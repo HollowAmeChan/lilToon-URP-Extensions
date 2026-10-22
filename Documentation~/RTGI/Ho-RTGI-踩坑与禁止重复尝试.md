@@ -160,3 +160,11 @@ GI私有diffuse分母1e−4/64（9/10各仅一个token）保持5轮/单位64/其
 step>4 factor2支持域名义L1仅−8.84%未达原20%，更重要是后两seed raw不匹配旧基线：full逐帧均值max2.219e−6/1.849e−6，不能继续写raw相同或用该比较接纳质量。前两seed同，不代表后两同；根因未证明，不强行归因GPU/driver/场景/共享资源。保留actual0功能完成与comparisonQualified=false，两者不是矛盾。
 
 候选入口/类/meta撤回、默认5复核过；不扫描ratio。035优先stock四seed重复/no-op clone及frame/数值light/sky/RIS/secondary状态定位，严格paired恢复前不试新的滤波参数/算式，不重跑无关MC/AS旧矩阵。033静态预测也不能覆盖这个真实输入差异；F51/F53继续搁置。
+
+## F56 / 步骤035：数值快照漏序列化、失败后误排与恢复边界
+
+未Serializable的GPU struct数组会被JsonUtility忽略，actual0和hash不能证明数值记录齐全；用明确Vector4/uint字段并先真实roundtrip/计数/hash资格。外部python exit1不会天然令PowerShell停止；曾误排下一Unity，已仅停自有子进程并留actual−1/partial。后续EAP+LASTEXITCODE和numeric门槛必须显式检查，不能失败自动串行。
+
+一次资格出现DEVICE_HUNG/removal/Unmap及fatal1073741845、无fresh report，序列化遗漏与device异常分开，不无证归因。先empty/no-AS小compute/fence与CPU schema资格、再新的host观测/短场景，不能原样反复重开大矩阵、改TDR/杀其它进程；当前A/B/no-op重现通过也不抹掉历史。
+
+历史selected secondary末位差在019原界内，不等于证明raw差异原因。当前严格pair可过，不给034原结果补发资格；端点hash不代表全帧输入。后续需新鲜stock配对或同一GI输入双NRD分支，不重启已搁置滤波候选。

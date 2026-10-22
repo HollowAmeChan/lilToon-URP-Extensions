@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         internal HoRTGIContext context,mainContext;internal GraphicsBuffer pixels,probe,rayProbe;internal int samplesPerPoint,pointCount,lastLightCount,lastInstances,lastCutouts;
         internal bool scheduled;
         internal HoRTGIRendererFeature.PassSettings lastSettings;internal bool lastEnvironment;
+        internal Vector4 lastSkyParameters,lastSkyTint,lastSkyConstant;
         internal int lastLightingSignature;internal uint lastSceneRevision,lastSkyRevision;
         ComputeShader shader;RayTracingShader rayShader;ProbePass pass;
         const BindingFlags Flags=BindingFlags.Instance|BindingFlags.NonPublic;
@@ -77,7 +78,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     d.reference=owner.context;d.main=main;d.settings=settings;d.lightCount=lightCount;d.seed=104729+owner.batch*8191;
                     d.shader=owner.shader;d.rayShader=owner.rayShader;d.pixels=owner.pixels;d.probe=owner.probe;d.rayProbe=owner.rayProbe;
                     var sky=frame.GetOrCreate<HoAtmosphereRenderGraphResources>();d.sky=TextureHandle.nullHandle;d.skyParameters=d.skyTint=d.skyConstant=Vector4.zero;
-                    owner.lastSkyRevision=sky.revision;
+                    owner.lastSkyRevision=sky.revision;owner.lastSkyParameters=sky.parameters;owner.lastSkyTint=sky.tint;owner.lastSkyConstant=sky.constantColor;
                     d.environment=main.environmentSampling&&settings.useEnvironment&&sky.IsValid;owner.lastEnvironment=d.environment;
                     if(sky.IsValid){d.sky=sky.radianceTexture;d.skyParameters=sky.parameters;d.skyTint=sky.tint;d.skyConstant=sky.constantColor;builder.UseTexture(d.sky);}
                     foreach(var buffer in new[]{d.reference.reservoirs,d.reference.history,d.reference.secondary,d.reference.finalVisibility})builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);

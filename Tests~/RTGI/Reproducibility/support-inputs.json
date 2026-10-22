@@ -1,0 +1,22 @@
+[
+  {
+    "path": "Editor/RTGI/HoRTGIGpuTimestampValidation.cs",
+    "sha256": "6A1009D1B68E8A2C15F1E3B7EAA380A8BB0BFB7FCB9E5A56926D988E14F78C18",
+    "bytes": 7881
+  },
+  {
+    "path": "Editor/RTGI/Shaders/HoRTGIGpuProbe.compute",
+    "sha256": "2472CC8F265B303282C0A7671DDF614ED2AF332AB15BF960A9242DC4498B4C60",
+    "bytes": 340
+  },
+  {
+    "path": "Tests~/RTGI/GpuTiming/Native/HoGIGpuProbe.cpp",
+    "sha256": "E8F5D018BAB92A4D561AAB9FF36B70294F946544A20D5BC9C8C0ED4EC95E9B15",
+    "bytes": 6767
+  },
+  {
+    "path": ".codex-research/RTGIValidation/Assets/Plugins/x86_64/HoGIGpuProbe.dll",
+    "sha256": "1D2468F15C5C930946954D291C48E574E6899DDFCA03110351DA76261ECCADD0",
+    "bytes": 13824
+  }
+]

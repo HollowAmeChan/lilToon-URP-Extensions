@@ -31,7 +31,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             public int seed,warmup,measured,firstShaderFrame,lastShaderFrame,firstApplicationFrame,lastApplicationFrame;
             public string stream,streamSha256;public bool actualTemporal;public float maxPrimaryError;
             public int lightCount,instances,cutouts,lightingSignature;public uint sceneRevision,skyRevision;
-            public HoRTGISpatialAudit.Report spatial;public Point[] points;public Capture[] captures;public Binding[] bindings;
+            public HoRTGISpatialAudit.Report spatial;public Point[] points;public Capture[] captures;public Binding[] bindings;public HoRTGIInputStateAudit.State firstInputs,lastInputs;
             public string weightStream,weightStreamSha256,publicationMap,publicationMapSha256;public int weightFrames;
         }
         [Serializable]internal sealed class Report
@@ -46,11 +46,11 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         readonly HoRTGIPoolPrecisionAudit precision;readonly Func<RenderTexture,Color[]> read;
         readonly Dictionary<int,RenderTexture> captured=new();readonly Dictionary<int,int> writes=new(),totals=new();
         readonly List<Segment> segments=new();HoRTGIDenseReferenceAudit.Point[] reference;
-        readonly Report report;readonly bool propagation;readonly int[] stageIds;readonly bool[] guideInitialized;readonly HoRTGIAtrousTrace trace;BinaryWriter stream,weightStream;Segment current;HoRTGISpatialAudit spatial;
+        readonly Report report;readonly bool propagation,reproInputs;readonly int[] stageIds;readonly bool[] guideInitialized;readonly HoRTGIAtrousTrace trace;BinaryWriter stream,weightStream;Segment current;HoRTGISpatialAudit spatial;
         double[,,] sums;long[,] negative;int observed;float maxPrimaryError;bool disposed;
-        internal HoRTGILocalStageAudit(HoRTGIContext context,HoRTGIDenseReferenceFeature feature,Func<RenderTexture,Color[]> read,int[] seeds,int warmup,int measured,bool propagation=false,bool traceControl=false)
+        internal HoRTGILocalStageAudit(HoRTGIContext context,HoRTGIDenseReferenceFeature feature,Func<RenderTexture,Color[]> read,int[] seeds,int warmup,int measured,bool propagation=false,bool traceControl=false,bool reproInputs=false,bool noopClone=false)
         {
-            this.context=context;this.feature=feature;this.read=read;this.propagation=propagation;stageIds=propagation?PropagationIds:StageIds;
+            this.context=context;this.feature=feature;this.read=read;this.propagation=propagation;this.reproInputs=reproInputs;stageIds=propagation?PropagationIds:StageIds;
             if(context.width!=256||context.height!=256||context.nrd==null||context.nrd.core.ValidationDiffuseStage!=null)throw new Exception("Local stage scope/domain is not available");
             string relative="Tests~/RTGI/LocalReference/results/reference.json.gz";
             string root=Path.GetFullPath(Path.Combine(Application.dataPath,"../../.."));byte[] packed=File.ReadAllBytes(Path.Combine(root,relative));byte[] raw;
@@ -69,7 +69,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             guideInitialized=reference.Select(p=>p.samples>0).ToArray();
             report=new Report{legacyReferenceInput=legacyPath,legacyReferenceSha256=legacyHash,referencePoints=reference,referenceInput=relative,referenceArchiveSha256=Hash(packed),referenceRawSha256=Hash(raw),seeds=seeds,stageIds=stageIds,warmup=warmup,measured=measured};
             precision=new HoRTGIPoolPrecisionAudit(context.nrd,"production");
-            if(propagation){trace=new HoRTGIAtrousTrace(context.nrd.core,!traceControl);report.trace=trace.report;}
+            if(propagation){trace=new HoRTGIAtrousTrace(context.nrd.core,!traceControl,noopClone);report.trace=trace.report;}
             context.nrd.core.ValidationDiffuseStage=CaptureStage;
         }
         void CaptureStage(CommandBuffer cmd,int pipeline,RenderTargetIdentifier source)
@@ -85,7 +85,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             precision.Copy(cmd,source,destination);writes.TryGetValue(pipeline,out int count);writes[pipeline]=count+1;
             if(trace!=null&&pipeline==9)trace.Bind(cmd);
         }
-        internal void BeginFrame(bool collectWeights=false){writes.Clear();if(trace!=null)trace.enabled=collectWeights&&trace.replacementActive;}
+        internal void BeginFrame(bool collectWeights=false){writes.Clear();if(trace!=null)trace.enabled=collectWeights&&trace.replacementActive&&!trace.noopClone;}
         internal void Begin(int seed,string output)
         {
             observed=0;maxPrimaryError=0;sums=new double[stageIds.Length,reference.Length,3];negative=new long[stageIds.Length,reference.Length];totals.Clear();
@@ -116,6 +116,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 }
                 if(!float.IsFinite(error)||error>.0005f)throw new Exception("Local full/RAB/history/ray/reference primary mismatch");maxPrimaryError=Mathf.Max(maxPrimaryError,error);
             }
+            if(reproInputs){var state=HoRTGIInputStateAudit.Capture(context,feature);if(first)current.firstInputs=state;else current.lastInputs=state;}
             if(first)
             {
                 current.lightCount=feature.lastLightCount;current.instances=feature.lastInstances;current.cutouts=feature.lastCutouts;
@@ -199,10 +200,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunPropagationControlQualification()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,traceControl:true,seedWarmup:16,seedMeasured:16,validationTag:"propagation-control-qualification");
         public static void RunPropagationControl()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,traceControl:true,validationTag:"propagation-control");
         public static void RunPropagation()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,validationTag:"propagation");
-        static async Task<HoRTGILocalStageAudit.Report> AuditLocalStages(HoRTGIRendererFeature gi,HoRTGIContext context,HoRTGIDenseReferenceFeature feature,Action render,Func<RenderTexture,Color[]> read,int warmup,int measured,string output,bool propagation=false,bool traceControl=false)
+        public static void RunReproStockQualification()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,traceControl:true,reproInputs:true,seedWarmup:16,seedMeasured:16,validationTag:"repro-stock-qualification");
+        public static void RunReproStock()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,traceControl:true,reproInputs:true,validationTag:"repro-stock");
+        public static void RunReproNoop()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,noopClone:true,reproInputs:true,validationTag:"repro-noop");
+        static async Task<HoRTGILocalStageAudit.Report> AuditLocalStages(HoRTGIRendererFeature gi,HoRTGIContext context,HoRTGIDenseReferenceFeature feature,Action render,Func<RenderTexture,Color[]> read,int warmup,int measured,string output,bool propagation=false,bool traceControl=false,bool reproInputs=false,bool noopClone=false)
         {
             int[] seeds=measured==16?new[]{0,104729}:new[]{0,104729,5347609,6396185};int oldFrame=context.frame;bool temporal=gi.Settings.temporal,spatial=gi.Settings.spatial;
-            using var audit=new HoRTGILocalStageAudit(context,feature,read,seeds,warmup,measured,propagation,traceControl);
+            using var audit=new HoRTGILocalStageAudit(context,feature,read,seeds,warmup,measured,propagation,traceControl,reproInputs,noopClone);
             try
             {
                 gi.Settings.temporal=gi.Settings.spatial=true;

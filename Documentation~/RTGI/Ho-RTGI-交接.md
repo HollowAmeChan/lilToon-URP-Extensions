@@ -543,3 +543,17 @@ Tests~/RTGI/PairwiseWeights有压缩输入SHA/源码公式/analysis/verify，默
 **035直接动作：** 暂停算法候选，先stock默认5同4seed的原版重复以及无操作shader clone对照，保持原27点/相机/时间预算；检查后两seed raw是否重现差异，记录实际shader frame、numeric lights/sky/RIS及secondary记录，必要逐字段比较而非仅单个hash。若stock原版本身变化，先定位状态/seed-reset/环境输入；若仅clone引入，定位观察/资源副作用。源/日志/失败都保留，严格pair恢复前不再试滤波参数或RGB算式。不要重采MC/跑旧AS flags或无新机制完整大矩阵。原质量/F39/static/复杂动态/1080完整预算及目标active继续。
 
 034已按白名单过滤提交`5095ddc`，ContrastSupport verifier提交后再次通过，明确保留comparisonQualified=false及后两seed raw不匹配。名义收益不足、不接纳因果质量；候选类/meta/入口已撤回，stock5实跑过，Runtime/Editor无最终diff。三自有进程终态/index空，仅Ho-GD计划未跟踪。035先stock重复/no-op clone及实际输入状态定位，严格pair恢复前停新滤波候选；所有原目标/质量/F39/动态/HD预算继续active。
+
+### 035终态（2026-10-23，待过滤提交）：当前stock/no-op严格重现，保留历史异常
+
+新InputStateAudit/meta+可选端点记录，数值灯72Vector4/primary135uint/RIS16384/secondary27及完整缓冲hash/probe；DenseFeature记录sky数值，Trace支持无debug的literal-stock clone。Runtime/DI/vendor无改动。28112短资格/31692初stock虽actual0，JSON漏原native struct数组，已保留initial-numeric-omission而不补写。
+
+53896修正后资格DEVICE_HUNG/removal/Unmap actual1073741845/debug11/无fresh report，发生在首快照前，原因未证实。PowerShell在外部Python失败后误排7312 stock，核自有PID/路径/启动时间后停止actual−1，partial/abort-review保留；已加EAP/LASTEXITCODE与runner numeric字段门槛。未动TDR/driver/他人进程，显存7302MiB/util50%仅相关观测。
+
+恢复：6968 empty/no-AS小known compute24samples/fence actual0/debug0；20912 CPU实际JsonUtility roundtrip actual0；显存下降后44040短场景98请求0/数值与hash资格过，资格mode限120s。随后53112 stockA、50368 stockB、50088 no-op all0，各1314请求，原4seed0/104729/5347609/6396185、64warm/256观察、27点/5轮/原支持域，API/compile/绑定/fence/drift0。三组全raw/pub时间均值图对026同seed逐bit同，彼此全部endpoint数值灯/sky/RIS/full secondary/primary hash与选中字段同；noop body只include改定位、无新算式，shader/kernel恢复。
+
+初stock灯/sky/RIS/primary对当前A同、secondary whole hash不同；27选点只position/normal末位差，hitmax9.26e−6、missdir7.82e−8/radius.01324、normal1oct16步，均符合019界。关联不证明raw漂移或TDR根因，历史cause仍unknown；当前严格重现不回填034资格。端点不是所有帧全部输入。
+
+Tests~/RTGI/Reproducibility含255source、8场景logs+2辅助logs、77原capture gzip、数值schema/abort/恢复与所有失败/analysis/verify。全部自有进程已终态、无active；Ho-GD计划排除。是记录/编排/重现性收益，不是画质修复/新性能预算。
+
+**036直接动作：** 使用同一GI输入的两个独立NRD baseline/no-op分支，先证明输入纹理/矩阵/时间/重置和输出等价、互不污染，后续仅一分支实验；这样避免再靠跨进程raytrace完全一致推断重建差异。先小负载/短资格，不立即增加大场景/HD驻留；所有Native描述符/时间/回调范围与恢复要审查。若选择新算法，必须新鲜stock配对与原旧15/新18/暗控制/full/phase/noise等资格，F51/F53/F55不自动重开；原全质量/F39/static/复杂动态/1080完整预算与目标active继续。

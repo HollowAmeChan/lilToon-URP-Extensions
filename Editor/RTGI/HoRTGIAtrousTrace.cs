@@ -16,16 +16,16 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         internal const int VectorsPerPoint=37;
         internal static readonly Vector2Int[] Pixels=HoRTGIDenseReferenceAudit.LocalPixels.Concat(new[]{new Vector2Int(141,157)}).Concat(
             Enumerable.Range(156,3).SelectMany(y=>Enumerable.Range(140,3).Select(x=>new Vector2Int(x,y))).Where(p=>p!=new Vector2Int(141,157))).ToArray();
-        [Serializable]internal sealed class Report{public string originalSha256,bodySha256,wrapperSha256,bodyPath,wrapperPath;public bool restoredOriginal,replacementActive;public int pointCount,vectorsPerPoint;}
+        [Serializable]internal sealed class Report{public string originalSha256,bodySha256,wrapperSha256,bodyPath,wrapperPath;public bool restoredOriginal,replacementActive,noopClone;public int pointCount,vectorsPerPoint;}
         readonly HoRTDINrdContext core;readonly ComputeShader[] shaders;readonly int[] kernels;
         readonly ComputeShader original,trace;readonly int originalKernel,kernel;
-        readonly GraphicsBuffer pixels,data;internal bool enabled;internal readonly bool replacementActive;internal readonly Report report;
-        internal HoRTGIAtrousTrace(HoRTDINrdContext core,bool replacementActive=true)
+        readonly GraphicsBuffer pixels,data;internal bool enabled;internal readonly bool replacementActive;internal readonly bool noopClone;internal readonly Report report;
+        internal HoRTGIAtrousTrace(HoRTDINrdContext core,bool replacementActive=true,bool noopClone=false)
         {
-            this.core=core;this.replacementActive=replacementActive;
+            this.core=core;this.replacementActive=replacementActive;this.noopClone=noopClone;
             string project=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
             if(!project.Replace('\\','/').EndsWith("/.codex-research/RTGIValidation"))throw new Exception("Dedicated trace project required");
-            const string directory="Assets/HoRTGIAtrousTrace";Directory.CreateDirectory(Path.Combine(project,directory));
+            string directory=noopClone?"Assets/HoRTGIAtrousNoop":"Assets/HoRTGIAtrousTrace";Directory.CreateDirectory(Path.Combine(project,directory));
             string source=File.ReadAllText(Path.GetFullPath(Path.Combine(Application.dataPath,"../../..","Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl"))).Replace("\r\n","\n");
             string body=source;
             body=ReplaceOnce(body,"[numthreads(GROUP_X, GROUP_Y, 1)]",Declarations+"\n[numthreads(GROUP_X, GROUP_Y, 1)]");
@@ -33,6 +33,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             body=ReplaceOnce(body,"            if (wDiffuse > 1e-4)",BeforeTap+"\n            if (wDiffuse > 1e-4)");
             body=ReplaceOnce(body,"                wDiffuse *= exp(-diffuseLuminanceW);","                wDiffuse *= exp(-diffuseLuminanceW);\n"+AfterTap);
             body=ReplaceOnce(body,"    gOut_Diff_Variance[pixelPos] = filteredDiffuseIlluminationAndVariance;","    gOut_Diff_Variance[pixelPos] = filteredDiffuseIlluminationAndVariance;\n"+Finish);
+            if(noopClone)body=source;
             string package="Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/";
             body=System.Text.RegularExpressions.Regex.Replace(body,"#include \"([^\"]+)\"",m=>"#include \""+package+m.Groups[1].Value+"\"");
             string bodyPath=directory+"/AtrousTrace.hlsl",wrapperPath=directory+"/AtrousTrace.compute";
@@ -47,11 +48,11 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             pixels=new GraphicsBuffer(GraphicsBuffer.Target.Structured,Pixels.Length,8);pixels.SetData(Pixels);
             data=new GraphicsBuffer(GraphicsBuffer.Target.Structured,Pixels.Length*4*VectorsPerPoint,16);
             if(replacementActive){shaders[10]=trace;kernels[10]=kernel;}
-            report=new Report{replacementActive=replacementActive,originalSha256=Hash(System.Text.Encoding.UTF8.GetBytes(source)),bodySha256=Hash(File.ReadAllBytes(Path.Combine(project,bodyPath))),wrapperSha256=Hash(File.ReadAllBytes(Path.Combine(project,wrapperPath))),bodyPath=bodyPath,wrapperPath=wrapperPath,pointCount=Pixels.Length,vectorsPerPoint=VectorsPerPoint};
+            report=new Report{noopClone=noopClone,replacementActive=replacementActive,originalSha256=Hash(System.Text.Encoding.UTF8.GetBytes(source)),bodySha256=Hash(File.ReadAllBytes(Path.Combine(project,bodyPath))),wrapperSha256=Hash(File.ReadAllBytes(Path.Combine(project,wrapperPath))),bodyPath=bodyPath,wrapperPath=wrapperPath,pointCount=Pixels.Length,vectorsPerPoint=VectorsPerPoint};
         }
         internal void Bind(CommandBuffer cmd)
         {
-            if(!replacementActive)return;
+            if(!replacementActive||noopClone)return;
             cmd.SetComputeIntParam(trace,"_HoGITraceEnabled",enabled?1:0);cmd.SetComputeIntParam(trace,"_HoGITracePointCount",Pixels.Length);
             cmd.SetComputeBufferParam(trace,kernel,"_HoGITracePixels",pixels);cmd.SetComputeBufferParam(trace,kernel,"_HoGITrace",data);
         }

@@ -67,3 +67,5 @@
 步骤033复用权重离线重建forward/geometry（31,104 tap0不符），简单luma对称化后期预测太小，不开GPU；既有factor2双向支持只在大步长能区分采样两类位置。[冻结重放与限制](../../Tests~/RTGI/PairwiseWeights/README.md)。034仅step>4局部候选，未修复生产、不能累加静态收益，全部原门槛/预算继续active。
 
 步骤034大步长factor2 guard撤回：名义L1−8.84%不足筛选，且后两seed发现raw配对不满足，不能当因果收益；默认5过滤实跑过。[原数据与配对失败](../../Tests~/RTGI/ContrastSupport/README.md)。035先stock重复/no-op clone和输入状态重现性，严格pair恢复前暂停新算法，所有原缺口active继续。
+
+步骤035当前stockA/B/no-op四seed全raw/pub均值图与端点数值状态逐bit重现，记录序列化与失败停止已修复；历史漏项/device crash/误排/partial全部保留。[完整重现性证据](../../Tests~/RTGI/Reproducibility/README.md)。历史034仍未资格，036同源GI双NRD基线先资格，不重开弱候选，全部原缺口active继续。

@@ -138,3 +138,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 033补充（2026-10-23）：已有权重离线核对几何/forward正确，简单luma方差对称化后期预测过小；冻结输入factor2支持域仅提示大步长局部候选，不是GPU/递归结果。Tests~/RTGI/PairwiseWeights保存全部输入与验证。Runtime/Editor未改，034实际资格前不生产化，目标active。
 
 034补充（2026-10-23）：late factor2支持域候选撤回，名义改善8.84%但严格raw配对在后两seed失败，不接纳因果质量收益。原数据和作用域/撤回资格见Tests~/RTGI/ContrastSupport；默认5保留，035先输入重现性，不继续参数扫描，目标active。
+
+035补充（2026-10-23）：stockA/B/no-op当前四seed全raw/pub均值图与数值endpoint一致；新增输入记录与序列化/失败停止修复，历史漏项/device removal/明确abort保留。Tests~/RTGI/Reproducibility有完整证据；未确认历史raw差异唯一原因，不补发034资格。036同源GI双NRD对照先资格，Runtime未改、目标active。

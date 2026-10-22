@@ -54,7 +54,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunResources512()=>Run(false,512,gpu:true,resources:true);
         public static void RunResources1080()=>Run(false,1920,gpu:true,resources:true,renderHeight:1080);
         public static void RunResources1080Compatibility()=>Run(true,1920,gpu:true,resources:true,renderHeight:1080);
-        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="",bool seedProduction=false,bool denseLocal=false,bool localStages=false,bool propagation=false,bool traceControl=false)
+        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="",bool seedProduction=false,bool denseLocal=false,bool localStages=false,bool propagation=false,bool traceControl=false,bool reproInputs=false,bool noopClone=false)
         {
             int width=size,height=renderHeight>0?renderHeight:size;
             var oldDefault=GraphicsSettings.defaultRenderPipeline;var oldQuality=QualitySettings.renderPipeline;bool oldAsync=ShaderUtil.allowAsyncCompilation;HoRTGIRendererFeature gi=null;int exit=1;
@@ -103,7 +103,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 if(productionHistory)report.productionHistory=await AuditProductionHistory(gi,context,Render,Read);
                 if(feedbackAudit)report.feedbackAudit=await AuditHistoryFeedback(gi,context,denseFeature,Render,Read,feedbackQualification,output,feedbackGpu);
                 if(seedAudit)report.seedAudit=await AuditSeeds(gi,context,denseFeature,Render,Read,seedCount,seedWarmup,seedMeasured,output,seedProduction);
-                if(localStages)report.localStageAudit=await AuditLocalStages(gi,context,denseFeature,Render,Read,seedWarmup,seedMeasured,output,propagation,traceControl);
+                if(localStages)report.localStageAudit=await AuditLocalStages(gi,context,denseFeature,Render,Read,seedWarmup,seedMeasured,output,propagation,traceControl,reproInputs,noopClone);
                 if(stability)
                 {
                     if(moments||spatialAudit)context.nrd.ValidationSignalScale=momentScale;

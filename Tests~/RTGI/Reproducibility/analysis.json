@@ -1,0 +1,478 @@
+{
+  "scope": "Current stock A/B and literal-math no-op shader10 clone. Endpoint snapshots are first/last only; hashes and selected fields do not identify every input at every frame. Host recovery and historical mismatches are not erased.",
+  "productionChanged": false,
+  "currentStrictReproducibilityPassed": true,
+  "comparisons": [
+    {
+      "seed": 0,
+      "runs": [
+        {
+          "label": "stock-a",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        },
+        {
+          "label": "stock-b",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        },
+        {
+          "label": "noop",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 104729,
+      "runs": [
+        {
+          "label": "stock-a",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        },
+        {
+          "label": "stock-b",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        },
+        {
+          "label": "noop",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 5347609,
+      "runs": [
+        {
+          "label": "stock-a",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        },
+        {
+          "label": "stock-b",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        },
+        {
+          "label": "noop",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "seed": 6396185,
+      "runs": [
+        {
+          "label": "stock-a",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        },
+        {
+          "label": "stock-b",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        },
+        {
+          "label": "noop",
+          "entireMeanMapEqualsOldBaseline": true,
+          "rawMeanMapEqualsOld": true,
+          "rawFrameMeansEqualOld": true,
+          "endpointStates": [
+            {
+              "endpoint": "firstInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            },
+            {
+              "endpoint": "lastInputs",
+              "lightsEqual": true,
+              "skyEqual": true,
+              "risEqual": true,
+              "selectedPrimaryEqual": true,
+              "selectedSecondaryEqual": true,
+              "fullHashesEqual": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "historicalInitialStockComparison": [
+    {
+      "seed": 0,
+      "endpoints": [
+        {
+          "endpoint": "firstInputs",
+          "lightsSkyRisPrimaryHashesEqual": true,
+          "secondaryWholeHashEqual": false,
+          "selectedDifferingFieldCounts": {
+            "position": 20
+          },
+          "selectedPairs": 27,
+          "maxHitPositionError": 6.106495129998063e-06,
+          "maxMissUnitDirectionError": 2.4646852851213073e-08,
+          "maxMissRadiusError": 0.009358928902656771,
+          "maxNormalOct16Steps": 0,
+          "withinOriginal019EndpointPrecision": true
+        },
+        {
+          "endpoint": "lastInputs",
+          "lightsSkyRisPrimaryHashesEqual": true,
+          "secondaryWholeHashEqual": false,
+          "selectedDifferingFieldCounts": {
+            "position": 21,
+            "normal": 1
+          },
+          "selectedPairs": 27,
+          "maxHitPositionError": 8.259061849445712e-06,
+          "maxMissUnitDirectionError": 3.030933300870052e-08,
+          "maxMissRadiusError": 0.006155280250823125,
+          "maxNormalOct16Steps": 1,
+          "withinOriginal019EndpointPrecision": true
+        }
+      ]
+    },
+    {
+      "seed": 104729,
+      "endpoints": [
+        {
+          "endpoint": "firstInputs",
+          "lightsSkyRisPrimaryHashesEqual": true,
+          "secondaryWholeHashEqual": false,
+          "selectedDifferingFieldCounts": {
+            "position": 20
+          },
+          "selectedPairs": 27,
+          "maxHitPositionError": 5.1577824718437046e-06,
+          "maxMissUnitDirectionError": 7.814227211740315e-08,
+          "maxMissRadiusError": 0.0046802574943285435,
+          "maxNormalOct16Steps": 0,
+          "withinOriginal019EndpointPrecision": true
+        },
+        {
+          "endpoint": "lastInputs",
+          "lightsSkyRisPrimaryHashesEqual": true,
+          "secondaryWholeHashEqual": false,
+          "selectedDifferingFieldCounts": {
+            "position": 19
+          },
+          "selectedPairs": 27,
+          "maxHitPositionError": 3.932099938981686e-06,
+          "maxMissUnitDirectionError": 0.0,
+          "maxMissRadiusError": 0.009868207242107019,
+          "maxNormalOct16Steps": 0,
+          "withinOriginal019EndpointPrecision": true
+        }
+      ]
+    },
+    {
+      "seed": 5347609,
+      "endpoints": [
+        {
+          "endpoint": "firstInputs",
+          "lightsSkyRisPrimaryHashesEqual": true,
+          "secondaryWholeHashEqual": false,
+          "selectedDifferingFieldCounts": {
+            "position": 18
+          },
+          "selectedPairs": 27,
+          "maxHitPositionError": 5.800974397943706e-06,
+          "maxMissUnitDirectionError": 1.0684594014006681e-08,
+          "maxMissRadiusError": 0.013232567071099766,
+          "maxNormalOct16Steps": 0,
+          "withinOriginal019EndpointPrecision": true
+        },
+        {
+          "endpoint": "lastInputs",
+          "lightsSkyRisPrimaryHashesEqual": true,
+          "secondaryWholeHashEqual": false,
+          "selectedDifferingFieldCounts": {
+            "position": 18,
+            "normal": 1
+          },
+          "selectedPairs": 27,
+          "maxHitPositionError": 3.932099938981686e-06,
+          "maxMissUnitDirectionError": 0.0,
+          "maxMissRadiusError": 0.0012855923268944025,
+          "maxNormalOct16Steps": 1,
+          "withinOriginal019EndpointPrecision": true
+        }
+      ]
+    },
+    {
+      "seed": 6396185,
+      "endpoints": [
+        {
+          "endpoint": "firstInputs",
+          "lightsSkyRisPrimaryHashesEqual": true,
+          "secondaryWholeHashEqual": false,
+          "selectedDifferingFieldCounts": {
+            "position": 18
+          },
+          "selectedPairs": 27,
+          "maxHitPositionError": 9.258502883409309e-06,
+          "maxMissUnitDirectionError": 0.0,
+          "maxMissRadiusError": 0.008038872256292962,
+          "maxNormalOct16Steps": 0,
+          "withinOriginal019EndpointPrecision": true
+        },
+        {
+          "endpoint": "lastInputs",
+          "lightsSkyRisPrimaryHashesEqual": true,
+          "secondaryWholeHashEqual": false,
+          "selectedDifferingFieldCounts": {
+            "position": 22,
+            "normal": 1
+          },
+          "selectedPairs": 27,
+          "maxHitPositionError": 6.325959759436416e-06,
+          "maxMissUnitDirectionError": 3.555151863565622e-08,
+          "maxMissRadiusError": 0.009089464816497639,
+          "maxNormalOct16Steps": 1,
+          "withinOriginal019EndpointPrecision": true
+        }
+      ]
+    }
+  ],
+  "historicalRawMismatchCause": "Unproven. Initial stock run also differed, while current A/B/no-op are exact. Selected secondary position/normal differences correlate with the initial cohort but do not prove the cause of raw divergence or device failure.",
+  "decision": "Use fresh stock pairing and per-field input checks for future work. Historical034 remains unqualified; do not reaccept its nominal result. Never auto-queue after failed native/Python/scene qualification."
+}

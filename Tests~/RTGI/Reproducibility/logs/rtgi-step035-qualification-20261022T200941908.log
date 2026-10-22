@@ -1,0 +1,1937 @@
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.15f1 (c1aa84e375f6) revision 12692100'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12" at "2026-10-22T20:09:42.093964Z"
+OS: 'Windows 11  (10.0.26200) CoreCountrySpecific' Language: 'zh' Physical Memory: 31908 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-22T20:09:42Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe
+-batchmode
+-force-d3d12
+-force-d3d12-debug
+-projectPath
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation
+-executeMethod
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation.RunReproStockQualification
+-logFile
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\rtgi-step035-qualification-20261022T200941908.log
+Successfully changed project path to: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation
+D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTGIValidation
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [49880]  Target information:
+
+Player connection [49880]  * "[IP] 26.182.211.171 [Port] 55505 [Flags] 2 [Guid] 582339490 [EditorId] 582339490 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [49880]  * "[IP] 192.168.1.6 [Port] 55505 [Flags] 2 [Guid] 582339490 [EditorId] 582339490 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [49880] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [49880] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-53896" after 0.2 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.1'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-hhh12"
+[Licensing::IpcConnector] LicenseClient-hhh12 channel disconnected successfully.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15" at "2026-10-22T20:09:42.899262Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 39200, path: "C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              ed2c9ca0bfa64de78c73797d83b0aa52
+  Correlation Id:          76076035a2be4481691a9dc14e06d1cc
+  External correlation Id: 8006964347575523897
+  Machine Id:              1CwKlLouk/VY6hjRtF7o1PKDkww=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-hhh12-6000.3.15" (connect: 0.00s, validation: 0.00s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15-notifications" at "2026-10-22T20:09:42.9040078Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: ewogICJzdWJzR3JvdXAiIDogInVuaXR5IGVkaXRvciIsCiAgIm5hbWVzcGFjZSIgOiAidW5pdHlfZWRpdG9yIiwKICAidHlwZSIgOiAiRURJVE9SIiwKICAidGFnIiA6ICJVbml0eVBlcnNvbmFsXXXX
+  Product: Unity Personal Version
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.82s
+[Licensing::Module] Licensing is initialized (took 0.28s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 0.74 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.15f1 (c1aa84e375f6)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTGIValidation/Assets
+Forcing GfxDevice: Direct3D 12
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 4060 (ID=0x2882)
+    Vendor:          NVIDIA
+    VRAM:            7956 MB
+    App VRAM Budget: 232 MB
+    Driver:          32.0.16.1742
+d3d12: Failed to create a heap!
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56896
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.003538 seconds.
+- Loaded All Assemblies, in  0.350 seconds
+Native extension for WindowsStandalone target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.228 seconds
+Domain Reload Profiling: 571ms
+	BeginReloadAssembly (167ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (10ms)
+	RebuildCommonClasses (23ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (41ms)
+	LoadAllAssembliesAndSetupDomain (104ms)
+		LoadAssemblies (148ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (102ms)
+			TypeCache.Refresh (100ms)
+				TypeCache.ScanAssembly (91ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (228ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (204ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (30ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (43ms)
+			ProcessInitializeOnLoadAttributes (72ms)
+			ProcessInitializeOnLoadMethodAttributes (57ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 31 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.nuget.newtonsoft-json@3.2.2 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64)
+    com.unity.mathematics@1.3.3 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.collections@2.6.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.collections@12999e356c23)
+    com.unity.burst@1.8.29 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.burst@6bb9aca3ef38)
+    com.unity.nuget.mono-cecil@1.11.6 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.test-framework.performance@3.4.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.test-framework.performance@aa81a99c4a75)
+    com.unity.searcher@4.9.4 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.searcher@d45a78918735)
+  Built-in packages:
+    com.unity.modules.imgui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.ui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.imageconversion@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.unitywebrequest@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.terrain@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.physics@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.animation@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.particlesystem@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.audio@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.screencapture@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.shadergraph@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.shadergraph@2da3a5f87f4a)
+    com.unity.modules.hierarchycore@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.render-pipelines.core@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.render-pipelines.core@648b47f96bf1)
+    com.unity.test-framework@1.6.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.test-framework@aebcb98460c6)
+    com.unity.ugui@2.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.ugui@23e8d17bfaf9)
+    com.unity.ext.nunit@2.0.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+  Embedded packages:
+    org.khronos.unitygltf@file:D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Packages\org.khronos.unitygltf (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Packages\org.khronos.unitygltf)
+  Local packages:
+    com.unity.render-pipelines.universal@file:D:\Unity_Fork\HoUrp17.3.0 (location: D:\Unity_Fork\HoUrp17.3.0)
+    com.unity.render-pipelines.universal-config@file:D:\Unity_Fork\HoUrpConfig17.0.3 (location: D:\Unity_Fork\HoUrpConfig17.0.3)
+    jp.lilxyzw.liltoon@file:D:\Unity_Fork\lilToon\Assets\lilToon (location: D:\Unity_Fork\lilToon\Assets\lilToon)
+    jp.lilxyzw.liltoon.urp.extensions@file:D:\Unity_Fork\lilToon-URP-Extensions (location: D:\Unity_Fork\lilToon-URP-Extensions)
+    jp.lilxyzw.liltoon.unitygltf.extensions@file:D:\Unity_Fork\lilToon-UnityGLTF-Extensions (location: D:\Unity_Fork\lilToon-UnityGLTF-Extensions)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.01 seconds
+Assembly reference Packages/org.khronos.unitygltf/Runtime/Scripts/Interactivity/VisualScripting/Units/Unity.VisualScripting.asmref has no target assembly definition
+Assembly reference Packages/org.khronos.unitygltf/Runtime/Scripts/Interactivity/VisualScripting/Units/Unity.VisualScripting.asmref has no target assembly definition
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTGIValidation
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 2s94ms
+[574/731    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[719/731    1s] Csc Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Editor.dll (+2 others)
+[           0s] Csc Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Editor.dll (+2 others) [CacheWrite 00000000000000000000000000000005]
+[720/731    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/jp.lilxyzw.liltoon.urp.extensions.Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Editor.dll, with 136 defines and 278 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[721/731    0s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.dll (+2 others)
+[722/731    0s] CopyFiles Library/ScriptAssemblies/jp.lilxyzw.liltoon.urp.extensions.Editor.pdb
+[723/731    0s] CopyFiles Library/ScriptAssemblies/jp.lilxyzw.liltoon.urp.extensions.Editor.dll
+[724/731    0s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+[725/731    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll, with 136 defines and 314 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[726/731    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.dll, with 138 defines and 279 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[727/731    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+[728/731    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+[729/731    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.pdb
+[730/731    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.dll
+*** Tundra build success (2.06 seconds), 13 items updated, 731 evaluated
+AssetDatabase: script compilation time: 2.433242s
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.718 seconds
+Refreshing native plugins compatible for Editor in 1.66 ms, found 2 plugins.
+Native extension for WindowsStandalone target not found
+Assembly reference Packages/org.khronos.unitygltf/Runtime/Scripts/Interactivity/VisualScripting/Units/Unity.VisualScripting.asmref has no target assembly definition
+Refreshing native plugins compatible for Editor in 1.74 ms, found 2 plugins.
+[lilToon] Switch Direct3D11 to Direct3D12
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.lilStartup:lilStartupMethod () (at D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilStartup.cs:93)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+UnityEditor.EditorAssemblies:ProcessInitializeOnLoadMethodAttributes ()
+
+(Filename: D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilStartup.cs Line: 93)
+
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  2.943 seconds
+Domain Reload Profiling: 3650ms
+	BeginReloadAssembly (313ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (53ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (142ms)
+	RebuildCommonClasses (24ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (28ms)
+	LoadAllAssembliesAndSetupDomain (333ms)
+		LoadAssemblies (334ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (89ms)
+			TypeCache.Refresh (64ms)
+				TypeCache.ScanAssembly (58ms)
+			BuildScriptInfoCaches (18ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (2943ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (2819ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (17ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (107ms)
+			ProcessInitializeOnLoadAttributes (1521ms)
+			ProcessInitializeOnLoadMethodAttributes (1157ms)
+			AfterProcessingInitializeOnLoad (15ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (19ms)
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_fakeshadow.shader using Guid(00795bf598b44dc4e9bd363348e77085) (ShaderImporter)Launched and connected shader compiler UnityShaderCompiler.exe after 0.02 seconds
+ -> (artifact id: '793ac20a6341b15bc0a20478854e03ff') in 0.1177538 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltsmulti_o.shader using Guid(51b2dee0ab07bd84d8147601ff89e511) (ShaderImporter) -> (artifact id: '680b2b22b59e7371a9511755158f8135') in 0.0611675 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltspass_opaque.shader using Guid(61b4f98a5d78b4a4a9d89180fac793fc) (ShaderImporter) -> (artifact id: '2ceaefa08789c6ef33b176306d504836') in 0.0840976 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_onetrans_o.shader using Guid(7171688840c632447b22ec14e2bdef7e) (ShaderImporter) -> (artifact id: 'b0b1634d6e92d1745a429aac71726e85') in 0.0502528 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltsmulti.shader using Guid(9294844b15dca184d914a632279b24e1) (ShaderImporter) -> (artifact id: '282759e61e39a8679d39106355acb6a6') in 0.0412503 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_onetrans.shader using Guid(b269573b9937b8340b3e9e191a3ba5a8) (ShaderImporter) -> (artifact id: '72a67fc44ea61f4069ac48ce1ea44e81') in 0.0426382 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_overlay_one.shader using Guid(33e950d038b8dfd4f824f3985c2abfb7) (ShaderImporter) -> (artifact id: '3e32cdacfe6b65132800655ed8d4045d') in 0.0188146 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_furonly.shader using Guid(33aad051c4a3a844a8f9330addb86a97) (ShaderImporter) -> (artifact id: 'ec7167dfc8104d705d35d0a3408eed98') in 0.0166428 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_fur_cutout.shader using Guid(544c75f56e9af8048b29a6ace5f52091) (ShaderImporter) -> (artifact id: '1efe2205fccde0e427d419aae3ead595') in 0.0475317 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_fur_two.shader using Guid(54bc8b41278802d4a81b27fe402994e2) (ShaderImporter) -> (artifact id: '2c6fabb38a5354fa52fb214258918531') in 0.0527886 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_overlay.shader using Guid(94274b8ef5d3af842b9427384cba3a8f) (ShaderImporter) -> (artifact id: '3d2a7b7d28336adcef656162b2a95b18') in 0.0201725 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_fur.shader using Guid(55706696b2bdb5d4d8541b89e17085c8) (ShaderImporter) -> (artifact id: 'f85db06cba756e27660bc10196159b98') in 0.0462126 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_cutout.shader using Guid(85d6126cae43b6847aff4b13f4adb8ec) (ShaderImporter) -> (artifact id: '441e6c6476e9e4fab9c55d2fae7a9bda') in 0.0408906 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_trans.shader using Guid(165365ab7100a044ca85fc8c33548a62) (ShaderImporter) -> (artifact id: '91cac154a4c815f04f5b7d4249d44f4a') in 0.045662 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltspass_transparent.shader using Guid(2683fad669f20ec49b8e9656954a33a8) (ShaderImporter) -> (artifact id: '8ad044d5ec283db0993a469fcbfa3fb8') in 0.0895773 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltsmulti_ref.shader using Guid(d7af54cdd86902d41b8c240e06b93009) (ShaderImporter) -> (artifact id: 'bd011709b3f8e4db81aad280e25e525c') in 0.041636 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_hair.shader using Guid(f75d7994d72c53e4da226b3b9b21d942) (ShaderImporter) -> (artifact id: 'a3fd81b14d40f0466c9c2c85d53e1f5f') in 0.0755836 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_furonly_two.shader using Guid(f8d9dfac6dbfaaf4c9c3aaf4bd8c955f) (ShaderImporter) -> (artifact id: '66442d0c29daa14968b6084d10e0ab0e') in 0.0194885 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltspass_baker.shader using Guid(f96a89829ccb1e54b85214550519a8d6) (ShaderImporter) -> (artifact id: 'b591af98d64079df8d3a874fb451330a') in 0.0132026 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_twotrans.shader using Guid(6a77405f7dfdc1447af58854c7f43f39) (ShaderImporter) -> (artifact id: 'b708389854a9d1dff8230b7d3d0e04b7') in 0.0464726 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_cutout_oo.shader using Guid(3b3957e6c393b114bab6f835b4ed8f5d) (ShaderImporter) -> (artifact id: 'cc005b4acb98a6657b7c1a655d66f052') in 0.0198167 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_cutout_o.shader using Guid(3b4aa19949601f046a20ca8bdaee929f) (ShaderImporter) -> (artifact id: 'a28555d42538f9f9b53f887b11c22172') in 0.0493511 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_oo.shader using Guid(fba17785d6b2c594ab6c0303c834da65) (ShaderImporter) -> (artifact id: '2cb1e0a81acef991fd47725469e5bb93') in 0.0205274 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_trans_oo.shader using Guid(0c762f24b85918a49812fc5690619178) (ShaderImporter) -> (artifact id: 'e165436a451c6b70593c20f6d1464978') in 0.0203735 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_trans_o.shader using Guid(3c79b10c7e0b2784aaa4c2f8dd17d55e) (ShaderImporter) -> (artifact id: 'bef7c8a307f659438d7155252cb99246') in 0.0493993 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_twotrans_o.shader using Guid(9cf054060007d784394b8b0bb703e441) (ShaderImporter) -> (artifact id: 'd552a046733da80eca718cb3aa83de9f') in 0.0528512 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_ref.shader using Guid(dce3f3e248acc7b4daeda00daf616b4d) (ShaderImporter) -> (artifact id: 'ce9102f376af15e1e380c178e3d9ee2c') in 0.0409523 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltspass_cutout.shader using Guid(ad219df2a46e841488aee6a013e84e36) (ShaderImporter) -> (artifact id: '2478982dd7ebdaf1fa16d83e59e17ee1') in 0.0739598 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltsmulti_fur.shader using Guid(1e50f1bc4d1b0e34cbf16b82589f6407) (ShaderImporter) -> (artifact id: 'c1bf2c0af03d3f36d0feeb32391a87fd') in 0.0447382 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_furonly_cutout.shader using Guid(7ec9f85eb7ee04943adfe19c2ba5901f) (ShaderImporter) -> (artifact id: 'e285a1407973fac44c1afed39141c3a6') in 0.0157645 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_ref_blur.shader using Guid(3fb94a39b2685ee4d9817dcaf6542d99) (ShaderImporter) -> (artifact id: 'e347ca8555526ade81dcd9a0f0e916dc') in 0.0416686 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts.shader using Guid(df12117ecd77c31469c224178886498e) (ShaderImporter) -> (artifact id: '0752223b9913da73317c830e501eebb8') in 0.0407349 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_o.shader using Guid(efa77a80ca0344749b4f19fdd5891cbe) (ShaderImporter) -> (artifact id: '8f7fb2c8316331e0ae79bfb4f17a3a15') in 0.0460345 seconds
+Refreshing native plugins compatible for Editor in 1.85 ms, found 2 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=a420860f28ff7394b8c9829499fcd7e9): Total: 8.736 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=33 (actual=33, local cache=0, cache server=0)
+		Asset DB Process Time: managed=2 ms, native=4909 ms
+		Asset DB Callback time: managed=95 ms, native=527 ms
+		Scripting: domain reloads=1, domain reload time=718 ms, compile time=2434 ms, other=48 ms
+		Project Asset Count: scripts=970, non-scripts=2354
+		Asset File Changes: new=0, changed=69, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.001ms
+	InvokePackagesCallback: 25.414ms
+	ApplyChangesToAssetFolders: 1.554ms
+	Scan: 120.819ms
+	OnSourceAssetsModified: 203.247ms
+	CategorizeAssetsWithTransientArtifact: 19.515ms
+	ProcessAssetsWithTransientArtifactChanges: 30.287ms
+	CategorizeAssets: 41.356ms
+	ImportOutOfDateAssets: 4505.241ms (485.674ms without children)
+		ImportManagerImport: 1547.221ms (33.200ms without children)
+			ImportInProcess: 1510.464ms
+			UpdateCategorizedAssets: 3.556ms
+		CompileScripts: 2434.081ms
+		ReloadNativeAssets: 0.024ms
+		UnloadImportedAssets: 5.934ms
+		ReloadImportedAssets: 31.656ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.322ms
+		InitializingProgressBar: 0.005ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.324ms
+	PostProcessAllAssets: 400.104ms
+	Hotreload: 2.805ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.001ms
+	UnloadStreamsBegin: 3.476ms
+	PersistCurrentRevisions: 0.066ms
+	UnloadStreamsEnd: 0.001ms
+	GenerateScriptTypeHashes: 1.840ms
+	Untracked: 3382.320ms
+
+Application.AssetDatabase Initial Refresh End
+Scanning for USB devices : 15.549ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-RTInputValidation
+Unloading 55 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 4272 unused Assets / (7.4 MB). Loaded Objects now: 5267.
+Memory consumption went from 272.1 MB to 264.7 MB.
+Total: 6.007200 ms (FindLiveObjects: 0.372800 ms CreateObjectMapping: 0.109100 ms MarkObjects: 3.949300 ms  DeleteObjects: 1.575300 ms)
+
+Opening scene 'Assets/mmd场景测试/血月古堡/血月古堡.unity'
+Unloading 14 Unused Serialized files (Serialized files now loaded: 0)
+Loaded scene 'Assets/mmd场景测试/血月古堡/血月古堡.unity'
+	Deserialize:            22.570 ms
+	Integration:            178.258 ms
+	Integration of assets:  2.308 ms
+	Thread Wait Time:       2.805 ms
+	Total Operation Time:   205.941 ms
+Unloading 8 unused Assets / (8.9 KB). Loaded Objects now: 5411.
+Memory consumption went from 267.9 MB to 267.9 MB.
+Total: 4.684300 ms (FindLiveObjects: 0.246600 ms CreateObjectMapping: 0.048500 ms MarkObjects: 4.211300 ms  DeleteObjects: 0.177100 ms)
+
+[Project] Loading completed in 12.377 seconds
+	Project init time: 				11.559 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.462 seconds
+		Asset Database init time: 		0.153 seconds
+		Global illumination init time: 	0.005 seconds
+		Assemblies load time: 			0.608 seconds
+		Unity extensions init time: 	0.004 seconds
+		Asset Database refresh time: 	8.736 seconds
+	Scene opening time: 			0.458 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1792699794451,"processId":53896,"projectLoad":12.3771319,"projectInit":11.5592524,"templateInit":0.0,"packageManagerInit":0.4617126,"assetDatabaseInit":0.1534966,"globalIlluminationInit":0.0045748,"assembliesLoad":0.607598,"unityExtensionsInit":0.0038121,"assetDatabaseRefresh":8.7362929,"sceneOpening":0.4581089}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1792699794451,"processId":53896,"editorVersion":"6000.3.15f1 (c1aa84e375f6)","branch":"6000.3/staging","buildType":"Release","platform":"Windows"}
+[Licensing::Client] Successfully resolved entitlement details
+Start Indexing on Editor startup
+[Indexing] Starting Initial Indexing for Assets
+[UnityConnectServicesConfig] config is NOT valid, switching to default
+Created GICache directory at C:/Users/hhh12/AppData/LocalLow/Unity/Caches/GiCache. Took: 0.051s, timestamps: [12.380 - 12.432]
+Asset Pipeline Refresh (id=b4f1e93c06f6b8e4d820d5ef9c0ef5d2): Total: 0.148 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+d3d12 validation error (category: 9, id: 232): ID3D12Device::RemoveDevice: Device removal has been triggered for the following reason (DXGI_ERROR_DEVICE_HUNG: The Device took an unreasonable amount of time to execute its commands, or the hardware crashed/hung. As a result, the TDR (Timeout Detection and Recovery) mechanism has been triggered. The current Device Context was executing commands when the hang occurred. The application may want to respawn and fallback to less aggressive use of the display hardware).
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 validation error (category: 8, id: 310): ID3D12Resource3::ID3D12Resource::Unmap: Resource (0x0000023D4ECCF160:'Unnamed ID3D12Resource Object'), Subresource (0) is not mapped.
+d3d12 : Creation of resource 'BufferD3D12::CreateBufferResource() Buffer' (216 x 1) format 0 failed (887a0005).
+d3d12: IDXGIInfoQueue has 0 allowed filtered messages from  0 total stored.
+d3d12: Device failed error (887a0005).
+d3d12: Device removed reason (887a0006).
+d3d12: GfxDevice was not out of Local memory
+d3d12: Local memory usage:
+ Budget: 1332383744
+ CurrentUsage: 325599232
+ AvailableForReservation: 67108864
+ CurrentReservation: 3902799872
+d3d12: GfxDevice was not out of Non-Local memory
+d3d12: Non-Local memory usage:
+ Budget: 15923707904
+ CurrentUsage: 378417152
+ AvailableForReservation: 0
+ CurrentReservation: 8096071680
+d3d12:     Starting DRED v1.2
+d3d12:     DRED CommandList: Gfx barriers command list (debug layer indirect)
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 2
+d3d12:     DRED BreadCrumb node id: 0
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  
+  15: RESOURCEBARRIER  
+
+
+d3d12:     DRED CommandList: noname
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 161
+d3d12:     DRED BreadCrumb node id: 1
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  
+  18: RESOLVEQUERYDATA  
+  12: CLEARRENDERTARGETVIEW  
+  12: CLEARRENDERTARGETVIEW  
+  12: CLEARRENDERTARGETVIEW  
+  12: CLEARRENDERTARGETVIEW  
+  12: CLEARRENDERTARGETVIEW  
+  12: CLEARRENDERTARGETVIEW  
+  12: CLEARRENDERTARGETVIEW  
+  12: CLEARRENDERTARGETVIEW  
+  12: CLEARRENDERTARGETVIEW  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  12: CLEARRENDERTARGETVIEW  
+  14: CLEARDEPTHSTENCILVIEW  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  15: RESOURCEBARRIER  
+  09: COPYRESOURCE  
+  15: RESOURCEBARRIER  
+  12: CLEARRENDERTARGETVIEW  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  14: CLEARDEPTHSTENCILVIEW  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  15: RESOURCEBARRIER  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  04: DRAWINDEXEDINSTANCED  
+  03: DRAWINSTANCED  
+  14: CLEARDEPTHSTENCILVIEW  
+  07: COPYBUFFERREGION  
+  15: RESOURCEBARRIER  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: Gfx barriers command list (debug layer indirect)
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 2
+d3d12:     DRED BreadCrumb node id: 2
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: noname
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 140
+d3d12:     DRED BreadCrumb node id: 3
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  18: RESOLVEQUERYDATA  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  09: COPYRESOURCE  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: Gfx barriers command list (debug layer indirect)
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 2
+d3d12:     DRED BreadCrumb node id: 4
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: noname
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 140
+d3d12:     DRED BreadCrumb node id: 5
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  18: RESOLVEQUERYDATA  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  09: COPYRESOURCE  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: Gfx barriers command list (debug layer indirect)
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 2
+d3d12:     DRED BreadCrumb node id: 6
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: noname
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 140
+d3d12:     DRED BreadCrumb node id: 7
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  18: RESOLVEQUERYDATA  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  09: COPYRESOURCE  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: Gfx barriers command list (debug layer indirect)
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 2
+d3d12:     DRED BreadCrumb node id: 8
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: noname
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 140
+d3d12:     DRED BreadCrumb node id: 9
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  18: RESOLVEQUERYDATA  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  09: COPYRESOURCE  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: Gfx barriers command list (debug layer indirect)
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 2
+d3d12:     DRED BreadCrumb node id: 10
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: noname
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 140
+d3d12:     DRED BreadCrumb node id: 11
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  18: RESOLVEQUERYDATA  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  09: COPYRESOURCE  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: Gfx barriers command list (debug layer indirect)
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 2
+d3d12:     DRED BreadCrumb node id: 12
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+
+
+d3d12:     DRED CommandList: noname
+d3d12:     DRED CommandQueue: Graphics CommandQueue
+d3d12:     DRED BreadCrumb count: 140
+d3d12:     DRED BreadCrumb node id: 13
+d3d12:     DRED BreadCrumb node contexts: 0
+d3d12:     DRED Command History:
+  46: BEGIN_COMMAND_LIST  <NOT COMPLETED>  
+  18: RESOLVEQUERYDATA  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  09: COPYRESOURCE  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  12: CLEARRENDERTARGETVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  04: DRAWINDEXEDINSTANCED  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+  14: CLEARDEPTHSTENCILVIEW  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  34: DISPATCHRAYS  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  07: COPYBUFFERREGION  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  06: DISPATCH  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  15: RESOURCEBARRIER  <NOT COMPLETED>  
+  03: DRAWINSTANCED  <NOT COMPLETED>  
+
+
+d3d12:     DRED GPU Page Fault VA: 0
+
+d3d12: Unrecoverable GPU device error! See logs for more info.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.GraphicsBuffer:InternalInitialization (UnityEngine.GraphicsBuffer/Target,UnityEngine.GraphicsBuffer/UsageFlags,int,int)
+UnityEngine.GraphicsBuffer:.ctor (UnityEngine.GraphicsBuffer/Target,int,int)
+lilToon.URP.Extensions.RTGI.HoRTGIContext:PrepareVisibility (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGIContext.cs:110)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGIDenseReferenceFeature/ProbePass:RecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ContextContainer) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGIDenseReferenceFeature.cs:74)
+UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPassesInEventRange (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent,UnityEngine.Rendering.Universal.RenderPassEvent) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/ScriptableRenderer.cs:1312)
+UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPasses (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent,UnityEngine.Rendering.Universal.RenderPassEvent) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/ScriptableRenderer.cs:1331)
+UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPasses (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/ScriptableRenderer.cs:1336)
+UnityEngine.Rendering.Universal.UniversalRenderer:OnAfterRendering (UnityEngine.Rendering.RenderGraphModule.RenderGraph,bool) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRendererRenderGraph.cs:1516)
+UnityEngine.Rendering.Universal.UniversalRenderer:OnRecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRendererRenderGraph.cs:653)
+UnityEngine.Rendering.Universal.ScriptableRenderer:RecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/ScriptableRenderer.cs:1265)
+UnityEngine.Rendering.Universal.UniversalRenderPipeline:RecordAndExecuteRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Rendering.Universal.ScriptableRenderer,UnityEngine.Rendering.CommandBuffer,UnityEngine.Camera,UnityEngine.Rendering.RenderGraphModule.RenderTextureUVOriginStrategy) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRenderPipelineRenderGraph.cs:23)
+UnityEngine.Rendering.Universal.UniversalRenderPipeline:RenderSingleCamera (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Rendering.Universal.UniversalCameraData) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRenderPipeline.cs:909)
+UnityEngine.Rendering.Universal.UniversalRenderPipeline:RenderSingleCameraInternal (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,UnityEngine.Rendering.Universal.UniversalAdditionalCameraData&,bool) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRenderPipeline.cs:726)
+UnityEngine.Rendering.Universal.UniversalRenderPipeline:ProcessRenderRequests<UnityEngine.Object> (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,UnityEngine.Object) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRenderPipeline.cs:617)
+UnityEngine.Rendering.RenderPipeline:InternalProcessRenderRequests<UnityEngine.Object> (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,UnityEngine.Object)
+UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,UnityEngine.Object,Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle)
+UnityEngine.Camera:SubmitRenderRequestsInternal (object)
+UnityEngine.Camera:SubmitRenderRequest<UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest> (UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest)
+UnityEngine.Rendering.RenderPipeline:SubmitRenderRequest<UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest> (UnityEngine.Camera,UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<>c__DisplayClass34_1:<Run>g__Render|7 () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICastleValidation.cs:173)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<AuditLocalStages>d__59:MoveNext () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGILocalStageAudit.cs:220)
+System.Runtime.CompilerServices.AsyncMethodBuilderCore/MoveNextRunner:InvokeMoveNext (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Runtime.CompilerServices.AsyncMethodBuilderCore/MoveNextRunner:Run ()
+System.Threading.Tasks.AwaitTaskContinuation:InvokeAction (object)
+System.Threading.Tasks.AwaitTaskContinuation:RunCallback (System.Threading.ContextCallback,object,System.Threading.Tasks.Task&)
+System.Threading.Tasks.SynchronizationContextAwaitTaskContinuation:Run (System.Threading.Tasks.Task,bool)
+System.Threading.Tasks.Task:FinishContinuations ()
+System.Threading.Tasks.Task:FinishStageThree ()
+System.Threading.Tasks.Task`1<bool>:TrySetResult (bool)
+System.Threading.Tasks.TaskCompletionSource`1<bool>:TrySetResult (bool)
+System.Threading.Tasks.TaskCompletionSource`1<bool>:SetResult (bool)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<>c__DisplayClass36_0:<NextEditorTick>g__Wake|0 () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICastleValidation.cs:190)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+[D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICastleValidation.cs line 173]
+
+Fatal Error! d3d12: Unrecoverable GPU device error! See logs for more info.
+UnityEngine.GraphicsBuffer:.ctor (UnityEngine.GraphicsBuffer/Target,int,int)
+lilToon.URP.Extensions.RTGI.HoRTGIContext:PrepareVisibility (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGIContext.cs:110)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGIDenseReferenceFeature/ProbePass:RecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ContextContainer) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGIDenseReferenceFeature.cs:74)
+UnityEngine.Rendering.RenderPipeline:SubmitRenderRequest<UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest> (UnityEngine.Camera,UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<>c__DisplayClass34_1:<Run>g__Render|7 () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICastleValidation.cs:173)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<AuditLocalStages>d__59:MoveNext () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGILocalStageAudit.cs:220)
+System.Threading.Tasks.TaskCompletionSource`1<bool>:SetResult (bool)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<>c__DisplayClass36_0:<NextEditorTick>g__Wake|0 () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICastleValidation.cs:190)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.GraphicsBuffer:InternalInitialization (UnityEngine.GraphicsBuffer/Target,UnityEngine.GraphicsBuffer/UsageFlags,int,int)
+UnityEngine.GraphicsBuffer:.ctor (UnityEngine.GraphicsBuffer/Target,int,int)
+lilToon.URP.Extensions.RTGI.HoRTGIContext:PrepareVisibility (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGIContext.cs:110)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGIDenseReferenceFeature/ProbePass:RecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ContextContainer) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGIDenseReferenceFeature.cs:74)
+UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPassesInEventRange (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent,UnityEngine.Rendering.Universal.RenderPassEvent) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/ScriptableRenderer.cs:1312)
+UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPasses (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent,UnityEngine.Rendering.Universal.RenderPassEvent) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/ScriptableRenderer.cs:1331)
+UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPasses (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/ScriptableRenderer.cs:1336)
+UnityEngine.Rendering.Universal.UniversalRenderer:OnAfterRendering (UnityEngine.Rendering.RenderGraphModule.RenderGraph,bool) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRendererRenderGraph.cs:1516)
+UnityEngine.Rendering.Universal.UniversalRenderer:OnRecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRendererRenderGraph.cs:653)
+UnityEngine.Rendering.Universal.ScriptableRenderer:RecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/ScriptableRenderer.cs:1265)
+UnityEngine.Rendering.Universal.UniversalRenderPipeline:RecordAndExecuteRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Rendering.Universal.ScriptableRenderer,UnityEngine.Rendering.CommandBuffer,UnityEngine.Camera,UnityEngine.Rendering.RenderGraphModule.RenderTextureUVOriginStrategy) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRenderPipelineRenderGraph.cs:23)
+UnityEngine.Rendering.Universal.UniversalRenderPipeline:RenderSingleCamera (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Rendering.Universal.UniversalCameraData) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRenderPipeline.cs:909)
+UnityEngine.Rendering.Universal.UniversalRenderPipeline:RenderSingleCameraInternal (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,UnityEngine.Rendering.Universal.UniversalAdditionalCameraData&,bool) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRenderPipeline.cs:726)
+UnityEngine.Rendering.Universal.UniversalRenderPipeline:ProcessRenderRequests<UnityEngine.Object> (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,UnityEngine.Object) (at D:/Unity_Fork/HoUrp17.3.0/Runtime/UniversalRenderPipeline.cs:617)
+UnityEngine.Rendering.RenderPipeline:InternalProcessRenderRequests<UnityEngine.Object> (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,UnityEngine.Object)
+UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,UnityEngine.Object,Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle)
+UnityEngine.Camera:SubmitRenderRequestsInternal (object)
+UnityEngine.Camera:SubmitRenderRequest<UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest> (UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest)
+UnityEngine.Rendering.RenderPipeline:SubmitRenderRequest<UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest> (UnityEngine.Camera,UnityEngine.Rendering.Universal.UniversalRenderPipeline/SingleCameraRequest)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<>c__DisplayClass34_1:<Run>g__Render|7 () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICastleValidation.cs:173)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<AuditLocalStages>d__59:MoveNext () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGILocalStageAudit.cs:220)
+System.Runtime.CompilerServices.AsyncMethodBuilderCore/MoveNextRunner:InvokeMoveNext (object)
+System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+System.Runtime.CompilerServices.AsyncMethodBuilderCore/MoveNextRunner:Run ()
+System.Threading.Tasks.AwaitTaskContinuation:InvokeAction (object)
+System.Threading.Tasks.AwaitTaskContinuation:RunCallback (System.Threading.ContextCallback,object,System.Threading.Tasks.Task&)
+System.Threading.Tasks.SynchronizationContextAwaitTaskContinuation:Run (System.Threading.Tasks.Task,bool)
+System.Threading.Tasks.Task:FinishContinuations ()
+System.Threading.Tasks.Task:FinishStageThree ()
+System.Threading.Tasks.Task`1<bool>:TrySetResult (bool)
+System.Threading.Tasks.TaskCompletionSource`1<bool>:TrySetResult (bool)
+System.Threading.Tasks.TaskCompletionSource`1<bool>:SetResult (bool)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<>c__DisplayClass36_0:<NextEditorTick>g__Wake|0 () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICastleValidation.cs:190)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+[D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICastleValidation.cs line 173]
+
+Crash!!!
+SymInit: Symbol-SearchPath: 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Mono;.;D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation;D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT;C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor;C:\WINDOWS;C:\WINDOWS\system32;', symOptions: 534, UserName: 'hhh12'
+OS-Version: 10.0.0
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe:Unity.exe (00007FF61D4D0000), size: 290816 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 6000.3.15.43652
+C:\WINDOWS\SYSTEM32\ntdll.dll:ntdll.dll (00007FFF7AE20000), size: 2523136 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\KERNEL32.DLL:KERNEL32.DLL (00007FFF7A610000), size: 831488 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\KERNELBASE.dll:KERNELBASE.dll (00007FFF786F0000), size: 4198400 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\USER32.dll:USER32.dll (00007FFF7A750000), size: 1929216 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\System32\win32u.dll:win32u.dll (00007FFF78B00000), size: 159744 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\GDI32.dll:GDI32.dll (00007FFF795C0000), size: 176128 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8328
+C:\WINDOWS\System32\gdi32full.dll:gdi32full.dll (00007FFF78170000), size: 1220608 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\msvcp_win.dll:msvcp_win.dll (00007FFF78360000), size: 667648 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\ucrtbase.dll:ucrtbase.dll (00007FFF78010000), size: 1359872 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\IMM32.DLL:IMM32.DLL (00007FFF7A3A0000), size: 200704 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.dll:Unity.dll (00007FFDFAC90000), size: 91967488 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 6000.3.15.43652
+C:\WINDOWS\System32\CRYPT32.dll:CRYPT32.dll (00007FFF784A0000), size: 1568768 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\System32\ADVAPI32.dll:ADVAPI32.dll (00007FFF795F0000), size: 770048 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\msvcrt.dll:msvcrt.dll (00007FFF7ACC0000), size: 692224 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 7.0.26100.9711
+C:\WINDOWS\System32\sechost.dll:sechost.dll (00007FFF7A3E0000), size: 688128 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\RPCRT4.dll:RPCRT4.dll (00007FFF78C30000), size: 1146880 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\libfbxsdk.dll:libfbxsdk.dll (00007FFDFA4E0000), size: 8019968 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2020.3.7.0
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\etccompress.dll:etccompress.dll (00007FFDFA000000), size: 5070848 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\s3tcompress.dll:s3tcompress.dll (00007FFF33440000), size: 180224 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\System32\ole32.dll:ole32.dll (00007FFF799C0000), size: 1679360 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\ispc_texcomp.dll:ispc_texcomp.dll (00007FFDF9E40000), size: 1826816 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\System32\combase.dll:combase.dll (00007FFF7A930000), size: 3715072 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\SETUPAPI.dll:SETUPAPI.dll (00007FFF79B90000), size: 4747264 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\System32\SHELL32.dll:SHELL32.dll (00007FFF78E10000), size: 7979008 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\FreeImage.dll:FreeImage.dll (0000000180000000), size: 5332992 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 3.18.0.0
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\compress_bc7e.dll:compress_bc7e.dll (00007FFDF9CE0000), size: 1433600 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\System32\WS2_32.dll:WS2_32.dll (00007FFF7A180000), size: 528384 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\SHLWAPI.dll:SHLWAPI.dll (00007FFF796C0000), size: 417792 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\WinPixEventRuntime.dll:WinPixEventRuntime.dll (00007FFE8B120000), size: 57344 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.0.2403.8001
+C:\WINDOWS\System32\OLEAUT32.dll:OLEAUT32.dll (00007FFF7A020000), size: 888832 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\umbraoptimizer64.dll:umbraoptimizer64.dll (00007FFDF9BB0000), size: 1187840 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\System32\WINTRUST.dll:WINTRUST.dll (00007FFF78410000), size: 532480 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\bcrypt.dll:bcrypt.dll (00007FFF77EF0000), size: 172032 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\VCRUNTIME140.dll:VCRUNTIME140.dll (00007FFF5C380000), size: 180224 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.51.36247.0
+C:\WINDOWS\WinSxS\amd64_microsoft.windows.common-controls_6595b64144ccf1df_6.0.26100.9711_none_3e07b8b0e334e825\COMCTL32.dll:COMCTL32.dll (00007FFF57D20000), size: 2691072 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 6.10.26100.9711
+C:\WINDOWS\SYSTEM32\MSVCP140.dll:MSVCP140.dll (00007FFF5C240000), size: 643072 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.51.36247.0
+C:\WINDOWS\SYSTEM32\VCRUNTIME140_1.dll:VCRUNTIME140_1.dll (00007FFF5BFD0000), size: 49152 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 14.51.36247.0
+C:\WINDOWS\SYSTEM32\d3d11.dll:d3d11.dll (00007FFF754C0000), size: 2486272 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\d3d12.dll:d3d12.dll (00007FFF469B0000), size: 143360 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\dxgi.dll:dxgi.dll (00007FFF75730000), size: 1290240 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\dwmapi.dll:dwmapi.dll (00007FFF742F0000), size: 188416 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\HID.DLL:HID.DLL (00007FFF76350000), size: 61440 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1150
+C:\WINDOWS\SYSTEM32\IPHLPAPI.DLL:IPHLPAPI.DLL (00007FFF766D0000), size: 208896 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\WINDOWS\SYSTEM32\OPENGL32.dll:OPENGL32.dll (00007FFE87440000), size: 1097728 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\WINDOWS\SYSTEM32\WINMM.dll:WINMM.dll (00007FFF68300000), size: 225280 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\WINHTTP.dll:WINHTTP.dll (00007FFF69120000), size: 1220608 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\GLU32.dll:GLU32.dll (00007FFF72D70000), size: 233472 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\SketchUpAPI.dll:SketchUpAPI.dll (00007FFDF9310000), size: 8990720 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 23.0.0.0
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\NativeProxyHelper.dll:NativeProxyHelper.dll (00007FFDF9150000), size: 1789952 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\SYSTEM32\VERSION.dll:VERSION.dll (00007FFF71400000), size: 45056 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1150
+C:\WINDOWS\SYSTEM32\WSOCK32.dll:WSOCK32.dll (00007FFF576C0000), size: 40960 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1
+C:\WINDOWS\SYSTEM32\powrprof.dll:powrprof.dll (00007FFF77CA0000), size: 385024 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.3912
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\SketchUpCommonPreferences.dll:SketchUpCommonPreferences.dll (00007FFE8B0A0000), size: 499712 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 23.0.0.0
+C:\WINDOWS\SYSTEM32\Secur32.dll:Secur32.dll (00007FFF73FD0000), size: 53248 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7705
+C:\WINDOWS\SYSTEM32\dxcore.dll:dxcore.dll (00007FFF74440000), size: 278528 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\SSPICLI.DLL:SSPICLI.DLL (00007FFF76F70000), size: 303104 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\OpenRL.dll:OpenRL.dll (0000023BC4AF0000), size: 12779520 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.5.0.2907
+C:\WINDOWS\SYSTEM32\cfgmgr32.DLL:cfgmgr32.DLL (00007FFF77BF0000), size: 335872 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\MSVCR100.dll:MSVCR100.dll (0000000059AE0000), size: 860160 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.40219.325
+C:\WINDOWS\SYSTEM32\MSVCP100.dll:MSVCP100.dll (0000000059A40000), size: 622592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.40219.325
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\embree.dll:embree.dll (00007FFDF8160000), size: 16711680 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2.14.0.0
+C:\WINDOWS\SYSTEM32\MSWSOCK.DLL:MSWSOCK.DLL (00007FFF77270000), size: 442368 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\tbb.dll:tbb.dll (00007FFE8AF70000), size: 303104 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2020.3.2022.1111
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\OpenRL_pthread.dll:OpenRL_pthread.dll (0000023BC3460000), size: 61440 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2.9.0.0
+C:\WINDOWS\SYSTEM32\UMPDC.dll:UMPDC.dll (00007FFF77C50000), size: 86016 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8972
+C:\WINDOWS\SYSTEM32\MSASN1.dll:MSASN1.dll (00007FFF775E0000), size: 77824 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\bcryptprimitives.dll:bcryptprimitives.dll (00007FFF782A0000), size: 704512 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\kernel.appcore.dll:kernel.appcore.dll (00007FFF76CB0000), size: 110592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\WINDOWS\system32\uxtheme.dll:uxtheme.dll (00007FFF741F0000), size: 684032 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+D:\_SOFTWARE\Performance\API\dll\x64\PerformanceAPI.dll:PerformanceAPI.dll (00007FFF72AB0000), size: 53248 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\SYSTEM32\windows.storage.dll:windows.storage.dll (00007FFF75A90000), size: 9101312 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\SHCORE.dll:SHCORE.dll (00007FFF7A2A0000), size: 1019904 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\profapi.dll:profapi.dll (00007FFF77F20000), size: 167936 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\System32\clbcatq.dll:clbcatq.dll (00007FFF78D50000), size: 716800 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 2001.12.10941.16384
+C:\WINDOWS\system32\wbem\wbemprox.dll:wbemprox.dll (00007FFF55890000), size: 73728 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\wbemcomn.dll:wbemcomn.dll (00007FFF57720000), size: 548864 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\CRYPTSP.dll:CRYPTSP.dll (00007FFF77560000), size: 110592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\system32\IconCodecService.dll:IconCodecService.dll (00007FFF2F4E0000), size: 45056 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1
+C:\WINDOWS\system32\rsaenh.dll:rsaenh.dll (00007FFF76C10000), size: 233472 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7705
+C:\WINDOWS\SYSTEM32\WindowsCodecs.dll:WindowsCodecs.dll (00007FFF73380000), size: 2326528 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\CRYPTBASE.dll:CRYPTBASE.dll (00007FFF77580000), size: 49152 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\imagehlp.dll:imagehlp.dll (00007FFF79B60000), size: 131072 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.4202
+C:\WINDOWS\system32\wbem\wbemsvc.dll:wbemsvc.dll (00007FFF53200000), size: 86016 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\system32\wbem\fastprox.dll:fastprox.dll (00007FFF533F0000), size: 1007616 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\amsi.dll:amsi.dll (00007FFF4DE70000), size: 118784 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7309
+C:\WINDOWS\System32\netprofm.dll:netprofm.dll (00007FFF71AA0000), size: 450560 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\npmproxy.dll:npmproxy.dll (00007FFF688E0000), size: 102400 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\gpapi.dll:gpapi.dll (00007FFF772F0000), size: 151552 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\Windows\System32\cryptnet.dll:cryptnet.dll (00007FFF70B50000), size: 241664 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\WINNSI.DLL:WINNSI.DLL (00007FFF72920000), size: 57344 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\NSI.dll:NSI.dll (00007FFF7ADD0000), size: 40960 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\dhcpcsvc6.DLL:dhcpcsvc6.DLL (00007FFF708C0000), size: 122880 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\dhcpcsvc.DLL:dhcpcsvc.DLL (00007FFF6FC70000), size: 151552 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\DNSAPI.dll:DNSAPI.dll (00007FFF76770000), size: 1409024 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\DSPARSE.dll:DSPARSE.dll (00007FFF77070000), size: 53248 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1
+C:\WINDOWS\system32\napinsp.dll:napinsp.dll (00007FFF4C6A0000), size: 98304 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1150
+C:\WINDOWS\System32\winrnr.dll:winrnr.dll (00007FFF4C550000), size: 77824 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9278
+C:\WINDOWS\system32\nlansp_c.dll:nlansp_c.dll (00007FFF4C4C0000), size: 159744 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\system32\wshbth.dll:wshbth.dll (00007FFF4C2C0000), size: 90112 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\System32\fwpuclnt.dll:fwpuclnt.dll (00007FFF68D70000), size: 548864 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Windows\System32\rasadhlp.dll:rasadhlp.dll (00007FFF707F0000), size: 45056 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\AMDUnityPlugin.DLL:AMDUnityPlugin.DLL (00007FFDF78F0000), size: 8843264 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\NVUnityPlugin.DLL:NVUnityPlugin.DLL (00007FFDF7750000), size: 1646592 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\Tools\astcenc-avx2.dll:astcenc-avx2.dll (00007FFE09B10000), size: 352256 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\SYSTEM32\mfplat.dll:mfplat.dll (00007FFF70B90000), size: 2256896 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\RTWorkQ.DLL:RTWorkQ.DLL (00007FFF70AC0000), size: 241664 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8972
+C:\WINDOWS\SYSTEM32\mfreadwrite.dll:mfreadwrite.dll (00007FFED0F10000), size: 872448 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\Mf.dll:Mf.dll (00007FFF71430000), size: 622592 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\MFCORE.DLL:MFCORE.DLL (00007FFF70FC0000), size: 4304896 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\CompPkgSup.DLL:CompPkgSup.DLL (00007FFF5C910000), size: 204800 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8521
+C:\Windows\System32\Windows.Media.dll:Windows.Media.dll (00007FFF31180000), size: 6922240 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\Windows\System32\Windows.ApplicationModel.dll:Windows.ApplicationModel.dll (00007FFF45220000), size: 880640 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\wintypes.dll:wintypes.dll (00007FFF71CA0000), size: 1482752 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Windows\System32\Windows.StateRepositoryPS.dll:Windows.StateRepositoryPS.dll (00007FFF454A0000), size: 802816 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\Windows\System32\AppXDeploymentClient.dll:AppXDeploymentClient.dll (00007FFF70E20000), size: 1515520 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\MMDevApi.dll:MMDevApi.dll (00007FFF60280000), size: 679936 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\DEVOBJ.dll:DEVOBJ.dll (00007FFF77BB0000), size: 192512 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\AUDIOSES.DLL:AUDIOSES.DLL (00007FFF5D1C0000), size: 1810432 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\resourcepolicyclient.dll:resourcepolicyclient.dll (00007FFF74FD0000), size: 81920 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.8115
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\D3D12\D3D12Core.dll:D3D12Core.dll (00007FFDF34C0000), size: 4780032 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.618.1.0
+C:\WINDOWS\SYSTEM32\DXGIDebug.dll:DXGIDebug.dll (00007FFDF3490000), size: 151552 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.1882
+C:\WINDOWS\SYSTEM32\directxdatabasehelper.dll:directxdatabasehelper.dll (00007FFF72620000), size: 389120 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\nvldumdx.dll:nvldumdx.dll (00007FFF714D0000), size: 843776 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1742
+C:\WINDOWS\SYSTEM32\wldp.dll:wldp.dll (00007FFF77660000), size: 528384 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\drvstore.dll:drvstore.dll (00007FFF70910000), size: 1548288 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\nvgpucomp64.dll:nvgpucomp64.dll (00007FFF69250000), size: 110788608 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1742
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\Display.NvContainer\NvMessageBus.dll:NvMessageBus.dll (00007FFF55B50000), size: 3555328 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 3.22.3719.8856
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\NvMemMapStoragex.dll:NvMemMapStoragex.dll (00007FFF68340000), size: 1421312 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\nvwgf2umx.dll:nvwgf2umx.dll (00007FFF62500000), size: 90284032 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1742
+C:\WINDOWS\system32\nvspcap64.dll:nvspcap64.dll (00007FFF461B0000), size: 1495040 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 11.0.9.251
+C:\WINDOWS\SYSTEM32\ntmarta.dll:ntmarta.dll (00007FFF76DE0000), size: 221184 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.7019
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\D3D12\D3D12SDKLayers.dll:D3D12SDKLayers.dll (00007FFDE2350000), size: 4968448 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.618.1.0
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\nvppex.dll:nvppex.dll (00007FFF3DE80000), size: 7499776 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1742
+C:\WINDOWS\SYSTEM32\D3DSCache.dll:D3DSCache.dll (00007FFDF3260000), size: 913408 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\USERENV.dll:USERENV.dll (00007FFF77320000), size: 212992 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\DirectML.dll:DirectML.dll (00007FFDF24F0000), size: 14061568 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.13.1.0
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\DirectML.Debug.dll:DirectML.Debug.dll (00007FFDE2130000), size: 2166784 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 1.13.1.0
+C:\WINDOWS\SYSTEM32\d3d11on12.dll:d3d11on12.dll (00007FFDF33E0000), size: 692224 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\D3D11_3SDKLayers.dll:D3D11_3SDKLayers.dll (00007FFDE2940000), size: 1220608 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\opencl.dll:opencl.dll (00007FFDF33A0000), size: 245760 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 3.0.6.0
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\radeonrays.dll:radeonrays.dll (00007FFDF2490000), size: 344064 (result: 0), SymType: '-deferred-', PDB: ''
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\MonoBleedingEdge\EmbedRuntime\mono-2.0-bdwgc.dll:mono-2.0-bdwgc.dll (00007FFDF1A40000), size: 10756096 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.burst@6bb9aca3ef38\.Runtime\MonoDebuggerHandling.dll:MonoDebuggerHandling.dll (00007FFDE28D0000), size: 368640 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\PackageCache\com.unity.burst@6bb9aca3ef38\.Runtime\burst-llvm-19.dll:burst-llvm-19.dll (00007FFDDDB70000), size: 59863040 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\4b4a72ae5432774b09bce8bc742e4f8f.dll:4b4a72ae5432774b09bce8bc742e4f8f.dll (00007FFDE2850000), size: 32768 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\84c6efa6b78e135a4d3d5cb61c9c1856.dll:84c6efa6b78e135a4d3d5cb61c9c1856.dll (00007FFDE2840000), size: 53248 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\cfa287809075af0de6b5ae51584ad536.dll:cfa287809075af0de6b5ae51584ad536.dll (00007FFDE2830000), size: 49152 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\a04c68ed96eea142a2b82198d4490005.dll:a04c68ed96eea142a2b82198d4490005.dll (00007FFDE2100000), size: 172032 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\2081244e7e525be26d2971c7053a2112.dll:2081244e7e525be26d2971c7053a2112.dll (00007FFDE2820000), size: 53248 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\4a990990a68bb4b36436c6e82aa632c5.dll:4a990990a68bb4b36436c6e82aa632c5.dll (00007FFDE2810000), size: 24576 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\e91a1abc2ecae7c5acfaf9014fa7b6cf.dll:e91a1abc2ecae7c5acfaf9014fa7b6cf.dll (00007FFDE20F0000), size: 20480 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\3fc6eecd80eddcb33d01eb00061b1eee.dll:3fc6eecd80eddcb33d01eb00061b1eee.dll (00007FFDE20D0000), size: 110592 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\c053eeffe1eff8802b100b2f516f4315.dll:c053eeffe1eff8802b100b2f516f4315.dll (00007FFDE20C0000), size: 49152 (result: 0), SymType: '-deferred-', PDB: ''
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTGIValidation\Library\BurstCache\JIT\31deeefa4db1eb528cc91599e666dc72.dll:31deeefa4db1eb528cc91599e666dc72.dll (00007FFDE20B0000), size: 28672 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\System32\MSCTF.dll:MSCTF.dll (00007FFF7A490000), size: 1425408 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\system32\explorerframe.dll:explorerframe.dll (00007FFF2BF80000), size: 3289088 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+C:\WINDOWS\SYSTEM32\TextShaping.dll:TextShaping.dll (00007FFF4CAF0000), size: 1040384 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\SYSTEM32\textinputframework.dll:textinputframework.dll (00007FFF49060000), size: 1335296 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9711
+C:\WINDOWS\system32\Oleacc.dll:Oleacc.dll (00007FFF49240000), size: 479232 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 7.2.26100.9549
+D:\Unity_Fork\lilToon-URP-Extensions\Runtime\RTDI\Plugins\x86_64\HoRTDINRD.dll:HoRTDINRD.dll (00007FFDDD6B0000), size: 2846720 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 4.17.3.0
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\nvcuda64.dll:nvcuda64.dll (00007FFE2ADB0000), size: 11837440 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1742
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\nvobjectloader64.dll:nvobjectloader64.dll (00007FFE29F50000), size: 15052800 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\System32\DriverStore\FileRepository\nv_dispi.inf_amd64_feedb8c0271ca811\nvrtum64.dll:nvrtum64.dll (00007FFE2B900000), size: 46350336 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 32.0.16.1742
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\MonoBleedingEdge\EmbedRuntime\MonoPosixHelper.dll:MonoPosixHelper.dll (00007FFDDDAD0000), size: 626688 (result: 0), SymType: '-deferred-', PDB: ''
+C:\WINDOWS\SYSTEM32\dbghelp.dll:dbghelp.dll (00007FFF75260000), size: 2408448 (result: 0), SymType: '-deferred-', PDB: '', fileVersion: 10.0.26100.9549
+
+========== OUTPUTTING STACK TRACE ==================
+
+0x00007FFF787B408A (KERNELBASE) RaiseException
+0x00007FFDFC437A59 (Unity) EditorMonoConsole::LogToConsoleImplementation
+0x00007FFDFC438740 (Unity) EditorMonoConsole::LogToConsoleImplementation
+0x00007FFDFB3F5E9D (Unity) DebugStringToFilePostprocessedStacktrace
+0x00007FFDFB3F5219 (Unity) DebugStringToFile
+0x00007FFDFB5083E0 (Unity) CheckDeviceStatus
+0x00007FFDFB4F13E4 (Unity) GfxDeviceD3D12::ReportResourceCreationError
+0x00007FFDFB4E3675 (Unity) GfxDeviceD3D12::CreateResourceWithTag
+0x00007FFDFB49FB99 (Unity) BufferD3D12::CreateBufferResource
+0x00007FFDFB4A1E79 (Unity) BufferD3D12::InitializeResource
+0x00007FFDFB497B02 (Unity) BufferD3D12::Initialize
+0x00007FFDFB4EC81D (Unity) GfxDeviceD3D12::InitializeBufferInternal
+0x00007FFDFB7F569E (Unity) GfxDeviceClient::InitializeBufferInternal
+0x00007FFDFB762DEA (Unity) GfxDevice::CreateBuffer
+0x00007FFDFBD91E1D (Unity) GraphicsBuffer::ReloadToGfxDevice
+0x00007FFDFBD8D26D (Unity) GraphicsBuffer::GraphicsBuffer
+0x00007FFDFB2207DE (Unity) GraphicsBuffer_CUSTOM_InitBuffer
+0x0000023EA43D282D (Mono JIT Code) (wrapper managed-to-native) UnityEngine.GraphicsBuffer:InitBuffer (UnityEngine.GraphicsBuffer/Target,UnityEngine.GraphicsBuffer/UsageFlags,int,int)
+0x0000023EA43D2103 (Mono JIT Code) UnityEngine.GraphicsBuffer:InternalInitialization (UnityEngine.GraphicsBuffer/Target,UnityEngine.GraphicsBuffer/UsageFlags,int,int)
+0x0000023EA43D1EF3 (Mono JIT Code) UnityEngine.GraphicsBuffer:.ctor (UnityEngine.GraphicsBuffer/Target,int,int)
+0x0000023F53F2FDA3 (Mono JIT Code) [D:\Unity_Fork\lilToon-URP-Extensions\Runtime\RTGI\HoRTGIContext.cs:110] lilToon.URP.Extensions.RTGI.HoRTGIContext:PrepareVisibility (bool) 
+0x0000023F7C96BC8B (Mono JIT Code) [D:\Unity_Fork\lilToon-URP-Extensions\Editor\RTGI\HoRTGIDenseReferenceFeature.cs:75] lilToon.URP.Extensions.Editor.RTGI.HoRTGIDenseReferenceFeature/ProbePass:RecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ContextContainer) 
+0x0000023F53F5975E (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\ScriptableRenderer.cs:1309] UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPassesInEventRange (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent,UnityEngine.Rendering.Universal.RenderPassEvent) 
+0x0000023F53F591DB (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\ScriptableRenderer.cs:1332] UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPasses (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent,UnityEngine.Rendering.Universal.RenderPassEvent) 
+0x0000023F53F5913B (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\ScriptableRenderer.cs:1337] UnityEngine.Rendering.Universal.ScriptableRenderer:RecordCustomRenderGraphPasses (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.Universal.RenderPassEvent) 
+0x0000023F53F8C393 (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\UniversalRendererRenderGraph.cs:1518] UnityEngine.Rendering.Universal.UniversalRenderer:OnAfterRendering (UnityEngine.Rendering.RenderGraphModule.RenderGraph,bool) 
+0x0000023F53F4B9C3 (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\UniversalRendererRenderGraph.cs:656] UnityEngine.Rendering.Universal.UniversalRenderer:OnRecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext) 
+0x0000023F53F47055 (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\ScriptableRenderer.cs:1266] UnityEngine.Rendering.Universal.ScriptableRenderer:RecordRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext) 
+0x0000023F53F420AB (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\UniversalRenderPipelineRenderGraph.cs:24] UnityEngine.Rendering.Universal.UniversalRenderPipeline:RecordAndExecuteRenderGraph (UnityEngine.Rendering.RenderGraphModule.RenderGraph,UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Rendering.Universal.ScriptableRenderer,UnityEngine.Rendering.CommandBuffer,UnityEngine.Camera,UnityEngine.Rendering.RenderGraphModule.RenderTextureUVOriginStrategy) 
+0x0000023F4F521263 (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\UniversalRenderPipeline.cs:910] UnityEngine.Rendering.Universal.UniversalRenderPipeline:RenderSingleCamera (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Rendering.Universal.UniversalCameraData) 
+0x0000023F4F514B3B (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\UniversalRenderPipeline.cs:727] UnityEngine.Rendering.Universal.UniversalRenderPipeline:RenderSingleCameraInternal (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,UnityEngine.Rendering.Universal.UniversalAdditionalCameraData&,bool) 
+0x0000023F4F50D7CB (Mono JIT Code) [D:\Unity_Fork\HoUrp17.3.0\Runtime\UniversalRenderPipeline.cs:618] UnityEngine.Rendering.Universal.UniversalRenderPipeline:ProcessRenderRequests<RequestData_REF> (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,RequestData_REF) 
+0x0000023F4F50CC17 (Mono JIT Code) UnityEngine.Rendering.RenderPipeline:InternalProcessRenderRequests<RequestData_REF> (UnityEngine.Rendering.ScriptableRenderContext,UnityEngine.Camera,RequestData_REF)
+0x0000023F4E4AFF4B (Mono JIT Code) UnityEngine.Rendering.RenderPipelineManager:DoRenderLoop_Internal (UnityEngine.Rendering.RenderPipelineAsset,intptr,UnityEngine.Object,Unity.Collections.LowLevel.Unsafe.AtomicSafetyHandle)
+0x0000023F4E4B00C8 (Mono JIT Code) (wrapper runtime-invoke) <Module>:runtime_invoke_void_object_intptr_object_AtomicSafetyHandle (object,intptr,intptr,intptr)
+0x00007FFDF1CC6C0E (mono-2.0-bdwgc) [C:\build\output\Unity-Technologies\mono\mono\mini\mini-runtime.c:3445] mono_jit_runtime_invoke 
+0x00007FFDF1C08984 (mono-2.0-bdwgc) [C:\build\output\Unity-Technologies\mono\mono\metadata\object.c:3068] do_runtime_invoke 
+0x00007FFDF1C08A70 (mono-2.0-bdwgc) [C:\build\output\Unity-Technologies\mono\mono\metadata\object.c:3115] mono_runtime_invoke 
+0x00007FFDFBC7E994 (Unity) scripting_method_invoke
+0x00007FFDFBC85853 (Unity) ScriptingInvocation::Invoke
+0x00007FFDFBC80DF5 (Unity) ScriptingInvocation::Invoke<void>
+0x00007FFDFB147B7F (Unity) Scripting::UnityEngine::Rendering::RenderPipelineManagerProxy::DoRenderLoop_Internal
+0x00007FFDFBA8D7D4 (Unity) ScriptableRenderContext::ExtractAndExecuteRenderPipeline
+0x00007FFDFB6445D6 (Unity) Camera::CustomRenderWithPipeline
+0x00007FFDFB651D8D (Unity) Camera::StandaloneCustomRender
+0x00007FFDFB652008 (Unity) Camera::StandaloneRender
+0x00007FFDFB654022 (Unity) CameraScripting::SubmitRenderRequests
+0x00007FFDFB25D6D7 (Unity) Camera_CUSTOM_SubmitRenderRequestsInternal
+0x0000023F4E4AFC5D (Mono JIT Code) (wrapper managed-to-native) UnityEngine.Camera:SubmitRenderRequestsInternal_Injected (intptr,object)
+0x0000023F4E4AFB9B (Mono JIT Code) UnityEngine.Camera:SubmitRenderRequestsInternal (object)
+0x0000023F4E4AFA0B (Mono JIT Code) UnityEngine.Camera:SubmitRenderRequest<RequestData_REF> (RequestData_REF)
+0x0000023F4E4AF7DB (Mono JIT Code) UnityEngine.Rendering.RenderPipeline:SubmitRenderRequest<RequestData_REF> (UnityEngine.Camera,RequestData_REF)
+0x0000023F4E4AE973 (Mono JIT Code) [D:\Unity_Fork\lilToon-URP-Extensions\Editor\RTGI\HoRTGICastleValidation.cs:173] lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<>c__DisplayClass34_1:<Run>g__Render|7 () 
+0x0000023F7C95243B (Mono JIT Code) [D:\Unity_Fork\lilToon-URP-Extensions\Editor\RTGI\HoRTGILocalStageAudit.cs:220] lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<AuditLocalStages>d__59:MoveNext () 
+0x0000023F4E4AE622 (Mono JIT Code) System.Runtime.CompilerServices.AsyncMethodBuilderCore/MoveNextRunner:InvokeMoveNext (object)
+0x0000023EA4406A0E (Mono JIT Code) System.Threading.ExecutionContext:RunInternal (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+0x0000023EA44067FB (Mono JIT Code) System.Threading.ExecutionContext:Run (System.Threading.ExecutionContext,System.Threading.ContextCallback,object,bool)
+0x0000023F4E4AE48B (Mono JIT Code) System.Runtime.CompilerServices.AsyncMethodBuilderCore/MoveNextRunner:Run ()
+0x0000023F4E4AE33A (Mono JIT Code) System.Threading.Tasks.AwaitTaskContinuation:InvokeAction (object)
+0x0000023F4E4AE145 (Mono JIT Code) System.Threading.Tasks.AwaitTaskContinuation:RunCallback (System.Threading.ContextCallback,object,System.Threading.Tasks.Task&)
+0x0000023F4E4ADFA3 (Mono JIT Code) System.Threading.Tasks.SynchronizationContextAwaitTaskContinuation:Run (System.Threading.Tasks.Task,bool)
+0x0000023F4E4AD3CF (Mono JIT Code) System.Threading.Tasks.Task:FinishContinuations ()
+0x0000023F4E4ACF63 (Mono JIT Code) System.Threading.Tasks.Task:FinishStageThree ()
+0x0000023F4E4ACD43 (Mono JIT Code) System.Threading.Tasks.Task`1<bool>:TrySetResult (bool)
+0x0000023F4E4ACBF3 (Mono JIT Code) System.Threading.Tasks.TaskCompletionSource`1<bool>:TrySetResult (bool)
+0x0000023F4E4ACB33 (Mono JIT Code) System.Threading.Tasks.TaskCompletionSource`1<bool>:SetResult (bool)
+0x0000023F4E4ACA73 (Mono JIT Code) [D:\Unity_Fork\lilToon-URP-Extensions\Editor\RTGI\HoRTGICastleValidation.cs:190] lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation/<>c__DisplayClass36_0:<NextEditorTick>g__Wake|0 () 
+0x0000023F4E4A5D70 (Mono JIT Code) UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+0x0000023E7D851855 (Mono JIT Code) (wrapper runtime-invoke) object:runtime_invoke_void (object,intptr,intptr,intptr)
+0x00007FFDF1CC6C0E (mono-2.0-bdwgc) [C:\build\output\Unity-Technologies\mono\mono\mini\mini-runtime.c:3445] mono_jit_runtime_invoke 
+0x00007FFDF1C08984 (mono-2.0-bdwgc) [C:\build\output\Unity-Technologies\mono\mono\metadata\object.c:3068] do_runtime_invoke 
+0x00007FFDF1C08A70 (mono-2.0-bdwgc) [C:\build\output\Unity-Technologies\mono\mono\metadata\object.c:3115] mono_runtime_invoke 
+0x00007FFDFBC7E994 (Unity) scripting_method_invoke
+0x00007FFDFBC85853 (Unity) ScriptingInvocation::Invoke
+0x00007FFDFBC80DF5 (Unity) ScriptingInvocation::Invoke<void>
+0x00007FFDFC26B9BB (Unity) Scripting::UnityEditor::EditorApplicationProxy::Internal_CallUpdateFunctions
+0x00007FFDFC8E9477 (Unity) SceneTracker::Update
+0x00007FFDFC4B7FDD (Unity) Application::TickTimer
+0x00007FFDFC299BAC (Unity) MainMessageLoop
+0x00007FFDFC2A1642 (Unity) UnityMain
+0x00007FF61D4D2F2A (Unity) __scrt_common_main_seh
+0x00007FFF7A63DDA7 (KERNEL32) BaseThreadInitThunk
+0x00007FFF7AE9EE4C (ntdll) RtlUserThreadStart
+
+========== END OF STACKTRACE ===========
+
+A crash has been intercepted by the crash handler. For call stack and other details, see the latest crash report generated in:
+ * C:/Users/hhh12/AppData/Local/Temp/Unity/Editor/Crashes

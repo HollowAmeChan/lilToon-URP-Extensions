@@ -1,0 +1,8 @@
+{
+    "pass": true,
+    "error": "",
+    "payloadSha256": "E4AA362EF50453A170B3CF235766C99C5772F0695FDCE54D257F411605CEFDE1",
+    "lightVectors": 72,
+    "primaryWords": 135,
+    "risRecords": 16384
+}

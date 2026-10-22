@@ -1,0 +1,13 @@
+{
+  "pid": 6968,
+  "startedUtc": "2026-10-22T20:14:52.7114766Z",
+  "entry": "HoRTGIGpuTimestampValidation.Run",
+  "scope": "Empty scene, no AS; small known compute loads and completion fences",
+  "active": false,
+  "abort": null,
+  "exit": 0,
+  "logSha256": "68CDE07A06DA3594A21DD934BDE6EBF2952BAA81A2C37D05C2544AA4EF978842",
+  "diagnostics": 0,
+  "fresh": true,
+  "reportSha256": "963711740FFAE650B6EF27FF573BE4822101E190F0E8058C6615ED4D8B47A374"
+}

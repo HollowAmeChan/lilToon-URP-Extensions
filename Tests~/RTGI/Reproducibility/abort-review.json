@@ -1,0 +1,8 @@
+{
+  "qualificationActualExit": 1073741845,
+  "failure": "D3D12 DEVICE_HUNG/removal and Unmap validation errors; no fresh terminal report",
+  "unexpectedFollowup": "PowerShell continued after external Python exit1; owned stock-a7312 launched without passed qualification",
+  "action": "Verified Unity path/start time and current owned run id, stopped only that child; actual stock-a exit-1 preserved",
+  "rule": "All subsequent orchestrations require explicit LASTEXITCODE/terminating-error guards; no more scene workloads before small no-scene/no-AS recovery qualification",
+  "rootCause": "Unproven; serialization omission is separate from device failure"
+}

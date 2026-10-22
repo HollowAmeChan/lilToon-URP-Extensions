@@ -725,3 +725,23 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 候选搁置，不扫ratio。原所有源/生成体/SHA归档后Castle恢复99f4fac、新ContrastSupportAudit/meta删除，49216 stock control过滤后真实98请求actual0、Native5/copy64/scope过、API/compile/绑定/fence/drift0。Runtime/DI/vendor始终未改。新证据与RTGI文档白名单、Ho-GD计划排除。035先原版4seed重现性/no-op clone对照，记录frame/light/sky/RIS/secondary实际状态，恢复严格pair前停止算法候选；不重采MC或重启旧AS调参。原所有质量/F39/static/复杂动态/HD预算继续active。
 
 034已按白名单过滤提交`5095ddc`，ContrastSupport verifier提交后再次通过，明确保留comparisonQualified=false及后两seed raw不匹配。名义收益不足、不接纳因果质量；候选类/meta/入口已撤回，stock5实跑过，Runtime/Editor无最终diff。三自有进程终态/index空，仅Ho-GD计划未跟踪。035先stock重复/no-op clone及实际输入状态定位，严格pair恢复前停新滤波候选；所有原目标/质量/F39/动态/HD预算继续active。
+
+## 035：默认5与no-op clone配对重现性（进行中）
+
+**事前review：** 034后两seed raw配对失败，因果比较未资格，停止算法候选。本轮固定原27点/4seed/64warm256观察，在stock重复A/B与不改stock算式的shader10 clone之间比较，不改Runtime/参数/预算，不重采MC/跑AS flags。先短资格确认新增只读快照有效。
+
+每segment首/尾保存真实shader/app frame、数值18灯、sky参数、完整RIS记录及hash、全secondary hash+27选中逐字段、完整primary history hash+选中raw包/实际probe，支持定位而非只报hash。GetData只读，不新增采样策略；保留raw/pub完整mean maps和逐轮流，先核旧031/026是否重现再比较A/B/clone。源/log/失败完整归档，未知原因不归因engine/driver；严格pair恢复前不碰滤波。默认5和所有原质量/F39/static/动态/HD预算继续active。
+
+### 035事后review（2026-10-23）：当前A/B/no-op严格重现，历史遗漏/TDR/误排保留
+
+**输入记录与首失败：** 新Editor InputStateAudit/meta；DenseFeature保存数值sky，Stage可选首尾输入快照；Trace可选literal-stock no-op clone，默认路径不启用。28112/31692 actual0但JSON漏未Serializable的AnalyticLight[]/Primary[]，灯hash/其它字段保留，数值资格未过；不能用actual0冒称完整记录。修正为72Vector4/135uint，保留原源/报告。
+
+**异常与编排review：** 53896修正后资格actual1073741845、无fresh report，首快照前D3D12 DEVICE_HUNG/removal+Unmap，debug11；不能称JSON造成。外部Python失败未停止PowerShell，7312 stock意外排起，核PID/路径/启动时间后仅停本任务该子进程actual−1，partial与abort-review保留。后续显式LASTEXITCODE/EAP检查，runner加numericSnapshotQualified字段及失败门槛。未改driver/TDR/杀他人进程，7302MiB/util50%只观测非原因。
+
+**恢复资格：** 6968 empty scene/no-AS已知小负载24sample/fence actual0/debug0，中位empty0/short.006144/long.039936ms；20912真实JsonUtility无渲染往返actual0（72vectors/135words/16384RIS）。显存降低后44040仅98请求/2分钟短资格actual0，真实数值字段和hash重建过；小负载不保证大场景，所有旧异常不改绿。
+
+**正式有效结果：** 当前stockA53112、stockB50368、no-op50088 all0，各1314请求，原4seed64warm/256观察、27点/支持域/5轮不变，API/compile/Property/UAV/fence/drift0。三者全raw/pub时间均值map对026同seed逐bit同；A/B/no-op端点灯/sky/RIS/完整secondary+primary hash、选中逐字段相同。clone body除include定位与stock相同、无debug/guard，scope恢复。只证明当前重现，不证明所有机器/时间，不能给034原配对失败补发资格。
+
+**历史差异解释界限：** 初stock对当前A的灯/sky/RIS/primary同、full secondary hash不同；selected差只position/normal：hitmax9.26e−6、miss方向7.82e−8/radius.01324、normal1oct16步，符合019既有界限。尚未证明其导致raw/TDR，不归因engine/driver/场景；端点非所有帧全部输入。
+
+**收益/成本/交接：** 本步修复记录缺字段与编排失败停止，恢复新鲜stock严格pair前置，无画质/产品GPU预算改善。255source/8场景完整log+2辅助log/77capture gzip/当前和历史全部状态/analysis/verify，Runtime/DI/vendor无改动，所有自有进程已终态。白名单InputStateAudit/meta、3Editor增强、Castle、新证据与RTGI六文档，Ho-GD计划排除。036先同源GI输入双独立NRD baseline/no-op分支资格，后续实验只动一分支，避免跨进程ray末位差混入；旧候选不重开，全部原质量/F39/static/复杂动态/HD预算继续active。

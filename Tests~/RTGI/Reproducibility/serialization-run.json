@@ -1,0 +1,13 @@
+{
+  "pid": 20912,
+  "startedUtc": "2026-10-22T20:17:20.1650917Z",
+  "scope": "Empty scene, actual JsonUtility roundtrip; no rendering or compute request",
+  "active": false,
+  "sourceSha256": "D060E4FDB45B7FF51E0D59F097457A978B808AE0CBED5407ED40F574FFB530A5",
+  "abort": null,
+  "exit": 0,
+  "logSha256": "E49E0D7A5A5AC47A4C9E585E86CB833B19C3154F93D0DE25789D19595CD437FE",
+  "diagnostics": 0,
+  "reportSha256": "2F75433B548C77AF1D29E885D049F37149A654AC9D5FCC39D5B5B8C1950745EF",
+  "fresh": true
+}

@@ -250,3 +250,5 @@
 步骤033：离线forward/geometry与固定结构重放完成，无新GPU/源码改动；排除预测微小的luma对称化GPU方向，仅保留大步长factor2支持域的可测假说。034单Editor局部候选需实际新旧控制/full/phase/noise及后续资格，冻结重放不等于完成；全部原范围/预算/用户强制要求继续active。
 
 步骤034：late factor2 guard名义收益弱且后两seed raw配对未满足，候选已移除、stock5实际资格复核，Runtime未变。035优先基线/无操作clone重现性和frame/light/sky/RIS/secondary核对，配对恢复前停算法试验；所有原范围/预算/用户强制要求继续active。
+
+步骤035：当前stockA/B/no-op严格重现恢复，记录缺字段/编排失败停止修复，历史漏项/TDR/abort原样保留；小负载恢复与短资格通过后才运行有效矩阵。无画质/产品GPU预算结论，Runtime不改。036先同源输入双NRD基线资格再算法，所有旧质量/范围/预算与用户强制条件继续active。
