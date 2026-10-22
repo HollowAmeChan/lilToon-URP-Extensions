@@ -1,0 +1,25 @@
+{
+  "decision": "Shelve fixed global atrous3 after legacy141,157 G/B hard regressions; retain production5 and remove candidate entrypoints/settings overrides from Editor",
+  "files": [
+    {
+      "path": "Editor/RTGI/HoRTGICastleValidation.cs",
+      "testedCandidateSha256": "5EB1F24BA487E43BC181607BBAAB093716E676A868BC5374F99C2B73E4D4070C",
+      "filteredSha256": "D7467C6ECEBEF8B61A9A3FE896334915B66B2FA7D4463BDC783AE702304A3ABD",
+      "restoreFrom": "90fc233"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGILocalStageAudit.cs",
+      "testedCandidateSha256": "BFC47B8777B9382E35D351CC4D307451C22B58B5F3E105A48BC4F7962D5A491F",
+      "filteredSha256": "8FDD3E28349232DF4C33AF523F4DAFBEC224AF478B20C4A98D74CAB9B395AFCE",
+      "restoreFrom": "90fc233"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISeedAudit.cs",
+      "testedCandidateSha256": "8F70F511C29D31B2EAB84679532355A7047A44524424402151B351618531CA2D",
+      "filteredSha256": "C4958AE086F12EB16891F086B2D057BA9F97E7FB1B9FF57B1B5FC6F2E96909E0",
+      "restoreFrom": "90fc233"
+    }
+  ],
+  "runtimeChanged": false,
+  "scanIteration2or4": false
+}

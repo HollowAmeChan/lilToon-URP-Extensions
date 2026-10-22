@@ -477,3 +477,15 @@ raw全帧均值+局部所有样本、input/Pre/Temporal/条件fast/Clamp/first A
 **030直接动作：** 固定同一atrous3，先完整8seed/旧17合格参考点与暗控制、full/全部16phase/全域及局部noise；旧16点参考含15合格/暗点未定必须原样保留，不挑点或用新18点替代。可复用SeedAudit productionOnly真实probe+每seed full map，Editor settings scope只改3并验证Native counts/恢复，raw与0268seed必须匹配；对0294seed局部结果可交叉复核。新增候选完整数据仍与生产5隔离，不覆盖旧证据。若继续有收益，再动态/HDR/两Release Player/GPU，最后才决定生产；不扫2/4或直接关闭降噪。原F39/static非零base/复杂动态/1080完整预算继续active。
 
 029已按白名单过滤提交`e53709e`，AtrousCandidate verifier提交后再次通过。固定3轮局部L1−33.6%、pooled full过但6phase仍失败、方差+38.6%，只进入更广资格。Native设置只改4字节、真实3轮与回5已证；两个自有进程终态，index空/Runtime无diff，仅他人Ho-GD计划未跟踪。030直接固定3的8seed/旧合格参考与暗控制，再动态/HDR/Player/GPU；不要先改Runtime，不扫描2/4，原所有缺口/目标active继续。旧source-SHA verifier用所属提交，不回滚当前代码凑绿。
+
+### 030终态（2026-10-22，待过滤提交）：固定3轮搁置，默认5保留
+
+完整8seed旧16 probe/full map已实际完成：19396资格98请求、39616矩阵2594请求 all0，设置148B仅offset92 uint5→3、Native3/hook恢复/后续5实证，API/compile/绑定/fence/drift0。旧16含15合格+未定(16,16)保持，结合新18共34点33合格全部评估，原full/16phase门槛不动。
+
+新18 L1 .458213→.300045（−34.52%），旧15 .306745→.293238（−4.40%），full3→7/8、pooled RGB−4.53312/−4.59497/−4.11332%过，phase9→8失败/无pass→fail；方差+40.79%。但是(141,157)G/B按预声明筛选硬退化：G mean/ref .911986→.847986，abs误差增加2.42011e−5>界1.89071e−5；B .996998→.908287，增加8.56060e−6>5e−6。R也更暗但未越界。加权L1不能覆盖反例，因此eligible=false，固定3轮搁置，不继续此候选生产资格，不扫2/4。
+
+8张raw均值全图和全部逐帧raw RGB均值对026逐bit同，029重合4seed新18均值逐bit同；实际变化不是采样换预算。Runtime/DI/SDK/Shader一直未改。过滤已把Castle/LocalStageAudit/SeedAudit恢复90fc233默认5诊断版，移除candidate入口/override/记录专用逻辑；原候选源和全部真实数据保存，不能把历史source重标当前。19648过滤后实际98请求资格0，copy64 bitexact，Native9×1+10×4=5，API/compile/Property/UAV/fence/drift0。所有自有进程终态/active=null。
+
+Tests~/RTGI/AtrousQualification约12.8MiB，250source仅8新文本、3完整log、3JSON+12map/streams lossless gzip、原输入/34点/analysis/contract/filter-review/verify。current-source由filtered-run对应，历史candidate用归档源重现；当前run_validation.ps1的候选入口已移除，不直接运行它，也不回滚产品凑旧SHA。run_filtered.ps1仍验证默认5。只两Editor回撤最终diff，新证据/RTGI六文档白名单，Ho-GD计划不纳入。
+
+**031直接动作：** 保持5，扩充逐轮观察到反例(141,157)及相邻控制，并保留新18点；028只保留pipeline10末轮，需按每个10的ordinal保存输出/输入，结合几何/亮度邻域与权重解释哪些传播帮助/伤害两类位置。先做新观察自身不改结果的qual，再有限predeclared seeds，不重跑1M参考或完整8seed。判明机制后才选择一个局部候选，不再全局降低迭代数/宽sigma/gain/单位格式扫描，不只针对新18点。原full/所有phase/F39/static/复杂动态/1080完整预算及目标active继续。

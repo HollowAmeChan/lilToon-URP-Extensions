@@ -54,7 +54,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunResources512()=>Run(false,512,gpu:true,resources:true);
         public static void RunResources1080()=>Run(false,1920,gpu:true,resources:true,renderHeight:1080);
         public static void RunResources1080Compatibility()=>Run(true,1920,gpu:true,resources:true,renderHeight:1080);
-        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="",bool seedProduction=false,bool denseLocal=false,bool localStages=false,string localStagePolicy="default")
+        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="",bool seedProduction=false,bool denseLocal=false,bool localStages=false)
         {
             int width=size,height=renderHeight>0?renderHeight:size;
             var oldDefault=GraphicsSettings.defaultRenderPipeline;var oldQuality=QualitySettings.renderPipeline;bool oldAsync=ShaderUtil.allowAsyncCompilation;HoRTGIRendererFeature gi=null;int exit=1;
@@ -103,7 +103,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 if(productionHistory)report.productionHistory=await AuditProductionHistory(gi,context,Render,Read);
                 if(feedbackAudit)report.feedbackAudit=await AuditHistoryFeedback(gi,context,denseFeature,Render,Read,feedbackQualification,output,feedbackGpu);
                 if(seedAudit)report.seedAudit=await AuditSeeds(gi,context,denseFeature,Render,Read,seedCount,seedWarmup,seedMeasured,output,seedProduction);
-                if(localStages)report.localStageAudit=await AuditLocalStages(gi,context,denseFeature,Render,Read,seedWarmup,seedMeasured,output,localStagePolicy);
+                if(localStages)report.localStageAudit=await AuditLocalStages(gi,context,denseFeature,Render,Read,seedWarmup,seedMeasured,output);
                 if(stability)
                 {
                     if(moments||spatialAudit)context.nrd.ValidationSignalScale=momentScale;
@@ -162,7 +162,6 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 gi.Settings.composite=true;gi.Settings.intensity=.25f;Render();Save(target,"scene-added-quarter",false);var added=Read(target);
                 for(int i=0;i<added.Length;i++){if(!Finite(added[i]))throw new Exception("Invalid composed camera color");double delta=Math.Max(Math.Abs(added[i].r-before[i].r),Math.Max(Math.Abs(added[i].g-before[i].g),Math.Abs(added[i].b-before[i].b)));report.cameraMeanChange+=delta;if(delta>1e-4)report.changedPixels++;}report.cameraMeanChange/=added.Length;
                 gi.Settings.intensity=1;Render();Save(target,"scene-added-one",false);
-                if(localStages){report.localStageAudit.restoredNativeAtrous=context.nrd.core.AppliedSettings.atrous;if(report.localStageAudit.restoredNativeAtrous!=5)throw new Exception("Local stage settings leaked into normal rendering");}
                 report.stableBakes=registry.SkinnedBakeCount-report.bakes;report.historyReused=context.lastTemporal;report.environment=context.environmentSampling;report.nativeCutout=context.alphaVisibility;report.skybox=RenderSettings.skybox!=null?RenderSettings.skybox.name:null;
                 report.pass=report.instances>0&&report.cutouts>0&&report.valid>0&&report.lit>0&&report.changedPixels>0&&report.stableBakes==0;
                 if(gpu)report.pass=report.gpuQualified&&report.instances>0&&report.valid>0&&report.changedPixels>0;

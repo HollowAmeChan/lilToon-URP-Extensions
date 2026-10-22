@@ -128,3 +128,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 028补充（2026-10-22）：固定18点4seed真实NRD stage，首Atrous/reference L1 .131、末.462，定位主要局部差在后几轮；raw/pub帧均值及局部均值对026同seed完全一致。Tests~/RTGI/LocalStages含原流/绑定/计数/参考源码及verifier，原full绿−5.107%/8phase未过，Runtime未改。029仅Editor atrous5→3单候选，核暗邻/噪声及原全域门槛后再决定资格，目标active。
 
 029补充（2026-10-22）：Editor单候选atrous5→3改善18点同模型reference L1约33.6%，4seed pooled full过原门槛、6phase仍失败，方差+38.6%。作用域唯一4字节与Native3轮/回5恢复已核，数据见Tests~/RTGI/AtrousCandidate。Runtime仍5，030先8seed/旧参考/暗控制与后续动态/HDR/Player/GPU资格，未完成生产取舍或全目标。
+
+030补充（2026-10-22）：完整8seed与旧控制点资格拒绝全局atrous3：旧(141,157)G/B硬退化，不能由新18平均收益抵消。Editor候选入口撤回，三文件恢复默认5诊断版且过滤后实跑资格过，Runtime始终5。Tests~/RTGI/AtrousQualification保留候选精确源/全部34点/原门槛与拒绝证据。031亮边/反例逐轮传播定位后再定局部机制，全目标仍active。

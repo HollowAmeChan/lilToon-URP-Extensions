@@ -633,3 +633,21 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **过滤/交接：** Tests~/RTGI/AtrousCandidate约2.2MiB，246source仅3新小文本、2完整logs、2JSON+6streams gzip、review-contract/输入SHA/analysis/verify过；两个自有进程终态active=null，Runtime无diff，他人Ho-GD计划排除。保留有收益的Editor候选进入030完整8seed/旧合格参考/暗控制/full/phase/noise资格，不扫描其它迭代数；进一步有收益才动态/HDR/两Player/GPU与生产取舍。原F39/static/复杂动态/HD完整预算与目标active继续。
 
 029已按白名单过滤提交`e53709e`，AtrousCandidate verifier提交后再次通过。固定3轮局部L1−33.6%、pooled full过但6phase仍失败、方差+38.6%，只进入更广资格。Native设置只改4字节、真实3轮与回5已证；两个自有进程终态，index空/Runtime无diff，仅他人Ho-GD计划未跟踪。030直接固定3的8seed/旧合格参考与暗控制，再动态/HDR/Player/GPU；不要先改Runtime，不扫描2/4，原所有缺口/目标active继续。旧source-SHA verifier用所属提交，不回滚当前代码凑绿。
+
+## 030：固定3轮完整8seed/旧参考控制资格（进行中）
+
+**事前review：** 0294seed有局部收益但未覆盖旧16点/完整8seed，方差增38.6%且6phase仍失败；Runtime仍5。本轮固定同一3，不扫迭代数，不改Shader/采样/单位/格式/时域策略。复用SeedAudit原legacy16点真实probe与每seed full map，原8seed各64warm/256观察；先2seed×16/16资格。设置148B只允许offset92 uint5→3，观察中实际Applied3/Native9+10总3，finally恢复hook且后续正常render回5。
+
+比较026同8seed原raw全帧均值/全图map、029重合4seed18点；新18参考+旧16（15合格/1暗点未定）全部报告，不把未定点改绿。沿029预声明hard-regression/噪声筛选、保留full/全部16phase/原5%门槛与SE限制，不只看加权L1。无收益或硬退化搁置固定候选；有收益再动态/HDR/两Release Player/GPU后生产取舍，当前不改Runtime。源码显式UTF8，隐藏Editor、自有进程15分钟/fence上限，F39/static/复杂动态/1080完整预算继续active。
+
+### 030事后review（2026-10-22）：完整8seed发现旧控制硬退化，固定3轮搁置
+
+**实际资格：** 19396短资格actual0/98请求，39616完整8seed actual0/2594请求，原列表各64warm/256观察，原legacy16 probe及full map/全部16phase保留。148B仅offset92 uint5→3、所有观察实际Applied3/Native3、hook恢复且后续render回5，API/compile/Property/UAV/fence/drift0；原18灯/15实例/12Cutout/天空/alpha/primary合同继续。旧16参考15合格+1未定原样保留，结合新18共34点/33合格全部报告。
+
+**收益与反例：** 新18 L1 .458213→.300045（−34.52%）；旧15 L1 .306745→.293238（−4.40%）；full3→7/8、pooled RGB−4.53312/−4.59497/−4.11332%过原full，pooled phase9→8失败、原phase无pass→fail。方差5.80513e−9→8.17309e−9（+40.79%）。但旧(141,157)G/B按预声明界硬退化：G filtered/ref .911986→.847986、abs error增加2.42011e−5>1.89071e−5；B .996998→.908287，增加8.56060e−6>5e−6；R也变暗但未越界。不能让加权平均收益掩盖反例，筛选条件不放宽。
+
+**正确性/取舍：** 所有8张raw全图均值图与逐帧RGB均值和026逐bit同；重合4seed新18点均值和029逐bit同。退化不是换采样预算造成，候选不具备更广资格，固定3轮搁置；不扫2/4，不继续该候选HDR/Player/生产部署。默认5保留，Runtime/Shader/SDK/DI一直未改。此轮是拒绝一个不充分策略的收益，不是画质修复。
+
+**过滤与实跑：** 三Editor文件Castle/LocalStageAudit/SeedAudit精确恢复90fc233默认5诊断版，移除candidate入口和覆盖；原实跑源SHA/字节完整归档，不伪称当前源生成原候选。19648过滤后真实98请求资格actual0，64分量copy bitexact，Native9一次+10四次=5、API/compile/绑定/fence/drift0。filter-review绑定前后源与Git字节，三自有进程终态active=null。
+
+**交接/范围：** Tests~/RTGI/AtrousQualification约12.8MiB，250source/8新文本、3完整logs、3JSON+12map/streams gzip、原输入/34点/分析/预声明contract/过滤review/verify通过。白名单两Editor回撤文件（SeedAudit恢复后无最终diff）、新证据与RTGI六文档；他人Ho-GD计划排除。031保持5轮，为新18和反例141157及相邻控制取得逐轮/邻域传播证据，解释同一全局滤波有利有害的结构差异后再定局部机制，不再全局cap3/迭代扫描、重采既有MC或宽sigma/gain/单位格式扫描。原full/phase/F39/static/复杂动态/1080完整预算继续active。

@@ -22,3 +22,5 @@ L1下降33.6076%；原相位没有pass→fail，合并full过原门槛，仍有�
 246精确source、仅3新小文本、2完整logs、2原JSON+6原HGS1流lossless gzip、review-contract/028与027输入SHA/analysis/verify约2.2MiB。新增设置scope/记录仅Editor，捕获和settings恢复已审查。`run_validation.ps1 -Mode qualification|matrix`独立输出，隐藏Editor、自有进程15分钟/fence上限；028旧数据不覆盖，旧verifier在所属commit核验。
 
 下一030先完整8seed及旧合格参考点/暗控制/全图/16phase/噪声边界，沿同一个固定3轮，不扫描2/4，不用4seed通过代替整体。若继续有收益，再实际动态/HDR/两Release Player/GPU资格后决定是否改生产；期间Runtime保持原5。所有F39/static非零base/复杂动态/1080完整预算继续，目标active。
+
+后续状态：030完整8seed/旧合格点出现硬退化，固定3轮已搁置，当前候选入口已移除，生产仍5。029是历史初筛收益，不能当最终接纳；见../AtrousQualification/README.md。

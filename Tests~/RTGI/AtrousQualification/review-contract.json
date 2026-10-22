@@ -1,0 +1,15 @@
+{
+  "scope": "Eight fixed seeds, all18 new qualified plus legacy16 including15 qualified and one unresolved; Editor screening, no production acceptance",
+  "seeds": [
+    0,
+    104729,
+    5347609,
+    6396185
+  ],
+  "minimumWeightedLocalL1Reduction": 0.2,
+  "fullAndPhaseRule": "Original gate success must not regress vs matched baseline; all per-seed/pooled results retained",
+  "noiseScreenFilteredToRawVarianceRatio": 0.15,
+  "noiseScreenLimit": "Proxy screen only; original analytic/dynamic variance fixtures remain required",
+  "localHardRegressionRule": "For every qualified point/channel (new18 plus legacy15), increase in absolute reference error beyond max(5e-6, reference*0.05, 2*combined empirical paired-seed/reference SE) is a hard regression. The legacy unresolved point is reported without a quality decision. Empirical SE is not a formal confidence interval.",
+  "disposition": "Reject if no meaningful local benefit, raw mismatch, full/phase regression, noise screen failure or local hard regression. Do not scan2/4. If useful, seek broader qualification before production."
+}
