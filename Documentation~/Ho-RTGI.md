@@ -132,3 +132,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 030补充（2026-10-22）：完整8seed与旧控制点资格拒绝全局atrous3：旧(141,157)G/B硬退化，不能由新18平均收益抵消。Editor候选入口撤回，三文件恢复默认5诊断版且过滤后实跑资格过，Runtime始终5。Tests~/RTGI/AtrousQualification保留候选精确源/全部34点/原门槛与拒绝证据。031亮边/反例逐轮传播定位后再定局部机制，全目标仍active。
 
 031补充（2026-10-22）：stock逐轮记录与旧全图map完全一致，亮边逐轮变暗而旧反例后期恢复；debug-UAV非bit-exact，单独用于权重解释并保存数值差/生成源/重建误差。Tests~/RTGI/AtrousPropagation包含27点/19参考+8guide、全部5进程证据。后期luma权重floor对低signal的影响为032最小阈值候选依据，Runtime保持5，未完成画质或全目标。
+
+032补充（2026-10-22）：只GI私有9/10 diffuse分母floor/64实验未改善整体，新18 L1−3.9%但full2→0/4、11phase退化，固定策略搁置；候选类/meta/入口已过滤移除，stock5实际资格复核过。Tests~/RTGI/LumaFloor完整保存源码/生成体/失败/撤回；033离线权重机制核对后再定下一候选，Runtime不变、目标active。

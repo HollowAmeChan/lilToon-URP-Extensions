@@ -675,3 +675,19 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **成本/过滤/交接：** 255source/12新小文本、5完整logs、47原JSON/bin gzip、生成源码SHA、observer-review/analysis/verify约24.4MiB。extra shader/copy/readback非产品性能，stock/debug边界明确，所有自有进程终态active=null。白名单新trace/meta、LocalStageAudit/Castle、新证据和RTGI六文档；Ho-GD计划排除。032只GI-private Atrous diffuse分母floor物理单位对齐1e−4/64，保持5和其它算式/参数/单位/格式，先scope/source/qual再同两组参考/暗控制/full/phase/noise，不扫迭代/单位。原F39/static/动态/HD完整预算继续active。
 
 031已按白名单过滤提交`99f4fac`，AtrousPropagation verifier提交后再次通过。stock全图时间均值图逐bit相同、逐轮两类相反作用已证；debug非exact，独立数值边界/重建与初失败保留。五自有进程终态、index空、Runtime无diff，仅他人Ho-GD计划未跟踪。032仅GI私有diffuse luminance分母floor随scale64对齐的单候选，默认5/其它算式与参数不动，先新旧控制/full/phase/noise再资格，不能跳过141157或重开迭代/纯单位扫描；全目标和所有原缺口继续active。
+
+## 032：GI私有Atrous diffuse分母floor物理单位候选（进行中）
+
+**事前review：** 031原版逐轮与独立权重显示scale64下后期phi×sigma常落入1e−4分母下限，亮边与反例激活程度不同；不是修复结论。只当前GI实例临时替换shader9/10，将精确diffusePhiLIlluminationInv分母floor 1e−4改1e−4/64（实际AppliedScale必须64），保持5轮/phi/variance/信号单位/格式/所有settings与其它算式；不碰tap cutoff/specular/vendor原文件/DI。生成体逐行仅一个token差、wrapper保持，finally恢复原shader/kernel。
+
+先2seed短资格与实际source/Native5确认，再同4seed新18+旧反例/8邻点/full/16phase/noise，必要完整8seed旧15/未定暗点；沿前述hard-regression与原门槛，不只报加权L1，不改阈值凑绿。有硬退化或无实质收益即撤回/搁置，不扫其它epsilon/单位/迭代数。Runtime保持stock。所有自有hidden Editor、15分钟/fence上限；全目标与F39/static/复杂动态/1080完整预算继续active。
+
+### 032事后review（2026-10-22）：固定diffuse分母floor/64候选失败，已过滤撤回
+
+**实际实现/资格：** 只Editor当前GI实例临时替换9/10，精确diffusePhiLIlluminationInv的1e−4→1e−4/64，每体只有一个token差，tap cutoff/specular/原math/settings/5轮/phi/variance/信号单位64/格式不改。21760资格98请求、632正式1314请求 all0；实际Native9×1+10×4，shader scope恢复，API/compile/Property/UAV/fence/drift0，F32 copy64过。031 stock27点模式，不用debug-UAV代替质量数据。
+
+**结果/收益review：** 新18 L1 .462545→.444431，仅改善3.916%，未达预声明20%；旧141157 G/B变化很小，G/reference .9155→.9134、B .9963→.9937。原full2→0/4过，phase7/11/11/7→9/14/12/12，新增11个原pass→fail；pooledRGB−5.02872/−5.56743/−5.33700%仍失败且更差。无19点局部hard-regression不等于整体可接纳。方差各seed约−.27～+.18%近似不变，不能报显著降噪收益。raw局部所有样本及preAtrous流逐bit同，非输入/预算变化。
+
+**取舍/过滤：** 固定floor/64策略拒绝/搁置，不否认031floor激活证据，但它不是主要解法。不得扫其它epsilon/单位/迭代。实际候选源/生成体/所有失败保存后，Castle恢复99f4fac，新增LumaFloorAudit与meta移除，Editor入口/覆盖不保留；Runtime/DI/vendor始终未改。43936过滤后stock control实际98请求0、Native5/typed-copy64/原math scope验证过，API/compile/绑定/fence/drift0。
+
+**交接/证据：** Tests~/RTGI/LumaFloor含254source、3完整logs、27原JSON/bin gzip、生成体SHA、预声明contract/analysis/filter-review/verify全部过，只代表证据自洽与撤回验证，不改绿质量失败。自有进程全终态active=null；白名单只新证据/RTGI六文档，Editor恢复后无最终源码diff，Ho-GD计划排除。033复用031center/sample variance/实际权重离线核对双向权重与归一化传播，先区别两类结构的机制再GPU单候选；静态输入重放不冒称迭代渲染或修复。原F39/static/复杂动态/HD完整预算及目标active继续。

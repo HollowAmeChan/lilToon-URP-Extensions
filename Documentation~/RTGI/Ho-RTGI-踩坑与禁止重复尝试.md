@@ -142,3 +142,9 @@ JSON float批均值要恢复IEEE float32；原C# LINQ Average(float selector)返
 加UAV即使不改原算式也可能改变compiled浮点结果：首次功能actual0但均值图不逐bit同，不能改成exact资格通过。stock27点对照与旧全图map逐bit同，因此质量stage只用stock，debug独立权重只作数值解释；正式debug差有量化记录和重建误差，不放宽原5%门槛。去附加块应逐行恢复stock，kernel/shader finally恢复，所有生成体/SHA保留。
 
 反例首Atrous受损、后大步长部分恢复，而亮边逐轮变暗，证明F51全局3轮不可重开。低signal下亮度权重floor1e−4在后期可能主导，亮边/反例的激活程度不同，当前只是新可测机制。032只允许GI私有diffuse floor随scale64对齐的单候选，5轮/其余参数/信号单位不变，不能借此重启1/.125纯单位或迭代数扫描、只优化亮边不验旧点。8邻点没有MC参考，guide不能伪装真值；9采样权重帧也不能泛化全帧保证。
+
+## F53 / 步骤032：floor激活证据不等于调小floor能修复
+
+GI私有diffuse分母1e−4/64（9/10各仅一个token）保持5轮/单位64/其它参数仍失败：新18 L1只−3.9%，full2→0/4、11个phase pass→fail、pooled RGB约−5.03/−5.57/−5.34%。不可用局部微小平均改善或19点无hard-regression掩盖旧full/phase退化，不改预声明20%/原5%门槛。floor确实激活不证明它是主根因；固定策略搁置，不继续epsilon/scale/迭代扫描。
+
+候选入口/私有shader类/meta已从Editor移除，Castle恢复99f4fac，过滤后stock实际资格通过；原源/生成体/失败保留，历史runner入口不再存在。033应先利用现有center/sample方差与权重作离线双向/归一化核对，给出能区别亮边与反例的新机制，不能无依据叠更多阈值/增益。静态输入反事实不是完整GPU递归效果，仍需独立实际资格。

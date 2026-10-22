@@ -1,0 +1,21 @@
+{
+  "decision": "Shelve diffuse floor1e-4/64: local benefit3.9%, full pass2->0 and11 phase pass-to-fail regressions",
+  "restored": {
+    "path": "Editor/RTGI/HoRTGICastleValidation.cs",
+    "fromRevision": "99f4fac",
+    "testedSha256": "A169A660D0C36FAFCB57022EAF62D8CFDA7F61A09CE94E6483D2876D85093A05",
+    "restoredSha256": "F772943BB81A6FCA38105D3B24030C881E397F308FF3F1D9FCD70BC06080FBC7"
+  },
+  "removed": [
+    {
+      "path": "Editor/RTGI/HoRTGILumaFloorAudit.cs",
+      "testedSha256": "1DB81531E33A393AC6BED85DDD5230241AA756CC986FFBBB1565E69FDB758837"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGILumaFloorAudit.cs.meta",
+      "testedSha256": "014F129CA37647087EEB51786272B35E7BAC8CA499D0265E013FE46B39366818"
+    }
+  ],
+  "runtimeChanged": false,
+  "scanMoreValues": false
+}

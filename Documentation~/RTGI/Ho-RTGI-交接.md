@@ -507,3 +507,13 @@ Tests~/RTGI/AtrousPropagation约24.4MiB，255source/12新文本、5完整log、4
 **032直接动作：** 只Editor GI私有Atrous diffuse luminance分母floor按AppliedSignalScale64作物理单位对齐（1e−4/64），保持5轮/phi/variance/实际RGB单位/格式/其它原算式不变；确切定位luma分母的1e−4，不能全局替换shader里tap cutoff1e−4或specular常量。先单scope/source diff及真实作用资格，再固定4seed所有新18+反例/暗邻，并完整8seed旧15控制/full/16phase/noise取舍；不得只看加权L1，失败隔离撤回。此是基于实际权重的最小阈值候选，不是重开F35单位1/.125或F51迭代扫描。其后必要动态/HDR/Player/GPU前不得生产化；所有原full/phase/F39/static/复杂动态/1080完整预算继续active。
 
 031已按白名单过滤提交`99f4fac`，AtrousPropagation verifier提交后再次通过。stock全图时间均值图逐bit相同、逐轮两类相反作用已证；debug非exact，独立数值边界/重建与初失败保留。五自有进程终态、index空、Runtime无diff，仅他人Ho-GD计划未跟踪。032仅GI私有diffuse luminance分母floor随scale64对齐的单候选，默认5/其它算式与参数不动，先新旧控制/full/phase/noise再资格，不能跳过141157或重开迭代/纯单位扫描；全目标和所有原缺口继续active。
+
+### 032终态（2026-10-22，待过滤提交）：floor/64候选失败撤回，033复用权重核对
+
+测试只GI实例shader9/10 diffuse亮度分母floor1e−4→1e−4/64，逐体一个token、其它原算式/settings/5轮/phi/variance/真实signal单位64/格式不改。21760短资格98请求、6324seed正式1314请求 all actual0、Native9×1+10×4、scope还原、API/compile/Property/UAV/fence/drift0、F32 copy64过；031 stock27点路径，无debug权重shader混入质量数据。
+
+候选不合格：新18 reference L1 .462545→.444431（−3.916%，不足原20%筛选），full2→0/4过，phase7/11/11/7→9/14/12/12，11个原pass→fail；pooled RGB−5.02872/−5.56743/−5.33700%，旧141157 G/B微变，19点无局部hard不能压过全域退化。方差近似不变，各seed约−.27～+.18%；raw全部局部样本/preAtrous流逐bit同，输入没有换。策略拒绝/搁置，不扫描其它epsilon/单位/迭代，也不继续8seed/Player/HDR资格。
+
+过滤后Castle精确恢复99f4fac，新增HoRTGILumaFloorAudit.cs/meta已移除，入口/覆盖不保留；Runtime/DI/vendor一直未改。43936 stock control实际98请求0，Native5/copy64/scope/原math资格过，API/compile/绑定/fence/drift0。原候选所有源/生成体SHA与报告完整留存，不重标当前源。Tests~/RTGI/LumaFloor含254source、3完整log、27capture gzip、输入/contract/analysis/filter-review/verify；current-source对应filtered-run，历史候选runner入口已删，不能直接调用或回滚产品凑SHA。自有进程终态active=null，Ho-GD计划不纳入。
+
+**033直接动作：** 复用031已有HGW1 center/sample variance、geometry/normal/material/luma因子/真实tap权重，离线检查luma权重双向方差依赖、归一化导致的亮度传播与两类结构差异，解释只调floor为何无效。固定原新18+反例与邻点，不能只挑亮边；静态输入重放不是完整迭代反馈或GPU资格。只有新机制能在现有反事实中区别两类位置，才再定一个局部GPU候选；不重采1M参考/重复旧完整矩阵/扫常量。默认stock5保持，F51/F53继续搁置，原full/phase/F39/static/复杂动态/1080完整预算和目标active继续。

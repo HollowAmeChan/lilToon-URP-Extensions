@@ -61,3 +61,5 @@
 步骤030完整8seed/旧参考发现反例：全局atrous3虽改善新18点和pooled full，旧(141,157)G/B超过预声明硬退化界，候选已搁置。Editor入口/override移除并恢复默认5，过滤后实际98请求资格通过；Runtime一直未改。[完整资格/拒绝与原数据](../../Tests~/RTGI/AtrousQualification/README.md)。031保持5，对亮边和反例作逐轮/邻域传播取证后再开局部机制，不扫描2/4，全部原缺口继续active。
 
 步骤031用stock真实逐轮输出说明亮边连续损失、旧反例后轮部分恢复；独立debug权重可重建自身结果但不bit-exact，未替代质量门槛。[原版/权重边界与证据](../../Tests~/RTGI/AtrousPropagation/README.md)。后期luma分母floor在scale64下的激活差异支持032仅GI私有最小阈值单位对齐单候选，默认5及其它设置保持，全部原质量/预算缺口继续active。
+
+步骤032单位域floor候选失败：新18 L1仅−3.9%，原full2→0/4且11个phase pass→fail，已保存失败并移除候选入口/类，stock5过滤后实跑通过。[原失败与撤回证据](../../Tests~/RTGI/LumaFloor/README.md)。033复用现有中心/邻居方差和权重，先离线核对双向/归一化机制，不继续常量/单位/迭代扫描；Runtime未改，全部原缺口active继续。
