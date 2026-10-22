@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 using lilToon.URP.Extensions.RTDI.NRD;
@@ -37,6 +38,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             public bool complete;public string referenceInput,referenceArchiveSha256,referenceRawSha256;
             public int[] seeds,stageIds;public int width=256,height=256,warmup,measured;
             public HoRTGIPoolPrecisionAudit.Report precision;public Segment[] segments;
+            public string policy,settingsBeforeHex,settingsAfterHex;public int atrousOffset;
+            public uint appliedAtrous,restoredNativeAtrous;public bool settingsHookRestored,captureReleased;
         }
         [Serializable]sealed class ReferenceFile{public int width,height;public HoRTGIDenseReferenceAudit.Report denseReference;}
         readonly HoRTGIContext context;readonly HoRTGIDenseReferenceFeature feature;
@@ -157,7 +160,22 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         internal Report Snapshot(bool terminal)
         {
             report.segments=segments.ToArray();report.complete=terminal&&segments.Count==report.seeds.Length;
-            if(terminal&&!report.complete)throw new Exception("Local stage seed contract incomplete");report.precision=precision.Snapshot();return report;
+            if(terminal&&!report.complete)throw new Exception("Local stage seed contract incomplete");report.precision=precision.Snapshot();report.appliedAtrous=context.nrd.core.AppliedSettings.atrous;return report;
+        }
+        internal void ConfigurePolicy(string policy)=>report.policy=policy;
+        internal void MarkSettingsRestored(bool value)=>report.settingsHookRestored=value;
+        internal void RecordSettings(HoRTDINrdNative.RelaxSettings before,HoRTDINrdNative.RelaxSettings after)
+        {
+            byte[] a=Bytes(before),b=Bytes(after);int offset=(int)Marshal.OffsetOf<HoRTDINrdNative.RelaxSettings>(nameof(HoRTDINrdNative.RelaxSettings.atrous));
+            if(before.atrous!=5||after.atrous!=3)throw new Exception("Unexpected Atrous candidate settings");
+            for(int i=0;i<a.Length;i++)if((i<offset||i>=offset+4)&&a[i]!=b[i])throw new Exception("Atrous candidate changed another setting byte");
+            if(report.settingsBeforeHex==null){report.atrousOffset=offset;report.settingsBeforeHex=BitConverter.ToString(a).Replace("-","");report.settingsAfterHex=BitConverter.ToString(b).Replace("-","");}
+            static byte[] Bytes(HoRTDINrdNative.RelaxSettings value)
+            {
+                int size=Marshal.SizeOf<HoRTDINrdNative.RelaxSettings>();var data=new byte[size];IntPtr pointer=Marshal.AllocHGlobal(size);
+                try{Marshal.Copy(data,0,pointer,size);Marshal.StructureToPtr(value,pointer,false);Marshal.Copy(pointer,data,0,size);return data;}
+                finally{Marshal.FreeHGlobal(pointer);}
+            }
         }
         internal static string Meaning(int id)=>id switch{-2=>"Physical raw",-1=>"NRD input remodulated",3=>"PrePass RGB",4=>"Temporal slow RGB",5=>"Conditional HistoryFix / fast RGB",6=>"Clamping slow RGB",9=>"First Atrous RGB",10=>"Last Atrous RGB",100=>"Physical publication",_=>throw new Exception("Unknown local stage")};
         static string Hash(byte[] value){using var hash=SHA256.Create();return BitConverter.ToString(hash.ComputeHash(value)).Replace("-","");}
@@ -165,18 +183,24 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             if(disposed)return;disposed=true;stream?.Dispose();context.nrd.core.ValidationDiffuseStage=null;precision.Dispose();
             foreach(var texture in captured.Values){texture.Release();UnityEngine.Object.DestroyImmediate(texture);}captured.Clear();
+            report.captureReleased=context.nrd.core.ValidationDiffuseStage==null;
         }
     }
     public static partial class HoRTGICastleValidation
     {
         public static void RunLocalStageQualification()=>Run(false,256,denseScheduled:true,denseLocal:true,localStages:true,seedWarmup:16,seedMeasured:16,validationTag:"local-stage-qualification");
         public static void RunLocalStages()=>Run(false,256,denseScheduled:true,denseLocal:true,localStages:true,validationTag:"local-stages");
-        static async Task<HoRTGILocalStageAudit.Report> AuditLocalStages(HoRTGIRendererFeature gi,HoRTGIContext context,HoRTGIDenseReferenceFeature feature,Action render,Func<RenderTexture,Color[]> read,int warmup,int measured,string output)
+        public static void RunAtrousThreeQualification()=>Run(false,256,denseScheduled:true,denseLocal:true,localStages:true,seedWarmup:16,seedMeasured:16,validationTag:"atrous-three-qualification",localStagePolicy:"atrous3");
+        public static void RunAtrousThree()=>Run(false,256,denseScheduled:true,denseLocal:true,localStages:true,validationTag:"atrous-three",localStagePolicy:"atrous3");
+        static async Task<HoRTGILocalStageAudit.Report> AuditLocalStages(HoRTGIRendererFeature gi,HoRTGIContext context,HoRTGIDenseReferenceFeature feature,Action render,Func<RenderTexture,Color[]> read,int warmup,int measured,string output,string policy="default")
         {
             int[] seeds=measured==16?new[]{0,104729}:new[]{0,104729,5347609,6396185};int oldFrame=context.frame;bool temporal=gi.Settings.temporal,spatial=gi.Settings.spatial;
             using var audit=new HoRTGILocalStageAudit(context,feature,read,seeds,warmup,measured);
+            var previousSettings=context.nrd.core.ValidationSettings;
+            if(previousSettings!=null||(policy!="default"&&policy!="atrous3"))throw new Exception("Local stage settings scope is not available");audit.ConfigurePolicy(policy);
             try
             {
+                if(policy=="atrous3")context.nrd.core.ValidationSettings=settings=>{var before=settings;settings.atrous=3;audit.RecordSettings(before,settings);return settings;};
                 gi.Settings.temporal=gi.Settings.spatial=true;
                 foreach(int seed in seeds)
                 {
@@ -193,7 +217,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 }
                 var report=audit.Snapshot(true);Debug.Log("[HoGILocalStages] COMPLETE segments="+report.segments.Length);return report;
             }
-            finally{feature.collect=false;gi.Settings.temporal=temporal;gi.Settings.spatial=spatial;context.historyValid=false;context.nrd.historyValid=false;context.frame=oldFrame;}
+            finally{context.nrd.core.ValidationSettings=previousSettings;audit.MarkSettingsRestored(context.nrd.core.ValidationSettings==previousSettings);feature.collect=false;gi.Settings.temporal=temporal;gi.Settings.spatial=spatial;context.historyValid=false;context.nrd.historyValid=false;context.frame=oldFrame;}
         }
     }
 }

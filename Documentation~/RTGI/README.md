@@ -55,3 +55,5 @@
 步骤027对6个中心+12相邻新坐标完成每点1048576无复用一跳样本，18/18原收敛标准过；与026 map相比全部18点raw/ref L1 .057、filtered .458，确认局部欠亮。主NRD normal/depth/signal输入匹配，[新参考及guide证据](../../Tests~/RTGI/LocalReference/README.md)完整；尚未定位具体filter阶段，未修复生产画质。028先同坐标4seed局部stage/新参考L1，不补gain/宽sigma/单位格式扫描，全部原全域/F39/HD完整预算继续，目标active。
 
 步骤028实际18点/4seed阶段归因：reference L1首Atrous .131→末.462，主要差在后四轮Atrous；原raw/pub全图帧均值与18点均值完全匹配026，observer未改这些结果。[阶段流与绑定证据](../../Tests~/RTGI/LocalStages/README.md)保留原full绿色−5.107%/8phase失败，无生产改动。029只Editor atrous5→3单候选并核全部点/暗邻/full/phase/噪声，无收益搁置，不扫迭代数；全部原F39/HD完整预算继续active。
+
+步骤029固定Editor GI atrous5→3候选有收益：18点reference L1−33.6%，4seed pooled full过原门槛、phase8→6失败，暗邻未触发预设硬退化；方差+38.6%且仍明显欠亮。[候选原流与作用域证明](../../Tests~/RTGI/AtrousCandidate/README.md)完整，Runtime仍5。030固定3的8seed/旧参考/暗控制/全图/相位/噪声，再动态/HDR/Player/GPU后决定生产；全部原缺口和目标active继续。

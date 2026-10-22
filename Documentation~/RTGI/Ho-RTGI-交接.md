@@ -463,3 +463,15 @@ HGS1原流每帧有shader/app帧、6writer count、9stage×18RGB。3/4/5/6/9各�
 **029直接动作：** 只Editor GI实例ValidationSettings设atrous=3（原5），保留前3轮移去后两大步长；不要改其它settings/采样/单位/格式/时域策略。沿同18点及4seed先资格+实际stage，Native writer count应9一次+10两次（3总），raw必须匹配，全部18点含暗邻与旧full/16phase/noise均报告。重点对新参考L1/细节、全域原门槛和方差取舍，不按加权L1掩盖暗邻硬退化。无实质收益或有硬退化搁置、不扫2/4；有收益才做8seed/旧合格参考点/动态/HDR/两Player/GPU后决定生产，不能跳过资格。028helper可继续用，verifier当前严格baseline10×4，候选另开证据目录/合同，不覆盖028或改绿。原F39/static/复杂动态/HD完整预算继续，目标active。
 
 028已按白名单过滤提交`90fc233`，LocalStages verifier提交后再次通过：copy/真实binding与writer count/全部stage原流/原质量失败保留，raw与pub观察一致性均通过。两个自有进程已结束、index空、Runtime无diff，仅他人Ho-GD计划未跟踪。029直接GI私有atrous5→3单Editor候选，先原18点/4seed/full/phase/暗邻/噪声取舍，有收益再8seed/旧参考/动态/HDR/Player/GPU，不扫其它迭代数、不提前生产化；全目标和原缺口继续active。
+
+### 029终态（2026-10-22，待过滤提交）：Atrous3有收益，030更广资格，Runtime仍5
+
+Editor-only settings scope只改GI atrous5→3，148B唯一差offset92 uint；记录Native Applied3，9一次+10两次，finally hook/capture恢复，之后正常render实际回5。其它settings/采样/单位64/生产32F/Shader/SDK/Runtime/DI不改。8792短资格98请求、632正式1314请求 all actual0，API/compile/Property/UAV/fence/drift0，F32 bitcopy资格过。
+
+正式前review-contract：固定18点L1改善至少20%；原full/phase通过项不转失败；逐点/通道absolute error增加超过max5e−6/ref5%/2×组合配对seed与参考经验SE判硬退化；filtered/raw全域方差比.15是筛选代理，不替代真实夹具，SE不提供正式CI。所有原质量门槛不动。
+
+同4seed0/104729/5347609/6396185、64warm/256观察，18点L1 .462545→.307095，改善33.6076%。原full2→3/4，pooled RGB−4.53772/−4.54476/−4.09065%通过full；phase7/11/11/7→6/4/11/5，pooled8→6失败，无pass→fail。暗邻部分通道微增，但无预声明硬退化；仍局部欠亮、一个seed full/6phase失败。方差均值5.60620e−9→7.76781e−9（+38.56%），candidate/raw .001822。不是全质量/动态/Player/GPU资格完成。
+
+raw全帧均值+局部所有样本、input/Pre/Temporal/条件fast/Clamp/first Atrous局部原流均对028逐bit同。数据与新增scope恢复可核验，Editor override不能标成production。Tests~/RTGI/AtrousCandidate约2.2MiB、246source/3新blob、2完整logs、2JSON+6streams lossless gzip、输入/review-contract/analysis/verify过，全部自有进程终态/active=null，Runtime无diff，他人Ho-GD计划排除。
+
+**030直接动作：** 固定同一atrous3，先完整8seed/旧17合格参考点与暗控制、full/全部16phase/全域及局部noise；旧16点参考含15合格/暗点未定必须原样保留，不挑点或用新18点替代。可复用SeedAudit productionOnly真实probe+每seed full map，Editor settings scope只改3并验证Native counts/恢复，raw与0268seed必须匹配；对0294seed局部结果可交叉复核。新增候选完整数据仍与生产5隔离，不覆盖旧证据。若继续有收益，再动态/HDR/两Release Player/GPU，最后才决定生产；不扫2/4或直接关闭降噪。原F39/static非零base/复杂动态/1080完整预算继续active。

@@ -1,0 +1,11 @@
+{
+  "baselineReport": {
+    "path": "../LocalStages/results/matrix.json",
+    "rawSha256": "C690A21EE7A583CE5BA9AB0D826AFEDF38C1BD4AB1B7BDEEC4BD6E9D473B9F6E"
+  },
+  "reference": {
+    "path": "../LocalReference/results/reference.json.gz",
+    "archiveSha256": "AFB0CF247D4B8E93B5B770D91E0D04562CD85DEEB3B1641EE927774008BC17DB",
+    "rawSha256": "C233802BAE403DC85B9D3DF50882B0CA9E5538A879ED6040838D8F41C6E5A9A9"
+  }
+}

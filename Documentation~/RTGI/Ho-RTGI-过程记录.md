@@ -613,3 +613,21 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **过滤/交接：** Tests~/RTGI/LocalStages约2.3MiB，246source/7新小文本、2完整logs、2原JSON+6streams gzip、code-reference/输入SHA/analysis/verify通过。当前Runtime无diff、全部自有进程结束/active=null。白名单新helper/meta、Castle、新证据和RTGI六文档，他人Ho-GD计划不纳入。原full/phase/F39/static/复杂动态/1080完整预算继续active。
 
 028已按白名单过滤提交`90fc233`，LocalStages verifier提交后再次通过：copy/真实binding与writer count/全部stage原流/原质量失败保留，raw与pub观察一致性均通过。两个自有进程已结束、index空、Runtime无diff，仅他人Ho-GD计划未跟踪。029直接GI私有atrous5→3单Editor候选，先原18点/4seed/full/phase/暗邻/噪声取舍，有收益再8seed/旧参考/动态/HDR/Player/GPU，不扫其它迭代数、不提前生产化；全目标和原缺口继续active。
+
+## 029：GI私有Atrous5→3单候选（进行中）
+
+**事前review：** 028实际18点/4seed stage误差first .131→last .462，raw/pub未被observer改动，参考CPU步长1<<i且step>4有offset。只Editor GI实例ValidationSettings将atrous5改3，其他148B settings字节必须相同，记录真实AppliedSettings与writer count、finally hook恢复和之后正常render回5。保留原GI T/S/单位64/32F策略、时间预算、shader/SDK/DI不改，候选不直接生产化。
+
+先2seed短资格，再同4seed（0/104729/5347609/6396185）、64warm/256观察；全部18点、暗邻、reference L1、full/16phase/原5%、局部/全域方差及raw一致性同时报告。收益判断不只加权L1；原参考收敛/全图边界保持。无实质收益或有硬退化就搁置且不扫2/4迭代；有收益再完整8seed/旧合格点/动态/HDR/两Player/GPU资格后决定生产。隐藏Editor，自有进程15分钟/fence上限，所有旧F39/HD缺口继续active。
+
+### 029事后review（2026-10-22）：3轮候选改善局部与全图边界，噪声代价明确
+
+**实现/隔离：** 仅Editor scope在GI core.ValidationSettings中将atrous5→3；每次校验148字节settings除offset92 uint外完全一致，记录实际Applied3、原hook/finally恢复与之后正常render Native回5，capture释放。单位/生产32F/时间历史/采样/其余settings、Runtime/DI/Shader/SDK不改。资格8792/正式632 actual0，98/1314请求，API/Shader/Property/UAV/fence/drift0；实际每观察帧9一次+10两次=3轮，typed copy64分量继续过。
+
+**预声明取舍：** 正式前review-contract固定18点L1≥20%改善、原full/phase通过项不退化、逐点逐通道误差增加超过max(5e−6,.05ref,2×组合配对seed/reference经验SE)判硬退化，方差filtered/raw<.15仅作本场景筛选代理。经验SE非正式CI，代理不替代原解析/动态夹具，原5%/其它门槛不放宽。不以加权L1掩盖暗邻，候选不直接生产化。
+
+**实际收益/成本review：** 同4seed全18点reference L1 .462545→.307095（−33.6076%）；full通过2→3/4，pooled RGB误差−4.538/−4.545/−4.091%过原full，phase每seed7/11/11/7→6/4/11/5，pooled8→6失败，原phase无pass→fail。暗邻部分通道小幅增加，逐点/通道全部报告，未触发硬退化界。局部仍明显欠亮、一个seed full与6pooled phase仍失败，不能称质量修复完成。方差均值5.60620e−9→7.76781e−9（+38.56%，各seed约34～44%），candidate/raw .001822，必须后续动态/真实Player再评估，不把少两dispatch直接称实测GPU节省。
+
+**正确性：** raw全帧RGB均值/局部raw全部样本对028逐bit一致；input/Pre/Temporal/条件fast/Clamp/first Atrous局部原流逐bit同。改变只影响后续空间滤波结果，参考/选点限制不解除。设置唯一4字节变化和真实Native绑定/count/恢复均可从原报告及stream重建。
+
+**过滤/交接：** Tests~/RTGI/AtrousCandidate约2.2MiB，246source仅3新小文本、2完整logs、2JSON+6streams gzip、review-contract/输入SHA/analysis/verify过；两个自有进程终态active=null，Runtime无diff，他人Ho-GD计划排除。保留有收益的Editor候选进入030完整8seed/旧合格参考/暗控制/full/phase/noise资格，不扫描其它迭代数；进一步有收益才动态/HDR/两Player/GPU与生产取舍。原F39/static/复杂动态/HD完整预算与目标active继续。

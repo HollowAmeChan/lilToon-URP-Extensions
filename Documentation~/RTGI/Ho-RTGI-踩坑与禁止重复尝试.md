@@ -124,3 +124,9 @@ JSON float批均值要恢复IEEE float32；原C# LINQ Average(float selector)返
 同18点新参考+4个预声明seed实际stage表明L1首Atrous .131→末.462，input/Pre/Temporal/Clamp较小；不再无依据优先改normal编码/单位/宽sigma。5是transient1条件HistoryFix/fast，10会写4次，末copy仅代表最后一次，不能把pipeline序号当单次dispatch或把5当slow m2。必须逐帧写计数、真实资源binding、32F typed copy/UAV与物理albedo×64。
 
 原raw/filtered全图逐帧均值与18点均值都和026同seed完全匹配，但这不是全纹理每帧逐byte证明。4seed子集L1不能与旧8seed当同预算回归。pooled full仍绿−5.107%、8phase失败，不以局部定位解除。copy/readback非产品成本。029只一个有依据的atrous5→3 Editor候选，噪声与暗邻点要一起评估；无收益或硬退化搁置，不扫2/4，也不直接生产化；F36/F35/F39/F31继续。
+
+## F50 / 步骤029：有收益的迭代候选也必须面对噪声与局部代价
+
+固定5→3得到18点L1−33.6%、4seed pooled full过、phase8→6失败，但不是全部修复：仍一个seed full/6phase失败，局部欠亮明显，暗邻一些通道小幅变差，方差+38.6%。不能只报L1/少两dispatch就称全质量/性能完成，不能拿全域方差代理替代解析/动态/Player。每点每通道和原full/phase全部保存；经验SE筛选不是正式置信保证，也不放宽原门槛。
+
+作用域要实证：148B仅offset92由5改3、Native 9×1+10×2、释放hook/capture后正常render回5。不得把Editor override的结果标成生产默认/Player已过，Runtime仍5；无必要不扫描2/4。030先固定3的8seed/旧合格点/暗控制资格，有收益再动态/HDR/两Player/GPU后取舍。旧F36/F35/F39/F31继续。
