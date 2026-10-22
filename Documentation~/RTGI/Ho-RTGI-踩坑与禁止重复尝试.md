@@ -118,3 +118,9 @@ Windows Python默认Path.write_text可能把原UTF8中文C#写成GBK，Unity本�
 Guide原pack/decode和depth、输入remod均过，不能继续无依据改normal编码/单位/格式来碰质量。相邻平面/材质边界是相关证据，未定位具体NRD阶段/根因；先实际stage+新参考L1，再选机制，禁止直接补gain、宽sigma、复活F36线段box。新增finite guard防NaN绕过比较，正式run源在guard前、最终短资格在后，必须保留唯一源diff及原数据finite证据，不改历史SHA。
 
 JSON float批均值要恢复IEEE float32；原C# LINQ Average(float selector)返回float后才赋double。若以decimal64直接算很小的split，会误报不一致；按既有精度重建，不放宽原2%/5%门槛或修改数据来凑绿。verifier既验证字节也从批次独立重算，功能exit0/guide正确不等于画质修复或GPU预算。
+
+## F49 / 步骤028：Atrous阶段定位与候选边界
+
+同18点新参考+4个预声明seed实际stage表明L1首Atrous .131→末.462，input/Pre/Temporal/Clamp较小；不再无依据优先改normal编码/单位/宽sigma。5是transient1条件HistoryFix/fast，10会写4次，末copy仅代表最后一次，不能把pipeline序号当单次dispatch或把5当slow m2。必须逐帧写计数、真实资源binding、32F typed copy/UAV与物理albedo×64。
+
+原raw/filtered全图逐帧均值与18点均值都和026同seed完全匹配，但这不是全纹理每帧逐byte证明。4seed子集L1不能与旧8seed当同预算回归。pooled full仍绿−5.107%、8phase失败，不以局部定位解除。copy/readback非产品成本。029只一个有依据的atrous5→3 Editor候选，噪声与暗邻点要一起评估；无收益或硬退化搁置，不扫2/4，也不直接生产化；F36/F35/F39/F31继续。

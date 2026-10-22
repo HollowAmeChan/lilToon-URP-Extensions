@@ -589,3 +589,25 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **成本/交接/过滤：** 只Editor首尾CPU readback/新报告，无产品资源/参数/SDK/Shader改动，无新GPU预算/画质修复结论。Tests~/RTGI/LocalReference约2.5MiB，242source/9新文本含场景与NRD编码原文、3完整logs、3原JSON gzip、026 map输入SHA、analysis/review/verify全过。全部自有进程已终态、active=null。白名单Castle/DenseFeature/DenseAudit、新证据与RTGI六文档；他人Ho-GD计划排除。028先同18点4个预声明seed0/104729/5347609/6396185的实际局部stage及新参考L1，保留原全域/16phase门槛，用真实绑定和32F typed copy/F43 guard，再按主损失阶段选机制；不重跑本轮MC、gain/宽sigma/单位格式扫描或复活F36候选。原F39/static/复杂动态/HD预算继续，目标active。
 
 027已按白名单过滤提交`d099dff`，LocalReference verifier提交后再次通过；18/18新局部参考原收敛过，主guide输入匹配，局部filtered欠亮有同模型参考支持但未修复/未定位阶段。3个实际进程终态，index空、Runtime无diff，仅他人Ho-GD计划未跟踪。028直接同18点/4个预声明seed的实际32F stage与新参考误差，不重采本轮MC或重复0268seed；原全域/phase/F39/static/复杂动态/HD完整预算继续，目标active。旧verifier涉及current-source SHA时用所属历史提交，不回滚当前代码凑旧检查。
+
+## 028：局部真实阶段归因（进行中）
+
+**事前review：** 02718点同模型参考全部原收敛过，026 TS raw较接近而filtered严重欠亮，guide首尾匹配；还未归因具体阶段。本轮固定同18点、seed0/104729/5347609/6396185，每64warm/256观察，先2seed×16warm/16观察资格。复用027原参考，不重采MC或重跑026完整8seed，不改生产/参数/单位/格式。
+
+只Editor使用既有ValidationDiffuseStage，production32F typed-copy self-test及UAV/format/binding guard；逐帧记录真实pipeline3/4/5/6/9/10写入计数，存原始local RGB流（raw/input/6阶段/publish）并按每帧实际history albedo×64重调制。5标条件HistoryFix/fast，不误作slow m2；10是末次Atrous。每seed同时保留full/全部16phase/旧5%和全帧RGB均值，以026同seed证明observer没有改原raw。primary/light/sky/alpha/scene域与新参考坐标核对，actual binding记录包含外部与pool资源。
+
+根据真实主损失阶段与reference L1决定后续一个有机制候选，未取证前不关阶段/宽sigma/gain/单位格式扫描，不复活F36同box线段候选。额外copy/readback只是诊断成本，不当产品GPU预算。隐藏Editor、自有进程15分钟/fence上限；原F39/static/复杂动态/1080完整预算继续active。
+
+### 028事后review（2026-10-22）：主要局部差在首轮之后的Atrous，尚无生产改动
+
+**实现/实际资格：** 新Editor HoRTGILocalStageAudit/meta，Castle仅加flag/入口/报告。固定同18点与4seed0/104729/5347609/6396185，实际primary/full/history/ray/reference误差≤.0005，18灯/15实例/12Cutout/sky/alpha域与原参数不变。43892资格actual0、14436正式actual0；98/1314真实Editor请求。API/Shader/Property/UAV/fence/drift0，F32 copy64分量逐bit过，所有capture UAV/格式guard与实际bindings/count已核验。每观察帧3/4/5/6/9各1写，10四写；9+10四次共5个Atrous，10只保留末次。
+
+**数据/正确性review：** HGS1存每帧shader/application序号、6真实writer计数、raw/input/3/4/5/6/9/10/pub九阶段18点物理RGB。实际每帧history albedo×64重调制，CPU double累计后float32落盘；负值保留/计数。3写external，4 transient0 slow、5 transient1条件fast/Fix、6 permanent0 slow、9 transient0、10 transient1/0/1/external，不能把5当slow moment。全部四seed raw与filtered全图逐帧RGB均值均与026同seed逐条同；18点raw/filtered均值也逐bit同，不扩大为所有纹理每帧逐byte证明。
+
+**实际收益：** 同18点4seed相对027合格同模型参考的L1：raw .094054、input .094075、PrePass .094619、Temporal slow .112661、条件fast/Fix .097161、Clamp slow .113427、first Atrous .130687、last Atrous .462370、physical pub .462545。首Atrous RGB相对参考−12.987/−12.023/−12.743%，末−38.709/−57.173/−60.188%。主要差出在首轮之后四次Atrous，不能继续盲追输入编码/单位/宽sigma。未单存10中间轮，不宣称某一轮单独被证错误；仅局部因果定位，非全图真值/画质修复。
+
+**原失败/成本：** 4seed full2/4过，phase7/11/11/7失败，pooled full−4.71818/−5.10748/−4.80745%仍失败、8phase失败，原阈值不动。全域平均时间方差raw4.26391e−6/filtered5.60620e−9，后续须核噪声取舍。4seed raw L1 .094不同于0278seed .057是预声明子集，不是代码回归。额外copy/readback/文件成本不作产品GPU预算。
+
+**参考/下一机制：** 复读本机参考NRD Relax.cpp，iteration clamp后gStepSize=1<<i；runtime Atrous shader与该参考按LF逐byte同，step>4有随机offset；CPU上下文/Shader原文和SHA已归档，不声称已反编译当前DLL常量。029只Editor GI私有atrous5→3，移去最后两大步长，其它setting/采样/单位/格式不改；相同4seed阶段/全部18点（含暗邻）/full/phase/noise与真实count对照。无收益或硬退化即搁置、不扫2/4；有收益再完整8seed/旧合格参考/动态/HDR/两Player/GPU资格，不现在接生产。
+
+**过滤/交接：** Tests~/RTGI/LocalStages约2.3MiB，246source/7新小文本、2完整logs、2原JSON+6streams gzip、code-reference/输入SHA/analysis/verify通过。当前Runtime无diff、全部自有进程结束/active=null。白名单新helper/meta、Castle、新证据和RTGI六文档，他人Ho-GD计划不纳入。原full/phase/F39/static/复杂动态/1080完整预算继续active。

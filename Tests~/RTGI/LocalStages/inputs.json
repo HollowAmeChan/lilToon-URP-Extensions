@@ -1,0 +1,29 @@
+{
+  "productionReport": {
+    "path": "../ProductionSeeds/results/matrix.json",
+    "rawSha256": "B2AD3A35801606CB328512712946B1EB535D3E8AE87C355A641E7B7E62DA8B8D"
+  },
+  "productionMaps": [
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-0.bin",
+      "rawSha256": "234DED939DE5030F94E33D0D772557641CE47ADC8D34D9F6D7A99DBC7FAF36E0"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-104729.bin",
+      "rawSha256": "6B23F62EC8800F61B41A2C753B378C6B7F93937AD4A1647D4E17525E1F8C2C20"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-5347609.bin",
+      "rawSha256": "BD61994610BBC52562C3E95A0703F351B85E538514860C0A232CD86906FACE38"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-6396185.bin",
+      "rawSha256": "8518C696FF1041D4566B87469186396FB4FC369CD933AE66477A914FBF27AF78"
+    }
+  ],
+  "reference": {
+    "path": "../LocalReference/results/reference.json.gz",
+    "archiveSha256": "AFB0CF247D4B8E93B5B770D91E0D04562CD85DEEB3B1641EE927774008BC17DB",
+    "rawSha256": "C233802BAE403DC85B9D3DF50882B0CA9E5538A879ED6040838D8F41C6E5A9A9"
+  }
+}

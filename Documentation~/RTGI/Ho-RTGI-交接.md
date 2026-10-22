@@ -449,3 +449,15 @@ first4seed探索top12、last4核验全部同点：探索首位(221,184)从.01454
 **028直接动作：** 复用同18点新参考，预声明4seed0/104729/5347609/6396185，各64warm+256观察；先真实绑定/32F typed copy self-test及UAV/F43 guard，再捕获NRD input、PrePass、Temporal slow、条件HistoryFix/fast、Clamp slow、first/lastAtrous、physical publication。每阶段按同像素实际albedo×64重调制，分seed报告局部/reference L1，同时保留原全域/16phase/5%门槛及raw相同检查；5不是slow m2，不能误标。按实际主损失阶段再定一个有机制候选，不无依据关闭某阶段/宽sigma/gain/格式单位扫描，不复活F36同box线段clip。无需重跑027 1M参考或026完整8seed，只引用精确输入SHA。原full绿色−5.158%、9phase/32块/F39/static/复杂动态/1080完整预算继续，目标active。
 
 027已按白名单过滤提交`d099dff`，LocalReference verifier提交后再次通过；18/18新局部参考原收敛过，主guide输入匹配，局部filtered欠亮有同模型参考支持但未修复/未定位阶段。3个实际进程终态，index空、Runtime无diff，仅他人Ho-GD计划未跟踪。028直接同18点/4个预声明seed的实际32F stage与新参考误差，不重采本轮MC或重复0268seed；原全域/phase/F39/static/复杂动态/HD完整预算继续，目标active。旧verifier涉及current-source SHA时用所属历史提交，不回滚当前代码凑旧检查。
+
+### 028终态（2026-10-22，待过滤提交）：Atrous后四轮是主要局部差，029单候选
+
+新HoRTGILocalStageAudit/meta+Castle flag/报告，仅Editor。固定027同18点，4seed0/104729/5347609/6396185，各64warm/256观察；先资格2seed×16/16。43892/14436 actual0，98/1314请求，API/compile/Property/UAV/fence/drift0；copy self-test64分量逐bit过，capture256²RGBA32F/UAV true。primary与新参考/原full/history/ray合同、18灯/15实例/12Cutout/sky/alpha与设置通过。
+
+HGS1原流每帧有shader/app帧、6writer count、9stage×18RGB。3/4/5/6/9各写1，10写4，复制末10；3 external、4 transient0 slow、5 transient1条件fast/Fix、6 permanent0 slow、9 transient0、10 transient1/0/1/external。5不是slow m2。每帧实际history albedo×64重调制；负值保留。四seed raw+filtered全图逐帧RGB均值均与026同seed逐条同，18点raw/pub均值也逐bit同；别外推全纹理逐帧byte同。
+
+相对02718点参考L1：raw .094054、input .094075、Pre .094619、Temporal .112661、Fix/fast .097161、Clamp .113427、first Atrous .130687、last .462370、publish .462545。首Atrous RGB−12.987/−12.023/−12.743%，末−38.709/−57.173/−60.188%，主要差在首轮之后四次Atrous。没存10中间轮，不断言某一轮单独有错；同模型选点非全图真值，未修复生产质量。4seed full2/4过，phase失败7/11/11/7；pooled fullRGB−4.71818/−5.10748/−4.80745%仍失败、8phase失败。raw/filtered全域时间方差均值4.26391e−6/5.60620e−9。
+
+复读本机参考Relax.cpp步长1<<i、runtime Atrous shader与参考LF逐byte同、step>4随机offset；code-references原文/SHA保留，不误称当前DLL常量反编译证明。LocalStages约2.3MiB，246source/7新blob、2完整logs、2JSON+6streams lossless gzip、输入SHA/analysis/verify。当前根源对应actual runs，所有自有进程终态active=null，Runtime无diff，他人Ho-GD计划不纳入。
+
+**029直接动作：** 只Editor GI实例ValidationSettings设atrous=3（原5），保留前3轮移去后两大步长；不要改其它settings/采样/单位/格式/时域策略。沿同18点及4seed先资格+实际stage，Native writer count应9一次+10两次（3总），raw必须匹配，全部18点含暗邻与旧full/16phase/noise均报告。重点对新参考L1/细节、全域原门槛和方差取舍，不按加权L1掩盖暗邻硬退化。无实质收益或有硬退化搁置、不扫2/4；有收益才做8seed/旧合格参考点/动态/HDR/两Player/GPU后决定生产，不能跳过资格。028helper可继续用，verifier当前严格baseline10×4，候选另开证据目录/合同，不覆盖028或改绿。原F39/static/复杂动态/HD完整预算继续，目标active。

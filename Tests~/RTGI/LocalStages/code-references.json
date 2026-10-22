@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "originalPath": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl",
+      "path": "code-references/0-RELAX_Atrous.cs.hlsl",
+      "bytes": 13037,
+      "sha256": "BC4C998E30852232AC98E4F2A7F924EF0072D900F44F4DE1D725171F9E1508B8"
+    },
+    {
+      "originalPath": "Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.cs.hlsl",
+      "path": "code-references/1-RELAX_AtrousSmem.cs.hlsl",
+      "bytes": 21413,
+      "sha256": "58E8B5BDC93CC3B331A8CF9994A784D5137BE2B566C78E39EF617CE6BE8B289E"
+    },
+    {
+      "originalPath": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Source/Relax.cpp",
+      "path": "code-references/2-Relax.cpp",
+      "bytes": 17645,
+      "sha256": "1F656B4D7671D1648FD3287F35E7A600B706C56DB9BCD9844B2BFD989681FC12"
+    },
+    {
+      "originalPath": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Atrous.cs.hlsl",
+      "path": "code-references/3-RELAX_Atrous.cs.hlsl",
+      "bytes": 13037,
+      "sha256": "BC4C998E30852232AC98E4F2A7F924EF0072D900F44F4DE1D725171F9E1508B8"
+    }
+  ],
+  "runtimeAtrousBodyLfEqualToLocalReference": true,
+  "cpuContext": "Local reference NRD Update_Relax clamps iteration count then uses gStepSize=1<<i; actual current dispatch counts are separately recorded."
+}

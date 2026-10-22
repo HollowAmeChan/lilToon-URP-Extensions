@@ -124,3 +124,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 026补充（2026-10-22）：当前生产TS八seed（各64warm/256观察）全域、16phase、固定64块与first4探索/last4局部验证完成。full−4.716/−5.158/−4.823%，pooled仍不通过；6个x86跨seed局部差值得进一步同域高样本参考核对，不能将raw当真值。239源/完整log/map与编码修正资格见Tests~/RTGI/ProductionSeeds；无Runtime/算法/参数改动，无画质修复或新预算结论，目标active。
 
 027补充（2026-10-22）：新固定18局部接收点每点1M同模型无复用参考全部原收敛过，对026实际map全18 raw/ref L1约.057、filtered .458，证实局部欠亮。首尾主NRD normal/depth/input remod匹配；详细样本/guide/源码/日志及最终finite guard资格见Tests~/RTGI/LocalReference。仅定位证据，无生产改动/画质修复；028实际阶段定位后再选机制，全域原5%/phase/F39/1080完整预算继续，目标active。
+
+028补充（2026-10-22）：固定18点4seed真实NRD stage，首Atrous/reference L1 .131、末.462，定位主要局部差在后几轮；raw/pub帧均值及局部均值对026同seed完全一致。Tests~/RTGI/LocalStages含原流/绑定/计数/参考源码及verifier，原full绿−5.107%/8phase未过，Runtime未改。029仅Editor atrous5→3单候选，核暗邻/噪声及原全域门槛后再决定资格，目标active。

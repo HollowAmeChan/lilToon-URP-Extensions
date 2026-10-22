@@ -1,0 +1,58 @@
+{
+  "results/qualification.json": {
+    "path": "results/qualification.json.gz",
+    "rawBytes": 310635,
+    "rawSha256": "4DBD6D7C4F60043B8BC27793C369F9FD1BB7F019CC9BEF27A8903E10F2F77D7D",
+    "archiveBytes": 30115,
+    "archiveSha256": "802383DABA4DE4D8358562E4345AD19F18A3D7199F6715CC839274249C28FD18"
+  },
+  "results/matrix.json": {
+    "path": "results/matrix.json.gz",
+    "rawBytes": 1164791,
+    "rawSha256": "C690A21EE7A583CE5BA9AB0D826AFEDF38C1BD4AB1B7BDEEC4BD6E9D473B9F6E",
+    "archiveBytes": 118893,
+    "archiveSha256": "CF81839069F2674403C66B6C936F152C6EAE5756D5BA01FBE973703120A3BAD7"
+  },
+  "results/matrix/stages-0.bin": {
+    "path": "results/matrix/stages-0.bin.gz",
+    "rawBytes": 506064,
+    "rawSha256": "5602BDC155CC0CA7520A73FFAAF702A8C928A486B478FFA77623AA36109634AD",
+    "archiveBytes": 386458,
+    "archiveSha256": "5082F8E2987D00558D1ED34CA9E358C7A6CA255A6865F10DCBD0C79F6735C7D4"
+  },
+  "results/matrix/stages-104729.bin": {
+    "path": "results/matrix/stages-104729.bin.gz",
+    "rawBytes": 506064,
+    "rawSha256": "32E14B81B2FD5F715FF229D807739F41DAAA1C16CA94357D9C4DD54F9AD89A88",
+    "archiveBytes": 386882,
+    "archiveSha256": "F0C58848C6AC0E319E11AAC7CA31DEFCD25A5874FFBD20DBFC7D6592DBD4A6ED"
+  },
+  "results/matrix/stages-5347609.bin": {
+    "path": "results/matrix/stages-5347609.bin.gz",
+    "rawBytes": 506064,
+    "rawSha256": "2CDA9B407A559B23223DD602699E1C47E3E9367F5B65B0305F3177E5CA77E9E5",
+    "archiveBytes": 388059,
+    "archiveSha256": "460208387685BBD580C476F49EE35123B645070A9B750DD14028A3E503304DA3"
+  },
+  "results/matrix/stages-6396185.bin": {
+    "path": "results/matrix/stages-6396185.bin.gz",
+    "rawBytes": 506064,
+    "rawSha256": "D8ED75EA12C2ABE8DF48F9F67341F159B2372209A50B567B0FEE026E4B707359",
+    "archiveBytes": 386613,
+    "archiveSha256": "295E2A6CD695AEA5D3F27E962FDFDB4046A3224502F90320D2E21A8F1CB3C60B"
+  },
+  "results/qualification/stages-0.bin": {
+    "path": "results/qualification/stages-0.bin.gz",
+    "rawBytes": 31824,
+    "rawSha256": "A0F4C7CA23D6D9E7A70C1FFB25E839EFCC9EFDB1D45EAAB42465827E3018D248",
+    "archiveBytes": 24433,
+    "archiveSha256": "40D0D67E0E7424BA3C7C9B10BED957FC5E5BE242CBFA18732EF6CBE5C909EA2F"
+  },
+  "results/qualification/stages-104729.bin": {
+    "path": "results/qualification/stages-104729.bin.gz",
+    "rawBytes": 31824,
+    "rawSha256": "4D840D7BE309BE953930AF4A0FB4B443DBFD8A2C16676E8BB42EC051609183E0",
+    "archiveBytes": 24498,
+    "archiveSha256": "91C32E47A9C7D03DC3B855C02330F0CE2BBA17C8FF294E99B8BD741075417385"
+  }
+}

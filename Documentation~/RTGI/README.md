@@ -53,3 +53,5 @@
 步骤026完成当前生产TS默认的8seed全域/局部证据：full误差−4.716/−5.158/−4.823%，3/8 full通过但合并full/9phase/32固定块仍失败；first4探索/last4验证表明单窗极值会缩小，6个x86局部差仍保留。[完整seed/holdout证据](../../Tests~/RTGI/ProductionSeeds/README.md)。无生产改动或画质修复；027先这些新坐标及相邻控制的同域无复用高样本参考+guide，不把raw当真值或盲调NRD，原质量/F39/HD完整预算继续，目标active。
 
 步骤027对6个中心+12相邻新坐标完成每点1048576无复用一跳样本，18/18原收敛标准过；与026 map相比全部18点raw/ref L1 .057、filtered .458，确认局部欠亮。主NRD normal/depth/signal输入匹配，[新参考及guide证据](../../Tests~/RTGI/LocalReference/README.md)完整；尚未定位具体filter阶段，未修复生产画质。028先同坐标4seed局部stage/新参考L1，不补gain/宽sigma/单位格式扫描，全部原全域/F39/HD完整预算继续，目标active。
+
+步骤028实际18点/4seed阶段归因：reference L1首Atrous .131→末.462，主要差在后四轮Atrous；原raw/pub全图帧均值与18点均值完全匹配026，observer未改这些结果。[阶段流与绑定证据](../../Tests~/RTGI/LocalStages/README.md)保留原full绿色−5.107%/8phase失败，无生产改动。029只Editor atrous5→3单候选并核全部点/暗邻/full/phase/噪声，无收益搁置，不扫迭代数；全部原F39/HD完整预算继续active。
