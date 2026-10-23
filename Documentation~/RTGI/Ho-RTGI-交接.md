@@ -611,3 +611,8 @@ SharedInput约11MiB，259source/9新文本、4完整log/22capture gzip、Frame.c
 **过滤/成本：** Tests~/RTGI/PairedStages保留264原源对象、2完整logs、38 lossless captures、HGB1两支9stage28点RGBA、observer/analysis/figure/contract/filter-review/verify，全部原SHA与不变性核过。合格Editor观察工具保留，只测试入口开启、默认stock/noop路径不变、finally恢复；新增values8064B+coords224B只是sparse payload，外加2NRD/RT/读回不作产品VRAM/性能预算。可选Matplotlib图初默认/内置Python缺库，pip user与target冲突后显式--no-user隔离target装，仅plot进程路径使用，原环境/Unity不动，失败与版本/图SHA保留。白名单只4新Editor文件/3既有Editor接线、本轮证据和六RTGI文档，Ho-GD计划排除。
 
 **039直接动作：** 现有实际证据允许一个单算子消融：仅把后4轮的固定center留重恢复stock行归一化，其余037 Smem temporal-var/w²、min-pair/RGB/settings/5轮/单位/格式不动。检验固定交换是否压制有益后期恢复，不预称修复。保持mainstock，把两独立branch设固定037参考/单算子变体以same input比较；物理校准改用main输出，不能沿用branch0==stock断言。先短资格两支stage9 RGB/variance bitexact、第一后轮同输入处出现算子差，再固定4seed旧15+新18/暗控制/full/phase/noise原门槛；失败保留消融并撤回，不扫描常量/迭代/坐标特判，不额外seed救回F58。所有原质量/F39/static/复杂动态/1080完整预算与总目标active继续。
+
+
+038已按白名单过滤提交`c0ad3e2`，PairedStages verifier提交后再次通过。两自有Unity实际0且终态、112 F32 gather分量/1024物理校准/原27点九阶段copy逐帧bitexact、两支完整mean map和候选原27逐帧pub对037逐bit同；新增196141 guide通过。Editor观察工具合格保留、只专用入口激活，Runtime/vendor/DI/生产默认未改，F58仍拒绝。264源/38captures/2logs/阶段图与失败依赖记录完整，index空，仅他人Ho-GD计划未跟踪。
+
+039以新阶段证据做单交换算子消融：固定037参考与只恢复后轮stock行归一化的变体，保留first Smem temporal-var/w²、min-pair/RGB、5轮/scale64/格式/参数。mainstock继续；两branch改参考/变体时务必同步物理校准和观察断言，不得沿用branch0==stock，优先同源三输出避免历史配对。短资格stage9两实验支RGBA相同、stage101同输入出现唯一算子差，再原四seed/旧15+新18/暗控制/full/phase/noise原门槛；不能称已证明exchange唯一原因。失败撤回保留，不以额外seed、常量扫描或位置特判救回，合格才完整部署资格。全目标与原质量/F39/static/复杂动态/1080完整预算、每步前后review/过滤提交/踩坑/交接持续active。
