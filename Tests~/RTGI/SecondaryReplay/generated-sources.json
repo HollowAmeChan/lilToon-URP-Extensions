@@ -1,0 +1,26 @@
+[
+  {
+    "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/Lineage.compute",
+    "sha256": "867CE6E98AD19AD18FE74C9FDCE57A2582CD0A5560114FAE00473BA7312850E5"
+  },
+  {
+    "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/Lineage.raytrace",
+    "sha256": "79AAEF4CAE1DC07C6D587BC77D3FE4A51725FFE3CA8EF167636BAFCF284898AB"
+  },
+  {
+    "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/LineageResampling.hlsl",
+    "sha256": "F9C5E0B10E675B8C81983CAC4012EF939D68A3F40C65A18F5A4C43A62F3FC023"
+  },
+  {
+    "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/LineageReservoir.hlsl",
+    "sha256": "F00397F4AF466D4387157E9B135903EBF904A60F97027D52870D16E228C2541E"
+  },
+  {
+    "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/LineageShading.hlsl",
+    "sha256": "839C9C3F0C84BE9BDA3AD4DBC9AEE4A281CE95823892201A801E2EA64D245AE2"
+  },
+  {
+    "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/ReplayCapture.compute",
+    "sha256": "394C46A89CFD447B43A9BCD43F592979BAA3A3DA226EAD2D9632C6D960DAD5D1"
+  }
+]

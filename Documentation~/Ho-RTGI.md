@@ -163,3 +163,6 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 
 
 步骤043：五固定fixture两后端各80帧边界来源观察通过，983040原包和raw/NRD逐位同，age/Jacobian/material/clip/noMatch/kind0恢复/kind3/服务重建有事件与独立谓词核对；disabled可选路径及未执行防御分支另作source可达性说明。[边界证据](../Tests~/RTGI/LineageBranches/README.md)。044推进真实currentTLAS同选择secondary静态重求/oracle，未改生产历史；全部原质量/范围/预算和目标active。
+
+
+步骤044：真实currentTLAS同次级DI选择静态重求两后端各64帧，262144样本exact-view cache LogLuv0差，原GI32/raw/NRD逐bit同，独立CPU BRDF/解析灯/方向oracle过预设数值门槛；packedview差异与两次parity失败完整保留。[重求证据](../Tests~/RTGI/SecondaryReplay/README.md)。045验证previous lastShade/current secondary端点与动态几何oracle，未接confidence/改历史，原全质量/范围/预算和目标active。

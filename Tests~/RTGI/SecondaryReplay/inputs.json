@@ -1,0 +1,26 @@
+{
+  "Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl": {
+    "sha256": "A30FB74ABF632DD3BD51324352BEE3513323FA9E3B6FFE4D6E5932D7DB1EC043",
+    "bytes": 4423
+  },
+  "Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl": {
+    "sha256": "2AEE17FA94A3CC188221E58AC08EC414DA5AAB333AE8A79BBAAE36EC578A12C8",
+    "bytes": 1408
+  },
+  "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl": {
+    "sha256": "CB76CA79A0E8DC2D41F7EE7AC37C88AADD60599C4A08E3B2AF10DC3DDEFE7127",
+    "bytes": 16136
+  },
+  "Runtime/RTDI/ThirdParty/donut/brdf.hlsli": {
+    "sha256": "D84207E122E4E5BE92BAAEF801F6B9BB73A7A25497DE0864197DD95E877B6253",
+    "bytes": 8367
+  },
+  "Runtime/SurfaceBuffer/Shaders/HoSurfaceBufferCommon.hlsl": {
+    "sha256": "A197A13DC7E7EEEA87EC58EC3F28ABF4BA355704102130CD50E38FAE2BA13D0D",
+    "bytes": 2189
+  },
+  "Runtime/RTDI/Shaders/HoRTDIEnvironment.hlsl": {
+    "sha256": "C5C4532C1AF349A89DA3BA151D2AEDDB03DCA23BB3234741E564231A60285F51",
+    "bytes": 991
+  }
+}

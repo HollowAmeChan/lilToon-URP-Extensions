@@ -1,0 +1,19 @@
+{
+  "step": 44,
+  "staticOnly": true,
+  "modes": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "framesPerMode": 16,
+  "exactViewCachedLogLuvMismatchRequired": 0,
+  "allOriginalPacketRawNrdBitwiseRequired": true,
+  "primaryVisibilityRepeatMismatchRequired": 0,
+  "independentOracleTolerance": "max(5e-6,.003*abs(reference))",
+  "lightDirectionAbsoluteTolerance": 1e-05,
+  "envVisibilityTextureOracle": "MeasuredGPUinputs,notindependentCPUoracle",
+  "packedView": "Reportedseparately;not substitute exactgate",
+  "noHistoryResetRelaxation": true
+}

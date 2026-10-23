@@ -1,0 +1,8 @@
+{
+  "observedExit": 1,
+  "observedFramesBeforeFailure": 2,
+  "failedFrame": 1002,
+  "failedPacketIndex": 1293,
+  "notQualified": true,
+  "meaning": "Exact original-output parity failed; no cause inferred yet. Control disables replay dispatch while using same enriched compiled shaders."
+}

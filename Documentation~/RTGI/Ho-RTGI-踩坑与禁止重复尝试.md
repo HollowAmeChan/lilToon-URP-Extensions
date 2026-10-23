@@ -237,3 +237,12 @@ RG/compat常规4T/S/首帧失效/多帧前源和空间源已过，未穷尽age/J
 feature.Create重建会销毁旧context/AS/NRD，必须前帧GPU读回完成后清hook/释放aux、丢旧ledger、新context同步seed，后续基础验证重新取gi.LastContext，不能继续读旧local context。固定同实例重建不等于F39原生3→5增长修复。失效帧允许无source但必须M0/meta0/entry事件，普通有效场景不能用空见证过测试。
 
 来源资格和事件覆盖不证明同secondary transport/currentTLAS replay/confidence。下一先原材质/normal/viewDir/DI选择/旧weight/单位与codec可重建，再独立oracle和端点/双段visibility；不新RNG、不按float反查、不无保护保NRD，不推广诊断buffer开销为产品预算。
+
+
+## F65 / 步骤044：精确方向观测会影响严格parity，静态重放不证明运动端点有效
+
+直接在原Shade增加exactview/材质读取时1002frame1293包radiance word与原版不同；禁额外replay射线仍同，不能归因额外射线或驱动，也不能放宽“原结果不变”门槛。独立Generate后观察dispatch恢复严格parity，保留两失败及各源码。具体编译/排序机制未单独定位，不把它泛化成已确认优化器bug。capture-only未dispatch的replay buffer不可作oracle。
+
+exactsourceview重求与GIcache LogLuv全同，packed16view仍2756编码差，0.0015666relative max不能忽略；未证明16B记录充分。CPUoracle阈值是绝对/相对结合，HDRmaxabs.000818不是固定5e-6以内；GPU visibility/env纹理采样作为输入不等于CPU独立验证TLAS/alpha/环境。
+
+旧secondary材质+开区间primary->旧点通畅，不证明当前geometry仍在旧点。静态replay pass不可直接改StructureRevision/CONTINUE，下一要previous lastShade/current端点及matched primary、双段visibility、零→亮/alpha/域变化oracle，记录和量化/原weight匹配后再动态confidence与成本。原rawGI保守失效/旧色Volume硬重置保持。

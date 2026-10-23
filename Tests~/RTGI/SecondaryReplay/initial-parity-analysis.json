@@ -1,0 +1,22 @@
+{
+  "scope": "Real static currentTLAS secondary->chosenLight replay, plus primary->cachedPoint open-interval consistency. Independent doubleLambert/GGX/Schlick/Smith+recombination;sample environmentradiance/visibility are measuredGPUinputs, not independent CPU TLAS/environmenttexture oracle.",
+  "partial": true,
+  "productionChanged": false,
+  "observedFrames": 2,
+  "replayedPixels": 8192,
+  "exactViewPackedLogLuvMismatches": 0,
+  "packedViewPackedLogLuvMismatches": 39,
+  "primaryVisibilityMismatches": 0,
+  "validAnalyticChoices": 3016,
+  "validEnvironmentChoices": 4352,
+  "oracleMaxAbsError": 1.0914476152645847e-05,
+  "sampleLightOracleViolations": 0,
+  "sampleLightOracleMaxAbsError": 0.0,
+  "lightDirectionOracleMaxAbsError": 0.0,
+  "oracleViolatingComponents": 0,
+  "gpuBrdfMaxAbsDifference": 0.00012265815341061526,
+  "packedViewMaxAbsRadianceDifference": 0.0005662441253662109,
+  "packedViewRelativeErrorP99": 0.0003015876546851359,
+  "packedViewRelativeErrorMax": 0.0005662591429427266,
+  "limitations": "No currentsecondary endpoint reconstruction/normal matching, worldmotion/alpha changes or confidence/history lifecycle accepted. Exact-cache mismatch remains failure under predeclared gate."
+}

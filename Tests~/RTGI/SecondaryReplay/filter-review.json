@@ -1,0 +1,21 @@
+{
+  "step": 44,
+  "runtimeVendorNrdResetChanged": false,
+  "qualifiedScope": "Static actualcurrentTLAS selectedDI secondary->light replay;exactsourceview reproducescachedLogLuv,primaryopenintervalrepeat matches original;independentCPU BRDF/analyticattenuation/envdirection arithmetic",
+  "notQualified": [
+    "No dynamicworld/alphachange/secondaryendpoint currentgeometrymatch",
+    "No independentCPU TLAS visibility or environmenttexture sampling oracle",
+    "No confidence/NRDhistory preserve or productmemory/GPUbudget",
+    "Packedsourceview producesdifferences so16Brecordnotproven strictsufficient"
+  ],
+  "failedControls": [
+    "46880 directinShade enrichedcapture exactparityfailsatframe1002 packet1293",
+    "47620 replaydispatchdisabled samepackedradianceworddifference;otherpacketfields same. Not attributedtoadditionalrays.",
+    "Capturemoved toindependentGenerateSecondary observation dispatch;35372andlaterstrictparitypassed. Specificcompiler/orderingrootcause notseparatelyproven."
+  ],
+  "exactInputProtocol": "Sidecarcontainsactualoriginalsecondary48B/exactsourceview propagatedwithchoice;no new RNG/RIS;lightData/UV/DIinvPdffrozen,GIweightdistinct,alloriginalpacket/raw/NRDoutputsgatedexact",
+  "oracleTolerance": "max(5e-6,.003*abs(doubleReference)) percomponent,not fixedabsoluteonly;GPU visibility/envsampleRadiance are measuredinputs",
+  "quantization": "packed16view separatelycompared;notaccepted as exactview equivalent",
+  "next": "Currentsecondary endpoint reconstruction/geometry+normal/primarymatching andoldzero/visibility transitions withindependentcontrolledoracle;static cachedreplay pass does notpermitstale geometry/NRDhistory.",
+  "logicalBufferScope": "Enrichedbuffer/capturepayload3.375MiB at64\u00b2,not totalVRAM/secondGI AS/NRD/readbacks;diagnosticonly"
+}

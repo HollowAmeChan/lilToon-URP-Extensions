@@ -1,0 +1,77 @@
+{
+  "results/capture-only.json": {
+    "path": "results/capture-only.json.gz",
+    "rawBytes": 20499,
+    "rawSha256": "3E2A69904B7F13E9EFC00BECF2EE33E57176D594FBCDF1E5FBDC0FEB273D5B0C",
+    "archiveBytes": 3966,
+    "archiveSha256": "5EA403ECA0D60842D8A057F5CDFAE109B9B5F0985A84B84733A64A3C9050FA43"
+  },
+  "results/compat.json": {
+    "path": "results/compat.json.gz",
+    "rawBytes": 105739,
+    "rawSha256": "325986D6A25EA440A09D638447AD02773195D31BBC702AB9DE97280F5959DA49",
+    "archiveBytes": 14980,
+    "archiveSha256": "7B60F49B5DAE765DAC58AE0972F56CF4CE1E4718BD495140C3F616DC7F733C76"
+  },
+  "results/initial-parity.json": {
+    "path": "results/initial-parity.json.gz",
+    "rawBytes": 19715,
+    "rawSha256": "EC66A00EBB54B4B67ED891B44034BEE88571EAFE43806591A8A4EEBFF32A49B8",
+    "archiveBytes": 3806,
+    "archiveSha256": "A205196FF119374B40C6379D0315CFD7DFD2CF6E527D0B9FEACF4FA0C9A29AFF"
+  },
+  "results/matrix.json": {
+    "path": "results/matrix.json.gz",
+    "rawBytes": 105740,
+    "rawSha256": "71BA178C624878030B62971DBF41242C91D83E96D49655050E89278630C1DE46",
+    "archiveBytes": 14986,
+    "archiveSha256": "948FCE7A19D99C6FA1022407FD1B5A28CEA7311F533F906F94E3F6BAE3C49CA0"
+  },
+  "results/qualification.json": {
+    "path": "results/qualification.json.gz",
+    "rawBytes": 48046,
+    "rawSha256": "5968104933BD3888EA084338F81DE57B0C2BE69B1DFAA190BFFC985CEC2D40C5",
+    "archiveBytes": 7402,
+    "archiveSha256": "13CF8BCF46F51D4FCBCD91436F374E52ED2DC78C88CCE5D648FC811401788DE1"
+  },
+  "results/capture-only/lineage.bin": {
+    "path": "results/capture-only/lineage.bin.xz",
+    "rawBytes": 4980776,
+    "rawSha256": "1DFD7D39CA1F5195845809C96DDA77301A8CB21ED905EDEE920CB53C5A06D464",
+    "archiveBytes": 437360,
+    "archiveSha256": "EF0A8F228F2FE7AFFCD433FD0D6F09AB5493DED728F859FF7AAC0ED6184044FC",
+    "codec": "xz"
+  },
+  "results/compat/lineage.bin": {
+    "path": "results/compat/lineage.bin.xz",
+    "rawBytes": 159384336,
+    "rawSha256": "337658A9D733E25FE7516A45BD06E062BBBF347A1BDF8ED53808EB90B3697BD6",
+    "archiveBytes": 17267688,
+    "archiveSha256": "A0305765E16B8E022A4637937DC6B242AB24BAB90BC0D098E453132C91182450",
+    "codec": "xz"
+  },
+  "results/initial-parity/lineage.bin": {
+    "path": "results/initial-parity/lineage.bin.xz",
+    "rawBytes": 4980776,
+    "rawSha256": "954720EDB3DC772C94F5D9C6C94242B55EEC29F4B3F374F9330BA2BFC0F462DD",
+    "archiveBytes": 714876,
+    "archiveSha256": "1F22658E46D3061B5F47AACF1E094372E11DB1476184911AD4947B109BBA2BEB",
+    "codec": "xz"
+  },
+  "results/matrix/lineage.bin": {
+    "path": "results/matrix/lineage.bin.xz",
+    "rawBytes": 159384336,
+    "rawSha256": "337658A9D733E25FE7516A45BD06E062BBBF347A1BDF8ED53808EB90B3697BD6",
+    "archiveBytes": 17267688,
+    "archiveSha256": "A0305765E16B8E022A4637937DC6B242AB24BAB90BC0D098E453132C91182450",
+    "codec": "xz"
+  },
+  "results/qualification/lineage.bin": {
+    "path": "results/qualification/lineage.bin.xz",
+    "rawBytes": 39846096,
+    "rawSha256": "AF4AA69C943647F5C8ED705DEAE261868B1267A3E75C9EBC9347381C20A5C0B6",
+    "archiveBytes": 4639232,
+    "archiveSha256": "E62ABAD38F89B0BC246DF2CDABFEBBED0728C94B96F6F021DA9E63C253370A90",
+    "codec": "xz"
+  }
+}

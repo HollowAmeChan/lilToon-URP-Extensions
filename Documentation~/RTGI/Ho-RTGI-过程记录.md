@@ -972,3 +972,27 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 043已按白名单过滤提交`e05b4d7`，LineageBranches verifier提交后再次通过。47056短40frame、48524RG/17244compat各80frame actual0/终态，所有shader/ASdebug/绑定/fence/drift0；每正式后端983040原包/raw/NRD逐bit同、1245184不可变来源检查。Age16687、cameraJac981/material27/noMatch4556/clip8192、kind0 16384/恢复、kind3 58529、服务代际1→2均有真实事件/独立原谓词和旧来源失效核对。272源/3logs/6lossless captures约27.8MiB，Runtime/vendor/reset未改，index与工作树clean。他人描边提交仍保留。
 
 044按已建立的普通+边界来源观察推进静态真实currentTLAS同DI选择secondary重求/oracle，不继续仅增加toy覆盖。审计允许在64²私有记录暂存原secondary材质/normal（明确payload）以重建实际来源，验证原lightData/UV/DI invPdf/source-viewDir（量化影响单独核）及emission、GI编码/SignalScale64/旧weight。不得新RNG/反查float来源；实际Spatial1 lastShade与preS history仍分开。先同世界/同选择输出对照、独立oracle，再世界变化时当前secondary端点/主面匹配和两段visibility、旧零信号/alpha/灯环境域；选择来源资格本身不等于confidence/动态画质。原GI reservoir保守失效/旧色Volume硬重置与NRD reset都在正确性/响应/噪声/能量/成本前保持。SDK可选fallback/permutation/checkerboard未启用；matched validprevious M0防御分支没执行，当前producer invariant不是普遍/故障注入证明，未来producer变更须重审。局部滤波公式线继续搁置，原全质量/F39/static/复杂动态/环境/1080预算及完整目标与review/过滤提交/踩坑/交接规则active。
+
+
+### 044预审（2026-10-23）：真实当前TLAS同DI选择静态secondary重求
+
+043边界来源/原结果等价证据为有效进展，生产reset仍保持。本轮64²静态古堡同源双GI4T/S，私有记录诊断临时增加来源secondary48B和原source-viewDir精确float3，与原meta一起沿相同source-pointer传播；也保留原16bit方向供量化对照。单RW buf保持UAV槽预算，新增字段/原packet/raw/pub必须对未改原版逐bit同。诊断记录只小尺寸，不做生产ABI/1080分配决定。
+
+私有native raygen在原FinalVisibility完成后、Final前，对Spatial1所选来源用原lightData/UV/DI invPdf、原材质/normal/emission/view、同一currentTLAS重求secondary->light可见性与辐射，不新RNG；另重复primary->secondary开区间射线对原FinalVisibility值核对（这不证明端点有效，静态世界限定）。精确view编码后应与旧GI LogLuv严格同，packedview差异单独统计不当修复；若strict不合就保留实际差异/机制，不放宽成可保历史。
+
+独立double CPU oracle从已记录的真实材质、normal、view和光方向计算Lambert+GGX/Schlick/Smith再按sample radiance/DI invPdf/pdf+emission重组，绝对5e-6或相对.003数值筛选；GPU采样环境radiance与真实可见性只是记录输入，不能冒称CPU独立TLAS/环境纹理oracle。解析灯额外按实际light buffer核attenuation，环境方向/UV核固定映射。先短8frame/mode，再16frame/mode与compat，compile/绑定/UAV/debug/fence/drift、资源恢复及实际正样本/环境/解析灯见证齐全。源/初失败/完整流/前后review/踩坑/交接/白名单提交继续。不是动态变化/alpha端点重建/confidence/NRD策略接纳，原全部质量/F39/static/动态/环境/1080预算与全目标active。
+
+
+### 044终态（2026-10-23，待过滤提交）：真实currentTLAS同DI选择secondary静态重求通过
+
+**实现/范围：** Editor64²诊断暂存来源secondary48B和exact source-view float3，真实DI lightData/UV/invPdf、原emission/normal/材质随来源继承。独立CaptureReplaySource在Generate后读取原输入，避免原Shader局部量观测；单RW buf，产品Runtime/vendor/DI/NRD/reset不改。原FinalVisibility后/Final前native重求Spatial1来源的secondary->同灯/环境样本currentTLAS visibility/radiance，无新RNG；重复primary->cachedPoint开区间对原visibility，仅静态限定、端点geometry尚未验证。
+
+35372短16frame、43728RG/34696compat各64frame allactual0、compile/warning/Property/UAV/ASdebug/fence/drift0、hook/资源恢复。原GI32全部pool与raw/NRD所有RGBA逐bit同；每正式后端262144 selected samples exact-view replay LogLuv与cache0差、primary visibility0差，实际解析灯107499/环境135571。packed16view有2756 word差，radiance maxabs.0159502、relative p99.00030657/max.00156663，不当strict等价/充分16B记录。
+
+**独立oracle：** double oct/material解码+Lambert/GGX/Smith/Schlick和sample radiance/DI invPdf/pdf+emission重组，component门槛max(5e-6,.003*abs(ref))，正式maxabs.000818014但0超界；实际light buffer解析attenuation maxabs.0000413005/0超界，env UV/解析方向maxabs7.628e−7<1e−5。GPU visibility/env texture radiance是记录输入，不冒称独立CPU TLAS/alpha/环境纹理oracle。两后端结果一致。
+
+**严格失败/隔离：** 46880初actual1，前2frame exactreplay/输出正常，1002frame1293包parity错；47620 capture-only禁replay dispatch仍同点actual1，只有packed radiance1176951723/1176689579不同，其它packet字段同。原数据/源/partial2frames保留，不放宽。把exactview/材质读取从原Shade局部路径移到独立观察dispatch后严格parity恢复；不进一步无证归因特定编译/排序或驱动。初partial不是整组资格、capture-only未写replay buffer不是transport证据。
+
+**过滤/成本：** 保留Editor可选静态replay/独立观察/失败witness和验证入口，SDK原文件不改。SecondaryReplay281源对象/5完整logs/10lossless report-stream、原两失败/CPUoracle/各量化差/contract/filter-review/verify齐全；完整大流xz原raw SHA复核。逻辑buffer3538944B=3.375MiB/64²非总VRAM/第二GI AS-NRD/射线/读回预算。只本步Editor/证据/六RTGI文档白名单，旧他人描边提交保留。未接动态confidence，生产motion reset限制仍在，全质量/F39/static/动态MC/环境/1080预算和总目标active。
+
+**045直接动作：** 受控current secondary端点重建/normal/material匹配和previous actual lastShade重求。保持原choice/weight/原sourceview、当前matched primary，固定实例移动secondary/遮挡和零→亮/alpha几何oracle，不把开区间到旧点可见或旧材质重放当当前端点仍有效。正确性/变化像素响应/噪声/能量/成本之后才NRD生命周期，GI reservoir保守失效与旧色Volume硬重置继续；局部滤波公式线搁置，每步review/过滤提交/踩坑/交接继续。

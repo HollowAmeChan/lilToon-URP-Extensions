@@ -1,0 +1,18 @@
+#pragma kernel Capture
+#pragma use_dxc
+#pragma target 6.0
+struct Packet{float3 position;uint misc;uint radiance;float weight;uint normal;uint unused;};
+StructuredBuffer<Packet> _SourcePacket;
+StructuredBuffer<uint4> _Records;
+RWStructuredBuffer<Packet> _Packet;
+RWStructuredBuffer<uint4> _Metadata,_Origin;
+int _Width,_Height,_RowPitch,_ArrayPitch,_Pool,_Stage,_Linear;
+[numthreads(8,8,1)]
+void Capture(uint3 id:SV_DispatchThreadID)
+{
+    if(id.x>=_Width||id.y>=_Height)return;uint pixelIndex=id.y*_Width+id.x;
+    uint address=_Linear!=0?pixelIndex:(id.y/16)*_RowPitch+(id.x/16)*256+(id.y%16)*16+id.x%16+_Pool*_ArrayPitch;
+    uint target=_Stage*_Width*_Height+pixelIndex;
+    if(_Linear!=0){uint start=18*_ArrayPitch+pixelIndex*8;uint4 a=_Records[start],b=_Records[start+1];Packet p;p.position=asfloat(a.xyz);p.misc=a.w;p.radiance=b.x;p.weight=asfloat(b.y);p.normal=b.z;p.unused=b.w;_Packet[target]=p;_Metadata[target]=_Records[start+2];_Origin[target]=_Records[start+3];}
+    else{_Packet[target]=_SourcePacket[address];_Metadata[target]=_Records[address*6];_Origin[target]=_Records[address*6+1];}
+}
