@@ -1028,3 +1028,7 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 **后审/过滤/成本：** 接纳仅Editor受控端点验证设施与证据，位置≤2bias/normalDot≥.9不是任意surface身份保证。静止primary/常量plane材质不覆盖移动primary、变形、parallax视角材质、环境域；不接动态confidence/历史保留。277精确源、3完整logs、6lossless capture、原错误模型/contract/filter-review/独立verify齐全，大流xz原rawSHA复核约23.80MiB。逻辑buffer4194304B=4MiB，不含第二GI AS/NRD、rays、引擎与读回，非产品VRAM/时间预算。只本步Editor/证据/六RTGI文档白名单，他人描边提交保留。
 
 **046直接动作：** 先审current-primary重投影对应和同旧样本transport变化信号，受控probe位置/法线不能直接推广任意模型。限定小尺寸、固定实例、原权重/选择，明确primary匹配/不匹配、旧零样本与当前可见性失效，先正确性与改变像素响应/噪声/能量、成本后才候选NRD生命周期；GI reservoir保守失效和旧色/Volume硬重置保持。禁止用全白confidence或盲换StructureRevision；局部公式线仍搁置。原全质量/F39/static/复杂动态/环境/1080预算与总目标active，每步pre/post review、过滤提交、踩坑和压缩交接继续。
+
+045已白名单过滤提交`af2d1ff`，提交后EndpointReplay verifier再次通过，工作树/index clean。277源/3logs/6lossless captures约23.80MiB，16短+RG/compat各32frame actual0，原输出全逐bit同；每正式126976 previous actualShade关系核，独立plane/alpha/BRDF及visibility全过。两个各4096 old-open/endpoint-missing反例、blocker961/恢复173/alpha4096主段变化见证，初Lambert/F0zero错误模型完整保留。Runtime/vendor/NRD/reset不改，生产动态降噪收益仍未交付。
+
+046下一步先审生产primary重投影和DI32同采样confidence映射，限定小尺寸当前primary对应/同旧样本变化信号；不无限增加来源诊断，不直接把probe匹配或全白confidence当历史允许。需具体验证改变像素响应/噪声/能量与成本后再接纳NRD生命周期，GI reservoir与旧色/Volume保守重置保持。全部原质量/F39/static/复杂动态/环境/1080预算及用户逐步review/过滤提交/踩坑/交接仍active；可见Player短测试授权已保存。

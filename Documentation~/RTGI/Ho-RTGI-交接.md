@@ -748,3 +748,7 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 **046直接动作：** 先审current-primary重投影对应和同旧样本transport变化信号，受控probe位置/法线不能直接推广任意模型。限定小尺寸、固定实例、原权重/选择，明确primary匹配/不匹配、旧零样本与当前可见性失效，先正确性与改变像素响应/噪声/能量、成本后才候选NRD生命周期；GI reservoir保守失效和旧色/Volume硬重置保持。禁止用全白confidence或盲换StructureRevision；局部公式线仍搁置。原全质量/F39/static/复杂动态/环境/1080预算与总目标active，每步pre/post review、过滤提交、踩坑和压缩交接继续。
 
 当前没有本步骤残留验证进程；主机其它Unity工程实例不属于本步骤，不关闭。尚未提交的是本步骤Editor三文件及新meta、EndpointReplay证据与六文档；提交后补实际hash。当前用户短暂可见Player授权继续有效，不再为同类约10秒真实enabled-camera测试重复确认。目标工具仍active且引用实施规划，其中六项强制流程始终适用。
+
+045已白名单过滤提交`af2d1ff`，提交后EndpointReplay verifier再次通过，工作树/index clean。277源/3logs/6lossless captures约23.80MiB，16短+RG/compat各32frame actual0，原输出全逐bit同；每正式126976 previous actualShade关系核，独立plane/alpha/BRDF及visibility全过。两个各4096 old-open/endpoint-missing反例、blocker961/恢复173/alpha4096主段变化见证，初Lambert/F0zero错误模型完整保留。Runtime/vendor/NRD/reset不改，生产动态降噪收益仍未交付。
+
+046下一步先审生产primary重投影和DI32同采样confidence映射，限定小尺寸当前primary对应/同旧样本变化信号；不无限增加来源诊断，不直接把probe匹配或全白confidence当历史允许。需具体验证改变像素响应/噪声/能量与成本后再接纳NRD生命周期，GI reservoir与旧色/Volume保守重置保持。全部原质量/F39/static/复杂动态/环境/1080预算及用户逐步review/过滤提交/踩坑/交接仍active；可见Player短测试授权已保存。
