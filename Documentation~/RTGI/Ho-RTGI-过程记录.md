@@ -884,3 +884,8 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 **F39有限审计：** 当前Unity6000.3.15f1/RTX4060/617.42同018。最小probe确实Add后Build，旧mirror/base0已做、原Ho/纯Unity3→5也scratch错、initial5干净。有限核UnityAPI/Microsoft scratch契约/Unity内存文章/本版notes未识别可行动新fix，不推断所有上游/后续版本均无fix，URL/局限native-audit保留；未重跑旧flags/mirror/growth矩阵，F39仍开。
 
 **过滤/失败保留：** 1163去重精确source对象、4完整build/player logs、两套全payload逐文件SHA/无HoGIGpuProbe.dll、2原report lossless gzip、18PNG/analysis/contract/filter-review/reference/verify完整。初RG wrapper同ordered记录persist后再append成双entry，原JSON与源码保留initial-metadata，去重为一次真实build/Player；compat wrapper已修、无重跑RG。offline verifier最初把Unity空error字符串误当null，按无error文本修、原报告SHA不变。只保留Editor可选构建/本轮证据/六RTGI文档白名单，Ho-GD计划排除。截图/读回/反射JSON开销不叫产品全帧GPU成本，原全质量/F39/static/复杂动态MC/环境混合/1080完整预算及总目标active。
+
+
+040已按白名单过滤提交`b4e8b65`，ComplexMotion verifier提交后再次通过。RG36184/10356、compat35500/40688四自有进程actual0/终态，各240真实camera帧/224GI更新、22checks、8固定instances/3skin/1Cutout，18真实PNG及完整两payload核SHA；Runtime/Shader/DI未改，Editor仅可选构建入口/场景。1163原源/4logs/初RG双entry元数据与修正保留，当前source看compat，旧RG按原snapshot。index空，仅Ho-GD计划未跟踪。F39同host/有限主源核查没有新行动依据，未重跑旧矩阵，不能称已解决。
+
+041先沿用户要求看DI过程/固定参考而非再扫滤波：已冻DI31/32持续记录片段、DynamicVisibility/PrimaryMotion/VisibilityConfidence与代码；直接保NRD平均噪声虽降但阶跃changedL1 .5709失败，生产依赖同旧采样当前TLAS重求confidence。GI motion实测48/48 reset/raw temporal0是新收敛瓶颈，但当前GI黑MV/白confidence且未接相同保护，禁止一行改StructureRevision/CONTINUE。先逐字段核GI历史packet/secondary transport/来源pixel-frame/RNG、primary匹配、灯/环境域，建立同历史GI采样重求和独立oracle/同源比较所需契约；缺元数据明确记录，不能新采样充当confidence。保留GI reservoir保守失效、旧颜色/Volume硬重置，正确性和变化像素残影/噪声证据后才限域生命周期候选。归一化/phi/迭代公式线继续搁置，原全质量/F39/static/复杂动态MC/环境混合/1080完整预算及全目标与review/过滤提交/踩坑/交接规则active。
