@@ -1,0 +1,22 @@
+{
+  "step": 37,
+  "predeclaredSeeds": [
+    0,
+    104729,
+    5347609,
+    6396185
+  ],
+  "warmup": 64,
+  "measured": 256,
+  "iterations": 5,
+  "signalScale": 64,
+  "minimumWeightedLocalL1Reduction": 0.2,
+  "noiseScreenFilteredToRawVarianceRatio": 0.15,
+  "hardRegressionLimit": "max(5e-6, abs(reference)*.05, 2*sqrt(paired four-seed empirical error delta SE^2 + reference batch SE^2))",
+  "referenceDomains": "Legacy16 (15 qualified + unresolved dark), new18 qualified; 27 local per-frame coordinates. Do not drop counterexample141157.",
+  "fullAnd16Phases": "Original strict 5% or 5e-6 gate; no old pass -> fail.",
+  "comparison": "Every actual frame branch0 RGBA bitwise baseline, physical resolve calibration bitwise publication, same input identifiers/value-copy matrices/settings/time.",
+  "stop": "Reject on insufficient new18 benefit, any hard regression/domain/noise failure; preserve evidence, remove override, no scalar/iteration scans.",
+  "productionAcceptance": "Not provided by this four-seed static screen. Requires full8, dynamic/HDR/Player/GPU.",
+  "scope": "One DI-derived diffuse policy bundle only in Editor branch1 pipeline9/10; no Runtime/vendor/DI/specular/F0 changes."
+}

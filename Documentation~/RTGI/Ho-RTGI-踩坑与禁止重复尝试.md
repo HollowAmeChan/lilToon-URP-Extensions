@@ -174,3 +174,12 @@ step>4 factor2支持域名义L1仅−8.84%未达原20%，更重要是后两seed 
 空场景不代表URP pool已初始化，初小fixture在Prepare失败，尚无shared frame；wrapper又因null路径Copy丢actual child exit。只能保wrapper1/child未知，不能从EditorApplication.Exit源码补观察值。先64²空相机3request初始化（无GI/AS），先persist退出元数据，可选路径有值才Copy。旧F17同类初始化已知，不再省warmup。
 
 同源输入的3个instance输出bit同/单支reset只影响该支/统一reset重同，证明诊断资格，不代表质量或性能。IReadOnly IN标识、独立OUT/pool/constants与Native数据拷贝要保持；不能嵌套调用后继续用上个native pointer。诊断资源字段只partial logical payload不能叫VRAM。DI成熟diffuse策略也只能GI private单分支对照，不能混入spec/F0或无控制直接生产化。
+
+
+## F58 / 步骤037：DI成熟diffuse bundle的总体收益不能豁免旧控制
+
+同GI实际输入独立stock/DI-derived NRD对照、1024物理发布校准bitexact、新18误差−42%/旧15总体−31%、full2→4/4，仍旧196141 B和141157 G/B三通道超过预设硬退化界。该完整bundle拒绝生产接纳/搁置，源/失败/收益全部保留；不能靠总体改善、DI成功、噪声筛选通过或门槛临界就改标准。四seed经验SE不是正式置信保证，不直接用额外seed重开预先声明的拒绝路径；先查机制。
+
+Smem variance预模糊也是DI diffuse策略一部分，不能只拷w²输出却称完整DI策略；DI BOTH/spec/F0/material guide不可整份复制到GI DIFF。物理输出要GPU RGBA16F还原并以原版逐帧校准，不能只对demodulated signal评分或CPU还原无资格。新增读回/两NRD为诊断成本，不是产品预算。
+
+后续允许的是新阶段证据：同源两支原27点加196141，实际每ordinal的RGB/variance，先证明观察不改037输出，再定位哪一阶段伤旧点；不是直接重复接纳该bundle或扫phi/epsilon/迭代/ratio、坐标特判。原F51/F53/F55仍搁置；原质量/F39/static/动态/1080缺口不因本轮partial收益关闭。

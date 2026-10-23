@@ -1,0 +1,16 @@
+{
+  "step": 37,
+  "decision": "Reject production adoption and shelve this exact diffuse bundle despite substantial aggregate benefit. Do not waive three channel hard-regression gates.",
+  "comparisonQualified": true,
+  "eligible": false,
+  "filteredToCommit": "All three existing Editor files restored to HEAD (85ecb7a source); private policy class/meta and five shaders/meta removed after exact byte capture. Runtime, vendor, DI unchanged.",
+  "sourceBeforeRemovalCheckedAgainst": "matrix-run.json sources SHA256",
+  "productionDefault": {
+    "iterations": 5,
+    "signalScale": 64,
+    "giColorPool": "32F"
+  },
+  "retained": "Tests evidence/reconstructor/analysis, RTGI process/pitfall/handoff and current stock qualification",
+  "notDone": "No further8/HDR/Player/GPU for rejected bundle; full goal remains active.",
+  "next": "Stage observations of same-input stock/DI-derived pair at old failures and new bright-edge controls; locate temporal-var/bandwidth/exchange contribution before a new mechanism candidate. Do not add position-specific masks or scalar scans."
+}

@@ -1,0 +1,54 @@
+--- vendor/Atrous
++++ GI-private/Atrous
+@@ -8,15 +8,15 @@
+ license agreement from NVIDIA CORPORATION is strictly prohibited.
+ */
+ 
+-#include "NRD.hlsli"
+-#include "ml.hlsli"
+-
+-#include "RELAX_Config.hlsli"
+-#include "RELAX_Atrous.resources.hlsli"
+-
+-#include "Common.hlsli"
+-
+-#include "RELAX_Common.hlsli"
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/NRD.hlsli"
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/ml.hlsli"
++
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Config.hlsli"
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.resources.hlsli"
++
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/Common.hlsli"
++
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Common.hlsli"
+ 
+ [numthreads(GROUP_X, GROUP_Y, 1)]
+ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
+@@ -216,7 +216,11 @@
+                 float4 sampleDiffuseIlluminationAndVariance = gIn_Diff_Variance[p];
+                 float sampleDiffuseLuminance = Color::Luminance(sampleDiffuseIlluminationAndVariance.rgb);
+ 
+-                float diffuseLuminanceW = abs(centerDiffuseLuminance - sampleDiffuseLuminance) * diffusePhiLIlluminationInv;
++                float pairDiffuseVar = min(max(0.0, centerDiffuseVar), max(0.0, sampleDiffuseIlluminationAndVariance.a));
++                // Avoid cancellation between opposing RGB changes at colored
++                // shadow boundaries; retain the same luminance units/bandwidth.
++                float diffuseColorDistance = Color::Luminance(abs(centerDiffuseIlluminationAndVariance.rgb - sampleDiffuseIlluminationAndVariance.rgb));
++                float diffuseLuminanceW = diffuseColorDistance / max(1.0e-4, gDiffPhiLuminance * sqrt(pairDiffuseVar));
+                 diffuseLuminanceW = min(gDiffMaxLuminanceRelativeDifference, diffuseLuminanceW);
+                 diffuseLuminanceW *= diffuseLuminanceWeightRelaxation;
+ 
+@@ -247,7 +251,12 @@
+ #endif
+ 
+ #if( NRD_DIFF )
+-    float4 filteredDiffuseIlluminationAndVariance = float4(sumDiffuseIlluminationAndVariance / float4(sumWDiffuse.xxx, sumWDiffuse * sumWDiffuse));
++    // Use fixed pair exchange coefficients instead of a row-dependent
++    // normalization. Rejected neighbor weight stays at the center.
++    const float diffuseCenterKernel = 0.44198 * 0.44198;
++    float retainedDiffuseWeight = saturate(1.0 - (sumWDiffuse - diffuseCenterKernel));
++    float4 diffuseNeighborSum = sumDiffuseIlluminationAndVariance - centerDiffuseIlluminationAndVariance * float4(diffuseCenterKernel.xxx, diffuseCenterKernel * diffuseCenterKernel);
++    float4 filteredDiffuseIlluminationAndVariance = diffuseNeighborSum + centerDiffuseIlluminationAndVariance * float4(retainedDiffuseWeight.xxx, retainedDiffuseWeight * retainedDiffuseWeight);
+     #if( NRD_MODE == SH )
+         // Luminance output is expected in YCoCg color space in SH mode, converting to YCoCg in last A-Trous pass
+         if (gIsLastPass == 1)

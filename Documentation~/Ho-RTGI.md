@@ -142,3 +142,6 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 035补充（2026-10-23）：stockA/B/no-op当前四seed全raw/pub均值图与数值endpoint一致；新增输入记录与序列化/失败停止修复，历史漏项/device removal/明确abort保留。Tests~/RTGI/Reproducibility有完整证据；未确认历史raw差异唯一原因，不补发034资格。036同源GI双NRD对照先资格，Runtime未改、目标active。
 
 036补充（2026-10-23）：Editor-only同源输入双NRD原版/no-op对照资格通过（1024实际GI观察帧RGBA bit同、历史独立、baseline均值不变），资料Tests~/RTGI/SharedInput；初allocation/wrapper失败保留。037才评估DI成熟diffuse策略在GI输入上的效果，未改产品NRD配置/画质，目标active。
+
+
+步骤037：同源GI实测DI diffuse bundle，新18/旧15总体reference L1改善42%/31%、full2→4/4，仍旧196141 B与141157 G/B硬退化，已拒绝生产接纳并撤回Editor覆盖；原stock5过滤复核过。1024帧物理GPU resolve对生产发布bitexact、全部数据/原源/取舍见[DiffusePolicy](../Tests~/RTGI/DiffusePolicy/README.md)。038先双分支逐轮观察定位旧退化，不能放宽原门槛/直接移植；全部原质量/范围/预算和目标active。

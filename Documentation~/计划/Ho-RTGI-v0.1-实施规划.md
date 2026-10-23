@@ -254,3 +254,7 @@
 步骤035：当前stockA/B/no-op严格重现恢复，记录缺字段/编排失败停止修复，历史漏项/TDR/abort原样保留；小负载恢复与短资格通过后才运行有效矩阵。无画质/产品GPU预算结论，Runtime不改。036先同源输入双NRD基线资格再算法，所有旧质量/范围/预算与用户强制条件继续active。
 
 步骤036：same actual GI input/common/settings的2独立NRD branch与baseline在1024帧全RGBA bit同，小资格证明reset隔离/恢复；初URP初始化与wrapper退出记录失败保留。仅Editor hook，无Player行为/画质/预算改变。037依M2同输入评估GI-private DI diffuse派生bundle，先exact差异与全控制资格，所有原范围/预算/用户强制要求继续active。
+
+
+步骤037：同源GI实测DI diffuse bundle，新18/旧15总体reference L1改善42%/31%、full2→4/4，仍旧196141 B与141157 G/B硬退化，已拒绝生产接纳并撤回Editor覆盖；原stock5过滤复核过。1024帧物理GPU resolve对生产发布bitexact、全部数据/原源/取舍见[DiffusePolicy](../../Tests~/RTGI/DiffusePolicy/README.md)。038先双分支逐轮观察定位旧退化，不能放宽原门槛/直接移植；全部原质量/范围/预算和目标active。
+用户每步过滤提交、前后review/收益取舍、长期无收益搁置、踩坑禁重试和跨压缩交接要求继续约束后续；短暂可见Player授权保留，本轮拒绝候选无需再跑该部署资格。

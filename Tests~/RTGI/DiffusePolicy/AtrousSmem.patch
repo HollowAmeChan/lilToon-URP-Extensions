@@ -1,0 +1,83 @@
+--- vendor/AtrousSmem
++++ GI-private/AtrousSmem
+@@ -8,15 +8,15 @@
+ license agreement from NVIDIA CORPORATION is strictly prohibited.
+ */
+ 
+-#include "NRD.hlsli"
+-#include "ml.hlsli"
+-
+-#include "RELAX_Config.hlsli"
+-#include "RELAX_AtrousSmem.resources.hlsli"
+-
+-#include "Common.hlsli"
+-
+-#include "RELAX_Common.hlsli"
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/NRD.hlsli"
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/ml.hlsli"
++
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Config.hlsli"
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.resources.hlsli"
++
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/Common.hlsli"
++
++#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Common.hlsli"
+ 
+ #if( NRD_DIFF )
+     groupshared float4 s_Diff[BUFFER_Y][BUFFER_X];
+@@ -53,7 +53,7 @@
+     float4 specularSum = 0;
+ #endif
+ #if( NRD_DIFF )
+-    float4 diffuseSum = 0;
++    diffuseVariance = 0;
+ #endif
+ 
+     static const float kernel[2][2] =
+@@ -77,7 +77,8 @@
+ #endif
+ #if( NRD_DIFF )
+             float4 diffuse = s_Diff[sharedMemoryIndexP.y][sharedMemoryIndexP.x];
+-            diffuseSum += diffuse * k;
++            float lumaDiff = Color::Luminance(diffuse.rgb);
++            diffuseVariance += k * max(0, diffuse.a - lumaDiff * lumaDiff);
+ #endif
+         }
+     }
+@@ -87,9 +88,7 @@
+     specularVariance = max(0, specular2ndMoment - specular1stMoment * specular1stMoment);
+ #endif
+ #if( NRD_DIFF )
+-    float diffuse1stMoment = Color::Luminance(diffuseSum.rgb);
+-    float diffuse2ndMoment = diffuseSum.a;
+-    diffuseVariance = max(0, diffuse2ndMoment - diffuse1stMoment * diffuse1stMoment);
++    // Temporal variance was accumulated above, without spatial mean contrast.
+ #endif
+ }
+ 
+@@ -254,6 +253,7 @@
+ 
+         float sumWDiffuse = 0;
+         float4 sumDiffuseIlluminationAnd2ndMoment = 0;
++        float sumDiffuseTemporalVariance = 0;
+         #if( NRD_MODE == SH )
+             float4 sumDiffuseSH = 0;
+         #endif
+@@ -342,6 +342,8 @@
+ 
+                 sumWDiffuse += wDiffuse;
+                 sumDiffuseIlluminationAnd2ndMoment += wDiffuse * sampleDiffuseIlluminationAnd2ndMoment;
++                float sampleDiffuseTemporalVar = max(0.0, sampleDiffuseIlluminationAnd2ndMoment.a - sampleDiffuseLuminance * sampleDiffuseLuminance);
++                sumDiffuseTemporalVariance += wDiffuse * wDiffuse * sampleDiffuseTemporalVar;
+                 #if( NRD_MODE == SH )
+                     sumDiffuseSH += wDiffuse * s_DiffSH[sharedMemoryIndexP.y][sharedMemoryIndexP.x];
+                 #endif
+@@ -365,7 +367,7 @@
+         sumDiffuseIlluminationAnd2ndMoment /= sumWDiffuse;
+         float diffuse1stMoment = Color::Luminance(sumDiffuseIlluminationAnd2ndMoment.rgb);
+         float diffuse2ndMoment = sumDiffuseIlluminationAnd2ndMoment.a;
+-        float diffuseVariance = max(0, diffuse2ndMoment - diffuse1stMoment * diffuse1stMoment);
++        float diffuseVariance = sumDiffuseTemporalVariance / (sumWDiffuse * sumWDiffuse);
+         float4 filteredDiffuseIlluminationAndVariance = float4(sumDiffuseIlluminationAnd2ndMoment.rgb, diffuseVariance);
+         gOut_Diff_Variance[pixelPos] = filteredDiffuseIlluminationAndVariance;
+         #if( NRD_MODE == SH )

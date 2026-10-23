@@ -71,3 +71,6 @@
 步骤035当前stockA/B/no-op四seed全raw/pub均值图与端点数值状态逐bit重现，记录序列化与失败停止已修复；历史漏项/device crash/误排/partial全部保留。[完整重现性证据](../../Tests~/RTGI/Reproducibility/README.md)。历史034仍未资格，036同源GI双NRD基线先资格，不重开弱候选，全部原缺口active继续。
 
 步骤036同一实际GI输入双独立NRD基线/no-op通过：1024观察帧完整RGBA逐bit同，baseline整图均值对旧基线不变，单支/统一reset证明历史隔离。[共享输入资格](../../Tests~/RTGI/SharedInput/README.md)。仅Editor hook/诊断，未修画质；037评估DI成熟diffuse策略单分支，不直接认定GI最佳，全部原缺口active。
+
+
+步骤037：同源GI实测DI diffuse bundle，新18/旧15总体reference L1改善42%/31%、full2→4/4，仍旧196141 B与141157 G/B硬退化，已拒绝生产接纳并撤回Editor覆盖；原stock5过滤复核过。1024帧物理GPU resolve对生产发布bitexact、全部数据/原源/取舍见[DiffusePolicy](../../Tests~/RTGI/DiffusePolicy/README.md)。038先双分支逐轮观察定位旧退化，不能放宽原门槛/直接移植；全部原质量/范围/预算和目标active。

@@ -1,0 +1,26 @@
+{
+  "Tests~/RTGI/LocalReference/results/reference.json.gz": {
+    "sha256": "AFB0CF247D4B8E93B5B770D91E0D04562CD85DEEB3B1641EE927774008BC17DB",
+    "bytes": 1545868
+  },
+  "Tests~/RTGI/DenseReference/results/fixed-reference.json": {
+    "sha256": "E45D050F77519F949726046A29EB783BAFA3C8E93CE2E24C988651979543E664",
+    "bytes": 3831167
+  },
+  "Tests~/RTGI/DenseReference/results/fixed-controls.json": {
+    "sha256": "95D3FF609CA3F18C97235C14EC3F2FD17F4226A9FF28727A17DA6B8CA20A7FE0",
+    "bytes": 6399244
+  },
+  "Documentation~/RTDI/技术/Ho-RTDI-DiffuseExchange.md": {
+    "sha256": "847DED6F455FB4B357D11FD2005168F5C3768C8D378ACFAC5EC995D0FC42B02B",
+    "bytes": 4739
+  },
+  "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl": {
+    "sha256": "0D1EC5208684217BDE4F532A89408990AF35FAE0A393C6EB5BBB525BFCF8928B",
+    "bytes": 14364
+  },
+  "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl": {
+    "sha256": "78F736102C5D27CEBA38B3F116E41AA27C2409210D95F162FD74B71E5766F40D",
+    "bytes": 22765
+  }
+}

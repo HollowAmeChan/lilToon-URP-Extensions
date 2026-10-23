@@ -573,3 +573,19 @@ SharedInput约11MiB，259source/9新文本、4完整log/22capture gzip、Frame.c
 **037直接动作：** 已读并冻结DI技术Ho-RTDI-DiffuseExchange.md及实际HoRTDINrdAtrous/Smem派生（SharedInput/di-reference）。以原stock作为branch0，在branch1对一个GI-private diffuse策略bundle做可精确重建评估：首轮只temporal variance用w²传播（不混入空间均值差），后续pair bandwidth/RGB contrast与拒绝Gaussian mass留center。保持5轮/时间历史/原资源/单位64/原参数，specular/F0/DI身份guide不带入；不要简单复制BOTH manifest。先审实际DI body与NRD_DIFF变体的exact patch/源SHA，再64²/实际短资格，之后旧15+新18/暗控制/full/16phase/noise/重置与后续部署。若无实质收益或硬退化就撤回，不重开cap3/floor/ratio扫描。此是计划M2允许的同Ho输入原版/DI派生对照，不能自动认为DI成功就GI接纳。原F39/static/复杂动态/1080完整预算和目标active继续。
 
 036已按白名单过滤提交`dfa3dd4`，SharedInput verifier提交后再次通过：64²历史reset隔离、实际GI1024观察帧全RGBA逐bit等价、旧baseline全图均值不变、初allocation/wrapper失败完整保留。四自有进程终态、index空，Runtime只有UNITY_EDITOR hook/Player预处理排除，Ho-GD计划未跟踪不纳入。037基于已冻结DI DiffuseExchange实际派生，仅branch1 GI-private diffuse bundle同源对照，先exact source/小资格再新旧控制/full/phase/noise，原全部目标/质量/F39/动态/HD预算继续active。
+
+
+### 037交接终态（2026-10-23，待过滤提交）：DI diffuse同源实测有总体收益、旧控制硬退化拒绝
+
+**实际范围：** 按预审只Editor branch1 pipeline9/10的一个固定DI mature diffuse bundle（Smem预模糊temporal variance、w²传播；后续pair min variance/RGB contrast、拒绝Gaussian质量留center）。原stock构造两个DIFF body，逐anchor/DI片段/SHA可重建，无spec/F0/guide/参数/5轮/单位64/格式/Runtime/vendor/DI改变。主baseline与branch0原版逐帧RGBA bitexact，branch1有实际变化。
+
+**验证：** 四自有进程29048小64²/64帧、17236真实短98请求/32比较帧、31812正式1314请求/1024观察帧、13432过滤stock98请求/32比较帧，均actual0。有效过程API/compile/Property/UAV/fence/drift0、hook/Shader/kernel/pool/OUT恢复释放。正式1280含warm实际callback，Native9×1280+10×5120保持5轮。同源settings/common/time value-copy，物理RGBA16F GPU resolve先用branch0对生产发布逐帧校准1024次0差；stock raw/pub均值图与026逐byte同，候选raw均值及逐帧raw实际同，comparisonQualified=true。
+
+**收益与失败：** 固定4seed64warm256，新18 reference L1 .462545→.266596（−42.36%），旧15 .304146→.208852（−31.33%），full2→4/4过，pooledRGB−4.167/−4.035/−3.671%，phase失败7/11/11/7→3/3/8/2，无pass→fail，但pooled仍3失败。方差×2.94/3.55/8.49/3.17，filtered/raw .00496～.00744过静态筛选，未验证动态。旧196141 B误差增6.299e−6>界5.913e−6；141157 G增2.171e−5>1.891e−5、B增8.084e−6>5e−6。旧B/reference .9435→.8732、.9963→.9126。原硬门槛不放宽，eligible=false，拒绝生产接纳，不继续8seed/HDR/Player/GPU。
+
+**过滤/成本：** 原候选所有源字节/2patch/5Shader/meta/工具、40真实capture lossless gzip、4完整logs、272source对象/SHA和全部34点/相位/方差分析保留Tests~/RTGI/DiffusePolicy约20.6MiB，verify通过。新增类/meta/5shader/meta/覆盖入口已移除，Castle/LocalStage/SharedInput精确恢复HEAD源；过滤后stock/no-op32帧RGBA bitexact。当前build只写Tests重建目录，历史runner拒绝缺入口；不能回滚产品凑旧SHA。额外2NRD/多RT/读回只诊断，不叫产品GPU预算。四进程终态/active=null，白名单只证据和六RTGI文档，Ho-GD计划排除。
+
+**后审：** 是有因果资格的机制收益与失败边界，未交付生产修复。F58禁止因聚合改善直接重开该完整bundle或放宽旧控制；不扫描phi/epsilon/迭代/ratio、不按坐标修复。038先保持同源两个独立分支，用原27+196141至少28点实际Pre/Temporal/Clamp/首Atrous/各ordinal的RGB/variance观察定位旧退化；observer先不改037原版和候选输出，才有限新采证据。新机制前不定算法变体，不重采MC/无新目的完整矩阵。所有原质量/F39/static/复杂动态/1080完整预算和总目标active继续。
+
+
+**038直接执行顺序：** 先git status/goal/最新交接核现状；勿找已移除类，037 source-index/source-files中保留实际源码/生成Shader与SHA。恢复实验应新建Editor观察类而非改变Runtime，GI主baseline/branch0继续stock5，branch1固定037 math，IN/common/settings同源，OUT/pool/constants独立。对两分支在相同cmd拷真实stage output，不能额外debug-UAV改公式却称bitexact；先比037 qualification原baseline/candidate完整mean map和原27局部，再确认新增196141参考/guide一致及物理resolve校准。只观察所需有限seed，定位退化开始/后续恢复后才论一个新机制。保持F31/F39/F51/F53/F55/F58范围和全部未完成目标。

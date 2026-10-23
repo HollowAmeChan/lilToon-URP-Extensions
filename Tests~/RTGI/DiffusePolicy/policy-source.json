@@ -1,0 +1,16 @@
+[
+  {
+    "stage": "AtrousSmem",
+    "stockNormalizedSha256": "01f647cbf83ee74da117d61a96118df23a99eda0a5a9a705d2feb72b2f36d2ee",
+    "diNormalizedSha256": "78f736102c5d27ceba38b3f116e41aa27c2409210d95f162fd74b71e5766f40d",
+    "bodySha256": "b0d5a4aec9a342029315522c731fdd21b6f81e6267680a0c28a63af93ff4abbf",
+    "wrapperSha256": "6e527e655cd9fed04b82f972a30e6c250a9aea228c1b81ca36f6f94a54198d25"
+  },
+  {
+    "stage": "Atrous",
+    "stockNormalizedSha256": "908c718d3222ca5c54ce85f0fa5b2a80b9dbaf8e3ddba693af99edf4d64e737e",
+    "diNormalizedSha256": "0d1ec5208684217bde4f532a89408990af35fae0a393c6eb5bbb525bfcf8928b",
+    "bodySha256": "c8bdcc628536911b92eda55e978fd5ce255960b67ac6326d01b92e8dd89a79ab",
+    "wrapperSha256": "7262c6bdd177978035897f0759e00de8c6d15321b75ea23ca99dd119a1db5cb7"
+  }
+]
