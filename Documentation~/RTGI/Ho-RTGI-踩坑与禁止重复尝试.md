@@ -228,3 +228,12 @@ linear是HLSL interpolation关键字，不能用作局部变量；初capture未�
 来源查不可变origin ledger而非float坐标/颜色；实际SDK normal encode/decode可改变word，本轮105670次但原版/trace同，不把它当meta串线或反向匹配证据。Spatial1实际Shade和pre-S历史0不能混用，S-off/packedcopy也要拷metadata。
 
 RG/compat常规4T/S/首帧失效/多帧前源和空间源已过，未穷尽age/Jacobian/camera/disocclusion、kind0/3和资源生命周期；必须明确partial coverage，不把pass扩成动态confidence/重求正确或生产历史可放开。逻辑1.875MiB不含额外GI AS/NRD/engine/读回，完整流lossless xz压缩不能丢失败/抽样冒充全部帧。
+
+
+## F64 / 步骤043：分支应有实际事件或可达性说明，重建不能继续用旧context
+
+生产fallback/permutation/checkerboard为0，不为了穷尽SDK打开新功能；previousM0防御分支0事件需说明有效primary→MakeM1/T/S累积/完整history及无效先禁T的不变量，不写成该分支已执行或永远不可达。Age/Jacobian/material/noMatch/clip/kind0恢复/kind3本轮有真实事件，并核原谓词；事件可重叠，不能把bit计数当互斥路径数。诊断ageLimit2/range.01等同时施于原版/记录版，不是生产调参。
+
+feature.Create重建会销毁旧context/AS/NRD，必须前帧GPU读回完成后清hook/释放aux、丢旧ledger、新context同步seed，后续基础验证重新取gi.LastContext，不能继续读旧local context。固定同实例重建不等于F39原生3→5增长修复。失效帧允许无source但必须M0/meta0/entry事件，普通有效场景不能用空见证过测试。
+
+来源资格和事件覆盖不证明同secondary transport/currentTLAS replay/confidence。下一先原材质/normal/viewDir/DI选择/旧weight/单位与codec可重建，再独立oracle和端点/双段visibility；不新RNG、不按float反查、不无保护保NRD，不推广诊断buffer开销为产品预算。

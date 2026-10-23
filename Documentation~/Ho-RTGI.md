@@ -160,3 +160,6 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 
 
 步骤042：真实古堡64²原版/lineage双GI两后端4T/S观察过，各128帧，1,572,864原包及raw/NRD输出逐bit同、2,097,152不可变来源检查，pre-S历史与实际Spatial1 Shade对应成立。capture保留字/UAV两失败完整，常规pass不覆盖age/Jacobian/视野/kind0/3或confidence。[来源证据与界限](../Tests~/RTGI/SelectionLineage/README.md)。043补分支/生命周期，再当前TLAS同选择重求/oracle；生产reset未动，全部原缺口/预算与目标active。
+
+
+步骤043：五固定fixture两后端各80帧边界来源观察通过，983040原包和raw/NRD逐位同，age/Jacobian/material/clip/noMatch/kind0恢复/kind3/服务重建有事件与独立谓词核对；disabled可选路径及未执行防御分支另作source可达性说明。[边界证据](../Tests~/RTGI/LineageBranches/README.md)。044推进真实currentTLAS同选择secondary静态重求/oracle，未改生产历史；全部原质量/范围/预算和目标active。

@@ -694,3 +694,16 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 042已按白名单过滤提交`543325c`，SelectionLineage verifier提交后再次通过。两初actual1（49216 capture关键字/错256path、38748UAV warning）原源/数据保留；49456短actual0、45856RG/47228compat各128frame actual0，正式每后端1,572,864原包与raw/NRD输出逐bit同、2,097,152不可变来源检查，pre-S history与Spatial1 actualShade对应成立。278源/5logs/10lossless captures约42.3MiB（大流xz rawSHA复核），Editor诊断合格保留、Runtime/vendor/生产reset不动。工作树clean；期间他人独立提交8d7c657“描边计划”已作为父提交保留，未纳入本轮白名单/未改写。
 
 043必须补已明确未证明的age/Jacobian/disocclusion/camera视野、kind0/3和资源生命周期来源分支，需实际event/场景见证，不将042常规pass扩成全覆盖。保持真实双GI原包/物理输出严格同源对照；normal codec105670word变化在原版也有，别用normal/radiance float反查来源。补齐关联后才小尺寸静态当前TLAS同DI选择的secondary重求/oracle，必要诊断可临时保留原secondary材质/normal数据以核viewDir/量化，但成本明示且不推广1080。主点到旧点开区间可见性不证明当前secondary仍存在；旧零/双段shadow/alpha/env及原weight/SignalScale一致需独立验证。当前GI reservoir保守失效/旧色Volume硬重置和NRD reset都保持；局部滤波公式线继续搁置，原全质量/F39/static/复杂动态/环境/1080预算及完整目标与review/过滤提交/踩坑/交接规则active。
+
+
+### 043终态（2026-10-23，待过滤提交）：真实边界事件/生命周期来源两后端通过
+
+**范围/实际：** Editor私有Temporal只增加event，单RW uint4记录buf追加N个word，不新增UAV槽；固定64²五fixture双GI原版/记录版：ageLimit2、相机平移/两帧转向、cullingMask0恢复、finiteRange.01+direct-sky黑结果、同实例集合feature服务重建。生产Runtime/vendor/DI/NRD/reset和参数不改，不是滤波调参或F39增长修复。47056短40frame、48524RG/17244compat各80frame allactual0、compile/warning/Property/UAV/ASdebug/fence/drift0、终态/active=null。
+
+每正式后端983040原GI32包与raw/NRD全部RGBA逐bit同，1245184不可变initial source/meta/position bits/age/stamp检查；history/pre-S和lastShade/Spatial1对应保留。年龄拒绝16687，原ageBefore+1确实>limit；相机case Jacobian拒绝981、material27、neighbor6961、noMatch4556、projectionInvalid8192，原Jac非有限/>10/<.1条件核过。kind0/primaryInvalid16384、恢复时prevSurfaceInvalid4096/noMatch4096，无效帧全部M0/meta0。有限距离kind3 58529，仍计黑样本M；服务generation1→2，重建后不继承旧来源/ledger，前帧完成读回后才释放hook/buf，两feature同seed，新control context刷新后基础验证继续。两后端事件/来源结果一致。
+
+**可达性/边界：** production zero-init的fallback/permutation/activecheckerboard0未开启，不为coverage打开，也不声称执行过。previousReservoirInvalid事件0；source invariant有效primary→flags1/2/3→MakeM1，T/S纳入有效current并累积M，完整history正M，新/resize无效history先禁T；故matched有效previous primary却M0非正常producer预期，不是该防御分支GPU执行/故障注入或未来普遍证明。Reachability逐源SHA保留。material拒绝已真实27次，不能继续标未覆盖。没有当前secondary transport重求/confidence/动态MC/Player/1080预算接受，生产motion reset不动。
+
+**过滤/成本：** 合格Editor事件/fixture/重建支持保留；事件比042多64KiB/64²，诊断逻辑buffer2031616B=1.9375MiB不含第二GI AS/NRD/engine/readback，非产品VRAM/时间。LineageBranches有272精确源/3完整logs/6lossless report+stream、大流xz原rawSHA复核，独立Python重算全部包/source/event谓词；无失败降级。只本步Editor/证据/六RTGI文档白名单，完整目标及原质量/F39/static/动态/环境/1080预算active，局部滤波公式线仍搁置。
+
+**044直接动作：** 已有普通+边界真实来源证据，推进64²真实currentTLAS同选择secondary静态重求/oracle，不继续仅toy。需从选中来源获取原secondary材质/normal与source-viewDir，诊断可临时丰富记录（明确payload/限制，不照搬1080）；原DI light/UV/invPdf/原weight、emission/quantization/SignalScale64保持，禁止新RNG。先静态同选择输出核对与独立oracle，normal codec往返不能误当来源错；当前secondary端点匹配/主面起点/两段visibility、零→亮/alpha/世界域变化再验证。原GI reservoir保守失效、旧色Volume硬重置和NRD reset在正确性/响应/噪声/能量/成本前都不放开，每步review/过滤提交/踩坑/交接继续。

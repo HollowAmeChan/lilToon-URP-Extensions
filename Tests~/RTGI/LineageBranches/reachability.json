@@ -1,0 +1,43 @@
+{
+  "scope": "Current production settings/invariant audit, not fault-injection or universal SDK proof",
+  "files": {
+    "Runtime/RTGI/Shaders/HoRTGIResampling.hlsl": {
+      "sha256": "FBBB2D1CDF3B54ECFB1C9DBEAA12F72CE7DB2B96183B5A0E2FE000A94CAD0F79",
+      "bytes": 2799
+    },
+    "Runtime/RTGI/Shaders/HoRTGI.raytrace": {
+      "sha256": "2E4CEBAAFBC8FEB3A8BF1C711BC44C64020E4567A602F1DC21C7301447ED9144",
+      "bytes": 4858
+    },
+    "Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl": {
+      "sha256": "A30FB74ABF632DD3BD51324352BEE3513323FA9E3B6FFE4D6E5932D7DB1EC043",
+      "bytes": 4423
+    },
+    "Runtime/RTGI/Shaders/HoRTGI.compute": {
+      "sha256": "0B12B95A26BA24A2B991628F0EED4397C3713299EB5C9CAABE401B1E9FACC946",
+      "bytes": 5670
+    },
+    "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl": {
+      "sha256": "CB76CA79A0E8DC2D41F7EE7AC37C88AADD60599C4A08E3B2AF10DC3DDEFE7127",
+      "bytes": 16136
+    },
+    "Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl": {
+      "sha256": "C8BDCD648B7C457B2311CE71AF362F12C1BB9A6C4DA88EBCC560502FC605C556",
+      "bytes": 9493
+    },
+    "Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl": {
+      "sha256": "5861641C7AC4703EA04ACF826DE8B89CAB2CC60FAFE61E897274CA4A301BCA67",
+      "bytes": 9241
+    }
+  },
+  "disabledOptionalPaths": [
+    "enableFallbackSampling=0 from zero initialization; no assignment enables it",
+    "enablePermutationSampling=0 from zero initialization",
+    "activeCheckerboardField=0 from zero initialization"
+  ],
+  "previousReservoirInvalid": {
+    "observedEvents": 0,
+    "reasoning": "Under complete unchanged-camera-sized history writes: valid primary generation always keeps outcome flags1/2/3, createsM1 even black; T/S includes current valid input and increasesM, history fromvalid primary remainsnonzeroM. New/resized/invalidated history disables temporal before loading it. Thus matched valid previousprimary withM0 is not expected in the current normal producer contract.",
+    "notClaimed": "Not an executed previousReservoirInvalid branch. Corrupt/external buffers or future producer changes require a new audit/test."
+  }
+}

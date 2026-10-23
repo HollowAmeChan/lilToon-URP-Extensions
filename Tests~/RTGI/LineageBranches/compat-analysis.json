@@ -1,0 +1,164 @@
+{
+  "scope": "Actual fixed diagnostic fixtures, original/private dualGI exact packet/raw/NRD equality. Source-event predicates verified; no sampling rule change, production history change or transport confidence qualification.",
+  "productionChanged": false,
+  "frames": 80,
+  "originalPacketsCompared": 983040,
+  "sourceChecks": 1245184,
+  "logicalBufferBytes": 2031616,
+  "contextGenerations": 2,
+  "rows": [
+    {
+      "case": 0,
+      "mode": 7,
+      "frames": 16,
+      "sourceChecks": 262144,
+      "invalidInitial": 0,
+      "blackInitial": 0,
+      "generations": [
+        1
+      ],
+      "events": {
+        "entry": 65536,
+        "eligible": 61440,
+        "projectionValid": 61440,
+        "sdkEntered": 61440,
+        "previousSurfaceInvalid": 0,
+        "neighborRejected": 0,
+        "materialRejected": 0,
+        "previousReservoirInvalid": 0,
+        "matched": 61440,
+        "jacobianRejected": 44,
+        "ageRejected": 16687,
+        "selectedPrevious": 39015,
+        "previousNotSelected": 22425,
+        "noMatch": 0,
+        "temporalDisabled": 4096,
+        "primaryInvalid": 0,
+        "projectionInvalid": 0
+      }
+    },
+    {
+      "case": 1,
+      "mode": 11,
+      "frames": 16,
+      "sourceChecks": 262144,
+      "invalidInitial": 0,
+      "blackInitial": 0,
+      "generations": [
+        1
+      ],
+      "events": {
+        "entry": 65536,
+        "eligible": 61440,
+        "projectionValid": 53248,
+        "sdkEntered": 53248,
+        "previousSurfaceInvalid": 2401,
+        "neighborRejected": 6961,
+        "materialRejected": 27,
+        "previousReservoirInvalid": 0,
+        "matched": 48692,
+        "jacobianRejected": 981,
+        "ageRejected": 0,
+        "selectedPrevious": 42142,
+        "previousNotSelected": 11106,
+        "noMatch": 4556,
+        "temporalDisabled": 4096,
+        "primaryInvalid": 0,
+        "projectionInvalid": 8192
+      }
+    },
+    {
+      "case": 2,
+      "mode": 15,
+      "frames": 16,
+      "sourceChecks": 196608,
+      "invalidInitial": 16384,
+      "blackInitial": 0,
+      "generations": [
+        1
+      ],
+      "events": {
+        "entry": 65536,
+        "eligible": 45056,
+        "projectionValid": 45056,
+        "sdkEntered": 45056,
+        "previousSurfaceInvalid": 4096,
+        "neighborRejected": 0,
+        "materialRejected": 0,
+        "previousReservoirInvalid": 0,
+        "matched": 40960,
+        "jacobianRejected": 23,
+        "ageRejected": 0,
+        "selectedPrevious": 36155,
+        "previousNotSelected": 8901,
+        "noMatch": 4096,
+        "temporalDisabled": 4096,
+        "primaryInvalid": 16384,
+        "projectionInvalid": 0
+      }
+    },
+    {
+      "case": 3,
+      "mode": 19,
+      "frames": 16,
+      "sourceChecks": 262144,
+      "invalidInitial": 0,
+      "blackInitial": 58529,
+      "generations": [
+        1
+      ],
+      "events": {
+        "entry": 65536,
+        "eligible": 61440,
+        "projectionValid": 61440,
+        "sdkEntered": 61440,
+        "previousSurfaceInvalid": 0,
+        "neighborRejected": 0,
+        "materialRejected": 0,
+        "previousReservoirInvalid": 0,
+        "matched": 61440,
+        "jacobianRejected": 2,
+        "ageRejected": 0,
+        "selectedPrevious": 57965,
+        "previousNotSelected": 3475,
+        "noMatch": 0,
+        "temporalDisabled": 4096,
+        "primaryInvalid": 0,
+        "projectionInvalid": 0
+      }
+    },
+    {
+      "case": 4,
+      "mode": 23,
+      "frames": 16,
+      "sourceChecks": 262144,
+      "invalidInitial": 0,
+      "blackInitial": 0,
+      "generations": [
+        1,
+        2
+      ],
+      "events": {
+        "entry": 65536,
+        "eligible": 57344,
+        "projectionValid": 57344,
+        "sdkEntered": 57344,
+        "previousSurfaceInvalid": 0,
+        "neighborRejected": 0,
+        "materialRejected": 0,
+        "previousReservoirInvalid": 0,
+        "matched": 57344,
+        "jacobianRejected": 33,
+        "ageRejected": 0,
+        "selectedPrevious": 50949,
+        "previousNotSelected": 6395,
+        "noMatch": 0,
+        "temporalDisabled": 8192,
+        "primaryInvalid": 0,
+        "projectionInvalid": 0
+      }
+    }
+  ],
+  "unreachableOptions": "Production zero-initialized enableFallbackSampling/permutation and activeCheckerboardField0 unchanged; these optional SDK paths were not enabled for coverage.",
+  "remaining": "Previous-reservoir-invalid was not executed; current producer invariant documented separately, not universal/fault-injection proof. No source-material replay/currentTLAS confidence, dynamic oracle or GPU budget proven."
+}

@@ -1,0 +1,96 @@
+--- Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl
++++ LineageTemporal.hlsl
+@@ -13,7 +13,7 @@
+ #ifndef RTXDI_GI_TEMPORAL_RESAMPLING_HLSLI
+ #define RTXDI_GI_TEMPORAL_RESAMPLING_HLSLI
+ 
+-#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl"
++#include "LineageReservoir.hlsl"
+ #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/Checkerboard.hlsl"
+ #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/ReservoirAddressing.hlsl"
+ 
+@@ -53,6 +53,7 @@
+     const RTXDI_ReservoirBufferParameters reservoirParams,
+     const RTXDI_GITemporalResamplingParameters tparams)
+ {
++    HoLMark(reservoirParams,pixelPosition,8);
+     // Backproject this pixel to last frame
+     int2 prevPos = int2(round(float2(pixelPosition) + screenSpaceMotion.xy));
+     const float expectedPrevLinearDepth = RAB_GetSurfaceLinearDepth(surface) + screenSpaceMotion.z;
+@@ -99,6 +100,7 @@
+ 
+         if (!RAB_IsSurfaceValid(temporalSurface))
+         {
++            HoLMark(reservoirParams,pixelPosition,16);
+             continue;
+         }
+ 
+@@ -109,12 +111,14 @@
+             expectedPrevLinearDepth, RAB_GetSurfaceLinearDepth(temporalSurface),
+             tparams.normalThreshold, tparams.depthThreshold))
+         {
++            HoLMark(reservoirParams,pixelPosition,32);
+             continue;
+         }
+ 
+         // Test material similarity and perform any other app-specific tests.
+         if (!RAB_AreMaterialsSimilar(RAB_GetMaterial(surface), RAB_GetMaterial(temporalSurface)))
+         {
++            HoLMark(reservoirParams,pixelPosition,64);
+             continue;
+         }
+ 
+@@ -125,13 +129,16 @@
+         // Check if the reservoir is a valid one.
+         if (!RTXDI_IsValidGIReservoir(temporalReservoir))
+         {
++            HoLMark(reservoirParams,pixelPosition,128);
+             continue;
+         }
+ 
+         foundTemporalReservoir = true;
++        HoLMark(reservoirParams,pixelPosition,256);
+         break;
+     }
+ 
++    if(!foundTemporalReservoir)HoLMark(reservoirParams,pixelPosition,8192);
+     RTXDI_GIReservoir curReservoir = RTXDI_EmptyGIReservoir();
+ 
+     float selectedTargetPdf = 0;
+@@ -150,8 +157,8 @@
+         //float jacobian = RTXDI_CalculateJacobian(RAB_GetSurfaceWorldPos(surface), RAB_GetSurfaceWorldPos(temporalSurface), temporalReservoir);
+ 		float jacobian = RTXDI_CalculateJacobian(RAB_GetSurfaceWorldPos(surface), RAB_GetSurfaceWorldPos(temporalSurface), temporalReservoir.position, temporalReservoir.normal);
+ 
+-        if (!RAB_ValidateGISampleWithJacobian(jacobian))
+-            foundTemporalReservoir = false;
++        HoLTemporalState(reservoirParams,pixelPosition,temporalReservoir.age,tparams.maxReservoirAge,jacobian);
++        if (!RAB_ValidateGISampleWithJacobian(jacobian)){foundTemporalReservoir = false;HoLMark(reservoirParams,pixelPosition,512);}
+ 
+         temporalReservoir.weightSum *= jacobian;
+         
+@@ -161,8 +168,7 @@
+         // Make the sample older
+         ++temporalReservoir.age;
+ 
+-        if (temporalReservoir.age > tparams.maxReservoirAge)
+-            foundTemporalReservoir = false;
++        if (temporalReservoir.age > tparams.maxReservoirAge){foundTemporalReservoir = false;HoLMark(reservoirParams,pixelPosition,1024);}
+     }
+ 
+     bool selectedPreviousSample = false;
+@@ -175,6 +181,7 @@
+         selectedPreviousSample = RTXDI_CombineGIReservoirs(curReservoir, temporalReservoir, RTXDI_GetNextRandom(rng), targetPdf);
+         if (selectedPreviousSample)
+         {
++            HoLMark(reservoirParams,pixelPosition,2048);
+             selectedTargetPdf = targetPdf;
+         }
+     }
+@@ -217,6 +224,7 @@
+         RTXDI_FinalizeGIResampling(curReservoir, normalizationNumerator, normalizationDenominator);
+     }
+ 
++    if(!selectedPreviousSample)HoLMark(reservoirParams,pixelPosition,4096);
+     return curReservoir;
+ }
+ 
