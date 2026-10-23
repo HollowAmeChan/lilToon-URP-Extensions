@@ -1,0 +1,7 @@
+*.json -text whitespace=cr-at-eol
+*.gz -diff -text
+logs/** -diff -text
+source-blobs/** -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+generated/** -text whitespace=cr-at-eol
+run_validation.ps1 -text whitespace=cr-at-eol
+run_filtered.ps1 -text whitespace=cr-at-eol

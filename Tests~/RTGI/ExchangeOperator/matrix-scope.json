@@ -1,0 +1,48 @@
+{
+  "scope": "Same-input mainstock/fixed037 DI reference/single normalization operator variant. Initial local-only qualification is not whole-image first-input proof.",
+  "qualified": true,
+  "wholeFirstImageQualified": true,
+  "mainFullNrdOutputFramesExact038": true,
+  "referenceFullNrdOutputFramesExact038DI": true,
+  "onlyNormalizationBlockChanged": true,
+  "onlyWrapperBodyNameChanged": true,
+  "frames": 1024,
+  "checks": [
+    {
+      "seed": 0,
+      "mainMeanMapExact038": true,
+      "referenceMeanMapExact038DI": true,
+      "referenceAll9StagesExact038DI": true,
+      "sameFirstFiveStageSampledRGBA": true,
+      "changedFirstLaterRgbComponents": 19507,
+      "addedGuideMaxError": 9.335544746136293e-07
+    },
+    {
+      "seed": 104729,
+      "mainMeanMapExact038": true,
+      "referenceMeanMapExact038DI": true,
+      "referenceAll9StagesExact038DI": true,
+      "sameFirstFiveStageSampledRGBA": true,
+      "changedFirstLaterRgbComponents": 19538,
+      "addedGuideMaxError": 9.335544746136293e-07
+    },
+    {
+      "seed": 5347609,
+      "mainMeanMapExact038": true,
+      "referenceMeanMapExact038DI": true,
+      "referenceAll9StagesExact038DI": true,
+      "sameFirstFiveStageSampledRGBA": true,
+      "changedFirstLaterRgbComponents": 19512,
+      "addedGuideMaxError": 9.335544746136293e-07
+    },
+    {
+      "seed": 6396185,
+      "mainMeanMapExact038": true,
+      "referenceMeanMapExact038DI": true,
+      "referenceAll9StagesExact038DI": true,
+      "sameFirstFiveStageSampledRGBA": true,
+      "changedFirstLaterRgbComponents": 19558,
+      "addedGuideMaxError": 9.335544746136293e-07
+    }
+  ]
+}

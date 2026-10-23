@@ -1,0 +1,9 @@
+#pragma kernel main
+#pragma use_dxc
+#pragma target 6.0
+#define NRD_INTERNAL 1
+#define NRD_COMPILER_DXC 1
+#define NRD_SIGNAL DIFF
+#define NRD_MODE RADIANCE
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrdBindings.hlsl"
+#include "ExchangeVariant.hlsl"

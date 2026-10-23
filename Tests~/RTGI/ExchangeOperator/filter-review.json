@@ -1,0 +1,16 @@
+{
+  "step": 39,
+  "comparisonQualified": true,
+  "mechanismPredictionSupported": true,
+  "productionEligible": false,
+  "decision": "Row normalization recovers89-98% of old channel loss but new18 improvement only3.26% below20%; reject candidate. Shelve the local normalization/DI formula experiment line after repeated lack of retainable product gain.",
+  "removed": [
+    "HoRTGIExchangeAudit.cs/meta",
+    "exchange flag/mode/hooks/entries from3existingEditor files"
+  ],
+  "restoredTo": "1cb030f source bytes; qualified038 paired observer retained",
+  "restorationCheck": "Each tested source matched matrix-run SHA before removal; three oldEditor files restored exact HEAD bytes",
+  "validation": "Actual filtered038 mode32 frames calibration/gather/source checks; no Runtime/Editor final diff",
+  "next": "F39 audit first: static mirror was already tried in018 and scratch error also reproduced withoutmirror in native Unity3->5, so canonical-index clone alone is not a new fix. Inspect archived minimal probe, engine/host differences and primary diagnostics; do not repeat flags/recreate/delay/capacity scans. If no new actionable mechanism, retain static gap and advance fixed-instance complex dynamic Player/whole-frame cost validation.",
+  "goal": "Full quality and all original gaps stay active; no formula interpolation or epsilon/phi/iteration sweep."
+}

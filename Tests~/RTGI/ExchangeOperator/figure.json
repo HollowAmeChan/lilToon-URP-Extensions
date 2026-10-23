@@ -1,0 +1,7 @@
+{
+  "dataFigureNotSceneScreenshot": true,
+  "sourceAnalysisSha256": "E9908A34B5BFA3E9C12C1A9EC3D12378C08337619E25B4FBB3619A4C293D67F5",
+  "figureSha256": "65BB3A6C97D8DC02A0907CD47E1968BAAC16D16EAE2288247915FAE9FCB67EA2",
+  "matplotlibVersion": "3.11.2",
+  "scope": "Descriptive four-seed means, no formal CI; reused isolated plotting dependencies from038; no new package installation"
+}

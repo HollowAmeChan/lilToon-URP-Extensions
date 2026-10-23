@@ -1,0 +1,30 @@
+{
+  "scope": "Same-input mainstock/fixed037 DI reference/single normalization operator variant. Initial local-only qualification is not whole-image first-input proof.",
+  "qualified": true,
+  "wholeFirstImageQualified": false,
+  "mainFullNrdOutputFramesExact038": true,
+  "referenceFullNrdOutputFramesExact038DI": true,
+  "onlyNormalizationBlockChanged": true,
+  "onlyWrapperBodyNameChanged": true,
+  "frames": 32,
+  "checks": [
+    {
+      "seed": 0,
+      "mainMeanMapExact038": true,
+      "referenceMeanMapExact038DI": true,
+      "referenceAll9StagesExact038DI": true,
+      "sameFirstFiveStageSampledRGBA": true,
+      "changedFirstLaterRgbComponents": 1219,
+      "addedGuideMaxError": 9.335544746136293e-07
+    },
+    {
+      "seed": 104729,
+      "mainMeanMapExact038": true,
+      "referenceMeanMapExact038DI": true,
+      "referenceAll9StagesExact038DI": true,
+      "sameFirstFiveStageSampledRGBA": true,
+      "changedFirstLaterRgbComponents": 1232,
+      "addedGuideMaxError": 9.335544746136293e-07
+    }
+  ]
+}

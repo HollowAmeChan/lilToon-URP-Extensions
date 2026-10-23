@@ -1,0 +1,34 @@
+{
+  "Tests~/RTGI/PairedStages/results/qualification.json.gz": {
+    "sha256": "FD9B148CA2305DFE721A46FC22951BDB4058A3E74BD7FE60F8AC4082B42C8992",
+    "bytes": 70445
+  },
+  "Tests~/RTGI/PairedStages/results/matrix.json.gz": {
+    "sha256": "E4E140BFD149F05C89A2F187243F1973036E4582A742B6992991AF14A45FAC23",
+    "bytes": 397394
+  },
+  "Tests~/RTGI/DiffusePolicy/analysis.json": {
+    "sha256": "083564EDE475B53BD02CA25DFB6AC9057479A68E3A84C538A35583AFB24A8A0C",
+    "bytes": 55027
+  },
+  "Tests~/RTGI/DiffusePolicy/review-contract.json": {
+    "sha256": "E56A28ECDA18435D371DA265C2D0547C8EC5F372D890DF04FD4D8FCA4EE34B42",
+    "bytes": 1219
+  },
+  "Tests~/RTGI/LocalReference/results/reference.json.gz": {
+    "sha256": "AFB0CF247D4B8E93B5B770D91E0D04562CD85DEEB3B1641EE927774008BC17DB",
+    "bytes": 1545868
+  },
+  "Tests~/RTGI/DenseReference/results/fixed-reference.json": {
+    "sha256": "E45D050F77519F949726046A29EB783BAFA3C8E93CE2E24C988651979543E664",
+    "bytes": 3831167
+  },
+  "Tests~/RTGI/DenseReference/results/fixed-controls.json": {
+    "sha256": "95D3FF609CA3F18C97235C14EC3F2FD17F4226A9FF28727A17DA6B8CA20A7FE0",
+    "bytes": 6399244
+  },
+  "Tests~/RTGI/StaticMesh/README.md": {
+    "sha256": "C8AA6898DB482BAFA16AE9DD50D24219B3C5EA405B410A5F33F971194527ADF2",
+    "bytes": 3941
+  }
+}

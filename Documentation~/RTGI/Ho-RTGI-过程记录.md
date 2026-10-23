@@ -827,3 +827,29 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 038已按白名单过滤提交`c0ad3e2`，PairedStages verifier提交后再次通过。两自有Unity实际0且终态、112 F32 gather分量/1024物理校准/原27点九阶段copy逐帧bitexact、两支完整mean map和候选原27逐帧pub对037逐bit同；新增196141 guide通过。Editor观察工具合格保留、只专用入口激活，Runtime/vendor/DI/生产默认未改，F58仍拒绝。264源/38captures/2logs/阶段图与失败依赖记录完整，index空，仅他人Ho-GD计划未跟踪。
 
 039以新阶段证据做单交换算子消融：固定037参考与只恢复后轮stock行归一化的变体，保留first Smem temporal-var/w²、min-pair/RGB、5轮/scale64/格式/参数。mainstock继续；两branch改参考/变体时务必同步物理校准和观察断言，不得沿用branch0==stock，优先同源三输出避免历史配对。短资格stage9两实验支RGBA相同、stage101同输入出现唯一算子差，再原四seed/旧15+新18/暗控制/full/phase/noise原门槛；不能称已证明exchange唯一原因。失败撤回保留，不以额外seed、常量扫描或位置特判救回，合格才完整部署资格。全目标与原质量/F39/static/复杂动态/1080完整预算、每步前后review/过滤提交/踩坑/交接持续active。
+
+
+### 039预审（2026-10-23）：同源固定DI参考与后轮归一化单算子消融
+
+038为有效进展：原28点九阶段资格、滤波前完全同/首轮颜色近同、旧反例后轮恢复不足，允许有目的的算子消融但未证明唯一原因。保持main stock5，把两独立branch设固定037参考/只恢复stock行归一化的变体。只替换后4轮diffuse output交换算子一个block，variance传播随同原表达式恢复；其它Smem temporal-var/w²、pair/RGB、phi/历史/5轮/单位64/格式/采样不改，Runtime/DI/vendor不动。物理GPU校准用main输出独立第三RT，不沿用branch0==stock断言。原038观察路径保持。
+
+先2seed16warm16观察短资格：冻结源SHA/精确单block逆替换回参考、112F32 gather、两实验支3/4/5/6/9全部RGBA逐bit同、101出现唯一算子差；reference全NRD输出逐帧SHA及物理mean map对038固定DI同，main亦不变；各Native5轮/guide/校准/恢复/无debug绑定编译错。通过才固定4seed64warm256原旧15+新18/暗控制/full/16phase/noise，三种输出same actual GI input/common/settings，避免跨进程推测。
+
+机制预测：恢复归一化可能增强旧141157 G/B、196141 B的后轮修正；记录相对固定DI的误差恢复量，至少收回原stock→DI差的一半才支持该方向，但不能替代产品门槛。沿原new18 L1改善>=20%、旧合格点误差增幅<=max(5e-6,参考5%,2倍配对seed/参考SE)、full/16phase不得pass→fail、filtered/raw variance<.15静态筛选；旧dark未合格仍不算过。若不合格，保留因果消融/源码/全部失败，移除新模式和类、恢复038观察/实跑过滤资格，不追加seed或常量/迭代扫描救回；有资格再完整8seed/动态/HDR/Player/GPU。目标active及F39/static/复杂动态/1080完整预算、前后review/过滤提交/踩坑/交接继续。
+
+039资格补强：初34400 actual0基础校准/28点读取完成，原源/结果保留initial-local-qualification，不将其补写成整图资格。为消融第一后轮归因新增两个F32 RT拷首Atrous输出，每观察帧完整RGBA262144分量逐bit比较/双SHA，再开正式矩阵；不是重跑失败或参数扫描。
+
+
+### 039终态（2026-10-23，待过滤提交）：归一化消融确认取舍，拒绝并暂搁置局部公式试验线
+
+**设计与验证：** mainstock、branch0固定037 DI参考、branch1只将后4轮diffuse交换block恢复stock行归一化，RGB/variance一起沿原表达式，Smem temporal-var/w²、pair/RGB/其它参数/5轮/64/32F不动。源码逆替换逐byte同、wrapper仅include名变；三输出同实际IN/common/settings/time和独立资源。物理校准独立main输出，不误用branch0==stock。
+
+四自有进程34400初局部资格98请求/32帧、19860补强98请求/32帧、39728正式1314请求/1024帧、25112过滤038模式98请求/32帧 actual0、API/compile/Property/UAV/fence/drift0、全部终态/active=null。初资格不补写整图证明；补强两个F32 RT每帧比较首轮整图262144RGBA，正式268435456分量/1024帧全bitexact，差异从首个后轮算子开始。112F32 gather过；main与DI参考完整NRD逐帧SHA、参考28点九stage/物理mean map对038同，guide max9.336e−7。只归一化干预含后续variance反馈，不夸成唯一因素。
+
+**机制收益/质量失败：** 旧141157G/B、196141B收回DI损失89.386/91.025/98.145%，原一半恢复预测过，无新硬退化。但新18 L1 .462545→.447479仅−3.257%（DI为.266596），旧15 .304146→.284750仅−6.377%（DI.208852）。full仍2/4、DI4/4；pooledRGB−4.483/−4.809/−4.548%、phase7/11/11/7→7/8/10/6无pass→fail但pooled6失败，方差×1.77/2.34/7.17/2.01、filtered/raw .00299～.00628。原20%new18门槛未过，eligible=false，拒绝生产，不继续8/HDR/Player/GPU；机制成立不能代替足够产品收益。
+
+**过滤/交接：** Tests~/RTGI/ExchangeOperator约41.3MiB，272源、4logs、72lossless captures、初/补强/正式源与生成体/全部34点与full/phase/noise/图/contract/analysis/filter-review/verify保留。新增ExchangeAudit/meta与3个既有Editor exchange接线/入口移除、精确恢复1cb030f，过滤038实际资格过；Runtime/DI/vendor一直未改。诊断额外2F32copy/第三physicalRT/2NRD/读回不作产品预算。只证据和六RTGI文档白名单，Ho-GD计划排除。
+
+**按用户规则搁置：** 029以来局部公式方向虽有机制认识、始终无可保留生产改进，暂搁置归一化/DI局部公式试验线，不再排插值/phi/epsilon/迭代/ratio或位置特判。质量缺口不关闭，未来新的结构性机制/参考链路证据再开。F58/F60继续拒绝，不把单一消融成功算目标完成。
+
+**040直接动作：** 转原实际交付缺口。先核F39最小原生增长probe、018失败原源和当前引擎/host/官方诊断是否提供新机制；静态owned mirror/base0已在018做过，原Ho/纯Unity3→5也scratch错而initial5干净，不能重新抄017称新方案。禁止盲试flags/Static/recreate/delay/capacity或原样重跑15矩阵。无可行动新证据则保留static缺口，推进固定实例复杂动态Player/全帧成本独立验证（不能冒称F39解决），原质量/F39/static/复杂动态/1080完整预算与总目标仍active。

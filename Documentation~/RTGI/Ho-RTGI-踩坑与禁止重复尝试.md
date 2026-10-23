@@ -192,3 +192,12 @@ Smem variance预模糊也是DI diffuse策略一部分，不能只拷w²输出却
 阶段3/4/5/6全RGBA同、首Atrous颜色近似同而variance差大，旧点/新18的主要相反变化都在后4轮。另旧196141后期DI variance更大仍恢复弱，禁止直接“提高所有variance”或只恢复首轮blur当修复；目前复合策略w²/min-pair/RGB/交换未分开因果。一个有目的的算子消融可以取证，不能以本轮观察通过为F58策略接纳或换松门槛/扫参数。
 
 独立gather读取避免031 debug-UAV重编译改结果的问题，仍要先112分量F32自检、对原整图stage27点bitexact、对037两branch完整pub map/逐帧27值bitexact和新guide资格；不能只凭公式相同称observer无影响。可选图表依赖不要动全局环境；本机default/bundled Python缺Matplotlib，隔离--target时需--no-user覆盖pip user配置，失败记录与GPU验证分开。
+
+
+## F60 / 步骤039：恢复旧点不等于同时保留总体收益，暂停局部公式线
+
+同源整图首轮输入逐bit同，单行归一化干预收回旧141157G/B、196141B约89～98%损失，足以支持算子影响；新18改善只3.26%而DI有42%，不得用机制预测通过替换原20%/全控制产品门槛。变体已撤回，原F58仍拒绝。不能在两个归一化端点间扫插值、phi/epsilon/迭代/ratio/位置特判，或把“无新硬退化”当足够收益；029以来此局部公式线长期无可保留生产改进，按用户要求暂搁置，新的结构性证据以后再开。
+
+branch0换成DI参考时必须独立main物理校准、更新断言；baselineMismatches>0是预期，不能仍把branch0当stock。初28点资格不是整图证明，保留初记录，再补强262144RGBA/帧双SHA，不能给历史结果补写已观察。后轮干预同时影响variance反馈，不冒称仅RGB系数或唯一因素。
+
+切换F39前先读018原证据：owned静态mirror/baseVertex0已经试过，原Ho及纯Unity3→5也触发scratch范围，初始5干净。重新照搬017 canonical helper不构成新机制，不重复flags/Static/recreate/delay/capacity。F39保持缺口，可推进固定实例动态Player/成本独立验证但不把它当静态增长资格。

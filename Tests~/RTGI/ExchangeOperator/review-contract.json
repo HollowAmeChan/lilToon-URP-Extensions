@@ -1,0 +1,23 @@
+{
+  "step": 39,
+  "main": "stock5",
+  "branches": [
+    "fixed037 DI-derived reference",
+    "DI-derived with stock row normalization only"
+  ],
+  "seeds": [
+    0,
+    104729,
+    5347609,
+    6396185
+  ],
+  "warmup": 64,
+  "measured": 256,
+  "minimumWeightedLocalL1Reduction": 0.2,
+  "noiseScreenFilteredToRawVarianceRatio": 0.15,
+  "hardRegressionLimit": "max(5e-6,abs(reference)*.05,2*sqrt(paired4seedDeltaSe^2+referenceBatchSe^2))",
+  "mechanismPrediction": "Recover at least half of DI regression in141157G/B and196141B; separate from all product gates",
+  "sameInputProof": "Whole stage9 RGBA262144 components per observed frame equal, first101 intervention; main/ref full NRD outputs exact038 and source only one inverse-checked block",
+  "fullAndPhases": "No stock pass->fail; original 5% or5e-6 gate; all34 controls including unresolved dark reported",
+  "stop": "Failure stops further8/dynamic/HDR/Player/GPU, archive and remove exchange mode/class, restore038 and actually qualify; no parameter scans"
+}
