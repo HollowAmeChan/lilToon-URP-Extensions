@@ -631,3 +631,8 @@ SharedInput约11MiB，259source/9新文本、4完整log/22capture gzip、Frame.c
 **按用户规则搁置：** 029以来局部公式方向虽有机制认识、始终无可保留生产改进，暂搁置归一化/DI局部公式试验线，不再排插值/phi/epsilon/迭代/ratio或位置特判。质量缺口不关闭，未来新的结构性机制/参考链路证据再开。F58/F60继续拒绝，不把单一消融成功算目标完成。
 
 **040直接动作：** 转原实际交付缺口。先核F39最小原生增长probe、018失败原源和当前引擎/host/官方诊断是否提供新机制；静态owned mirror/base0已在018做过，原Ho/纯Unity3→5也scratch错而initial5干净，不能重新抄017称新方案。禁止盲试flags/Static/recreate/delay/capacity或原样重跑15矩阵。无可行动新证据则保留static缺口，推进固定实例复杂动态Player/全帧成本独立验证（不能冒称F39解决），原质量/F39/static/复杂动态/1080完整预算与总目标仍active。
+
+
+039已按白名单过滤提交`8b376bc`，ExchangeOperator verifier提交后再次通过。四自有进程actual0/终态，正式1024帧整图首轮RGBA全同、main/DI参考对038全NRD输出逐帧SHA同；单归一化干预收回旧点89～98%损失却只留新18约3.26%改善，eligible=false，变体类/meta/模式/入口撤回，038观察恢复实跑过。272源/72captures/4logs/全部收益失败/算子图/初局部与补强资格完整留存，Runtime/Editor无最终diff，index空，仅Ho-GD计划未跟踪。
+
+按用户长期无可保留收益需搁置要求，局部归一化/DI公式试验线暂搁置，不接着扫插值/参数/迭代或依据现有两端数据再排公式。040改推进其它实际交付缺口：先读F39 StaticMesh README/归档源/原生HoRTAccelerationGrowthProbe与当前引擎/host/官方诊断，旧mirror/base0和原Ho/纯Unity3→5均scratch错、初始5干净，不能再抄canonical helper当新方案或原样重跑flags/recreate/delay/capacity。只有新的可行动证据才重开AS实验；否则显式保留static缺口，推进固定实例复杂动态Player和完整帧成本独立验证，不冒称F39解决。完整画质/静态/动态/1080预算及总目标和每步review/过滤提交/踩坑/交接规则继续active。
