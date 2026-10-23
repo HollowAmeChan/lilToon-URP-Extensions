@@ -940,3 +940,8 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 **过滤/成本/数据：** 保留合格Editor controller/capture/entry/meta和Castle可选接线；Runtime/vendor无diff。lineage/origin/lastShade/5stage capture逻辑payload1,966,080B=1.875MiB，不含第二GI AS/NRD/engine/readbacks，非产品预算。SelectionLineage有278源对象、5完整logs、10report/stream，完整大流xz无损（原raw SHA重验，约42.3MiB），初两失败源码/report/partial stream和全部case全保留，verify独立核所有包。当前源对应compat，旧源独立归档；只本轮Editor/证据/六RTGI文档白名单，Ho-GD计划排除。生产motion48/48 reset与原所有质量/F39/static/复杂动态/环境/1080缺口仍active。
 
 **043直接动作：** 先补未证的真实分支/生命周期来源观察，需显式event/场景见证，不凭常规pass给age/Jacobian/fallback补资格，保持同源原输出严格对照。随后小尺寸原DI选择静态当前TLAS重求与独立oracle：所选来源的secondary材质/normal/原viewDir需可重建，诊断可临时丰富记录但内存/生命周期明示、不能直接推广1080或把辅助字段当充分ABI。当前secondary点要验证、两段visibility、旧零信号、量化/SignalScale64/原weight一致，不新RNG。选择关联/实际重求/变化像素残影/噪声/能量和成本都过后才NRD生命周期候选；GI reservoir保守失效、旧色/Volume硬重置继续，局部滤波公式线搁置，全目标active。
+
+
+042已按白名单过滤提交`543325c`，SelectionLineage verifier提交后再次通过。两初actual1（49216 capture关键字/错256path、38748UAV warning）原源/数据保留；49456短actual0、45856RG/47228compat各128frame actual0，正式每后端1,572,864原包与raw/NRD输出逐bit同、2,097,152不可变来源检查，pre-S history与Spatial1 actualShade对应成立。278源/5logs/10lossless captures约42.3MiB（大流xz rawSHA复核），Editor诊断合格保留、Runtime/vendor/生产reset不动。工作树clean；期间他人独立提交8d7c657“描边计划”已作为父提交保留，未纳入本轮白名单/未改写。
+
+043必须补已明确未证明的age/Jacobian/disocclusion/camera视野、kind0/3和资源生命周期来源分支，需实际event/场景见证，不将042常规pass扩成全覆盖。保持真实双GI原包/物理输出严格同源对照；normal codec105670word变化在原版也有，别用normal/radiance float反查来源。补齐关联后才小尺寸静态当前TLAS同DI选择的secondary重求/oracle，必要诊断可临时保留原secondary材质/normal数据以核viewDir/量化，但成本明示且不推广1080。主点到旧点开区间可见性不证明当前secondary仍存在；旧零/双段shadow/alpha/env及原weight/SignalScale一致需独立验证。当前GI reservoir保守失效/旧色Volume硬重置和NRD reset都保持；局部滤波公式线继续搁置，原全质量/F39/static/复杂动态/环境/1080预算及完整目标与review/过滤提交/踩坑/交接规则active。
