@@ -254,3 +254,11 @@ previous actual Shade需要在Final覆写lastShade前读取；当前Spatial1/pre
 初CPU误以为rough1/F0zero消除全部spec，绿表面在红蓝灯下严格0预言失败。Schlick仍有(1−VoH)^5，必须独立求GGX/Smith；原错误oracle源码/SHA/115+4053+3755超界保留，修CPU后GPU数据/阈值均不变。禁止改夹具/门槛迎合预言，不能用错误oracle给正确GPU定罪或忽略失败。
 
 277源/3logs/6lossless captures与verify见EndpointReplay；4MiB只是64²诊断buffer，额外AS/NRD/rays/readback另计。端点资格不是动态confidence/历史策略或画质收益，生产保守reset继续；需currentprimary对应、改变像素噪声/残影/能量/成本后再接纳。长期无收益局部公式线仍按F60搁置。
+
+## F67 / 步骤046：confidence接通不等于历史收益，必须匹配编码/物理单位
+
+LogLuv不仅量化logY，还量化chroma并夹负RGB。初CPU把未编码currentRGB与已往返GPU RGB比较，frame1 845超界/max.0384；不得扩大容差掩盖，须完整独立codec并保留错误模型和原GPU数据。当前float64 oracle对FP32 codec bin边界max.01345<预设.03，只是受控资格，不是任意颜色普适界。NRD为physical/64，比较physical raw须仅还原NRD RGB×64，不混单位或缩放距离alpha。
+
+初46404 Save在File.Create默认独占stream仍打开时ReadAllBytes失败；Flush不释放sharing lock，须先关闭再hash。保存actual1/原source/log/partialreport/bins，不能因已16frame或渲染无错误补写完整pass。
+
+独立NRD分支phase0同原与端点/零信号confidence正确只证接线。16frame保持阶段的自均值/temporal noise不证明动态真值/能量/残影；候选phase4 frameL1 .02273甚至高于原.01595，禁止宣称收益/上线。必须独立收敛reference及连续/阶跃变化像素验证，无收益则搁置，不扫描指数/模糊/阈值/phi。固定primary位置bitmatch不是移动primary/相机/材质身份对应；黑motion/白confidence不能跳过缺口。

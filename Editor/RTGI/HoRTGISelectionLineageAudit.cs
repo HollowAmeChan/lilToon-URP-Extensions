@@ -29,6 +29,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             capture=AssetDatabase.LoadAssetAtPath<ComputeShader>(replay?DirectoryPath+"ReplayCapture.compute":"Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGISelectionCapture.compute");captureKernel=capture.FindKernel("Capture");
             typeof(HoRTGIRendererFeature).GetField("shader",Flags).SetValue(trace,compute);typeof(HoRTGIRendererFeature).GetField("rayShader",Flags).SetValue(trace,ray);
         }
+        internal GraphicsBuffer EndpointRecords=>endpoint?records:throw new InvalidOperationException("Endpoint scope required");
         internal BindingFeature MakeBinding(){var b=ScriptableObject.CreateInstance<BindingFeature>();b.owner=this;return b;}
         internal sealed class BindingFeature:ScriptableRendererFeature
         {

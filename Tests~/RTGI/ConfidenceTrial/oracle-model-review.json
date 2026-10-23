@@ -1,0 +1,10 @@
+{
+  "initialSource": "initial-unquantized-confidence-oracle.py.txt",
+  "sha256": "DA0E5910DA3B014DA81DB50430C24255C1B2FC58DBCABAA41C4E1FFE09453D66",
+  "failureFrame": 1,
+  "maxAbsError": 0.038395929354298364,
+  "violations": 845,
+  "cause": "CPU compared unquantized current RGB against GPU LogLuv roundtrip current RGB. Spectral gamut clamp/chroma quantization is not bounded solely by logY step; independent codec must be modeled, not tolerance enlarged.",
+  "rawGpuDataUnchanged": true,
+  "thresholdUnchanged": true
+}

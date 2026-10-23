@@ -25,13 +25,15 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunEndpointReplayQualification()=>Run(false,64,denseScheduled:true,lineageAudit:true,lineageFrames:16,secondaryReplay:true,endpointAudit:true,validationTag:"endpoint-replay-qualification");
         public static void RunEndpointReplay()=>Run(false,64,denseScheduled:true,lineageAudit:true,lineageFrames:32,secondaryReplay:true,endpointAudit:true,validationTag:"endpoint-replay");
         public static void RunEndpointReplayCompatibility()=>Run(true,64,denseScheduled:true,lineageAudit:true,lineageFrames:32,secondaryReplay:true,endpointAudit:true,validationTag:"endpoint-replay");
-        static async Task<HoRTGISelectionLineageAudit.Report> AuditEndpointReplay(HoRTGIRendererFeature a,HoRTGIRendererFeature b,HoRTGISelectionLineageAudit audit,Action render,Func<RenderTexture,Color[]> read,string output,int frames)
+        static async Task<HoRTGISelectionLineageAudit.Report> AuditEndpointReplay(HoRTGIRendererFeature a,HoRTGIRendererFeature b,HoRTGISelectionLineageAudit audit,Action render,Func<RenderTexture,Color[]> read,string output,int frames,bool confidenceTrial=false)
         {
             bool t=a.Settings.temporal,s=a.Settings.spatial;int old=a.LastContext.frame;audit.Begin(output,frames);audit.ResetMode(3);foreach(var f in new[]{a,b}){f.Settings.temporal=true;f.Settings.spatial=true;f.LastContext.frame=1000;f.LastContext.historyValid=false;f.LastContext.nrd.historyValid=false;}
+            using var confidence=confidenceTrial?new HoRTGIConfidenceTrial(b.LastContext,audit,output):null;
             try{for(int i=0;i<frames;i++){
                 int phase=i/(frames/8);endpointSecondary.position=new Vector3(0,0,phase==1?-1.25f:-1);endpointBlocker.position=new Vector3(phase==3?-.35f:10,0,-.6f);endpointAlpha.position=new Vector3(phase==5||phase==6?0:10,0,-.5f);endpointCutout.SetColor("_Color",new Color(0,0,0,phase==5?1:0));endpointSurface.SetColor("_Color",phase==7?Color.green:Color.white);
-                audit.EndpointPhase=phase;await NextEditorTick();render();audit.Observe(1000,read);
-            }var r=audit.Finish(output);Debug.Log("[HoGIEndpointReplay] COMPLETE frames="+r.frames.Length);return r;}
+                audit.EndpointPhase=phase;if(confidence!=null){confidence.Phase=phase;confidence.HardReset=i==0||(i%(frames/8)==0&&phase>=5);}
+                await NextEditorTick();render();audit.Observe(1000,read);confidence?.Observe();
+            }confidence?.Save();var r=audit.Finish(output);Debug.Log("[HoGIEndpointReplay] COMPLETE frames="+r.frames.Length);return r;}
             finally{endpointSecondary.position=new Vector3(0,0,-1);endpointBlocker.position=new Vector3(10,0,-.6f);endpointAlpha.position=new Vector3(10,0,-.5f);endpointCutout.SetColor("_Color",new Color(0,0,0,0));endpointSurface.SetColor("_Color",Color.white);foreach(var f in new[]{a,b}){f.Settings.temporal=t;f.Settings.spatial=s;f.LastContext.frame=old;f.LastContext.historyValid=false;f.LastContext.nrd.historyValid=false;}}
         }
     }

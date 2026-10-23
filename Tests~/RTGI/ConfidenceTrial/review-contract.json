@@ -1,0 +1,13 @@
+{
+  "step": 46,
+  "scope": "controlled static primary/constant material; shared actual NRD inputs; no production retention",
+  "confidence": "same old sample, quantized current replay versus old cached RGB, both primary visibility, relative luminance change exponent8; unsupported/endpoint/primary mismatch confidence0",
+  "primary": "same pixel world position bitexact; no moving primary/camera correspondence acceptance",
+  "hardReset": "initial and material/alpha phase changes",
+  "qualificationFrames": 16,
+  "formalFrames": 128,
+  "notQualityAcceptance": "No independent dynamic MC reference yet; noise/lag/energy remain required before product acceptance",
+  "productionUnchanged": true,
+  "confidenceAbsTolerance": 0.03,
+  "confidenceToleranceReason": "Float64 full independent LogLuv (including gamut clamp) compared to float32 GPU codec; preset confidence abs tolerance0.03 for exponent8/codec bin boundaries, strict invalid endpoints/primary rejection exact0 separately. Initial unquantized CPU model failed and is preserved; tolerance unchanged. This is controlled qualification, not a universal error bound."
+}

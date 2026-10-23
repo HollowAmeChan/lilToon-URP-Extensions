@@ -1,0 +1,20 @@
+{
+  "step": 46,
+  "productionAccepted": false,
+  "inputQualificationAccepted": true,
+  "runtimeVendorDiNrdResetChanged": false,
+  "benefit": "Actual independent shared-input NRD branches and same-old-sample confidence are wired and independently checked; first static phase branch outputs bitexact to original NRD. This enables a bounded quality experiment, not a product noise/lag/energy gain.",
+  "findings": "Formal two backends identical; invalid endpoint/kind/no-primary-history17140 -> confidence0; zero->bright162 and bright->zero8700 -> confidence0; full independent codec CPU max confidence error0.0134466 < preset0.03.",
+  "noObservedNoiseBenefit": "Last8-of16 stable state windows did not improve over original reset strategy (e.g restored blocker relative frameL1 baseline0.01595 vs candidate0.02273). Short holds/reset once are not continuous motion; self-mean is not independent ground truth.",
+  "notQualified": [
+    "Moving primary/camera correspondence, arbitrary material/geometry/environment",
+    "Production sidecar format/memory/time, retained history lifecycle",
+    "Independent dynamic reference/changed-pixel lag/energy acceptance; no tuning permitted from these short window metrics"
+  ],
+  "failuresPreserved": [
+    "46404 actual1 after16 frames: evidence stream still open during ReadAllBytes; full source/log/captures preserved, stream closed before hash; rendering equations unchanged",
+    "Initial CPU confidence used unquantized current RGB; frame1 845 violations max0.0383959; preserve source/SHA, implement full independent LogLuv/gamut clamp, same GPU data and same0.03 threshold"
+  ],
+  "cost": "Additional external textures278528B=0.265625MiB at64x64, excludes two extra NRD cores, existing4MiB endpoint diagnostic, duplicate GI AS/NRD, rays/readback. No GPU budget accepted.",
+  "next": "Independent deterministic plane/point-light one-bounce reference with convergence, controlled continuous and step motion, changed-pixel response/energy/noise versus original reset and blind keep. Reject/shelve if no benefit; do not scan exponent/filter/phi/threshold."
+}

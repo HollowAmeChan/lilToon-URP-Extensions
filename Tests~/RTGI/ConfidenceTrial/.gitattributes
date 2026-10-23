@@ -1,0 +1,8 @@
+*.json -text whitespace=cr-at-eol
+*.gz -diff -text
+*.xz -diff -text
+source-blobs/** -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+logs/** -diff -text
+run_validation.ps1 -text whitespace=cr-at-eol
+initial-lambert-oracle.py.txt -text whitespace=cr-at-eol
+*.txt -text whitespace=cr-at-eol

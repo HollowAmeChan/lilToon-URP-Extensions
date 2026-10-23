@@ -1,0 +1,365 @@
+{
+  "scope": "Controlled static-primary shared-input NRD trial. Independent plane/alpha/BRDF and confidence input oracle qualified, not independent dynamic MC/lag/energy or product acceptance.",
+  "productionChanged": false,
+  "frames": 128,
+  "endpoint": {
+    "scope": "Actualprevious lastShade on fixedprimary,controlledcurrentTLAS endpoint/fullmaterial+bothlegs;independent finiteplane/alpha/pointlightLambert+rough1GGX(F0zero stillFresnel) oracle. Not arbitrary geometry/worldmotion/primarymotion/NRDconfidence acceptance.",
+    "productionChanged": false,
+    "frames": 128,
+    "previousActualShadePacketChecks": 520192,
+    "logicalBufferBytes": 4194304,
+    "distanceMaxAbsError": 1.7881393432617188e-07,
+    "positionMaxAbsError": 1.7881393432617188e-07,
+    "normalMaxAbsError": 8.742277657347586e-08,
+    "radianceMaxAbsError": 9.608357417967284e-05,
+    "rows": [
+      {
+        "phase": 0,
+        "samples": 65536,
+        "matched": 65536,
+        "openButEndpointMissing": 0,
+        "geometryHitMismatches": 0,
+        "visibilityMismatches": 0,
+        "materialMismatches": 0,
+        "oracleRadianceViolations": 0
+      },
+      {
+        "phase": 1,
+        "samples": 65522,
+        "matched": 61426,
+        "openButEndpointMissing": 4096,
+        "geometryHitMismatches": 0,
+        "visibilityMismatches": 0,
+        "materialMismatches": 0,
+        "oracleRadianceViolations": 0
+      },
+      {
+        "phase": 2,
+        "samples": 65534,
+        "matched": 61438,
+        "openButEndpointMissing": 0,
+        "geometryHitMismatches": 0,
+        "visibilityMismatches": 0,
+        "materialMismatches": 0,
+        "oracleRadianceViolations": 0
+      },
+      {
+        "phase": 3,
+        "samples": 65527,
+        "matched": 65527,
+        "openButEndpointMissing": 0,
+        "geometryHitMismatches": 0,
+        "visibilityMismatches": 0,
+        "materialMismatches": 0,
+        "oracleRadianceViolations": 0
+      },
+      {
+        "phase": 4,
+        "samples": 65535,
+        "matched": 65531,
+        "openButEndpointMissing": 4,
+        "geometryHitMismatches": 0,
+        "visibilityMismatches": 0,
+        "materialMismatches": 0,
+        "oracleRadianceViolations": 0
+      },
+      {
+        "phase": 5,
+        "samples": 65531,
+        "matched": 65531,
+        "openButEndpointMissing": 0,
+        "geometryHitMismatches": 0,
+        "visibilityMismatches": 0,
+        "materialMismatches": 0,
+        "oracleRadianceViolations": 0
+      },
+      {
+        "phase": 6,
+        "samples": 65533,
+        "matched": 61437,
+        "openButEndpointMissing": 4096,
+        "geometryHitMismatches": 0,
+        "visibilityMismatches": 0,
+        "materialMismatches": 0,
+        "oracleRadianceViolations": 0
+      },
+      {
+        "phase": 7,
+        "samples": 64818,
+        "matched": 64818,
+        "openButEndpointMissing": 0,
+        "geometryHitMismatches": 0,
+        "visibilityMismatches": 0,
+        "materialMismatches": 0,
+        "oracleRadianceViolations": 0
+      }
+    ]
+  },
+  "confidenceMaxAbsErrorVsIndependentCodecCpu": 0.013446596775971043,
+  "confidenceAbsTolerance": 0.03,
+  "invalidEndpointOrPrimaryOrKindRejected": 17140,
+  "zeroToBright": 162,
+  "brightToZero": 8700,
+  "unchangedPositiveConfidenceWitness": 75666,
+  "meanUnits": "Physical RGB; raw unchanged, NRD RGB multiplied by original SignalScale64",
+  "externalTextureBytes": 278528,
+  "additionalNrdPoolsAndRaysExcluded": true,
+  "rows": [
+    {
+      "phase": 0,
+      "tailMeanRgb": [
+        [
+          0.375490203499794,
+          0.000183250132977264,
+          0.391819056141685
+        ],
+        [
+          0.3792802258053598,
+          0.00018285086608194057,
+          0.3920400350834825
+        ],
+        [
+          0.3792802258053598,
+          0.00018285086608194057,
+          0.3920400350834825
+        ],
+        [
+          0.3792802258053598,
+          0.00018285086608194057,
+          0.3920400350834825
+        ]
+      ],
+      "tailRelativeFrameL1": [
+        0.9766273513878672,
+        0.015570841204755359,
+        0.015570841204755359,
+        0.015570841204755359
+      ],
+      "confidenceMean": 0.8861404657363892
+    },
+    {
+      "phase": 1,
+      "tailMeanRgb": [
+        [
+          0.26023297011852264,
+          0.00012714027616311796,
+          0.2718445070677262
+        ],
+        [
+          0.25920240668347105,
+          0.00013003999117544573,
+          0.27909399394229695
+        ],
+        [
+          0.2963774893255504,
+          0.00014685812591186398,
+          0.28352526091157415
+        ],
+        [
+          0.26433190968941744,
+          0.00011885149243695547,
+          0.2617205423325686
+        ]
+      ],
+      "tailRelativeFrameL1": [
+        1.0036705893057982,
+        0.011531449382103239,
+        0.013614031509241738,
+        0.013126926746940491
+      ],
+      "confidenceMean": 0.8865417242050171
+    },
+    {
+      "phase": 2,
+      "tailMeanRgb": [
+        [
+          0.37097519636154175,
+          0.00018406282833893783,
+          0.39355237282870803
+        ],
+        [
+          0.37469826083770386,
+          0.00018145516045287025,
+          0.38905974180306657
+        ],
+        [
+          0.32954637524881036,
+          0.0001530272450316339,
+          0.344211287597318
+        ],
+        [
+          0.38419437040602133,
+          0.00016335494456798383,
+          0.35894652564479657
+        ]
+      ],
+      "tailRelativeFrameL1": [
+        0.9573559956503983,
+        0.01650283372311359,
+        0.021546003246506344,
+        0.01859954486083209
+      ],
+      "confidenceMean": 0.8852452039718628
+    },
+    {
+      "phase": 3,
+      "tailMeanRgb": [
+        [
+          0.1774469818919897,
+          0.00015611924573022407,
+          0.33370145047592814
+        ],
+        [
+          0.1753060002665734,
+          0.00015899525187590413,
+          0.3415403389810763
+        ],
+        [
+          0.24304943993229244,
+          0.00016222683622635348,
+          0.32870301149159786
+        ],
+        [
+          0.21452372407452458,
+          0.00016200845197156255,
+          0.3304920498669617
+        ]
+      ],
+      "tailRelativeFrameL1": [
+        0.9203022701013837,
+        0.020079489592464562,
+        0.023916374418425323,
+        0.020284798168298597
+      ],
+      "confidenceMean": 0.8923192620277405
+    },
+    {
+      "phase": 4,
+      "tailMeanRgb": [
+        [
+          0.3778190612792969,
+          0.00017593753000255674,
+          0.37619847952555574
+        ],
+        [
+          0.38081127673785886,
+          0.0001753853543312589,
+          0.37607796174484065
+        ],
+        [
+          0.3163923041056478,
+          0.0001578221014126857,
+          0.3697874434130881
+        ],
+        [
+          0.3130399843671512,
+          0.00015768410720584658,
+          0.37684298415115336
+        ]
+      ],
+      "tailRelativeFrameL1": [
+        0.9485260804485477,
+        0.015948603923125356,
+        0.022637755652148137,
+        0.022734928826131273
+      ],
+      "confidenceMean": 0.9377517700195312
+    },
+    {
+      "phase": 5,
+      "tailMeanRgb": [
+        [
+          0.00048592422899673693,
+          2.2369204089045525e-07,
+          0.0005021130400564289
+        ],
+        [
+          0.000500437690545863,
+          6.337729056875096e-09,
+          0.0004739768026494895
+        ],
+        [
+          0.000500437690545863,
+          6.337729056875096e-09,
+          0.0004739768026494895
+        ],
+        [
+          0.0005003799809953913,
+          6.269732105572648e-09,
+          0.0004732853872524423
+        ]
+      ],
+      "tailRelativeFrameL1": [
+        1.057706815145412,
+        0.0379403363579192,
+        0.0379403363579192,
+        0.03795739761131866
+      ],
+      "confidenceMean": 0.8692463636398315
+    },
+    {
+      "phase": 6,
+      "tailMeanRgb": [
+        [
+          0.38171330466866493,
+          0.00017507546363049187,
+          0.3743573175652273
+        ],
+        [
+          0.37822975034305273,
+          0.00017940107579206277,
+          0.38468761345893654
+        ],
+        [
+          0.37822975034305273,
+          0.00017940107579206277,
+          0.38468761345893654
+        ],
+        [
+          0.3783674573724056,
+          0.00017914194201074096,
+          0.38414888574425277
+        ]
+      ],
+      "tailRelativeFrameL1": [
+        0.9675460760826863,
+        0.01462347954493173,
+        0.01462347954493173,
+        0.014656882340944791
+      ],
+      "confidenceMean": 0.8872295022010803
+    },
+    {
+      "phase": 7,
+      "tailMeanRgb": [
+        [
+          7.293763701454736e-06,
+          0.0,
+          6.995342118898407e-06
+        ],
+        [
+          5.780679109334674e-06,
+          0.0,
+          5.312296086738399e-06
+        ],
+        [
+          5.780679109334674e-06,
+          0.0,
+          5.312296086738399e-06
+        ],
+        [
+          5.7472157166063185e-06,
+          0.0,
+          5.283241990036648e-06
+        ]
+      ],
+      "tailRelativeFrameL1": [
+        0.646824008154558,
+        0.0919838091983991,
+        0.0919838091983991,
+        0.09257764898934234
+      ],
+      "confidenceMean": 0.8526343107223511
+    }
+  ]
+}

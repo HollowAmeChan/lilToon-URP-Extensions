@@ -1,0 +1,20 @@
+// Private constant-plane/static-primary same-sample confidence experiment.
+#pragma kernel Confidence
+#pragma use_dxc
+#pragma target 6.0
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/Color.hlsl"
+StructuredBuffer<uint4> _Records;
+RWTexture2D<float> _Confidence;
+RWTexture2D<float4> _PreviousPrimary;
+int _QueryBase,_FirstFrame;
+[numthreads(8,8,1)]void Confidence(uint3 id:SV_DispatchThreadID)
+{
+ uint pixel=id.y*64+id.x,start=_QueryBase+pixel*18;
+ float3 primary=asfloat(_Records[start+16].xyz);bool same=_FirstFrame==0&&all(asuint(primary)==asuint(_PreviousPrimary[id.xy].xyz));_PreviousPrimary[id.xy]=float4(primary,1);
+ bool supported=_Records[start].w==1&&asfloat(_Records[start+5].w)>0&&same;
+ float3 oldRgb=asfloat(_Records[start+12].xyz)*asfloat(_Records[start+9].w);
+ float3 newRgb=RTXDI_DecodeLogLuvToRGB(RTXDI_EncodeRGBToLogLuv(asfloat(_Records[start+11].xyz)))*asfloat(_Records[start+9].y);
+ float oldLum=dot(oldRgb,float3(.2126,.7152,.0722)),newLum=dot(newRgb,float3(.2126,.7152,.0722));
+ float gradient=abs(newLum-oldLum)/max(max(newLum,oldLum),1e-10);float c=saturate(1-gradient);c*=c;c*=c;c*=c;
+ _Confidence[id.xy]=supported?c:0;
+}

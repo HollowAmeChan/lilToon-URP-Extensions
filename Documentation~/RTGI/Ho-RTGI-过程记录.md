@@ -1032,3 +1032,27 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 045已白名单过滤提交`af2d1ff`，提交后EndpointReplay verifier再次通过，工作树/index clean。277源/3logs/6lossless captures约23.80MiB，16短+RG/compat各32frame actual0，原输出全逐bit同；每正式126976 previous actualShade关系核，独立plane/alpha/BRDF及visibility全过。两个各4096 old-open/endpoint-missing反例、blocker961/恢复173/alpha4096主段变化见证，初Lambert/F0zero错误模型完整保留。Runtime/vendor/NRD/reset不改，生产动态降噪收益仍未交付。
 
 046下一步先审生产primary重投影和DI32同采样confidence映射，限定小尺寸当前primary对应/同旧样本变化信号；不无限增加来源诊断，不直接把probe匹配或全白confidence当历史允许。需具体验证改变像素响应/噪声/能量与成本后再接纳NRD生命周期，GI reservoir与旧色/Volume保守重置保持。全部原质量/F39/static/复杂动态/环境/1080预算及用户逐步review/过滤提交/踩坑/交接仍active；可见Player短测试授权已保存。
+
+### 046预审（2026-10-24）：受控同输入NRD历史/同采样confidence候选，不进入生产
+
+045受控当前端点/oracle通过，DI31直接保留历史有阶跃残影失败，不能盲换StructureRevision。046沿DI32同旧样本辐射变化→八次方confidence，但先限定045静止primary/常量plane材质。每帧GPU核当前primary位置与上一帧记录逐位相同，匹配失败/端点失效/不支持kind保守confidence0；这只是本夹具对应保护，移动相机/primary重投影与view-dependent材质未交付。
+
+私有诊断同一实际FinalNRD输入增加两个独立NRD分支：盲保留历史对照、受控confidence候选；原版+lineage生产NRD和GI原包/物理输出仍严格同源对照。原GI reservoir scene.Revision失效不改。分支除reset/confidence/外部输出以外的设置/输入保持原stock5/scale64；首帧与alpha/材质域变化明确硬reset，仅受控transform试验允许NRD历史。GPU原choice/UV/invPdf/sourceview/端点两段visibility，不新RNG。
+
+比较旧cached radiance×旧primary visibility与同选择current radiance（同LogLuv域）×current primary visibility，staticprimary下共同Lambert/weight相消，旧零也比较；g=abs(newLum-oldLum)/max(newLum,oldLum,1e-10)，confidence=(1-g)^8，失配0，不做模糊/阈值扫描。独立CPU从原query重算confidence并逐像素核对，旧零→亮/亮→零/端点失效/真实primary对应有见证才资格；第一静态段共同reset下分支输出须逐位同原NRD。
+
+先16frame短资格，再RG/compat各128frame八phase，保留全部原流/输出/SHA/失败。新增输出和confidence像素做真实噪声/响应诊断，但未取得独立动态MC参考前不把自参照均值当能量/残影验收。受控NRD输入接线资格是本步预期收益；产品接纳仍需下一步独立reference/变化像素L1/噪声/能量及实际成本，所有原质量/场景/预算缺口保留。新纹理/buffer及额外NRD池成本分列，不推广1080，不修改Runtime/vendor/DI。若候选没有收益按原门槛拒绝/搁置，不无限调参数。
+
+### 046终态（2026-10-24，待过滤提交）：同采样confidence/独立同输入NRD候选接线过，产品接纳拒绝
+
+**实现/范围：** Editor私有trial沿045静止primary/常量材质四固定AS plane/八phase；GPU与前帧同像素primary位置逐bit匹配（不是移动primary重投影），冻结旧DIchoice/UV/invPdf/sourceview，当前TLAS端点/材质/两段visibility。cached旧RGB与LogLuv往返currentRGB各乘primary visibility，relative luminance变化→(1−g)^8；失配/端点失效/unsupported/首帧无历史confidence0，旧零也比较。两个独立NRD core共享真正FinalNRD输入，盲保留对照和confidence候选；phase0不消费confidence且同原common，初始/alpha/材质域硬reset，仅受控transform的实验分支保留NRD。原GI reservoir和原版/lineage生产NRD/reset不动。
+
+**实测与正确性：** 41400短16、50092 RG/53052compat各128frame actual0，compile/warning/ASdebug/fence/drift0、终态/资源hook恢复。每正式520192 previous actualShade关系核，原3poolGI32/raw/NRD所有RGBA逐bit同，第一静态phase实验两NRD也逐bit同baseline。独立plane/alpha/pointlightBRDF oracle过；完整float64 LogLuv/gamut clamp CPU confidence maxabs.0134465968<预设.03，17140失效/unsupported/首帧confidence0、零→亮162/亮→零8700严格0、75666有效正亮不变高confidence见证。两后端分析完全一致。
+
+**失败保留：** 初46404 actual1，16frame已写但Save对仍独占打开的confidence-images.bin做ReadAllBytes产生Sharing violation，source/log/report/bins保留，仅先关stream再hash后重跑。初CPU confidence未模拟GPU当前RGB LogLuv往返，frame1 845超界/max.0383959；原oracle/SHA/失败计数保留，补独立完整codec（光谱色gamut clamp不能只按logY估计）后过，GPU原数据与.03阈值未改；.03是受控FP32编码bin边界/八次方资格容差，不冒称任意颜色普适界。
+
+**收益/接纳：** 仅接纳Editor输入与分支隔离资格；拒绝生产历史/画质接纳。末8/16稳态短窗未显示相对原reset收益：phase1 frameL1原.01153/候选.01313，phase4原.01595/候选.02273。这是阶跃后保持，并非连续运动；自均值不是真值/能量，不能判残影pass。物理RGB均值只将NRD乘64、raw保持原单位。候选无已证明的产品收益，禁止继续扫描confidence指数/模糊/阈值或重开局部phi。
+
+**归档/成本/过滤：** ConfidenceTrial284精确源、4完整logs、16lossless captures约102.08MiB、初保存失败/初CPU错误模型/contract/filter-review/独立verify齐。新增external纹理278528B=.265625MiB/64²，另两NRD core池、既有4MiB端点诊断、双GI AS/NRD、rays/readback不含；非总VRAM/GPU时间/1080预算。只本步Editor/证据/六RTGI文档白名单，Runtime/vendor/DI/生产reset不改、他人描边提交保留。
+
+**047具体下一项：** 不继续只加来源诊断。建立受控固定primary/点灯/有限plane的独立一跳积分reference并核收敛，包含black材质掠射GGX（不能假设纯黑）；先八phase能量/变化像素响应与噪声，再连续/阶跃遮挡（原world-change每帧reset）检验实际收益。若动态门槛无收益则拒绝/搁置，不调指数凑pass。移动primary/相机对应、parallax/任意模型、环境/成本仍未资格，生产保守reset继续。全部原质量/F39/static/复杂动态/环境/1080预算及完整目标active，逐步pre/post review/过滤提交/踩坑/压缩交接继续。
