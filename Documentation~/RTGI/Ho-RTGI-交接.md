@@ -727,3 +727,8 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 **过滤/成本：** 保留Editor可选静态replay/独立观察/失败witness和验证入口，SDK原文件不改。SecondaryReplay281源对象/5完整logs/10lossless report-stream、原两失败/CPUoracle/各量化差/contract/filter-review/verify齐全；完整大流xz原raw SHA复核。逻辑buffer3538944B=3.375MiB/64²非总VRAM/第二GI AS-NRD/射线/读回预算。只本步Editor/证据/六RTGI文档白名单，旧他人描边提交保留。未接动态confidence，生产motion reset限制仍在，全质量/F39/static/动态MC/环境/1080预算和总目标active。
 
 **045直接动作：** 受控current secondary端点重建/normal/material匹配和previous actual lastShade重求。保持原choice/weight/原sourceview、当前matched primary，固定实例移动secondary/遮挡和零→亮/alpha几何oracle，不把开区间到旧点可见或旧材质重放当当前端点仍有效。正确性/变化像素响应/噪声/能量/成本之后才NRD生命周期，GI reservoir保守失效与旧色Volume硬重置继续；局部滤波公式线搁置，每步review/过滤提交/踩坑/交接继续。
+
+
+044已按白名单过滤提交`5abcdf1`，SecondaryReplay verifier提交后再次通过。46880初parity/47620禁replay同点parity actual1两失败完整；独立Generate后capture隔离后35372短16、43728RG/34696compat各64frame actual0。原GI32/raw/NRD所有RGBA逐bit同，每正式262144samechoice exactview currentTLAS secondary replay cacheLogLuv0差，primary开区间visibility0差；107499解析/135571环境真实选择。CPU独立BRDF/解析灯/方向oracle无超max(5e-6,.003ref)component，GPUvisibility/env纹理不是独立CPUoracle。packedview2756word差/maxrel.00156663单列，16B充分性不接纳。281源/5logs/10lossless captures约39.4MiB，Runtime/vendor/reset未改，工作树clean。
+
+045从静态cached材质重放推进**previous actual lastShade在当前世界的secondary端点有效性**：受控固定实例移动secondary/遮挡、静态matched primary先行，用旧choice/DI invPdf/sourceview/GIweight，当前TLAS重建命中/normal/material及两段visibility，与独立简单几何oracle核；只到旧点的开区间通畅不足以证明旧secondary存在。当前私有Final之前lastShade区仍是previous帧，可评审其读取/重投影时序，Final才覆盖；不能拿当前Spatial1重求冒称旧历史。必要新增小尺寸诊断字段/当前命中payload与成本明示，原缓存数据不能当新表面。逐步零→亮/alpha/灯环境域及currentprimary匹配，正确性/变化像素响应/噪声/能量/成本前不改NRD生命周期；GI reservoir保守失效、旧色Volume硬重置保持。原F39/static/全质量/动态MC/环境/1080预算和全目标与review/过滤提交/踩坑/交接规则active，局部滤波公式线继续搁置。
