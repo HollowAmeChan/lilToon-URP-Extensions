@@ -1,0 +1,9 @@
+{
+  "rawGpuReportsUnchanged": true,
+  "initialOracleSource": "initial-lambert-oracle.py.txt",
+  "initialOracleSha256": "8BD4C4B66A7DBEECC7800FBAEA180E93F9885B73CBCF3E9DBB08131B22CD7C4D",
+  "initialResult": "Geometry/hit/status/normal/material/visibility predicatespassed; radianceviolations115blocker/4053alpha/3755greenmaterial",
+  "cause": "CPU treated F0=0 as noGGX, but original Schlick returns(1-VoH)^5 grazing term even F0zero;roughness1 still executes GGX",
+  "correction": "Add independent roughness1 GSmith/D=1pi/Schlick formula; no sourcegeometry,GPUshader,threshold or rawdata edits",
+  "predeclaredPredictionRejected": "Green secondary under red/blue lamps is not strictlyzero due grazing specular; do not fake a pureLambert case by changing fixture after observing."
+}

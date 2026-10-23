@@ -1,0 +1,151 @@
+// Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
+// NVIDIA portions are governed by ../../RTDI/ThirdParty/RTXDI/LICENSE.txt.
+// Adapted from the diffuse branch of the reference GI/BrdfRayTracing.hlsl.
+#pragma max_recursion_depth 1
+#define HO_RTGI_NATIVE_SHADING 1
+#include "LineageResampling.hlsl"
+RWStructuredBuffer<float2> _HoRTGIFinalVisibility;
+float4 _HoRTGIRaySettings; // bias, finite geometry range, environment enabled, distant sample range
+
+[shader("miss")]
+void HoRTGIMiss(inout HoRTGISecondarySurface payload : SV_RayPayload) { payload=(HoRTGISecondarySurface)0; }
+
+[shader("raygeneration")]
+void GenerateSecondary()
+{
+    uint2 pixel=DispatchRaysIndex().xy;
+    uint index=pixel.y*(uint)_HoRTGIFrame.x+pixel.x;
+    HoRTGISecondaryData result=(HoRTGISecondaryData)0;
+    HoRTPrimarySurface primary;
+    if(!HoRTTryLoadPrimarySurface(pixel,primary)) { _HoRTGISecondary[index]=result;return; }
+    RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(pixel,(uint)_HoRTGIFrameIndex,RTXDI_GI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
+    float2 random=float2(RTXDI_GetNextRandom(rng),RTXDI_GetNextRandom(rng));
+    float3 tangent,bitangent;ConstructONB(primary.shadingNormalWS,tangent,bitangent);
+    float pdf;float3 local=SampleCosHemisphere(random,pdf);
+    float3 direction=normalize(tangent*local.x+bitangent*local.y+primary.shadingNormalWS*local.z);
+    // Black outcomes still count as samples in RIS; dropping them would bias energy upward.
+    result.pdf=max(pdf,1e-12);result.positionWS=primary.positionWS+direction*_HoRTGIRaySettings.w;
+    result.normal=result.geometricNormal=HoGIPackNormal(-direction);result.flags=3;
+    if(dot(primary.geometricNormalWS,direction)>0)
+    {
+        RayDesc ray;ray.Origin=primary.positionWS;ray.Direction=direction;
+        ray.TMin=_HoRTGIRaySettings.x;ray.TMax=_HoRTGIRaySettings.y;
+        HoRTGISecondarySurface hit=(HoRTGISecondarySurface)0;
+        TraceRay(_HoRTSceneAccelerationStructure,0,255,0,1,0,ray,hit);
+        if(hit.status==0)
+        {
+            // Finite bounce range is not proof of an unobstructed sky. Only
+            // GI-only direct-sky mode needs the additional distant query.
+            if(_HoRTGIRaySettings.z>.5&&HoAtmosphereAvailable()&&ray.TMax<_HoRTGIRaySettings.w)
+            {
+                ray.TMin=ray.TMax;ray.TMax=_HoRTGIRaySettings.w;
+                hit.status=HO_RTGI_VISIBILITY_QUERY;
+                TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,255,0,1,0,ray,hit);
+            }
+            if(hit.status==0)
+            {
+                result.flags=2;
+                if(_HoRTGIRaySettings.z>.5)result.emission=HoAtmosphereSampleRadiance(direction);
+            }
+            // Otherwise retain flags=3: an opaque black outcome still counts,
+            // and a surface beyond maxDistance does not become a GI bounce.
+        }
+        else
+        {
+            result.positionWS=primary.positionWS+direction*hit.distance;
+            if(hit.status==1&&all(isfinite(hit.normalWS))&&all(isfinite(hit.geometricNormalWS))&&all(isfinite(hit.emission)))
+            {
+                result.flags=1;result.normal=HoGIPackNormal(hit.normalWS);result.geometricNormal=HoGIPackNormal(hit.geometricNormalWS);
+                float3 base=saturate(hit.baseColor);
+                result.diffuseAlbedo=HoGIPackColor(float4(base*(1-hit.metallic),1));
+                result.specularRoughness=HoGIPackColor(float4(lerp(hit.reflectance.xxx,base,hit.metallic),hit.perceptualRoughness));
+                result.emission=max(0,hit.emission);
+            }
+        }
+    }
+    _HoRTGISecondary[index]=result;
+}
+
+[shader("raygeneration")]
+void ShadeSecondaryNative(){HoGIShadeSecondary(DispatchRaysIndex().xy);}
+[shader("raygeneration")]
+void TemporalNative(){HoGITemporal(DispatchRaysIndex().xy);}
+[shader("raygeneration")]
+void SpatialNative(){HoGISpatial(DispatchRaysIndex().xy);}
+
+[shader("raygeneration")]
+void TraceFinalVisibility()
+{
+    uint2 pixel=DispatchRaysIndex().xy;uint index=pixel.y*(uint)_HoRTGIFrame.x+pixel.x;
+    float2 result=0;
+    RAB_Surface surface=RAB_GetGBufferSurface(pixel,false);
+    RTXDI_GIReservoir reservoir=RTXDI_LoadGIReservoir(HoGILayout(),pixel,1);
+    if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidGIReservoir(reservoir))
+    {
+        float3 delta=reservoir.position-surface.worldPos;float distance=length(delta);float3 direction=delta/max(distance,1e-12);
+        if(distance>_HoRTGISettings.w*2&&dot(direction,surface.geoNormal)>0&&dot(direction,surface.normal)>0)
+        {
+            HoRTSceneHit hit=HoRTTraceScene(surface.worldPos,direction,_HoRTGISettings.w,distance-_HoRTGISettings.w,255);
+            result=float2(hit.status==0?1:0,min(65504,hit.status==0?distance:max(hit.distance,_HoRTGISettings.w)));
+        }
+    }
+    _HoRTGIFinalVisibility[index]=result;
+}
+
+[shader("raygeneration")]
+void CaptureReplaySource()
+{
+    uint2 pixel=DispatchRaysIndex().xy;uint id=pixel.y*(uint)_HoRTGIFrame.x+pixel.x;uint pointer=RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,1);HoRTGISecondaryData data=_HoRTGISecondary[id];float3 view=0;
+    if(data.flags==1&&(_HoRTGIFrame.z>0||_HoRTGIEnvironment.z>.5))view=normalize(RAB_GetGBufferSurface(pixel,false).worldPos-data.positionWS);
+    _HoLRecords[pointer*6+2]=uint4(asuint(data.positionWS),data.normal);_HoLRecords[pointer*6+3]=uint4(data.diffuseAlbedo,data.specularRoughness,asuint(data.emission.xy));
+    _HoLRecords[pointer*6+4]=uint4(asuint(data.emission.z),asuint(data.pdf),data.geometricNormal,data.flags);_HoLRecords[pointer*6+5]=asuint(float4(view,0));
+}
+[shader("raygeneration")]
+void ReplaySelected()
+{
+    uint2 pixel=DispatchRaysIndex().xy;uint id=pixel.y*(uint)_HoRTGIFrame.x+pixel.x;uint pointer=RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,1);
+    uint4 a=_HoLRecords[pointer*6+2],b=_HoLRecords[pointer*6+3],c=_HoLRecords[pointer*6+4],m=HoLMeta(pointer);
+    HoRTGISecondaryData data;data.positionWS=asfloat(a.xyz);data.normal=a.w;data.diffuseAlbedo=b.x;data.specularRoughness=b.y;data.emission=asfloat(uint3(b.zw,c.x));data.pdf=asfloat(c.y);data.geometricNormal=c.z;data.flags=c.w;
+    float3 exactView=asfloat(_HoLRecords[pointer*6+5].xyz);float3 packedView=RTXDI_DecodeNormalizedVectorFromSnorm2x16(m.w);
+    HoReplayEvaluation exact=HoReplayEvaluate(data,m,exactView),quant=HoReplayEvaluate(data,m,packedView);
+    RTXDI_GIReservoir selected=RTXDI_LoadGIReservoir(HoGILayout(),pixel,1);RAB_Surface primary=RAB_GetGBufferSurface(pixel,false);float primaryVisible=0;
+    if(RAB_IsSurfaceValid(primary)&&RTXDI_IsValidGIReservoir(selected)){
+        float3 delta=selected.position-primary.worldPos;float distance=length(delta);float3 direction=delta/max(distance,1e-12);
+        if(distance>_HoRTGISettings.w*2&&dot(direction,primary.geoNormal)>0&&dot(direction,primary.normal)>0)primaryVisible=HoRTTraceScene(primary.worldPos,direction,_HoRTGISettings.w,distance-_HoRTGISettings.w,255).status==0?1:0;
+    }
+    uint start=18*HoGILayout().reservoirArrayPitch+(uint)(_HoRTGIFrame.x*_HoRTGIFrame.y)*8+id*8;
+    _HoLRecords[start]=uint4(_HoRTGIReservoirs[pointer].packed_radiance,RTXDI_EncodeRGBToLogLuv(exact.radiance),RTXDI_EncodeRGBToLogLuv(quant.radiance),m.x);
+    _HoLRecords[start+1]=asuint(float4(exact.radiance,exact.visible));_HoLRecords[start+2]=asuint(float4(quant.radiance,quant.visible));
+    _HoLRecords[start+3]=asuint(float4(exact.sampleRadiance,exact.pdf));_HoLRecords[start+4]=asuint(float4(exact.direction,exact.distance));
+    _HoLRecords[start+5]=asuint(float4(exact.brdf,asfloat(m.z)));_HoLRecords[start+6]=asuint(float4(primaryVisible,_HoRTGIFinalVisibility[id].x,data.flags,(m.x&0x80000000u)!=0?1:0));
+    _HoLRecords[start+7]=asuint(float4(exactView,0));
+}
+
+[shader("raygeneration")]
+void ReplayPreviousEndpoint()
+{
+    uint2 pixel=DispatchRaysIndex().xy;uint id=pixel.y*(uint)_HoRTGIFrame.x+pixel.x,n=(uint)(_HoRTGIFrame.x*_HoRTGIFrame.y);uint baseIndex=18*HoGILayout().reservoirArrayPitch+id*8;
+    uint4 p0=_HoLRecords[baseIndex],p1=_HoLRecords[baseIndex+1],meta=_HoLRecords[baseIndex+2],origin=_HoLRecords[baseIndex+3];
+    uint4 a=_HoLRecords[baseIndex+4],b=_HoLRecords[baseIndex+5],c=_HoLRecords[baseIndex+6],viewWord=_HoLRecords[baseIndex+7];
+    float3 oldPosition=asfloat(p0.xyz),oldGeo=HoGIUnpackNormal(c.z),view=asfloat(viewWord.xyz);uint kind=c.w;
+    float bias=_HoRTGISettings.w,epsilon=4*bias;float3 probeOrigin=oldPosition+oldGeo*epsilon,probeDirection=-oldGeo;
+    HoRTGISecondarySurface hit=(HoRTGISecondarySurface)0;float3 matchedPosition=0;float positionMatch=0,normalDot=0,matched=0;
+    if(kind==1&&(p0.w&255)!=0){RayDesc ray;ray.Origin=probeOrigin;ray.Direction=probeDirection;ray.TMin=bias;ray.TMax=8*bias;TraceRay(_HoRTSceneAccelerationStructure,0,255,0,1,0,ray,hit);
+        if(hit.status==1){matchedPosition=probeOrigin+probeDirection*hit.distance;positionMatch=length(matchedPosition-oldPosition)<=2*bias?1:0;normalDot=dot(oldGeo,hit.geometricNormalWS);matched=positionMatch!=0&&normalDot>=.9?1:0;}
+    }
+    RAB_Surface primary=RAB_GetGBufferSurface(pixel,false);float openOld=0,openMatched=0;
+    if(RAB_IsSurfaceValid(primary)&&kind==1){float3 delta=oldPosition-primary.worldPos;float d=length(delta);if(d>2*bias)openOld=HoRTTraceScene(primary.worldPos,delta/d,bias,d-bias,255).status==0?1:0;
+        if(matched!=0){delta=matchedPosition-primary.worldPos;d=length(delta);if(d>2*bias)openMatched=HoRTTraceScene(primary.worldPos,delta/d,bias,d-bias,255).status==0?1:0;}
+    }
+    HoReplayEvaluation eval=(HoReplayEvaluation)0;
+    if(matched!=0){HoRTGISecondaryData current=(HoRTGISecondaryData)0;current.positionWS=matchedPosition;current.normal=HoGIPackNormal(hit.normalWS);current.geometricNormal=HoGIPackNormal(hit.geometricNormalWS);current.flags=1;
+        current.diffuseAlbedo=HoGIPackColor(float4(saturate(hit.baseColor)*(1-hit.metallic),1));current.specularRoughness=HoGIPackColor(float4(lerp(hit.reflectance.xxx,saturate(hit.baseColor),hit.metallic),hit.perceptualRoughness));current.emission=hit.emission;eval=HoReplayEvaluate(current,meta,view);
+    }
+    uint start=18*HoGILayout().reservoirArrayPitch+n*8+id*18;
+    _HoLRecords[start]=uint4(p1.x,meta.x,meta.y,kind);_HoLRecords[start+1]=asuint(float4(oldPosition,p0.w&255));_HoLRecords[start+2]=asuint(float4(probeOrigin,epsilon));_HoLRecords[start+3]=asuint(float4(probeDirection,8*bias));
+    _HoLRecords[start+4]=asuint(float4(hit.distance,hit.status,positionMatch,normalDot));_HoLRecords[start+5]=asuint(float4(matchedPosition,matched));_HoLRecords[start+6]=asuint(float4(hit.normalWS,hit.perceptualRoughness));
+    _HoLRecords[start+7]=asuint(float4(hit.baseColor,hit.metallic));_HoLRecords[start+8]=asuint(float4(hit.emission,hit.reflectance));_HoLRecords[start+9]=asuint(float4(openOld,openMatched,eval.visible,asfloat(viewWord.w)));
+    _HoLRecords[start+10]=asuint(float4(eval.direction,eval.distance));_HoLRecords[start+11]=asuint(float4(eval.radiance,eval.visible));_HoLRecords[start+12]=asuint(float4(RTXDI_DecodeLogLuvToRGB(p1.x),asfloat(meta.z)));
+    _HoLRecords[start+13]=asuint(float4(view,origin.x));_HoLRecords[start+14]=asuint(float4(eval.sampleRadiance,eval.pdf));_HoLRecords[start+15]=uint4(origin.xyz,origin.w);
+    _HoLRecords[start+16]=asuint(float4(primary.worldPos,bias));_HoLRecords[start+17]=asuint(float4(eval.brdf,asfloat(p1.y)));
+}

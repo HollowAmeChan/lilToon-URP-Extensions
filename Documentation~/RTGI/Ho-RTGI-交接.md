@@ -732,3 +732,19 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 044已按白名单过滤提交`5abcdf1`，SecondaryReplay verifier提交后再次通过。46880初parity/47620禁replay同点parity actual1两失败完整；独立Generate后capture隔离后35372短16、43728RG/34696compat各64frame actual0。原GI32/raw/NRD所有RGBA逐bit同，每正式262144samechoice exactview currentTLAS secondary replay cacheLogLuv0差，primary开区间visibility0差；107499解析/135571环境真实选择。CPU独立BRDF/解析灯/方向oracle无超max(5e-6,.003ref)component，GPUvisibility/env纹理不是独立CPUoracle。packedview2756word差/maxrel.00156663单列，16B充分性不接纳。281源/5logs/10lossless captures约39.4MiB，Runtime/vendor/reset未改，工作树clean。
 
 045从静态cached材质重放推进**previous actual lastShade在当前世界的secondary端点有效性**：受控固定实例移动secondary/遮挡、静态matched primary先行，用旧choice/DI invPdf/sourceview/GIweight，当前TLAS重建命中/normal/material及两段visibility，与独立简单几何oracle核；只到旧点的开区间通畅不足以证明旧secondary存在。当前私有Final之前lastShade区仍是previous帧，可评审其读取/重投影时序，Final才覆盖；不能拿当前Spatial1重求冒称旧历史。必要新增小尺寸诊断字段/当前命中payload与成本明示，原缓存数据不能当新表面。逐步零→亮/alpha/灯环境域及currentprimary匹配，正确性/变化像素响应/噪声/能量/成本前不改NRD生命周期；GI reservoir保守失效、旧色Volume硬重置保持。原F39/static/全质量/动态MC/环境/1080预算和全目标与review/过滤提交/踩坑/交接规则active，局部滤波公式线继续搁置。
+
+### 045终态（2026-10-24，待过滤提交）：previous actual Shade的当前端点/材质/两段visibility通过受控oracle
+
+**实施/实际：** 64²静止primary、四固定AS平面（不增长）、红蓝两点灯/环境关，8相位覆盖次级移动/恢复、opaque挡片/恢复、alpha闭合/重开、白→绿材质。读取Final覆盖前previous actual Spatial1 lastShade，非pre-S history或当前Spatial1；短probe验证当前TLAS端点并取当前full-material payload，旧choice/UV/invPdf/exact sourceview/GIweight冻结。原版和私有诊断双GI严格同源，Runtime/vendor/DI/NRD/reset不改。
+
+48652短16frame、51816 RG/3728 compat各32frame actual0，compile/warning/ASdebug/fence/drift0，终态active=null/资源与hook恢复。每正式后端126976个previous actualShade包关系核对，原3poolGI32/raw/NRD全部RGBA逐bit同；primary位置逐bit不变。独立CPU四有限矩形交点/alpha/两段visibility/pointlight衰减及Lambert+rough1GGX oracle全部0错，位置/距离maxabs1.7881393432617188e−7、normal8.742277657347586e−8，radiance9.628468508182664e−5且逐分量max(5e−6,.003abs(ref))0超界。
+
+**收益/反例：** 每后端次级面移走及alpha重开各4096个old-open但endpoint-invalid；有效endpoint的primary visibility实际变化：blocker961、恢复173、alpha关闭4096。证明开区间到旧点通畅不足以保留旧transport。诊断/安全前置有收益，产品噪声/残影/收敛尚无改善结论，不能把它计为画质交付。
+
+**错误假设拒绝：** 初CPU仅Lambert，F0zero误判无spec与绿表面红蓝灯严格0的预言失败，blocker/alpha/green超界115/4053/3755。原模型/SHA/错误计数保留；独立CPU加入rough1 GGX D=1/π、G=2NoL/(NoV+NoL)、Schlick(1−VoH)^5后过，GPU原源/夹具/原数据/阈值未动。不得为迎合预言改场景或放宽门槛。
+
+**后审/过滤/成本：** 接纳仅Editor受控端点验证设施与证据，位置≤2bias/normalDot≥.9不是任意surface身份保证。静止primary/常量plane材质不覆盖移动primary、变形、parallax视角材质、环境域；不接动态confidence/历史保留。277精确源、3完整logs、6lossless capture、原错误模型/contract/filter-review/独立verify齐全，大流xz原rawSHA复核约23.80MiB。逻辑buffer4194304B=4MiB，不含第二GI AS/NRD、rays、引擎与读回，非产品VRAM/时间预算。只本步Editor/证据/六RTGI文档白名单，他人描边提交保留。
+
+**046直接动作：** 先审current-primary重投影对应和同旧样本transport变化信号，受控probe位置/法线不能直接推广任意模型。限定小尺寸、固定实例、原权重/选择，明确primary匹配/不匹配、旧零样本与当前可见性失效，先正确性与改变像素响应/噪声/能量、成本后才候选NRD生命周期；GI reservoir保守失效和旧色/Volume硬重置保持。禁止用全白confidence或盲换StructureRevision；局部公式线仍搁置。原全质量/F39/static/复杂动态/环境/1080预算与总目标active，每步pre/post review、过滤提交、踩坑和压缩交接继续。
+
+当前没有本步骤残留验证进程；主机其它Unity工程实例不属于本步骤，不关闭。尚未提交的是本步骤Editor三文件及新meta、EndpointReplay证据与六文档；提交后补实际hash。当前用户短暂可见Player授权继续有效，不再为同类约10秒真实enabled-camera测试重复确认。目标工具仍active且引用实施规划，其中六项强制流程始终适用。

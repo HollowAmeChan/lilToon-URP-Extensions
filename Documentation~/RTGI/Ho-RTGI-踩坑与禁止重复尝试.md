@@ -246,3 +246,11 @@ feature.Create重建会销毁旧context/AS/NRD，必须前帧GPU读回完成后�
 exactsourceview重求与GIcache LogLuv全同，packed16view仍2756编码差，0.0015666relative max不能忽略；未证明16B记录充分。CPUoracle阈值是绝对/相对结合，HDRmaxabs.000818不是固定5e-6以内；GPU visibility/env纹理采样作为输入不等于CPU独立验证TLAS/alpha/环境。
 
 旧secondary材质+开区间primary->旧点通畅，不证明当前geometry仍在旧点。静态replay pass不可直接改StructureRevision/CONTINUE，下一要previous lastShade/current端点及matched primary、双段visibility、零→亮/alpha/域变化oracle，记录和量化/原weight匹配后再动态confidence与成本。原rawGI保守失效/旧色Volume硬重置保持。
+
+## F66 / 步骤045：开区间通畅不证明端点存在，F0zero不等于纯Lambert
+
+previous actual Shade需要在Final覆写lastShade前读取；当前Spatial1/pre-S history不能替代。次级表面移走、alpha重开时两后端各4096个旧点仍open而endpoint不存在；只做primary→旧点shadow会错误允许历史。须验证当前端点/normal/material及两段visibility，失配保守拒绝。本轮oldP±bias probe只在受控平面/静止primary通过，不能保证任意模型identity、parallax视角材质或移动primary对应；不要无证推广。
+
+初CPU误以为rough1/F0zero消除全部spec，绿表面在红蓝灯下严格0预言失败。Schlick仍有(1−VoH)^5，必须独立求GGX/Smith；原错误oracle源码/SHA/115+4053+3755超界保留，修CPU后GPU数据/阈值均不变。禁止改夹具/门槛迎合预言，不能用错误oracle给正确GPU定罪或忽略失败。
+
+277源/3logs/6lossless captures与verify见EndpointReplay；4MiB只是64²诊断buffer，额外AS/NRD/rays/readback另计。端点资格不是动态confidence/历史策略或画质收益，生产保守reset继续；需currentprimary对应、改变像素噪声/残影/能量/成本后再接纳。长期无收益局部公式线仍按F60搁置。

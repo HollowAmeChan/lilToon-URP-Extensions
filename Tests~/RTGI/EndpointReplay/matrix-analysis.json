@@ -1,0 +1,93 @@
+{
+  "scope": "Actualprevious lastShade on fixedprimary,controlledcurrentTLAS endpoint/fullmaterial+bothlegs;independent finiteplane/alpha/pointlightLambert+rough1GGX(F0zero stillFresnel) oracle. Not arbitrary geometry/worldmotion/primarymotion/NRDconfidence acceptance.",
+  "productionChanged": false,
+  "frames": 32,
+  "previousActualShadePacketChecks": 126976,
+  "logicalBufferBytes": 4194304,
+  "distanceMaxAbsError": 1.7881393432617188e-07,
+  "positionMaxAbsError": 1.7881393432617188e-07,
+  "normalMaxAbsError": 8.742277657347586e-08,
+  "radianceMaxAbsError": 9.628468508182664e-05,
+  "rows": [
+    {
+      "phase": 0,
+      "samples": 16384,
+      "matched": 16384,
+      "openButEndpointMissing": 0,
+      "geometryHitMismatches": 0,
+      "visibilityMismatches": 0,
+      "materialMismatches": 0,
+      "oracleRadianceViolations": 0
+    },
+    {
+      "phase": 1,
+      "samples": 16379,
+      "matched": 12283,
+      "openButEndpointMissing": 4096,
+      "geometryHitMismatches": 0,
+      "visibilityMismatches": 0,
+      "materialMismatches": 0,
+      "oracleRadianceViolations": 0
+    },
+    {
+      "phase": 2,
+      "samples": 16380,
+      "matched": 12284,
+      "openButEndpointMissing": 0,
+      "geometryHitMismatches": 0,
+      "visibilityMismatches": 0,
+      "materialMismatches": 0,
+      "oracleRadianceViolations": 0
+    },
+    {
+      "phase": 3,
+      "samples": 16366,
+      "matched": 16366,
+      "openButEndpointMissing": 0,
+      "geometryHitMismatches": 0,
+      "visibilityMismatches": 0,
+      "materialMismatches": 0,
+      "oracleRadianceViolations": 0
+    },
+    {
+      "phase": 4,
+      "samples": 16380,
+      "matched": 16380,
+      "openButEndpointMissing": 0,
+      "geometryHitMismatches": 0,
+      "visibilityMismatches": 0,
+      "materialMismatches": 0,
+      "oracleRadianceViolations": 0
+    },
+    {
+      "phase": 5,
+      "samples": 16371,
+      "matched": 16371,
+      "openButEndpointMissing": 0,
+      "geometryHitMismatches": 0,
+      "visibilityMismatches": 0,
+      "materialMismatches": 0,
+      "oracleRadianceViolations": 0
+    },
+    {
+      "phase": 6,
+      "samples": 16381,
+      "matched": 12285,
+      "openButEndpointMissing": 4096,
+      "geometryHitMismatches": 0,
+      "visibilityMismatches": 0,
+      "materialMismatches": 0,
+      "oracleRadianceViolations": 0
+    },
+    {
+      "phase": 7,
+      "samples": 15801,
+      "matched": 15801,
+      "openButEndpointMissing": 0,
+      "geometryHitMismatches": 0,
+      "visibilityMismatches": 0,
+      "materialMismatches": 0,
+      "oracleRadianceViolations": 0
+    }
+  ]
+}

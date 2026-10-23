@@ -1,0 +1,54 @@
+"""Independent rectangular-plane geometric and point-light oracle for old Shade queries."""
+from pathlib import Path
+import json,gzip,lzma,struct,hashlib
+import numpy as np
+HERE=Path(__file__).resolve().parent
+P=np.dtype([('position','<f4',(3,)),('misc','<u4'),('radiance','<u4'),('weight','<f4'),('normal','<u4'),('unused','<u4')])
+def raw(p):
+ if p.exists():return p.read_bytes()
+ q=p.with_suffix(p.suffix+'.gz');return gzip.decompress(q.read_bytes()) if q.exists() else lzma.decompress(p.with_suffix(p.suffix+'.xz').read_bytes())
+def read(p):return json.loads(raw(p).decode('utf-8-sig'))
+def intersect(o,d,low,high,phase):
+ n=len(o);best=np.full(n,np.inf);which=np.full(n,-1,dtype=int)
+ planes=[(0,0,1,1),(-1.25 if phase==1 else -1,0,2,2),(-.6,-.35 if phase==3 else 10,.2,2),(-.5,0 if phase in [5,6] else 10,2,2)]
+ for i,(z,cx,hx,hy) in enumerate(planes):
+  if i==3 and phase!=5:continue
+  dz=d[:,2];t=np.divide(z-o[:,2],dz,out=np.full(n,np.inf),where=np.abs(dz)>1e-20);hit=o+d*t[:,None]
+  ok=(t>=low)&(t<=high)&(np.abs(hit[:,0]-cx)<=hx+1e-6)&(np.abs(hit[:,1])<=hy+1e-6)&(t<best);best[ok]=t[ok];which[ok]=i
+ return best,which
+
+def visible(o,p,bias,phase):
+ delta=p-o;dist=np.linalg.norm(delta,axis=1);direction=delta/np.maximum(dist[:,None],1e-12);t,which=intersect(o,direction,bias,dist-bias,phase);return (which<0)&(dist>2*bias)
+
+def summarize(label='matrix'):
+ doc=read(HERE/f'results/{label}.json');r=doc['selectionLineage'];b=raw(HERE/'results'/label/r['stream']);assert b[:4]==b'HGT1' and hashlib.sha256(b).hexdigest().upper()==r['streamSha256'];w,h,nf=struct.unpack('<3i',b[4:16]);n=w*h
+ dtype=np.dtype([('mode','<i4'),('shader','<i4'),('app','<i4'),('phase','<i4'),('packet',P,(5,n)),('meta','<u4',(5,n,4)),('origin','<u4',(5,n,4)),('control',P,(3,n)),('currentMaterial','<u4',(n,4,4)),('query','<u4',(n,18,4))]);frames=np.frombuffer(b,dtype=dtype,offset=16);assert len(frames)==nf==len(r['frames']);lights=np.array([[v[c] for c in 'xyzw'] for v in r['analyticLights']],dtype=float).reshape(-1,4,4)
+ counts=[{'phase':p,'samples':0,'matched':0,'openButEndpointMissing':0,'geometryHitMismatches':0,'visibilityMismatches':0,'materialMismatches':0,'oracleRadianceViolations':0} for p in range(8)];positionError=distanceError=normalError=radianceError=0.;previousChecks=0
+ for fi,f in enumerate(frames):
+  phase=int(f['phase']);assert phase==fi//(nf//8);u=f['query'];v=u.view('<f4');valid=u[:,0,3]==1;row=counts[phase];row['samples']+=int(valid.sum());old=v[:,1,:3].astype(float);o=v[:,2,:3].astype(float);direction=v[:,3,:3].astype(float);bias=v[:,16,3].astype(float);primary=v[:,16,:3].astype(float)
+  t,which=intersect(o,direction,bias,v[:,3,3],phase);hit=which>=0;status=v[:,4,1]>0;row['geometryHitMismatches']+=int(np.count_nonzero((hit!=status)&valid));assert not np.any((hit!=status)&valid)
+  if np.any(hit&valid):
+   use=hit&valid;distanceError=max(distanceError,float(np.max(np.abs(t[use]-v[use,4,0]))));expectedPosition=o[use]+direction[use]*t[use,None];positionError=max(positionError,float(np.max(np.abs(expectedPosition-v[use,5,:3]))));expectedN=np.zeros_like(expectedPosition);expectedN[:,2]=np.where(direction[use,2]>0,-1,1);normalError=max(normalError,float(np.max(np.abs(expectedN-v[use,6,:3]))))
+  expectedMatch=hit&(np.abs(t-4*bias)<=2*bias);matched=v[:,5,3]>0;assert not np.any((expectedMatch!=matched)&valid);row['matched']+=int(np.count_nonzero(matched&valid));row['openButEndpointMissing']+=int(np.count_nonzero(valid&~matched&(v[:,9,0]>0)))
+  openOld=visible(primary,old,bias,phase);row['visibilityMismatches']+=int(np.count_nonzero((openOld!=(v[:,9,0]>0))&valid))
+  if fi:
+   prev=frames[fi-1];assert np.array_equal(u[:,0,0],prev['packet'][4]['radiance']) and np.array_equal(u[:,0,1:3],prev['meta'][4,:,:2]) and np.array_equal(u[:,1,3],(prev['packet'][4]['misc']&255).astype(np.float32).view('<u4'))
+   assert np.array_equal(v[:,1,:3].view('<u4'),prev['packet'][4]['position'].copy().view('<u4')) and np.array_equal(u[:,15],prev['origin'][4]);assert np.array_equal(u[:,17,3],prev['packet'][4]['weight'].view('<u4'));previousChecks+=n
+  use=valid&matched
+  if np.any(use):
+   idx=np.flatnonzero(use);surface=which[use];base=np.ones((len(idx),3));base[np.isin(surface,[2,3])]=0;base[(surface==1)&(phase==7)]=[0,1,0]
+   row['materialMismatches']+=int(np.count_nonzero(np.abs(base-v[use,7,:3])>1e-6));assert np.all(v[use,6,3]==1) and np.all(v[use,7,3]==0) and np.all(v[use,8]==0)
+   current=v[use,5,:3].astype(float);currentOpen=visible(primary[use],current,bias[use],phase);row['visibilityMismatches']+=int(np.count_nonzero(currentOpen!=(v[use,9,1]>0)))
+   lightIndex=(u[use,0,1]&0x7fffffff).astype(int);has=(u[use,0,1]&0x80000000)!=0;expected=np.zeros((len(idx),3))
+   if np.any(has):
+    at=np.flatnonzero(has);light=lights[lightIndex[has]];delta=light[:,0,:3]-current[has];dd=np.sum(delta*delta,axis=1);dist=np.sqrt(dd);L=delta/dist[:,None];fade=np.clip(1-(dd/light[:,0,3]**2)**2,0,1);sample=light[:,1,:3]*(fade*fade/dd)[:,None];N=np.zeros_like(L);N[:,2]=1;response=base[has]*(np.maximum(0,np.sum(N*L,axis=1))/np.pi)[:,None];vis=visible(current[has],light[:,0,:3],bias[use][has],phase);row['visibilityMismatches']+=int(np.count_nonzero(vis!=(v[use,9,2][has]>0)));expected[has]=response*sample*v[use,12,3][has,None]*vis[:,None]
+   error=np.abs(expected-v[use,11,:3]);radianceError=max(radianceError,float(error.max()));row['oracleRadianceViolations']+=int(np.count_nonzero(error>np.maximum(5e-6,.003*np.abs(expected))))
+  assert np.all(np.isfinite(v[:,1:18]))
+ assert distanceError<5e-5 and positionError<5e-5 and normalError<1e-4
+ if not all(x['geometryHitMismatches']==x['visibilityMismatches']==x['materialMismatches']==x['oracleRadianceViolations']==0 for x in counts):print('ORACLE FAILURE',counts,'radiance',radianceError)
+ assert all(x['geometryHitMismatches']==x['visibilityMismatches']==x['materialMismatches']==x['oracleRadianceViolations']==0 for x in counts)
+ assert counts[1]['openButEndpointMissing']>0 and counts[6]['openButEndpointMissing']>0 and counts[5]['matched']>0 and counts[7]['matched']>0
+ return {'scope':'Actualprevious lastShade on fixedprimary,controlledcurrentTLAS endpoint/fullmaterial+bothlegs;independent finiteplane/alpha/pointlightLambert oracle. Not arbitrary geometry/worldmotion/primarymotion/NRDconfidence acceptance.','productionChanged':False,'frames':len(frames),'previousActualShadePacketChecks':previousChecks,'logicalBufferBytes':r['logicalBufferBytes'],'distanceMaxAbsError':distanceError,'positionMaxAbsError':positionError,'normalMaxAbsError':normalError,'radianceMaxAbsError':radianceError,'rows':counts}
+if __name__=='__main__':
+ import argparse
+ p=argparse.ArgumentParser();p.add_argument('--mode',default='matrix',choices=['qualification','matrix','compat']);args=p.parse_args();r=summarize(args.mode);(HERE/(args.mode+'-analysis.json')).write_text(json.dumps(r,indent=2)+'\n',encoding='utf-8');print(json.dumps(r,indent=2))

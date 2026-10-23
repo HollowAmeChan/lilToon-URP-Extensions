@@ -1,0 +1,15 @@
+{
+  "step": 45,
+  "runtimeVendorNrdResetChanged": false,
+  "qualifiedScope": "Previous actual Spatial1 Shade on static primary; current-TLAS finite plane endpoint, full material, both legs of visibility and independent CPU plane/alpha/point-light Lambert+rough1 GGX oracle.",
+  "notQualified": [
+    "Moving primary, arbitrary mesh/deformation, parallax/view-dependent material",
+    "Production sufficient sidecar ABI, NRD confidence/history retention",
+    "Dynamic image noise/lag/energy gain or product GPU/VRAM budget"
+  ],
+  "benefit": "Both backends witness 4096 open-old-point but missing endpoint samples after secondary movement and 4096 after alpha reopening. No product quality improvement claimed.",
+  "rejectedPrediction": "Initial Lambert-only CPU model and green-under-red/blue strictly-zero prediction rejected. Preserve initial source/violations; F0zero still Schlick grazing GGX. GPU source/data/threshold unchanged.",
+  "originalOutputs": "All GI32 pools and raw/NRD RGBA bitexact in each actual paired frame.",
+  "cost": "4MiB diagnostic logical buffer at64x64, excludes duplicate GI AS/NRD, rays, engine and readbacks.",
+  "next": "Bounded current-primary correspondence and same-sample change signal; require changed-pixel lag/noise/energy and cost before retaining history. Conservative reservoir invalidation and old color/Volume reset stay."
+}

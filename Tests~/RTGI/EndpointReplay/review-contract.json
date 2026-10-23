@@ -1,0 +1,23 @@
+{
+  "step": 45,
+  "scene": "64\u00b2fixedprimary+fourinitialASplanes,2pointlights,staticcamera",
+  "phases": [
+    "static",
+    "secondaryaway",
+    "restored",
+    "blocker",
+    "restored",
+    "alphaClosed",
+    "alphaReopened",
+    "secondaryGreen"
+  ],
+  "frames": 32,
+  "probe": "oldP+oldgeoN*4bias,dir-oldgeoN,TMinbias,TMax8bias",
+  "match": "distance<=2bias,normalDot>=.9",
+  "geometryPositionDistanceAbsTolerance": 5e-05,
+  "normalAbsTolerance": 0.0001,
+  "radianceTolerance": "max(5e-6,.003*abs(doubleReference))",
+  "rawGpuDataAndThresholdsAfterOracleFix": "Unchanged;F0zero has Schlickgrazing GGX,originalzeroPrediction rejected",
+  "noHistoryPolicyChange": true,
+  "coverageLimit": "Controlledplanes/alpha/Lambert+rough1GGX;not arbitrarytexturedmodel or movingprimary confidence"
+}
