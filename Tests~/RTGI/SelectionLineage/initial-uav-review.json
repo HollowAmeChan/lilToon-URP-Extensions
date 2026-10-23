@@ -1,0 +1,8 @@
+{
+  "observedExit": 1,
+  "debugErrors": 0,
+  "newShaderWarning": 1,
+  "accepted": false,
+  "reason": "Private FinalNRD had12UAVs, exceeded Unity d3d11 shader backend8slot qualification; warning not waived even on D3D12",
+  "repair": "Metadata/origin/last-shade combined into one uint4 buffer; no production math changes"
+}

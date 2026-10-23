@@ -270,3 +270,6 @@
 
 
 步骤041：原SDK小GPU合约/独立oracle验证GI32无法唯一恢复旧次级DI选择、默认misc/unused丢失；保留同选择比新采样必要。实际GPU同时修正两CPU诊断字段标签，旧全包比较/texture质量不变，历史分项计数须旧schema解码。[采样契约与证据](../../Tests~/RTGI/ReplayContract/README.md)。042做真实T/S/Final来源继承观察后才动态confidence；未改生产reset，190.55MiB/1080候选开销待证，全部原缺口与目标active。
+
+
+步骤042：真实古堡64²原版/lineage双GI两后端4T/S观察过，各128帧，1,572,864原包及raw/NRD输出逐bit同、2,097,152不可变来源检查，pre-S历史与实际Spatial1 Shade对应成立。capture保留字/UAV两失败完整，常规pass不覆盖age/Jacobian/视野/kind0/3或confidence。[来源证据与界限](../../Tests~/RTGI/SelectionLineage/README.md)。043补分支/生命周期，再当前TLAS同选择重求/oracle；生产reset未动，全部原缺口/预算与目标active。

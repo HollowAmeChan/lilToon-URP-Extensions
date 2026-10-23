@@ -1,0 +1,32 @@
+[
+  {
+    "original": "Runtime/RTGI/Shaders/HoRTGI.compute",
+    "originalRawSha256": "0B12B95A26BA24A2B991628F0EED4397C3713299EB5C9CAABE401B1E9FACC946",
+    "generated": "Assets/HoRTGISelectionLineage/Lineage.compute",
+    "generatedSha256": "9C61AC230954CD36A66338B5C0B462026BD5157E5BA7E58B40F49680BE8B44C3"
+  },
+  {
+    "original": "Runtime/RTGI/Shaders/HoRTGI.raytrace",
+    "originalRawSha256": "2E4CEBAAFBC8FEB3A8BF1C711BC44C64020E4567A602F1DC21C7301447ED9144",
+    "generated": "Assets/HoRTGISelectionLineage/Lineage.raytrace",
+    "generatedSha256": "79172D39474341AEEEA2A5532FCBB5A1259A23B0E0B27CD336510FC338763C98"
+  },
+  {
+    "original": "Runtime/RTGI/Shaders/HoRTGIResampling.hlsl",
+    "originalRawSha256": "FBBB2D1CDF3B54ECFB1C9DBEAA12F72CE7DB2B96183B5A0E2FE000A94CAD0F79",
+    "generated": "Assets/HoRTGISelectionLineage/LineageResampling.hlsl",
+    "generatedSha256": "F9C5E0B10E675B8C81983CAC4012EF939D68A3F40C65A18F5A4C43A62F3FC023"
+  },
+  {
+    "original": "Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl",
+    "originalRawSha256": "A30FB74ABF632DD3BD51324352BEE3513323FA9E3B6FFE4D6E5932D7DB1EC043",
+    "generated": "Assets/HoRTGISelectionLineage/LineageShading.hlsl",
+    "generatedSha256": "D421AA208DE452674304101E46FFD47F6F70C13CDBD99E50D1B8AD9E3EDCAE02"
+  },
+  {
+    "original": "Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl",
+    "originalRawSha256": "C8BDCD648B7C457B2311CE71AF362F12C1BB9A6C4DA88EBCC560502FC605C556",
+    "generated": "Assets/HoRTGISelectionLineage/LineageReservoir.hlsl",
+    "generatedSha256": "AFB456D54FEB4AFE390F0C41AC5C4237837AE83372D5BD5A7B98CA151AF3BCF0"
+  }
+]

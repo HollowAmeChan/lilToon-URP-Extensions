@@ -1,0 +1,17 @@
+{
+  "observedUnityExit": 1,
+  "runnerFresh": false,
+  "runnerPathError": "Runner inherited256 report path but actual test is64; original metadata unchanged",
+  "shaderErrors": 4,
+  "captureQualified": false,
+  "reason": "HLSL interpolation keyword linear used as local variable; stagebuffers unwritten, no actual source witness. Partial stream preserved. Initial opaque main/output comparisons did not throw but not standalone acceptance.",
+  "repair": "Rename pixelIndex; post-read compiler diagnostics and nonempty source check; correct64 report path.",
+  "report.json": {
+    "sha256": "8B406A06EB60D4A961717977902A931675015665DD6B44E26F775AF1D9F071FA",
+    "bytes": 17050
+  },
+  "lineage.bin": {
+    "sha256": "1C774EEC2A640B969EA08D804166CAE5715C503D264967ED9AC83A02EAD96FA0",
+    "bytes": 54526352
+  }
+}

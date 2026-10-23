@@ -1,0 +1,27 @@
+--- Runtime/RTGI/Shaders/HoRTGI.compute
++++ Lineage.compute
+@@ -48,6 +48,10 @@
+ void HoGIFinal(uint2 pixel)
+ {
+     RTXDI_GIReservoir reservoir=RTXDI_LoadGIReservoir(HoGILayout(),pixel,1);
++    uint hoPixel=pixel.y*(uint)_HoRTGIFrame.x+pixel.x;uint hoPointer=RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,1);
++    RTXDI_PackedGIReservoir hoActual=_HoRTGIReservoirs[hoPointer];uint hoLast=6*HoGILayout().reservoirArrayPitch+hoPixel*4;
++    _HoLRecords[hoLast]=uint4(asuint(hoActual.position),hoActual.packed_miscData_age_M);_HoLRecords[hoLast+1]=uint4(hoActual.packed_radiance,asuint(hoActual.weight),hoActual.packed_normal,asuint(hoActual.unused));
++    _HoLRecords[hoLast+2]=HoLMeta(hoPointer);_HoLRecords[hoLast+3]=HoLOrigin(hoPointer);
+     RAB_Surface surface=RAB_GetGBufferSurface(pixel,false);float3 demodulated=0;float hitDistance=65504;
+     bool valid=RAB_IsSurfaceValid(surface);
+     if(valid)
+@@ -82,9 +86,12 @@
+     #endif
+     // Keep temporal history independent of the spatially resampled pool.
+     // Final executes after both stages, so no temporal reader races this write.
+-    if(_HoRTGIFlags.y>.5)
++    if(_HoRTGIFlags.y>.5) {
+         _HoRTGIReservoirs[RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,0)]=
+             _HoRTGIReservoirs[RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,2)];
++        uint hoHistory=RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,0),hoTemporal=RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,2);
++        HoLMeta(hoHistory)=HoLMeta(hoTemporal);HoLOrigin(hoHistory)=HoLOrigin(hoTemporal);
++    }
+     else
+         RTXDI_StoreGIReservoir(reservoir,HoGILayout(),pixel,0);
+     HoRTDIPrimaryHistory history=(HoRTDIPrimaryHistory)0;

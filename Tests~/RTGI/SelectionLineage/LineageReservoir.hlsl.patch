@@ -1,0 +1,93 @@
+--- Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl
++++ LineageReservoir.hlsl
+@@ -50,6 +50,7 @@
+ 
+     // Number of frames the chosen sample has survived.
+     uint age;
++    uint hoSourcePointer;
+ };
+ 
+ // Encoding helper constants for RTXDI_PackedGIReservoir
+@@ -64,6 +65,16 @@
+ // Application can use this field to store anything.
+ static const uint RTXDI_PackedGIReservoir_MiscDataMask = 0xffff0000;
+ 
++RWStructuredBuffer<uint4> _HoLRecords;
++#define HoLMeta(pointer) _HoLRecords[(pointer)*2]
++#define HoLOrigin(pointer) _HoLRecords[(pointer)*2+1]
++void HoLStore(uint source, RTXDI_ReservoirBufferParameters layout, uint2 pixel, uint arrayIndex)
++{
++    uint target=RTXDI_ReservoirPositionToPointer(layout,pixel,arrayIndex);
++    HoLMeta(target)=source<3*layout.reservoirArrayPitch?HoLMeta(source):0;
++    HoLOrigin(target)=source<3*layout.reservoirArrayPitch?HoLOrigin(source):0;
++}
++
+ // Converts a GIReservoir into its packed form.
+ // This function should be used only when the application needs to store data with the given argument.
+ // It can be retrieved when unpacking the GIReservoir, but RTXDI SDK doesn't use the filed at all. 
+@@ -105,6 +116,7 @@
+ 
+     miscData = data.packed_miscData_age_M & RTXDI_PackedGIReservoir_MiscDataMask;
+ 
++    res.hoSourcePointer = 0xffffffffu;
+     return res;
+ }
+ 
+@@ -121,7 +133,7 @@
+     uint reservoirArrayIndex)
+ {
+     uint pointer = RTXDI_ReservoirPositionToPointer(reservoirParams, reservoirPosition, reservoirArrayIndex);
+-    return RTXDI_UnpackGIReservoir(RTXDI_GI_RESERVOIR_BUFFER[pointer]);
++    RTXDI_GIReservoir hoResult = RTXDI_UnpackGIReservoir(RTXDI_GI_RESERVOIR_BUFFER[pointer]); hoResult.hoSourcePointer=pointer; return hoResult;
+ }
+ 
+ RTXDI_GIReservoir RTXDI_LoadGIReservoir(
+@@ -131,7 +143,7 @@
+     out uint miscFlags)
+ {
+     uint pointer = RTXDI_ReservoirPositionToPointer(reservoirParams, reservoirPosition, reservoirArrayIndex);
+-    return RTXDI_UnpackGIReservoir(RTXDI_GI_RESERVOIR_BUFFER[pointer], miscFlags);
++    RTXDI_GIReservoir hoResult = RTXDI_UnpackGIReservoir(RTXDI_GI_RESERVOIR_BUFFER[pointer], miscFlags); hoResult.hoSourcePointer=pointer; return hoResult;
+ }
+ 
+ #if RTXDI_ENABLE_STORE_RESERVOIR
+@@ -152,6 +164,7 @@
+     uint2 reservoirPosition,
+     uint reservoirArrayIndex)
+ {
++    HoLStore(reservoir.hoSourcePointer,reservoirParams,reservoirPosition,reservoirArrayIndex);
+     RTXDI_StorePackedGIReservoir(
+         RTXDI_PackGIReservoir(reservoir, 0), reservoirParams, reservoirPosition, reservoirArrayIndex);
+ }
+@@ -163,6 +176,7 @@
+     uint2 reservoirPosition,
+     uint reservoirArrayIndex)
+ {
++    HoLStore(reservoir.hoSourcePointer,reservoirParams,reservoirPosition,reservoirArrayIndex);
+     RTXDI_StorePackedGIReservoir(
+         RTXDI_PackGIReservoir(reservoir, miscFlags), reservoirParams, reservoirPosition, reservoirArrayIndex);
+ }
+@@ -179,6 +193,7 @@
+     s.weightSum = 0.0;
+     s.M = 0;
+     s.age = 0;
++    s.hoSourcePointer = 0xffffffffu;
+ 
+     return s;
+ }
+@@ -198,6 +213,7 @@
+     reservoir.weightSum = samplePdf > 0.0 ? 1.0 / samplePdf : 0.0;
+     reservoir.M = 1;
+     reservoir.age = 0;
++    reservoir.hoSourcePointer = 0xffffffffu;
+     return reservoir;
+ }
+ 
+@@ -228,6 +244,7 @@
+         reservoir.normal = newReservoir.normal;
+         reservoir.radiance = newReservoir.radiance;
+         reservoir.age = newReservoir.age;
++        reservoir.hoSourcePointer = newReservoir.hoSourcePointer;
+     }
+ 
+     return selectSample;

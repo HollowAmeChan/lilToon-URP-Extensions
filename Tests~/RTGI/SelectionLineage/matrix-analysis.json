@@ -1,0 +1,76 @@
+{
+  "scope": "Actual64\u00b2dual-featureGI original/math-identical lineage path, four T/S modes. Static camera/legal scene, no dynamic confidence/transport replay. Global original packet and physical publication exact equality; metadata checked against immutable initial stream, not float search.",
+  "productionChanged": false,
+  "frames": 128,
+  "originalPacketsCompared": 1572864,
+  "logicalBufferBytes": 1966080,
+  "rows": [
+    {
+      "mode": 0,
+      "frames": 32,
+      "wholeControlTracePacketMismatches": 0,
+      "immutableInitialSourceChecks": 524288,
+      "selectedPreviousFrame": 0,
+      "spatialDifferentOrigin": 0,
+      "initialSampleKinds": [
+        1,
+        2
+      ],
+      "validSecondaryDiChoices": 117604,
+      "environmentChoices": 70046,
+      "selectedNormalWordDifferentFromInitial": 29372,
+      "selectedLogLuvWordDifferentFromInitial": 0
+    },
+    {
+      "mode": 1,
+      "frames": 32,
+      "wholeControlTracePacketMismatches": 0,
+      "immutableInitialSourceChecks": 524288,
+      "selectedPreviousFrame": 116198,
+      "spatialDifferentOrigin": 0,
+      "initialSampleKinds": [
+        1,
+        2
+      ],
+      "validSecondaryDiChoices": 117556,
+      "environmentChoices": 69584,
+      "selectedNormalWordDifferentFromInitial": 24616,
+      "selectedLogLuvWordDifferentFromInitial": 0
+    },
+    {
+      "mode": 2,
+      "frames": 32,
+      "wholeControlTracePacketMismatches": 0,
+      "immutableInitialSourceChecks": 524288,
+      "selectedPreviousFrame": 0,
+      "spatialDifferentOrigin": 71507,
+      "initialSampleKinds": [
+        1,
+        2
+      ],
+      "validSecondaryDiChoices": 117571,
+      "environmentChoices": 70012,
+      "selectedNormalWordDifferentFromInitial": 29340,
+      "selectedLogLuvWordDifferentFromInitial": 0
+    },
+    {
+      "mode": 3,
+      "frames": 32,
+      "wholeControlTracePacketMismatches": 0,
+      "immutableInitialSourceChecks": 524288,
+      "selectedPreviousFrame": 116328,
+      "spatialDifferentOrigin": 47244,
+      "initialSampleKinds": [
+        1,
+        2
+      ],
+      "validSecondaryDiChoices": 117577,
+      "environmentChoices": 70051,
+      "selectedNormalWordDifferentFromInitial": 22342,
+      "selectedLogLuvWordDifferentFromInitial": 0
+    }
+  ],
+  "sourceChecks": 2097152,
+  "allOriginalPublicationHashesExact": true,
+  "coverageLimit": "Ordinary temporal previous/current selection, first-frame reset and spatial/S-off/history/lastShade verified. Not claimed exhaustive age-limit/Jacobian/disocclusion/camera-motion branch coverage; no alpha/light/geometry transition oracle yet."
+}

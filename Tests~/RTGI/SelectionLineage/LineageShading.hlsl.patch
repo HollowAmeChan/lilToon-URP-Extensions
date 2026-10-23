@@ -1,0 +1,29 @@
+--- Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl
++++ LineageShading.hlsl
+@@ -22,6 +22,7 @@
+     uint index=pixel.y*(uint)_HoRTGIFrame.x+pixel.x;
+     HoRTGISecondaryData data=_HoRTGISecondary[index];
+     RTXDI_GIReservoir reservoir=RTXDI_EmptyGIReservoir();
++    uint4 hoMeta=uint4(0,data.flags,0,0);
+     if(data.flags!=0)
+     {
+         float3 radiance=data.emission;
+@@ -46,6 +47,7 @@
+             RTXDI_DIReservoir lightReservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,HoGIEnvironmentRIS(),HoGIEnvironmentRIS(),sample);
+             if(RTXDI_IsValidDIReservoir(lightReservoir))
+             {
++                hoMeta=uint4(lightReservoir.lightData,lightReservoir.uvData,asuint(RTXDI_GetDIReservoirInvPdf(lightReservoir)),RTXDI_EncodeNormalizedVectorToSnorm2x16(surface.viewDir));
+                 // Reconstruct the stored choice before visibility; the SDK's out
+                 // sample can diverge under Unity DXC with multiple candidates.
+                 sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(lightReservoir),false),surface,RTXDI_GetDIReservoirSampleUV(lightReservoir));
+@@ -59,6 +61,10 @@
+         // Keep HDR energy; the reference's optional firefly clamp is disabled.
+         reservoir=RTXDI_MakeGIReservoir(data.positionWS,HoGIUnpackNormal(data.normal),radiance,data.pdf);
+     }
++    uint hoPointer=RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,1);
++    HoLMeta(hoPointer)=hoMeta;
++    HoLOrigin(hoPointer)=data.flags!=0?uint4((uint)_HoRTGIFrameIndex,index,data.flags,((uint)_HoRTGIFrameIndex+1)*(uint)(_HoRTGIFrame.x*_HoRTGIFrame.y)+index+1):0;
++    reservoir.hoSourcePointer=hoPointer;
+     RTXDI_StoreGIReservoir(reservoir,HoGILayout(),pixel,1);
+ }
+ #endif

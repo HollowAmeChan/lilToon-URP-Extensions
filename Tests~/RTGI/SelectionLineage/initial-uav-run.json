@@ -1,0 +1,1100 @@
+{
+  "step": 42,
+  "debugLayerRequested": true,
+  "staleLockRemoved": false,
+  "startedUtc": "2026-10-23T13:11:47.8942645Z",
+  "sources": [
+    {
+      "sha256": "4F6994033AD44BBC58214E8F38562AE86D9E4104EC7A82DBDC07D15213ACCEFB",
+      "path": "Runtime/RTGI/HoRTGICompositePass.cs"
+    },
+    {
+      "sha256": "432003715162BCA6E8BFB7BBC80F88F86C342360B8967B47482DE54DE22F6A9A",
+      "path": "Runtime/RTGI/HoRTGICompositePass.cs.meta"
+    },
+    {
+      "sha256": "BF569C7172177B8DF827E001BD18246AC7884964DBAF60317A54158300EF9E86",
+      "path": "Runtime/RTGI/HoRTGIContext.cs"
+    },
+    {
+      "sha256": "4998164CD00C08F948152B61DC66D59BB753762942BBC31324F8601955723722",
+      "path": "Runtime/RTGI/HoRTGIContext.cs.meta"
+    },
+    {
+      "sha256": "CD0E785B8285ED32863D421A1979E9C25CF07021359B96FC9E54317D5051DD70",
+      "path": "Runtime/RTGI/HoRTGIDebugPass.cs"
+    },
+    {
+      "sha256": "B09FA92435464AF0BA49F815DC3AD098CCCE4EC1FB39C49CA1AB06E832C6F731",
+      "path": "Runtime/RTGI/HoRTGIDebugPass.cs.meta"
+    },
+    {
+      "sha256": "BDEC4CAE2DC8231708643B5A981C053DACE90E26ADCB9DA2BE68E0D71AA64083",
+      "path": "Runtime/RTGI/HoRTGIGrid.cs"
+    },
+    {
+      "sha256": "9F54F7C12A2F6AB6EC8FD6033C8E508F3E9478CE31D319B4DB56BC421A8E9236",
+      "path": "Runtime/RTGI/HoRTGIGrid.cs.meta"
+    },
+    {
+      "sha256": "1030FA1442FB273A6AD47C4FB389B424E2CED9E6C7C179571029682C67801C84",
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs"
+    },
+    {
+      "sha256": "E62AC8CA7E17334C8B32FE3632961A1168C5A8484F7AD0DA8BADA5FBFBAC20C9",
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs.meta"
+    },
+    {
+      "sha256": "39D55746D16BE28AD9E2A685CEA25D58A3F8304059B02C81F29E0A89083A2469",
+      "path": "Runtime/RTGI/HoRTGIRenderGraphResources.cs"
+    },
+    {
+      "sha256": "7E9026F9E32B7EA085FFE5CEA2F290EC473F972B118DFF7236FA8278017D88DB",
+      "path": "Runtime/RTGI/HoRTGIRenderGraphResources.cs.meta"
+    },
+    {
+      "sha256": "BAB616690F6357A02E0792A1FAFB3DF76F40EF14BA4B7918D5060DF13F398308",
+      "path": "Runtime/RTGI/HoRTGISecondaryMaterials.cs"
+    },
+    {
+      "sha256": "56025A5D064A4E6713D75F0DB84477CCFD26D0D62172F09C0C5D24FBB64DC763",
+      "path": "Runtime/RTGI/HoRTGISecondaryMaterials.cs.meta"
+    },
+    {
+      "sha256": "267FAD96A9BFB24E226E4A56E1476D1597D638457CD52BA876E82B568A28BA5C",
+      "path": "Runtime/RTGI/HoRTGISettings.cs"
+    },
+    {
+      "sha256": "984EA27F154B9111C68C7877BAE4A1E7765EB7EC871990EE6F5FB9945BB51ECE",
+      "path": "Runtime/RTGI/HoRTGISettings.cs.meta"
+    },
+    {
+      "sha256": "D9567404A73FB98C82D219DACA35EC1BC204DCA9A3EC44EE1B89C679A9A0CAE4",
+      "path": "Runtime/RTGI/HoRTGIVolume.cs"
+    },
+    {
+      "sha256": "A9A03E518C5A794051E3CB8944D0EB496AA4C686B5FFEE57F0A4EAF253B85407",
+      "path": "Runtime/RTGI/HoRTGIVolume.cs.meta"
+    },
+    {
+      "sha256": "870A386143E0182B6B7C3C461FF1EDE04D2340E0696568524534112E49038590",
+      "path": "Runtime/RTGI/NRD.meta"
+    },
+    {
+      "sha256": "19363645BFD6B171BCB0FAE662D1BC7C207481507E870962787C637BCD54CFAC",
+      "path": "Runtime/RTGI/Shaders.meta"
+    },
+    {
+      "sha256": "C6F15888A58877C4D120E28B6D4A8E0DF76D0A1B865CE0E67D506DAA3AC733E2",
+      "path": "Runtime/RTGI/NRD/HoRTGINrdContext.cs"
+    },
+    {
+      "sha256": "9F8AC8C7F13FDC8764980AAC1124D98AA69183343E4954B0465A0A19DDDA016F",
+      "path": "Runtime/RTGI/NRD/HoRTGINrdContext.cs.meta"
+    },
+    {
+      "sha256": "F5D6594A6F5C1333989D49E6F3FFD3E0F0EDE1629646A4A797460B60AC7320D7",
+      "path": "Runtime/RTGI/NRD/HoRTGINrdManifest.cs"
+    },
+    {
+      "sha256": "BCFA745E020C49AA5B094B70BCC9B25611FC0C56014DDD67AD962580E63BF48A",
+      "path": "Runtime/RTGI/NRD/HoRTGINrdManifest.cs.meta"
+    },
+    {
+      "sha256": "0B12B95A26BA24A2B991628F0EED4397C3713299EB5C9CAABE401B1E9FACC946",
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute"
+    },
+    {
+      "sha256": "490DEEEDA74C272BAF0D030A3FB7B51D4510841D01691D2D42352A80035ED667",
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute.meta"
+    },
+    {
+      "sha256": "2E4CEBAAFBC8FEB3A8BF1C711BC44C64020E4567A602F1DC21C7301447ED9144",
+      "path": "Runtime/RTGI/Shaders/HoRTGI.raytrace"
+    },
+    {
+      "sha256": "0876A850268D06D2CB886F2C886488D4779961BB4211D7E7DC52FFFD36016F9C",
+      "path": "Runtime/RTGI/Shaders/HoRTGI.raytrace.meta"
+    },
+    {
+      "sha256": "110657137C0413E3CA8808CD1FC74D741792942F818676BEC69B4CAAAD5897BB",
+      "path": "Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl"
+    },
+    {
+      "sha256": "D1AF4F0ACC3A47CBAC6D2ED13B96569FE350E63E2FE5601F4EB1AF586213F86F",
+      "path": "Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl.meta"
+    },
+    {
+      "sha256": "730B7B3E806F2D54A62D5556061983417AF8DBF3F4A7CD35242E370C28E80479",
+      "path": "Runtime/RTGI/Shaders/HoRTGIComposite.shader"
+    },
+    {
+      "sha256": "EF0093169762D012F20D660B26085AFF28982CF914023BD66811120B76BCC113",
+      "path": "Runtime/RTGI/Shaders/HoRTGIComposite.shader.meta"
+    },
+    {
+      "sha256": "418AFCDEE33FFF5565B9550F1F7A79A0AEEED1B4797FB8228D95A20FDA6D52FC",
+      "path": "Runtime/RTGI/Shaders/HoRTGIDebug.shader"
+    },
+    {
+      "sha256": "C5F53089BC9C2F74597BEF2248D826E8457236B6D046744E41B423ADD8AAB2D7",
+      "path": "Runtime/RTGI/Shaders/HoRTGIDebug.shader.meta"
+    },
+    {
+      "sha256": "27CE1056448FF1161E407CDAF8E1790A575A62A3D0AA441113473CE458D33BEB",
+      "path": "Runtime/RTGI/Shaders/HoRTGIGrid.hlsl"
+    },
+    {
+      "sha256": "2490EF0FEC62B9901D4A63141BB92B0E5E8DAEEB2A685E0E5F15EF2A5BEB44D9",
+      "path": "Runtime/RTGI/Shaders/HoRTGIGrid.hlsl.meta"
+    },
+    {
+      "sha256": "2AEE17FA94A3CC188221E58AC08EC414DA5AAB333AE8A79BBAAE36EC578A12C8",
+      "path": "Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl"
+    },
+    {
+      "sha256": "D80A52166CBE3314363108452A9C012B757E9C330E2690C7E4D6899C17355AB6",
+      "path": "Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl.meta"
+    },
+    {
+      "sha256": "0F475DDA1311587DB6688D9FA9A22A440600B2C3488AFC9FAC895AD2D6EC972D",
+      "path": "Runtime/RTGI/Shaders/HoRTGINrdSignal.hlsl"
+    },
+    {
+      "sha256": "5D509B1E4264B059C68D5B6339B8911B507D1789B9C680A72573A09499CC3477",
+      "path": "Runtime/RTGI/Shaders/HoRTGINrdSignal.hlsl.meta"
+    },
+    {
+      "sha256": "FBBB2D1CDF3B54ECFB1C9DBEAA12F72CE7DB2B96183B5A0E2FE000A94CAD0F79",
+      "path": "Runtime/RTGI/Shaders/HoRTGIResampling.hlsl"
+    },
+    {
+      "sha256": "9066F51B0CD3AA45C65B998EB4CEC0082FB55C99B2C8006628C4330C5A798049",
+      "path": "Runtime/RTGI/Shaders/HoRTGIResampling.hlsl.meta"
+    },
+    {
+      "sha256": "DC2E41D583B9B366BA322C1035DB558FDD2A64950D78CEDAB1303770A7E70D3D",
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryData.hlsl"
+    },
+    {
+      "sha256": "768B700FE59DABDF723D72725051AF64D8838F5FA59590425D28E36D80C7AD3C",
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryData.hlsl.meta"
+    },
+    {
+      "sha256": "4132F4988935B5551431001A042E94AC5B2569485F7195AED6960FFBBA784959",
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl"
+    },
+    {
+      "sha256": "2221277A71861B66959CB6C324CBF2DBBCA14B9FF29A46C689E640121D50D26E",
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl.meta"
+    },
+    {
+      "sha256": "60814EC59838A3614F49EF429111DDC9AE3CB1763EC66A7E72042D54E9AB45DC",
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.shader"
+    },
+    {
+      "sha256": "5023578622ADA01580093262AD2F234BFC90856E1A3039A92A51EE4ECBD9B0E5",
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.shader.meta"
+    },
+    {
+      "sha256": "1FF58F5134ABAD44A531C96E3B46D15C9240FE630C3C54FA65243B43BA8D4F44",
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondarySurface.hlsl"
+    },
+    {
+      "sha256": "AD1B7C49E2784346917AC64E0EB50653C504762EA81D4DFB6D2F3E546D1772F8",
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondarySurface.hlsl.meta"
+    },
+    {
+      "sha256": "A30FB74ABF632DD3BD51324352BEE3513323FA9E3B6FFE4D6E5932D7DB1EC043",
+      "path": "Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl"
+    },
+    {
+      "sha256": "9EED9385361E5E3F85FE06E42B18BB1E4131F452A09D0BADE91219AF51E2AED6",
+      "path": "Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl.meta"
+    },
+    {
+      "sha256": "2295F9E839A8704763D59A2DABEE52971D966DF0FCBEEA059E1F60B61AE41A02",
+      "path": "Runtime/RTGI/Shaders/NRD.meta"
+    },
+    {
+      "sha256": "6E7D8BC68A6F79DDF1D7A2C636931E3C704F6F145BB69451A45FD66B289BB9FB",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd00.compute"
+    },
+    {
+      "sha256": "5961574DF755048074A26FC02D5C6EB257E66FE9DA8C5E521B6BE425E6B48D4F",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd00.compute.meta"
+    },
+    {
+      "sha256": "EBBB3B83E9777ECC6129A9594897CA1A97940B8C5A858E3671CF01AD4E9555DF",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd01.compute"
+    },
+    {
+      "sha256": "BD85942D54C380E5F3CFCC7E9C507EBF978D182FFCF6236433316511CCADC04E",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd01.compute.meta"
+    },
+    {
+      "sha256": "AA0217DA7E22CF1B6A0DC57BDC731FDEA0E6E60098A2D0327CD5A70C35336287",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd02.compute"
+    },
+    {
+      "sha256": "B3780733D22BBC6183E7D12030141E30C9D2586E985A827FBD08FF97B082B63C",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd02.compute.meta"
+    },
+    {
+      "sha256": "4B66E03FF97FDAEE6237BEC6E5832A633EF41862ED35E1286DD202B72645B533",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd03.compute"
+    },
+    {
+      "sha256": "B7D193796EEFF31CC19876FE33E89ECB5C80453BDCCD91C693A31EDC843FE25E",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd03.compute.meta"
+    },
+    {
+      "sha256": "375EC673B05662A579D53224DD9075FF53872C428CF5E32B0DA8669A07191D96",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd04.compute"
+    },
+    {
+      "sha256": "7A69860B7E0F94ED8E06B76B4840291BEE3AA96615248DD30B6A7FE164B8A79B",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd04.compute.meta"
+    },
+    {
+      "sha256": "DD931551B9D007E6CCDAE49805E06DFCE0C9DD1AA11EDCACA3BDAC5C87A5D248",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd05.compute"
+    },
+    {
+      "sha256": "387927C613B83A8CF92474F73D2CD4CB38AA9878A1634CCB356CCACAEFAB59CC",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd05.compute.meta"
+    },
+    {
+      "sha256": "0A173025E7E5F35F25FC83DA1DC08DEF435B1B4598EF4472576A0DB0FB82E841",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd06.compute"
+    },
+    {
+      "sha256": "233DFD535B324D2EAED668938934BEAA9B28EFED3E4DF272BE5D6DD0FF590E4D",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd06.compute.meta"
+    },
+    {
+      "sha256": "A77F82BB374D542DE75F070A1258A6B81A018CBE39597D25292FFC73D5501A84",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd07.compute"
+    },
+    {
+      "sha256": "64BF19E1491AFA8F4C3AF4931D2899B6439E61A9A5B6BBB42C2C9BA3BB946978",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd07.compute.meta"
+    },
+    {
+      "sha256": "FB62DA4DEE7F37482A497CF664FA51E2DBBA936325F621BC0891A5A594D71B7F",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd08.compute"
+    },
+    {
+      "sha256": "6E29A89D4EDBC80E7B128C02C6542140E4B4C45FCF14CD140C2F766C6B578376",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd08.compute.meta"
+    },
+    {
+      "sha256": "C708C755A8DC24349D367C1A23900669A8CC5977D726FECC2486BDD2DFBD9D76",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd09.compute"
+    },
+    {
+      "sha256": "4034E6CA23B03DF9E99F5A4D0A4676FB69679695D192EAEFA3438B67687A4B69",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd09.compute.meta"
+    },
+    {
+      "sha256": "5C806067A2C00DDA3791FD6A335C06070D331750C74380A6EF30D697D5664F7B",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd10.compute"
+    },
+    {
+      "sha256": "87CA32BD4A17F37176AE98233381CB02E80379A44917AD39A21DD826C5E79261",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd10.compute.meta"
+    },
+    {
+      "sha256": "31B678801BF70A5EF674B79B18EABF5B07844FC882645E98C951E11D203531E1",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd11.compute"
+    },
+    {
+      "sha256": "6D8EE12E21B1DE4430195C351C2BDF7F6F8FC9AAA52FB2C07C614B0EE03A43EC",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd11.compute.meta"
+    },
+    {
+      "sha256": "646B3E0CE55576C257244F352189147D62EA2EB94589A3C82C695561FEAF8EF7",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd12.compute"
+    },
+    {
+      "sha256": "642DCD4BD375AB4CEB78063149F731C635DAF5BD032418416CAED5C113153736",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd12.compute.meta"
+    },
+    {
+      "sha256": "9B8545BB8B6616DAB166BE00ABA863AB5074C380CE3BE4935C0E6D33311DACCF",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd13.compute"
+    },
+    {
+      "sha256": "1E932E4CCCC12DA8E1860FC5EE7C5B88F02BE591AA75AF9A3B1B596D1533010B",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd13.compute.meta"
+    },
+    {
+      "sha256": "5F00CF9B6C5F2BA121E291D4AEA2D333F0ADF3D06E549666B4AC9426576DE18E",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd14.compute"
+    },
+    {
+      "sha256": "0A0A0B93C5D1E07302F34BADB660C9379AA85BC37CDE90EF94EEEEC9BADD30DE",
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd14.compute.meta"
+    },
+    {
+      "sha256": "E7817ACB6B60425DD9360D479E5533713E384CF5F820CC246D7BE8B2458CB265",
+      "path": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs"
+    },
+    {
+      "sha256": "46F245366B71FC0C2A9882A91ED502234C1746CAE337629B91609DDE29E04208",
+      "path": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs.meta"
+    },
+    {
+      "sha256": "F34F4512C3E51FF328316C96AF48CA3547A27CADBF327FBA8D724624B7F79D49",
+      "path": "Runtime/RayTracing/HoRTRayMeshIndices.cs"
+    },
+    {
+      "sha256": "CF2CE0C54CB6C44EBA6E09FA975E5A47601F6BAA285B0A436912E474575C404F",
+      "path": "Runtime/RayTracing/HoRTRayMeshIndices.cs.meta"
+    },
+    {
+      "sha256": "2CDF2AB3781A14D1CDED399717B88F9AEBA6D3DBCDD69135C1D52EFCE1DC6D29",
+      "path": "Runtime/RayTracing/HoRTScene.cs"
+    },
+    {
+      "sha256": "988EE1D52074247CCD71D0F490AF3AD6C09A45F2140C50C44D402EDCB3D6C087",
+      "path": "Runtime/RayTracing/HoRTScene.cs.meta"
+    },
+    {
+      "sha256": "8AD248AD21F76E7104BAA80B0F9EE9C69C34782F102178B8B7BA83BE5B95A0B2",
+      "path": "Runtime/RayTracing/HoRTSkinnedMesh.cs"
+    },
+    {
+      "sha256": "018858643EE59063789357BBB29D3FA34EE9C4D29664AA6877CB056FF5F4140E",
+      "path": "Runtime/RayTracing/HoRTSkinnedMesh.cs.meta"
+    },
+    {
+      "sha256": "B82040249E75FB4B81F802F1A90D1862CB22694109ABFC49C209C52EB7DBA627",
+      "path": "Runtime/RayTracing/Shaders.meta"
+    },
+    {
+      "sha256": "682CB34F549394EDC44C0E123F8471E5C68A42135614E2C7D98E267BCC96949B",
+      "path": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl"
+    },
+    {
+      "sha256": "815599C3004D578B9B02CAB2A5845C68D65005FF1C90887D7A4B31149A030098",
+      "path": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl.meta"
+    },
+    {
+      "sha256": "5B51FE9913DC064357FF9D1D688708EED7E13491884B1488C57BA76EB2CD42DA",
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneHit.hlsl"
+    },
+    {
+      "sha256": "31E46724390E697F5C127950A4390868BA251B36E77352D1A37DDD4202664177",
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneHit.hlsl.meta"
+    },
+    {
+      "sha256": "6CF489A175782CFC06BC7F265D65E0B911B93120A4FF1E1CC4B6B03F73F4063A",
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneQuery.hlsl"
+    },
+    {
+      "sha256": "6D2D10BF66FEF91515E71C60E0FB6174B998082EBB5D3FE862A33F698FDEF886",
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneQuery.hlsl.meta"
+    },
+    {
+      "sha256": "33D9B39CCE3AAC629A9E70BFDD65CC873C7367C6A8342EF9A627602F705AF1F8",
+      "path": "Runtime/RTDI/Shaders/HoRTDI.compute"
+    },
+    {
+      "sha256": "FB592FA4FB91B688641C7D1B5A61E3112DD666BEF3D38E80CC64D93A3D223251",
+      "path": "Runtime/RTDI/Shaders/HoRTDI.compute.meta"
+    },
+    {
+      "sha256": "CB76CA79A0E8DC2D41F7EE7AC37C88AADD60599C4A08E3B2AF10DC3DDEFE7127",
+      "path": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl"
+    },
+    {
+      "sha256": "158FA7C1ACCC096E72E2ECDB8F4135CDEF5CB746021DADCE112E258889ACB226",
+      "path": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl.meta"
+    },
+    {
+      "sha256": "B92BBE8BD11AFCEA824B0D427A38FF1161C055F3541AD23D863B725E854187DF",
+      "path": "Runtime/RTDI/Shaders/HoRTDIAuxiliary.hlsl"
+    },
+    {
+      "sha256": "7D40B9C962128D0E10B2DD3FE29B2E719259A22980876D88AF95C1919D10D2C6",
+      "path": "Runtime/RTDI/Shaders/HoRTDIAuxiliary.hlsl.meta"
+    },
+    {
+      "sha256": "D2B6EC85053BFC52AA4943F14F8A5A060ECD9EC593FFC113A8F5DE2F0097575A",
+      "path": "Runtime/RTDI/Shaders/HoRTDIComposite.shader"
+    },
+    {
+      "sha256": "198E5C97F5755A06D4E775D68ECFE6F5D340834A62D31869EEECD9F01D0C0D4F",
+      "path": "Runtime/RTDI/Shaders/HoRTDIComposite.shader.meta"
+    },
+    {
+      "sha256": "8995BAE6CE3B6118D70D989B484B9425FB85D3697F090DAD277A30A92FA2EC82",
+      "path": "Runtime/RTDI/Shaders/HoRTDIConfidence.hlsl"
+    },
+    {
+      "sha256": "C4E46D1C937D7CAA0F1D50DB79A74FB8C399A9751D9C498695ADEA7B5000B284",
+      "path": "Runtime/RTDI/Shaders/HoRTDIConfidence.hlsl.meta"
+    },
+    {
+      "sha256": "77A4030F5018579FCEE4F2FBCC35DCE87DF3F72D849485155642AA4EB1F43A51",
+      "path": "Runtime/RTDI/Shaders/HoRTDIDebug.shader"
+    },
+    {
+      "sha256": "EC1255C36983001B41AA7E3AE78532FC7BEB8811E1EAE1141FF3BFF45446C40F",
+      "path": "Runtime/RTDI/Shaders/HoRTDIDebug.shader.meta"
+    },
+    {
+      "sha256": "C5C4532C1AF349A89DA3BA151D2AEDDB03DCA23BB3234741E564231A60285F51",
+      "path": "Runtime/RTDI/Shaders/HoRTDIEnvironment.hlsl"
+    },
+    {
+      "sha256": "7BB8B159E1AB42BD4E2D2F386083AC61CE11F7A7F180CC3434B12D2DFFB353D3",
+      "path": "Runtime/RTDI/Shaders/HoRTDIEnvironment.hlsl.meta"
+    },
+    {
+      "sha256": "39E5AF34942CFA70D08AC8CFF77F9EB8A2FED480307EF575F8E3DAC761C808FB",
+      "path": "Runtime/RTDI/Shaders/HoRTDIFinalVisibility.raytrace"
+    },
+    {
+      "sha256": "B7013D551F4851953E22480AA903A50F37278B5B794835138E9F963E57F38BDE",
+      "path": "Runtime/RTDI/Shaders/HoRTDIFinalVisibility.raytrace.meta"
+    },
+    {
+      "sha256": "CE8FCB2BE5A7C088540CC2B7FCE969AFD4AF7AAF7F2D415A367C88E2A647E761",
+      "path": "Runtime/RTDI/Shaders/HoRTDIPrimaryHistory.hlsl"
+    },
+    {
+      "sha256": "1982A6B985DE2E4D432A639D8D63E71AC9CD4ECD7A9278FD247DA61F7AEC2F62",
+      "path": "Runtime/RTDI/Shaders/HoRTDIPrimaryHistory.hlsl.meta"
+    },
+    {
+      "sha256": "C3FC212AC611CAC303448473905B6A122C4DAEF759AEDBE15070DE144E914968",
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityMaterial.shader"
+    },
+    {
+      "sha256": "7C05630CD97702DCDED887215786F268C0201E28EF12DB30FCDD50007C196F34",
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityMaterial.shader.meta"
+    },
+    {
+      "sha256": "2D0E65FDEEA30CF065BE6E254BA048C5F9205C07525BF9F5B60E7BDEE3EB8FE5",
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityPayload.hlsl"
+    },
+    {
+      "sha256": "C9D4CD6C6D1414531A1B30C3B74CDA644808AF0C73F57779A3B0A0866435EC21",
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityPayload.hlsl.meta"
+    },
+    {
+      "sha256": "B89B0853A08EFFB7B3AEA75D664C46BCAB99AE2CB9954D19C21DD033805EBD2F",
+      "path": "Runtime/RTDI/Shaders/NRD.meta"
+    },
+    {
+      "sha256": "59DA12F675FA21111458A82FED1FB9E74B83C3651E162299DEF959CEC5845B5B",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd00.compute"
+    },
+    {
+      "sha256": "3970C1D16412B2A06F3501764ED7CD8EAA537DFD710B1BFE7177D68B50F180D3",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd00.compute.meta"
+    },
+    {
+      "sha256": "14B1EBEAB810F583571F4FE5DEC96E732224D0C682024A84CDE49B00D5FE3720",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd01.compute"
+    },
+    {
+      "sha256": "6B7209FE0820991412E5D50CE95581B080F417D76BA6F5E2733478CB5880C8FA",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd01.compute.meta"
+    },
+    {
+      "sha256": "EF27C8DD53CBD81D8711E928C770F5F2B9EA3BDCF2A38ED8A0ADA89F07D2634B",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd02.compute"
+    },
+    {
+      "sha256": "C2D7419BF6072E83DCE026163D4171D192C1A90ABFA0966261937C924598A63C",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd02.compute.meta"
+    },
+    {
+      "sha256": "65945A50B6C8AA481F5CD51DBACDB45FC356CC6597EFB3F60EEF15C8874869CE",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd03.compute"
+    },
+    {
+      "sha256": "1E6FDBFDFC9D1C57ABCC1A3640FB9114B7365169CB363C37F21CE6E4E3B7F4AF",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd03.compute.meta"
+    },
+    {
+      "sha256": "9C96D5AAE556371B6B36FB9A2373D832092501A5EF2E85AD2A98FA101999D382",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd04.compute"
+    },
+    {
+      "sha256": "F8459F84D3201B0C59BB1F5A5DFBFD0C79BB0DA06AAB91763943BECB534AE296",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd04.compute.meta"
+    },
+    {
+      "sha256": "44D44AECF51BCB945121D3CBC8C6AE28CCE31B732477C9EF395D65B40F5F41A4",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd05.compute"
+    },
+    {
+      "sha256": "5BDC68290FC335DF50868B96EC509341B5A402CD556DA49DABBBCDFA3740A8B4",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd05.compute.meta"
+    },
+    {
+      "sha256": "4C170D3215A230890BB0FC2C54D5466DD06304228C27A4D79B2679A577E962B9",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd06.compute"
+    },
+    {
+      "sha256": "1D08BEC50FB7B3E93F4584FF07EF56733F4BE21D9F74D246A74BE20BA33DE856",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd06.compute.meta"
+    },
+    {
+      "sha256": "EE3D96861B9A440BE4D3622BE7D41DF9A9C0BEF7B82EC58A01E02034C6803D98",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd07.compute"
+    },
+    {
+      "sha256": "BFC3ED031C677965B5363D54BFC33EBB50BC94339091038EC61CA0051F86664D",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd07.compute.meta"
+    },
+    {
+      "sha256": "9EE0CB63874A3C3139997E92BE3B682F47247556769D4C52835791C2A7D1AD5F",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd08.compute"
+    },
+    {
+      "sha256": "3CCD58B2EBFCEC6C5B618E4883147D97E9947575FEE82799DF9F58D94A4B2388",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd08.compute.meta"
+    },
+    {
+      "sha256": "DB31DA1DAFFC35287D78E54DFF7E2B6A934AA1B4C4D54451822D6BFC78760FE1",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd09.compute"
+    },
+    {
+      "sha256": "5C95209CAED4ED4AD7A14DCA1AE2FEA34F4662E7FA870912432F344E8DBF4B4E",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd09.compute.meta"
+    },
+    {
+      "sha256": "BB542A5FEC7671BB0E56F81A767E29F8A45212A871389AC05C6DD8F604AB8227",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute"
+    },
+    {
+      "sha256": "F0C4AFF68D3306FA66F251A29BA9371356324C21E89A96B27B252629EE3CBCFE",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute.meta"
+    },
+    {
+      "sha256": "121A19B28111F44E487A83FE740499B65B390944D5F2C60F052B508EEEE8A802",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd11.compute"
+    },
+    {
+      "sha256": "7CF96CBC8DB3D8AFFF7792C68C77EE4961ACC7EF4B60C9EEE3FD8BD47E3FA01B",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd11.compute.meta"
+    },
+    {
+      "sha256": "50403F1C10831117DE4A4BB4FBA8BADCB2423D479997D009BEDCB73F92504765",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd12.compute"
+    },
+    {
+      "sha256": "CA609E24A03B9978F9E8AF36EE315C4BA3027CC02C7B776179782EB9D72CAE9C",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd12.compute.meta"
+    },
+    {
+      "sha256": "5EE02CED38D38B0AFC0DDA31313D7834117833DA13986D18A9D3CA95BFB8216D",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd13.compute"
+    },
+    {
+      "sha256": "92170A15BE1D6D5EEDB367F1E274B9C7A6F5E9054755B931DEFA8886C247DF1F",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd13.compute.meta"
+    },
+    {
+      "sha256": "383F50BAE14B96D7043C41A544B493FA40BBF61E555188838BE2A63E065ADED0",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd14.compute"
+    },
+    {
+      "sha256": "990531D049CE043D3069481E7B7E881448AA06D672129164DC0D81766B31AA31",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd14.compute.meta"
+    },
+    {
+      "sha256": "0D1EC5208684217BDE4F532A89408990AF35FAE0A393C6EB5BBB525BFCF8928B",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl"
+    },
+    {
+      "sha256": "3A6B908E182AA23DD65C48CB9C00D1F58DC87D17F6397A7C691D75D6F82A97DB",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl.meta"
+    },
+    {
+      "sha256": "78F736102C5D27CEBA38B3F116E41AA27C2409210D95F162FD74B71E5766F40D",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl"
+    },
+    {
+      "sha256": "D4F415835FC328F677EE590D00E34DE0F12C1F846F89B89FE1F966EF9BBE7B04",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl.meta"
+    },
+    {
+      "sha256": "DC0AECDFA95698D297D6547BBCF921A92346C72CB8317383CCB09ADC98607ADB",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdBindings.hlsl"
+    },
+    {
+      "sha256": "88651A7431A1CC39C0F086FF7DBC71195984C971249D7E2BE307C2DEAB5258EF",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdBindings.hlsl.meta"
+    },
+    {
+      "sha256": "40D8B01CCC233A9800DC7500CEAA324296569897AECD81162F12EAE877E3F7E1",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdHistoryClamping.hlsl"
+    },
+    {
+      "sha256": "DDCABA3A46F4EB7D2C2C5D0B9DFCFF6493A4CB00588E3627F509B68CF55633A5",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdHistoryClamping.hlsl.meta"
+    },
+    {
+      "sha256": "F424A3AC6C8119BFF095389C84B5A5F91525B31776606283284A1C7EFE6749F9",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdMaterialGuide.hlsl"
+    },
+    {
+      "sha256": "516F8141EB25B35A00C0682E584A4E587F33D55A043EA49EE68A37F34E3D8063",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdMaterialGuide.hlsl.meta"
+    },
+    {
+      "sha256": "BE360B034008E10C10C0AD9625A8CABCBCEF3AC94DF77B303A88C9ABD311AA7F",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdTemporal.hlsl"
+    },
+    {
+      "sha256": "93C1E28811A5FC527A817351D51E71A80986CDD6F63FB16D1C1439F1B71598F5",
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdTemporal.hlsl.meta"
+    },
+    {
+      "sha256": "2346CA34F0B3C0EFE1C5FC7C08588AEF48B851CB355463835570C8A31867B87C",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI.meta"
+    },
+    {
+      "sha256": "B8036C887B3A17ED445B5295C159EEC970D50881279CB22C14B76A68D415C61B",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI.meta"
+    },
+    {
+      "sha256": "27638E2233A18FBFFAA57758A9A5A407D4EFCA7CC72DE60DC4ED6E8627398EF2",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LICENSE.txt"
+    },
+    {
+      "sha256": "E9039BEE32A3346212F41B35975E74CFE3D183AB5AD5C073FBB70998862F6194",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LICENSE.txt.meta"
+    },
+    {
+      "sha256": "CE3D3C265BAE7E28F82CDC9075EDAC65B8FF22891D71C742CF94F33B22C9FD0E",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling.meta"
+    },
+    {
+      "sha256": "FED1EDF69659524B119C42AEDBA70E8220220D1CC51C0FA8FB1D2A439678E82C",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR.meta"
+    },
+    {
+      "sha256": "998CFEE3B159548E9B5D1E5726FA1644E71C9A2A1E32D63FB90CDDA0E24A7761",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiParameters.h"
+    },
+    {
+      "sha256": "1E98072E35F1E0D7B2231B838B4BEB0E80D27AEE2F4B7893ED4514C24D91A2D1",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiParameters.h.meta"
+    },
+    {
+      "sha256": "78AD0D8F75ACC58EE289E635B926BE991BBDE1D04FB242118DEEFBDD0F6F5BE5",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiTypes.h"
+    },
+    {
+      "sha256": "3B962EE7824203A94C488D28F395A4569D07A58D6C08CC23259F1912BBCEBFCC",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiTypes.h.meta"
+    },
+    {
+      "sha256": "E0768EC66381444532F1B0102A88039D29DD7757CDB66F6F8C19D276DF9819B0",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils.meta"
+    },
+    {
+      "sha256": "B4D0F3283C30C85A4DFE1D269FAAD3CEBD6F47E6AC791F6C6B4C15D7953FC941",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl"
+    },
+    {
+      "sha256": "AD232DF8D9F2659B41BA684D5E0AD805EC57FA123768DE56043C762AD6BBE024",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl.meta"
+    },
+    {
+      "sha256": "30BE10EF4AF3296D288AB4EC9E35F1918FA88AB513138690DFE369BA64F0BE5F",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/PairwiseStreaming.hlsl"
+    },
+    {
+      "sha256": "259162D48254992099DE3731070994ACAC50AD886C38F0F25B972F2872F9B18C",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/PairwiseStreaming.hlsl.meta"
+    },
+    {
+      "sha256": "120FE0447DE9F4C4D71425685D8EF6FCBF5E5BF9EA36E9FEFF642A41E5A143BE",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/Reservoir.hlsl"
+    },
+    {
+      "sha256": "FE2F092A8EFE47ED54FBFC2DB965D7F43DA84E0C8AF0ED5AB8C27B0BA0BD3157",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/Reservoir.hlsl.meta"
+    },
+    {
+      "sha256": "273F08A0A105D66F69C5E00025C72B7158B9BD0DA76DBE0A2F930E896A727999",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReservoirStorage.hlsl"
+    },
+    {
+      "sha256": "CFC682326498245616B3531FFFDADFB06B10FD3A2BB58A83EAE9A29A8007B891",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReservoirStorage.hlsl.meta"
+    },
+    {
+      "sha256": "870763A51796F34C8AFE364789A5A8EBDCE9240BAF036B28A69C6F6B603E62D7",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReSTIRDIParameters.h"
+    },
+    {
+      "sha256": "64261E3E1812A61717AB206942DC8F0DE8DC70183380298DDAC3E5D4F0987823",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReSTIRDIParameters.h.meta"
+    },
+    {
+      "sha256": "8F6C17A81CB9E5270C92711F5D8A8272BC2E60D087A816688EE5CA64CFEF9C52",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/SpatialResampling.hlsl"
+    },
+    {
+      "sha256": "FEF03AB14804983C810C81345534EA33CC30907088371580C24B8218B10038C3",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/SpatialResampling.hlsl.meta"
+    },
+    {
+      "sha256": "33C9339CA52E6BCF1A796F4E0C9C577DC661F4D46490F33958D6A03F36098685",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/TemporalResampling.hlsl"
+    },
+    {
+      "sha256": "718D9653C637E8EEC5AE96FEAC3C270F09FD15B9CF2F17DD91CCE3430BD58809",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/TemporalResampling.hlsl.meta"
+    },
+    {
+      "sha256": "C8BDCD648B7C457B2311CE71AF362F12C1BB9A6C4DA88EBCC560502FC605C556",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl"
+    },
+    {
+      "sha256": "A4AF40F7CC54AB84B5EF57AC1DB7545459C80882189DF4C1135D10F59DC9D740",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl.meta"
+    },
+    {
+      "sha256": "05290DC9D6908D7975DA80057A6020DB68B053DDFA43877E7D2C25CA7ACA7610",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/ReSTIRGIParameters.h"
+    },
+    {
+      "sha256": "BDCAE8B4DCFC335559CC460ACEEEFDFD5391B34116696FBC040C6404FE01D3EC",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/ReSTIRGIParameters.h.meta"
+    },
+    {
+      "sha256": "99FF8EC88F495E8262AEA29DB2D56C8CA268EDE5F3F468B5C40FBBB23583363B",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl"
+    },
+    {
+      "sha256": "C484B070EB1DBCC9D783AB67A7098981C2310295D4A82E039431C0542D8F72F6",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl.meta"
+    },
+    {
+      "sha256": "5861641C7AC4703EA04ACF826DE8B89CAB2CC60FAFE61E897274CA4A301BCA67",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl"
+    },
+    {
+      "sha256": "6BEFAB6E912639EC00532096F7400CE92FBF1D792EE85F0FA6D3009E0398A6B0",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl.meta"
+    },
+    {
+      "sha256": "EDD02C8ED273F21A5F7205F83DB0DD938FAAE5571115711D9F38948CBEC17ECC",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/LocalLightSelection.hlsl"
+    },
+    {
+      "sha256": "01C4D68422A86F9B4260C2F1F8675487BC71F7755C66DCCC7CBDBB0CDC87B803",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/LocalLightSelection.hlsl.meta"
+    },
+    {
+      "sha256": "DF8BB5FC14D69EB3D9CBD436EB888EC39F12238E3246B3B1878C911F4DDABD0C",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl"
+    },
+    {
+      "sha256": "FA7DA6354257B3043CAD247B6A8B73861EFD3CE505A7EFA3B7213CDA6D29781A",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl.meta"
+    },
+    {
+      "sha256": "9E2C1DDB813203B7DC559FBD1223DEEDC9D16BF146F750C77074F0E4D2729C9A",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBuffer.hlsl"
+    },
+    {
+      "sha256": "C6EFD04446AF54AA80A7927C3F8CE0088C7664B4E53E2567D51F18D31EF1CF2D",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBuffer.hlsl.meta"
+    },
+    {
+      "sha256": "A8A5F97D654D38410C6490C2FDF16B349F2AFBEAFC26A554A879E0E5ED52C7C6",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBufferSegmentParameters.h"
+    },
+    {
+      "sha256": "79FFC5525A7B725AD3B62FA8522799318606A7B42B8665ADA911A16B0FD68AAF",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBufferSegmentParameters.h.meta"
+    },
+    {
+      "sha256": "40ECEA3503A1EEEB734DB65E09FEF1F4DBEA7574883F80D6043A59DCA3A4B86E",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/UniformSampling.hlsl"
+    },
+    {
+      "sha256": "5D01B13196238B8D6CF09D72DB4DBA4F9FEB53EBE39274875C2DF973C85880A7",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/UniformSampling.hlsl.meta"
+    },
+    {
+      "sha256": "08C35B6BA1C6CB92FDF9E0C684EB09B18453D0F4A9CBA6D07A8B4A0CF49DBF05",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRParameters.h"
+    },
+    {
+      "sha256": "4B86CC407345C8508EF4AFC0E8E539DCB4A147B5EF8E3E1E7CD3E898B623587C",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRParameters.h.meta"
+    },
+    {
+      "sha256": "A40F21D02DF3AE7E546E8E2F1435482FBB0D6CF073A8A08C7D580C2EFC6B43A7",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRSampling.hlsl"
+    },
+    {
+      "sha256": "A3DFBC3AF25D7315E06F00518B03F44696176584BAB0CA04188CDC07345AE06C",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRSampling.hlsl.meta"
+    },
+    {
+      "sha256": "CE3EC2485C4325A3F32C9D8D58D6C63B62B803DA873038AE999584A9D04D6E2F",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Checkerboard.hlsl"
+    },
+    {
+      "sha256": "4DCE2618BBF2D683611207DB114138F3D6AE218F108886881D152AA8A1DA25AC",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Checkerboard.hlsl.meta"
+    },
+    {
+      "sha256": "4EF47F29ACAEC96B75FE08B310E6B4504F75373CFAA7E4992FAB2A7C2BB2DB53",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Color.hlsl"
+    },
+    {
+      "sha256": "4DC97D79AC694570E544CAC7257E000C011252139EA98716E08FFD30D1CD4F5D",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Color.hlsl.meta"
+    },
+    {
+      "sha256": "4099BB0359D8E2732F46F80B74AD62A01365CD2012D537786CAB66680DF9FF82",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Math.hlsl"
+    },
+    {
+      "sha256": "E9D0D347464AF5063C6A9A8E9391409E4271F192164AC545AEBE5AB5AE0EF038",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Math.hlsl.meta"
+    },
+    {
+      "sha256": "DF9E3A92F7A5F8260DDD87F9B565A8583788C422122FFF8AFDD1352BCEAEA457",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerPerPassSeeds.hlsl"
+    },
+    {
+      "sha256": "D374433B98D79072C3A866C08312AE00FDDA395DA4DB8B7841694CD5218CF78C",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerPerPassSeeds.hlsl.meta"
+    },
+    {
+      "sha256": "70DF439BFC7E5163641F9F3F107A1F88D81D7AAD7FD593797303A6CE7E71C467",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl"
+    },
+    {
+      "sha256": "908A9081A93A687CBC5539A17A40103C766BF1B033EDAE7E4538D14BBE328E35",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl.meta"
+    },
+    {
+      "sha256": "CFE65684FB4FD958534E92A107E9DB2CF47AAE443395164C1C18D833D768B261",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/ReservoirAddressing.hlsl"
+    },
+    {
+      "sha256": "3F9CAB42297B0DC39022019D706367A0F7CE3F7468C66034D20288100CEC6FDA",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/ReservoirAddressing.hlsl.meta"
+    },
+    {
+      "sha256": "9D15B2AA75F133D33870FA2B2CD25A647E7D632FECF01C065C0DA19B09DACE8F",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/TypePacking.hlsl"
+    },
+    {
+      "sha256": "1E5C44D46B93F8752FD4F171649216910A69E0620DE4C814C2EC4D6772B2AD44",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/TypePacking.hlsl.meta"
+    },
+    {
+      "sha256": "88DC1C7B8E5A47FE95A41A2FE4A485B3944FD9FF3E35FC80582FE58EA30B6EFA",
+      "path": "Editor/RTGI/HoRTGISharedInputAudit.cs"
+    },
+    {
+      "sha256": "79355E3B702D712C26B286F52301135EE28C57F8799A01CA3A5A0073C31027D1",
+      "path": "Editor/RTGI/HoRTGISharedInputAudit.cs.meta"
+    },
+    {
+      "sha256": "C6F15888A58877C4D120E28B6D4A8E0DF76D0A1B865CE0E67D506DAA3AC733E2",
+      "path": "Runtime/RTGI/NRD/HoRTGINrdContext.cs"
+    },
+    {
+      "sha256": "D060E4FDB45B7FF51E0D59F097457A978B808AE0CBED5407ED40F574FFB530A5",
+      "path": "Editor/RTGI/HoRTGIInputStateAudit.cs"
+    },
+    {
+      "sha256": "CD3C2A3D53FD077B35A4ABF21935E6FCD48064F99879AD3FA267FEF6AD3E6697",
+      "path": "Editor/RTGI/HoRTGIInputStateAudit.cs.meta"
+    },
+    {
+      "sha256": "0A797864AF9FFE64A80490AE9C2B7F01325E4655DE7D7A7233F840365DD72D26",
+      "path": "Runtime/RTDI/HoRTDIRendererFeature.cs"
+    },
+    {
+      "sha256": "583609EE04A0DEB9D41980EAD62671A85E579CD84E5A8A97DA1ED6BD46825C0A",
+      "path": "Editor/RTGI/HoRTGIAtrousTrace.cs"
+    },
+    {
+      "sha256": "485619550692C5AED8B72FA3E99065FBF60394AA0BF2BD46BA99E27278683C06",
+      "path": "Editor/RTGI/HoRTGIAtrousTrace.cs.meta"
+    },
+    {
+      "sha256": "BC4C998E30852232AC98E4F2A7F924EF0072D900F44F4DE1D725171F9E1508B8",
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl"
+    },
+    {
+      "sha256": "739F6B39F56B2DBA15F8AA8379E96FC4B4DCDEB12BF63B00844AC2371A290C2F",
+      "path": "Editor/RTGI/HoRTGILocalStageAudit.cs"
+    },
+    {
+      "sha256": "0754F2C94C1F33E446E452F5822E5FF91CA737400CCFF7C584B465FAC92BA452",
+      "path": "Editor/RTGI/HoRTGILocalStageAudit.cs.meta"
+    },
+    {
+      "sha256": "5579541828A43BEEFC0EAC9A1175D332A8351F56E23E1E4617425FA20D9C9150",
+      "path": "Editor/RTGI/HoRTGIPoolPrecisionAudit.cs"
+    },
+    {
+      "sha256": "DD76704DD414606ED38CBEDB46F594611B9A4B5B6CB769928AE0C218A410E258",
+      "path": "Editor/RTGI/Shaders/HoRTGIPrecisionCopy.compute"
+    },
+    {
+      "sha256": "A52825CED48EF6508A0781E585766B4E5B7852AEF55F691F9CA5037B3A048786",
+      "path": "Runtime/RTDI/NRD/HoRTDINrdNative.cs"
+    },
+    {
+      "sha256": "30ABBDFDCDEFBE4E1178CC972E923268C945D91954568284612F5CA01F0C31AD",
+      "path": "Runtime/RTDI/ThirdParty/NRD/NRD.hlsli"
+    },
+    {
+      "sha256": "DE5AC2561205454D4DDAB00AF062D13928F8D5D8C52F5F6371A8EA4B7B98E939",
+      "path": "Runtime/RTDI/ThirdParty/NRD/NRDConfig.hlsli"
+    },
+    {
+      "sha256": "176C4B6800B4D2A6CE323DB5EF6764B473F55D48EA6001CB2B57DECC7FF01EDE",
+      "path": ".codex-research/RTGIValidation/Assets/mmd场景测试/血月古堡/血月古堡.unity"
+    },
+    {
+      "sha256": "C4958AE086F12EB16891F086B2D057BA9F97E7FB1B9FF57B1B5FC6F2E96909E0",
+      "path": "Editor/RTGI/HoRTGISeedAudit.cs"
+    },
+    {
+      "sha256": "B467D962EF35FD44DE8DE83E4A657B8BD816B2492B8E31DE1380ECDA4C9B61A1",
+      "path": "Editor/RTGI/HoRTGICastleValidation.cs"
+    },
+    {
+      "sha256": "70CBC1E07974F43CA57060D77050F697C05412110D06745FF27875754120498D",
+      "path": "Editor/RTGI/HoRTGISpatialAudit.cs"
+    },
+    {
+      "sha256": "3D2A13ADB2802D4109F96CDB5B9DB741A0E0344B5849FC517388AB0CBBFC4D1F",
+      "path": "Editor/RTGI/HoRTGIDenseReferenceFeature.cs"
+    },
+    {
+      "sha256": "5A00FD350A8661B7F88F3AABFEE15DC1A3FD2D997ED6623D3C3F7D77589AE571",
+      "path": "Editor/RTGI/HoRTGIDenseReferenceAudit.cs"
+    },
+    {
+      "sha256": "0DFF51F3184F2CC411D0A10F0A459A4C5812FB6AF9B35B265F7D8F862D56705A",
+      "path": "Editor/RTGI/Shaders/HoRTGIDensePrimary.hlsl"
+    },
+    {
+      "sha256": "FD4E215999F8E4292E374B66AAB65C6E7DCF0907F677A3D279B75BEE5151BE8F",
+      "path": "Editor/RTGI/Shaders/HoRTGIDenseReference.compute"
+    },
+    {
+      "sha256": "C85201D12306BB4758CD65DCF61F9660A703620F703B1A2051F49A1FE475C551",
+      "path": "Editor/RTGI/Shaders/HoRTGIDenseReference.raytrace"
+    },
+    {
+      "sha256": "4D90971CE317B8B3817715F3EABB1CCFA5D43EA4343A1EB2F4B56B7160B94E91",
+      "path": "Runtime/RTDI/NRD/HoRTDINrdContext.cs"
+    },
+    {
+      "sha256": "5EFF9D42D56DA8B38D305BC483D84263AEE3C31A6C6C3A0A637370DA68220EDB",
+      "path": "Runtime/RTDI/Plugins/x86_64/HoRTDINRD.dll"
+    },
+    {
+      "sha256": "7F323CB68814F99B417E69B607C80D859323F404A8F4095B9407F3B41D053B5F",
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.cs.hlsl"
+    },
+    {
+      "sha256": "9CDAC4A0810C72FC2DA936B8BBB8633A9F27881B6930E5375D3F3B8E008E40FC",
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.cs.hlsl"
+    },
+    {
+      "sha256": "275F5F6807BCC90F72CE1E84DA767174AFF31BC89D58CEDFCCB414867F01DAB2",
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.cs.hlsl"
+    },
+    {
+      "sha256": "CD6EE4DCBA2FF9DCB12C3A7768B205912DE29D60B146D3139F059887FA6D2305",
+      "path": "Tests~/RTGI/SelectionLineage/run_validation.ps1"
+    },
+    {
+      "sha256": "DE321B46D1FDDAAEEE420675E3ABB6EAF5CA1B5E9BC6F187FCBC5DD77720AC45",
+      "path": "Editor/RTGI/HoRTGISelectionLineageAudit.cs"
+    },
+    {
+      "sha256": "282D15AD493717D3F9152A5CFD3093D690FDD297177D1AB058C919E632D71DB7",
+      "path": "Editor/RTGI/HoRTGISelectionLineageAudit.cs.meta"
+    },
+    {
+      "sha256": "67364D8C4FF0CFC4B430EDDE5886FEC34E16D8AB68E167C95695836F89B85CAF",
+      "path": "Editor/RTGI/HoRTGISelectionLineageValidation.cs"
+    },
+    {
+      "sha256": "529F7020B1BB8F7D49F826DE55C48D0DC5A946DBBF5B3CC8A0E099420DF9F23B",
+      "path": "Editor/RTGI/HoRTGISelectionLineageValidation.cs.meta"
+    },
+    {
+      "sha256": "17045302633329B60980055F1B15F92C12C1C9BD16758EBF565F3D4F8267024C",
+      "path": "Editor/RTGI/Shaders/HoRTGISelectionCapture.compute"
+    },
+    {
+      "sha256": "73CD92A68B2692946463474DB2803DAD7A583CF1B3D777462477B13DECB63D36",
+      "path": "Editor/RTGI/Shaders/HoRTGISelectionCapture.compute.meta"
+    },
+    {
+      "sha256": "544B9E6D51D462B0EDB14B23D2AAFDCADA4B52FA05987B22A8EFEA4765743FC5",
+      "path": "Tests~/RTGI/SelectionLineage/generate.py"
+    },
+    {
+      "sha256": "1AC55749AA180C91D72AA438FF0BB83DAE83F003DF66122D121E1D03CF0FE7CA",
+      "path": "Tests~/RTGI/SelectionLineage/generated-sources.json"
+    },
+    {
+      "sha256": "9C61AC230954CD36A66338B5C0B462026BD5157E5BA7E58B40F49680BE8B44C3",
+      "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/Lineage.compute"
+    },
+    {
+      "sha256": "79172D39474341AEEEA2A5532FCBB5A1259A23B0E0B27CD336510FC338763C98",
+      "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/Lineage.raytrace"
+    },
+    {
+      "sha256": "F9C5E0B10E675B8C81983CAC4012EF939D68A3F40C65A18F5A4C43A62F3FC023",
+      "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/LineageResampling.hlsl"
+    },
+    {
+      "sha256": "AFB456D54FEB4AFE390F0C41AC5C4237837AE83372D5BD5A7B98CA151AF3BCF0",
+      "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/LineageReservoir.hlsl"
+    },
+    {
+      "sha256": "D421AA208DE452674304101E46FFD47F6F70C13CDBD99E50D1B8AD9E3EDCAE02",
+      "path": ".codex-research/RTGIValidation/Assets/HoRTGISelectionLineage/LineageShading.hlsl"
+    }
+  ],
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "qualification",
+      "abortReason": null,
+      "exitCode": 1,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step042-qualification-20261023T131150487.log",
+      "logSha256": "DB0C58928782EC014FA8A5D903E55C7E921A5DACF19658509B59AD050BF2C3C6",
+      "marker": false,
+      "fresh": true,
+      "debugErrors": 0,
+      "shaderCsDiagnostics": 1,
+      "pass": false,
+      "reportSha256": "7767C3EA624407C295E91C8D1E38DA929DC445011F3F32DD7B7CAA8D69A22834",
+      "lineagePass": false,
+      "restored": false,
+      "comparedFrames": 0,
+      "sourceDrift": 0
+    }
+  ]
+}

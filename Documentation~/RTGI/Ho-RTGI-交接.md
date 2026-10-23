@@ -674,3 +674,18 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 041已按白名单过滤提交`aa2bf78`，ReplayContract verifier提交后再次通过。20788初编译actual1完整保留，45904 actual0/终态：原SDK64case、32GI字节碰撞、64默认metadata丢失、quantile48选择、1024双CPU逐word比较和独立oraclemax3.674e−8。已修未来HistoryFeedback/RuntimeProbe的GI32-v2诊断标签，历史源/报告不改、原full-byte/texture质量仍有效，分项标签更正两历史README。262源/2logs/4lossless captures/契约/原失败/成本假设完整，Runtime/vendor/NRD/生产reset无diff，index空，仅Ho-GD计划未跟踪。
 
 042不再重复toy合约：按ReplayContract/contract.md做低分辨率真实T/S/Final来源继承观察。优先保存实际次级DI选中lightData/UV/invPdf及原secondary source-viewDir/kind，避免恢复旧RNG/RIS表；aux16B仅候选、flags/normal/量化充分性待证。GI私有helper可评审寄存器source-pointer、Load/选择/Store的sidecar继承，但必须含初始生成、temporal fallback/无效、spatial/S-off和Final的pre-S raw copy/真正Spatial1 lastShade；不改原SDK/DI、不按float反匹配，须主包/原结果对照与真实多灯/环境/Cutout观察。手工Combine ledger只opaque字段见证（7.5sentinel不作oracle权重2），不是已有真实来源实现。先证明该关联再当前TLAS同选择重求/独立oracle，端点当前secondary也必须匹配，不能只测开区间primary->旧点visibility。NRD confidence正确性/变化像素残影/噪声/能量与成本前不放开历史，GI reservoir保守失效、旧色/Volume硬重置继续；hypothetical1080额外190.55MiB不可直接分配。全质量/F39/static/动态/环境/1080预算及完整目标与review/过滤提交/踩坑/交接继续active。
+
+
+### 042终态（2026-10-23，待过滤提交）：真实GI来源继承的常规T/S/Final两后端观察资格通过
+
+**实际实现/范围：** 64²合法古堡18灯/环境/Cutout，原版和私有lineage GI feature同相机/设置/seed/scene。Editor生成5份私有Shader/helper（原许可与exact patch/SHA保留）：寄存器source-pointer随原SDK Combine选样继承，Load标源pool地址、Store拷sidecar，初始保存真实DI lightData/UV/invPdf/source-viewDir（无DI UV域kind）；origin stamp只审计。Final补pre-S metadata copy、捕获真正Spatial1 lastShade。原GI32外存字段不变，Runtime/vendor/DI/NRD/reset未改，原scope默认不启用诊断。
+
+**有效资格：** 49456短32frame、45856RG/47228compat各128frame actual0，4种T/S开关各8/32frame。有效进程compile/Shaderwarning/Property/UAV/ASdebug/fence/drift0，终态/active=null、hook恢复/trace关停/资源释放。每正式后端原3pool GI32共1,572,864包逐bit同，raw/NRD publication全RGBA逐bit同且逐帧双SHA保留。独立Python不可变initial ledger按(origin frame,pixel)查并核metadata/position bits/age/stamp，不按float反查；各2,097,152次来源检查。T-only/TS旧帧来源116198/116328，S-only/TS不同origin71507/47244；history0对pre-S Temporal2（S-off对应Spatial1）和实际lastShade对Spatial1包/meta/origin都同，两后端数据结果一致。
+
+**量化/覆盖界限：** 每后端105670 selected normal word与initial不同但原版/trace完全同，属于原SDK编码往返；LogLuv差0，不得按normal word等initial反查来源。initial kinds仅1/2。本轮没有穷尽age-limit/Jacobian拒绝/disocclusion/camera-motion fallback、kind0/3、world/light/alpha/Volume/resize/重建所有分支；预审全面覆盖要求尚未全部证明，pass只限已观察常规路径。未作当前TLAS transport replay、confidence、动态收敛、Player/1080预算接受。
+
+**两失败保留：** 49216actual1：拷贝Shader使用HLSL保留字linear有4compile error，同时private FinalNRD12UAV warning；未写stagebuf见证空，旧runner还查256错路径fresh=false，实际64report/partial bin原字节手动保留，不补写fresh。38748actual1：修pixelIndex/路径/编译与非空检查后12UAV warning仍拒绝。将原5个额外UAV合为一个RW uint4记录buf，原数学不变后才有效资格，无D3D12豁免warning。
+
+**过滤/成本/数据：** 保留合格Editor controller/capture/entry/meta和Castle可选接线；Runtime/vendor无diff。lineage/origin/lastShade/5stage capture逻辑payload1,966,080B=1.875MiB，不含第二GI AS/NRD/engine/readbacks，非产品预算。SelectionLineage有278源对象、5完整logs、10report/stream，完整大流xz无损（原raw SHA重验，约42.3MiB），初两失败源码/report/partial stream和全部case全保留，verify独立核所有包。当前源对应compat，旧源独立归档；只本轮Editor/证据/六RTGI文档白名单，Ho-GD计划排除。生产motion48/48 reset与原所有质量/F39/static/复杂动态/环境/1080缺口仍active。
+
+**043直接动作：** 先补未证的真实分支/生命周期来源观察，需显式event/场景见证，不凭常规pass给age/Jacobian/fallback补资格，保持同源原输出严格对照。随后小尺寸原DI选择静态当前TLAS重求与独立oracle：所选来源的secondary材质/normal/原viewDir需可重建，诊断可临时丰富记录但内存/生命周期明示、不能直接推广1080或把辅助字段当充分ABI。当前secondary点要验证、两段visibility、旧零信号、量化/SignalScale64/原weight一致，不新RNG。选择关联/实际重求/变化像素残影/噪声/能量和成本都过后才NRD生命周期候选；GI reservoir保守失效、旧色/Volume硬重置继续，局部滤波公式线搁置，全目标active。

@@ -219,3 +219,12 @@ branch0换成DI参考时必须独立main物理校准、更新断言；baselineMi
 旧CPU Packet语义标签顺序错位但全word比较覆盖仍完整；实际GPU sentinel验证SDK offsets12misc/16LogLuv/24normal，已改未来schemaGI32-v2。历史normal/radiance分类计数不能按字面使用；原全包0 mismatch/texture质量仍成立，原JSON不改、明示解码映射。不把语义标签修正误报为生产GPU ABI更改。
 
 HLSL point是保留字；lazy compute编译可能在首次dispatch才暴露，GetComputeShaderMessages之前空不等于编译成功。保留20788初编译失败，未写buffer导致的后续CPU错不是ABI证据；同步并在readback后复查编译信息。两个buffer75,776B只是payload，假想1080辅助记录190.55MiB不是已实现/已证明充分的VRAM预算，先低分辨率和生命周期/成本，再重求与生产策略。
+
+
+## F63 / 步骤042：观察Shader也有编译/UAV预算，常规来源pass不替代全分支或confidence
+
+linear是HLSL interpolation关键字，不能用作局部变量；初capture未写buffer时即使原包/图未变也没有来源证据，必须post-read编译检查与sourceChecks非零。旧runner查256而实际64的fresh=false原metadata保留，手动补存actual64report不能补写成fresh通过。private FinalNRD12UAV warning不能因D3D12就放行；合并5额外UAV为一个uint4缓冲后才0warning资格。
+
+来源查不可变origin ledger而非float坐标/颜色；实际SDK normal encode/decode可改变word，本轮105670次但原版/trace同，不把它当meta串线或反向匹配证据。Spatial1实际Shade和pre-S历史0不能混用，S-off/packedcopy也要拷metadata。
+
+RG/compat常规4T/S/首帧失效/多帧前源和空间源已过，未穷尽age/Jacobian/camera/disocclusion、kind0/3和资源生命周期；必须明确partial coverage，不把pass扩成动态confidence/重求正确或生产历史可放开。逻辑1.875MiB不含额外GI AS/NRD/engine/读回，完整流lossless xz压缩不能丢失败/抽样冒充全部帧。
