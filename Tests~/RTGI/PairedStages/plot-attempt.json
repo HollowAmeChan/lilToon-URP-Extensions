@@ -1,0 +1,14 @@
+{
+  "scope": "Optional static data chart, no GPU/scene validation changes",
+  "initialDefaultPython": "ModuleNotFoundError: matplotlib",
+  "initialBundledPython": "ModuleNotFoundError: matplotlib",
+  "firstTargetInstall": "pip user configuration conflicts with --target; no install performed",
+  "resolution": "Explicit --no-user --target .codex-research/rtgi-plot-deps; global packages untouched",
+  "matplotlibVersion": "3.11.2",
+  "numpyVersionInPlotOnly": "2.4.6",
+  "actualCommand": "python with sys.path.insert(0, .codex-research/rtgi-plot-deps), runpy.run_path(plot.py)",
+  "renderedFigureReviewed": true,
+  "figureSha256": "0B4A1A93A13DDAA8F1ACCDD0C4F781B48663702476721DC8730EAB464A7958CD",
+  "notSceneScreenshot": true,
+  "sourceAnalysisSha256": "BAA289DABDCA672F9DD56031C676FADB309F8DA4D24C2A2ADC13F30074B8A415"
+}

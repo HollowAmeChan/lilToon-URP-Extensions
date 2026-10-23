@@ -1,0 +1,30 @@
+{
+  "origin": "Step037 matrix-run.json",
+  "entries": [
+    {
+      "path": "Tests~/RTGI/DiffusePolicy/source-blobs/B0D5A4AEC9A34202-HoRTGIDiffusePolicyAtrousSmem.hlsl",
+      "name": "HoRTGIDiffusePolicyAtrousSmem.hlsl",
+      "sha256": "B0D5A4AEC9A342029315522C731FDD21B6F81E6267680A0C28A63AF93FF4ABBF"
+    },
+    {
+      "path": "Tests~/RTGI/DiffusePolicy/source-blobs/6E527E655CD9FED0-HoRTGIDiffusePolicyAtrousSmem.compute",
+      "name": "HoRTGIDiffusePolicyAtrousSmem.compute",
+      "sha256": "6E527E655CD9FED04B82F972A30E6C250A9AEA228C1B81CA36F6F94A54198D25"
+    },
+    {
+      "path": "Tests~/RTGI/DiffusePolicy/source-blobs/C8BDCC628536911B-HoRTGIDiffusePolicyAtrous.hlsl",
+      "name": "HoRTGIDiffusePolicyAtrous.hlsl",
+      "sha256": "C8BDCC628536911B92EDA55E978FD5CE255960B67AC6326D01B92E8DD89A79AB"
+    },
+    {
+      "path": "Tests~/RTGI/DiffusePolicy/source-blobs/7262C6BDD1779780-HoRTGIDiffusePolicyAtrous.compute",
+      "name": "HoRTGIDiffusePolicyAtrous.compute",
+      "sha256": "7262C6BDD177978035897F0759E00DE8C6D15321B75EA23CA99DD119A1DB5CB7"
+    },
+    {
+      "path": "Tests~/RTGI/DiffusePolicy/source-blobs/561AADD8DEDDF766-HoRTGISharedResolve.compute",
+      "name": "HoRTGISharedResolve.compute",
+      "sha256": "561AADD8DEDDF766956825D51FBC1332321E3AFDBE97F08DD200F762A3D8C2DD"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "step": 38,
+  "purpose": "Observe fixed rejected037 policy, not new policy acceptance or parameter sweep",
+  "seeds": [
+    0,
+    104729,
+    5347609,
+    6396185
+  ],
+  "warmup": 64,
+  "measured": 256,
+  "receivers": 28,
+  "branches": 2,
+  "stageIds": [
+    3,
+    4,
+    5,
+    6,
+    9,
+    101,
+    102,
+    103,
+    104
+  ],
+  "invariance": "Stock/candidate full mean maps and candidate27 per-frame values bitexact037; branch0 main RGBA bitexact; sparse28 stage gather validated112 F32 components and main27 all9 stages bitexact; physical baseline calibration every frame",
+  "newGuide": "196141 actual full/RAB/history/ray/reference error<=.0005",
+  "alphaSemantics": {
+    "3": "hit distance",
+    "4": "second moment",
+    "5": "conditional HistoryFix on responsive buffer, alpha0 for observed settled samples; no variance inference",
+    "6": "second moment",
+    "9": "actual variance",
+    "101-103": "actual variance",
+    "104": "history length, not variance"
+  },
+  "varianceUnits": "demodulated NRD radiance^2; no componentwise albedo scaling",
+  "scopeGuard": "F58 policy remains rejected; no new MC/full8/HDR/Player/GPU or new formula; use stage evidence before any future ablation"
+}

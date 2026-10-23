@@ -1,0 +1,10 @@
+#pragma kernel Gather
+#pragma use_dxc
+#pragma target 5.0
+Texture2D<float4> _Source;
+StructuredBuffer<uint2> _Pixels;
+RWStructuredBuffer<float4> _Values;
+int _Count, _Offset;
+[numthreads(32,1,1)]
+void Gather(uint3 id:SV_DispatchThreadID)
+{if(id.x<_Count)_Values[_Offset+id.x]=_Source.Load(int3(_Pixels[id.x],0));}

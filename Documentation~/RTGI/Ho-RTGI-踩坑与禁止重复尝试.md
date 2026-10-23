@@ -183,3 +183,12 @@ step>4 factor2支持域名义L1仅−8.84%未达原20%，更重要是后两seed 
 Smem variance预模糊也是DI diffuse策略一部分，不能只拷w²输出却称完整DI策略；DI BOTH/spec/F0/material guide不可整份复制到GI DIFF。物理输出要GPU RGBA16F还原并以原版逐帧校准，不能只对demodulated signal评分或CPU还原无资格。新增读回/两NRD为诊断成本，不是产品预算。
 
 后续允许的是新阶段证据：同源两支原27点加196141，实际每ordinal的RGB/variance，先证明观察不改037输出，再定位哪一阶段伤旧点；不是直接重复接纳该bundle或扫phi/epsilon/迭代/ratio、坐标特判。原F51/F53/F55仍搁置；原质量/F39/static/动态/1080缺口不因本轮partial收益关闭。
+
+
+## F59 / 步骤038：阶段alpha语义与复合策略归因
+
+不能把所有阶段alpha都当variance：Pre是hitdistance，Temporal/Clamp是moment，本轮settled HistoryFix fast alpha0不代表估计variance0，最终Atrous alpha是historyLength；只有9/101/102/103直出variance。Temporal/Clamp由luma/M2离线重构是近似，不能冒充shader同次算出的值，不把demod variance逐通道乘albedo平方。输出RGB重调制与最后RGBA16F物理发布有量化差，必须分开。
+
+阶段3/4/5/6全RGBA同、首Atrous颜色近似同而variance差大，旧点/新18的主要相反变化都在后4轮。另旧196141后期DI variance更大仍恢复弱，禁止直接“提高所有variance”或只恢复首轮blur当修复；目前复合策略w²/min-pair/RGB/交换未分开因果。一个有目的的算子消融可以取证，不能以本轮观察通过为F58策略接纳或换松门槛/扫参数。
+
+独立gather读取避免031 debug-UAV重编译改结果的问题，仍要先112分量F32自检、对原整图stage27点bitexact、对037两branch完整pub map/逐帧27值bitexact和新guide资格；不能只凭公式相同称observer无影响。可选图表依赖不要动全局环境；本机default/bundled Python缺Matplotlib，隔离--target时需--no-user覆盖pip user配置，失败记录与GPU验证分开。

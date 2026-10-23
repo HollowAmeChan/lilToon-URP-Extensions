@@ -1,0 +1,21 @@
+#pragma kernel main
+#pragma use_dxc
+#pragma target 6.0
+// Editor-only physical publication. Matches HoRTGI.compute ResolveNRD and packed
+// material returned by RAB_GetGBufferSurface. Calibrated against baseline per frame.
+struct Primary { uint depth, normal, geometric, diffuse, specular; };
+StructuredBuffer<Primary> _History;
+Texture2D<float4> _Source, _Raw;
+RWTexture2D<float4> _Output;
+float _Scale;
+int _Width, _Height;
+[numthreads(8,8,1)]
+void main(uint3 id:SV_DispatchThreadID)
+{
+    if(id.x>=_Width||id.y>=_Height)return;
+    uint packed=_History[id.y*_Width+id.x].diffuse;
+    float3 albedo=float3(packed&255,(packed>>8)&255,(packed>>16)&255)/255.0;
+    bool valid=_Raw.Load(int3(id.xy,0)).a>.5;
+    float3 signal=_Source.Load(int3(id.xy,0)).rgb*_Scale;
+    _Output[id.xy]=float4(valid?max(signal,0)*albedo:0,valid?1:0);
+}

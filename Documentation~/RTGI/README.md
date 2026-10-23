@@ -74,3 +74,6 @@
 
 
 步骤037：同源GI实测DI diffuse bundle，新18/旧15总体reference L1改善42%/31%、full2→4/4，仍旧196141 B与141157 G/B硬退化，已拒绝生产接纳并撤回Editor覆盖；原stock5过滤复核过。1024帧物理GPU resolve对生产发布bitexact、全部数据/原源/取舍见[DiffusePolicy](../../Tests~/RTGI/DiffusePolicy/README.md)。038先双分支逐轮观察定位旧退化，不能放宽原门槛/直接移植；全部原质量/范围/预算和目标active。
+
+
+步骤038：同源stock/固定037策略28点×9stage实际RGBA观察合格（1024帧输出对037逐bit不变、112分量F32读取自检、全部stage对原整图copy匹配）。旧反例首轮颜色近似同，后4轮有益恢复减弱；196141后期variance更大仍恢复弱，不能只泛调variance，F58继续拒绝。[阶段证据与图](../../Tests~/RTGI/PairedStages/README.md)。039只一个后轮交换算子消融、其它保持，先短资格再原全部控制/门槛；原质量/F39/动态/完整预算与目标active。

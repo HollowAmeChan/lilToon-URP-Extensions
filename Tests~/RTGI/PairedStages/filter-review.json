@@ -1,0 +1,18 @@
+{
+  "step": 38,
+  "decision": "Retain qualified Editor-only paired stage observer; fixed037 policy remains rejected and only reconstructs in isolated validation Assets. No new algorithm/parameter/production shader.",
+  "retainedExistingEditorFiles": [
+    "HoRTGICastleValidation.cs optionalpairedStages flag/receivers/entry wiring",
+    "HoRTGILocalStageAudit.cs optional paired begin/guide/observe/end",
+    "HoRTGISharedInputAudit.cs optional owned paired observer, same default noop behavior"
+  ],
+  "newEditorFiles": [
+    "HoRTGIPairedStageAudit.cs/meta",
+    "Shaders/HoRTGIPairedGather.compute/meta"
+  ],
+  "runtimeVendorDiChanged": false,
+  "qualification": "Two actual0 runs,112-component F32 gather exact,1024 physical calibration frames exact, stock/candidate full mean maps and27 per-frame exact037,all9 stage matches main copy",
+  "cost": "2 extraNRD cores, physical readbacks, sparse8064B values+224B coordinates; diagnostic only, not VRAM or product performance budget.",
+  "f58Accepted": false,
+  "next": "Single operator ablation of late fixed-center exchange vs stock row normalization, hold Smem temporal variance/pair/RGB and settings fixed. First establish same-input fixed037 reference plus variant and mainstock physical calibration. Stage9 same,101 intervention; preserve original gates and stop on failures."
+}

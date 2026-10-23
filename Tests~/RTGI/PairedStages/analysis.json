@@ -1,0 +1,1228 @@
+{
+  "scope": "Four fixed seeds, actual28 receivers, nine stages each branch, stock vs fixed rejected037 policy. Observation only, not new acceptance/ablation. Final alpha is historyLength; Pre alpha hitdistance; Temporal/Clamp alpha moment with approximate offline variance; HistoryFix fast alpha zero excluded. No componentwise albedo conversion of variance.",
+  "observer": {
+    "scope": "Observer invariance and sparse stage-source qualification; not policy acceptance. Extra guide receiver was added without changing actual publications.",
+    "qualified": true,
+    "frames": 1024,
+    "checks": [
+      {
+        "seed": 0,
+        "stockFullMeanMapExact037": true,
+        "candidateFullMeanMapExact037": true,
+        "candidate27PerFrameExact037": true,
+        "gatherStockAll9StagesMatchesMainCopy27": true,
+        "gatherMaxRemodulationDifference": 0.0,
+        "addedGuideMaxError": 9.335544746136293e-07
+      },
+      {
+        "seed": 104729,
+        "stockFullMeanMapExact037": true,
+        "candidateFullMeanMapExact037": true,
+        "candidate27PerFrameExact037": true,
+        "gatherStockAll9StagesMatchesMainCopy27": true,
+        "gatherMaxRemodulationDifference": 0.0,
+        "addedGuideMaxError": 9.335544746136293e-07
+      },
+      {
+        "seed": 5347609,
+        "stockFullMeanMapExact037": true,
+        "candidateFullMeanMapExact037": true,
+        "candidate27PerFrameExact037": true,
+        "gatherStockAll9StagesMatchesMainCopy27": true,
+        "gatherMaxRemodulationDifference": 0.0,
+        "addedGuideMaxError": 9.335544746136293e-07
+      },
+      {
+        "seed": 6396185,
+        "stockFullMeanMapExact037": true,
+        "candidateFullMeanMapExact037": true,
+        "candidate27PerFrameExact037": true,
+        "gatherStockAll9StagesMatchesMainCopy27": true,
+        "gatherMaxRemodulationDifference": 0.0,
+        "addedGuideMaxError": 9.335544746136293e-07
+      }
+    ]
+  },
+  "upstreamStageEquality": [
+    {
+      "stage": 3,
+      "rgbDifferentComponents": 0,
+      "alphaDifferentComponents": 0,
+      "maxRgbDifferenceNRD": 0.0
+    },
+    {
+      "stage": 4,
+      "rgbDifferentComponents": 0,
+      "alphaDifferentComponents": 0,
+      "maxRgbDifferenceNRD": 0.0
+    },
+    {
+      "stage": 5,
+      "rgbDifferentComponents": 0,
+      "alphaDifferentComponents": 0,
+      "maxRgbDifferenceNRD": 0.0
+    },
+    {
+      "stage": 6,
+      "rgbDifferentComponents": 0,
+      "alphaDifferentComponents": 0,
+      "maxRgbDifferenceNRD": 0.0
+    },
+    {
+      "stage": 9,
+      "rgbDifferentComponents": 86013,
+      "alphaDifferentComponents": 28672,
+      "maxRgbDifferenceNRD": 7.295014802366495e-05
+    },
+    {
+      "stage": 101,
+      "rgbDifferentComponents": 86016,
+      "alphaDifferentComponents": 28672,
+      "maxRgbDifferenceNRD": 0.0005131966318003833
+    },
+    {
+      "stage": 102,
+      "rgbDifferentComponents": 86016,
+      "alphaDifferentComponents": 28672,
+      "maxRgbDifferenceNRD": 0.0006339815736282617
+    },
+    {
+      "stage": 103,
+      "rgbDifferentComponents": 86016,
+      "alphaDifferentComponents": 28672,
+      "maxRgbDifferenceNRD": 0.0006367666646838188
+    },
+    {
+      "stage": 104,
+      "rgbDifferentComponents": 86016,
+      "alphaDifferentComponents": 0,
+      "maxRgbDifferenceNRD": 0.0006199243362061679
+    }
+  ],
+  "new18StageError": [
+    {
+      "stage": 3,
+      "new18BaselineReferenceL1": 0.09461901502187688,
+      "new18DIReferenceL1": 0.09461901502187688
+    },
+    {
+      "stage": 4,
+      "new18BaselineReferenceL1": 0.11266147585520522,
+      "new18DIReferenceL1": 0.11266147585520522
+    },
+    {
+      "stage": 5,
+      "new18BaselineReferenceL1": 0.09716123196222505,
+      "new18DIReferenceL1": 0.09716123196222505
+    },
+    {
+      "stage": 6,
+      "new18BaselineReferenceL1": 0.11342681490762815,
+      "new18DIReferenceL1": 0.11342681490762815
+    },
+    {
+      "stage": 9,
+      "new18BaselineReferenceL1": 0.1306872478158863,
+      "new18DIReferenceL1": 0.13014455761450683,
+      "baselineActualVariance": {
+        "mean": 1.712297711411749e-08,
+        "median": 1.2485516176496958e-08,
+        "p10": 4.9574561344911675e-09,
+        "p90": 3.3477800442938145e-08,
+        "zeroFraction": 0.0
+      },
+      "diActualVariance": {
+        "mean": 3.3925367565028685e-09,
+        "median": 1.9229908776452476e-09,
+        "p10": 8.141699425756599e-10,
+        "p90": 6.9240822409000225e-09,
+        "zeroFraction": 0.0
+      }
+    },
+    {
+      "stage": 101,
+      "new18BaselineReferenceL1": 0.21514980084397464,
+      "new18DIReferenceL1": 0.15916692901338828,
+      "baselineActualVariance": {
+        "mean": 5.120677388040914e-09,
+        "median": 3.657883884677915e-09,
+        "p10": 1.8149695413249845e-09,
+        "p90": 9.164379033421715e-09,
+        "zeroFraction": 0.0
+      },
+      "diActualVariance": {
+        "mean": 2.200760959960655e-09,
+        "median": 1.1841361780007276e-09,
+        "p10": 4.2704820790717693e-10,
+        "p90": 4.478953474773564e-09,
+        "zeroFraction": 0.0
+      }
+    },
+    {
+      "stage": 102,
+      "new18BaselineReferenceL1": 0.3068724722868868,
+      "new18DIReferenceL1": 0.1921949655929874,
+      "baselineActualVariance": {
+        "mean": 1.99605110146989e-09,
+        "median": 1.3814229760100716e-09,
+        "p10": 5.180307793839489e-10,
+        "p90": 3.744751664314096e-09,
+        "zeroFraction": 0.0
+      },
+      "diActualVariance": {
+        "mean": 1.7001462401445682e-09,
+        "median": 8.427816222678075e-10,
+        "p10": 2.543826427281459e-10,
+        "p90": 3.554408034567302e-09,
+        "zeroFraction": 0.0
+      }
+    },
+    {
+      "stage": 103,
+      "new18BaselineReferenceL1": 0.38689638582872643,
+      "new18DIReferenceL1": 0.22548483112721016,
+      "baselineActualVariance": {
+        "mean": 7.599266136484821e-10,
+        "median": 5.553140725034211e-10,
+        "p10": 1.6566501781500877e-10,
+        "p90": 1.4594268460399467e-09,
+        "zeroFraction": 0.0
+      },
+      "diActualVariance": {
+        "mean": 1.3727493800162636e-09,
+        "median": 6.123414553194095e-10,
+        "p10": 1.8785358824047193e-10,
+        "p90": 2.9488370412167347e-09,
+        "zeroFraction": 0.0
+      }
+    },
+    {
+      "stage": 104,
+      "new18BaselineReferenceL1": 0.46236987179512806,
+      "new18DIReferenceL1": 0.26635092130011184
+    }
+  ],
+  "oldFailureStageTrajectories": [
+    {
+      "x": 141,
+      "y": 157,
+      "referenceMean": [
+        0.006199366878718138,
+        0.0003781422274187207,
+        9.649994899518788e-05
+      ],
+      "stages": [
+        {
+          "stage": 3,
+          "baselineMean": [
+            0.005931552800254141,
+            0.0003378127877397136,
+            8.477659937354062e-05
+          ],
+          "diMean": [
+            0.005931552800254141,
+            0.0003378127877397136,
+            8.477659937354062e-05
+          ],
+          "baselineOverReference": [
+            0.9567997694436543,
+            0.8933484896561158,
+            0.8785144474819166
+          ],
+          "diOverReference": [
+            0.9567997694436543,
+            0.8933484896561158,
+            0.8785144474819166
+          ],
+          "errorIncrease": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "meanDiMinusBaseline": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "alphaMeaning": "hit distance, NOT variance"
+        },
+        {
+          "stage": 4,
+          "baselineMean": [
+            0.005979918511889066,
+            0.00034258029378559073,
+            8.557899738089681e-05
+          ],
+          "diMean": [
+            0.005979918511889066,
+            0.00034258029378559073,
+            8.557899738089681e-05
+          ],
+          "baselineOverReference": [
+            0.96460148735794,
+            0.9059561956994772,
+            0.8868294571343694
+          ],
+          "diOverReference": [
+            0.96460148735794,
+            0.9059561956994772,
+            0.8868294571343694
+          ],
+          "errorIncrease": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "meanDiMinusBaseline": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "baselineVariance": {
+            "mean": 4.30574417837551e-08,
+            "median": 2.7001186701884923e-08,
+            "p10": 1.4137117256800483e-08,
+            "p90": 1.0064511261571603e-07,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "second moment; variance reconstructed offline approximately",
+            "phi2NextRangeFloorFraction": null
+          },
+          "diVariance": {
+            "mean": 4.30574417837551e-08,
+            "median": 2.7001186701884923e-08,
+            "p10": 1.4137117256800483e-08,
+            "p90": 1.0064511261571603e-07,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "second moment; variance reconstructed offline approximately",
+            "phi2NextRangeFloorFraction": null
+          }
+        },
+        {
+          "stage": 5,
+          "baselineMean": [
+            0.0059916294888051735,
+            0.000338031540979968,
+            8.400821968360423e-05
+          ],
+          "diMean": [
+            0.0059916294888051735,
+            0.000338031540979968,
+            8.400821968360423e-05
+          ],
+          "baselineOverReference": [
+            0.966490547506374,
+            0.8939269842657965,
+            0.8705519594398277
+          ],
+          "diOverReference": [
+            0.966490547506374,
+            0.8939269842657965,
+            0.8705519594398277
+          ],
+          "errorIncrease": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "meanDiMinusBaseline": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "alphaMeaning": "HistoryFix fast/responsive path alpha zero; NOT a temporal variance estimate",
+          "baselineAuxAlpha": {
+            "mean": 0.0,
+            "median": 0.0,
+            "p10": 0.0,
+            "p90": 0.0,
+            "zeroFraction": 1.0
+          },
+          "diAuxAlpha": {
+            "mean": 0.0,
+            "median": 0.0,
+            "p10": 0.0,
+            "p90": 0.0,
+            "zeroFraction": 1.0
+          }
+        },
+        {
+          "stage": 6,
+          "baselineMean": [
+            0.005969092648408694,
+            0.000342245845464594,
+            8.556614759315962e-05
+          ],
+          "diMean": [
+            0.005969092648408694,
+            0.000342245845464594,
+            8.556614759315962e-05
+          ],
+          "baselineOverReference": [
+            0.9628552020207171,
+            0.9050717445677435,
+            0.8866962986418419
+          ],
+          "diOverReference": [
+            0.9628552020207171,
+            0.9050717445677435,
+            0.8866962986418419
+          ],
+          "errorIncrease": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "meanDiMinusBaseline": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "baselineVariance": {
+            "mean": 4.305744163163709e-08,
+            "median": 2.700118750257456e-08,
+            "p10": 1.4137116907400307e-08,
+            "p90": 1.0064511435877865e-07,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "second moment; variance reconstructed offline approximately",
+            "phi2NextRangeFloorFraction": null
+          },
+          "diVariance": {
+            "mean": 4.305744163163709e-08,
+            "median": 2.700118750257456e-08,
+            "p10": 1.4137116907400307e-08,
+            "p90": 1.0064511435877865e-07,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "second moment; variance reconstructed offline approximately",
+            "phi2NextRangeFloorFraction": null
+          }
+        },
+        {
+          "stage": 9,
+          "baselineMean": [
+            0.005296253281970906,
+            0.00030201966199429217,
+            7.969893535403363e-05
+          ],
+          "diMean": [
+            0.005298276256878094,
+            0.00030201987612145733,
+            7.968169097323684e-05
+          ],
+          "baselineOverReference": [
+            0.8543216405133984,
+            0.7986932960540869,
+            0.8258961396757624
+          ],
+          "diOverReference": [
+            0.8546479601113129,
+            0.7986938623150058,
+            0.8257174413347129
+          ],
+          "errorIncrease": [
+            -2.0229749071879258e-06,
+            -2.1412716516349892e-10,
+            1.724438079679126e-08
+          ],
+          "meanDiMinusBaseline": [
+            2.0229749071879258e-06,
+            2.1412716516349892e-10,
+            -1.724438079679126e-08
+          ],
+          "baselineVariance": {
+            "mean": 7.275817375494709e-08,
+            "median": 4.71641925514632e-08,
+            "p10": 2.9388583122624823e-08,
+            "p90": 1.331886522848436e-07,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.0
+          },
+          "diVariance": {
+            "mean": 7.587581016504745e-09,
+            "median": 5.339673148085922e-09,
+            "p10": 2.9686270774931247e-09,
+            "p90": 1.5695857591424557e-08,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.0283203125
+          }
+        },
+        {
+          "stage": 101,
+          "baselineMean": [
+            0.0053131261569890325,
+            0.0003200693486663706,
+            8.60851243679719e-05
+          ],
+          "diMean": [
+            0.005315361433792422,
+            0.0003131712497838361,
+            8.353872381537301e-05
+          ],
+          "baselineOverReference": [
+            0.8570433498989245,
+            0.8464258299085824,
+            0.8920742991508178
+          ],
+          "diOverReference": [
+            0.8574039152352112,
+            0.8281837548840013,
+            0.8656867147104792
+          ],
+          "errorIncrease": [
+            -2.235276803389842e-06,
+            6.8980988825345126e-06,
+            2.546400552598887e-06
+          ],
+          "meanDiMinusBaseline": [
+            2.235276803389842e-06,
+            -6.8980988825345126e-06,
+            -2.546400552598887e-06
+          ],
+          "baselineVariance": {
+            "mean": 1.518283274147894e-08,
+            "median": 1.0062905175800552e-08,
+            "p10": 6.067178270896535e-09,
+            "p90": 3.6657615964941213e-08,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.0
+          },
+          "diVariance": {
+            "mean": 2.9813870977037082e-09,
+            "median": 2.0902775066389268e-09,
+            "p10": 1.1889173423540456e-09,
+            "p90": 6.534252428025411e-09,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.61328125
+          }
+        },
+        {
+          "stage": 102,
+          "baselineMean": [
+            0.005240686442869818,
+            0.0003229975728756838,
+            8.754528022037508e-05
+          ],
+          "diMean": [
+            0.005269281208103986,
+            0.000313544352067074,
+            8.382988946998465e-05
+          ],
+          "baselineOverReference": [
+            0.8453583318097558,
+            0.8541695411288338,
+            0.9072054558779161
+          ],
+          "diOverReference": [
+            0.8499708617331472,
+            0.8291704267132356,
+            0.8687039769747956
+          ],
+          "errorIncrease": [
+            -2.8594765234168408e-05,
+            9.453220808609765e-06,
+            3.715390750390433e-06
+          ],
+          "meanDiMinusBaseline": [
+            2.8594765234168408e-05,
+            -9.453220808609765e-06,
+            -3.715390750390433e-06
+          ],
+          "baselineVariance": {
+            "mean": 7.38280608641919e-09,
+            "median": 3.654856972623577e-09,
+            "p10": 2.386946196253348e-09,
+            "p90": 1.3930151521179835e-08,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.1328125
+          },
+          "diVariance": {
+            "mean": 2.1398232583362455e-09,
+            "median": 1.444311892306871e-09,
+            "p10": 8.177465649072957e-10,
+            "p90": 4.782945994818988e-09,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.75
+          }
+        },
+        {
+          "stage": 103,
+          "baselineMean": [
+            0.005426521488796545,
+            0.0003381528411087126,
+            9.318362917156739e-05
+          ],
+          "diMean": [
+            0.005320321017250664,
+            0.0003192715885015794,
+            8.613211595753645e-05
+          ],
+          "baselineOverReference": [
+            0.8753347873998714,
+            0.8942477633799744,
+            0.9656339733010029
+          ],
+          "diOverReference": [
+            0.858203929745607,
+            0.8443161470777679,
+            0.892561258885552
+          ],
+          "errorIncrease": [
+            0.0001062004715458812,
+            1.8881252607133234e-05,
+            7.051513214030935e-06
+          ],
+          "meanDiMinusBaseline": [
+            -0.0001062004715458812,
+            -1.8881252607133234e-05,
+            -7.051513214030935e-06
+          ],
+          "baselineVariance": {
+            "mean": 2.8850733776292735e-09,
+            "median": 1.636438817786967e-09,
+            "p10": 9.02103652888897e-10,
+            "p90": 7.036372684510193e-09,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.6962890625
+          },
+          "diVariance": {
+            "mean": 1.474223134328512e-09,
+            "median": 1.0032986108576836e-09,
+            "p10": 5.780377843045414e-10,
+            "p90": 3.1539592715290628e-09,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.849609375
+          }
+        },
+        {
+          "stage": 104,
+          "baselineMean": [
+            0.005493691548334611,
+            0.00034631761746210864,
+            9.617739440488355e-05
+          ],
+          "diMean": [
+            0.005364735810777192,
+            0.0003246085188069823,
+            8.809320804651292e-05
+          ],
+          "baselineOverReference": [
+            0.8861697743996979,
+            0.9158395766221253,
+            0.9966574636187588
+          ],
+          "diOverReference": [
+            0.8653683377239443,
+            0.8584296999116684,
+            0.9128834674400276
+          ],
+          "errorIncrease": [
+            0.0001289557375574197,
+            2.170909865512635e-05,
+            8.084186358370629e-06
+          ],
+          "meanDiMinusBaseline": [
+            -0.0001289557375574197,
+            -2.170909865512635e-05,
+            -8.084186358370629e-06
+          ],
+          "alphaMeaning": "actual history length, NOT variance",
+          "baselineHistoryLength": {
+            "mean": 30.0,
+            "median": 30.0,
+            "p10": 30.0,
+            "p90": 30.0,
+            "zeroFraction": 0.0
+          },
+          "diHistoryLength": {
+            "mean": 30.0,
+            "median": 30.0,
+            "p10": 30.0,
+            "p90": 30.0,
+            "zeroFraction": 0.0
+          }
+        }
+      ],
+      "actualPhysicalBaselinePublication": [
+        0.005491763353347778,
+        0.0003462012391537428,
+        9.614753071218729e-05
+      ],
+      "actualPhysicalDiPublication": [
+        0.005362771451473236,
+        0.000324488733895123,
+        8.806335972622037e-05
+      ],
+      "physicalPublicationErrorIncrease": [
+        0.00012899190187454224,
+        2.1712505258619785e-05,
+        8.084170985966921e-06
+      ]
+    },
+    {
+      "x": 196,
+      "y": 141,
+      "referenceMean": [
+        0.007301318924874067,
+        0.00042346856207586825,
+        8.957552927313372e-05
+      ],
+      "stages": [
+        {
+          "stage": 3,
+          "baselineMean": [
+            0.0074232245813276075,
+            0.00036388774763010173,
+            7.288146134616184e-05
+          ],
+          "diMean": [
+            0.0074232245813276075,
+            0.00036388774763010173,
+            7.288146134616184e-05
+          ],
+          "baselineOverReference": [
+            1.0166963883796711,
+            0.8593028626406225,
+            0.8136313783190906
+          ],
+          "diOverReference": [
+            1.0166963883796711,
+            0.8593028626406225,
+            0.8136313783190906
+          ],
+          "errorIncrease": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "meanDiMinusBaseline": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "alphaMeaning": "hit distance, NOT variance"
+        },
+        {
+          "stage": 4,
+          "baselineMean": [
+            0.00733918624722012,
+            0.00033905812725291344,
+            6.779439839318007e-05
+          ],
+          "diMean": [
+            0.00733918624722012,
+            0.00033905812725291344,
+            6.779439839318007e-05
+          ],
+          "baselineOverReference": [
+            1.0051863673859043,
+            0.8006689459799098,
+            0.7568406119763063
+          ],
+          "diOverReference": [
+            1.0051863673859043,
+            0.8006689459799098,
+            0.7568406119763063
+          ],
+          "errorIncrease": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "meanDiMinusBaseline": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "baselineVariance": {
+            "mean": 8.508781998446427e-07,
+            "median": 4.254571077927211e-08,
+            "p10": 1.8570607933728356e-08,
+            "p90": 1.1353222090613971e-06,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "second moment; variance reconstructed offline approximately",
+            "phi2NextRangeFloorFraction": null
+          },
+          "diVariance": {
+            "mean": 8.508781998446427e-07,
+            "median": 4.254571077927211e-08,
+            "p10": 1.8570607933728356e-08,
+            "p90": 1.1353222090613971e-06,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "second moment; variance reconstructed offline approximately",
+            "phi2NextRangeFloorFraction": null
+          }
+        },
+        {
+          "stage": 5,
+          "baselineMean": [
+            0.007429591811637178,
+            0.00036006246925717036,
+            7.200183347136742e-05
+          ],
+          "diMean": [
+            0.007429591811637178,
+            0.00036006246925717036,
+            7.200183347136742e-05
+          ],
+          "baselineOverReference": [
+            1.01756845414958,
+            0.8502696575446418,
+            0.8038114209944484
+          ],
+          "diOverReference": [
+            1.01756845414958,
+            0.8502696575446418,
+            0.8038114209944484
+          ],
+          "errorIncrease": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "meanDiMinusBaseline": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "alphaMeaning": "HistoryFix fast/responsive path alpha zero; NOT a temporal variance estimate",
+          "baselineAuxAlpha": {
+            "mean": 0.0,
+            "median": 0.0,
+            "p10": 0.0,
+            "p90": 0.0,
+            "zeroFraction": 1.0
+          },
+          "diAuxAlpha": {
+            "mean": 0.0,
+            "median": 0.0,
+            "p10": 0.0,
+            "p90": 0.0,
+            "zeroFraction": 1.0
+          }
+        },
+        {
+          "stage": 6,
+          "baselineMean": [
+            0.007335218741692146,
+            0.00033850038562511505,
+            6.765309294581105e-05
+          ],
+          "diMean": [
+            0.007335218741692146,
+            0.00033850038562511505,
+            6.765309294581105e-05
+          ],
+          "baselineOverReference": [
+            1.0046429716557908,
+            0.7993518667968311,
+            0.7552631114187808
+          ],
+          "diOverReference": [
+            1.0046429716557908,
+            0.7993518667968311,
+            0.7552631114187808
+          ],
+          "errorIncrease": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "meanDiMinusBaseline": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "baselineVariance": {
+            "mean": 8.508782004020904e-07,
+            "median": 4.254571740144203e-08,
+            "p10": 1.85706084928569e-08,
+            "p90": 1.1353222106242455e-06,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "second moment; variance reconstructed offline approximately",
+            "phi2NextRangeFloorFraction": null
+          },
+          "diVariance": {
+            "mean": 8.508782004020904e-07,
+            "median": 4.254571740144203e-08,
+            "p10": 1.85706084928569e-08,
+            "p90": 1.1353222106242455e-06,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "second moment; variance reconstructed offline approximately",
+            "phi2NextRangeFloorFraction": null
+          }
+        },
+        {
+          "stage": 9,
+          "baselineMean": [
+            0.006073049225917542,
+            0.0003150242704384699,
+            6.806523688724264e-05
+          ],
+          "diMean": [
+            0.006069634283053353,
+            0.00031447482305110586,
+            6.791836328047681e-05
+          ],
+          "baselineOverReference": [
+            0.8317742709783479,
+            0.7439141854927839,
+            0.7598641887975689
+          ],
+          "diOverReference": [
+            0.8313065550903931,
+            0.7426166927469927,
+            0.7582245266269108
+          ],
+          "errorIncrease": [
+            3.414942864188829e-06,
+            5.494473873640508e-07,
+            1.4687360676583425e-07
+          ],
+          "meanDiMinusBaseline": [
+            -3.414942864188829e-06,
+            -5.494473873640508e-07,
+            -1.4687360676583425e-07
+          ],
+          "baselineVariance": {
+            "mean": 3.0038978269218697e-07,
+            "median": 6.72441693438941e-08,
+            "p10": 3.753954480600896e-08,
+            "p90": 4.3159769234080177e-07,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.0
+          },
+          "diVariance": {
+            "mean": 8.063695101836327e-08,
+            "median": 1.2187261422269557e-08,
+            "p10": 6.203978886176742e-09,
+            "p90": 1.268654088448784e-07,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.0
+          }
+        },
+        {
+          "stage": 101,
+          "baselineMean": [
+            0.005681997401855255,
+            0.00033062309125463427,
+            7.559386400395338e-05
+          ],
+          "diMean": [
+            0.005891865572324312,
+            0.00032730369543516777,
+            7.314024445043412e-05
+          ],
+          "baselineOverReference": [
+            0.7782152047211467,
+            0.7807500269533589,
+            0.84391199937488
+          ],
+          "diOverReference": [
+            0.8069590758803806,
+            0.7729114384092776,
+            0.8165203716230899
+          ],
+          "errorIncrease": [
+            -0.0002098681704690566,
+            3.3193958194665044e-06,
+            2.453619553519258e-06
+          ],
+          "meanDiMinusBaseline": [
+            0.0002098681704690566,
+            -3.3193958194665044e-06,
+            -2.453619553519258e-06
+          ],
+          "baselineVariance": {
+            "mean": 3.639008151670037e-08,
+            "median": 1.2023835704866315e-08,
+            "p10": 7.961765291497614e-09,
+            "p90": 5.149797992487494e-08,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.0
+          },
+          "diVariance": {
+            "mean": 3.754832146043389e-08,
+            "median": 4.640439810188468e-09,
+            "p10": 2.519527186883863e-09,
+            "p90": 4.0172896476065106e-08,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.095703125
+          }
+        },
+        {
+          "stage": 102,
+          "baselineMean": [
+            0.005669630382989713,
+            0.0003442323633332283,
+            8.032175460427282e-05
+          ],
+          "diMean": [
+            0.005850649031663082,
+            0.00033511252427621113,
+            7.605929157627561e-05
+          ],
+          "baselineOverReference": [
+            0.7765213985756009,
+            0.8128876477766864,
+            0.8966930506138089
+          ],
+          "diOverReference": [
+            0.8013139943430144,
+            0.7913516003017307,
+            0.8491079225929618
+          ],
+          "errorIncrease": [
+            -0.00018101864867336916,
+            9.119839057017149e-06,
+            4.262463027997204e-06
+          ],
+          "meanDiMinusBaseline": [
+            0.00018101864867336916,
+            -9.119839057017149e-06,
+            -4.262463027997204e-06
+          ],
+          "baselineVariance": {
+            "mean": 6.367875696145983e-09,
+            "median": 2.9088802477872377e-09,
+            "p10": 2.194200421357095e-09,
+            "p90": 8.937839446332425e-09,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.294921875
+          },
+          "diVariance": {
+            "mean": 2.117075511144477e-08,
+            "median": 2.5791385693807456e-09,
+            "p10": 1.406329841469045e-09,
+            "p90": 1.8343694563327547e-08,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.4736328125
+          }
+        },
+        {
+          "stage": 103,
+          "baselineMean": [
+            0.005711597006740994,
+            0.0003513555386933973,
+            8.254115777133019e-05
+          ],
+          "diMean": [
+            0.005817829663941987,
+            0.000336777456879042,
+            7.689682601968073e-05
+          ],
+          "baselineOverReference": [
+            0.7822692126600274,
+            0.8297086729910514,
+            0.9214699420825712
+          ],
+          "diOverReference": [
+            0.7968190026766065,
+            0.795283256041815,
+            0.858457958816039
+          ],
+          "errorIncrease": [
+            -0.00010623265720099365,
+            1.457808181435532e-05,
+            5.644331751649456e-06
+          ],
+          "meanDiMinusBaseline": [
+            0.00010623265720099365,
+            -1.457808181435532e-05,
+            -5.644331751649456e-06
+          ],
+          "baselineVariance": {
+            "mean": 3.2022348213844518e-09,
+            "median": 1.4724333974314163e-09,
+            "p10": 9.551916035910323e-10,
+            "p90": 4.714893186985594e-09,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.7294921875
+          },
+          "diVariance": {
+            "mean": 1.8032998918117785e-08,
+            "median": 1.8267066748123284e-09,
+            "p10": 9.9162776878714e-10,
+            "p90": 1.3732566905844142e-08,
+            "zeroFraction": 0.0,
+            "units": "NRD demodulated radiance squared",
+            "alphaMeaning": "actual GPU variance",
+            "phi2NextRangeFloorFraction": 0.6513671875
+          }
+        },
+        {
+          "stage": 104,
+          "baselineMean": [
+            0.005658615875333765,
+            0.0003555914137456084,
+            8.454135588532135e-05
+          ],
+          "diMean": [
+            0.005808701444064389,
+            0.00034013286573224635,
+            7.824394898486355e-05
+          ],
+          "baselineOverReference": [
+            0.7750128344696797,
+            0.8397114817744156,
+            0.9437996802401003
+          ],
+          "diOverReference": [
+            0.7955687874796644,
+            0.803206887578371,
+            0.8734969206409273
+          ],
+          "errorIncrease": [
+            -0.00015008556873062368,
+            1.5458548013362052e-05,
+            6.297406900457797e-06
+          ],
+          "meanDiMinusBaseline": [
+            0.00015008556873062368,
+            -1.5458548013362052e-05,
+            -6.297406900457797e-06
+          ],
+          "alphaMeaning": "actual history length, NOT variance",
+          "baselineHistoryLength": {
+            "mean": 30.0,
+            "median": 30.0,
+            "p10": 30.0,
+            "p90": 30.0,
+            "zeroFraction": 0.0
+          },
+          "diHistoryLength": {
+            "mean": 30.0,
+            "median": 30.0,
+            "p10": 30.0,
+            "p90": 30.0,
+            "zeroFraction": 0.0
+          }
+        }
+      ],
+      "actualPhysicalBaselinePublication": [
+        0.005656730383634567,
+        0.00035547418519854546,
+        8.45124595798552e-05
+      ],
+      "actualPhysicalDiPublication": [
+        0.005806766450405121,
+        0.00034000491723418236,
+        7.821299368515611e-05
+      ],
+      "physicalPublicationErrorIncrease": [
+        -0.0001500360667705536,
+        1.5469267964363098e-05,
+        6.299465894699097e-06
+      ]
+    }
+  ],
+  "counter141157NineNeighborVarianceBlur": [
+    {
+      "inputBranch": 0,
+      "stockSpatialPlusTemporalBlurVariance": {
+        "mean": 7.455632470887021e-08,
+        "median": 4.629244981192747e-08,
+        "p10": 2.913563992051937e-08,
+        "p90": 1.485771910949873e-07,
+        "zeroFraction": 0.0
+      },
+      "diTemporalOnlyBlurVariance": {
+        "mean": 6.673476615450878e-08,
+        "median": 4.206934561794911e-08,
+        "p10": 2.611984864840505e-08,
+        "p90": 1.287246029020392e-07,
+        "zeroFraction": 0.0
+      },
+      "stockPhi2Bandwidth": {
+        "mean": 0.000502573000718529,
+        "median": 0.0004303135914186489,
+        "p10": 0.00034138330223210903,
+        "p90": 0.0007709113235427501,
+        "zeroFraction": 0.0
+      },
+      "diPhi2Bandwidth": {
+        "mean": 0.0004760077696999075,
+        "median": 0.00041021625966369346,
+        "p10": 0.00032323272313663484,
+        "p90": 0.0007175641961722432,
+        "zeroFraction": 0.0
+      },
+      "stockFloorFraction": 0.0,
+      "diFloorFraction": 0.0,
+      "scope": "Offline reconstruction of computeVariance from nine actual Clamp RGBA samples. No geometry/range tap reconstruction or new GPU intervention."
+    },
+    {
+      "inputBranch": 1,
+      "stockSpatialPlusTemporalBlurVariance": {
+        "mean": 7.455632470887021e-08,
+        "median": 4.629244981192747e-08,
+        "p10": 2.913563992051937e-08,
+        "p90": 1.485771910949873e-07,
+        "zeroFraction": 0.0
+      },
+      "diTemporalOnlyBlurVariance": {
+        "mean": 6.673476615450878e-08,
+        "median": 4.206934561794911e-08,
+        "p10": 2.611984864840505e-08,
+        "p90": 1.287246029020392e-07,
+        "zeroFraction": 0.0
+      },
+      "stockPhi2Bandwidth": {
+        "mean": 0.000502573000718529,
+        "median": 0.0004303135914186489,
+        "p10": 0.00034138330223210903,
+        "p90": 0.0007709113235427501,
+        "zeroFraction": 0.0
+      },
+      "diPhi2Bandwidth": {
+        "mean": 0.0004760077696999075,
+        "median": 0.00041021625966369346,
+        "p10": 0.00032323272313663484,
+        "p90": 0.0007175641961722432,
+        "zeroFraction": 0.0
+      },
+      "stockFloorFraction": 0.0,
+      "diFloorFraction": 0.0,
+      "scope": "Offline reconstruction of computeVariance from nine actual Clamp RGBA samples. No geometry/range tap reconstruction or new GPU intervention."
+    }
+  ],
+  "productionChanged": false,
+  "policyAccepted": false,
+  "decision": "Keep037 rejected. Use stage/variance evidence to select a future mechanism only; no parameter scan."
+}

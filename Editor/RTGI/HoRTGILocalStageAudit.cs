@@ -206,11 +206,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunReproNoop()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,noopClone:true,reproInputs:true,validationTag:"repro-noop");
         public static void RunSharedInputSceneQualification()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,traceControl:true,sharedInput:true,seedWarmup:16,seedMeasured:16,validationTag:"shared-input-scene-qualification");
         public static void RunSharedInputScene()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,traceControl:true,sharedInput:true,validationTag:"shared-input-scene");
-        static async Task<HoRTGILocalStageAudit.Report> AuditLocalStages(HoRTGIRendererFeature gi,HoRTGIContext context,HoRTGIDenseReferenceFeature feature,Action render,Func<RenderTexture,Color[]> read,int warmup,int measured,string output,bool propagation=false,bool traceControl=false,bool reproInputs=false,bool noopClone=false,bool sharedInput=false)
+        public static void RunPairedStageQualification()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,traceControl:true,sharedInput:true,pairedStages:true,seedWarmup:16,seedMeasured:16,validationTag:"paired-stage-qualification");
+        public static void RunPairedStages()=>Run(false,256,denseScheduled:true,localStages:true,propagation:true,traceControl:true,sharedInput:true,pairedStages:true,validationTag:"paired-stages");
+        static async Task<HoRTGILocalStageAudit.Report> AuditLocalStages(HoRTGIRendererFeature gi,HoRTGIContext context,HoRTGIDenseReferenceFeature feature,Action render,Func<RenderTexture,Color[]> read,int warmup,int measured,string output,bool propagation=false,bool traceControl=false,bool reproInputs=false,bool noopClone=false,bool sharedInput=false,bool pairedStages=false)
         {
             int[] seeds=measured==16?new[]{0,104729}:new[]{0,104729,5347609,6396185};int oldFrame=context.frame;bool temporal=gi.Settings.temporal,spatial=gi.Settings.spatial;
             using var audit=new HoRTGILocalStageAudit(context,feature,read,seeds,warmup,measured,propagation,traceControl,reproInputs,noopClone);
-            using var shared=sharedInput?new HoRTGISharedInputAudit(context.nrd,context.width,context.height):null;
+            using var shared=sharedInput?new HoRTGISharedInputAudit(context.nrd,context.width,context.height,pairedStages):null;
             try
             {
                 gi.Settings.temporal=gi.Settings.spatial=true;
@@ -218,13 +220,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 {
                     context.historyValid=false;context.nrd.historyValid=false;context.frame=seed;feature.collect=false;
                     for(int i=0;i<warmup;i++){await NextEditorTick();audit.BeginFrame();render();}
-                    audit.Begin(seed,output);
+                    audit.Begin(seed,output);shared?.paired?.Begin(seed,output,context.width,context.height);
                     for(int i=0;i<measured;i++)
                     {
                         await NextEditorTick();feature.collect=i==0||i==measured-1;feature.batch=Array.IndexOf(seeds,seed);audit.BeginFrame(propagation&&(i==0||i==measured-1||(measured>16&&i%32==0)));render();
-                        if(feature.collect)audit.ValidateProbe(i==0);audit.AddFrame();shared?.Observe();
+                        if(feature.collect){audit.ValidateProbe(i==0);shared?.paired?.ValidateAddedGuide(feature,i==0);}audit.AddFrame();shared?.Observe();shared?.ObservePaired(context);
                     }
-                    feature.collect=false;audit.End(output);if(shared!=null)audit.SetShared(shared.Snapshot());File.WriteAllText(Path.Combine(output,"local-stage-progress.json"),JsonUtility.ToJson(audit.Snapshot(false),false));
+                    feature.collect=false;audit.End(output);shared?.paired?.End(output);if(shared!=null)audit.SetShared(shared.Snapshot());File.WriteAllText(Path.Combine(output,"local-stage-progress.json"),JsonUtility.ToJson(audit.Snapshot(false),false));
                     Debug.Log("[HoGILocalStages] seed="+seed+" complete");
                 }
                 var report=audit.Snapshot(true);Debug.Log("[HoGILocalStages] COMPLETE segments="+report.segments.Length);return report;

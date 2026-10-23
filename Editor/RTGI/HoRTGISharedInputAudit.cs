@@ -27,14 +27,14 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         [Serializable]internal sealed class Report
         {
             public bool restoredHook,released,independentPools,sharedInputBindings;public int recorded,width,height;
-            public Frame[] frames;public HoRTGIAtrousTrace.Report noop;public long diagnosticLogicalBytes;
+            public Frame[] frames;public HoRTGIAtrousTrace.Report noop;public HoRTGIPairedStageAudit.Report paired;public long diagnosticLogicalBytes;
         }
         readonly HoRTGINrdContext baseline;readonly HoRTDINrdContext[] branches=new HoRTDINrdContext[2];
         readonly RenderTexture[] outputs=new RenderTexture[2],validations=new RenderTexture[2];
-        readonly HoRTGIAtrousTrace noop;readonly List<Frame> frames=new();readonly Report report;
+        readonly HoRTGIAtrousTrace noop;internal readonly HoRTGIPairedStageAudit paired;readonly List<Frame> frames=new();readonly Report report;
         readonly Action<CommandBuffer,HoRTDINrdNative.CommonSettings,HoRTDINrdNative.RelaxSettings,IReadOnlyDictionary<string,RenderTargetIdentifier>> previous;
         Frame current;bool disposed;internal bool isolateBranch1;
-        internal HoRTGISharedInputAudit(HoRTGINrdContext baseline,int width,int height)
+        internal HoRTGISharedInputAudit(HoRTGINrdContext baseline,int width,int height,bool pairedStages=false)
         {
             this.baseline=baseline;if(baseline.ValidationRecordInputs!=null)throw new Exception("Shared-input hook already owned");previous=baseline.ValidationRecordInputs;
             const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
@@ -51,11 +51,11 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var a=(Array)typeof(HoRTDINrdContext).GetField(name,flags).GetValue(branches[0]);var b=(Array)typeof(HoRTDINrdContext).GetField(name,flags).GetValue(branches[1]);var c=(Array)typeof(HoRTDINrdContext).GetField(name,flags).GetValue(baseline.core);
                 for(int i=0;i<a.Length;i++)if(ReferenceEquals(a.GetValue(i),b.GetValue(i))||ReferenceEquals(a.GetValue(i),c.GetValue(i)))throw new Exception("NRD branches share writable resources");
             }
-            noop=new HoRTGIAtrousTrace(branches[1],true,true);report.noop=noop.report;baseline.ValidationRecordInputs=Record;
+            if(pairedStages){paired=new HoRTGIPairedStageAudit(branches,width,height);report.paired=paired.report;}else{noop=new HoRTGIAtrousTrace(branches[1],true,true);report.noop=noop.report;}baseline.ValidationRecordInputs=Record;
         }
         void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings common,HoRTDINrdNative.RelaxSettings settings,IReadOnlyDictionary<string,RenderTargetIdentifier> source)
         {
-            current=new Frame{shaderFrame=(int)common.frameIndex,applicationFrame=Time.frameCount,baselineReset=common.accumulationMode==2,isolatedReset1=isolateBranch1,commonSha256=Hash(StructBytes(common)),settingsSha256=Hash(StructBytes(settings))};report.recorded++;
+            paired?.BeginFrame();current=new Frame{shaderFrame=(int)common.frameIndex,applicationFrame=Time.frameCount,baselineReset=common.accumulationMode==2,isolatedReset1=isolateBranch1,commonSha256=Hash(StructBytes(common)),settingsSha256=Hash(StructBytes(settings))};report.recorded++;
             for(int i=0;i<2;i++)
             {
                 var resources=source.ToDictionary(p=>p.Key,p=>p.Value);resources["OUT_DIFF_RADIANCE_HITDIST"]=outputs[i];resources["OUT_VALIDATION"]=validations[i];
@@ -77,10 +77,11 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             }
             current.baselineSha256=Hash(ColorBytes(a));current.branch0Sha256=Hash(ColorBytes(b));current.branch1Sha256=Hash(ColorBytes(c));frames.Add(current);current=null;
         }
-        internal Report Snapshot(){report.frames=frames.ToArray();return report;}
+        internal Report Snapshot(){report.frames=frames.ToArray();if(paired!=null)report.paired=paired.Snapshot();return report;}
+        internal void ObservePaired(lilToon.URP.Extensions.RTGI.HoRTGIContext context)=>paired?.Observe(context,outputs[0],outputs[1]);
         public void Dispose()
         {
-            if(disposed)return;disposed=true;baseline.ValidationRecordInputs=previous;report.restoredHook=baseline.ValidationRecordInputs==previous;noop.Dispose();
+            if(disposed)return;disposed=true;baseline.ValidationRecordInputs=previous;report.restoredHook=baseline.ValidationRecordInputs==previous;noop?.Dispose();paired?.Dispose();
             for(int i=0;i<2;i++){branches[i].Dispose();outputs[i].Release();validations[i].Release();UnityEngine.Object.DestroyImmediate(outputs[i]);UnityEngine.Object.DestroyImmediate(validations[i]);}report.released=true;
         }
         internal static Color[] Read(RenderTexture texture)

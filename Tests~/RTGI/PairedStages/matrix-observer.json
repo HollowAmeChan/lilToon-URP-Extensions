@@ -1,0 +1,43 @@
+{
+  "scope": "Observer invariance and sparse stage-source qualification; not policy acceptance. Extra guide receiver was added without changing actual publications.",
+  "qualified": true,
+  "frames": 1024,
+  "checks": [
+    {
+      "seed": 0,
+      "stockFullMeanMapExact037": true,
+      "candidateFullMeanMapExact037": true,
+      "candidate27PerFrameExact037": true,
+      "gatherStockAll9StagesMatchesMainCopy27": true,
+      "gatherMaxRemodulationDifference": 0.0,
+      "addedGuideMaxError": 9.335544746136293e-07
+    },
+    {
+      "seed": 104729,
+      "stockFullMeanMapExact037": true,
+      "candidateFullMeanMapExact037": true,
+      "candidate27PerFrameExact037": true,
+      "gatherStockAll9StagesMatchesMainCopy27": true,
+      "gatherMaxRemodulationDifference": 0.0,
+      "addedGuideMaxError": 9.335544746136293e-07
+    },
+    {
+      "seed": 5347609,
+      "stockFullMeanMapExact037": true,
+      "candidateFullMeanMapExact037": true,
+      "candidate27PerFrameExact037": true,
+      "gatherStockAll9StagesMatchesMainCopy27": true,
+      "gatherMaxRemodulationDifference": 0.0,
+      "addedGuideMaxError": 9.335544746136293e-07
+    },
+    {
+      "seed": 6396185,
+      "stockFullMeanMapExact037": true,
+      "candidateFullMeanMapExact037": true,
+      "candidate27PerFrameExact037": true,
+      "gatherStockAll9StagesMatchesMainCopy27": true,
+      "gatherMaxRemodulationDifference": 0.0,
+      "addedGuideMaxError": 9.335544746136293e-07
+    }
+  ]
+}

@@ -594,3 +594,20 @@ SharedInput约11MiB，259source/9新文本、4完整log/22capture gzip、Frame.c
 037已按白名单过滤提交`520935e`，DiffusePolicy verifier提交后再次通过。四个自有进程actual0/全部终态，1024观察帧同源stock与物理GPU校准bitexact；固定DI diffuse bundle新18/旧15总体收益42%/31%、full4/4，但旧196141 B和141157 G/B三通道硬退化，拒绝接入生产，候选覆盖/新增类/Shader/入口均移除并stock复核过。40真实capture/4logs/272源对象和全部收益/失败/取舍留存，Runtime/Editor无最终diff。提交后仅校正JSON属性变更留下的索引行尾缓存，HEAD与worktree原字节相同，没有重写证据。index空、仅他人Ho-GD计划未跟踪。
 
 038继续同源stage观察：原27点加196141至少28点，对stock与固定037策略读取实际Pre/Temporal/Clamp/首Atrous及每个后续ordinal的RGB/variance；先短资格证明observer不改037两分支原输出/物理resolve，再有限seed定位旧退化与帮助传播，新机制后才定候选。不得放宽硬门槛或扫描参数/坐标特判，不重采旧MC/无目的大矩阵；F39/static/复杂动态/1080完整预算、原全部目标和每步review/过滤提交/踩坑/交接约束继续active。
+
+
+### 038终态（2026-10-23，待过滤提交）：同源逐轮RGB/variance资格过，旧反例在后四轮恢复不足
+
+**范围/资格：** 新Editor HoRTGIPairedStageAudit/meta、独立Gather shader/meta及Castle/LocalStage/SharedInput可选接线。原生产stock5/scale64/GI32F、Runtime/vendor/DI未改，037固定策略只在隔离Assets按5份原字节/SHA重建，用于观察，不接纳F58。保留原27点+196141=28点；两branch共享实际IN/common/settings/time，独立历史/OUT/pools/constants；只在原dispatch之后gather真实RGBA，不给滤波body注入debug UAV。112 tiny/negative/large F32分量自检bitexact，9stage原27点稀疏读取重调制对main F32整图copy逐帧bitexact。
+
+1108短98请求/32观察帧、18596正式1314请求/1024观察帧 actual0，原4seed64warm256；API/compile/Property/UAV/fence/drift0，自有进程全终态/active=null。新增196141 full/RAB/history/ray/reference guide max9.336e−7。两branch完整raw/pub mean maps、候选原27点逐帧物理pub对037同模式逐bit同；branch0对main每帧demod RGBA同，物理GPU发布校准1024次0差。此资格允许解释阶段，非策略接纳。
+
+**发现：** 28点Pre/Temporal/HistoryFix/Clamp全部RGBA两支相同；第一Atrous新18 L1 stock.130687/DI.130145近似同，后4轮stock .215150/.306872/.386896/.462370，DI .159167/.192195/.225485/.266351。旧141157 G/B首轮近似同，B/ref .82590/.82572，末.99666/.91288；196141 B首轮.75986/.75822，末.94380/.87350。原三通道物理pub硬退化精确同037，拒绝不变。收益与旧反例损失主要都在后4轮，不能归因早期history或只看整体误差。
+
+首轮实际variance141157 stock7.276e−8/DI7.588e−9、196141 3.004e−7/8.064e−8；但196141 step4/8 DI反而约3.3/5.6倍stock仍恢复弱，排除“所有位置都只是variance太小”的笼统修复。141157 Clamp9邻真实moments离线重构preblur原/DI mean7.456e−8/6.673e−8、phi2带宽mean .0005026/.0004760、floor均0，首轮RGB几乎不变；恢复首轮blur不足以解释完整退化。尚不能把w²/min-pair/RGB/exchange各自因果分开。
+
+**语义/边界：** Pre alpha hitdistance；Temporal/Clamp alpha二阶矩（离线variance近似，不冒充GPU直出）；本轮settled HistoryFix fast/responsive alpha全0，不当variance；9/101/102/103实际variance；104 historyLength禁止当variance。不逐通道乘albedo平方换variance。图表末stage是NRD RGB重调制、非物理RGBA16F最后量化值。4seed经验/同模型参考不是正式CI/独立真值/全图MC。没有新算法/MC/8seed/HDR/Player/GPU资格。
+
+**过滤/成本：** Tests~/RTGI/PairedStages保留264原源对象、2完整logs、38 lossless captures、HGB1两支9stage28点RGBA、observer/analysis/figure/contract/filter-review/verify，全部原SHA与不变性核过。合格Editor观察工具保留，只测试入口开启、默认stock/noop路径不变、finally恢复；新增values8064B+coords224B只是sparse payload，外加2NRD/RT/读回不作产品VRAM/性能预算。可选Matplotlib图初默认/内置Python缺库，pip user与target冲突后显式--no-user隔离target装，仅plot进程路径使用，原环境/Unity不动，失败与版本/图SHA保留。白名单只4新Editor文件/3既有Editor接线、本轮证据和六RTGI文档，Ho-GD计划排除。
+
+**039直接动作：** 现有实际证据允许一个单算子消融：仅把后4轮的固定center留重恢复stock行归一化，其余037 Smem temporal-var/w²、min-pair/RGB/settings/5轮/单位/格式不动。检验固定交换是否压制有益后期恢复，不预称修复。保持mainstock，把两独立branch设固定037参考/单算子变体以same input比较；物理校准改用main输出，不能沿用branch0==stock断言。先短资格两支stage9 RGB/variance bitexact、第一后轮同输入处出现算子差，再固定4seed旧15+新18/暗控制/full/phase/noise原门槛；失败保留消融并撤回，不扫描常量/迭代/坐标特判，不额外seed救回F58。所有原质量/F39/static/复杂动态/1080完整预算与总目标active继续。

@@ -1,0 +1,46 @@
+{
+  "Tests~/RTGI/DiffusePolicy/results/matrix.json.gz": {
+    "sha256": "D81E838D86DE1FD25BE4C41F178B3E20350C5FD01B59FDB95BB73E9434F367E5",
+    "bytes": 395923
+  },
+  "Tests~/RTGI/DiffusePolicy/results/qualification.json.gz": {
+    "sha256": "1A2DF841C1C7168DC2F1094A6A3BE98EB621C0190A8917C03EE64C7B1A2C03EC",
+    "bytes": 69360
+  },
+  "Tests~/RTGI/DiffusePolicy/analysis.json": {
+    "sha256": "083564EDE475B53BD02CA25DFB6AC9057479A68E3A84C538A35583AFB24A8A0C",
+    "bytes": 55027
+  },
+  "Tests~/RTGI/DiffusePolicy/review-contract.json": {
+    "sha256": "E56A28ECDA18435D371DA265C2D0547C8EC5F372D890DF04FD4D8FCA4EE34B42",
+    "bytes": 1219
+  },
+  "Tests~/RTGI/DenseReference/results/fixed-reference.json": {
+    "sha256": "E45D050F77519F949726046A29EB783BAFA3C8E93CE2E24C988651979543E664",
+    "bytes": 3831167
+  },
+  "Runtime/RTDI/ThirdParty/NRD/ml.hlsli": {
+    "sha256": "AEEA3BBEC753BBE3C1E16495C109C9E43C676082C11C18186564EA79024AA685",
+    "bytes": 110585
+  },
+  "Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.cs.hlsl": {
+    "sha256": "7F323CB68814F99B417E69B607C80D859323F404A8F4095B9407F3B41D053B5F",
+    "bytes": 45481
+  },
+  "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.cs.hlsl": {
+    "sha256": "275F5F6807BCC90F72CE1E84DA767174AFF31BC89D58CEDFCCB414867F01DAB2",
+    "bytes": 6835
+  },
+  "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.cs.hlsl": {
+    "sha256": "9CDAC4A0810C72FC2DA936B8BBB8633A9F27881B6930E5375D3F3B8E008E40FC",
+    "bytes": 18415
+  },
+  "Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.cs.hlsl": {
+    "sha256": "58E8B5BDC93CC3B331A8CF9994A784D5137BE2B566C78E39EF617CE6BE8B289E",
+    "bytes": 21413
+  },
+  "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl": {
+    "sha256": "BC4C998E30852232AC98E4F2A7F924EF0072D900F44F4DE1D725171F9E1508B8",
+    "bytes": 13037
+  }
+}
