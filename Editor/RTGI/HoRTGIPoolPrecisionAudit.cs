@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using lilToon.URP.Extensions.RTGI.NRD;
 using UnityEditor;
 using UnityEngine;
@@ -65,15 +65,15 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         }
         internal Report Snapshot()
         {
-            var core=context.core;var description=(HoRTDINrdNative.InstanceDesc)typeof(HoRTDINrdContext).GetField("description",Flags).GetValue(core);
+            var core=context.core;var description=(HoNrdNative.InstanceDesc)typeof(HoNrdContext).GetField("description",Flags).GetValue(core);
             var result=new Report{mode=mode,copyBitExact=bitExact,copiedComponents=copiedComponents,signalScale=context.AppliedSignalScale,signalFormat=context.signal.rt.graphicsFormat.ToString(),outputFormat=context.output.rt.graphicsFormat.ToString()};
             var pools=new List<Pool>();
             foreach(string category in new[]{"permanent","transient"})
             {
-                var handles=(RTHandle[])typeof(HoRTDINrdContext).GetField(category,Flags).GetValue(core);IntPtr descriptors=category=="permanent"?description.permanent:description.transient;
+                var handles=(RTHandle[])typeof(HoNrdContext).GetField(category,Flags).GetValue(core);IntPtr descriptors=category=="permanent"?description.permanent:description.transient;
                 for(int i=0;i<handles.Length;i++)
                 {
-                    var native=HoRTDINrdNative.Read<HoRTDINrdNative.TextureDesc>(descriptors,i);var texture=handles[i].rt;
+                    var native=HoNrdNative.Read<HoNrdNative.TextureDesc>(descriptors,i);var texture=handles[i].rt;
                     long bytes=(long)texture.width*texture.height*GraphicsFormatUtility.GetBlockSize(texture.graphicsFormat);
                     long baseline=(long)texture.width*texture.height*(native.format==27?8:native.format==30?4:native.format==17?2:native.format==8?4:native.format==0?1:throw new Exception("Unmapped native pool format"));
                     var expected=native.format==27?(mode!="baseline"?GraphicsFormat.R32G32B32A32_SFloat:GraphicsFormat.R16G16B16A16_SFloat):texture.graphicsFormat;
@@ -82,11 +82,11 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     pools.Add(new Pool{category=category,index=i,nativeFormat=native.format,format=texture.graphicsFormat.ToString(),width=texture.width,height=texture.height,bytes=bytes,baselineBytes=baseline});
                 }
             }
-            var passes=(HoRTDINrdNative.DispatchDesc[])typeof(HoRTDINrdContext).GetField("passes",Flags).GetValue(core);
-            var resources=(HoRTDINrdNative.ResourceDesc[,])typeof(HoRTDINrdContext).GetField("resources",Flags).GetValue(core);var bindings=new List<Binding>();
+            var passes=(HoNrdNative.DispatchDesc[])typeof(HoNrdContext).GetField("passes",Flags).GetValue(core);
+            var resources=(HoNrdNative.ResourceDesc[,])typeof(HoNrdContext).GetField("resources",Flags).GetValue(core);var bindings=new List<Binding>();
             for(int i=0;i<core.LastDispatchCount;i++)for(int j=0;j<passes[i].resourceCount;j++)
             {
-                var r=resources[i,j];string name=HoRTDINrdNative.ResourceName(r.type);
+                var r=resources[i,j];string name=HoNrdNative.ResourceName(r.type);
                 if(name=="PERMANENT_POOL"||name=="TRANSIENT_POOL")bindings.Add(new Binding{pipeline=(int)passes[i].pipeline,dispatch=i,binding=HoRTGINrdManifest.Resources[passes[i].pipeline][j],descriptorType=r.descriptorType,resourceType=name,poolIndex=(int)r.poolIndex});
             }
             result.pools=pools.ToArray();result.bindings=bindings.ToArray();result.pass=bitExact&&result.signalScale==64&&(mode=="baseline"?result.changedPools==0:result.changedPools>0);

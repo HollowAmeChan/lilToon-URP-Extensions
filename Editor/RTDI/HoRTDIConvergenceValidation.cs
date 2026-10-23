@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.NRD;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -117,7 +118,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             readonly HoRTDIContext context;
             readonly bool previousStabilityOverride;
-            readonly Func<lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.RelaxSettings,lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.RelaxSettings> previous;
+            readonly Func<lilToon.URP.Extensions.NRD.HoNrdNative.RelaxSettings,lilToon.URP.Extensions.NRD.HoNrdNative.RelaxSettings> previous;
             internal ConvergenceMotionHistory(HoRTDIContext context)
             {
                 this.context=context;previous=context.nrd.ValidationSettings;

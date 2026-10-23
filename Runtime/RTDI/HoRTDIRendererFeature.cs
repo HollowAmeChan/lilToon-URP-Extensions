@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.NRD;
 #pragma warning disable CS0618,CS0672
 using System;
 using System.Collections.Generic;
@@ -49,7 +50,7 @@ namespace lilToon.URP.Extensions.RTDI
             #endif
             bool alpha=SystemInfo.supportsRayTracing&&finalVisibilityShader!=null&&visibilityMaterialShader!=null;
             if(alpha)visibilityMaterials=new HoRTDIVisibilityMaterials(visibilityMaterialShader);
-            scene=alpha?new HoRTScene(visibilityMaterials.Resolve,HoRTDIVisibilityMaterials.SupportsCutout):new HoRTScene();
+            scene=alpha?new HoRTScene(visibilityMaterials.Resolve,HoRTCutoutSupport.Supports):new HoRTScene();
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
         #if UNITY_EDITOR
@@ -82,8 +83,6 @@ namespace lilToon.URP.Extensions.RTDI
             Shader.SetGlobalTexture("_HoRTDIRawDiffuseTexture",Texture2D.blackTexture);Shader.SetGlobalTexture("_HoRTDIRawSpecularTexture",Texture2D.blackTexture);
             if(!isActive||!settings.enabled)foreach(var item in contexts.Values){item.historyValid=false;item.nrdHistoryValid=false;}
         }
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct AnalyticLight {public Vector4 positionRange,radianceType,directionOuter,innerShadow;}
         public override void AddRenderPasses(ScriptableRenderer renderer,ref RenderingData data)
         {
             var camera=data.cameraData.camera;var volume=VolumeManager.instance.stack.GetComponent<HoRTDIVolume>();
@@ -100,8 +99,8 @@ namespace lilToon.URP.Extensions.RTDI
             var renderers=UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);var geometry=new List<Renderer>();
             foreach(var item in renderers)if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
             visibilityMaterials?.BeginFrame();scene.Synchronize(geometry,0xff,settings.excludedRayMaterials);visibilityMaterials?.EndFrame();
-            var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=viewSettings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)viewSettings.localSampling*397)^((int)viewSettings.finalSampling*457)^(visibilityMaterials?.Signature??0);int excludedLights=0;
-            var infiniteLights=new List<AnalyticLight>();var infiniteKeys=new List<Light>();
+            var lightList=new List<HoRTAnalyticLight>();var lightKeys=new List<Light>();int signature=viewSettings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)viewSettings.localSampling*397)^((int)viewSettings.finalSampling*457)^(visibilityMaterials?.Signature??0);int excludedLights=0;
+            var infiniteLights=new List<HoRTAnalyticLight>();var infiniteKeys=new List<Light>();
             foreach(var light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
             {
                 if(!light.enabled||!light.gameObject.activeInHierarchy||(settings.lightLayers.value&(1<<light.gameObject.layer))==0)continue;
@@ -117,7 +116,7 @@ namespace lilToon.URP.Extensions.RTDI
                 if(light.useColorTemperature)color*=Mathf.CorrelatedColorTemperatureToRGB(light.colorTemperature);
                 color*=Mathf.Max(0,light.intensity);
                 var direction=light.transform.forward;
-                var item=new AnalyticLight{positionRange=new Vector4(light.transform.position.x,light.transform.position.y,light.transform.position.z,Mathf.Max(.001f,light.range)),
+                var item=new HoRTAnalyticLight{positionRange=new Vector4(light.transform.position.x,light.transform.position.y,light.transform.position.z,Mathf.Max(.001f,light.range)),
                     radianceType=new Vector4(color.r,color.g,color.b,light.type==LightType.Point?0:light.type==LightType.Spot?1:2),
                     directionOuter=new Vector4(direction.x,direction.y,direction.z,Mathf.Cos(light.spotAngle*Mathf.Deg2Rad*.5f)),
                     innerShadow=new Vector4(Mathf.Cos(light.innerSpotAngle*Mathf.Deg2Rad*.5f),0,0,0)};
@@ -135,7 +134,7 @@ namespace lilToon.URP.Extensions.RTDI
             context.PreparePower(localCount,viewSettings.localSampling==HoRTDILocalSampling.Power);
             context.PrepareDenoiser(viewSettings.denoise,nrdShaders);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
-            var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
+            var lightData=lightList.Count>0?lightList.ToArray():new HoRTAnalyticLight[1];
             pass.Setup(context,scene,shader,finalVisibilityShader,settings,viewSettings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
             float compositeAmount=viewSettings.compositeAmount;
             bool composite=viewSettings.composite&&compositeAmount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
@@ -183,10 +182,10 @@ namespace lilToon.URP.Extensions.RTDI
             private static readonly string[] ReferenceStages={"BuildPowerPdf","Presample","BuildEnvironmentPdf","PresampleEnvironment","Initial","Temporal","Spatial","Shade"};
             private HoRTDIContext context;private HoRTScene scene;private ComputeShader shader;private PassSettings settings;
             private RayTracingShader finalVisibilityShader;
-            private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
+            private HoRTAnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             private int requestedFinalSamples;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
-            internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,HoRTDIViewSettings view,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
+            internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,HoRTDIViewSettings view,HoRTAnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
             {
                 this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings,view);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
                 requestedFinalSamples=view.finalSampling==HoRTDIFinalSampling.TripleAnalytic?3:1;
@@ -309,7 +308,7 @@ namespace lilToon.URP.Extensions.RTDI
                 c.lastTemporal=temporal;
                 bool reset=false,timeReset=false,traceConfidence=false;
                 c.lastVisibilityGradients=false;c.lastNrdReset=false;
-                var common=default(HoRTDINrdNative.CommonSettings);
+                var common=default(HoNrdNative.CommonSettings);
                 if(c.nrd!=null)
                 {
                     c.nrd.HasCutoutVisibility=c.finalVisibility!=null;
@@ -332,7 +331,7 @@ namespace lilToon.URP.Extensions.RTDI
                     #if UNITY_EDITOR
                     if(c.nrd.ValidationUseJitteredProjection){nrdProjection=d.projection;previousNrdProjection=c.previousProjection;nrdJitter=previousNrdJitter=Vector2.zero;}
                     #endif
-                    common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,nrdProjection,c.previousView,previousNrdProjection,c.frame,reset);
+                    common=HoNrdNative.CommonSettings.Create(c.width,c.height,d.view,nrdProjection,c.previousView,previousNrdProjection,c.frame,reset);
                     common.jitter=nrdJitter;common.previousJitter=previousNrdJitter;
                     #if UNITY_EDITOR
                     c.nrd.SceneViewPreview=!Application.isPlaying&&(d.camera.cameraType==CameraType.SceneView||c.nrd.ValidationForceSceneViewPreview)&&!c.nrd.ValidationDisableSceneViewPreview;

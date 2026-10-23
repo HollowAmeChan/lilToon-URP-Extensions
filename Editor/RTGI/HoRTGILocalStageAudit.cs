@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using lilToon.URP.Extensions.RTGI;
 using lilToon.URP.Extensions.RTGI.NRD;
 using UnityEditor;
@@ -170,12 +170,12 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         Binding[] Bindings()
         {
             const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
-            var core=context.nrd.core;var passes=(HoRTDINrdNative.DispatchDesc[])typeof(HoRTDINrdContext).GetField("passes",flags).GetValue(core);
-            var resources=(HoRTDINrdNative.ResourceDesc[,])typeof(HoRTDINrdContext).GetField("resources",flags).GetValue(core);var result=new List<Binding>();
+            var core=context.nrd.core;var passes=(HoNrdNative.DispatchDesc[])typeof(HoNrdContext).GetField("passes",flags).GetValue(core);
+            var resources=(HoNrdNative.ResourceDesc[,])typeof(HoNrdContext).GetField("resources",flags).GetValue(core);var result=new List<Binding>();
             for(int i=0;i<core.LastDispatchCount;i++)for(int j=0;j<passes[i].resourceCount;j++)
             {
                 int id=(int)passes[i].pipeline;var r=resources[i,j];string name=HoRTGINrdManifest.Resources[id][j];
-                if(r.descriptorType==1&&(name=="gOut_Diff"||name=="gOut_Diff_Variance"))result.Add(new Binding{pipeline=id,dispatch=i,resourceIndex=j,poolIndex=(int)r.poolIndex,descriptorType=r.descriptorType,binding=name,resourceType=HoRTDINrdNative.ResourceName(r.type)});
+                if(r.descriptorType==1&&(name=="gOut_Diff"||name=="gOut_Diff_Variance"))result.Add(new Binding{pipeline=id,dispatch=i,resourceIndex=j,poolIndex=(int)r.poolIndex,descriptorType=r.descriptorType,binding=name,resourceType=HoNrdNative.ResourceName(r.type)});
             }
             return result.ToArray();
         }

@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RayTracing;
 using System;
 using UnityEngine;
 
@@ -19,7 +20,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             foreach(float pose in new[]{.5f,0,.4f})
             {
                 var previous=new Reservoir[c.reservoirs.count];c.reservoirs.GetData(previous);
-                var lamps=new lilToon.URP.Extensions.RTDI.HoRTDIRendererFeature.AnalyticLight[c.lights.count];c.lights.GetData(lamps);
+                var lamps=new HoRTAnalyticLight[c.lights.count];c.lights.GetData(lamps);
                 skinBlockerBone.localPosition=Vector3.right*pose;RenderCamera();
                 Require(c.lastVisibilityGradients&&!c.lastNrdReset&&!c.lastTemporal,"pose needs true visibility confidence and retained NRD, with reservoir history rejected");
                 ReadImage(c.previousLuminance.rt,luminance);ReadImage(c.gradientA.rt,gradients);ReadImage(c.diffConfidence.rt,confidence);

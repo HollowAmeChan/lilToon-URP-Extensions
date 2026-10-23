@@ -1,0 +1,5 @@
+{
+  "actualExitCode": 1,
+  "pid": 52336,
+  "reason": "Removed DI imports too broadly from two integration tests that explicitly instantiate DI; source snapshots and full log preserved. Preexisting SurfaceBuffer CS0108 outside scope."
+}

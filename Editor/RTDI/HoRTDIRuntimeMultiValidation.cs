@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RayTracing;
 using UnityEngine;
 using lilToon.URP.Extensions.RTDI;
 namespace lilToon.URP.Extensions.Editor.RTDI
@@ -49,7 +50,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             feature.Settings.useEnvironment=false;surfaceMaterial.SetFloat("_Reflectance",0);AlphaFill(alphaTexture,1);var renderer=blocker.GetComponent<Renderer>();
             blocker.transform.position=Vector3.right*4;int nativeFrames=0,opaqueFrames=0,singleFrames=0,maxRetired=0;
-            var weights=new HoRTDIRendererFeature.AnalyticLight[3];weights[0].radianceType=new Vector4(float.MaxValue,0,0,0);weights[1].radianceType=new Vector4(1e-20f,0,0,0);weights[2].radianceType=Vector4.zero;
+            var weights=new HoRTAnalyticLight[3];weights[0].radianceType=new Vector4(float.MaxValue,0,0,0);weights[1].radianceType=new Vector4(1e-20f,0,0,0);weights[2].radianceType=Vector4.zero;
             var fallback=HoRTDIAuxiliaryProposal.Build(weights,3);Require(fallback[0]>0&&fallback[1]>fallback[0]&&fallback[2]==1,"Extreme power CDF lost source support");
             // No GPU readback in this loop: resource retirement must use the
             // submitted fence, not the synchronous validation helper.

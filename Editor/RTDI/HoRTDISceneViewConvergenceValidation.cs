@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.NRD;
 #pragma warning disable CS0618
 using System;
 using System.IO;
@@ -50,8 +51,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateSlowSceneView()
         {
-            var ordinaryClock=new HoRTDINrdTiming();ordinaryClock.Advance(0);Require(ordinaryClock.Advance(1.2),"Game pause reset changed");
-            var previewClock=new HoRTDINrdTiming();previewClock.Advance(0,true);Require(!previewClock.Advance(1.2,true),"Slow preview reset");
+            var ordinaryClock=new HoNrdTiming();ordinaryClock.Advance(0);Require(ordinaryClock.Advance(1.2),"Game pause reset changed");
+            var previewClock=new HoNrdTiming();previewClock.Advance(0,true);Require(!previewClock.Advance(1.2,true),"Slow preview reset");
             Require(previewClock.Advance(-1,true)&&previewClock.Advance(double.NaN,true),"Preview rewind/invalid clock was accepted");
             camera.cameraType=CameraType.SceneView;feature.Settings.inSceneView=true;feature.Settings.useEnvironment=false;
             feature.Settings.temporal=feature.Settings.spatial=true;feature.Settings.initialSamples=8;feature.Settings.maxHistory=4;

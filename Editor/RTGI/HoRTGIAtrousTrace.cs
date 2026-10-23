@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -17,10 +17,10 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         internal static readonly Vector2Int[] Pixels=HoRTGIDenseReferenceAudit.LocalPixels.Concat(new[]{new Vector2Int(141,157)}).Concat(
             Enumerable.Range(156,3).SelectMany(y=>Enumerable.Range(140,3).Select(x=>new Vector2Int(x,y))).Where(p=>p!=new Vector2Int(141,157))).ToArray();
         [Serializable]internal sealed class Report{public string originalSha256,bodySha256,wrapperSha256,bodyPath,wrapperPath;public bool restoredOriginal,replacementActive,noopClone;public int pointCount,vectorsPerPoint;}
-        readonly HoRTDINrdContext core;readonly ComputeShader[] shaders;readonly int[] kernels;
+        readonly HoNrdContext core;readonly ComputeShader[] shaders;readonly int[] kernels;
         readonly ComputeShader original,trace;readonly int originalKernel,kernel;
         readonly GraphicsBuffer pixels,data;internal bool enabled;internal readonly bool replacementActive;internal readonly bool noopClone;internal readonly Report report;
-        internal HoRTGIAtrousTrace(HoRTDINrdContext core,bool replacementActive=true,bool noopClone=false)
+        internal HoRTGIAtrousTrace(HoNrdContext core,bool replacementActive=true,bool noopClone=false)
         {
             this.core=core;this.replacementActive=replacementActive;this.noopClone=noopClone;
             string project=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
@@ -43,7 +43,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             trace=AssetDatabase.LoadAssetAtPath<ComputeShader>(wrapperPath);if(trace==null)throw new Exception("Trace shader import failed");kernel=trace.FindKernel("main");
             foreach(var message in ShaderUtil.GetComputeShaderMessages(trace))if(message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error||message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning)throw new Exception(message.message);
             const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
-            shaders=(ComputeShader[])typeof(HoRTDINrdContext).GetField("shaders",flags).GetValue(core);kernels=(int[])typeof(HoRTDINrdContext).GetField("kernels",flags).GetValue(core);
+            shaders=(ComputeShader[])typeof(HoNrdContext).GetField("shaders",flags).GetValue(core);kernels=(int[])typeof(HoNrdContext).GetField("kernels",flags).GetValue(core);
             original=shaders[10];originalKernel=kernels[10];
             pixels=new GraphicsBuffer(GraphicsBuffer.Target.Structured,Pixels.Length,8);pixels.SetData(Pixels);
             data=new GraphicsBuffer(GraphicsBuffer.Target.Structured,Pixels.Length*4*VectorsPerPoint,16);

@@ -1,0 +1,2878 @@
+{
+  "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\nrd-architecture-playerBuild-20261023T195839504.log",
+  "mode": "playerBuild",
+  "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGIPlayerValidation.Build",
+  "logSha256": "E29CFB40B7070DA5558BD44ABA5E6163AD260014E509778199DA0489FAFF013A",
+  "abort": null,
+  "sourceDrift": 0,
+  "exitCode": 0,
+  "diagnostics": 3,
+  "activeProcess": null,
+  "sources": [
+    {
+      "path": "Runtime/jp.lilxyzw.liltoon.urp.extensions.Runtime.asmdef",
+      "sha256": "1BB44CBD1A71CFDF42E654E94E4B5B0378E41F94A57A9DEAF2FC0AAE2E9DD437"
+    },
+    {
+      "path": "Runtime/Atmosphere/HoAtmosphereCache.cs",
+      "sha256": "69876671A179225384B0FA087D513A26D61C06A44392D9126B4AF27C1342FD7C"
+    },
+    {
+      "path": "Runtime/Atmosphere/HoAtmosphereDebugPass.cs",
+      "sha256": "CEE9CC646B23850B565C549155C83CB9A832A8F5E288C670C5C5F171B11167EE"
+    },
+    {
+      "path": "Runtime/Atmosphere/HoAtmosphereDebugViewInfo.cs",
+      "sha256": "681645BD74D8094BB82F4D277728646E6D6997F449E7E4C1235B3358B60028F9"
+    },
+    {
+      "path": "Runtime/Atmosphere/HoAtmosphereRendererFeature.cs",
+      "sha256": "D02BB2C8FBDC3AB9687D51C3803CCC66FB093F58DA610E7F1050FC2BB65FFA3A"
+    },
+    {
+      "path": "Runtime/Atmosphere/HoAtmosphereRenderGraphResources.cs",
+      "sha256": "497B162702BB5AE4E235A14740547C659559EDBC787362A7BDF44C1F226871C2"
+    },
+    {
+      "path": "Runtime/Atmosphere/HoAtmosphereSettings.cs",
+      "sha256": "A0067CE7C25CEE743F3A373E777ECFF3E2F5C15692174442D6246C4094C82A63"
+    },
+    {
+      "path": "Runtime/Atmosphere/HoAtmosphereVolume.cs",
+      "sha256": "B51F983D15E87B9B33BA0644612834B72CC0639DAEE8684C273E3C39441361A1"
+    },
+    {
+      "path": "Runtime/Atmosphere/Regions/HoAtmosphereDustField.cs",
+      "sha256": "B753F8976806CE3EB22BA8316AF921CEF8E789CF873584434BB02FB51B0FC518"
+    },
+    {
+      "path": "Runtime/Atmosphere/Regions/HoAtmosphereMediumResources.cs",
+      "sha256": "F61BF82613652321B43028FC2AB335D3C6E56C00EBC0A8BAEF2E3EF182E4F098"
+    },
+    {
+      "path": "Runtime/Atmosphere/Regions/HoAtmosphereRegion.cs",
+      "sha256": "013554AC4C2D97B340FB1DF9B82C72ED566283320AB0EB0C0A98A925538DA4C7"
+    },
+    {
+      "path": "Runtime/Atmosphere/Regions/HoAtmosphereRegionRegistry.cs",
+      "sha256": "B792506CCB0E8788C6884E721421CBEBB752F02406586BA1BC72AF104D8D7579"
+    },
+    {
+      "path": "Runtime/Atmosphere/Shaders/HoAtmosphereMedium.hlsl",
+      "sha256": "F9C27FE992423FF5FF9E04379FB6B606E2C0BBB3D8D916C8084DDF949EA6AC3B"
+    },
+    {
+      "path": "Runtime/Atmosphere/Shaders/HoAtmosphereSampling.hlsl",
+      "sha256": "7D0CE948D1D7BB424B30F554F27502053909157AA563BD89C9ED801AF108B754"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoACDebugCatalog.cs",
+      "sha256": "44300269E34E08F695B1E2611255C9087F1F3C2DF9EE62EA65BF4816698C8735"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeBindings.cs",
+      "sha256": "8250318DF897F8D49CB4F23F0219DB9538316F66F94B90E818CC9DB18A7604F1"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeConsumerRegistry.cs",
+      "sha256": "9D8B4CF71C8C30618A8D31E960473142D4B0D997E7D868B16727469514607EF6"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeDebugPass.cs",
+      "sha256": "8A4740F10DFEAF0AED118DD9EBA9BB67F57E78354FB7A2CFB7C8DCE17390A74E"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeDemand.cs",
+      "sha256": "69D5534F46112A04E99BE871E1598FB41083DB6AA242419C83AA68F5575D0942"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeDemandDebug.cs",
+      "sha256": "14EB1E035C97FCE417B5E463AC17186785ADDDCE92A435E96028D3D35DFB1A7D"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeOutlineIdentityPass.cs",
+      "sha256": "58739413927806CB002A439F1E5E8203292A6203FD2B9519488A6D4A9731B690"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositePass.cs",
+      "sha256": "8BBF8C6B2DDEAE2F569059B02FC367CE140490E6B7B70FE4142DF9056D825093"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeProductionDiagnostics.cs",
+      "sha256": "26E48A400BED3AFB2E2866F8458757756C23708BC317E3F078EBD7F65DAE4576"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeQuery.cs",
+      "sha256": "B7042B009D02E50251D12D7B3BDA59ADF6A0A429B9E7A52A9BEB3F915ECC6C22"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeRendererFeature.cs",
+      "sha256": "A13E2B3B9599AB1741B4C22E03BC66AB819700781C91659BC168A75EC2750599"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeRenderGraphResources.cs",
+      "sha256": "4739087D1873DC2AF54302CC5DC25FEE9E573B4E6FAD8B21F761103F3B46A69F"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeSettings.cs",
+      "sha256": "0F2E7D801890158536321FBDE10E0623B8301AFAC44189B398EBC1A0828FDF25"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeShaderConstants.cs",
+      "sha256": "9A0C1B53203801B3A36F6D7893956025A131330D618C801B6063C7E801E597DB"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoAttributeCompositeVolume.cs",
+      "sha256": "6CE6B3B23455D41AD2EC4E1B6CDB8A10F8271F29B9CEBA9E97638DC1307E9110"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoSemanticSampleDomain.cs",
+      "sha256": "11B69D78D011EFFBF7887985190946593667D4FBBBB670CD8FA6001C47B6EDA7"
+    },
+    {
+      "path": "Runtime/AttributeComposite/HoSemanticSchema.cs",
+      "sha256": "787B578A345B66035AFE9AC06E5D6E4DD49C0CE78122CAE634D1749FEFFADF0A"
+    },
+    {
+      "path": "Runtime/AttributeComposite/Shaders/HoACCorrelatedCompose.hlsl",
+      "sha256": "4043A18CDA8C9135DC22106297EF7541CDBB626C23E66AE915B431FE10EE444D"
+    },
+    {
+      "path": "Runtime/AttributeComposite/Shaders/HoACOutlineInheritance.hlsl",
+      "sha256": "96C54F52B3E8537AA108EBD1D66DB6AC84723E60942B2D77E10D5C30580BD8EC"
+    },
+    {
+      "path": "Runtime/AttributeComposite/Shaders/HoACQuery.hlsl",
+      "sha256": "38B9B97103474D265DCC02DEC3189FD1CBF08CB4FA457D19F36B2470FB508FEE"
+    },
+    {
+      "path": "Runtime/AttributeComposite/Shaders/HoACRawIdentity.hlsl",
+      "sha256": "9AC39BC58A66A9BD5E8D790AD72FD7F44406420783C4ED019F78C9E5B21834CE"
+    },
+    {
+      "path": "Runtime/AttributeComposite/Shaders/HoACSemanticCompose.hlsl",
+      "sha256": "A9F2EBD1F4E132ED85C7C48A1D53EDD02BFFAD39061BF9B6F8CFDA7C64AE025A"
+    },
+    {
+      "path": "Runtime/CharacterShadow/HoCharacterShadow.cs",
+      "sha256": "27B1E1288294D75668A9344F47049A4FD4F2C46E1DAEBB12C9107B325A4043A8"
+    },
+    {
+      "path": "Runtime/CharacterShadow/HoCharacterShadowDebugViewInfo.cs",
+      "sha256": "E00E51C6AACA6384DD0E7257C72B171A48F07D134E7059E70E36B97CA7521A33"
+    },
+    {
+      "path": "Runtime/CharacterShadow/HoCharacterShadowFrame.cs",
+      "sha256": "EF05006C995353EC49836B60A29FA73378EEDB7C885BCA7612859F02847BEC6F"
+    },
+    {
+      "path": "Runtime/CharacterShadow/HoCharacterShadowRendererFeature.cs",
+      "sha256": "C08D981030B4601B3D990399423923EA2D55AB1BE1F01ECAB976B16628455F4D"
+    },
+    {
+      "path": "Runtime/CharacterShadow/HoCharacterShadowSettings.cs",
+      "sha256": "786DD0AE4CF138CF59DA8821F24F7DB40CF883514D22D9726C52DA814B0DF353"
+    },
+    {
+      "path": "Runtime/CharacterShadow/HoCharacterShadowShaderContract.cs",
+      "sha256": "BC98BBC50BF451584FA9625C2D17E129891638625855FC3DE2BCF5396C978404"
+    },
+    {
+      "path": "Runtime/CharacterShadow/HoCharacterShadowVolume.cs",
+      "sha256": "FAD55C9047E8440A9691F6E59300074FC2B0B352ED7836D290427FCFA36CA451"
+    },
+    {
+      "path": "Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl",
+      "sha256": "720175C1420FAC32FD6B44957E4B2EB3C95F96809C97C664AC17FCC2644D3FA4"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterReferenceFrameBuffer.cs",
+      "sha256": "147C84BB6EBD2685E337E825D1094B91FD497D76D846BFC2C176995FBAB9DC05"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterRenderScale.cs",
+      "sha256": "A6E24C508F63547E80DC4A5E8FB844D33B66DEEFFF0E70ECA22C9C35CAD32F63"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterSpecializationDebugViewInfo.cs",
+      "sha256": "1507092DC66346524B20AC80FD0A7C4957B812A3B0CF86BE49930648F619A76E"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterSpecializationEffects.cs",
+      "sha256": "16E1BCCB958F15F8C2009C5DD30FB4B358C36006726F76AA8438F7C0DDCDC95A"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterSpecializationRendererFeature.cs",
+      "sha256": "D157F54F90D71F76DE6EFFABD369E97BD6EABE99630525648738ECA2AE758C4B"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterSpecializationRuntimeDiagnostics.cs",
+      "sha256": "89AE84E98CACB007A1919E0743119EB7F9A5B8E9A439BF1AF970CE20D4C07780"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterSpecializationSettings.cs",
+      "sha256": "F6E5507F9E607FD1CC45C645C40BF2330CDB85754B78FF68BF3391BDA182982A"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterSpecializationShaderConstants.cs",
+      "sha256": "F2C019EB9EF30A2D2B4C4929664ADA8F9487DB2219C0709B26EE0201AD5DB3EA"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/HoCharacterSpecializationVolume.cs",
+      "sha256": "C36630416614A071670C9D2FC8F5435D1C6B30372B883A8532DF737E734234A1"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.Data.cs",
+      "sha256": "D7054B18E51CD72E01D6A396987EDAD75FC60EA8B04FB2F2A22A1BB0D47DED1A"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.FaceHairDiffuse.cs",
+      "sha256": "44E16D0E809AC49C648D02FC60E94F4F080555366C7361C1245157F0CD43B4C5"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.MaterialProperties.cs",
+      "sha256": "C206D75E21773F64C63E5624A9D41DC83FBFF0EC1271FD373BE51A9958A046F6"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.ObjectSemantic.cs",
+      "sha256": "351EFCE50B71C70C6754DED9DFEB91BA90429E00145979F8A0520EFE481E0E0A"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.SubjectOutline.cs",
+      "sha256": "FAA0B28B11CA72C134BE6A4D70E01291D5159FB1C2DAC20D1093B31E3354A747"
+    },
+    {
+      "path": "Runtime/CharacterSpecialization/Shaders/HoCharacterCaptureCommon.hlsl",
+      "sha256": "87B24B0B3A6411588700E1F3857B22E717D6807B889E467852E50A671852D29C"
+    },
+    {
+      "path": "Runtime/Debug/AssemblyInfo.cs",
+      "sha256": "CE9A82A59E4A23ADCDBD7ADFACD926FFF5CBFA65E4F6FC8BD7035F73C317D2A3"
+    },
+    {
+      "path": "Runtime/Debug/HoAdaptiveProbeVolumeDebugViewInfo.cs",
+      "sha256": "62B2B510B252ABB5AD202C778C75B3B442E58E006A8DBC4362405C220A6E7A01"
+    },
+    {
+      "path": "Runtime/Debug/HoDebugGrid.cs",
+      "sha256": "043CB491B28E7ECBA362EF1CBD5056A4B532A9ADCF05BA7F4B136BB7D1E51509"
+    },
+    {
+      "path": "Runtime/Debug/HoDebugRenderPass.cs",
+      "sha256": "4A576370967B2ADA30778C5B4EEF87D427C2F7C8F47B91E68279AA41AE10E71F"
+    },
+    {
+      "path": "Runtime/Debug/HoDebugTileRendererFeature.cs",
+      "sha256": "B9C34A4D5ACA7DEE61BD05F0F0A20EB182E39D99F0FBA4101AC0D36772AFE4DD"
+    },
+    {
+      "path": "Runtime/Debug/HoDebugTileShaderConstants.cs",
+      "sha256": "F4597F97494BEE45B4FBC8E497D78CE8AC1F261842159F4DFF9C567B837503D5"
+    },
+    {
+      "path": "Runtime/Debug/HoDebugViewInfo.cs",
+      "sha256": "B8761695C2D5DF6E1D7E2B60BD8A10474664B324AC352553D024BF4A4B153B00"
+    },
+    {
+      "path": "Runtime/Debug/HoDebugViewRegistry.cs",
+      "sha256": "EEB2E01E670A5B17A219340735465D6A744551505EA14C885EFFAA66D262CCCF"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferDebugMode.cs",
+      "sha256": "71E37EE4A3768646B54FB8869CF1AF3D8B68B80FF2B9FFD4E0078AD70A2A2FB7"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferDebugPass.cs",
+      "sha256": "2E633F109BA6FD738B1E3B6ACAE86ACE5145AAEB5F61A296A09C3DD9C37AB44E"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferDebugViewInfo.cs",
+      "sha256": "92B9B96094138B776A0813A82CE8A39A5347D8A34C763384672041E8EAFC1032"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferFormatUtility.cs",
+      "sha256": "E1D01EA8BA10077C7505B284218C66433DEAC5D706344470EEEBBBA6C7903F4D"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferPass.cs",
+      "sha256": "EFA6421AF1A2924C6BDE57F03B12F784ECF0A799C72117CF607DFBC2F07EA0B0"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferRendererFeature.cs",
+      "sha256": "355F8390C034BB83E264DA6EAE7200FB48FD64DEEA7445F69574A45FA252CCEF"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferRenderGraphResources.cs",
+      "sha256": "C657981940E0E1AFB09264C4BE0E4CCB155574F99D7E3CD2098EA6E4BE622279"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferRenderTargets.cs",
+      "sha256": "65C6AA787F0ADB13309B2B15D1AF2429F64D2288A5FA879821E7AE095C11E137"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferSettings.cs",
+      "sha256": "2C09F28AC8520B5A46A9502D87856707374B8538536C4293C9A4558F56C21EB3"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferShaderConstants.cs",
+      "sha256": "5505F451DEA663D1B9F75094167948A30B8851B2E49F962C1F9C3F53EBB65AD0"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferSkyPass.cs",
+      "sha256": "92F34AD8EF506B902C21DC7E969F8DA44084FF59803F1C998834BC045E5F0F6E"
+    },
+    {
+      "path": "Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl",
+      "sha256": "333C90504BD010BF49F3B94D9F2B3F063F3714B0D0526C6A993971D62F7A9128"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometryDataDebugPass.cs",
+      "sha256": "CF97459B7A4F872BA1019F818BF55831DACFB86FBBBAEC368BF347BC1176AC45"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometryDataDebugViewInfo.cs",
+      "sha256": "1ACE11169C771FDE766846E467F29834A4DF29983344ED3B2074A892BAC17431"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometryDataReferenceFrame.cs",
+      "sha256": "8880688EEC5458275B15DF502BFB2857F2462A68E16F4ABF56ABFED4E702C02A"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometryDataRendererFeature.cs",
+      "sha256": "DA9B228593966BA244233E1ED3ED520B00573ECA2915DEE9785111FAAB7BB624"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometryDataSettings.cs",
+      "sha256": "1E23484E0168AA8EA6B1B23355C53CB0AA3FA3F8F151F7E826F50780D7DC9D13"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometryDataVolume.cs",
+      "sha256": "346EBDB5C324228F6656F508E5CF27E87870351D53D90F6543E952F3FA61C318"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometryReferenceFrameRegistry.cs",
+      "sha256": "186F46A407E552F8179F6BFD70BEAD998A434FA081DAF644C34A0D547AEB21B7"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometryRendererBinding.cs",
+      "sha256": "B560AC02D109C39E77936EC92376CC15CCF615CE58E29E04FEFB93D610C37456"
+    },
+    {
+      "path": "Runtime/GeometryData/HoGeometrySkinnedSource.cs",
+      "sha256": "4ED1CE807157C1BC60B492338C9F6963561CADC44CD27F0407DD558EA9B5C582"
+    },
+    {
+      "path": "Runtime/GeometryData/Outline/HoGeometryDataOutlineCorrection.cs",
+      "sha256": "AF5F2B1C3EA600695F6F9C5DE24FA5752E84E1652D6D5B9E5C2A0F5159335E64"
+    },
+    {
+      "path": "Runtime/GeometryData/Outline/HoGeometryDataOutlineCorrectionBuilder.cs",
+      "sha256": "549C86EED30E2B2B8C2D22B9883C52DB59C12D2AB9F02B13493218C536C116C9"
+    },
+    {
+      "path": "Runtime/GeometryData/Outline/HoOutlineDataRegistry.cs",
+      "sha256": "2A5F109D6B41C04494ED40502518B04591CC1C2A8ACD27C01AAE779F11FED7D0"
+    },
+    {
+      "path": "Runtime/GeometryData/Resources/HoGeometryDataTension.compute",
+      "sha256": "8F09E3F8ED7D796D62C5B539DB7D82DA8485C97FC935F4C6D7230F3FEB93E834"
+    },
+    {
+      "path": "Runtime/GeometryData/Shaders/HoGeometryDataReferenceFrame.hlsl",
+      "sha256": "6203554EC625C61AE4F4F75ED1A227D0B62147F6B20C1992BE993FC37517C7F5"
+    },
+    {
+      "path": "Runtime/GeometryData/Shaders/HoGeometryOutline.hlsl",
+      "sha256": "57AD0E062106D2B0D31D7B14D50C711B10EA8B1ADCD7F03C33F3C0D2051B9B15"
+    },
+    {
+      "path": "Runtime/GeometryData/Shaders/HoGeometryTension.hlsl",
+      "sha256": "9AC84A1F3E74BC2CFFD432ED07572109BBA1A6E33E2FF2A967232E55073E3EB0"
+    },
+    {
+      "path": "Runtime/GeometryData/Tension/HoGeometryDataTension.cs",
+      "sha256": "4A74488FA7597237C94919204B207C12F07868A00363174A2E1D2E7D59D254B6"
+    },
+    {
+      "path": "Runtime/GeometryData/Tension/HoGeometryTensionMaterial.cs",
+      "sha256": "11C77B4D6EEBB0A2B24C937928E192AE8B8AAEB66F3E29A3F87173B9212E6FCA"
+    },
+    {
+      "path": "Runtime/GeometryData/Tension/HoGeometryTensionPass.cs",
+      "sha256": "74DDE833E3C161D66359063A0976D2BD2A9728223EA44517616E236689B6BDEE"
+    },
+    {
+      "path": "Runtime/GeometryData/Tension/HoTensionDataRegistry.cs",
+      "sha256": "A82FE2E3253C0B640ACFD104C27BBE6909E720CCA42E7FD3173FC80A2469A7DE"
+    },
+    {
+      "path": "Runtime/GeometryData/Tension/HoTensionResources.cs",
+      "sha256": "EF6840B0D26CC92C90F9BF2655CB39673C1F52F0330016C0C2F25A7399BF35DF"
+    },
+    {
+      "path": "Runtime/GeometryData/Tension/HoTensionTopology.cs",
+      "sha256": "AD59290BA769F3A91B0468372898954C1388A27DA311C60A6B8FEB9BBF42B053"
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAODebugViewInfo.cs",
+      "sha256": "9123DC8C10E4448109648AB2571904F459DC303EC1E8149E8C0D0DBEA4AAFAEF"
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAOQualityPresets.cs",
+      "sha256": "6AEB9216FD0B57AB1BF03A6524FF6EF2225BE248BCD25E6AC007F54A9930F90D"
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAORendererFeature.cs",
+      "sha256": "573820DD72603F60261724674242176BD42D8C9AABB1BBE1D32057AAA577D83A"
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAORenderGraphResources.cs",
+      "sha256": "1E1A46C355A1D6608D13DCDBFDC7D9CBB45F8040B72A94833C5A50C201A0647D"
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAOSettings.cs",
+      "sha256": "E0CB39D926DECE53D95C565083694C6AAB556FE00674D06E0D537951A96B9464"
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAOShaderConstants.cs",
+      "sha256": "5612BD82181F1F2ECAB92DBDD867CC3359643C4941BB4AA7F9325051F52F69E4"
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAOVolume.cs",
+      "sha256": "3D0C8FB1D9E7781B05A83D9C7E237B8A8F11BE693D309292219B5E122566E09D"
+    },
+    {
+      "path": "Runtime/GTAO/Shaders/HoGTAOCommon.hlsl",
+      "sha256": "A1CAF96C137B6DD0C94197BFA3D448B9E54CACC6671BBC494BC4F649911C44CB"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessDebugViewInfo.cs",
+      "sha256": "C884C233C027FB2C43B1A54F1C01E0B0212E11E3B6B730982D7CFDB21E72A076"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessEffect.cs",
+      "sha256": "B23EF27875C09B4F9595AED43568579D68003C91D1AA00A0FE7B5C1522814DB5"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessEffectDescriptor.cs",
+      "sha256": "7B3B556C91FB3BEF4B06B71878915FCC2E312C2F4922EB2F2F107DE0BC459FD2"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessEffectRegistry.cs",
+      "sha256": "1E3993557B65628656DA878035D615B7F496A7263580E362B287AFEDBF6BB45A"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessLayer.cs",
+      "sha256": "691D0D14E9D9C0BDF06708BAFF34D43A3249BD17DEF96F92642C74B189981C14"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessRendererFeature.cs",
+      "sha256": "F46248CDCA2209925EDC2A14CC5CEEAAA002D1F2CC765A9868753DCCA9B27DE5"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessRuntimeDiagnostics.cs",
+      "sha256": "523A60386C4924A940F74F3E0C70665BC1A8D9D829CCC436098DBA4CB5B04216"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessShaderConstants.cs",
+      "sha256": "CEC23511332870C1F7E3380F7BD33E576FE1C003A7E6739E04F8C74D6A8103D7"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessStackSettings.cs",
+      "sha256": "5DC3C1C3F76590F7D26309193AAA06CDC79A300A40498543D381D61C7BFBEBA9"
+    },
+    {
+      "path": "Runtime/ImageProcess/ImageProcessStackVolume.cs",
+      "sha256": "38434E152CA650E481378CAB67A8C7BC08841BBA9B945900CCBC4AA0BF2572FE"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageProcessMaterialCache.cs",
+      "sha256": "E97D1CD9AAE6C22866A139908041009A38D7DA273632C10DBD0FA2DF4EDFFEF8"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageProcessPass.cs",
+      "sha256": "4F1D866019610F9088D7EC78CDBBD42FA5B12C7AB721571B99F7721B259D2FCE"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageProcessPass.Data.cs",
+      "sha256": "A278022ABBC4CBAF0C107927D6C46907E634BF437A9E74B3992E43DEB9617B08"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageProcessPass.Textures.cs",
+      "sha256": "6C460557815E43AD2DD153F524BC6B3115F6546BD1EE3D5730D133D25B4D2BBF"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageProcessRuntimeLayer.cs",
+      "sha256": "4E688290A96D994300CD219D354868A715D8CEBF1B642D338B371F64D4A149B4"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageProcessRuntimeLayerBuilder.cs",
+      "sha256": "A1D4F78FDDFAB438AA6664248589B222A93C44B5C124105B49B2E3D1C6BD41E8"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/EffectPipeline/ImageProcessPass.EffectDispatch.cs",
+      "sha256": "902038BC136A54ABD5C5F85A07B68529D2BEA51864A7E34C489A8D87DF947B16"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/EffectPipeline/ImageProcessPass.EffectProperties.cs",
+      "sha256": "9689824068A82B4EDA3518EBCB20BA16CAA8A53948039E581BA6FAEE3D004C39"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.ApertureBokeh.cs",
+      "sha256": "A8F05E67FE45E70E5CA0B8635AFF0412D934B4BC6F3F1C90AEFD39723E725D0A"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.AutoWhiteBalance.cs",
+      "sha256": "3F54237D96A6613CE4CFEDEB26FB9020910F584E66101ADD20BB8729484ED501"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.BlueNoise.cs",
+      "sha256": "49021454DD0D3263448BC8AF505360C5885B4FB2A00D1FC1E48960E80A7F07F5"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.BokehZoomBlur.cs",
+      "sha256": "8D90DE15EA29F5C84760C3090ACDF76D5943D1ADD3E9A2FE9ACB41C5885AB1E6"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.CameraFlash.cs",
+      "sha256": "CE105C92D8A335826C664A9992AFCAF450C91DC3810024B568FF6D6516653BB5"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.CameraSwitcher.cs",
+      "sha256": "8C6C08655A8203A6BC953A0B5B9BDB9ECACCFA6FF9598426B59DCD775DBA50B5"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.CenterColorCorrection.cs",
+      "sha256": "2B3AA468A519D705D3EA60D68B4B59D936653421C604E150B5D15968617F681F"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.ChangeFrameRate.cs",
+      "sha256": "7B7EEC7F6E5D24F6F39892AC362E2D54CE686670526BD172F1E7CBB4384F16D9"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.CinematicBars.cs",
+      "sha256": "A2EA8FE4DA2BBC6467E5CEEDA4A4682F32C08D764AF5313CE543981262F165DC"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.ColorGradingCustom.cs",
+      "sha256": "304B55351B1839610935F07048A6F9B426B2348AF8A4559CB5D753EC6C8B6039"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.CRTEffects.cs",
+      "sha256": "20D79371B3391B9058B2853CF33FE1C4AB52EA6B602B21E84290429FA20011CE"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.CustomMaterial.cs",
+      "sha256": "9C20FC8B53E7EAE67E344FFAAFEB4C78B214DB1363518E18EC8CD397A6DEB709"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Distortion.cs",
+      "sha256": "F1479549BDB88CBC88A8BAAC08AD6129F302AA6EE6CEDED51D3BC307F61D6792"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.DitheringCustom.cs",
+      "sha256": "A58C7999095308B694E85E4D25AF549B55C940944411D5625CA31A91F6652456"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.DownScaleResolution.cs",
+      "sha256": "1C92BF64F8BCFE9E9A2DEE5DB892AC0FE4DE986015C0269A40E4F4E063EAF088"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.FilmBreathGateWeave.cs",
+      "sha256": "FE89BFA5BA1E28C5550D5A54FADCADF140B08D15810A0690A9BD2329347F29A5"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Fisheye.cs",
+      "sha256": "2C6ADEC751B1457EBA4159721F257B976C83851BD5A332B9D758327F8521517A"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.GateWeave.cs",
+      "sha256": "05C62D03AB45490F065F4358D2F13FAFF005E45443BD32E458E267C504C81E35"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Glass.cs",
+      "sha256": "BEFA2609ECFEFA2F4044CD6E1F94AE87FD3B1BBD075483A3281AFF95E2AA1B2F"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.GlitchArt.cs",
+      "sha256": "BD3AD22CABF0D0F27DE429902A4C0C188285065B44A85044BD065E7D3A874A9B"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Glow.cs",
+      "sha256": "BA6DDC37DDC3820E3D6039B29433899FB01DAC6877E724C3A7F3222279A60775"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Gradient.cs",
+      "sha256": "E7309C0F744254B935FF3E0250D2B0B638D3FA04B28DE3273D177BE08216C577"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.GradientMap.cs",
+      "sha256": "E594ABFD5FC90E5ABBDE4244440033F838A816BDEDC076EA8FA18A53D1B4652E"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.GrainCustom.cs",
+      "sha256": "18AEAB8D2A96B03E2C68F1C485EA69ABE5894D889B4C1FA3964D30EF97D100A2"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Halftone.cs",
+      "sha256": "DA653665FA63C274FDCBC23B319ACA4C7822BD95EC7FA7718B0A642C0CEF214F"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.IrisBlur.cs",
+      "sha256": "2C61927C4BAFC05D67B42748D139F64D6EC1B16A53000CBEAF693834A8D67518"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Kuwahara.cs",
+      "sha256": "89AE874905B3BE4FEA98C26783D8C143876EFA2B52354A5A995FF5FA4DD5F08C"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.LED.cs",
+      "sha256": "01CBE91F9D61BD6E5FF809D09C7E7A399925E0E053D0F64103617EB75BB5B5C5"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.LensDistortionCustom.cs",
+      "sha256": "26EA0FE2372ADC89CA039FD6AD0D44841374FB3A6139732C4AC66ADAF86685C7"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.LensFlare.cs",
+      "sha256": "8932E3ED7E1AB611AF76DFC29DDAF09109BBBC59536FFB6061C1DF594C63D5D1"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.LevelAdjustment.cs",
+      "sha256": "70B53C35092C3EDD4F43952A929F8643D8B71A7666B76E83E107B84EA1C4A060"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Lighting.cs",
+      "sha256": "8F7E4E99F7BD7FB8763832E4E86FC36851F33B08B83895FBF49E331503209F46"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.LogoOverlay.cs",
+      "sha256": "BF9611C305E26D54673976BCA1D741D286D1EDE88A320CBED5E55E67FF0653AD"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.MotionTrail.cs",
+      "sha256": "CFFB94632D88624F2278FD3B3F6CF48007AB86727B1D719CD9885F82853FD2D4"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Particle.cs",
+      "sha256": "27A53C5F7CB7DFD425690104EC7EF13F3B7C4834E0A023A043D2FFD4F4D6E571"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Pixelize.cs",
+      "sha256": "B71552D7E8E2AECE8531D6B69947CE2BC807CA3880FD93E3FCE89EC5F5FDDDAA"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.PrismFracture.cs",
+      "sha256": "6749E4017D8DBD8F82C00D2979F51496F768621FAD001BABCCE74CD820D2BFA2"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.RetroLookProBleedCustom.cs",
+      "sha256": "A4313B05190E289BF1F8BC8E3073CE111742A3F3630A7110265F91CD503B77BB"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.RetroLookProNoise2Custom.cs",
+      "sha256": "CC4CDFB92BFEE67EADF62A6A484337C427453E0B3E43EBF11C46847482D17DD8"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.RetroLookProOldFilm2Custom.cs",
+      "sha256": "873C28C2D7BB23BD8021D731DD0845D6241C5EE0C95BA073983268854363820C"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.RetroLookProTVEffectCustom.cs",
+      "sha256": "D23079331B241FF71AC355F541BB12A071DCA8F585EA795927E9AEBAC45E8BC1"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.RGBBlur.cs",
+      "sha256": "AF8F05209E11CF91C5100E030968DBF4B8323F7AC85D411596E122523138A3BA"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.RGBBlurV2.cs",
+      "sha256": "A070F916505590F904CAE0805DB8B6399BE00FE7FAD3C2AE4C3483424DA8DC79"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.RGBChannelSeparator.cs",
+      "sha256": "3516080BCA214087CCCF6BB19C09973EDA63DFC74739B69AD3A3143EC169C811"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.RGBSplit.cs",
+      "sha256": "0E9BEAB0789C30CA87E1A66CC081470C7D3C4EEF7126F0C9101099F9610C7684"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.SharpenAfter.cs",
+      "sha256": "E41264D5B975EAE68186BAD5503FB76938F4F822AA82CBBCA20B54473916F664"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.SharpenBefore.cs",
+      "sha256": "6539373BBA55E1AFFB46BF2977B72AAEA62582FD954D786AA848D97F1960775E"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.SkyGodRays.cs",
+      "sha256": "9A90622C68D6C946AF2F08AC6B616CA4462B5F1385171CE04A94F89FBD10C7AF"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.SpeedLines.cs",
+      "sha256": "B0951E4B1814042BD58D6803713602C58E5D54666FD892870D8F8D807EF783C8"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.ToonMap.cs",
+      "sha256": "87F5AFBD49848639934204E8163D21D6B2A9D6A0F5FE37361915C3A8CBB6E18E"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.TransparentBackground.cs",
+      "sha256": "AC33416D192CA7ACC717AA1F22D6B235B1C7DDFA6093103DA0142FD008C06A35"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Tube.cs",
+      "sha256": "06E8922BD4A7038E1B459061F0139C3800E02BCE06844F41A46875ABD4B31EA6"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.VHS.cs",
+      "sha256": "5F781DB0E83C6825DF073D49F9DD25CBD0503902E75323CA64D625B48D56E3E4"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.VignetteCustom.cs",
+      "sha256": "98F3F05AA059FB44F49D7B821F413C16ACDCEC877DB30FA7263BD5635D8838FB"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Effects/ImageProcessPass.Weather.cs",
+      "sha256": "48D2D24085C70EE28215E3204AF387EA977F3730A3AC35D52B418085886DE258"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/GradientRamp/ImageProcessGradientRampBaker.cs",
+      "sha256": "4729A39AABABFF6BF85FBB49F6FD76E0767CB4B9E7E55C2D6F1DD76D338C1B9F"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/GradientRamp/ImageProcessGradientRampCache.cs",
+      "sha256": "5FFB3EB8F913CFB19F1616D850F0F5CE9E0E51FC60526152A5B5373D627EEBDC"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/Halftone/ImageProcessHalftoneMath.cs",
+      "sha256": "205D57160121EC9FD875FEE3E5328004CB0DCC5F3FA28D06FD8C14BB4E37191E"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageChain/ImageProcessChain.cs",
+      "sha256": "7E6FE61203700F202D53364C53404B0F10F08019F3BB7A90D14DAA0CF5CE3519"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageChain/ImageProcessPassContext.cs",
+      "sha256": "772B2AFB66FE6C9DD2E1AEA7FB686A6BEA7C3361F9D3BB460E51C16DE2FA9D01"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageChain/ImageProcessResourceKind.cs",
+      "sha256": "33813C127AF6259E37BABD6C69F024D7C437EE0F75D5B14E9753D18A68D37DCE"
+    },
+    {
+      "path": "Runtime/ImageProcess/Renderer/ImageChain/ImageProcessResourceRequest.cs",
+      "sha256": "08B666646D7DDC59874095B24201DCC6C9C26F4208E7DE27E448F55FABC0761A"
+    },
+    {
+      "path": "Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl",
+      "sha256": "17F54FEDD215187E9B1E6EAA774B196C8EED8194BD583D8D09E8099226EB9B07"
+    },
+    {
+      "path": "Runtime/MaterialGradient/Shaders/HoMaterialGradientSampling.hlsl",
+      "sha256": "6E3BBC4D05A618D3166F9DE729821C1538E7F499566CA8AE9D79ED7EB3918149"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdContext.cs",
+      "sha256": "C815FDE052B9583507280E9A759C48962E8D8FD6BA1CABC8870E56BF8334751D"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdNative.cs",
+      "sha256": "6C6347ECA6316A8285A38B89307C6275D4C841C84137282065530B9028EC8A66"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdResources.cs",
+      "sha256": "32EC6EEEA5DD20BB48934A076DF0CE04723AAD4677D978C95EA8298B2058AD80"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdTiming.cs",
+      "sha256": "166E556B3AA4B21CF3A94AD802ECB4BE2B384CB1B3E76F1B4CC2D96475B0EA26"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferConflict.cs",
+      "sha256": "BA349896176A088E8B41D5C5399FB026EBD2FF9FBF9ED1C3C50F559A1931EC43"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferDebugPass.cs",
+      "sha256": "4A1A21F87774F420B0CB967D0472A5C15C384FFFD1D7E2772D2FF064A0771F87"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferDebugViewInfo.cs",
+      "sha256": "7CDFB35F9F63E3071DDAD219DB7EDC312FA47FF67FA2583200A4D832427CCAA0"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferFormatUtility.cs",
+      "sha256": "293D221B023FD7212DD3DE7CE662790D20C2BB482597AA633288A064E4A809E7"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferGroup.cs",
+      "sha256": "11AAE7AFB27E862E066A4406E5387DFBD7C95B7A291F3F7804D11205E7790A1B"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferHash.cs",
+      "sha256": "0724843D5EA628FF686314BEC470EA811B22C6D0366AF0856D1F28EE36BF4D32"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferPaletteData.cs",
+      "sha256": "ECC37F145805C96681E20A268D3F6E9913397DAFBFED488F14A8B15544880A28"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferPartEntry.cs",
+      "sha256": "F82A193CE1C386BE466A88439AB870E9D26AACB8A0744E90DB59FDF8F514AB17"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferPass.cs",
+      "sha256": "F15954C3688EA08B3CC2E842BDB99A3438DA94F7322C59C6C2EFC1ED5B3BAC55"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferRegistry.cs",
+      "sha256": "88E33F78660723CC2C492ABC52874BA9EA6B540F36F75D2110047EEE237B9631"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferRendererFeature.cs",
+      "sha256": "763148EFCF07A98BEB35444E66F617DA6AD9C9EBC93C9A348856DC10227E7093"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferRenderGraphResources.cs",
+      "sha256": "AAA776CC062B57A46647DB5AB095D2D3595001834F327C18AF6166A7098DBC4F"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferRenderTargets.cs",
+      "sha256": "C660B72346039F9C82B37D74644D1F15C19E7EF4A16877B4CE3D80438804C389"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferSelectionMembership.cs",
+      "sha256": "E0E1944BD2F91287973A7FA47D6534B453B5A678C7D41650999EF974D5D98DD5"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferSettings.cs",
+      "sha256": "ECDAB9261198B94665A6824F948F3C5947F6B287AC87EA14C940F9C01C7027CF"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferShaderConstants.cs",
+      "sha256": "61B3A6A7B8C6BE0AF12B59E42D19016135C9D80A4F5F09B7C6095D49A47D8EA1"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferTypes.cs",
+      "sha256": "50AB333FD44E272B3A6524C8C0153D6D162FDD8E4CB225B6A8AC921770A9F8C9"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/HoObjectBufferVolume.cs",
+      "sha256": "C939FDFFF90DBCAA6BEF898A8C0878A8ECB5BB4F79259A1D292304D6DB7061DD"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl",
+      "sha256": "17E93DF953A3B983E99591087A8D17643836393152CC36FBDB37D8DFADDE5631"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/Shaders/HoObjectBufferPalette.hlsl",
+      "sha256": "B1FF401AE267FD115BC73521F9C7F7A49914C269C497B369EA2AAA2DB6B07AB2"
+    },
+    {
+      "path": "Runtime/ObjectBuffer/Shaders/HoRendererIdentity.hlsl",
+      "sha256": "96874A549EA0CD4282F72BD1E4DB615310EC3B2FB0479B383620237BFA4EAF2A"
+    },
+    {
+      "path": "Runtime/OIT/WeightedOIT.hlsl",
+      "sha256": "59A17C23DFB1AA3B14227EA2CEFA8F51B6E01C2081F7B8685F8D525AE6E6EC08"
+    },
+    {
+      "path": "Runtime/OIT/WeightedOITRendererFeature.cs",
+      "sha256": "ED2DD4B2DAEBC93A258D1E304B65741A482673EF540F66B8596E7B739B25104B"
+    },
+    {
+      "path": "Runtime/OIT/WeightedOITSettings.cs",
+      "sha256": "BFBD2040222C738C2481D0DDBA6A14E9E42047EA867C2BA3459D6D754E7E178D"
+    },
+    {
+      "path": "Runtime/OIT/WeightedOITShaderConstants.cs",
+      "sha256": "D7F02A5659C6885DB384C1512E1DB2F7DA5F213D0E7739E7BC27906B65EDBE17"
+    },
+    {
+      "path": "Runtime/PlanarReflection/HoPlanarReflectionDebugViewInfo.cs",
+      "sha256": "9DF4CF771E1396B3B9806AE3A45A443CC356634C5D1F74A89C6DAA15E0BAFEB4"
+    },
+    {
+      "path": "Runtime/PlanarReflection/HoPlanarReflectionRendererFeature.cs",
+      "sha256": "9D78860BDA1FBBEB1DB1744AD3F423CCFC59C2376C4439770B947AA418DEEF7C"
+    },
+    {
+      "path": "Runtime/PlanarReflection/HoPlanarReflectionRuntimeDiagnostics.cs",
+      "sha256": "F70343EC805D0044E94F72EBA5877B33A1DE6178B7EBA219A2C096B87CB5FD44"
+    },
+    {
+      "path": "Runtime/PlanarReflection/HoPlanarReflectionSurface.cs",
+      "sha256": "5532C47DA90BB1A4BCAEEFC74D5398185FE7D83E6A420FD2EA8C1C26D15DF8B6"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTCutoutSupport.cs",
+      "sha256": "F817DFDA2ED76F1F0C26038173ADA1C009D4DEC0EBE515A37D0F3FEF38DB6A3D"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs",
+      "sha256": "E7817ACB6B60425DD9360D479E5533713E384CF5F820CC246D7BE8B2458CB265"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTRayMeshIndices.cs",
+      "sha256": "F34F4512C3E51FF328316C96AF48CA3547A27CADBF327FBA8D724624B7F79D49"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTScene.cs",
+      "sha256": "2CDF2AB3781A14D1CDED399717B88F9AEBA6D3DBCDD69135C1D52EFCE1DC6D29"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTSharedData.cs",
+      "sha256": "924C26BAB4FD5F750A6C36258979A53C4A7893B58D3E00CEF27387190E26EB07"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTSkinnedMesh.cs",
+      "sha256": "8AD248AD21F76E7104BAA80B0F9EE9C69C34782F102178B8B7BA83BE5B95A0B2"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl",
+      "sha256": "682CB34F549394EDC44C0E123F8471E5C68A42135614E2C7D98E267BCC96949B"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneHit.hlsl",
+      "sha256": "5B51FE9913DC064357FF9D1D688708EED7E13491884B1488C57BA76EB2CD42DA"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneQuery.hlsl",
+      "sha256": "6CF489A175782CFC06BC7F265D65E0B911B93120A4FF1E1CC4B6B03F73F4063A"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIAuxiliaryProposal.cs",
+      "sha256": "E5AE9F065C342C71BB560661BCD58C5A995E63C4B02536C01586EC24FBB98512"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDICompositePass.cs",
+      "sha256": "C094360A9274B2E609697AE360D64CA8B2D7F75E7D2FA8DADBC09E49D061A71D"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIContext.cs",
+      "sha256": "3D5CB310FC0D6FE836AAB4E6DB5938F41E1EC81C2E1A245D313E5C14778249E2"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIDebugPass.cs",
+      "sha256": "3BFF337786065B8506F2B3FB4BDF2B6CEBF71A22F9BE6B7BCC81938511C992CA"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIProjectionSample.cs",
+      "sha256": "73B8E8749B098E8F48E1BABC0ED176F8CD7D7932841DD722F0BE560B894D3B0E"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIRendererFeature.cs",
+      "sha256": "42E9B771BA17B0193AF2837E8238571C3870B82E3986E37C3CE90D902B2E882D"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIRenderGraphResources.cs",
+      "sha256": "1478278E0A353C89372B9A04012D9266F584499FA66AF5F5CC5E35B12B79436A"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDISettings.cs",
+      "sha256": "7EC6192D5DFB1FA175A30A769ADAD789F5164BDF134F666F8661FD4D4320890D"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIViewSettings.cs",
+      "sha256": "A8BC7BFD39240B4A1DAAD5BFE2B2D1EBB457829AD9A6EDA6A1A18B94D4E3FCCC"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIVisibilityMaterials.cs",
+      "sha256": "2B2470CC964E2785F260A3934F8DA99B045488708BE8524238E45CBCD12C0E5A"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIVolume.cs",
+      "sha256": "AE02E14D345F0F497C28F65B43221C2E541309BD683B415A60825B6A33275A7F"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdContext.cs",
+      "sha256": "B2B72D23B0D006B94276457C15E78157715C02A7A963DF49FF7BB668BC3CA68D"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdManifest.cs",
+      "sha256": "6198C7D480D829AC69B44DFD29678E08433FA026856797F661961863086B9D4A"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdProfile.cs",
+      "sha256": "1BC6757C3FE63E7730AED3CA819663AC6530854565881132FFD85E6D580C729A"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDI.compute",
+      "sha256": "33D9B39CCE3AAC629A9E70BFDD65CC873C7367C6A8342EF9A627602F705AF1F8"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl",
+      "sha256": "CB76CA79A0E8DC2D41F7EE7AC37C88AADD60599C4A08E3B2AF10DC3DDEFE7127"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIAuxiliary.hlsl",
+      "sha256": "B92BBE8BD11AFCEA824B0D427A38FF1161C055F3541AD23D863B725E854187DF"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIConfidence.hlsl",
+      "sha256": "8995BAE6CE3B6118D70D989B484B9425FB85D3697F090DAD277A30A92FA2EC82"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIEnvironment.hlsl",
+      "sha256": "C5C4532C1AF349A89DA3BA151D2AEDDB03DCA23BB3234741E564231A60285F51"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIPrimaryHistory.hlsl",
+      "sha256": "CE8FCB2BE5A7C088540CC2B7FCE969AFD4AF7AAF7F2D415A367C88E2A647E761"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityPayload.hlsl",
+      "sha256": "2D0E65FDEEA30CF065BE6E254BA048C5F9205C07525BF9F5B60E7BDEE3EB8FE5"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd00.compute",
+      "sha256": "59DA12F675FA21111458A82FED1FB9E74B83C3651E162299DEF959CEC5845B5B"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd01.compute",
+      "sha256": "14B1EBEAB810F583571F4FE5DEC96E732224D0C682024A84CDE49B00D5FE3720"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd02.compute",
+      "sha256": "EF27C8DD53CBD81D8711E928C770F5F2B9EA3BDCF2A38ED8A0ADA89F07D2634B"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd03.compute",
+      "sha256": "65945A50B6C8AA481F5CD51DBACDB45FC356CC6597EFB3F60EEF15C8874869CE"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd04.compute",
+      "sha256": "9C96D5AAE556371B6B36FB9A2373D832092501A5EF2E85AD2A98FA101999D382"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd05.compute",
+      "sha256": "44D44AECF51BCB945121D3CBC8C6AE28CCE31B732477C9EF395D65B40F5F41A4"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd06.compute",
+      "sha256": "4C170D3215A230890BB0FC2C54D5466DD06304228C27A4D79B2679A577E962B9"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd07.compute",
+      "sha256": "EE3D96861B9A440BE4D3622BE7D41DF9A9C0BEF7B82EC58A01E02034C6803D98"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd08.compute",
+      "sha256": "9EE0CB63874A3C3139997E92BE3B682F47247556769D4C52835791C2A7D1AD5F"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd09.compute",
+      "sha256": "DB31DA1DAFFC35287D78E54DFF7E2B6A934AA1B4C4D54451822D6BFC78760FE1"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute",
+      "sha256": "BB542A5FEC7671BB0E56F81A767E29F8A45212A871389AC05C6DD8F604AB8227"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd11.compute",
+      "sha256": "121A19B28111F44E487A83FE740499B65B390944D5F2C60F052B508EEEE8A802"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd12.compute",
+      "sha256": "50403F1C10831117DE4A4BB4FBA8BADCB2423D479997D009BEDCB73F92504765"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd13.compute",
+      "sha256": "5EE02CED38D38B0AFC0DDA31313D7834117833DA13986D18A9D3CA95BFB8216D"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd14.compute",
+      "sha256": "383F50BAE14B96D7043C41A544B493FA40BBF61E555188838BE2A63E065ADED0"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl",
+      "sha256": "0D1EC5208684217BDE4F532A89408990AF35FAE0A393C6EB5BBB525BFCF8928B"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl",
+      "sha256": "78F736102C5D27CEBA38B3F116E41AA27C2409210D95F162FD74B71E5766F40D"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdBindings.hlsl",
+      "sha256": "DC0AECDFA95698D297D6547BBCF921A92346C72CB8317383CCB09ADC98607ADB"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdHistoryClamping.hlsl",
+      "sha256": "40D8B01CCC233A9800DC7500CEAA324296569897AECD81162F12EAE877E3F7E1"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdMaterialGuide.hlsl",
+      "sha256": "F424A3AC6C8119BFF095389C84B5A5F91525B31776606283284A1C7EFE6749F9"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdTemporal.hlsl",
+      "sha256": "BE360B034008E10C10C0AD9625A8CABCBCEF3AC94DF77B303A88C9ABD311AA7F"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/donut/brdf.hlsli",
+      "sha256": "D84207E122E4E5BE92BAAEF801F6B9BB73A7A25497DE0864197DD95E877B6253"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/donut/utils.hlsli",
+      "sha256": "00AE446AEDF30570A817C04B6D03A66515B40DBF061F8F955087C9A7DE4890FD"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Clear.cs.hlsl",
+      "sha256": "24881EBD9E5B16CAE635ED569FBCC969ACD8AF79C6109EFD9F3F4C086FC5CCB0"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Clear.resources.hlsli",
+      "sha256": "82C51B6091070DEBF1212ECF37975033F8E08E91199001997EB7ABFB065C8BB7"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Common.hlsli",
+      "sha256": "E4F7DD4E9767DFDD2D377E6059C875BF3455E30A2593B97F862C8C802F56C95C"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/ml.hlsli",
+      "sha256": "AEEA3BBEC753BBE3C1E16495C109C9E43C676082C11C18186564EA79024AA685"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/NRD.hlsli",
+      "sha256": "30ABBDFDCDEFBE4E1178CC972E923268C945D91954568284612F5CA01F0C31AD"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/NRDConfig.hlsli",
+      "sha256": "DE5AC2561205454D4DDAB00AF062D13928F8D5D8C52F5F6371A8EA4B7B98E939"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Poisson.hlsli",
+      "sha256": "66836E654C8EB771C14A01C0E72EDAEC40A1AC337037E289927259326510DC49"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AntiFirefly.cs.hlsl",
+      "sha256": "2A756F16FFB591646853B295B1E99583E935841DAD9091FB37B7A349B660DD8C"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AntiFirefly.resources.hlsli",
+      "sha256": "A97B340D9B65F88E4D5C91D6E516DB9538513BB1781DC9171AC828F0FF43E236"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl",
+      "sha256": "BC4C998E30852232AC98E4F2A7F924EF0072D900F44F4DE1D725171F9E1508B8"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.resources.hlsli",
+      "sha256": "C4EFF8E57ACE80BF84353576B3FA34E80272AC0F5329B4148603E2373D37E4BE"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.cs.hlsl",
+      "sha256": "58E8B5BDC93CC3B331A8CF9994A784D5137BE2B566C78E39EF617CE6BE8B289E"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.resources.hlsli",
+      "sha256": "5D6A2EA982B96C6599786F1E0D58BCC6FEAD846541C39B20B3FCC99EE4F9A5C4"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_ClassifyTiles.cs.hlsl",
+      "sha256": "3BF9D7F020C0540E951CE7F58CD95CEC2E268B1590AC37E24B28D915B047345A"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_ClassifyTiles.resources.hlsli",
+      "sha256": "6679CA875140AE3877125AE6611B74BD966417CA30AD3E12EEB0C0D413392C67"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Common.hlsli",
+      "sha256": "4E0245D75951F6582D13C8257FEB56B1B78A2C369BD177113CF1CDAEE38C4D8A"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Config.hlsli",
+      "sha256": "722121CD19AA9961050F6593E344567EB634503235C74549C01D4B2240C5D5FA"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Copy.cs.hlsl",
+      "sha256": "213C2D8D9AE4AB3994035D6D826451CF2F548217ED3BD3626E53CDDC50B28894"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Copy.resources.hlsli",
+      "sha256": "005BD298194565E424A35A05B33D509869C47B6CE99AD1B9A107DA6BEDB0AC38"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.cs.hlsl",
+      "sha256": "9CDAC4A0810C72FC2DA936B8BBB8633A9F27881B6930E5375D3F3B8E008E40FC"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.resources.hlsli",
+      "sha256": "00731BCD49E94FB6DB828E21B354D4AA77AC68F3AFEDF75A13CC5F9E4721C3CE"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.cs.hlsl",
+      "sha256": "275F5F6807BCC90F72CE1E84DA767174AFF31BC89D58CEDFCCB414867F01DAB2"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.resources.hlsli",
+      "sha256": "94BA4E657C5C2DF16404EF879E7B980233D8F6F943F291CCBF9D91BB8AED0096"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HitDistReconstruction.cs.hlsl",
+      "sha256": "64803ACB9938461633E07BA05DF8E9BC732FD6AD178AE250FD08E60B5901FBD1"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HitDistReconstruction.resources.hlsli",
+      "sha256": "D9C6184D70EEF0CCEF97AC3DB573CBA294A786BCAC8510D49723E796B8047FB1"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_PrePass.cs.hlsl",
+      "sha256": "242CC9463E71CCC1960B5E37B838278754533393314F5E0F25EA5B295DA693A4"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_PrePass.resources.hlsli",
+      "sha256": "37C6C067638750FC58949E2564D1B278F1B57203053EDF1979D7A55E57F890E3"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_SplitScreen.cs.hlsl",
+      "sha256": "7F56CFBC16996A85FF8B9DFFB74D5322568960FF2CE1136A870B2522B56DA0A6"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_SplitScreen.resources.hlsli",
+      "sha256": "A55151F70130C845904C9D880879A33B31CB11D31B78231A69BA8551ED3529F6"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.cs.hlsl",
+      "sha256": "7F323CB68814F99B417E69B607C80D859323F404A8F4095B9407F3B41D053B5F"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.resources.hlsli",
+      "sha256": "35D062BAAD5814B21794167A5E141CE856F658AD9BBBA5C9BD3B30D11E5C4C31"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Validation.cs.hlsl",
+      "sha256": "B28F75D965E9DA90234442DE7478FD52CDDBE52FA1366EDFD1980717DCEBC08B"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Validation.resources.hlsli",
+      "sha256": "E54905DD1A9E21D6550AE49061D2B8AB147866FE0D4BDA82758B474C944DE389"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl",
+      "sha256": "B4D0F3283C30C85A4DFE1D269FAAD3CEBD6F47E6AC791F6C6B4C15D7953FC941"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/PairwiseStreaming.hlsl",
+      "sha256": "30BE10EF4AF3296D288AB4EC9E35F1918FA88AB513138690DFE369BA64F0BE5F"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/Reservoir.hlsl",
+      "sha256": "120FE0447DE9F4C4D71425685D8EF6FCBF5E5BF9EA36E9FEFF642A41E5A143BE"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReservoirStorage.hlsl",
+      "sha256": "273F08A0A105D66F69C5E00025C72B7158B9BD0DA76DBE0A2F930E896A727999"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/SpatialResampling.hlsl",
+      "sha256": "8F6C17A81CB9E5270C92711F5D8A8272BC2E60D087A816688EE5CA64CFEF9C52"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/TemporalResampling.hlsl",
+      "sha256": "33C9339CA52E6BCF1A796F4E0C9C577DC661F4D46490F33958D6A03F36098685"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl",
+      "sha256": "C8BDCD648B7C457B2311CE71AF362F12C1BB9A6C4DA88EBCC560502FC605C556"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl",
+      "sha256": "99FF8EC88F495E8262AEA29DB2D56C8CA268EDE5F3F468B5C40FBBB23583363B"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl",
+      "sha256": "5861641C7AC4703EA04ACF826DE8B89CAB2CC60FAFE61E897274CA4A301BCA67"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/LocalLightSelection.hlsl",
+      "sha256": "EDD02C8ED273F21A5F7205F83DB0DD938FAAE5571115711D9F38948CBEC17ECC"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl",
+      "sha256": "DF8BB5FC14D69EB3D9CBD436EB888EC39F12238E3246B3B1878C911F4DDABD0C"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBuffer.hlsl",
+      "sha256": "9E2C1DDB813203B7DC559FBD1223DEEDC9D16BF146F750C77074F0E4D2729C9A"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/UniformSampling.hlsl",
+      "sha256": "40ECEA3503A1EEEB734DB65E09FEF1F4DBEA7574883F80D6043A59DCA3A4B86E"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRSampling.hlsl",
+      "sha256": "A40F21D02DF3AE7E546E8E2F1435482FBB0D6CF073A8A08C7D580C2EFC6B43A7"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Checkerboard.hlsl",
+      "sha256": "CE3EC2485C4325A3F32C9D8D58D6C63B62B803DA873038AE999584A9D04D6E2F"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Color.hlsl",
+      "sha256": "4EF47F29ACAEC96B75FE08B310E6B4504F75373CFAA7E4992FAB2A7C2BB2DB53"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Math.hlsl",
+      "sha256": "4099BB0359D8E2732F46F80B74AD62A01365CD2012D537786CAB66680DF9FF82"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerPerPassSeeds.hlsl",
+      "sha256": "DF9E3A92F7A5F8260DDD87F9B565A8583788C422122FFF8AFDD1352BCEAEA457"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl",
+      "sha256": "70DF439BFC7E5163641F9F3F107A1F88D81D7AAD7FD593797303A6CE7E71C467"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/ReservoirAddressing.hlsl",
+      "sha256": "CFE65684FB4FD958534E92A107E9DB2CF47AAE443395164C1C18D833D768B261"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/TypePacking.hlsl",
+      "sha256": "9D15B2AA75F133D33870FA2B2CD25A647E7D632FECF01C065C0DA19B09DACE8F"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGICompositePass.cs",
+      "sha256": "4F6994033AD44BBC58214E8F38562AE86D9E4104EC7A82DBDC07D15213ACCEFB"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIContext.cs",
+      "sha256": "CFFBFF3DE1CAB4CC15C533F11A45C7EBD649478499FD4D3AA0B60AA48C83F35E"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIDebugPass.cs",
+      "sha256": "CD0E785B8285ED32863D421A1979E9C25CF07021359B96FC9E54317D5051DD70"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIGrid.cs",
+      "sha256": "BDEC4CAE2DC8231708643B5A981C053DACE90E26ADCB9DA2BE68E0D71AA64083"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "sha256": "32823AD703827A955BB5FC9C7E6EC6E83FF61EF4D25BF091A41334E980B6E69A"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRenderGraphResources.cs",
+      "sha256": "39D55746D16BE28AD9E2A685CEA25D58A3F8304059B02C81F29E0A89083A2469"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGISecondaryMaterials.cs",
+      "sha256": "BC86FEF2370F1087F7381D33C7A7E6564045C440894823944CE9ED4B1A4435A3"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGISettings.cs",
+      "sha256": "267FAD96A9BFB24E226E4A56E1476D1597D638457CD52BA876E82B568A28BA5C"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIVolume.cs",
+      "sha256": "D9567404A73FB98C82D219DACA35EC1BC204DCA9A3EC44EE1B89C679A9A0CAE4"
+    },
+    {
+      "path": "Runtime/RTGI/NRD/HoRTGINrdContext.cs",
+      "sha256": "D641B761856C4D262076448D20E83762772FDD431B231FA4FBB334A1F5B2EF8A"
+    },
+    {
+      "path": "Runtime/RTGI/NRD/HoRTGINrdManifest.cs",
+      "sha256": "F5D6594A6F5C1333989D49E6F3FFD3E0F0EDE1629646A4A797460B60AC7320D7"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute",
+      "sha256": "0B12B95A26BA24A2B991628F0EED4397C3713299EB5C9CAABE401B1E9FACC946"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl",
+      "sha256": "110657137C0413E3CA8808CD1FC74D741792942F818676BEC69B4CAAAD5897BB"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIGrid.hlsl",
+      "sha256": "27CE1056448FF1161E407CDAF8E1790A575A62A3D0AA441113473CE458D33BEB"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl",
+      "sha256": "2AEE17FA94A3CC188221E58AC08EC414DA5AAB333AE8A79BBAAE36EC578A12C8"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGINrdSignal.hlsl",
+      "sha256": "0F475DDA1311587DB6688D9FA9A22A440600B2C3488AFC9FAC895AD2D6EC972D"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIResampling.hlsl",
+      "sha256": "FBBB2D1CDF3B54ECFB1C9DBEAA12F72CE7DB2B96183B5A0E2FE000A94CAD0F79"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryData.hlsl",
+      "sha256": "DC2E41D583B9B366BA322C1035DB558FDD2A64950D78CEDAB1303770A7E70D3D"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl",
+      "sha256": "4132F4988935B5551431001A042E94AC5B2569485F7195AED6960FFBBA784959"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondarySurface.hlsl",
+      "sha256": "1FF58F5134ABAD44A531C96E3B46D15C9240FE630C3C54FA65243B43BA8D4F44"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl",
+      "sha256": "A30FB74ABF632DD3BD51324352BEE3513323FA9E3B6FFE4D6E5932D7DB1EC043"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd00.compute",
+      "sha256": "6E7D8BC68A6F79DDF1D7A2C636931E3C704F6F145BB69451A45FD66B289BB9FB"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd01.compute",
+      "sha256": "EBBB3B83E9777ECC6129A9594897CA1A97940B8C5A858E3671CF01AD4E9555DF"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd02.compute",
+      "sha256": "AA0217DA7E22CF1B6A0DC57BDC731FDEA0E6E60098A2D0327CD5A70C35336287"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd03.compute",
+      "sha256": "4B66E03FF97FDAEE6237BEC6E5832A633EF41862ED35E1286DD202B72645B533"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd04.compute",
+      "sha256": "375EC673B05662A579D53224DD9075FF53872C428CF5E32B0DA8669A07191D96"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd05.compute",
+      "sha256": "DD931551B9D007E6CCDAE49805E06DFCE0C9DD1AA11EDCACA3BDAC5C87A5D248"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd06.compute",
+      "sha256": "0A173025E7E5F35F25FC83DA1DC08DEF435B1B4598EF4472576A0DB0FB82E841"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd07.compute",
+      "sha256": "A77F82BB374D542DE75F070A1258A6B81A018CBE39597D25292FFC73D5501A84"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd08.compute",
+      "sha256": "FB62DA4DEE7F37482A497CF664FA51E2DBBA936325F621BC0891A5A594D71B7F"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd09.compute",
+      "sha256": "C708C755A8DC24349D367C1A23900669A8CC5977D726FECC2486BDD2DFBD9D76"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd10.compute",
+      "sha256": "5C806067A2C00DDA3791FD6A335C06070D331750C74380A6EF30D697D5664F7B"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd11.compute",
+      "sha256": "31B678801BF70A5EF674B79B18EABF5B07844FC882645E98C951E11D203531E1"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd12.compute",
+      "sha256": "646B3E0CE55576C257244F352189147D62EA2EB94589A3C82C695561FEAF8EF7"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd13.compute",
+      "sha256": "9B8545BB8B6616DAB166BE00ABA863AB5074C380CE3BE4935C0E6D33311DACCF"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd14.compute",
+      "sha256": "5F00CF9B6C5F2BA121E291D4AEA2D333F0ADF3D06E549666B4AC9426576DE18E"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessDebugViewInfo.cs",
+      "sha256": "AC9BD7E16F60115B3E1370FEB0FF75470D234E1D97EF5C9E5958EEA1E3D44924"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessEffect.cs",
+      "sha256": "A75A5940B91D98E96A890426338773E7143AD180E9FC68A67F03C281AD91857A"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessEffectRegistry.cs",
+      "sha256": "5F67FCEEB3DB0B4E716B75385F6CFF0292EBB59230A63C0D782EE55316AC3D22"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessFogMath.cs",
+      "sha256": "37557EFA0F0A238587A00947F7606633EED06C91EDC1361737ED04B6FD62AE57"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessFogMode.cs",
+      "sha256": "AEC5420B016762442ACCEFA98A83ABD974F56C45F4B618796BD9368BFCB8DEE0"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessLayer.cs",
+      "sha256": "E731FE22062788831285906E624816FECF8185B835A19772D6CDA66D3FBC7708"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessRendererFeature.cs",
+      "sha256": "A92B12A575DBB26A86A4025DF3CA3D1C262D997BC0089A16B4A98F43F3389657"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessRenderPassEvents.cs",
+      "sha256": "93B228544F9B36341D0E4BDDA973DA7AF029B9335C4FB7B67E4735DCED2AA2D8"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessRuntimeDiagnostics.cs",
+      "sha256": "2288834B9735E0A9A48D68ACB00BF7C7CE421830634C4D23E0B8D73B5FFE25A3"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessShaderConstants.cs",
+      "sha256": "8CDC37E9075C24BEAC0E9F0008DA6B09915C8E58FD17A800570FB55F56B09730"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessStackSettings.cs",
+      "sha256": "62C6F40EBB9FA8D4D5D5124F30E7E602D51E036BC69861D26A1EED29E1C4EBB1"
+    },
+    {
+      "path": "Runtime/ScreenProcess/ScreenProcessStackVolume.cs",
+      "sha256": "CB17A2018235B2390DFE0AB1DD39F02FF051FADFF27D15FCACDDE117315A338B"
+    },
+    {
+      "path": "Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessDepthInputs.hlsl",
+      "sha256": "185D94FD8E0AC8EA51C5400F3D03EFCED8E550C7996889EC5825C01FF97430A8"
+    },
+    {
+      "path": "Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl",
+      "sha256": "642AA5C63127477CDAF3B0CADA3A582BB800F5E575D307BC39AF03F35E3467BF"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastDebugMaterial.cs",
+      "sha256": "48C9A038A0CC81A195EA3B4C3E0F1E1E2B4BCD369A135C93C4A9524F95C4B7F3"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastDebugMode.cs",
+      "sha256": "33C8559F5609EC6F2BA5C79512E2DC6295AEA0D845DA9A47BE8D6A032C949D25"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastDebugPass.cs",
+      "sha256": "4AF4212BC5F0ADCE9C3922AFF279B47D3762B02B7220AEF2276C8D74CB1EFE82"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastDebugViewInfo.cs",
+      "sha256": "91C1A45958C0F67C72F5DA737902223272FC13B6AD4C5DF971F9D5CBB3F429FC"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastFrameCollector.cs",
+      "sha256": "B1223537FDFFB137F30460A89669AACD6A4317C58CEFE9AFFFAFE9520904F3BB"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastFrameData.cs",
+      "sha256": "DEC28C0B8F92188E267E22F4791F6EB382B6342285FCFE8153D0A0E60DC615D8"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastPass.cs",
+      "sha256": "354C63F4B8D5886B6A6E2021D1B452822B599E86279AC670372D61716165AED2"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastPcssQuality.cs",
+      "sha256": "5230898316671AD9FFC8B1A5709CB791C17557897674627AB080126066C62F0F"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastPublisher.cs",
+      "sha256": "A9B27584B41ED0F117041AC3447CFB7EC106A4DC1ACA982C21EBD4DD9A1FE42A"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastRendererFeature.cs",
+      "sha256": "A75BC1F5EF948B6064398D15B32CCDF557238D6F346B1B54C279A6A44D712772"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastRenderGraphResources.cs",
+      "sha256": "9D8E6831ECE4A128AC9640F683921D0818EAC5CDF61FD9D37CA0B31CE4CB0B62"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastRuntimeDiagnostics.cs",
+      "sha256": "E1056F2BB8A4FC28CDBE312A67A46DB5C8B966AE74790C3DE3CDB4EC175D05B1"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastSettings.cs",
+      "sha256": "042A0D29EC41C12442FCC7E70B6578182A50FEF08E72DD2CB3F5790C648FD29D"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastShaderConstants.cs",
+      "sha256": "D336B0D2D6F9199A735E8CE15FD8471967994B4312E74ECB81C683AB979654E0"
+    },
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastShaderContract.cs",
+      "sha256": "50A61B78B5B681ADBCE68EA3C3B4C016B394BEA12381C6EFC15416948B6A70B8"
+    },
+    {
+      "path": "Runtime/ShadowCast/Shaders/HoShadowCastSampling.hlsl",
+      "sha256": "A846861F13F52A27E3BFC578108DD64AA8D235F4CCC2DD9427499C4A8EB05493"
+    },
+    {
+      "path": "Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl",
+      "sha256": "43055A6BB77EF2E8DB12692760B9B35788E09AEF08741CB4346CFD16AFC9D346"
+    },
+    {
+      "path": "Runtime/SSGI/HoSSGIDebugViewInfo.cs",
+      "sha256": "26B656914E5ACEAE65D3AADA67E1F051D2E7B066166C03782C35D569F541CAD3"
+    },
+    {
+      "path": "Runtime/SSGI/HoSSGIRendererFeature.cs",
+      "sha256": "584D80FC19BDF41516446FAAB53E86F60FAF4F4E25990500B3301F058CF18286"
+    },
+    {
+      "path": "Runtime/SSGI/HoSSGIRenderGraphResources.cs",
+      "sha256": "6B9254A680516D12C6BDD1020EE8F834BC3E7B592579138B58D6F2795E35051D"
+    },
+    {
+      "path": "Runtime/SSGI/HoSSGISettings.cs",
+      "sha256": "73A7A4CCA1E78D839216A071C9B7D131F44845D60EA6B5A30A1A6CFA5F82157B"
+    },
+    {
+      "path": "Runtime/SSGI/HoSSGIShaderConstants.cs",
+      "sha256": "35B453D48151D1A71C903DCFE586C632E20632EE8938807CFB67B0882DDACDC9"
+    },
+    {
+      "path": "Runtime/SSGI/HoSSGIVolume.cs",
+      "sha256": "7A4278A64695A0DC1571D776A7DEA1AEB56DC833C76B3F35A5A4BDBD28CA9C47"
+    },
+    {
+      "path": "Runtime/SubsurfaceScattering/HoSubsurfaceScatteringDebugPass.cs",
+      "sha256": "0A0C16B4E0C7C89EB3349A6BB34CEF8A1C9BC4F97AF025838CA1B3623EB4691E"
+    },
+    {
+      "path": "Runtime/SubsurfaceScattering/HoSubsurfaceScatteringDebugViewInfo.cs",
+      "sha256": "9720F34BD63B7F17DC251377BE5F4749A0EAE60000E7F58868EDD02E6FBF7AFB"
+    },
+    {
+      "path": "Runtime/SubsurfaceScattering/HoSubsurfaceScatteringRendererFeature.cs",
+      "sha256": "232DAFE2033CBB9E8F2429FDB4A07ED6FB540A014C7A01A04E59C91605A45934"
+    },
+    {
+      "path": "Runtime/SubsurfaceScattering/HoSubsurfaceScatteringRuntimeDiagnostics.cs",
+      "sha256": "DFD78D0541AF1849CF9108D718B3155654CEFD26C738CB733CFCDE2AEB06454A"
+    },
+    {
+      "path": "Runtime/SubsurfaceScattering/HoSubsurfaceScatteringSettings.cs",
+      "sha256": "9D15546B8FCA7D3622BD735DEB01776941946AAB7DC6B4FE67305E4DC062FE55"
+    },
+    {
+      "path": "Runtime/SubsurfaceScattering/HoSubsurfaceScatteringShaderConstants.cs",
+      "sha256": "9D8BFEE97313BECDA1393935177CDA0C89BFE14533CC1CAD7475A7D91428CF95"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceAssociationInputs.cs",
+      "sha256": "73903FC2D64BBE257BCBDCCD0E46291B6842B080DC6D5ADC48344791C93C7542"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferCorrelatedSemanticPass.cs",
+      "sha256": "78B95408470E446D61A1058498D4A9E81505345323E0A389695D07565157AC52"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferDebugPass.cs",
+      "sha256": "DE1FE816730651A238923F4C466AD74C32E29C9D2FF7EA10E29FD66888654AC7"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferDebugViewInfo.cs",
+      "sha256": "73963511C66944F56AD9495CCABB1F4FA25273E846DB29B2022CD03B642121C3"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferFormatUtility.cs",
+      "sha256": "570AD07F4A4ADC668B580E1793E90B5A96C2E6F670678C83B30B5E08FADC751C"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferPass.cs",
+      "sha256": "F8850DD11385117B6E9CDB164473BE34C215BF811B38F8162D28E9C6A878A97F"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferRendererFeature.cs",
+      "sha256": "21E03D92BB526186D45BA0448C95638C56E4DC6F7E28BFA36625004C2C73FF0C"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferRenderGraphResources.cs",
+      "sha256": "46CD281F857B05700A3AB8D94A846C853B201D536E8BDA777E259B3669E0B7CC"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferSemanticPass.cs",
+      "sha256": "0F4C7B9E1574A87AA4099D14E043B83C3FCAC14E492ECC2912EE87C59CD0FA74"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferSettings.cs",
+      "sha256": "595C3034F1428A32A3D9FEA1B0E1639F73C3840BDBC75CB5B52A452377D64D9D"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferShaderConstants.cs",
+      "sha256": "33D6E83FB7149C6765B8EC96809A209E9D1F2F6F36F2ABA2F51C05F379099BC3"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceBufferVolume.cs",
+      "sha256": "403AC9272AA13812474869AE4948DDC95487E8D4D525D37389FBA63A9CCCA423"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/HoSurfaceSemanticPrecisionDiagnostics.cs",
+      "sha256": "80084B1271697B404237920F47FD45BA892A78D7D0EA05C35C9FD6333766C47B"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/Shaders/HoSurfaceAssociation.hlsl",
+      "sha256": "47735459925673E7D9F805A86AE227CA6D51AD490DCA4B9377134FDFF6E367BC"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/Shaders/HoSurfaceBufferCommon.hlsl",
+      "sha256": "A197A13DC7E7EEEA87EC58EC3F28ABF4BA355704102130CD50E38FAE2BA13D0D"
+    },
+    {
+      "path": "Runtime/VolumeLight/HoVolumeLightDebugViewInfo.cs",
+      "sha256": "C178903753A53C434D60449AEC999C2EA5161E180AEA54BD6D7B13AE01741FE1"
+    },
+    {
+      "path": "Runtime/VolumeLight/HoVolumeLightDustPass.cs",
+      "sha256": "73C7A8A52DE99BA53707FA5E0BE265FB9F2A0197D06A581B53DC1F5F7DC90651"
+    },
+    {
+      "path": "Runtime/VolumeLight/HoVolumeLightHistory.cs",
+      "sha256": "73C2F8A8ABE60DF0AF3DF82C5E98E6182A90384492DBD786781A9D7A249EE20D"
+    },
+    {
+      "path": "Runtime/VolumeLight/HoVolumeLightReconstruction.cs",
+      "sha256": "092ECFDEF10C543774B3B7D3E9EEED1420077F376DA331ED5458178687E188EB"
+    },
+    {
+      "path": "Runtime/VolumeLight/HoVolumeLightRendererFeature.cs",
+      "sha256": "2DA7F098B7ADF10CFAA32F372918A284B7F2FC4DF94925DA8CD8B7E39BC3CEDD"
+    },
+    {
+      "path": "Runtime/VolumeLight/HoVolumeLightVolume.cs",
+      "sha256": "F7F0EE950FDFC6D0660803929F1A71D351A7FE468E0B17DD85C94AAF8BF533DA"
+    },
+    {
+      "path": "Runtime/VolumeLight/Resources/HoVolumeLightReconstruction.hlsl",
+      "sha256": "FD939D385720B9C45A1334CF6AD0C72EB9742D9CCBEBBF51F7C00D1E69B2FA03"
+    },
+    {
+      "path": "Runtime/VolumeLight/Resources/HoVolumeLightSolarCommon.hlsl",
+      "sha256": "B598E186BCC054A7566B2254479B743E4149047BF04E28D627977CE80EFE61CD"
+    },
+    {
+      "path": "Editor/jp.lilxyzw.liltoon.urp.extensions.Editor.asmdef",
+      "sha256": "3C042FD455CAC7A92F785631AC901BE8A2C016FB099E7E0838D7155D1CE579A6"
+    },
+    {
+      "path": "Editor/LilUrpEditorSectionGui.cs",
+      "sha256": "11D6E6CCF715C66210D9F352D344F3894C38165B9924CED5DA16CA95BCE50FFE"
+    },
+    {
+      "path": "Editor/Atmosphere/HoAtmosphereDensityPresetBake.cs",
+      "sha256": "8047B685295FC3EC5926CB25E34B74A6D5F0B34876D8ED16DA823517C035FCC5"
+    },
+    {
+      "path": "Editor/Atmosphere/HoAtmosphereDensityPresets.cs",
+      "sha256": "70BE3C8EE3934C053D735F53684D515B68C533C9AB249FCFE3A216DF8D32B733"
+    },
+    {
+      "path": "Editor/Atmosphere/HoAtmosphereDensityPresetValidation.cs",
+      "sha256": "2359E79DA65AB9F8E308E36B3072E586D0070E8004D069DABB706BFC53021A8B"
+    },
+    {
+      "path": "Editor/Atmosphere/HoAtmosphereDustPresets.cs",
+      "sha256": "1A98EC5CE40B040627BF45D8B88B95C8093C5C318F8014D8BB7012E99183AE33"
+    },
+    {
+      "path": "Editor/Atmosphere/HoAtmosphereRegionEditor.cs",
+      "sha256": "39FFEE7F1AE29424DF2C2A51951CC66CCCEED276A82165F4B2DE4444A2A2C5E1"
+    },
+    {
+      "path": "Editor/Atmosphere/HoAtmosphereRendererFeatureEditor.cs",
+      "sha256": "3993FF222373AFFD8227610044BC42C6A0C9793EF5DDDD17507F928CA4BB79AC"
+    },
+    {
+      "path": "Editor/Atmosphere/HoAtmosphereValidation.cs",
+      "sha256": "0F1DBC4D6B567247E8675D76285CA614E647F5F0518B262D6D3E81686BD29C6F"
+    },
+    {
+      "path": "Editor/Atmosphere/HoAtmosphereVolumeEditor.cs",
+      "sha256": "09B41A39CF2F7A91D7A2F310CD8D17CF9C6E1CB5956DEEA1E57BE1EFDE11C078"
+    },
+    {
+      "path": "Editor/AttributeComposite/HoAttributeCompositeRendererFeatureEditor.cs",
+      "sha256": "C3A9337499108A7BF17E3B8204398BF3324968041D6304F7BCD6E8E359870AD8"
+    },
+    {
+      "path": "Editor/AttributeComposite/HoAttributeCompositeVolumeEditor.cs",
+      "sha256": "9CBD498150F4533D308B01A3A27110F9585B4B781A0BF1A09182BD58DE2A8E38"
+    },
+    {
+      "path": "Editor/CharacterShadow/HoCharacterShadowEditor.cs",
+      "sha256": "D9AE21AB0933D118186F0C61D8910CE5E15C0A90B16108867F48DDC6A33C0696"
+    },
+    {
+      "path": "Editor/CharacterShadow/HoCharacterShadowRendererFeatureEditor.cs",
+      "sha256": "15072E062A0925BDFB4FD44658F3AAC4E3E4A3B490E9A99F784306A67D39F2BD"
+    },
+    {
+      "path": "Editor/CharacterShadow/HoCharacterShadowValidation.cs",
+      "sha256": "BCFB80A0F466E5F3D5A2675518D11D4E7249CED9889D816142A963A13938A043"
+    },
+    {
+      "path": "Editor/CharacterShadow/HoCharacterShadowVolumeEditor.cs",
+      "sha256": "E7C4AB6C5F0A8C76513C9F9FF56D75C9D249A1F4E493E0E0C6BD60C0485C7CAA"
+    },
+    {
+      "path": "Editor/CharacterSpecialization/HoCharacterReferenceFrameResourceLifecycle.cs",
+      "sha256": "447FC91183308BBF9BCEA4BBECC12CED402FBA0FAE19D9A87951A1DB6E1AED14"
+    },
+    {
+      "path": "Editor/CharacterSpecialization/HoCharacterSpecializationRendererFeatureEditor.cs",
+      "sha256": "CB809515DCA2B9426E041B3B0685992DD0459852A4A4A2F343F1F5C13C0118BA"
+    },
+    {
+      "path": "Editor/CharacterSpecialization/HoCharacterSpecializationVolumeEditor.cs",
+      "sha256": "B1503E0C47BDED681CF112281FE505DC4BA90571265B73C12D2A1CC1D27FA75C"
+    },
+    {
+      "path": "Editor/CharacterSpecialization/Effects/HoCharacterDropShadowEditorSection.cs",
+      "sha256": "29AC6B470DB5F378CA00F68EC51CD69AD188B2C67124FA0C5874C8A9748F8699"
+    },
+    {
+      "path": "Editor/CharacterSpecialization/Effects/HoCharacterEnhancedOutlineEditorSection.cs",
+      "sha256": "30649EB028ABA949D0239876D9121C0655B7458765CC58B86551C2FDAB02D11A"
+    },
+    {
+      "path": "Editor/CharacterSpecialization/Effects/HoCharacterEyeRevealEditorSection.cs",
+      "sha256": "6A563C5F7EB4961193FF979CA45D64156F6FF36B4FA546B1A90AF8762D06CEC8"
+    },
+    {
+      "path": "Editor/CharacterSpecialization/Effects/HoCharacterFaceHairDiffuseEditorSection.cs",
+      "sha256": "D5BA7E7F3A22B5C57EE0765E9E41E8B295FCE78915E3B09416B8660DD59E2B1C"
+    },
+    {
+      "path": "Editor/CharacterSpecialization/Effects/HoCharacterSubjectOutlineEditorSection.cs",
+      "sha256": "DAD784684DA55C2AC34C2AF468CF76BA58B3231FA7CC1D93EC0E1E4B1035AEF8"
+    },
+    {
+      "path": "Editor/Debug/HoDebugPresentationValidation.cs",
+      "sha256": "D10F9E5AE6BD1E2224E5531674DE647E1FA7973FED643ED2B3166B86610C4421"
+    },
+    {
+      "path": "Editor/Debug/HoDebugTileRendererFeatureEditor.cs",
+      "sha256": "4865B56C76043A43363DD1970F2484C391A985F070ADC20902F9C5FA71E97E9D"
+    },
+    {
+      "path": "Editor/Debug/LilUrpDebugShaderValidator.cs",
+      "sha256": "F6F8EA343DBAF4A859320FBE6422F37A5E61762BE7163CF9B9EB8A27E432DF37"
+    },
+    {
+      "path": "Editor/GeometryBuffer/HoGeometryBufferRendererFeatureEditor.cs",
+      "sha256": "BAD203451F767944D5652137A18180EFC2290695D8F6593F4FBCBA32B8AA4FA2"
+    },
+    {
+      "path": "Editor/GeometryData/HoGeometryDataOutlineCorrectionEditor.cs",
+      "sha256": "774191D70DF96CB1024F05591F1A041497D6703D219BADEEDB6A172DF1257C2A"
+    },
+    {
+      "path": "Editor/GeometryData/HoGeometryDataReferenceFrameEditor.cs",
+      "sha256": "D60E2FFD7BFE357F15BA0BF8E013B822F5A83A1B5799A473057114B403EE80AB"
+    },
+    {
+      "path": "Editor/GeometryData/HoGeometryDataRendererFeatureEditor.cs",
+      "sha256": "8703CB1C94F42EA731CCC30CD703CE7C60E2C05DC035DC8C615C3A337E45E3CD"
+    },
+    {
+      "path": "Editor/GeometryData/HoGeometryDataResourceLifecycle.cs",
+      "sha256": "BEF63F6ADAE675FB20F7AB702F36741BB7BEAADA201A1530C638F7D30BA6ACF5"
+    },
+    {
+      "path": "Editor/GeometryData/HoGeometryDataTensionEditor.cs",
+      "sha256": "CE14016FA759E868BA6454F76A258E419CE3F8C2BED4625F9E07B772D8F1FE23"
+    },
+    {
+      "path": "Editor/GeometryData/HoGeometryDataTensionPreparation.cs",
+      "sha256": "7AEA3D7AF91BA84697DDBA7496618E585D305DF840CA90B259D0AEC2F9F4C120"
+    },
+    {
+      "path": "Editor/GeometryData/HoGeometryDataVolumeEditor.cs",
+      "sha256": "0E841B29C2929D0D180250FF992A2663AD72EBC2D7E8F5DDAE2339B9C1C5294C"
+    },
+    {
+      "path": "Editor/GTAO/HoGTAORendererFeatureEditor.cs",
+      "sha256": "9545E1F8DB525D6BCACFAC5E4A965D69EED8D7DF10D0B0A1A464BB80EC7191B5"
+    },
+    {
+      "path": "Editor/GTAO/HoGTAOVolumeEditor.cs",
+      "sha256": "4857BD5641FEA1FA08E793F471E2DCE6CA9F87A8521C24EC9218959C8504B6D6"
+    },
+    {
+      "path": "Editor/LilMatConvert/UnityGltfPbrGraphToUrpLitConverter.cs",
+      "sha256": "14E2E0C2F8511FB6341C6BC6E4EADCDACE43AEFC3E588B8130DD6B371FBC91DB"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoGradientTextureDrawer.cs",
+      "sha256": "F68A7523EED67349EE51EC22B4DC428DF07CA8D78A02D9273CD6E480A65DE0AE"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoMaterialGradientDebounce.cs",
+      "sha256": "DC0B855BEB506DA0A3D119EC654499BE755E7A9C0A747BDAD0CFED442BA24238"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoMaterialGradientEditorApi.cs",
+      "sha256": "B6238CD10C7DC678CD3C125A6E852985305F1E58DB645B6B98F5B17349C2A554"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoMaterialGradientPresetLibrary.cs",
+      "sha256": "A7069DC3554CD5CD00AA418876391B6A306DC11280AFF3CC5ADAD91F633E51B2"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoMaterialGradientPresetStore.cs",
+      "sha256": "54828D6148607742E03C9D4236B0C22DE5463439F7626BA32E2BB04D37C7C27B"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoMaterialGradientPropertyGui.cs",
+      "sha256": "39A76270E5F945F81A8006D48C7A8C6E8BDC8A015230462ED03F84387B9EE2C6"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoMaterialGradientPropertyRules.cs",
+      "sha256": "A3F24D777E984FC735A32B3520AEAF81F93406BE65D5CBF50D876032F12AC0ED"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoMaterialGradientShaderGUI.cs",
+      "sha256": "B747151D75DA6D5F450F3287C9E5614A067C308F9F1384BA9DFFFA9269BC26FB"
+    },
+    {
+      "path": "Editor/MaterialGradient/HoMaterialGradientTextureBaker.cs",
+      "sha256": "32E3CE2916CF87EC6F2A3DCDFE720B329A1A5313C8E1C4AE6F703D2F239895B0"
+    },
+    {
+      "path": "Editor/ObjectBuffer/HoObjectBufferGroupEditor.cs",
+      "sha256": "46F15BEFEF2DB4016474962AE0231D922096006FEE237E1DCFC4985949A11BAE"
+    },
+    {
+      "path": "Editor/ObjectBuffer/HoObjectBufferR1Validation.cs",
+      "sha256": "936B46730958B6CF54618757615A4465706BEC5A954300CA416A186873B48F11"
+    },
+    {
+      "path": "Editor/ObjectBuffer/HoObjectBufferRendererFeatureEditor.cs",
+      "sha256": "A3C493D876CD3AA7BBC3E51FBCBE6A218A68C11473987BA62D589BAF9C6048DC"
+    },
+    {
+      "path": "Editor/ObjectBuffer/HoObjectBufferVolumeEditor.cs",
+      "sha256": "C87AB4618F277333884BB71ED6705E7B2CA940DD9321EE431549B2D1C77F6481"
+    },
+    {
+      "path": "Editor/PlanarReflection/HoPlanarReflectionRendererFeatureEditor.cs",
+      "sha256": "22A6F5DFE0E04C3E8B32B122A853D66058A04E578B52A9F4F15991AAC5DC4F03"
+    },
+    {
+      "path": "Editor/PlanarReflection/HoPlanarReflectionSurfaceEditor.cs",
+      "sha256": "11E8AB3FD3B0F88B51D51BC1C992B54B3EA0E872730FDAFC13A18058B0A4DBD9"
+    },
+    {
+      "path": "Editor/PostProcessing/EffectBrowser/EffectBrowserCatalog.cs",
+      "sha256": "472AD90C78D28673B347457660723C7ED5F74E4C141F74C7D2781EE373464819"
+    },
+    {
+      "path": "Editor/PostProcessing/EffectBrowser/EffectBrowserEntry.cs",
+      "sha256": "E8C07DEA16A1495D19CD4F108835F7E052106AFF9537C374491366759CF7FA07"
+    },
+    {
+      "path": "Editor/PostProcessing/EffectBrowser/EffectBrowserSearch.cs",
+      "sha256": "2D32E1552485F4A24DD820529CAFE5432E2D2BEEA0B55FA51C14C70D56D839F2"
+    },
+    {
+      "path": "Editor/PostProcessing/EffectBrowser/EffectBrowserState.cs",
+      "sha256": "1AFB836788B63B91DFCD454423F4D24BE550685B666099AFB8E6A9302D5DAB0F"
+    },
+    {
+      "path": "Editor/PostProcessing/EffectBrowser/EffectBrowserView.cs",
+      "sha256": "0501A5F2F7A59440CA2565BC51377831BBFEE54C4E8D88723857994787080D77"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessRendererFeatureEditor.cs",
+      "sha256": "8BB2BA63D411831A0E500234348C2E26464B6E12EB52D11EECD4A700D9A2C3FD"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessStackGlassViewControls.cs",
+      "sha256": "1FF3A745850696004497D43A5EEA958CC0C6E1100E18C2F4E35C8644E94DC112"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessStackParticleViewControls.cs",
+      "sha256": "74DE19A5F02AFCD9AF3D02C53AF78981160D1EEB0F408927364F4478C2871D08"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessStackViewControls.cs",
+      "sha256": "1E28DF96CCB7B3242B27CFA81E1642C68F7AC77905D0D04DB3C01D1001AC316A"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessStackVolumeEditor.ColorGradingLooks.cs",
+      "sha256": "53646330BACC7FC3D4303DB5DC8BEF005F723BEF6BA05ADC60117C27666ECBED"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessStackVolumeEditor.cs",
+      "sha256": "1AEBD30857E90E1E92716B7238B1D7A30DDE772AB2FA0B26AE677A085B27FF4C"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessStackVolumeEditor.GradientMapLooks.cs",
+      "sha256": "940E42D7884FFD24091B37736AE27AD0E0E0CC7F16FDE2ACB3F60CF6FC82A2C2"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessStackVolumeEditor.HalftonePresets.cs",
+      "sha256": "0D7450EA19D8D79360822C37367A3B97036072D6F985B5172CBC217B5FFA60F5"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/ImageProcessStackVolumeEditor.Presets.cs",
+      "sha256": "97DB9C462D09D758D2BB327BD2C05CD7710FBB7D63DF1E74949198F33B1A6F1A"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/ApertureBokeh.cs",
+      "sha256": "EC3B288FDB6A44E4F20DA19AC0E5D2FF227879D3A620B9FAFD1FEECB9B47E2AF"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/AutoWhiteBalance.cs",
+      "sha256": "F976DC8118DC5318E4BF710FE08E7E9BA3F3D9B698FE982F912613FEA7E77D26"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/BlueNoise.cs",
+      "sha256": "82EDBFCBA660315C138B4441606E5D20959722D44DBABBF7A1826BE8667CD3AC"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/BokehZoomBlur.cs",
+      "sha256": "45C667703FE1367BDD11E40E182B6CD4963020E814BE80F6CE23304C6BF2E5DB"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/CenterColorCorrection.cs",
+      "sha256": "C4BED1309173CD6D22BFEDA548894B4EE082A0C55E9B77BDEEE1E7C4F5A539FE"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/ChangeFrameRate.cs",
+      "sha256": "304C4EB2AED61388E619DA400A1E00631D45854789BF063840CC6A20FF921F43"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/CinematicBars.cs",
+      "sha256": "E3F53E4788D62B9CBEF4A37F4C5E7B4C96B6B7DDB298A3AA73FF92E2B09BC6CF"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/ColorGradingCustom.cs",
+      "sha256": "4D4B1F769C5734E5D454B491B13B012E48B71F1D82281CB1012BBCF668500D4D"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/CRTEffects.cs",
+      "sha256": "24A3252C30B1C7C5B14A9EAD8AC2C1CC309CF96C18E7E09C659C0E8D2EA21267"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Distortion.cs",
+      "sha256": "0DA7586427605EECA77C7C6538BA0E56BE28F5DE54EA902542A036AB7FCEA85F"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/DitheringCustom.cs",
+      "sha256": "00BE1DEBD307EAA586B0622A28CD2E954E7D16B937070C38360EFECA62E02C49"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/DownScaleResolution.cs",
+      "sha256": "03622283E02864498B23D2E3A35D4C4B972604C5B60D680C513BEF0634097216"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/FilmBreathGateWeave.cs",
+      "sha256": "CE90CEE349CC8FF7A40CF5051DB2AD8A03042DC8F354CBD075545F3384FD7C6B"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Fisheye.cs",
+      "sha256": "E905820CACD21203EC1B659211BA108E02907622B1C5F46190DD958B30C1B2FE"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/GateWeave.cs",
+      "sha256": "E2F7652BF421B8F6BD1E65BEF62F1EA2DC27E07ADF999306168D872F8AFBAABA"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Glass.cs",
+      "sha256": "601B596699DBB1BFC0C513D87E64F5F9E703E2BD27B2538D8C47CD26C6B79281"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/GlitchArt.cs",
+      "sha256": "A58D1D83F7E71978D496ED4AEBFAFE54D3FAA1D7A3DEC5C8E5D4C42230A14B29"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Glow.cs",
+      "sha256": "748F6EA8A4C864391358994A7F4E988BF090C7693EB789E7E861FAEE9E962591"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Gradient.cs",
+      "sha256": "E252DA038557E81856A33A05103ABA7E987C5F9FE1522896DD04B9F92BF45DB8"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/GradientMap.cs",
+      "sha256": "27565AB04FF66F2F866E36641D0789E2DEC26A299E746106039D720C84ABFC64"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/GrainCustom.cs",
+      "sha256": "8FD49E0F08738133422B2A61CBBA8D5AA57D711D66F371AEE27F44083DF5C21F"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Halftone.cs",
+      "sha256": "0173FBBB4750E96BCBC578DF00120B204AE4D269556610BD206BE8C67748B7FF"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/IrisBlur.cs",
+      "sha256": "07408AD85543673E0314CB7ADF1E9273AC8BDE84923E215D6BAAECE44DC1D662"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Kuwahara.cs",
+      "sha256": "27149BA42D1EFA7C9873495393D07724AF18EEADEC15CB07E92DCB476A0ED47D"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/LensFlare.cs",
+      "sha256": "9F20FAE623E1FA02D22CC69EF6F06E94CFF26884EAF93EA9AC4BE0F1E4B09B34"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/LevelAdjustment.cs",
+      "sha256": "29FF719CBE6950C511A87D22E92580B84D2A396EEF8B240A1A365916D5AB38D2"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/LogoOverlay.cs",
+      "sha256": "F86DE7F847AE595AD18A0AE60554934D87CB00982DAC9DE49C7B05B8BF5DAFF9"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Particle.cs",
+      "sha256": "9F9F5F73AEFCFE8759F21629025F0E3A4240D16F346C350140A0514A63640867"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Pixelize.cs",
+      "sha256": "A2DF9B96D51EE6EF5505A8146DC3D2E00066DE6A98D49B080006AEFA691B2146"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/PrismFracture.cs",
+      "sha256": "7CDC078330A5AFA0D6AC6210472F0D272E1B9DFDE41BF391014BF2B02E6E94F4"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/RGBBlurV2.cs",
+      "sha256": "A10341FC8BAC149881758A7C89D3D8684F9A8EA472C9E450637E90CA0ED0CFDB"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/RGBChannelSeparator.cs",
+      "sha256": "1DD75B26F743B6FAB996BE0C75BC68D2752826A46876DC99C0394B8CB1D729E9"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/RGBSplit.cs",
+      "sha256": "01CABC89148DE2474E8005BA185CB08ED23B91C56C9CA9FE485D3DC141B2D694"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Sharpen.cs",
+      "sha256": "4CA887C601FCC0821AE2711CEB72BF254FDA71D7E6F092B9254B657A38AA8AF9"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/SkyGodRays.cs",
+      "sha256": "AFF8784F0EF0C89345AB1DAB5F22C9767B119993625F6495B2BB988769BD574E"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/SpeedLines.cs",
+      "sha256": "B2BC93C43FCCB245738E4B2F747F3BB44A1AF74BFA6E8E851D703518D2A41970"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/ToonMap.cs",
+      "sha256": "B501C0A95E84C7ED4F43837EFAF180815E8CA6208C6C13C4B8FA99F011B7C5AA"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Tube.cs",
+      "sha256": "4F4A4EC26A5D960DDC8F53E13178B36E8FA4ADBCD1F1FFC883709921D8487A2E"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/VHS.cs",
+      "sha256": "A3EEAB8384601DF7F69A846629FFF3F045C3C02A0AD0D1A5555462C167099ED3"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/VignetteCustom.cs",
+      "sha256": "6F6CDA16E003B653318F6EF932D99597492EFA3CCBC6EEF06B8DEA877EBF30DA"
+    },
+    {
+      "path": "Editor/PostProcessing/ImageProcess/Filters/Weather.cs",
+      "sha256": "B116A23FAEA7CDAC31BCF8299F949CD4F6A258F17E6DC2CF573C37120564A517"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/ScreenProcessRendererFeatureEditor.cs",
+      "sha256": "196D7874455B5B471CB61848566A00BE5C68B9020F527940E16209B4BA330093"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/ScreenProcessStackViewControls.cs",
+      "sha256": "D28FC4014D1893A249C5C2BC9815EB2862FC274A3C1924EE1E5DCE7667739CFE"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/ScreenProcessStackVolumeEditor.cs",
+      "sha256": "6F885322A01AAC35C1442472DFB68F3824B0F82C87D6DDCB9632F66750ECC9B2"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/ScreenProcessStackVolumeEditor.DepthFogPresets.cs",
+      "sha256": "E9B2241AD96AAFF8EFFF5D75934E59F5BE97C99E1D1B932FE45B5DF529F53C04"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/ScreenProcessStackVolumeEditor.Presets.cs",
+      "sha256": "C3A65D593C524A3A92E8D252ECCFC049D9B821BCCF3D6731892422C9B34A0F31"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/Filters/DepthFog.cs",
+      "sha256": "6ACC046362262C0897F0352480343BC00C8FC1CF9EC2050F63EEA236720672BA"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/Filters/DepthOfField.cs",
+      "sha256": "F61DF5F4B4DB90CB8692C718B4FB0E52662D06FCBDF3F80FD9A98447FBC1BB47"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/Filters/DropShadow.cs",
+      "sha256": "7EC26F01C4F95519DDFCB73E5D4DCF950E52F4E2B2F096903D7609ECFB21EA69"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/Filters/EdgeLight.cs",
+      "sha256": "628886E4AE9B72E10DA075ED9559B0C9D5676CF2D2053DB99A6754512F376C22"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/Filters/Outline.cs",
+      "sha256": "2211777A989AB487FDBC7BB1DC8B3CBDD83E93A8DF3E7E72902879E78DDA9802"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/Filters/PostLighting.cs",
+      "sha256": "963E3FE28E943EFBE5505B2734EE425AA032904C77B8C192F6EB70D11E3DEC0E"
+    },
+    {
+      "path": "Editor/PostProcessing/ScreenProcess/Filters/SkyTyndall.cs",
+      "sha256": "589692E1C189456BAADAD6DEC86EE970FB39CF36C46E47CD9F50237033E11ED0"
+    },
+    {
+      "path": "Editor/PostProcessing/ViewControls/PostProcessLayerViewControlSession.cs",
+      "sha256": "72D2D2B611B320234487160052845691C0DC4C310C46F1C0D336F08DFDD13B39"
+    },
+    {
+      "path": "Editor/PostProcessing/ViewControls/PostProcessScreenSpaceControlTemplates.cs",
+      "sha256": "02375967369E0747D3F15146B6F7F2F8B066E0624A0E730888F5E4FE6FE07C9D"
+    },
+    {
+      "path": "Editor/PostProcessing/ViewControls/PostProcessScreenSpaceHandle.cs",
+      "sha256": "684661D63B647D15A0D3D389A746EBF15E47F425B923FEB4DC4BAAE2F2BCCEA9"
+    },
+    {
+      "path": "Editor/PostProcessing/ViewControls/PostProcessScreenSpaceViewControl.cs",
+      "sha256": "8130D582DD482092BF37A4203A7E9EF3DA25906AC2B6F56DF225CB03581572ED"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTAccelerationGrowthProbe.cs",
+      "sha256": "E750C7A41F9DCFA04478524EA51C4611698F326F9C24C8448B99522E130F63E2"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.compute",
+      "sha256": "C1DEEAA7AA4A9FDAFF2D62E2F49DB2164C398017D870EDC8C2DC69C8182C4EE4"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.cs",
+      "sha256": "0369B9056E38C7CE41046FE75F03E60DDDFCC9932B824D49262FC7ABA5B988BC"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.hlsl",
+      "sha256": "0E6375364A0F769EB0B06CAD19507DB9045C2A10D8FF55E99902374FA4B24B82"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSceneValidation.compute",
+      "sha256": "00848C0C66BF421ABA2D053AF1B1650D0A06E4C3E8BC06FDE6FAB507F98D4D48"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSceneValidation.cs",
+      "sha256": "A791C875D5871A8FF819A957929A8B60C875199BB7A4BDB7E86148A1D237A510"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSkinnedSceneValidation.cs",
+      "sha256": "E633417FB5BF3BA6C0926707B4C0CBA2BBFA22152717FF5743ED7D5CE49F6663"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryEnvironmentStageValidation.cs",
+      "sha256": "19F4A92D4120EDE3CB0AB41F4E04FB8E5DC75E4D42C8132CEB81FFE83CFC86E2"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryEnvironmentValidation.cs",
+      "sha256": "6EA1CC2AAE0EC8845FE49927C8BFF075504959DB123EC2644DE21460C1403CBD"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliarySpatialValidation.cs",
+      "sha256": "DED5DD7C380E7C94B2503EB45DEAE45B25BC3F2717CE503160739950AACE3562"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryVisibilitySwitchValidation.cs",
+      "sha256": "D2C685FAB85C70BE37CE4FF7EEDD13B3D50BA20D9192C0F67361FA0AB6F959A6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICastleFrameValidation.cs",
+      "sha256": "CD6A59EAC2CE95819EC31BF86FA39B288C8162C4DDCCFD745E72A8CA02430382"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIClampingReport.cs",
+      "sha256": "AF8B085AA38C4BFDDE43292970A8D4C7C177F68CE232E53B005F2BF09E8E4D2A"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompactAuxiliaryValidation.cs",
+      "sha256": "A40B9C9D124AB67E4522C8F0E3938BCDB871F6F6A361C89274D049DDEA5E8C1F"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIComponentNoiseValidation.cs",
+      "sha256": "E5DDCC29BE8C1617C0A89C26417D9E4356A314CA9DD32C35136B462ABC91F602"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompositeBlendValidation.cs",
+      "sha256": "7CE78811F3BEB8616C6FC0C8BA152A20EC3294FB4A0E50C55A351BA752E65458"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompositeValidation.cs",
+      "sha256": "E019D66F7B10E947930CDBE6368CE3F5804D26B8E999E7F540F602CAD0D02870"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIConvergenceStatistics.cs",
+      "sha256": "AB383EC28CD374BAD5856617B5CA27E64EB8B62F0B4B19A845EB7EE4DF070214"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIConvergenceValidation.cs",
+      "sha256": "46B55A406B633FEF7E6EDF7B39C1286BC2194454AD237904EBF4ADA5B1EDD3C6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICurvedValidation.cs",
+      "sha256": "408A92A34A1FA6D2E77D8605610C675244BF98C90E06891385FB547DAAFAD501"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutCubeValidation.cs",
+      "sha256": "CEBC23103B0A4280253C3FF92EDBCC1DFF2844BAB6D6BCFFFC5836F2740E573A"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutGpuValidation.cs",
+      "sha256": "B2F096C8FF112CF9CC04D1AFEEC8B25FC48CA923FA075BF948EA4045052D43A6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutMultiQualityValidation.cs",
+      "sha256": "0776683F25B395211BE24CF54B6C4B3E5C12CFCAAE5C0BCE9E979825B0C9ECD5"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutQualityValidation.cs",
+      "sha256": "38D645831486C4BAD95A127CBC37753A120B66218453AF09B3527859E416DC1A"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionMotionValidation.cs",
+      "sha256": "F82B93632825D6D136B23B11CA14CE86FA9ABB79D0257A36C176EE2F893BADC0"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionSpecularStageValidation.cs",
+      "sha256": "822DD1251AD251D334EC3A8B83D7B976796A7821C98D83DD3F79A28CDF9D5AA8"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionValidation.cs",
+      "sha256": "AF243EACE2CCB22F26399B6C8A2A4C2E541345A946DA3340B462077E002C9F04"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutShadowStageValidation.cs",
+      "sha256": "4AE9B665C432868208C82057AA10D87063A8B90CA4187318D3F721275249B020"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutValidation.cs",
+      "sha256": "33AE73BF92DF9381158F3B771620F3616DE80E7C8432A5FE3CCA7E75B7E2932C"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDemodulatedProposalValidation.cs",
+      "sha256": "1B711D369B7BF589B6216434CA547E64A4DAB2F031ABA5528C8DDC9F6D2F6B46"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDiffuseColourStageValidation.cs",
+      "sha256": "357702B6D02E5FE6E2A18C106F45E81AA2230686EE615EA5745055B3B2FAA729"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDiffuseSegmentValidation.cs",
+      "sha256": "658B70415EB35F589090AF37A744CAE8932FE33DDC6B43A3DEA168A7A597627A"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDynamicAuxiliaryCDFValidation.cs",
+      "sha256": "37BE87ADABC8A999E9CDD3F3C3014910B54E80AD9DEA67406ECEC72B4CB829E8"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentDirectionValidation.cs",
+      "sha256": "29DFEDA610A647850267D4546C014B41EE44870FD6033FD133A9F16645261E89"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentIntensityValidation.cs",
+      "sha256": "65FD024EBF3AC6977E623FB571E8AD7D909D235D621971A90F1A29F307A3B174"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentValidation.cs",
+      "sha256": "FC5D57EF8213EB7CCCABF9284A244A93E38F56DCF291F8B53FBE80ABC2BC2A05"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIF0BoundaryValidation.cs",
+      "sha256": "D11794C4AD224C52EF8924BA6B3BF7ED509265B9B89596BF11AE17E674DA0E04"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIGuideDistanceValidation.cs",
+      "sha256": "99CC1EA94D5F4C10EF4910EE73D491FECEB879479A011185CBFB6F717BAD8C19"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDILateSpecularExchangeValidation.cs",
+      "sha256": "22B7D8642D2C364A4981235C8B170E44C9BF771A47651FA154D8AE25DF1EF316"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMaterialExclusionValidation.cs",
+      "sha256": "FA8A8EF787A26B3D04CCE22258140A97C1BB9BE333FDF96A7B7A979A6D867451"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMotionProtocolValidation.cs",
+      "sha256": "971C05A619EE10C0B7C4DE2648DBB918BC8028EF74A756721F35B66DD983C101"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMultiCameraMeanValidation.cs",
+      "sha256": "A6F76C876CE6F207A4693E9305DE167EA5D649329B4E6FC78F0FD1C28E68DAF3"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMultiCameraValidation.cs",
+      "sha256": "9F2504199C9175C18777F8DC7F9E46AC5251EC28BD7AFA73767CBAD49C65CEA7"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDINrdRecordingValidation.cs",
+      "sha256": "6F6192B3F7C35F61AF4D31459BE9C1CD6E0DE49B9D10642E870A4CEBB1FC74AA"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDINrdValidation.cs",
+      "sha256": "59189808AE13FD0526E84583B3B998E5F98AD545AE44391F6A636FDBA6F0338C"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIOpaqueAuxiliaryValidation.cs",
+      "sha256": "23C483233B68990AC9E9A808CDD9A3633704228F34E31C9D32C60783809749F2"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIOpaqueDirectAuxiliaryValidation.cs",
+      "sha256": "ABA111F45C80BB6772EB4AB033B4CA4561C7C18351BBDB719964424639F1D099"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedFinalSampleValidation.cs",
+      "sha256": "51AA2DAEAEE8759BD2FFB9A538FE88E06EA2572842A8A674BC1E791B19BF241D"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedFinalSequenceValidation.cs",
+      "sha256": "A2B65C38A46EA053F29514D834F7F7C6973BE567ECCB716DB6476A48468EBB3C"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedLightDomainValidation.cs",
+      "sha256": "01AC3F2228FB3C8DA66EDDE10FC8DE913D4159D449CB312BD7C5AED14D2C9950"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedPowerCDFValidation.cs",
+      "sha256": "5430B37F87D76FAEF03FB39B2AA8C81EF20BA638D1F48C4744B37C93C8E3682E"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPlayerValidation.cs",
+      "sha256": "05F2EBA016700CCB2C386DDE0BACEAD1B87A1243ED2DE1D331B03FCBF4EF6D48"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPresampleCoherenceValidation.cs",
+      "sha256": "BF301799C6125F4F7A47F76CEDAC4809C287083F16C84556D52C199BAA47F1BF"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPrimaryMotionValidation.cs",
+      "sha256": "2E7F582117F66A93526655E2D4FFBA5B64A72F3BD6261AF27A30EC9DA0465F6E"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPrimaryStageValidation.cs",
+      "sha256": "DC23CDF46365A49B76FC5E5190D98B51FD2C0ED0350B94C1D5384435B5DB3642"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIRendererFeatureEditor.cs",
+      "sha256": "5153BEFD234F927844DDF6BCEBD5990EA14A96EC8490A6779562F9DD449872D0"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIResolutionSpecularConfidenceValidation.cs",
+      "sha256": "5C5E7F35EC6CAEB89EFCE41A3F26D1C8B7F105F50C7D3CBC2D24966A44767166"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIResourceValidation.cs",
+      "sha256": "DFF47AC356327B0B08DF20FE00BBAA4E528CD4BEB3B590FF2550FCDCEC00D362"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIReuseNoiseStageValidation.cs",
+      "sha256": "9888A8CA38244F02D8A7A3328D502C28244673231A13A3F84AA8A80AF7BCEDD2"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIReuseNoiseValidation.cs",
+      "sha256": "D362F9D86564924124080DDA03F156EEA732089A299B735651961D706ABE8E76"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIRuntimeMultiValidation.cs",
+      "sha256": "B4C081D17AACB9691EF41798B99D8B617FD0A40B9927B12A23CF2CF4DE7F7B45"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneValidation.cs",
+      "sha256": "1A98713D76F429D85CB3E9DFBE1B6C0E7E6CA94D5C3D88785C5D4A96956C82FD"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneViewConvergenceValidation.cs",
+      "sha256": "6F5DE6D9FA780ED83704B6739F4E8CC523871302E574A86231AD98947B67CC22"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneViewRepaint.cs",
+      "sha256": "D5566195746BE25372954FB90AE2FD857167B60779C289B8FB0B295246B6FD82"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISecondAuxiliaryValidation.cs",
+      "sha256": "185124E3ED07E69A52662AE95FBF1B20186D139480DD09CF4A6C6D15DD9B2D42"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISettingsSnapshotValidation.cs",
+      "sha256": "B4AF16417D18FC0E806AC5179D9672A407322556D2FB7E61F8EA826476B49355"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISkinnedValidation.cs",
+      "sha256": "72C784AFC26B29ECCB3FE6E3834250B518F8D0535EFAC7E3BF06430D6DD98080"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularDistanceControl.cs",
+      "sha256": "17419EB337A65855E28EF84B97468A4651AE187C1F238920729F977E68F112F9"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularProposalValidation.cs",
+      "sha256": "CE593EE11DB6528A8D4248AB8962B06FB5DA698986118DF9330139B6DB76D739"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularReferenceValidation.cs",
+      "sha256": "D5D1D8E4F175726195A0D018C02272D110F70326E4D8B1FCEC93F66F9DAB18A0"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularWeightReport.cs",
+      "sha256": "FD70A5FF1F97BD1568D6491053D285D15236E07B3D206CAE4185AC9CAE854B8C"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIStableSpecularGuideValidation.cs",
+      "sha256": "36FB39A87498B225EB9D9845F48BA6586E5B9C4B709E07C109C60F4E13B38341"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIStratifiedAuxiliaryValidation.cs",
+      "sha256": "D7A2E87C1A33FD822F73F05E8093E2D87E6F7F5372750B1AEE08833E946E5949"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISurfaceAuxiliaryValidation.cs",
+      "sha256": "C92B2BC881E35DFED6E8946456B8585ACEC29584849824797B22BF4DCCE8D9D1"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDITemperedTargetValidation.cs",
+      "sha256": "72EA14B64C4C594EFC0679A90441F88D24678DAC34BCCDDF478FCE78887C5BA8"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDITemporalJitterValidation.cs",
+      "sha256": "02354714D87AB59DAC1F322C6767828C355BD086F9DDFB992B5B0AB4295F1349"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIValidation.cs",
+      "sha256": "1F571B29EE5D8C24251C9D1C709D551B66023D7F385F55B1C6D80BB00064E7BF"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVisibilityConfidenceValidation.cs",
+      "sha256": "4736D43A6BD60257B1F42820F7695F66D2AA5AE5333721B1804D70E4866E736D"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVndfProposalValidation.cs",
+      "sha256": "C3C24512F28315C5D5215CFFCCD03C1CCB53A2378458F6E51520EADDE72EFDD6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVolumeControlsValidation.cs",
+      "sha256": "F8D7926BF871B0FB66D7D661D1FDA64C5C3B2EBEFBC4CE913E3E857F14B2CCEC"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVolumeEditor.cs",
+      "sha256": "05F5F17F69D89AAABE70B094C029071A90654034418C104B7D2768B7BEC55392"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIAtrousTrace.cs",
+      "sha256": "63681A4893BC940D244BA1D7259395ACC700A70DFF3856B538B5AF34C017B731"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICastleMeshLayoutValidation.cs",
+      "sha256": "CBD620612CFE38ACB0A425A734820663F5A1ACEA24817DD91934D2CCDB755807"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICastleValidation.cs",
+      "sha256": "AB62CAB201AAE26309F7D12E0178915AE2B7E6719FEF2BFE56E74B22BFCB955D"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICompositeValidation.cs",
+      "sha256": "7DC8F257CB2903FFE3AF12CC24D8B1BC27954CDD8A3B31BD1EC381DB2707FD24"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIConfidenceTrial.cs",
+      "sha256": "F36661252E1A3D31D210A53BEFBE1E3B1D9F97344D001A15AE51F819C3B8C978"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICutoutHitValidation.cs",
+      "sha256": "0130F302E511DD25180F013EA78B6CB4425A5D1AE174D86E73655DC22B9F0B7F"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICutoutLightingValidation.cs",
+      "sha256": "AC432752BE43394A0EB521F5391A0B81471ACE9EC00C96F3707392A088686371"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIDenseReferenceAudit.cs",
+      "sha256": "5A00FD350A8661B7F88F3AABFEE15DC1A3FD2D997ED6623D3C3F7D77589AE571"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIDenseReferenceFeature.cs",
+      "sha256": "3D2A13ADB2802D4109F96CDB5B9DB741A0E0344B5849FC517388AB0CBBFC4D1F"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIEndpointReplayValidation.cs",
+      "sha256": "365F3F927B88503F539B0C039481A1B04FF6B4EE6A07A5F79E6D042546C07E6D"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIEnvironmentValidation.cs",
+      "sha256": "054F6B5EB0A3B65639F257143F7593C5F466566527DF38D5B15B4444B887DBE8"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGpuClock.cs",
+      "sha256": "254CA8A289B43E5B4C6BC59CFA98C05D019ADEB58A0660823BF28C32A0D47A06"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGpuTimestampValidation.cs",
+      "sha256": "6A1009D1B68E8A2C15F1E3B7EAA380A8BB0BFB7FCB9E5A56926D988E14F78C18"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGridValidation.cs",
+      "sha256": "5A00F9ACE5A14405596CF5A5E58D78052C021ED12FDAD992BCA3A89A410ADC82"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIHistoryFeedbackAudit.cs",
+      "sha256": "A4FE23C37687D215BBDB6893561CC4AE9F12A470C2F6B2A12BDBC8212A89407C"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIInputStateAudit.cs",
+      "sha256": "FE1FF76A9C461B5DC209766E426B6255C899011E1277E1E361855C7C4CD35F4E"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGILineageBranchesValidation.cs",
+      "sha256": "3AFACFA31B1E42D2F924AFA6BC2A617D3C32C9665277830BA807DFD0D837AC1E"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGILocalStageAudit.cs",
+      "sha256": "B0CAFB9659B33A208D000856F2B7350B0BCD15425834053CB05570587EB7D827"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMatchedReferenceValidation.cs",
+      "sha256": "E8A72B46BE740EFA22F935068803C91D056ECB69D6481AF10C053C771E5248F2"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMaterialExclusionValidation.cs",
+      "sha256": "4EB6750B247ECFD97DED92CF5EEC7100DCE53058B0C2A14E8D61F59DE0A0664A"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMomentAudit.cs",
+      "sha256": "148B9D5A9BC84C72A250E213B19647C58ABD04FA793BD0A3F5B8652E33510461"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGINrdValidation.cs",
+      "sha256": "C21E423283029C99A779D15F764A55F591A4165C8BE011EBFF02A98FB2D9C3DA"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPairedStageAudit.cs",
+      "sha256": "B1DD0FCD4BFE2703C3A6FB3107D6491F6843C9F5149DAED8C3E5C80474CEA33C"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPlayerValidation.cs",
+      "sha256": "6C644C93F90CF244C522C18AC166E8F4F43B76A45942B8B5CB59CC2C49C6F298"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPoolPrecisionAudit.cs",
+      "sha256": "8CCED3BB8F5671FFCCD7D919C02A5C6CB5326363AB91D678279B89D88685E5AF"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPrecisionRangeValidation.cs",
+      "sha256": "2FD906F141391A3B6C9AF07C68A8FD39BC64483B3EF00AF4C2EED550E1D76E64"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIProductionHistoryAudit.cs",
+      "sha256": "59A8363C27F6BE03BCC15DF17DD85807C695C02FE781F7EC6FFCA9F6B8CD6A37"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIRendererFeatureEditor.cs",
+      "sha256": "F80C4341E91F2E42927CFEAC86C098D3D1E5DF3384C369004CD4DD2F041916A8"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIReplayContractAudit.cs",
+      "sha256": "8895B7E162D97A789BEC9AC9DEC0079BA4BAE3158D4C10CD4E756AF6F9C828AF"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIResourceAudit.cs",
+      "sha256": "CD83801FDE78526DF067694DA648570AB8F66DB98B03E67AE9C4AD129B3FE9A3"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISecondaryReplayValidation.cs",
+      "sha256": "58F5D25FF43FB9392CEBBAEAF39C4943060B397848230A60C554088593CACC68"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISecondaryValidation.cs",
+      "sha256": "A787FCE27F5DD2F4A2F852BA1C3E739A458DBA700BA38CF1D15E4E0E5C317562"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISeedAudit.cs",
+      "sha256": "C4958AE086F12EB16891F086B2D057BA9F97E7FB1B9FF57B1B5FC6F2E96909E0"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISelectionLineageAudit.cs",
+      "sha256": "56FEE2284FB8B7BD23FD548C22BC57DFF3BE78E4DA3D12C1EE7D6223977FE297"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISelectionLineageValidation.cs",
+      "sha256": "67364D8C4FF0CFC4B430EDDE5886FEC34E16D8AB68E167C95695836F89B85CAF"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISharedInputAudit.cs",
+      "sha256": "8329BD132CDE9C9F35C09F86FD6846A07B20DDD87D94BC3D60B0B98BA1EADF8D"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISkinnedHitValidation.cs",
+      "sha256": "204A5379A07567B1C64E2CDBB23E465CFE78C7519914FEFC29D9522CB2382A1E"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISkinnedLightingValidation.cs",
+      "sha256": "D0D9A120B42B289E5BA87C83BBD365D27D0FBC497A6730A7342A44419E5C2D04"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISpatialAudit.cs",
+      "sha256": "70CBC1E07974F43CA57060D77050F697C05412110D06745FF27875754120498D"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIValidation.cs",
+      "sha256": "EE48B5409C68D083B01776FB6CC9440D7FB2683943C214503C81E304BDDF21CE"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIVolumeEditor.cs",
+      "sha256": "CCB86A487DDA0EB2CE039D1BBA3E9ECA21B6B7862836BE0C725492DD668B0DC6"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGICutoutReadback.compute",
+      "sha256": "61F6073103CECAA732DEDC963CF85F8E444E884CA1D14AEC536917E93B853C5F"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIDensePrimary.hlsl",
+      "sha256": "0DFF51F3184F2CC411D0A10F0A459A4C5812FB6AF9B35B265F7D8F862D56705A"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIDenseReference.compute",
+      "sha256": "FD4E215999F8E4292E374B66AAB65C6E7DCF0907F677A3D279B75BEE5151BE8F"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIGpuProbe.compute",
+      "sha256": "2472CC8F265B303282C0A7671DDF614ED2AF332AB15BF960A9242DC4498B4C60"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIGridAudit.compute",
+      "sha256": "139A46C62118236F56F036194F7DFFE00774606299E7D2E48F1BCEAEBCB8CDED"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIPairedGather.compute",
+      "sha256": "9D5D7FA9C806E83B8C7BF995D8FE4624020D2A94DD97B828CF289862B4BE61D6"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIPrecisionCopy.compute",
+      "sha256": "DD76704DD414606ED38CBEDB46F594611B9A4B5B6CB769928AE0C218A410E258"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIReplayContract.compute",
+      "sha256": "65C9DFC1C4885E9578311C884DF4696291DB548C22EA2C0965FEBB48977E14CB"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGISelectionCapture.compute",
+      "sha256": "5CF58FCC4F965FD9A25D566E02593771ED50B0936B4F103904D5076DB23FF798"
+    },
+    {
+      "path": "Editor/ShadowCast/HoShadowCastRendererFeatureEditor.cs",
+      "sha256": "24E25D58C3B4D20EDCA3996D59B8BE85A1CF6D65C0E3C518D537AD9BE4BFBF26"
+    },
+    {
+      "path": "Editor/ShadowCast/HoShadowCastShaderContractValidator.cs",
+      "sha256": "3A0A073573770769D5368062DC934844FE6BFFC440331440ADBE39644574E6DF"
+    },
+    {
+      "path": "Editor/SSGI/HoSSGIFilterValidation.cs",
+      "sha256": "703275CDA7B5FC11B434F8BCA2E156E28D3C4CF4E92D1DFB52689BD36B64F654"
+    },
+    {
+      "path": "Editor/SSGI/HoSSGIRendererFeatureEditor.cs",
+      "sha256": "09468C958AF6B007DF78592DE594BCE4A36972B6A7A04A35722A3955A47B5C92"
+    },
+    {
+      "path": "Editor/SSGI/HoSSGIValidation.cs",
+      "sha256": "EF11699CC65BF9021B8BD026C25188C52751CFAC110F518A5097CB164326ED2D"
+    },
+    {
+      "path": "Editor/SSGI/HoSSGIVolumeEditor.cs",
+      "sha256": "8ED03A9496046905CD52FACA3F330B38E9E13CBD18D0A8F3AAA2A91D955F6ABD"
+    },
+    {
+      "path": "Editor/SubsurfaceScattering/HoSubsurfaceScatteringRendererFeatureEditor.cs",
+      "sha256": "D02614B57AD277835D58DC86A7BF7CF90EB2C8605F5A27047F9B54D8E9D27D2B"
+    },
+    {
+      "path": "Editor/SurfaceBuffer/HoInvisibleSurfaceValidation.cs",
+      "sha256": "F952BBC5F4C6596666F4E79A2E5E622D4C86D790835968ED058F97394FA54025"
+    },
+    {
+      "path": "Editor/SurfaceBuffer/HoSurfaceAssociationValidation.cs",
+      "sha256": "09B4209845798392BCFFAA4713E4855223C5819EBF2476F8ECF5DA7A74DB2103"
+    },
+    {
+      "path": "Editor/SurfaceBuffer/HoSurfaceBufferEmissionValidation.cs",
+      "sha256": "F7EF905113B7207FD210AADE21274FF15E8A60231045CC0A884EBC3D8286521D"
+    },
+    {
+      "path": "Editor/SurfaceBuffer/HoSurfaceBufferVolumeEditor.cs",
+      "sha256": "18BEECEE9AAFA4AE4B6ABF0345B3A432647BAC686285D05EA2B3DA78EBC68F4C"
+    },
+    {
+      "path": "Editor/VolumeLight/HoVolumeLightAntialiasingValidation.cs",
+      "sha256": "95DD4FDAEBEF22F2C44C22E426E5440E92856CB597B98AF8FD58F7CBED4EFADF"
+    },
+    {
+      "path": "Editor/VolumeLight/HoVolumeLightDustPerformance.cs",
+      "sha256": "15EA7772D89420954E41753DB8C8B7B87CB99F63494388E6BA8E8DD73295E806"
+    },
+    {
+      "path": "Editor/VolumeLight/HoVolumeLightDustValidation.cs",
+      "sha256": "A17D0CFFDD12E47216147BA59DEDC18AA6DDC643413EBDE36E268D8BA97B7963"
+    },
+    {
+      "path": "Editor/VolumeLight/HoVolumeLightEditors.cs",
+      "sha256": "5FB9A5837BE5B8886A9167D9AAFAA9076C9933FA1DA3B0235A8181F64297B680"
+    },
+    {
+      "path": "Editor/VolumeLight/HoVolumeLightValidation.cs",
+      "sha256": "4D03CE1A317EF1F21ED50BE09ACFE8C252E75C05582FD730D27CE56AD22EA0E1"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/HoNrdArchitecture/Architecture.asmref",
+      "sha256": "B6BAE689DBD20E2D763149A92450656AF5C07D8E04B5FB9ECFED417008937D83"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/HoNrdArchitecture/ArchitectureFill.compute",
+      "sha256": "C25380AB712DBFA6A03526572A5C1B07D15F880B8C6050DF6E6A8CBCF64E16D7"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/HoNrdArchitecture/ArchitectureValidation.cs",
+      "sha256": "45AEEEFA1725D2ADF643D077A16060FD56D540DBF95F01747685FF35648BC0E1"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/HoNrdArchitecture/CombinedValidation.cs",
+      "sha256": "2206D217B64D60249FF8C12F5FA15A1C6A10D53A40CD11F82FBE4863FE8B3854"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/HoNrdArchitecture/HoLegacyNrdContext.cs",
+      "sha256": "624F2F81E61A1433681AE8B0AAF30532CD4069E34FAA928BE6B1E529EAD1A1D6"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/HoNrdArchitecture/HoLegacyNrdManifest.cs",
+      "sha256": "9B62AD04D4D60EF2D83D479F3E0D1A7FFFE59D9B2346E2BEDBB9181D1577A37F"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/HoNrdArchitecture/HoLegacyNrdNative.cs",
+      "sha256": "14FDDB6D668F35D490994019B92E24B5D8477AFBEDF35220ABBD46C4BCC434BC"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/HoNrdArchitecture/HoLegacyNrdTiming.cs",
+      "sha256": "65289A0D460F6A478741441E2235EE2BFFE68DAB99244C97C535108BFF75E5F1"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/RTGIPlayerProbe/HoRTGIAutomaticProbe.cs",
+      "sha256": "C2F8DE0CAA20942CD86D2A9C7D781BA3EDF2A545CD3263CF7D49835FE7B2F78C"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/RTGIPlayerProbe/HoRTGIBackbufferProbe.cs",
+      "sha256": "A3A1AE15724FC3CDBBCB1D6E87E8F283742B206E3AF41D82685A120C5D860EB8"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/RTGIPlayerProbe/HoRTGIComplexMotionProbe.cs",
+      "sha256": "5B3E43787E7E6EEFA00592E4826787FE10AE431798D5D0E7B7085080F047E9F4"
+    },
+    {
+      "path": ".codex-research/RTGIValidation/Assets/RTGIPlayerProbe/HoRTGIRuntimeProbe.cs",
+      "sha256": "66F81A5E0A1E77D5DF4AB98128A652CF1623883213BCC37935B653DB9EF87508"
+    }
+  ],
+  "startedUtc": "2026-10-23T19:58:39.6944721Z"
+}

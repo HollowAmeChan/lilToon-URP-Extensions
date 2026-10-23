@@ -1,9 +1,9 @@
+using lilToon.URP.Extensions.RayTracing;
 using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
-using lilToon.URP.Extensions.RTDI;
 using lilToon.URP.Extensions.RTGI;
 using UnityEngine;
 using UnityEditor;
@@ -24,8 +24,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         }
         internal static State Capture(HoRTGIContext context,HoRTGIDenseReferenceFeature feature)
         {
-            if(Marshal.SizeOf<HoRTDIRendererFeature.AnalyticLight>()!=64||Marshal.SizeOf<HoRTGISeedAudit.Secondary>()!=48||Marshal.SizeOf<HoRTGICastleValidation.Primary>()!=20)throw new Exception("Input-state buffer ABI drift");
-            var lights=new HoRTDIRendererFeature.AnalyticLight[feature.lastLightCount];context.lights.GetData(lights,0,0,lights.Length);
+            if(Marshal.SizeOf<HoRTAnalyticLight>()!=64||Marshal.SizeOf<HoRTGISeedAudit.Secondary>()!=48||Marshal.SizeOf<HoRTGICastleValidation.Primary>()!=20)throw new Exception("Input-state buffer ABI drift");
+            var lights=new HoRTAnalyticLight[feature.lastLightCount];context.lights.GetData(lights,0,0,lights.Length);
             var ris=new Vector2Int[context.environmentRis.count];context.environmentRis.GetData(ris);
             var secondary=new HoRTGISeedAudit.Secondary[context.secondary.count];context.secondary.GetData(secondary);
             var primary=new HoRTGICastleValidation.Primary[context.history.count];context.history.GetData(primary);

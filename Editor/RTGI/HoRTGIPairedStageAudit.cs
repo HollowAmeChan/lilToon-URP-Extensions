@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using lilToon.URP.Extensions.RTGI;
 using UnityEditor;
 using UnityEngine;
@@ -26,13 +26,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         readonly ComputeShader[] shaders,original=new ComputeShader[2];readonly int[] kernels,originalKernels=new int[2];
         readonly ComputeShader resolve;readonly int resolveKernel;readonly RenderTexture[] physical=new RenderTexture[2];
         readonly List<Segment> segments=new();internal readonly Report report=new Report();
-        readonly HoRTDINrdContext core;readonly HoRTDINrdContext[] cores;HoRTGISpatialAudit spatial;BinaryWriter stream;Segment current;int observed;bool disposed;
-        internal HoRTGIPairedStageAudit(HoRTDINrdContext[] cores,int width,int height)
+        readonly HoNrdContext core;readonly HoNrdContext[] cores;HoRTGISpatialAudit spatial;BinaryWriter stream;Segment current;int observed;bool disposed;
+        internal HoRTGIPairedStageAudit(HoNrdContext[] cores,int width,int height)
         {
             if(width!=256||height!=256)throw new Exception("Paired stage domain must be256");
             this.cores=cores;this.core=cores[1];var core=this.core;const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
             if(cores.Any(c=>c.ValidationDiffuseStage!=null))throw new Exception("Stage hook already owned");
-            shaders=(ComputeShader[])typeof(HoRTDINrdContext).GetField("shaders",flags).GetValue(core);kernels=(int[])typeof(HoRTDINrdContext).GetField("kernels",flags).GetValue(core);
+            shaders=(ComputeShader[])typeof(HoNrdContext).GetField("shaders",flags).GetValue(core);kernels=(int[])typeof(HoNrdContext).GetField("kernels",flags).GetValue(core);
             string root=Path.GetFullPath(Path.Combine(Application.dataPath,"../../.."));var sources=new List<ShaderSource>();
             string project=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
             if(!project.Replace('\\','/').EndsWith("/.codex-research/RTGIValidation"))throw new Exception("Dedicated project required");

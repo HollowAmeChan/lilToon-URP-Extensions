@@ -1,0 +1,288 @@
+{
+    "pass": false,
+    "independentHistories": true,
+    "isolatedResetObserved": false,
+    "gpuFrames": 0,
+    "gpuComponents": 0,
+    "diDispatchCases": 0,
+    "gpuHashes": [],
+    "diDispatchHashes": [],
+    "pools": [
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R16G16B16A16_SFloat",
+            "index": 0,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 32768
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R16G16B16A16_SFloat",
+            "index": 1,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 32768
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R16G16B16A16_SFloat",
+            "index": 2,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 32768
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R16G16B16A16_SFloat",
+            "index": 3,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 32768
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R16_SFloat",
+            "index": 4,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 8192
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R16_SFloat",
+            "index": 5,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 8192
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R8_UNorm",
+            "index": 6,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 4096
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R8G8B8A8_UNorm",
+            "index": 7,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 16384
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R8_UNorm",
+            "index": 8,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 4096
+        },
+        {
+            "channel": "DI",
+            "pool": "permanent",
+            "format": "R32_SFloat",
+            "index": 9,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 16384
+        },
+        {
+            "channel": "DI",
+            "pool": "transient",
+            "format": "R16G16B16A16_SFloat",
+            "index": 0,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 32768
+        },
+        {
+            "channel": "DI",
+            "pool": "transient",
+            "format": "R16G16B16A16_SFloat",
+            "index": 1,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 32768
+        },
+        {
+            "channel": "DI",
+            "pool": "transient",
+            "format": "R16G16B16A16_SFloat",
+            "index": 2,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 32768
+        },
+        {
+            "channel": "DI",
+            "pool": "transient",
+            "format": "R16G16B16A16_SFloat",
+            "index": 3,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 32768
+        },
+        {
+            "channel": "DI",
+            "pool": "transient",
+            "format": "R8_UNorm",
+            "index": 4,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 4096
+        },
+        {
+            "channel": "DI",
+            "pool": "transient",
+            "format": "R8_UNorm",
+            "index": 5,
+            "width": 4,
+            "height": 4,
+            "factor": 16,
+            "bytes": 16
+        },
+        {
+            "channel": "DI",
+            "pool": "transient",
+            "format": "R8_UNorm",
+            "index": 6,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 4096
+        },
+        {
+            "channel": "GI",
+            "pool": "permanent",
+            "format": "R32G32B32A32_SFloat",
+            "index": 0,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 65536
+        },
+        {
+            "channel": "GI",
+            "pool": "permanent",
+            "format": "R32G32B32A32_SFloat",
+            "index": 1,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 65536
+        },
+        {
+            "channel": "GI",
+            "pool": "permanent",
+            "format": "R8_UNorm",
+            "index": 2,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 4096
+        },
+        {
+            "channel": "GI",
+            "pool": "permanent",
+            "format": "R8G8B8A8_UNorm",
+            "index": 3,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 16384
+        },
+        {
+            "channel": "GI",
+            "pool": "permanent",
+            "format": "R8_UNorm",
+            "index": 4,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 4096
+        },
+        {
+            "channel": "GI",
+            "pool": "permanent",
+            "format": "R32_SFloat",
+            "index": 5,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 16384
+        },
+        {
+            "channel": "GI",
+            "pool": "transient",
+            "format": "R32G32B32A32_SFloat",
+            "index": 0,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 65536
+        },
+        {
+            "channel": "GI",
+            "pool": "transient",
+            "format": "R32G32B32A32_SFloat",
+            "index": 1,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 65536
+        },
+        {
+            "channel": "GI",
+            "pool": "transient",
+            "format": "R8_UNorm",
+            "index": 2,
+            "width": 4,
+            "height": 4,
+            "factor": 16,
+            "bytes": 16
+        },
+        {
+            "channel": "GI",
+            "pool": "transient",
+            "format": "R8_UNorm",
+            "index": 3,
+            "width": 64,
+            "height": 64,
+            "factor": 1,
+            "bytes": 4096
+        }
+    ],
+    "diPoolBytes": 327696,
+    "giPoolBytes": 307216,
+    "matchingTransientBytes64": 4112,
+    "matchingTransientLayoutBytes1080": 2081760,
+    "memoryScope": "Actual64x64 texture payload. 1080 is descriptor arithmetic only; pools remain separately owned. No memory saving claimed for extraction.",
+    "error": "System.Exception: GPU parity failed frame 0\r\n  at lilToon.URP.Extensions.Editor.NrdArchitecture.ArchitectureValidation.Run () [0x0068d] in D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation\\Assets\\HoNrdArchitecture\\ArchitectureValidation.cs:94 "
+}

@@ -1,0 +1,422 @@
+[
+  {
+    "directory": "backend-20261023T192751270",
+    "mode": "backend",
+    "exitCode": 1,
+    "diagnostics": 0,
+    "accepted": false,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "backend-20261023T192751270/report.json",
+        "sha256": "5679CC2A81C1406559C6D531126F4CA9FC51D3BD622CC3CAF3D6A9BFCB88957C",
+        "bytes": 1836
+      },
+      {
+        "path": "backend-20261023T192751270/run.json",
+        "sha256": "639BB3ED02DD4E351B22BC53D50528BB9EEAAB5139D64A45A10A3D5EA5504189",
+        "bytes": 121603
+      },
+      {
+        "path": "backend-20261023T192751270/unity.log",
+        "sha256": "D991FF0B2D5ED1C0D2C7F1C7EC6429DCDA7EC641E892E43A4FC534CCF61C8F27",
+        "bytes": 40657
+      }
+    ]
+  },
+  {
+    "directory": "backend-20261023T192939386",
+    "mode": "backend",
+    "exitCode": 1,
+    "diagnostics": 0,
+    "accepted": false,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "backend-20261023T192939386/report.json",
+        "sha256": "9161D4BF5C8F2C69B75277E8386DBFEB97EE8702242200D84558C8A3B2710DB2",
+        "bytes": 7541
+      },
+      {
+        "path": "backend-20261023T192939386/run.json",
+        "sha256": "00C56A3B452494F9FC5AA8B7C75520DB5872341B6FB3720DF66FA12D0D1E850E",
+        "bytes": 121603
+      },
+      {
+        "path": "backend-20261023T192939386/unity.log",
+        "sha256": "B5840399308FCBB0B74DB2DC24AD924C21042F14EFE63F513CCFA59AADC69F13",
+        "bytes": 28607
+      }
+    ]
+  },
+  {
+    "directory": "backend-20261023T193134438",
+    "mode": "backend",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "backend-20261023T193134438/report.json",
+        "sha256": "1C97D473C200C9F1453D0F70AE899DDF07266031A6C70146AA6DE7A4AB5E2594",
+        "bytes": 14656
+      },
+      {
+        "path": "backend-20261023T193134438/run.json",
+        "sha256": "EBE00AC3DD7E2DA1EE191CF1589D546D130349FF81BF634B422E5EF70A8BAF87",
+        "bytes": 121603
+      },
+      {
+        "path": "backend-20261023T193134438/unity.log",
+        "sha256": "CE65F04482C7DA476963A5E5DD796AB608D587D8FC9A0B0616D59D3E4FD81B20",
+        "bytes": 28419
+      }
+    ]
+  },
+  {
+    "directory": "backend-20261023T194239312",
+    "mode": "backend",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "backend-20261023T194239312/report.json",
+        "sha256": "1C97D473C200C9F1453D0F70AE899DDF07266031A6C70146AA6DE7A4AB5E2594",
+        "bytes": 14656
+      },
+      {
+        "path": "backend-20261023T194239312/run.json",
+        "sha256": "EC60C7620026744302DFC2B06B383E8304C26D8EC041D9D9C26205AA6C487E92",
+        "bytes": 121798
+      },
+      {
+        "path": "backend-20261023T194239312/unity.log",
+        "sha256": "202DC1EB6BC289BCCBACB7E01547C0E217E624AEEEEED792DF45872C2FB22ADD",
+        "bytes": 26494
+      }
+    ]
+  },
+  {
+    "directory": "combined-20261023T193917219",
+    "mode": "combined",
+    "exitCode": 1,
+    "diagnostics": 6,
+    "accepted": false,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "combined-20261023T193917219/run.json",
+        "sha256": "2D366D868A64619AA733C99D9CB0A0F090241EDAD9262811D967AFC38D96B49D",
+        "bytes": 121796
+      },
+      {
+        "path": "combined-20261023T193917219/unity.log",
+        "sha256": "1965D4F8EF7AB52306EB8D50C7BC64B70ABAD8B28A001A6B6F981F86356094E8",
+        "bytes": 86237
+      }
+    ]
+  },
+  {
+    "directory": "combined-20261023T193948329",
+    "mode": "combined",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "combined-20261023T193948329/report.json",
+        "sha256": "66C4155089DBABFC34849C6433CF9F1AB98C68DC60B50AB1AA8F727899760707",
+        "bytes": 539
+      },
+      {
+        "path": "combined-20261023T193948329/run.json",
+        "sha256": "E53E8CA42A844E9B4558F0E4AF2B0D8A31A174AACFC6555C47E13A8071CB3CA0",
+        "bytes": 121796
+      },
+      {
+        "path": "combined-20261023T193948329/unity.log",
+        "sha256": "0B8669CB6AE93C592D0CFE81981FE2AF4FEE29552938370388EB032B3A32B92B",
+        "bytes": 27372
+      }
+    ]
+  },
+  {
+    "directory": "combinedCompat-20261023T193959394",
+    "mode": "combinedCompat",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "combinedCompat-20261023T193959394/report.json",
+        "sha256": "4E799CD92EFFCE6707CC8C216E32C379D33864305ED726514C17E1E240306FAC",
+        "bytes": 538
+      },
+      {
+        "path": "combinedCompat-20261023T193959394/run.json",
+        "sha256": "BCD183D4382A8B26153E65EC77DC8E38AEBEAEE10D52E828C327343A118CF5BA",
+        "bytes": 121821
+      },
+      {
+        "path": "combinedCompat-20261023T193959394/unity.log",
+        "sha256": "B6726A9D7C5322960747773BCEEC1E0C03D4C1DF7A35E597A12545DB4AAB1285",
+        "bytes": 25451
+      }
+    ]
+  },
+  {
+    "directory": "composite-20261023T193455886",
+    "mode": "composite",
+    "exitCode": 0,
+    "diagnostics": 2,
+    "accepted": false,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "composite-20261023T193455886/manual-report-index.json",
+        "sha256": "C7677ABCE0852FBFBFB2BB6A1EAB109DFD773811A253E6B66BCD1E953CDE4935",
+        "bytes": 400
+      },
+      {
+        "path": "composite-20261023T193455886/report.json",
+        "sha256": "47E1DCCD1E152730AA0926F3E031AA96A451311DB77FDFCD78D5FE522B7C6984",
+        "bytes": 4042
+      },
+      {
+        "path": "composite-20261023T193455886/run.json",
+        "sha256": "FB1DDE9BD10605D4AA2BD3B5839A0B934FDD810085D47B48521DA042AE974D5A",
+        "bytes": 121599
+      },
+      {
+        "path": "composite-20261023T193455886/unity.log",
+        "sha256": "54C17DB228DB91375BB098B3CF74344BA34EBCE332C8087C22B9B53C6D9E6BA1",
+        "bytes": 69293
+      }
+    ]
+  },
+  {
+    "directory": "gi-20261023T193436604",
+    "mode": "gi",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "gi-20261023T193436604/filtered.exr",
+        "sha256": "FDBD635F83CE0D90AB2A45D07A2DE0F26303246CD5CECD5FF38D797255EA605E",
+        "bytes": 66891
+      },
+      {
+        "path": "gi-20261023T193436604/filtered.png",
+        "sha256": "A2FA47A2CDE97E1C15FB33A3EB4A46B5D2028CC9FC606DAA6D3D9616D12C5728",
+        "bytes": 2752
+      },
+      {
+        "path": "gi-20261023T193436604/raw.exr",
+        "sha256": "C14203CE4C3601294FFF834CEDE47287CD3EAB18EBCCC9FCAE89E399B881FD27",
+        "bytes": 66891
+      },
+      {
+        "path": "gi-20261023T193436604/raw.png",
+        "sha256": "7443D03E0764C1D02640D6FFAE5197278B6433C6EB00309C013A49E758DF66C1",
+        "bytes": 9521
+      },
+      {
+        "path": "gi-20261023T193436604/report.json",
+        "sha256": "98AC9FFCB0DC1EE3753EC077CCC4DDEEAC9D87A01E710548152E82AD8D69DAFA",
+        "bytes": 3847
+      },
+      {
+        "path": "gi-20261023T193436604/run.json",
+        "sha256": "06FC015F8AF8CF03D3C7ECC5D353C7E13094F917A4584FB2CEC1DF172159E921",
+        "bytes": 121579
+      },
+      {
+        "path": "gi-20261023T193436604/unity.log",
+        "sha256": "1C21C491E1F7574B537E15B6BBE12DC0A109428DA295429156B6F5A80342D228",
+        "bytes": 68498
+      }
+    ]
+  },
+  {
+    "directory": "giCompat-20261023T193446953",
+    "mode": "giCompat",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "giCompat-20261023T193446953/filtered.exr",
+        "sha256": "FDBD635F83CE0D90AB2A45D07A2DE0F26303246CD5CECD5FF38D797255EA605E",
+        "bytes": 66891
+      },
+      {
+        "path": "giCompat-20261023T193446953/filtered.png",
+        "sha256": "A2FA47A2CDE97E1C15FB33A3EB4A46B5D2028CC9FC606DAA6D3D9616D12C5728",
+        "bytes": 2752
+      },
+      {
+        "path": "giCompat-20261023T193446953/raw.exr",
+        "sha256": "C14203CE4C3601294FFF834CEDE47287CD3EAB18EBCCC9FCAE89E399B881FD27",
+        "bytes": 66891
+      },
+      {
+        "path": "giCompat-20261023T193446953/raw.png",
+        "sha256": "7443D03E0764C1D02640D6FFAE5197278B6433C6EB00309C013A49E758DF66C1",
+        "bytes": 9521
+      },
+      {
+        "path": "giCompat-20261023T193446953/report.json",
+        "sha256": "575C3291F6DF51A4190AA5AA51A2460821680CFDE3BD4CABFC415FFCA86FC949",
+        "bytes": 3846
+      },
+      {
+        "path": "giCompat-20261023T193446953/run.json",
+        "sha256": "6DF997808FA7A470A5726308AFE9DE2F58F93C287E344C36EC3F247371F53E36",
+        "bytes": 121604
+      },
+      {
+        "path": "giCompat-20261023T193446953/unity.log",
+        "sha256": "2D633308C920E13D91CAB817F5FC87EE49297A800DB26DFAE1D72415B8B5194C",
+        "bytes": 67318
+      }
+    ]
+  },
+  {
+    "directory": "player-20261023T200124860",
+    "mode": "player",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "player-20261023T200124860/filtered.png",
+        "sha256": "372B3FB7FA37AFA426F5CFA42BA3C5E862BE49575BA0982498BB16066AD59D87",
+        "bytes": 4712
+      },
+      {
+        "path": "player-20261023T200124860/payload.json",
+        "sha256": "C0209C468C401B713571A9637FE8D54A778EFA295B2CF02D9701B2A9290A471D",
+        "bytes": 707
+      },
+      {
+        "path": "player-20261023T200124860/raw.png",
+        "sha256": "729FDFAFE7E50B8F69681A3B539A09A285D1214BA3E5EB7156E9DFDDBF77BF24",
+        "bytes": 7469
+      },
+      {
+        "path": "player-20261023T200124860/report.json",
+        "sha256": "E7A9F99303FCE11B4713E0E9F11C8407003C4FA80097F890792CD4C1A7DA2050",
+        "bytes": 167761
+      },
+      {
+        "path": "player-20261023T200124860/run.json",
+        "sha256": "25132825659606425F7EA5B3FDB4F2C1519D51DFCB46932D2B727FC8B501320B",
+        "bytes": 122661
+      },
+      {
+        "path": "player-20261023T200124860/unity.log",
+        "sha256": "EACC0B53D32E11239C10908EFFD7706D3CE1551631896E31945E0BDD5FF209DF",
+        "bytes": 4013
+      }
+    ]
+  },
+  {
+    "directory": "player-20261023T200521388",
+    "mode": "player",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "player-20261023T200521388/filtered.png",
+        "sha256": "F18AB7E08899DB61E70BE47DBC493CDD1A13FF291C1C8D4C1B2C268A65A91A07",
+        "bytes": 4705
+      },
+      {
+        "path": "player-20261023T200521388/payload.json",
+        "sha256": "8E79A091EC59714C2BFC34898D8DDE067735B77BB2A1894F76B47333849A6DE0",
+        "bytes": 707
+      },
+      {
+        "path": "player-20261023T200521388/raw.png",
+        "sha256": "729FDFAFE7E50B8F69681A3B539A09A285D1214BA3E5EB7156E9DFDDBF77BF24",
+        "bytes": 7469
+      },
+      {
+        "path": "player-20261023T200521388/report.json",
+        "sha256": "73DCD9FC7B7E997B968061B94AD9B3736AF853AC3B7DD0625F0DA29D0F394C1C",
+        "bytes": 167781
+      },
+      {
+        "path": "player-20261023T200521388/run.json",
+        "sha256": "3C52E4A1A58B81A196D92A13343B0D79687B577C46EED141FFF2785DA0ECA502",
+        "bytes": 122661
+      },
+      {
+        "path": "player-20261023T200521388/unity.log",
+        "sha256": "F2887F2B35E5F8F8A46F1D8B10609C9E479B93B4B226DB6996F929F10C62ECBA",
+        "bytes": 4013
+      }
+    ]
+  },
+  {
+    "directory": "playerBuild-20261023T195839504",
+    "mode": "playerBuild",
+    "exitCode": 0,
+    "diagnostics": 3,
+    "accepted": true,
+    "knownWarningReview": true,
+    "artifacts": [
+      {
+        "path": "playerBuild-20261023T195839504/build-warning-review.json",
+        "sha256": "6F4C1F8674CA49D62EAE989B5EC25103CED295C892160649B08F7192A95FBE09",
+        "bytes": 629
+      },
+      {
+        "path": "playerBuild-20261023T195839504/run.json",
+        "sha256": "BED018B090A5AB0A26B785111086CA2FA4341805ED550863E58AAA3EDF28BA09",
+        "bytes": 122580
+      },
+      {
+        "path": "playerBuild-20261023T195839504/unity.log",
+        "sha256": "E29CFB40B7070DA5558BD44ABA5E6163AD260014E509778199DA0489FAFF013A",
+        "bytes": 417423
+      }
+    ]
+  },
+  {
+    "directory": "small-20261023T193427389",
+    "mode": "small",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "small-20261023T193427389/report.json",
+        "sha256": "177CD25802CBA03E0C126A9CC44D155E0B88BA024CB47046D557D4F49F89ED10",
+        "bytes": 59093
+      },
+      {
+        "path": "small-20261023T193427389/run.json",
+        "sha256": "34B059545003467F31B09AF473B7BEB3643144DDE2E1138997A74A43EB41139C",
+        "bytes": 121604
+      },
+      {
+        "path": "small-20261023T193427389/unity.log",
+        "sha256": "5D0635460176F4D98E3A98B498743DA61DDD40C09EEC19E3CB4546A86CD8BE7C",
+        "bytes": 31628
+      }
+    ]
+  }
+]

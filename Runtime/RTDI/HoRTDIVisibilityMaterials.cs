@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RayTracing;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -31,38 +32,12 @@ namespace lilToon.URP.Extensions.RTDI
         }
         internal void BeginFrame() { seen.Clear(); Signature = 0; }
 
-        internal static bool SupportsCutout(Material material)
-        {
-            if (material == null || material.shader == null || material.renderQueue >= (int)RenderQueue.Transparent
-                || material.GetTag("RenderType", false) != "TransparentCutout"
-                || !material.shader.name.StartsWith("Hidden/lilToonCutout", StringComparison.Ordinal)) return false;
-            if (Enabled(material, "_UseMain2ndTex") || Enabled(material, "_UseMain3rdTex")
-                || Enabled(material, "_UseParallax") || Enabled(material, "_UseDither")) return false;
-            var animation = Vector(material, "_MainTex_ScrollRotate");
-            if (animation.x != 0 || animation.y != 0 || animation.w != 0 || Vector(material, "_DissolveParams").x != 0
-                || Vector(material, "_DistanceFade").z != 0) return false;
-            float mode = Float(material, "_AlphaMaskMode");
-            if (mode < 0 || mode > 4 || mode != Mathf.Floor(mode)) return false;
-            foreach (string name in Scalars) if (!Finite(Float(material, name))) return false;
-            if (!Finite(material.GetColor("_Color").a) || !Finite(animation.z)) return false;
-            foreach (string name in new[] { "_MainTex", "_AlphaMask" })
-            {
-                var texture = material.HasProperty(name) ? material.GetTexture(name) : null;
-                if (texture != null && !(texture is Texture2D)) return false;
-                if (!material.HasProperty(name)) continue;
-                var scale = material.GetTextureScale(name); var offset = material.GetTextureOffset(name);
-                if (!Finite(scale.x) || !Finite(scale.y) || !Finite(offset.x) || !Finite(offset.y)) return false;
-            }
-            return true;
-        }
-        private static bool Enabled(Material m, string p) => Float(m, p) != 0;
         private static float Float(Material m, string p) => m.HasProperty(p) ? m.GetFloat(p) : 0;
         private static Vector4 Vector(Material m, string p) => m.HasProperty(p) ? m.GetVector(p) : Vector4.zero;
-        private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
 
         internal Material Resolve(Material source)
         {
-            if (!SupportsCutout(source)) return opaque;
+            if (!HoRTCutoutSupport.Supports(source)) return opaque;
             if (!seen.Add(source)) return adapters[source];
             if (!adapters.TryGetValue(source, out var adapter))
             {
@@ -70,7 +45,7 @@ namespace lilToon.URP.Extensions.RTDI
                 adapters.Add(source, adapter);
             }
             adapter.CopyPropertiesFromMaterial(source); adapter.shaderKeywords = Array.Empty<string>();
-            bool cutout = SupportsCutout(source); adapter.SetFloat("_HoRTDICutout", cutout ? 1 : 0);
+            bool cutout = HoRTCutoutSupport.Supports(source); adapter.SetFloat("_HoRTDICutout", cutout ? 1 : 0);
             if (cutout) unchecked
             {
                 int hash = source.GetInstanceID();

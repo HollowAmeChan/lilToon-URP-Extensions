@@ -1,0 +1,18 @@
+{
+  "step": "A01",
+  "architectureAccepted": true,
+  "memorySavingAccepted": false,
+  "gpuResourceAllocationChanged": false,
+  "numericPolicyChanged": false,
+  "publicFeatureSettingsChanged": false,
+  "serializedAssetGuidsPreserved": true,
+  "newDependencyRule": "RTGI C# -> common NRD/RayTracing; DI -> common NRD/RayTracing; common NRD has no Feature types. Shader vendor/path ownership not fully migrated.",
+  "validation": "Original frozen context/native vs shared backend33 GPU frames540672RGBA values bitexact; DI64 native dispatch/resource/constant/profile cases exact;64 shared-input frames;243 GI requests each RG/compat;42 joint requests each RG/compat;Release RG Mono two runs304 requests each.",
+  "memory": "No reduction. Exact matching transient types only4112B/64 squared,2081760B/1080 descriptor arithmetic; permanent histories stay independent.",
+  "failurePolicy": "Initial import/URP init/baseline Shader-ABI rename/test syntax failures preserved. Old composite actual0 ASdebug2 rejected. Release build3 pre-existing exact historical Shader warning lines reviewed separately, no new warning allowance.",
+  "preservedUncommitted": [
+    "Documentation~/RTGI/Ho-RTGI-过程记录.md",
+    "Tests~/RTGI/PlanarReference/"
+  ],
+  "next": "Audit compatible primary/pose/signal lifetimes and meaningful allocation owners. Do not merge distinct histories, lower FP32 or claim code extraction saves VRAM."
+}

@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RayTracing;
 using System;
 
 namespace lilToon.URP.Extensions.RTDI
@@ -5,7 +6,7 @@ namespace lilToon.URP.Extensions.RTDI
     internal static class HoRTDIAuxiliaryProposal
     {
         // Input is the immutable light snapshot in actual shader index order.
-        internal static float[] Build(HoRTDIRendererFeature.AnalyticLight[] lights,int count)
+        internal static float[] Build(HoRTAnalyticLight[] lights,int count)
         {
             if(count==0)return new[]{1f};var weights=new double[count];double sum=0;
             for(int i=0;i<count;i++)

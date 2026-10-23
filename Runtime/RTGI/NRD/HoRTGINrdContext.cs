@@ -1,7 +1,7 @@
 #pragma warning disable CS0618
 using System;
 using System.Collections.Generic;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.RTGI.NRD
     internal sealed class HoRTGINrdContext:IDisposable
     {
         internal const float SignalScale=64;
-        internal readonly HoRTDINrdContext core;
+        internal readonly HoNrdContext core;
         internal RTHandle signal,normal,viewZ,output,filtered;
         internal bool historyValid,lastReset;
         internal Matrix4x4 previousView=Matrix4x4.identity,previousProjection=Matrix4x4.identity;
@@ -24,7 +24,7 @@ namespace lilToon.URP.Extensions.RTGI.NRD
         float seconds=1f/60;
         #if UNITY_EDITOR
         internal double? ValidationTimeSeconds;
-        internal Action<CommandBuffer,HoRTDINrdNative.CommonSettings,HoRTDINrdNative.RelaxSettings,IReadOnlyDictionary<string,RenderTargetIdentifier>> ValidationRecordInputs;
+        internal Action<CommandBuffer,HoNrdNative.CommonSettings,HoNrdNative.RelaxSettings,IReadOnlyDictionary<string,RenderTargetIdentifier>> ValidationRecordInputs;
         // Isolated unit-domain comparison. Physical raw is unchanged; changing
         // the NRD unit invalidates only its own history before recording.
         internal float? ValidationSignalScale;
@@ -42,7 +42,7 @@ namespace lilToon.URP.Extensions.RTGI.NRD
             }
         }
         internal HoRTGINrdContext(ComputeShader[] shaders)
-        {core=new HoRTDINrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources,highPrecisionColorPool:true);}
+        {core=new HoNrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources,highPrecisionColorPool:true);}
         internal void Prepare(int w,int h)
         {
             if(w!=width||h!=height){historyValid=false;width=w;height=h;}
@@ -94,7 +94,7 @@ namespace lilToon.URP.Extensions.RTGI.NRD
                 seconds+= (sample-seconds)*(1-Mathf.Exp(-sample/.1f));
             }
             lastReset=reset||timeReset||!historyValid;
-            var common=HoRTDINrdNative.CommonSettings.Create(width,height,view,projection,historyValid?previousView:view,historyValid?previousProjection:projection,frame,lastReset);
+            var common=HoNrdNative.CommonSettings.Create(width,height,view,projection,historyValid?previousView:view,historyValid?previousProjection:projection,frame,lastReset);
             common.timeDelta=deltaMs;
             var settings=ReferenceSettings(preview?1f/60:seconds);
             #if UNITY_EDITOR
@@ -105,11 +105,11 @@ namespace lilToon.URP.Extensions.RTGI.NRD
         }
         // Pinned NRDSettings.h defaults, with accumulation periods converted to
         // observed unscaled seconds. Scene View uses the reference sample budget.
-        internal static HoRTDINrdNative.RelaxSettings ReferenceSettings(float delta)
+        internal static HoNrdNative.RelaxSettings ReferenceSettings(float delta)
         {
             uint frames=(uint)Mathf.Clamp(Mathf.RoundToInt(.5f/delta),2,255);
             uint fast=(uint)Mathf.Clamp(Mathf.RoundToInt(.1f/delta),1,(int)frames-1);
-            return new HoRTDINrdNative.RelaxSettings
+            return new HoNrdNative.RelaxSettings
             {
                 acceleration=.3f,spatialSigma=4.5f,temporalSigma=.5f,reset=.5f,
                 diffFrames=frames,specFrames=frames,diffFast=fast,specFast=fast,historyFixFrames=Math.Min(3u,fast-1),

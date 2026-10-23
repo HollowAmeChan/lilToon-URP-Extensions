@@ -43,7 +43,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 shader = AssetDatabase.LoadAssetAtPath<RayTracingShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGISecondaryValidation.raytrace");
                 var hitShader = Shader.Find("Hidden/lilToon/URP/RTGI/SecondaryMaterial");
                 Require(shader != null && hitShader != null, "Missing GI hit shaders");
-                materials = new HoRTGISecondaryMaterials(hitShader); scene = new HoRTScene(materials.Resolve,HoRTGISecondaryMaterials.SupportsCutout);
+                materials = new HoRTGISecondaryMaterials(hitShader); scene = new HoRTScene(materials.Resolve,HoRTCutoutSupport.Supports);
                 var go = Keep(new GameObject("Offscreen GI receiver"));
                 go.transform.position = new Vector3(2, 0, 0);
                 var mesh = Keep(new Mesh());

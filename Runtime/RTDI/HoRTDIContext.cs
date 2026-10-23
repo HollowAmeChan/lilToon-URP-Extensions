@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RayTracing;
 // Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
 // Neighbor-offset generation is adapted from UnityPathTracing's RtxdiUtils.
 // NVIDIA portions are governed by ThirdParty/RTXDI/LICENSE.txt, not the package MIT license.
@@ -14,7 +15,6 @@ namespace lilToon.URP.Extensions.RTDI
 {
     internal sealed class HoRTDIContext : IDisposable
     {
-        internal const int PrimaryHistoryStride=20;
         internal GraphicsBuffer reservoirs,history,lights,neighbors,previousLights,currentToPrevious,previousToCurrent;
         internal GraphicsBuffer auxiliaryCDF,auxiliarySecondary;
         private GraphicsFence auxiliaryFence;
@@ -79,7 +79,7 @@ namespace lilToon.URP.Extensions.RTDI
         internal bool lastVisibilityGradients,lastNrdReset;
         internal int settingsSignature;
         internal Light[] previousLightKeys=Array.Empty<Light>();
-        private HoRTDIRendererFeature.AnalyticLight[] previousLightData=new HoRTDIRendererFeature.AnalyticLight[1];
+        private HoRTAnalyticLight[] previousLightData=new HoRTAnalyticLight[1];
         internal bool historyValid,lastTemporal;
         internal Matrix4x4 previousVP=Matrix4x4.identity,previousInverseVP=Matrix4x4.identity;
         internal Vector4 previousCamera,previousTowardsEye,previousViewZ,previousClip;
@@ -91,7 +91,7 @@ namespace lilToon.URP.Extensions.RTDI
                 // Reference RTXDI block-linear layout / three-buffer DI schedule.
                 rowPitch=((w+15)/16)*256;arrayPitch=rowPitch*((h+15)/16);
                 reservoirs=new GraphicsBuffer(GraphicsBuffer.Target.Structured,arrayPitch*3,24){name="HoRTDI SDK reservoirs"};
-                history=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,PrimaryHistoryStride){name="HoRTDI previous surface guides"};
+                history=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,HoRTPrimaryHistory.Stride){name="HoRTDI previous surface guides"};
                 historyValid=false;frame=0;
             }
             // Buffer growth does not invalidate the reservoirs: the previous
@@ -208,14 +208,14 @@ namespace lilToon.URP.Extensions.RTDI
         }
         internal sealed class LightFrame
         {
-            internal readonly HoRTDIRendererFeature.AnalyticLight[] current,previous;
+            internal readonly HoRTAnalyticLight[] current,previous;
             internal readonly Light[] keys;
             internal readonly int[] currentToPrevious,previousToCurrent;
             internal readonly int previousCount;
             internal readonly bool domainChanged;
             internal float[] AuxiliaryCDF(int count)=>HoRTDIAuxiliaryProposal.Build(current,count);
-            internal LightFrame(HoRTDIRendererFeature.AnalyticLight[] current,Light[] keys,
-                HoRTDIRendererFeature.AnalyticLight[] previous,Light[] previousKeys)
+            internal LightFrame(HoRTAnalyticLight[] current,Light[] keys,
+                HoRTAnalyticLight[] previous,Light[] previousKeys)
             {
                 this.current=current;this.keys=keys;this.previous=previous;previousCount=previousKeys.Length;
                 currentToPrevious=new int[Mathf.Max(1,keys.Length)];previousToCurrent=new int[Mathf.Max(1,previousCount)];
@@ -234,7 +234,7 @@ namespace lilToon.URP.Extensions.RTDI
                 }
             }
         }
-        internal LightFrame CaptureLights(HoRTDIRendererFeature.AnalyticLight[] current,Light[] keys)
+        internal LightFrame CaptureLights(HoRTAnalyticLight[] current,Light[] keys)
             =>new LightFrame(current,keys,previousLightData,previousLightKeys);
         internal void Complete(Matrix4x4 view,Matrix4x4 projection,HoRTDIProjectionSample projectionSample,Camera camera,uint revision,int signature,LightFrame lightFrame)
         {

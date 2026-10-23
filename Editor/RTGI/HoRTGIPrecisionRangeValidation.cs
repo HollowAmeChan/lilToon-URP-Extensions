@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using lilToon.URP.Extensions.RTGI;
 using lilToon.URP.Extensions.RTGI.NRD;
 using UnityEngine;
@@ -22,7 +22,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         const BindingFlags PrecisionFlags=BindingFlags.Instance|BindingFlags.NonPublic;
         public static void RunPrecision(){precisionAudit=true;Run();}
         public static void RunPrecisionCompatibility(){precisionAudit=true;compatibility=true;Run();}
-        static RTHandle[] Pools(HoRTDINrdContext core,string name)=>(RTHandle[])typeof(HoRTDINrdContext).GetField(name,PrecisionFlags).GetValue(core);
+        static RTHandle[] Pools(HoNrdContext core,string name)=>(RTHandle[])typeof(HoNrdContext).GetField(name,PrecisionFlags).GetValue(core);
         static void CheckPrecisionPools(HoRTGINrdContext context,string label)
         {
             var state=DescribePools(context.core,label);
@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             Require(context.AppliedSignalScale==64&&context.signal.rt.graphicsFormat==GraphicsFormat.R16G16B16A16_SFloat&&context.output.rt.graphicsFormat==GraphicsFormat.R32G32B32A32_SFloat,"Precision policy retains units/input and uses float32 output: "+label);
             precisionPoolStates.Add(state);
         }
-        static PoolState DescribePools(HoRTDINrdContext core,string label)
+        static PoolState DescribePools(HoNrdContext core,string label)
         {
             var state=new PoolState{label=label};
             foreach(var texture in Pools(core,"permanent").Concat(Pools(core,"transient")))
@@ -56,7 +56,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             var c=gi.LastContext;CheckPrecisionPools(c.nrd,"initial production");
             var library=(ComputeShader[])typeof(HoRTGIRendererFeature).GetField("nrdShaders",PrecisionFlags).GetValue(gi);
-            using(var defaultCore=new HoRTDINrdContext(library,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources))
+            using(var defaultCore=new HoNrdContext(library,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources))
             {
                 defaultCore.Prepare(Size,Size);var control=DescribePools(defaultCore,"default constructor control");
                 Require(control.rgba16Count==4&&control.rgba32Count==0,"Shared default constructor retains four half color pools");precisionPoolStates.Add(control);

@@ -99,3 +99,5 @@
 步骤045：previous actual Spatial1 Shade在current TLAS的端点/当前材质/两段visibility通过64²受控平面与独立CPU oracle，RG/compat各32帧原GI32/raw/NRD逐位同；次级移动与alpha重开各4096个“到旧点通畅但端点不存在”反例。F0zero仍有Schlick掠射GGX，初Lambert-only预测已拒绝并保留。仅端点正确性/诊断收益，无动态降噪收益或历史保留接纳；移动primary/任意材质及成本仍待证。[证据与复核](../../Tests~/RTGI/EndpointReplay/README.md)。046限定current-primary对应和同采样变化信号；原保守reset、局部公式搁置及全部质量/范围/预算与目标active。
 
 步骤046：同旧样本confidence→两个独立同输入NRD接线过，RG/compat各128帧原GI32/raw/NRD逐位同，零→亮162/亮→零8700严格confidence0，独立几何/BRDF/full-codec oracle过；初stream保存失败及CPU缺LogLuv模型保留。短窗未显示相对原reset噪声收益，拒绝生产接纳。[实验与取舍](../../Tests~/RTGI/ConfidenceTrial/README.md)。047补独立收敛reference及连续/阶跃变化像素能量/残影/噪声后决定去留，不扫描confidence/局部公式；移动primary/环境/成本及全部原缺口和目标active。
+
+2026-10-24用户转向架构优化：A01公共NRD/通用C#契约已解耦，GI不再引用DI C#类型。新旧GPU/DI调度与两路径真实场景回归通过，数值/资源格式/历史reset保持；本步没有显存减少。原047草稿保留、GI研究目标暂停，继续前先读[公共层设计与交接](../架构/Ho-RT-公共层-设计与交接.md)及新的RenderingArchitecture验证入口；旧历史证据不改写。

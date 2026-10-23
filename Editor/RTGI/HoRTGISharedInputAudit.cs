@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using lilToon.URP.Extensions.RTGI.NRD;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -29,31 +29,31 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             public bool restoredHook,released,independentPools,sharedInputBindings;public int recorded,width,height;
             public Frame[] frames;public HoRTGIAtrousTrace.Report noop;public HoRTGIPairedStageAudit.Report paired;public long diagnosticLogicalBytes;
         }
-        readonly HoRTGINrdContext baseline;readonly HoRTDINrdContext[] branches=new HoRTDINrdContext[2];
+        readonly HoRTGINrdContext baseline;readonly HoNrdContext[] branches=new HoNrdContext[2];
         readonly RenderTexture[] outputs=new RenderTexture[2],validations=new RenderTexture[2];
         readonly HoRTGIAtrousTrace noop;internal readonly HoRTGIPairedStageAudit paired;readonly List<Frame> frames=new();readonly Report report;
-        readonly Action<CommandBuffer,HoRTDINrdNative.CommonSettings,HoRTDINrdNative.RelaxSettings,IReadOnlyDictionary<string,RenderTargetIdentifier>> previous;
+        readonly Action<CommandBuffer,HoNrdNative.CommonSettings,HoNrdNative.RelaxSettings,IReadOnlyDictionary<string,RenderTargetIdentifier>> previous;
         Frame current;bool disposed;internal bool isolateBranch1;
         internal HoRTGISharedInputAudit(HoRTGINrdContext baseline,int width,int height,bool pairedStages=false)
         {
             this.baseline=baseline;if(baseline.ValidationRecordInputs!=null)throw new Exception("Shared-input hook already owned");previous=baseline.ValidationRecordInputs;
             const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
-            var shaders=(ComputeShader[])typeof(HoRTDINrdContext).GetField("shaders",flags).GetValue(baseline.core);
+            var shaders=(ComputeShader[])typeof(HoNrdContext).GetField("shaders",flags).GetValue(baseline.core);
             report=new Report{width=width,height=height,independentPools=true,sharedInputBindings=true};
             for(int i=0;i<2;i++)
             {
-                branches[i]=new HoRTDINrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources,highPrecisionColorPool:true);branches[i].Prepare(width,height);
+                branches[i]=new HoNrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources,highPrecisionColorPool:true);branches[i].Prepare(width,height);
                 outputs[i]=new RenderTexture(width,height,0,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear){enableRandomWrite=true};validations[i]=new RenderTexture(width,height,0,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear){enableRandomWrite=true};
                 if(!outputs[i].Create()||!validations[i].Create())throw new Exception("Shared output allocation failed");report.diagnosticLogicalBytes+=(long)width*height*24;
             }
             foreach(string name in new[]{"permanent","transient","constants"})
             {
-                var a=(Array)typeof(HoRTDINrdContext).GetField(name,flags).GetValue(branches[0]);var b=(Array)typeof(HoRTDINrdContext).GetField(name,flags).GetValue(branches[1]);var c=(Array)typeof(HoRTDINrdContext).GetField(name,flags).GetValue(baseline.core);
+                var a=(Array)typeof(HoNrdContext).GetField(name,flags).GetValue(branches[0]);var b=(Array)typeof(HoNrdContext).GetField(name,flags).GetValue(branches[1]);var c=(Array)typeof(HoNrdContext).GetField(name,flags).GetValue(baseline.core);
                 for(int i=0;i<a.Length;i++)if(ReferenceEquals(a.GetValue(i),b.GetValue(i))||ReferenceEquals(a.GetValue(i),c.GetValue(i)))throw new Exception("NRD branches share writable resources");
             }
             if(pairedStages){paired=new HoRTGIPairedStageAudit(branches,width,height);report.paired=paired.report;}else{noop=new HoRTGIAtrousTrace(branches[1],true,true);report.noop=noop.report;}baseline.ValidationRecordInputs=Record;
         }
-        void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings common,HoRTDINrdNative.RelaxSettings settings,IReadOnlyDictionary<string,RenderTargetIdentifier> source)
+        void Record(CommandBuffer cmd,HoNrdNative.CommonSettings common,HoNrdNative.RelaxSettings settings,IReadOnlyDictionary<string,RenderTargetIdentifier> source)
         {
             paired?.BeginFrame();current=new Frame{shaderFrame=(int)common.frameIndex,applicationFrame=Time.frameCount,baselineReset=common.accumulationMode==2,isolatedReset1=isolateBranch1,commonSha256=Hash(StructBytes(common)),settingsSha256=Hash(StructBytes(settings))};report.recorded++;
             for(int i=0;i<2;i++)

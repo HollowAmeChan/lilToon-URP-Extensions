@@ -1,0 +1,29 @@
+{
+  "revision": "4ce800b875a7d014edc66db821d45686f0dfaee6",
+  "files": [
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdContext.cs",
+      "snapshot": "baseline/HoRTDINrdContext.cs",
+      "sha256": "4D90971CE317B8B3817715F3EABB1CCFA5D43EA4343A1EB2F4B56B7160B94E91"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdNative.cs",
+      "snapshot": "baseline/HoRTDINrdNative.cs",
+      "sha256": "A52825CED48EF6508A0781E585766B4E5B7852AEF55F691F9CA5037B3A048786"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdTiming.cs",
+      "snapshot": "baseline/HoRTDINrdTiming.cs",
+      "sha256": "271CD7213196AFDF1AFEAD31635A2DF945634805A7C80285E1B1220492DCD007"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdManifest.cs",
+      "snapshot": "baseline/HoRTDINrdManifest.cs",
+      "sha256": "CD6E04344E532D0F0C9C2DD099FBA3C36CFAF5B2B200ECC7B0F98E36726AE21E"
+    }
+  ],
+  "preservedOtherWork": [
+    "Documentation~/RTGI/Ho-RTGI-过程记录.md",
+    "Tests~/RTGI/PlanarReference/"
+  ]
+}

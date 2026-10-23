@@ -1,3 +1,5 @@
+using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.NRD;
 #pragma warning disable CS0618
 using System;
 using System.Collections.Generic;
@@ -231,7 +233,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var oldPosition=light.transform.position;
             light.color=new Color(.2f,.7f,.4f,1);NearRGB(RenderMean(),LightColor(light)*ExpectedMean(light),"light color retarget mean",.02f);
             Require(feature.LastContext.lastTemporal,"Light color change cleared history");
-            var previousData=new HoRTDIRendererFeature.AnalyticLight[feature.LastContext.previousLights.count];feature.LastContext.previousLights.GetData(previousData);
+            var previousData=new HoRTAnalyticLight[feature.LastContext.previousLights.count];feature.LastContext.previousLights.GetData(previousData);
             int previousLightIndex=ReferenceIndex(feature.LastContext.previousLightKeys,light);Require(previousLightIndex>=0,"dynamic light snapshot identity missing");
             Near(previousData[previousLightIndex].radianceType.x,2,"old light radiance was overwritten",.001f);
             Near(previousData[previousLightIndex].positionRange.x,oldPosition.x,"old light position was overwritten",.001f);
@@ -265,7 +267,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             // Exercise real RELAX rather than the deterministic single-delta bypass.
             Point(light.transform.position,Color.white,0);
-            var timing=new lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdTiming();timing.Advance(0);
+            var timing=new lilToon.URP.Extensions.NRD.HoNrdTiming();timing.Advance(0);
             for(int i=1;i<90;i++)Require(!timing.Advance(i/30.0),"Continuous clock unexpectedly reset");
             var before=timing.FilteredSeconds;Require(!timing.Advance(89/30.0)&&timing.FilteredSeconds==before,"Duplicate render changed FPS estimate");
             Require(timing.Advance(0),"Clock rewind did not reset history");Require(timing.Advance(2),"Long camera gap did not reset history");
@@ -662,7 +664,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                         else probeSettings.specFast=15;
                         var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
                         var instance=(IntPtr)c.nrd.GetType().GetField("instance",flags).GetValue(c.nrd);
-                        lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.Check(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.SetDenoiserSettings(instance,0,ref probeSettings),"History no-clamp audit");
+                        lilToon.URP.Extensions.NRD.HoNrdNative.Check(lilToon.URP.Extensions.NRD.HoNrdNative.SetDenoiserSettings(instance,0,ref probeSettings),"History no-clamp audit");
                     }
                     if(forceLocalHistoryAudit)for(int frame=0;frame<128;frame++)RenderCamera();
                     if(forceLocalFilterAudit)
@@ -677,7 +679,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                         if(variant==4)probeSettings.specPrepass=5;
                         var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
                         var instance=(IntPtr)c.nrd.GetType().GetField("instance",flags).GetValue(c.nrd);
-                        lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.Check(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.SetDenoiserSettings(instance,0,ref probeSettings),"Local filter audit settings");
+                        lilToon.URP.Extensions.NRD.HoNrdNative.Check(lilToon.URP.Extensions.NRD.HoNrdNative.SetDenoiserSettings(instance,0,ref probeSettings),"Local filter audit settings");
                         for(int frame=0;frame<128;frame++)RenderCamera();
                         Debug.Log($"[HoRTDIValidation] LOCAL_FILTER_VARIANT sigma={probeSettings.fastSigma} specFast={probeSettings.specFast} acceleration={probeSettings.acceleration} reset={probeSettings.reset} specPrepass={probeSettings.specPrepass}; real native setting, diagnostic only");
                     }
@@ -922,12 +924,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static RenderTexture FindNrdTemporalPool(HoRTDIContext context,string name,bool requirePermanent=false,int pipeline=4)
         {
             var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var type=context.nrd.GetType();
-            var passes=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.DispatchDesc[])type.GetField("passes",flags).GetValue(context.nrd);
-            var resources=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceDesc[,])type.GetField("resources",flags).GetValue(context.nrd);
+            var passes=(lilToon.URP.Extensions.NRD.HoNrdNative.DispatchDesc[])type.GetField("passes",flags).GetValue(context.nrd);
+            var resources=(lilToon.URP.Extensions.NRD.HoNrdNative.ResourceDesc[,])type.GetField("resources",flags).GetValue(context.nrd);
             var permanent=(RTHandle[])type.GetField("permanent",flags).GetValue(context.nrd);var transient=(RTHandle[])type.GetField("transient",flags).GetValue(context.nrd);var manifest=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[pipeline];
             for(int i=0;i<context.nrd.LastDispatchCount;i++)if(passes[i].pipeline==pipeline)
                 for(int j=0;j<manifest.Length;j++)if(manifest[j]==name)
-                {var resource=resources[i,j];string kind=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceName(resource.type);Require(kind=="PERMANENT_POOL"||(!requirePermanent&&kind=="TRANSIENT_POOL"),"Temporal diagnostic is not the expected pool");return(kind=="PERMANENT_POOL"?permanent:transient)[resource.poolIndex].rt;}
+                {var resource=resources[i,j];string kind=lilToon.URP.Extensions.NRD.HoNrdNative.ResourceName(resource.type);Require(kind=="PERMANENT_POOL"||(!requirePermanent&&kind=="TRANSIENT_POOL"),"Temporal diagnostic is not the expected pool");return(kind=="PERMANENT_POOL"?permanent:transient)[resource.poolIndex].rt;}
             throw new InvalidOperationException("NRD history diagnostic input missing: "+name);
         }
         private static void ValidateSpecular()
@@ -985,8 +987,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             NearRGB(hdrRawSum/hdrCount,hdrReference,"HDR raw energy",hdrReference.r*.04f);
             NearRGB(hdrFilteredSum/hdrCount,hdrReference,"HDR filtered energy",hdrReference.r*.05f);
             var nrdType=hdrContext.nrd.GetType();
-            var passArray=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.DispatchDesc[])nrdType.GetField("passes",flags).GetValue(hdrContext.nrd);
-            var resourceArray=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceDesc[,])nrdType.GetField("resources",flags).GetValue(hdrContext.nrd);
+            var passArray=(lilToon.URP.Extensions.NRD.HoNrdNative.DispatchDesc[])nrdType.GetField("passes",flags).GetValue(hdrContext.nrd);
+            var resourceArray=(lilToon.URP.Extensions.NRD.HoNrdNative.ResourceDesc[,])nrdType.GetField("resources",flags).GetValue(hdrContext.nrd);
             var permanent=(RTHandle[])nrdType.GetField("permanent",flags).GetValue(hdrContext.nrd);
             for(int i=0;i<hdrContext.nrd.LastDispatchCount;i++)if(passArray[i].pipeline==4)
             {
@@ -1178,7 +1180,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var oldKeys=feature.LastContext.previousLightKeys;int oldSun=ReferenceIndex(oldKeys,sun);
             feature.Settings.temporal=true;sun.type=LightType.Point;sun.transform.position=new Vector3(0,0,-2);sun.range=100;
             Render();CheckLightMappings(oldKeys);Require(feature.LastContext.lastTemporal,"Changing light region cleared history");
-            var previous=new HoRTDIRendererFeature.AnalyticLight[feature.LastContext.previousLights.count];feature.LastContext.previousLights.GetData(previous);
+            var previous=new HoRTAnalyticLight[feature.LastContext.previousLights.count];feature.LastContext.previousLights.GetData(previous);
             Near(previous[oldSun].radianceType.w,2,"previous infinite-light type was overwritten",.001f);
             sun.enabled=false;foreach(var item in irrelevant)item.enabled=false;
             feature.Settings.initialSamples=8;Render();

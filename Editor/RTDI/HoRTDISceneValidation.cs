@@ -67,7 +67,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var visibilityShader=AssetDatabase.LoadAssetAtPath<Shader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIVisibilityMaterial.shader");
                 if(visibilityShader==null)throw new Exception("Visibility material shader missing");
                 using var visibility=new HoRTDIVisibilityMaterials(visibilityShader);
-                using var registry = new HoRTScene(visibility.Resolve,HoRTDIVisibilityMaterials.SupportsCutout);
+                using var registry = new HoRTScene(visibility.Resolve,HoRTCutoutSupport.Supports);
                 visibility.BeginFrame();var timer = System.Diagnostics.Stopwatch.StartNew(); registry.Synchronize(renderers,0xff,excluded);visibility.EndFrame();timer.Stop();
                 double initialMs = timer.Elapsed.TotalMilliseconds; uint initialBakes = registry.SkinnedBakeCount, revision = registry.Revision;
                 timer.Restart(); for (int i = 0; i < 64; ++i){visibility.BeginFrame();registry.Synchronize(renderers,0xff,excluded);visibility.EndFrame();} timer.Stop();

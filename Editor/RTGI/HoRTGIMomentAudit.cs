@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using lilToon.URP.Extensions.RTGI.NRD;
 using UnityEngine;
 
@@ -40,8 +40,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         internal static Binding[] CaptureBindings(HoRTGINrdContext context)
         {
             const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;
-            var passes=(HoRTDINrdNative.DispatchDesc[])typeof(HoRTDINrdContext).GetField("passes",flags).GetValue(context.core);
-            var resources=(HoRTDINrdNative.ResourceDesc[,])typeof(HoRTDINrdContext).GetField("resources",flags).GetValue(context.core);
+            var passes=(HoNrdNative.DispatchDesc[])typeof(HoNrdContext).GetField("passes",flags).GetValue(context.core);
+            var resources=(HoNrdNative.ResourceDesc[,])typeof(HoNrdContext).GetField("resources",flags).GetValue(context.core);
             var result=new List<Binding>();
             for(int i=0;i<context.core.LastDispatchCount;i++)
             {
@@ -49,7 +49,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 for(int j=0;j<p.resourceCount;j++)
                 {
                     string name=HoRTGINrdManifest.Resources[p.pipeline][j];if(!name.Contains("Diff"))continue;
-                    var r=resources[i,j];result.Add(new Binding{pipeline=p.pipeline,dispatch=i,name=name,descriptorType=r.descriptorType,resourceType=HoRTDINrdNative.ResourceName(r.type),poolIndex=r.poolIndex});
+                    var r=resources[i,j];result.Add(new Binding{pipeline=p.pipeline,dispatch=i,name=name,descriptorType=r.descriptorType,resourceType=HoNrdNative.ResourceName(r.type),poolIndex=r.poolIndex});
                 }
             }
             return result.ToArray();

@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.NRD;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,7 +35,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 using var context=new HoRTDINrdContext(shaders);context.Prepare(64,64);
                 using var cmd=new CommandBuffer{name="NRD allocation measurement"};
                 var external=new Dictionary<string,RenderTargetIdentifier>();
-                foreach(string name in HoRTDINrdManifest.ResourceTypes)external[name]=new RenderTargetIdentifier(Texture2D.blackTexture);
+                foreach(string name in HoNrdResources.Types)external[name]=new RenderTargetIdentifier(Texture2D.blackTexture);
                 int frame=0;
                 for(;frame<16;frame++){cmd.Clear();context.Record(cmd,Common(frame),external);}
                 const int samples=128;var timer=new Stopwatch();
@@ -51,7 +52,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
             finally{UnityEngine.Profiling.Profiler.enabled=previousProfiler;}
         }
-        private static HoRTDINrdNative.CommonSettings Common(int frame)=>HoRTDINrdNative.CommonSettings.Create(64,64,Matrix4x4.identity,Matrix4x4.Perspective(60,1,.1f,50),Matrix4x4.identity,Matrix4x4.Perspective(60,1,.1f,50),frame,frame==0);
+        private static HoNrdNative.CommonSettings Common(int frame)=>HoNrdNative.CommonSettings.Create(64,64,Matrix4x4.identity,Matrix4x4.Perspective(60,1,.1f,50),Matrix4x4.identity,Matrix4x4.Perspective(60,1,.1f,50),frame,frame==0);
         private static ProfilerRecorder StartAllocationRecorder()=>ProfilerRecorder.StartNew(ProfilerCategory.Internal,"GC.Alloc",1,ProfilerRecorderOptions.CollectOnlyOnCurrentThread|ProfilerRecorderOptions.SumAllSamplesInFrame);
         private static void ValidateAllocationCounter()
         {

@@ -1,0 +1,11 @@
+{
+  "source": "Tests~/RTGI/Backbuffer/build-warning-review.json",
+  "sourceSha256": "4CD85BA8DD89C2B4D5C0911FEC006A91E69D2456B75A123026E4DD9AC1B0B6AE",
+  "knownLines": [
+    "Shader warning in 'Hidden/lilToon/URP/VolumeLight/SolarHD': floating point division by zero at /Unity_Fork/HoUrp17.3.0/ShaderLibrary/Shadows.hlsl(310) (on d3d11)",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+  ],
+  "unhandled": [],
+  "acceptedExistingWarningsOnly": true
+}

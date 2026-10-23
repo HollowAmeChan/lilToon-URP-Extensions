@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RayTracing;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -189,7 +190,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static bool LightDomainChanged(HoRTDIContext c,Light[] keys)
         {
             if(keys.Length!=c.previousLightKeys.Length)return true;
-            var previousData=(HoRTDIRendererFeature.AnalyticLight[])typeof(HoRTDIContext).GetField("previousLightData",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(c);
+            var previousData=(HoRTAnalyticLight[])typeof(HoRTDIContext).GetField("previousLightData",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(c);
             foreach(var lamp in keys)
             {
                 int old=Array.FindIndex(c.previousLightKeys,p=>ReferenceEquals(p,lamp));if(old<0)return true;

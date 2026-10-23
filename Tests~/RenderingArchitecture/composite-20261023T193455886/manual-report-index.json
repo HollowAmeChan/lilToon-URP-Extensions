@@ -1,0 +1,6 @@
+{
+  "path": ".codex-research/RTGIValidation/ho-gi-composite-rg/report.json",
+  "sha256": "47E1DCCD1E152730AA0926F3E031AA96A451311DB77FDFCD78D5FE522B7C6984",
+  "lastWriteUtc": 1792784103.8592145,
+  "note": "Original runner used wrong output folder; original run metadata unchanged. Actual0 functionalreport pass still rejected because two D3D12 AS scratch errors, not accepted qualification."
+}

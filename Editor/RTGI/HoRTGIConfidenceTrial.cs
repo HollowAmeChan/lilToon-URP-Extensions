@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Security.Cryptography;
 using lilToon.URP.Extensions.RTGI;
 using lilToon.URP.Extensions.RTGI.NRD;
-using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.NRD;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -17,23 +17,23 @@ namespace lilToon.URP.Extensions.Editor.RTGI
     {
         [Serializable]internal sealed class Frame{public int phase,index;public bool baselineReset,hardReset,confidenceEnabled;public int unchangedBranch0,unchangedBranch1;public string rawSha,baselineSha,keepSha,confidenceSha,confidenceInputSha;}
         [Serializable]internal sealed class Report{public bool restored,released,independentPools;public long externalBytes;public string stream,streamSha256;public Frame[] frames;public string scope="Static primary/constant material controlled trial only; no quality or production acceptance";}
-        readonly HoRTGIContext context;readonly HoRTGISelectionLineageAudit lineage;readonly HoRTGINrdContext source;readonly HoRTDINrdContext[] branches=new HoRTDINrdContext[2];
+        readonly HoRTGIContext context;readonly HoRTGISelectionLineageAudit lineage;readonly HoRTGINrdContext source;readonly HoNrdContext[] branches=new HoNrdContext[2];
         readonly RenderTexture[] outputs=new RenderTexture[2],validation=new RenderTexture[2];readonly RenderTexture confidence,previousPrimary;readonly ComputeShader shader;readonly int kernel;
-        readonly Action<CommandBuffer,HoRTDINrdNative.CommonSettings,HoRTDINrdNative.RelaxSettings,IReadOnlyDictionary<string,RenderTargetIdentifier>> previous;
+        readonly Action<CommandBuffer,HoNrdNative.CommonSettings,HoNrdNative.RelaxSettings,IReadOnlyDictionary<string,RenderTargetIdentifier>> previous;
         readonly List<Frame> frames=new();readonly string output;readonly BinaryWriter stream;readonly Report report=new();Frame current;bool disposed;internal int Phase;internal bool HardReset;
         internal HoRTGIConfidenceTrial(HoRTGIContext context,HoRTGISelectionLineageAudit lineage,string output)
         {
             this.context=context;this.lineage=lineage;this.output=output;source=context.nrd;if(source.ValidationRecordInputs!=null)throw new Exception("NRD hook owned");previous=source.ValidationRecordInputs;
             if(context.width!=64||context.height!=64)throw new Exception("Small fixed primary scope only");
             shader=AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/HoRTGISelectionLineage/EndpointConfidence.compute");if(shader==null)throw new Exception("Generate confidence shader first");kernel=shader.FindKernel("Confidence");
-            const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;var shaders=(ComputeShader[])typeof(HoRTDINrdContext).GetField("shaders",flags).GetValue(source.core);
-            for(int i=0;i<2;i++){branches[i]=new HoRTDINrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources,highPrecisionColorPool:true);branches[i].Prepare(64,64);outputs[i]=Texture(RenderTextureFormat.ARGBFloat);validation[i]=Texture(RenderTextureFormat.ARGBHalf);}
-            foreach(string name in new[]{"permanent","transient","constants"}){var arrays=new[]{source.core,branches[0],branches[1]}.Select(v=>(Array)typeof(HoRTDINrdContext).GetField(name,flags).GetValue(v)).ToArray();for(int i=0;i<arrays[0].Length;i++)if(ReferenceEquals(arrays[0].GetValue(i),arrays[1].GetValue(i))||ReferenceEquals(arrays[1].GetValue(i),arrays[2].GetValue(i)))throw new Exception("Writable pools shared");}report.independentPools=true;
+            const BindingFlags flags=BindingFlags.Instance|BindingFlags.NonPublic;var shaders=(ComputeShader[])typeof(HoNrdContext).GetField("shaders",flags).GetValue(source.core);
+            for(int i=0;i<2;i++){branches[i]=new HoNrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources,highPrecisionColorPool:true);branches[i].Prepare(64,64);outputs[i]=Texture(RenderTextureFormat.ARGBFloat);validation[i]=Texture(RenderTextureFormat.ARGBHalf);}
+            foreach(string name in new[]{"permanent","transient","constants"}){var arrays=new[]{source.core,branches[0],branches[1]}.Select(v=>(Array)typeof(HoNrdContext).GetField(name,flags).GetValue(v)).ToArray();for(int i=0;i<arrays[0].Length;i++)if(ReferenceEquals(arrays[0].GetValue(i),arrays[1].GetValue(i))||ReferenceEquals(arrays[1].GetValue(i),arrays[2].GetValue(i)))throw new Exception("Writable pools shared");}report.independentPools=true;
             confidence=Texture(RenderTextureFormat.RFloat);previousPrimary=Texture(RenderTextureFormat.ARGBFloat);report.externalBytes=64L*64*(2*24+4+16);
             report.stream="confidence-images.bin";stream=new BinaryWriter(File.Create(Path.Combine(output,report.stream)));stream.Write(new byte[]{72,71,67,49});stream.Write(64);stream.Write(64);stream.Write(5);source.ValidationRecordInputs=Record;
         }
         static RenderTexture Texture(RenderTextureFormat format){var t=new RenderTexture(64,64,0,format,RenderTextureReadWrite.Linear){enableRandomWrite=true};if(!t.Create())throw new Exception("Trial texture allocation failed");return t;}
-        void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings common,HoRTDINrdNative.RelaxSettings settings,IReadOnlyDictionary<string,RenderTargetIdentifier> inputs)
+        void Record(CommandBuffer cmd,HoNrdNative.CommonSettings common,HoNrdNative.RelaxSettings settings,IReadOnlyDictionary<string,RenderTargetIdentifier> inputs)
         {
             current=new Frame{phase=Phase,index=frames.Count,baselineReset=common.accumulationMode==2,hardReset=HardReset,confidenceEnabled=Phase!=0};
             if(frames.Count==0&&!HardReset)throw new Exception("Trial initial reset required");

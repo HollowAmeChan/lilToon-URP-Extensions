@@ -1,0 +1,17 @@
+#pragma kernel Fill
+#pragma target 6.0
+#pragma use_dxc
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/NRD.hlsli"
+RWTexture2D<float4> _Signal,_Normal;
+RWTexture2D<float> _ViewZ,_Confidence;
+int _Frame;
+[numthreads(8,8,1)]void Fill(uint3 id:SV_DispatchThreadID)
+{
+ uint h=id.x*1664525+id.y*1013904223+(uint)_Frame*747796405;h^=h>>16;
+ float n=(h&65535)/65535.;float3 c=float3(.02,.01,.005)*(.3+1.4*n);
+ if(_Frame>=8&&_Frame<16)c=c.bgr*2;
+ if(_Frame>=24)c*=float3(4,.3,2);
+ bool valid=id.x>1;_Signal[id.xy]=RELAX_FrontEnd_PackRadianceAndHitDist(valid?c:0,valid?1.5:0,true);
+ _Normal[id.xy]=NRD_FrontEnd_PackNormalAndRoughness(float3(0,0,1),1,0);_ViewZ[id.xy]=valid?3:1e6;
+ _Confidence[id.xy]=(_Frame>=8&&_Frame<16&&id.x<32)?0:1;
+}

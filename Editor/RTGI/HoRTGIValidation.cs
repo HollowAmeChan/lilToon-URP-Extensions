@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RTDI;
 #pragma warning disable CS0618
 using System;
 using System.Collections.Generic;
@@ -6,7 +7,6 @@ using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.SurfaceBuffer;
 using lilToon.URP.Extensions.RTGI;
-using lilToon.URP.Extensions.RTDI;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;

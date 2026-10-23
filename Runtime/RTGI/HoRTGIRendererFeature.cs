@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.RayTracing;
-using lilToon.URP.Extensions.RTDI;
 using lilToon.URP.Extensions.RTGI.NRD;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -49,7 +48,7 @@ namespace lilToon.URP.Extensions.RTGI
             for(int i=0;i<nrdShaders.Length;i++)if(nrdShaders[i]==null)nrdShaders[i]=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(root+"NRD/HoRTGINrd"+i.ToString("D2")+".compute");
             #endif
             if(secondaryMaterialShader!=null)materials=new HoRTGISecondaryMaterials(secondaryMaterialShader);
-            scene=materials!=null?new HoRTScene(materials.Resolve,HoRTGISecondaryMaterials.SupportsCutout):new HoRTScene();
+            scene=materials!=null?new HoRTScene(materials.Resolve,HoRTCutoutSupport.Supports):new HoRTScene();
             pass=new HoRTGIPass();debugPass=new HoRTGIDebugPass();compositePass=new HoRTGICompositePass();
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
@@ -88,7 +87,7 @@ namespace lilToon.URP.Extensions.RTGI
             context.PrepareVisibility(scene.CutoutCount>0);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTGI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             if(materials.TimeVarying)context.historyValid=false;
-            pass.Setup(context,scene,shader,rayShader,captured,lights.Count>0?lights.ToArray():new HoRTDIRendererFeature.AnalyticLight[1],lights.Count,signature);
+            pass.Setup(context,scene,shader,rayShader,captured,lights.Count>0?lights.ToArray():new HoRTAnalyticLight[1],lights.Count,signature);
             bool compositeRequested=volume!=null&&volume.composite.overrideState?volume.composite.value:settings.composite;
             float amount=volume!=null&&volume.intensity.overrideState?volume.intensity.value:settings.intensity;
             amount=float.IsFinite(amount)?Mathf.Max(0,amount):0;
@@ -110,9 +109,9 @@ namespace lilToon.URP.Extensions.RTGI
             }
         }
         // Identical analytic-light adaptation to Ho-RTDI; no dependency on DI being enabled.
-        private static List<HoRTDIRendererFeature.AnalyticLight> CollectLights(int layerMask,out int excluded,out int signature)
+        private static List<HoRTAnalyticLight> CollectLights(int layerMask,out int excluded,out int signature)
         {
-            var lights=new List<HoRTDIRendererFeature.AnalyticLight>();excluded=0;signature=0;
+            var lights=new List<HoRTAnalyticLight>();excluded=0;signature=0;
             foreach(var light in Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
             {
                 if(!light.enabled||!light.gameObject.activeInHierarchy||(layerMask&(1<<light.gameObject.layer))==0)continue;
@@ -124,7 +123,7 @@ namespace lilToon.URP.Extensions.RTGI
                 var color=QualitySettings.activeColorSpace==ColorSpace.Linear?light.color.linear:light.color;
                 if(light.useColorTemperature)color*=Mathf.CorrelatedColorTemperatureToRGB(light.colorTemperature);
                 color*=Mathf.Max(0,light.intensity);var direction=light.transform.forward;
-                var item=new HoRTDIRendererFeature.AnalyticLight
+                var item=new HoRTAnalyticLight
                 {
                     positionRange=new Vector4(light.transform.position.x,light.transform.position.y,light.transform.position.z,Mathf.Max(.001f,light.range)),
                     radianceType=new Vector4(color.r,color.g,color.b,light.type==LightType.Point?0:light.type==LightType.Spot?1:2),
@@ -171,11 +170,11 @@ namespace lilToon.URP.Extensions.RTGI
         private sealed class HoRTGIPass : ScriptableRenderPass
         {
             private HoRTGIContext context;private HoRTScene scene;private ComputeShader shader;private RayTracingShader rayShader;
-            private PassSettings settings;private HoRTDIRendererFeature.AnalyticLight[] lights;private int lightCount,signature;
+            private PassSettings settings;private HoRTAnalyticLight[] lights;private int lightCount,signature;
             private double renderTime;
             private static readonly string[] Stages={"BuildEnvironmentPdf","PresampleEnvironment","ShadeSecondary","Temporal","Spatial","Final"};
             internal HoRTGIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
-            internal void Setup(HoRTGIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader rayShader,PassSettings settings,HoRTDIRendererFeature.AnalyticLight[] lights,int lightCount,int signature)
+            internal void Setup(HoRTGIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader rayShader,PassSettings settings,HoRTAnalyticLight[] lights,int lightCount,int signature)
             {
                 this.context=context;this.scene=scene;this.shader=shader;this.rayShader=rayShader;this.settings=settings;this.lights=lights;this.lightCount=lightCount;this.signature=signature;
                 renderTime=Time.unscaledTimeAsDouble;
@@ -187,7 +186,7 @@ namespace lilToon.URP.Extensions.RTGI
             {
                 internal HoRTGIContext context;internal HoRTScene.Inputs scene;internal HoRTPrimarySurfaceInputs primary;
                 internal ComputeShader shader;internal RayTracingShader rayShader;internal PassSettings settings;
-                internal HoRTDIRendererFeature.AnalyticLight[] lights;internal int lightCount,signature;internal uint revision,environmentRevision;
+                internal HoRTAnalyticLight[] lights;internal int lightCount,signature;internal uint revision,environmentRevision;
                 internal Matrix4x4 view,projection;internal Camera camera;internal TextureHandle diffuse,rawDiffuse,environment;
                 internal double renderTime;
                 internal Vector4 environmentParameters,environmentTint,environmentConstant;

@@ -774,3 +774,5 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 047应直接做独立真值/收益判别，避免无穷诊断。现有matrix/compat像素HGC1：header16B、帧数组[5,4096,RGBAfloat]，顺序physical raw、baseline NRD、blind keep NRD、confidence NRD、confidence texture；只有后3个NRD RGB需×64，不动alpha距离。HGT1为045结构，实际primary位置query16，正式帧128/每phase16；当前世界物理状态0/2/4/6相同，1次级z−1.25，3黑挡片x−.35，5alpha黑面闭合，7secondary绿色；黑面rough1/F0zero仍有GGX。
 
 可评审独立有限面确定性积分：receiver P(z0,N−z)看secondary Q(z<0,N+z)，dA→receiver demod factor=h²/(π*r⁴)，乘次级point-light Lambert+rough1GGX与两段visibility；lights用实际analyticLights，primary取真实query坐标，物理reference的secondary view=normalize(P−Q)，不能用旧cached/sourceview当真值。各面z固定，primary→Q与Q→pointlight穿其它平面的交点对Q.xy仿射，因此遮挡区域是轴对齐矩形，可按投影矩形边界分割积分domain后Gauss-Legendre16/32/64核收敛，避免薄挡片uniform-grid混叠。此为待核方案，先用独立直接ray/alpha和低阶交叉核确保没有漏面/重叠贡献。先64个规则receiver检查当前候选能量/变化像素误差，再一次受控连续/阶跃遮挡验证；如无实质收益按原门槛拒绝/搁置，不调整confidence指数/模糊/阈值/phi来压线。移动primary/相机/环境/任意材质与GPU成本仍未交付，不因这些小夹具缩小原完整目标。
+
+2026-10-24用户转向架构优化：A01公共NRD/通用C#契约已解耦，GI不再引用DI C#类型。新旧GPU/DI调度与两路径真实场景回归通过，数值/资源格式/历史reset保持；本步没有显存减少。原047草稿保留、GI研究目标暂停，继续前先读[公共层设计与交接](../架构/Ho-RT-公共层-设计与交接.md)及新的RenderingArchitecture验证入口；旧历史证据不改写。
