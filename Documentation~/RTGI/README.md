@@ -80,3 +80,6 @@
 
 
 步骤039：同源单归一化算子消融，整图首轮RGBA1024帧逐bit同，收回旧点89～98%退化却丢掉大部分总体收益（新18只改善3.26%<20%），已拒绝/撤回，038观察恢复实跑过。[算子取舍与原证据](../../Tests~/RTGI/ExchangeOperator/README.md)。按用户规则暂搁置局部公式试验，040先核F39原生scratch新机制，不重复018已做的mirror/flags等；无新证据则推进独立复杂动态Player/成本资格。全部原质量/范围/预算和目标active。
+
+
+步骤040：两Release自动屏幕Player通过受控多接收面/bone+blendshape/移动遮挡/RGB/Cutout/Volume检查，各240camera帧/224GI更新、8固定instance，18实际PNG。发现运动48/48全局NRD reset，当前功能响应不等于动态收敛；已核DI31/32同采样confidence与直接保留历史的旧失败，041先审GI等价信号与oracle，禁止盲换StructureRevision。[实测与审查](../../Tests~/RTGI/ComplexMotion/README.md)。F39同host/有限官方核查无新行动依据未重跑，全部原质量/范围/预算与目标active。

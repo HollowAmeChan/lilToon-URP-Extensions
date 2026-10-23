@@ -201,3 +201,12 @@ Smem variance预模糊也是DI diffuse策略一部分，不能只拷w²输出却
 branch0换成DI参考时必须独立main物理校准、更新断言；baselineMismatches>0是预期，不能仍把branch0当stock。初28点资格不是整图证明，保留初记录，再补强262144RGBA/帧双SHA，不能给历史结果补写已观察。后轮干预同时影响variance反馈，不冒称仅RGB系数或唯一因素。
 
 切换F39前先读018原证据：owned静态mirror/baseVertex0已经试过，原Ho及纯Unity3→5也触发scratch范围，初始5干净。重新照搬017 canonical helper不构成新机制，不重复flags/Static/recreate/delay/capacity。F39保持缺口，可推进固定实例动态Player/成本独立验证但不把它当静态增长资格。
+
+
+## F61 / 步骤040：动态响应覆盖不是时域收敛，不能无confidence照搬DI的StructureRevision
+
+两实际Player运动48/48全局reset，停姿恢复temporal，表明现保守策略的累积限制。DI31直接保留NRD虽平均噪声改善却阶跃changedL1 .5709失败，DI32用了真实同采样可见性confidence，PrimaryMotion还要求当前匹配表面射线起点。GI白confidence/黑MV不能凭DI代码一行StructureRevision/CONTINUE就上线；先审GI历史样本、secondary transport重求及独立oracle，不把新RNG变化混入confidence，不解禁原GI reservoir保守失效。不重开归一化/phi局部试验线。
+
+240 native camera frames含16 Volume-off，只有224 GI更新，不能把全callback当GI dispatch。ROI运动响应范围包含真实信号，不是噪声MSE；约4.4秒Start后生命周期不是总窗口时长/GPU时间，截图读回开销不作产品预算。F39原生增长仍缺口，8固定实例动测不等于增长支持。有限官方搜索未找到对应fix不等于全上游无fix，不据一般allocator文章盲试旧flags。
+
+先persist元数据再append同一个ordered记录会制造重复entry；保留原JSON/源码后去重，不能数成两次执行或重跑已过Player。每backend独立snapshot。JsonUtility空string序列化为""，不能只允许null错误字段，但必须结合pass/exit/marker/所有数值门槛，不能用空串绕过真错。

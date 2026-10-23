@@ -1,0 +1,108 @@
+{
+  "scope": "Controlled multireceiver fixed-instance enabled-camera512 Release Player, primary/emitter/blocker motion; same ordinary rendering loop. ROI response/switch/composition qualification, not complex real-scene reference or noise MSE/performance budget.",
+  "productionChanged": false,
+  "backends": {
+    "rg": {
+      "pass": true,
+      "compatibility": false,
+      "cameraFrames": 240,
+      "activeGiFrames": 224,
+      "activeGiFrameSequenceContiguous": true,
+      "callbackFramesContiguous": true,
+      "captureMatchesEveryCameraFrame": true,
+      "instanceCounts": [
+        8
+      ],
+      "snapshotCounts": [
+        3
+      ],
+      "cutoutCounts": [
+        1
+      ],
+      "renderLifecycleSeconds": 4.384169999999999,
+      "allRgbCompositeMaxErrors": {
+        "63": 0.007227018475532532,
+        "239": 0.00521637499332428
+      },
+      "volumeOffRasterMaxError": 0.0,
+      "firstEditedFrameOldColourMaxima": {
+        "144": 0.0,
+        "160": 0.00026877480559051037,
+        "176": 0.0
+      },
+      "motionFrames": 48,
+      "motionNrdResetFrames": 48,
+      "motionRawTemporalUsedFrames": 0,
+      "motionBakeDelta": 48,
+      "motionStructureRevisions": [
+        2
+      ],
+      "motionBlueMin": 0.05493587255477905,
+      "motionBlueMax": 0.5127186179161072,
+      "motionBlueRange": 0.4577827453613281,
+      "stationaryBakeDelta": 0,
+      "reEnabledReset": true,
+      "stationaryTemporalResumed": true,
+      "checks": 22
+    },
+    "compat": {
+      "pass": true,
+      "compatibility": true,
+      "cameraFrames": 240,
+      "activeGiFrames": 224,
+      "activeGiFrameSequenceContiguous": true,
+      "callbackFramesContiguous": true,
+      "captureMatchesEveryCameraFrame": true,
+      "instanceCounts": [
+        8
+      ],
+      "snapshotCounts": [
+        3
+      ],
+      "cutoutCounts": [
+        1
+      ],
+      "renderLifecycleSeconds": 4.3306606,
+      "allRgbCompositeMaxErrors": {
+        "63": 0.007212921977043152,
+        "239": 0.00521637499332428
+      },
+      "volumeOffRasterMaxError": 0.0,
+      "firstEditedFrameOldColourMaxima": {
+        "144": 0.0,
+        "160": 0.00026877480559051037,
+        "176": 0.0
+      },
+      "motionFrames": 48,
+      "motionNrdResetFrames": 48,
+      "motionRawTemporalUsedFrames": 0,
+      "motionBakeDelta": 48,
+      "motionStructureRevisions": [
+        2
+      ],
+      "motionBlueMin": 0.05493587255477905,
+      "motionBlueMax": 0.5127186179161072,
+      "motionBlueRange": 0.4577827453613281,
+      "stationaryBakeDelta": 0,
+      "reEnabledReset": true,
+      "stationaryTemporalResumed": true,
+      "checks": 22
+    }
+  },
+  "crossBackend": {
+    "raw": {
+      "bitwiseEquivalentReportedFloatValues": true,
+      "maxAbsDifference": 0.0
+    },
+    "filtered": {
+      "bitwiseEquivalentReportedFloatValues": false,
+      "maxAbsDifference": 0.0006830692291259766
+    },
+    "screen": {
+      "bitwiseEquivalentReportedFloatValues": false,
+      "maxAbsDifference": 0.0004029273986816406
+    }
+  },
+  "finding": "Both continuous-motion segments reset NRD and reject raw temporal reuse in48/48frames. This is the current conservative policy and a convergence limitation, not proof that motion denoising quality is complete.",
+  "next": "Review DI same-sample visibility confidence/primary motion protocol and GI signal support. Do not blindly preserve NRD history using StructureRevision without confidence; keep raw GI reservoirs conservative."
+}

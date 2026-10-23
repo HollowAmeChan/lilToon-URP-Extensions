@@ -1,0 +1,74 @@
+{
+  "player-results/compat/031-raster.png": {
+    "sha256": "542D1007E4E7712BCD73AC14BD78288FB7CB0A6F5BA2446618851BFB4817432A",
+    "bytes": 6585
+  },
+  "player-results/compat/063-composite.png": {
+    "sha256": "E2A672C6C4B32B70610BFEACE83D6759A434B989E742DA600B19AD281AB43F5C",
+    "bytes": 155448
+  },
+  "player-results/compat/095-continuous-motion.png": {
+    "sha256": "EF7CB7834393CE51071126400D236ABC7B59713C580B8368091E5D4D22023159",
+    "bytes": 160547
+  },
+  "player-results/compat/143-restored-static.png": {
+    "sha256": "E62A9FF597310C73680F8D32E14F5CAEC870FBC9C54355D003A83F32D3CFE944",
+    "bytes": 156441
+  },
+  "player-results/compat/144-cutout-closed.png": {
+    "sha256": "542D1007E4E7712BCD73AC14BD78288FB7CB0A6F5BA2446618851BFB4817432A",
+    "bytes": 6585
+  },
+  "player-results/compat/160-blue-off.png": {
+    "sha256": "E018856D3B4E6AF8F471F2513A6F0A9504676D3A57C95BA95C2FE3F2F03983DA",
+    "bytes": 91941
+  },
+  "player-results/compat/176-red-off.png": {
+    "sha256": "0C9AB36CB285E8891DA3CE4DFC160BDDE37DB275E2313F349167C1FC88B1C824",
+    "bytes": 90069
+  },
+  "player-results/compat/207-volume-off.png": {
+    "sha256": "542D1007E4E7712BCD73AC14BD78288FB7CB0A6F5BA2446618851BFB4817432A",
+    "bytes": 6585
+  },
+  "player-results/compat/239-reenabled-half.png": {
+    "sha256": "44EF6D8FE9BF2335A4507D4F888719F3A67EBD86A5957268005EE677C8EAEEA5",
+    "bytes": 68054
+  },
+  "player-results/rg/031-raster.png": {
+    "sha256": "542D1007E4E7712BCD73AC14BD78288FB7CB0A6F5BA2446618851BFB4817432A",
+    "bytes": 6585
+  },
+  "player-results/rg/063-composite.png": {
+    "sha256": "ECF25552032BAE99EB054091CBEDBF81978F2B110A0683C424EFA09AE9835B17",
+    "bytes": 155701
+  },
+  "player-results/rg/095-continuous-motion.png": {
+    "sha256": "EF7CB7834393CE51071126400D236ABC7B59713C580B8368091E5D4D22023159",
+    "bytes": 160547
+  },
+  "player-results/rg/143-restored-static.png": {
+    "sha256": "E62A9FF597310C73680F8D32E14F5CAEC870FBC9C54355D003A83F32D3CFE944",
+    "bytes": 156441
+  },
+  "player-results/rg/144-cutout-closed.png": {
+    "sha256": "542D1007E4E7712BCD73AC14BD78288FB7CB0A6F5BA2446618851BFB4817432A",
+    "bytes": 6585
+  },
+  "player-results/rg/160-blue-off.png": {
+    "sha256": "E018856D3B4E6AF8F471F2513A6F0A9504676D3A57C95BA95C2FE3F2F03983DA",
+    "bytes": 91941
+  },
+  "player-results/rg/176-red-off.png": {
+    "sha256": "0C9AB36CB285E8891DA3CE4DFC160BDDE37DB275E2313F349167C1FC88B1C824",
+    "bytes": 90069
+  },
+  "player-results/rg/207-volume-off.png": {
+    "sha256": "542D1007E4E7712BCD73AC14BD78288FB7CB0A6F5BA2446618851BFB4817432A",
+    "bytes": 6585
+  },
+  "player-results/rg/239-reenabled-half.png": {
+    "sha256": "44EF6D8FE9BF2335A4507D4F888719F3A67EBD86A5957268005EE677C8EAEEA5",
+    "bytes": 68054
+  }
+}

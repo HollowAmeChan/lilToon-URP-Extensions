@@ -636,3 +636,18 @@ SharedInput约11MiB，259source/9新文本、4完整log/22capture gzip、Frame.c
 039已按白名单过滤提交`8b376bc`，ExchangeOperator verifier提交后再次通过。四自有进程actual0/终态，正式1024帧整图首轮RGBA全同、main/DI参考对038全NRD输出逐帧SHA同；单归一化干预收回旧点89～98%损失却只留新18约3.26%改善，eligible=false，变体类/meta/模式/入口撤回，038观察恢复实跑过。272源/72captures/4logs/全部收益失败/算子图/初局部与补强资格完整留存，Runtime/Editor无最终diff，index空，仅Ho-GD计划未跟踪。
 
 按用户长期无可保留收益需搁置要求，局部归一化/DI公式试验线暂搁置，不接着扫插值/参数/迭代或依据现有两端数据再排公式。040改推进其它实际交付缺口：先读F39 StaticMesh README/归档源/原生HoRTAccelerationGrowthProbe与当前引擎/host/官方诊断，旧mirror/base0和原Ho/纯Unity3→5均scratch错、初始5干净，不能再抄canonical helper当新方案或原样重跑flags/recreate/delay/capacity。只有新的可行动证据才重开AS实验；否则显式保留static缺口，推进固定实例复杂动态Player和完整帧成本独立验证，不冒称F39解决。完整画质/静态/动态/1080预算及总目标和每步review/过滤提交/踩坑/交接规则继续active。
+
+
+### 040终态（2026-10-23，待过滤提交）：两后端多接收面动态Player通过，证实48/48全局reset限制
+
+**实际范围/收益：** 新ComplexMotion独立probe和Player builder可选入口（旧默认不变），全Runtime/Shader/DI/vendor/生产参数无改动。固定8初始ray instance、3owned skin snapshot、1Cutout；额外倾斜/移动primary接收面、持续bone+blendshape发光面、移动ray-only遮挡，末段Cutout/红蓝开关/Volume关开/强度.5。复用017已验证sourcebase4构建/ownedbase0代码，本步未重新逐mesh枚举该metadata；不是F39增长资格或复杂大场景MC画质。
+
+RG build36184/Player10356、compat build35500/Player40688 all actual0，serialized enabled camera/target=null/512屏幕，240原生连续camera callback与同帧WaitForEndOfFrame截图，无人工render/request/Volume.Update。各240观察含Volume-off16，实际224 GI更新连续；生命周期4.384/4.331秒不是全process/GPU预算，外部10秒可见界限沿用户授权。每后端22checks、instances8/skins3/cutout1全程；48motion实际Bake48、StructureRevision恒2、停姿Bake0并恢复temporal。
+
+三ROI全部RGB合成误差强度1 max.007227/.007213、.5均.005216<原.015；Volume-off屏幕恢复raster误差0。Cutout封闭首帧RGB raw/filtered0；蓝关首帧旧蓝max.0002688<.005、红关首帧旧红0，另一色保留，Volume重开首帧reset。RG/compat raw三ROI逐帧float相同，filtered最大差.0006831/screen.0004029真实保留。build仅原五条精确warning，runtimeD3D12/compile/Property/UAV/fence/drift0；原GB fallback缺省提示仍在、夹具全lilToon路径不证明fallback支持。18真实PNG已看RG合成和compat运动，受控色块/多表面/位移符合预期。
+
+**新瓶颈/参考核对：** 两持续运动段均48/48 NRD reset、GI raw temporal0，当前全scene.Revision令NRD无时间累积，必须记为收敛限制，不能因响应checks通过称动态画质完成。已读并冻DI31/32过程、VisibilityConfidence/currentDI、PrimaryMotion与固定RTXDI FullSample NRD：DI直接忽略world reset虽降噪，阶跃变化像素L1 .5709>.35失败；后续真实同reservoir/light采样当前TLAS重求confidence才保留NRD。GI现在黑MV/白confidence且无同类动态保护。不能直接换StructureRevision/强设CONTINUE，GI reservoir保守失效继续；下一步先审同GI历史采样重求的元数据/RNG/primary对应与独立oracle可行性，再限域生命周期候选，不重开局部滤波参数线。
+
+**F39有限审计：** 当前Unity6000.3.15f1/RTX4060/617.42同018。最小probe确实Add后Build，旧mirror/base0已做、原Ho/纯Unity3→5也scratch错、initial5干净。有限核UnityAPI/Microsoft scratch契约/Unity内存文章/本版notes未识别可行动新fix，不推断所有上游/后续版本均无fix，URL/局限native-audit保留；未重跑旧flags/mirror/growth矩阵，F39仍开。
+
+**过滤/失败保留：** 1163去重精确source对象、4完整build/player logs、两套全payload逐文件SHA/无HoGIGpuProbe.dll、2原report lossless gzip、18PNG/analysis/contract/filter-review/reference/verify完整。初RG wrapper同ordered记录persist后再append成双entry，原JSON与源码保留initial-metadata，去重为一次真实build/Player；compat wrapper已修、无重跑RG。offline verifier最初把Unity空error字符串误当null，按无error文本修、原报告SHA不变。只保留Editor可选构建/本轮证据/六RTGI文档白名单，Ho-GD计划排除。截图/读回/反射JSON开销不叫产品全帧GPU成本，原全质量/F39/static/复杂动态MC/环境混合/1080完整预算及总目标active。

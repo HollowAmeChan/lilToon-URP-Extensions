@@ -1,0 +1,16 @@
+{
+  "player-results/compat/report.json": {
+    "path": "player-results/compat/report.json.gz",
+    "rawSha256": "89C9B471C88AAB52FF8C8F3301879AA9DE1E1B58222501F45A0893F191C95C0F",
+    "rawBytes": 693982,
+    "archiveSha256": "9F0AE46CFE77F358CD1DE5C14C0EF4EDB9F4149D487E9F143A11AD3288BBCE24",
+    "archiveBytes": 58178
+  },
+  "player-results/rg/report.json": {
+    "path": "player-results/rg/report.json.gz",
+    "rawSha256": "290DDC69009DDE9A96F1DC4985DEB9955D8416E4B993E5AA1184588A7F6AC9C7",
+    "rawBytes": 693632,
+    "archiveSha256": "2A95E5D203EB3FCFB1DA093EB309D1F2473D659B8EF50EBE5E337D704510421E",
+    "archiveBytes": 58119
+  }
+}

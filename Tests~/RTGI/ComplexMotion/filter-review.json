@@ -1,0 +1,20 @@
+{
+  "step": 40,
+  "retained": [
+    "Editor/RTGI/HoRTGIPlayerValidation.cs: new optional complexMotion build entries/scenario; all old defaults unchanged",
+    "Tests~/RTGI/ComplexMotion: independent actual Player probe, evidence, audit, analysis, verification"
+  ],
+  "runtimeChanged": false,
+  "shaderNativeVendorChanged": false,
+  "productionGiPolicyChanged": false,
+  "validation": "RG36184/Player10356 andCompat35500/Player40688 actual0; each240 camera/224GI frames,22checks,48continuous motion resets/skin updates,stopped posesreuse,allRGB/Cutout/emission/Volume,18actualscreenPNG",
+  "metadataCorrection": "FirstRG wrapper persisted then appended same ordered record twice. Original2entry JSON+exact source preserved, corrected tooneactual run; compat wrapper fixed, no rerun of successful RG.",
+  "acceptedBenefit": "Coverage and confirmed motion-history convergence limitation, not product visual/noise fix or GPU budget.",
+  "next": "Review DI31/32 same-sample confidence + PrimaryMotion and pinnedGI replay metadata. Keep GI reservoir invalidation; do not copy StructureRevision/CONTINUE without dynamic confidence. Design same-input or independent oracle before a bounded lifecycle candidate.",
+  "openGaps": [
+    "F39 static growth/base-vertex support",
+    "full/phase/local denoised quality",
+    "dynamic MC/lag/noise acceptance",
+    "1080 and whole-frame product GPU budget"
+  ]
+}

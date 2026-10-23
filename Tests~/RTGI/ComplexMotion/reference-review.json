@@ -1,0 +1,66 @@
+{
+  "scope": "Primary local reference/reset audit; no GI lifecycle changes this step",
+  "files": [
+    {
+      "original": "Documentation~/RTDI/\u6280\u672f/Ho-RTDI-VisibilityConfidence.md",
+      "path": "reference/Ho-RTDI-VisibilityConfidence.md",
+      "sha256": "A0D60DD45BCB1A555F858C894C8A4FE4D210B636B3B68BFA27F6024D2AFD9943",
+      "bytes": 6844
+    },
+    {
+      "original": "Runtime/RTDI/HoRTDIRendererFeature.cs",
+      "path": "reference/HoRTDIRendererFeature.cs",
+      "sha256": "0A797864AF9FFE64A80490AE9C2B7F01325E4655DE7D7A7233F840365DD72D26",
+      "bytes": 54000
+    },
+    {
+      "original": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "path": "reference/HoRTGIRendererFeature.cs",
+      "sha256": "1030FA1442FB273A6AD47C4FB389B424E2CED9E6C7C179571029682C67801C84",
+      "bytes": 32461
+    },
+    {
+      "original": "Runtime/RTGI/NRD/HoRTGINrdContext.cs",
+      "path": "reference/HoRTGINrdContext.cs",
+      "sha256": "C6F15888A58877C4D120E28B6D4A8E0DF76D0A1B865CE0E67D506DAA3AC733E2",
+      "bytes": 7538
+    },
+    {
+      "original": ".codex-research/UnityPathTracing/RenderingPlugin/External/RTXDI/Samples/FullSample/Source/RenderPasses/DenoisingPasses/NrdIntegration.cpp",
+      "path": "reference/NrdIntegration.cpp",
+      "sha256": "1E7A4F3D58DE39E58D387C2D6B15DBD55BE070C9A8BAB9C4C9F1A1B10D92686B",
+      "bytes": 23603
+    },
+    {
+      "original": "Documentation~/RTDI/\u5f52\u6863/Ho-RTDI-\u6301\u7eed\u63a8\u8fdb\u8bb0\u5f55.md",
+      "path": "reference/DI-step31-32-process-excerpt.md",
+      "sha256": "069B470BAF5328E33AEA82D601D91DDE29F714C62BF436F265952C3878A97CBC",
+      "sourceDocumentSha256": "5575FDD92F98C8B3808A37BA0EA968241C633196241A662BD0AFF7DEA6511DD1",
+      "sourceLines": [
+        344,
+        375
+      ],
+      "bytes": 6687
+    },
+    {
+      "original": "Documentation~/RTDI/\u5f52\u6863/Ho-RTDI-PrimaryMotion.md",
+      "path": "reference/Ho-RTDI-PrimaryMotion.md",
+      "sha256": "DD5374A51F5EA919E208C10386451093024D9B446A4D7DC703DFCD4B2EF06C94",
+      "bytes": 4032
+    },
+    {
+      "original": "Documentation~/RTDI/\u5f52\u6863/Ho-RTDI-DynamicVisibility.md",
+      "path": "reference/Ho-RTDI-DynamicVisibility.md",
+      "sha256": "487FB3149F696A0752E154FBD3A2B64DEB4641922BD8F5AD5458186C89956D42",
+      "bytes": 4619
+    }
+  ],
+  "findings": [
+    "GI currently uses full scene.Revision for raw temporal reuse and NRD reset. All48 motion frames reset in both actual Players.",
+    "DI preserves NRD on pose/transform only with real same-history-sample visibility confidence and structure checks; comments explicitly warn against keeping history without confidence.",
+    "GI currently binds white IN_DIFF_CONFIDENCE, black IN_MV, with no equivalent dynamic history-confidence path.",
+    "Pinned RTXDI FullSample NRD integration sets CONTINUE and exposes confidence inputs; this alone does not prove GI can safely keep history.",
+    "Archived DI31 ignore-reset reduced average noise but failed changed-pixel step L1 .570931>.35; DI32 added true same-sample visibility confidence. Do not repeat its known unsafe shortcut for GI."
+  ],
+  "next": "Read DI Step32/PrimaryMotion protocol and GI history signal availability; design same-sample GI confidence/oracle or bounded diagnostic. Keep GI reservoirs conservative; do not blindly substitute StructureRevision or set CONTINUE."
+}

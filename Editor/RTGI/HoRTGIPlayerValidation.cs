@@ -26,6 +26,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void BuildSkinnedBaseVertexCompatibility()=>Build(true,true,true,"BaseVertex",true);
         public static void BuildAutomatic()=>Build(false,true,true,"Automatic",true,true,true,true);
         public static void BuildAutomaticCompatibility()=>Build(true,true,true,"Automatic",true,true,true,true);
+        public static void BuildComplexMotion()=>Build(false,true,true,"ComplexMotion",true,true,true,true,true,true);
+        public static void BuildComplexMotionCompatibility()=>Build(true,true,true,"ComplexMotion",true,true,true,true,true,true);
         public static void BuildBackbuffer()=>Build(false,true,true,"Backbuffer",true,true,true,true,true);
         public static void BuildBackbufferCompatibility()=>Build(true,true,true,"Backbuffer",true,true,true,true,true);
         public static void BuildPrecisionOutput()=>Build(false,true,true,"PrecisionOutput",true,true,true);
@@ -57,13 +59,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             AuditScripts();
         }
-        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="",bool baseVertex=false,bool historyProbe=false,bool precisionProbe=false,bool automatic=false,bool backbuffer=false)
+        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="",bool baseVertex=false,bool historyProbe=false,bool precisionProbe=false,bool automatic=false,bool backbuffer=false,bool complexMotion=false)
         {
             try
             {
                 string root=Directory.GetParent(Application.dataPath).FullName;
                 if(!root.Replace('\\','/').EndsWith("/.codex-research/RTGIValidation"))throw new Exception("Dedicated GI project required");
-                var probeType=Type.GetType((backbuffer?"HoRTGIBackbufferProbe":automatic?"HoRTGIAutomaticProbe":"HoRTGIRuntimeProbe")+", Assembly-CSharp");if(probeType==null)throw new Exception("Copy the selected Tests~/RTGI/Dynamic probe into isolated Assets before launching Build");
+                var probeType=Type.GetType((complexMotion?"HoRTGIComplexMotionProbe":backbuffer?"HoRTGIBackbufferProbe":automatic?"HoRTGIAutomaticProbe":"HoRTGIRuntimeProbe")+", Assembly-CSharp");if(probeType==null)throw new Exception("Copy the selected Tests~/RTGI/Dynamic probe into isolated Assets before launching Build");
                 string assets=precisionProbe?("Assets/RTGIPlayerProbe"+suffix+(compatibility?"Compatibility/":"/")):historyProbe?(compatibility?"Assets/RTGIPlayerProbeHistoryFeedbackCompatibility/":"Assets/RTGIPlayerProbeHistoryFeedback/"):baseVertex?"Assets/RTGIPlayerProbeBaseVertex/":"Assets/RTGIPlayerProbe/";Directory.CreateDirectory(Path.Combine(root,assets));AssetDatabase.Refresh();
                 // Own isolated outputs only.
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);RenderSettings.fog=false;
@@ -96,11 +98,20 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 }
                 Transform blueBone=null;SkinnedMeshRenderer blueSkin=null;
                 if(skinned){MakeSkin(red,false,assets+"RedSkin.asset",out _,baseVertex);blueSkin=MakeSkin(blue,true,assets+"BlueSkin.asset",out blueBone,baseVertex);cutoutRenderer=MakeSkin(cutoutRenderer.gameObject,false,assets+"CutoutSkin.asset",out _,baseVertex);}
+                Transform motionReceiver=null,motionBlocker=null;
+                if(complexMotion){
+                    if(PlayerSettings.colorSpace!=ColorSpace.Linear)throw new Exception("Complex motion fixture requires Linear color space");
+                    var left=Quad("Tilted left GI receiver",new Vector3(-.62f,-.4f,-.08f),new Vector3(.7f,.7f,1),0,new Color(.65f,.8f,.7f),Color.black,assets+"LeftReceiver.mat");left.transform.rotation=Quaternion.Euler(0,15,0);
+                    var right=Quad("Tilted right GI receiver",new Vector3(.62f,-.4f,-.08f),new Vector3(.7f,.7f,1),0,new Color(.8f,.65f,.7f),Color.black,assets+"RightReceiver.mat");right.transform.rotation=Quaternion.Euler(0,-15,0);
+                    motionReceiver=Quad("Moving primary GI receiver",new Vector3(0,.45f,-.1f),new Vector3(.65f,.65f,1),0,new Color(.7f,.7f,.85f),Color.black,assets+"MovingReceiver.mat").transform;
+                    motionBlocker=Quad("Moving ray-only blocker",new Vector3(3,0,-.55f),new Vector3(.9f,1.5f,1),1,Color.black,Color.black,assets+"MovingBlocker.mat").transform;
+                }
                 var holder=new GameObject("GI Player Volume").AddComponent<Volume>();holder.isGlobal=true;var profile=ScriptableObject.CreateInstance<VolumeProfile>();var component=profile.Add<HoRTGIVolume>();BoundScript(component);component.enable.Override(true);AssetDatabase.CreateAsset(profile,assets+"Volume.asset");AssetDatabase.AddObjectToAsset(component,profile);EditorUtility.SetDirty(profile);EditorUtility.SetDirty(component);holder.sharedProfile=profile;
                 var probe=new GameObject("GI Runtime Probe").AddComponent(probeType);var so=new SerializedObject(probe);
                 Set(so,"probeCamera",camera);Set(so,"feature",gi);Set(so,"redMaterial",red.GetComponent<Renderer>().sharedMaterial);Set(so,"blueWall",blue.transform);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
                 if(cutout){Set(so,"cutoutMaterial",cutoutMaterial);Set(so,"cutoutRenderer",cutoutRenderer);Set(so,"excludedSky",skyMaterial);so.ApplyModifiedPropertiesWithoutUndo();}
                 if(skinned){Set(so,"blueBone",blueBone);Set(so,"blueSkin",blueSkin);so.ApplyModifiedPropertiesWithoutUndo();}
+                if(complexMotion){Set(so,"blueMaterial",blue.GetComponent<Renderer>().sharedMaterial);Set(so,"motionReceiver",motionReceiver);Set(so,"motionBlocker",motionBlocker);so.ApplyModifiedPropertiesWithoutUndo();}
                 var baseVertexProperty=so.FindProperty("baseVertexProbe");if(baseVertex&&baseVertexProperty==null)throw new Exception("Copy the updated runtime probe before base-vertex build");if(baseVertexProperty!=null){baseVertexProperty.boolValue=baseVertex;so.ApplyModifiedPropertiesWithoutUndo();}
                 var historyProperty=so.FindProperty("historyProbe");if(historyProbe&&historyProperty==null)throw new Exception("Copy the updated runtime history probe before build");if(historyProperty!=null){historyProperty.boolValue=historyProbe;so.ApplyModifiedPropertiesWithoutUndo();}
                 var precisionProperty=so.FindProperty("precisionProbe");if(precisionProbe&&precisionProperty==null)throw new Exception("Copy the precision runtime probe before build");if(precisionProperty!=null){precisionProperty.boolValue=precisionProbe;so.ApplyModifiedPropertiesWithoutUndo();}

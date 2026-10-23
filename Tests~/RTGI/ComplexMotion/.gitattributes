@@ -1,0 +1,8 @@
+*.json -text whitespace=cr-at-eol
+*.gz -diff -text
+*.png -diff -text
+logs/** -diff -text
+source-blobs/** -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab,cr-at-eol
+reference/** -text whitespace=-blank-at-eof,cr-at-eol
+run_players.ps1 -text whitespace=cr-at-eol
+HoRTGIComplexMotionProbe.cs -text whitespace=cr-at-eol
