@@ -1,0 +1,68 @@
+{
+  "scope": "Actual original SDK GPU packing/stream selection, independent bounded two-point-light Lambert/plane oracle. No production scene/AS replay, temporal/spatial provenance implementation or NRD confidence acceptance.",
+  "productionChanged": false,
+  "gpuCases": 64,
+  "packed32ByteCollisionCases": 32,
+  "miscDroppedByDefaultRoundtripCases": 64,
+  "unusedDroppedByRoundtripCases": 64,
+  "sdkSelectedBQuantiles": 48,
+  "bothCpuFullWordMutationChecks": 1024,
+  "sameChoiceUnchangedRadianceBitExactCases": 64,
+  "oracleMaxAbsError": 3.673055098962763e-08,
+  "newChoiceStaticFalseGradientCases": 32,
+  "newChoiceMissedRealChangeCollisionCases": 16,
+  "newChoiceFalseChangeCollisionCases": 16,
+  "oracleResults": {
+    "oldChoice0": [
+      0.45552802778699325,
+      0.11432860305242183,
+      0.028582150763105458
+    ],
+    "oldChoice1": [
+      0.45552802778699325,
+      0.11432860305242183,
+      0.028582150763105458
+    ],
+    "currentChoice0AfterOccluder": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "currentChoice1AfterOccluder": [
+      0.45552802778699325,
+      0.11432860305242183,
+      0.028582150763105458
+    ]
+  },
+  "tentativeMemoryBudgets": [
+    {
+      "width": 64,
+      "height": 64,
+      "hypotheticalSidecar16BThreePools": 196608,
+      "hypotheticalLastShade48B": 196608,
+      "extraBytes": 393216,
+      "extraMiB": 0.375,
+      "scope": "Candidate accounting only; omits confidence/gradient textures and alignment/native allocations; not measured or proven sufficient layout."
+    },
+    {
+      "width": 256,
+      "height": 256,
+      "hypotheticalSidecar16BThreePools": 3145728,
+      "hypotheticalLastShade48B": 3145728,
+      "extraBytes": 6291456,
+      "extraMiB": 6.0,
+      "scope": "Candidate accounting only; omits confidence/gradient textures and alignment/native allocations; not measured or proven sufficient layout."
+    },
+    {
+      "width": 1920,
+      "height": 1080,
+      "hypotheticalSidecar16BThreePools": 100270080,
+      "hypotheticalLastShade48B": 99532800,
+      "extraBytes": 199802880,
+      "extraMiB": 190.546875,
+      "scope": "Candidate accounting only; omits confidence/gradient textures and alignment/native allocations; not measured or proven sufficient layout."
+    }
+  ],
+  "finding": "Existing GI32 plus aggregate radiance cannot identify the original secondary DI sample. SDK default pack/unpack does not preserve a free metadata word. Selection-return bool can drive an explicit auxiliary ledger, but production high-level T/S do not export it.",
+  "legacyCpuLayoutCorrection": "Legacy normal@12 was misc, misc@16 was LogLuv radiance, radiance@24 was normal. All32-word equality remained valid; historical classified counts/JSON names must be decoded with old schema. Correct future layout tested with actual GPU sentinel and both equality implementations."
+}

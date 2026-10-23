@@ -656,3 +656,16 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 040已按白名单过滤提交`b4e8b65`，ComplexMotion verifier提交后再次通过。RG36184/10356、compat35500/40688四自有进程actual0/终态，各240真实camera帧/224GI更新、22checks、8固定instances/3skin/1Cutout，18真实PNG及完整两payload核SHA；Runtime/Shader/DI未改，Editor仅可选构建入口/场景。1163原源/4logs/初RG双entry元数据与修正保留，当前source看compat，旧RG按原snapshot。index空，仅Ho-GD计划未跟踪。F39同host/有限主源核查没有新行动依据，未重跑旧矩阵，不能称已解决。
 
 041先沿用户要求看DI过程/固定参考而非再扫滤波：已冻DI31/32持续记录片段、DynamicVisibility/PrimaryMotion/VisibilityConfidence与代码；直接保NRD平均噪声虽降但阶跃changedL1 .5709失败，生产依赖同旧采样当前TLAS重求confidence。GI motion实测48/48 reset/raw temporal0是新收敛瓶颈，但当前GI黑MV/白confidence且未接相同保护，禁止一行改StructureRevision/CONTINUE。先逐字段核GI历史packet/secondary transport/来源pixel-frame/RNG、primary匹配、灯/环境域，建立同历史GI采样重求和独立oracle/同源比较所需契约；缺元数据明确记录，不能新采样充当confidence。保留GI reservoir保守失效、旧颜色/Volume硬重置，正确性和变化像素残影/噪声证据后才限域生命周期候选。归一化/phi/迭代公式线继续搁置，原全质量/F39/static/复杂动态MC/环境混合/1080完整预算及全目标与review/过滤提交/踩坑/交接规则active。
+
+
+### 041终态（2026-10-23，待过滤提交）：同采样信息必要性/SDK GPU契约通过，CPU诊断字段标签修正
+
+**源码结论：** 实际secondary48B不跟随GI选样，选中DI light/UV/invPdf未存；GI32只位置/normal/LogLuv聚合radiance/GI weight/M/age，age非sourcepixel。NRD来自Spatial1真实Shade，history0却pre-S2，不能互换。不能由位置/颜色反查来源，也不必重生成旧RNG/RIS候选：先保存原选中选择和DI invPdf（非GI weight），还需原secondary BRDF的source-viewDir/sample-kind、T/S来源继承与实际lastShade捕获、当前secondary匹配和两段visibility。详contract，尚非生产实现。
+
+**GPU与独立oracle：** 20788初actual1，HLSL保留字point造成3 compile error，未写buffer后的CPU错不代表ABI失败；原源/log/report/binary保留。修名lightPosition、同步/后dispatch检查。45904小D3D12 compute/no-AS actual0、compile/Property/UAV/fence/debug/drift0。原SDK Pack/Unpack/Combine直接执行，64案例：32旧GI32字节碰撞而当前旧选择响应不同；64默认roundtrip应用misc/unused丢失；64quantile实际选B48次。opaque aux四word按select bool复制，独立sentinel不作transport权重，未证明真实Shade/高层T/S关联。双点灯Lambert GPU AABB与独立CPU中平面oracle max3.674e−8<1e−6；64同选择静态bitexact，换另一选择负对照32静态假变化、碰撞中16漏真实变化/16假变化。非真实TLAS/alpha/area/env/spec replay或confidence资格。
+
+**修一个诊断实错：** SDK GI32偏移0pos/12misc/16LogLuv/20weight/24normal/28unused。旧HistoryFeedback.Packet与RuntimeProbe.Packet把12标normal、16标misc、24标radiance；未来已校正并加GI32-v2。两个CPU类型经实际GPU sentinel/Marshal offset核对，1024次逐word翻转保证Equal/Same仍覆盖32B。旧全包byte-copy判据和texture质量/能量结论保留；旧normalMismatch实misc、旧radianceMismatch实normal，未另记全局true radiance mismatch，只有全包0才可推全部字段同。原报告/源不改，两历史README加显式标签提醒，映射legacy-layout-review。
+
+**过滤/成本/边界：** 保留新Editor helper/shader/meta、两个CPU诊断布局/schema修正、本轮证据及文档，不改Runtime/vendor/DI/NRD/重置。ReplayContract有262源对象/2完整logs/4lossless报告binary、初失败/独立oracle/源映射/contract/filter-review/verify，全部SHA核过。两个GraphicsBuffer逻辑payload75,776B不是总GPU分配；假设16B×3pool+48B lastShade在256²6MiB、1080约190.55MiB/相机，未含gradient/对齐/原生分配，16B是否充分仍待证，不直接申请1080。无Player/AS重跑，生产motion48/48 reset仍未修。Ho-GD计划排除，原所有质量/F39/static/复杂动态/环境/1080预算和总目标active。
+
+**042直接动作：** 低分辨率真实GI T/S/Final来源继承观察资格，而非继续toy或放开reset。评审GI私有helper寄存器source-pointer/sidecar在Load/选中/Store传播，原SDK/DI不改、GI32字段/原结果须对照；覆盖初始、temporal所有分支/fallback、空间选样、S-off、pre-S packed history copy与Spatial1 lastShade，碰撞不能靠float匹配。证明真实关联与主输出无影响后才当前TLAS同旧选择重求/独立oracle/变化像素响应。保留GI reservoir保守失效和旧色/Volume硬重置，confidence正确性与成本前不改NRD生命周期；局部phi/归一化/迭代线继续搁置。

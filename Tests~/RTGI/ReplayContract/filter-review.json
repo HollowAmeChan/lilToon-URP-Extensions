@@ -1,0 +1,18 @@
+{
+  "step": 41,
+  "retained": [
+    "Editor no-AS actual SDK contract helper/shader+meta",
+    "Future HistoryFeedback Packet diagnostic ABI label/order correction and schema",
+    "Dynamic runtime probe Packet label/order correction and schema",
+    "Historical2README label warnings; old raw reports/sources intact",
+    "Contract/oracle/source/log/binary/review/sixRTGI docs"
+  ],
+  "runtimeShaderVendorNrdChanged": false,
+  "productionResetChanged": false,
+  "evidence": "45904 actual0,64cases,32GI32 collisions,64misc/unused default losses,48/64 selection,1024word mutation checks,bothCPUoffsets match actualGPU; independent plane oraclemax3.674e-8<1e-6",
+  "initialFailure": "20788 actual1,HLSL point keywordcompile3errors; unwritten buffer means noABI result. Kept original and fixed name/sync/postcompiler guard.",
+  "benefit": "Prevents incorrect confidence design and future mislabelled packet interpretation; no motion convergence fix claimed.",
+  "next": "Application-private selection lineage/sidecar observation through actualGI T/S/Final, with strict originalpacket/producer-output parity, then actualsame-sample currentTLAS oracle; no reset relaxation yet.",
+  "cost": "Two diagnostic GraphicsBuffer logical payloads75,776B only, not total GPU allocation/VRAM; hypothetical1080 sidecar+lastshade190.55MiB is an unimplemented/insufficiently proven candidate constraint.",
+  "ledgerLimit": "Opaque sentinel field-copy lane is separate from transport oracle and does not prove real Shade/T/S association."
+}

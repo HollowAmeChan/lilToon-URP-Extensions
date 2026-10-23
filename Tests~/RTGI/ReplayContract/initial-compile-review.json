@@ -1,0 +1,1 @@
+{"observedExit":1,"shaderErrors":3,"gpuSemanticQualified":false,"cause":"HLSL geometry primitive keyword point used as local variable; failed kernel left unwritten buffer, subsequent semantic check was not ABI evidence","repair":"Rename lightPosition; synchronous compilation and post-dispatch compiler diagnostics check; keep original source/log/report/stream"}

@@ -1,0 +1,38 @@
+{
+  "scope": "Future diagnostic semantics only; production SDK/shader ABI unchanged",
+  "sdkGI32Offsets": {
+    "position": 0,
+    "miscAgeM": 12,
+    "packedLogLuvRadiance": 16,
+    "weightFloat": 20,
+    "packedNormal": 24,
+    "unusedFloatBits": 28
+  },
+  "legacyCpuJsonMeaning": {
+    "position": "position",
+    "normal": "miscAgeM",
+    "misc": "packedLogLuvRadiance",
+    "weight": "weightFloat",
+    "radiance": "packedNormal",
+    "unused": "unusedFloatBits"
+  },
+  "historicalCounters": {
+    "packetMismatches": "All32bits retained valid full-word comparison",
+    "normalMismatches": "Actually miscAgeM mismatches",
+    "radianceMismatches": "Actually packedNormal mismatches",
+    "actualRadianceGlobalMismatches": "Not separately recorded unless full packet mismatch waszero; cannot infer from old named counters."
+  },
+  "preservedConclusions": "Full-byte selected-source equality and texture-based raw/filtered/quality means remain valid; no old report/acceptance threshold rewritten.",
+  "newSchema": "GI32-v2",
+  "baselineCommit": "c2f9bb2",
+  "sourceBefore": {
+    "Editor/RTGI/HoRTGIHistoryFeedbackAudit.cs": {
+      "sha256": "5278A5087C144EF33D183440450F4C42768E6BF399C69B4B3C81AE27B147580E",
+      "gitBlob": "045d89c8c6466f6367645e4d3c4aee5dc7db2a55"
+    },
+    "Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs": {
+      "sha256": "4AE68EC0D099299231FB5F785252F2AAFCA97E4134C06CFD498F967B16C3521C",
+      "gitBlob": "1ffe099f43cac2016470d3884e9a235559d0da02"
+    }
+  }
+}

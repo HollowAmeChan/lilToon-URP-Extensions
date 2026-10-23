@@ -46,3 +46,6 @@ Player原能量/空间L1/方差、相机移动、灯光/几何变化、Volume/NR
 运行`python Tests~/RTGI/ProductionHistory/analyze.py`与`verify_validation.py`验证生产唯一Runtime diff、实际history/反事实、原/修正/legacy失败、精确warning规则、315真实帧/23状态、Release payload以及仍失败的画质/AS门槛。旧020 Generate与verifier要求旧Runtime，按3b6937e历史运行，不回滚此生产改进满足旧SHA。
 
 下一项针对当前剩余质量：先读当前production stage与015 slow-moment/实际绑定，定位Temporal/后续Atrous局部损失和精度；NRD默认64、HDR/动态安全与成本一并保持。F35禁止继续纯单位盲调。F39不重试旧flags/延时；本机Unity RTX参考为Automatic并直接Build，若将来有新的API/分配机制证据才允许有界原生对照。正常enabled-camera与1080/完整预算仍未完成，goal保持active。
+
+
+041诊断语义更正：当时CPU Packet字段标签偏移与SDK不符，旧normal@12实为misc/M/age、misc@16实为LogLuv radiance、radiance@24实为packed normal。32字节全包Equal覆盖全部word，因此原packed-source复制/texture质量判据仍成立；旧分项normal/radiance计数和JSON标签不能按字面使用。原源/原报告不改，映射和实际GPU ABI验证见[ReplayContract](../ReplayContract/README.md)。

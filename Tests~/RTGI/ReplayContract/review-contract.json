@@ -1,0 +1,14 @@
+{
+  "step": 41,
+  "gpuCases": 64,
+  "analyticOracleAbsoluteTolerance": 1e-06,
+  "expectedGI32CollisionCases": 32,
+  "sdkQuantileSelectionB": 48,
+  "fullWordCpuMutationChecks": 1024,
+  "sameChoiceStaticBitExact": 64,
+  "expectedNewChoiceStaticFalseGradientCases": 32,
+  "expectedMissedAndFalseDynamicCollisionCases": 16,
+  "scope": "Actual SDK packing/Combine and independent bounded analytic transport only; no production scene, provenance T/S implementation or NRD confidence acceptance",
+  "runtimeUnchanged": true,
+  "legacyJsonsUnchanged": true
+}

@@ -193,8 +193,8 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
     }
     static bool HistorySample(int value)=>value==4||value==52||value==179||value==180||value==239||value==240||value==244||value==267||value==269||value==270||value==271||value>=303;
     [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-    struct Packet{public Vector3 position;public uint normal,misc;public float weight;public uint radiance,unused;}
-    [Serializable]sealed class HistoryCheck{public int sample,applicationFrame,giFrame,pixels,historySource,packetMismatches,spatialTemporalDifferentPackets;public bool temporalUsed,nrdReset,alphaVisibility;public string computeShader;}
+    struct Packet{public Vector3 position;public uint misc,radiance;public float weight;public uint normal,unused;}
+    [Serializable]sealed class HistoryCheck{public string packetLayout="GI32-v2: pos0,misc12,LogLuv16,weight20,normal24,unused28";public int sample,applicationFrame,giFrame,pixels,historySource,packetMismatches,spatialTemporalDifferentPackets;public bool temporalUsed,nrdReset,alphaVisibility;public string computeShader;}
     void CheckHistory(object context,bool reset)
     {
         if(!feature.Settings.spatial||!feature.Settings.temporal)throw new Exception("History Player requires actual default T/S settings");

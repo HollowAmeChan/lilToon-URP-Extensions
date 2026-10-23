@@ -154,3 +154,6 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 
 
 步骤040：两Release自动屏幕Player通过受控多接收面/bone+blendshape/移动遮挡/RGB/Cutout/Volume检查，各240camera帧/224GI更新、8固定instance，18实际PNG。发现运动48/48全局NRD reset，当前功能响应不等于动态收敛；已核DI31/32同采样confidence与直接保留历史的旧失败，041先审GI等价信号与oracle，禁止盲换StructureRevision。[实测与审查](../Tests~/RTGI/ComplexMotion/README.md)。F39同host/有限官方核查无新行动依据未重跑，全部原质量/范围/预算与目标active。
+
+
+步骤041：原SDK小GPU合约/独立oracle验证GI32无法唯一恢复旧次级DI选择、默认misc/unused丢失；保留同选择比新采样必要。实际GPU同时修正两CPU诊断字段标签，旧全包比较/texture质量不变，历史分项计数须旧schema解码。[采样契约与证据](../Tests~/RTGI/ReplayContract/README.md)。042做真实T/S/Final来源继承观察后才动态confidence；未改生产reset，190.55MiB/1080候选开销待证，全部原缺口与目标active。

@@ -20,11 +20,11 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         [Serializable] internal sealed class ShaderSource { public string policy, path, sha256; public int[] kernels; }
         [Serializable, StructLayout(LayoutKind.Sequential)] internal struct Packet
         {
-            public Vector3 position; public uint normal, misc; public float weight; public uint radiance, unused;
+            public Vector3 position; public uint misc, radiance; public float weight; public uint normal, unused;
         }
         [Serializable] internal sealed class HistoryCheck
         {
-            public string policy, mode; public int seed, shaderFrame, pixels, sourceBuffer, packetMismatches, radianceMismatches, normalMismatches;
+            public string packetLayout="GI32-v2: pos0,misc12,LogLuv16,weight20,normal24,unused28"; public string policy, mode; public int seed, shaderFrame, pixels, sourceBuffer, packetMismatches, radianceMismatches, normalMismatches;
             public bool strictCopyRequired; public Packet[] selectedHistory, selectedSource;
         }
         [Serializable] internal sealed class Variant

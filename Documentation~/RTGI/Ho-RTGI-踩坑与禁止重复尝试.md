@@ -210,3 +210,12 @@ branch0换成DI参考时必须独立main物理校准、更新断言；baselineMi
 240 native camera frames含16 Volume-off，只有224 GI更新，不能把全callback当GI dispatch。ROI运动响应范围包含真实信号，不是噪声MSE；约4.4秒Start后生命周期不是总窗口时长/GPU时间，截图读回开销不作产品预算。F39原生增长仍缺口，8固定实例动测不等于增长支持。有限官方搜索未找到对应fix不等于全上游无fix，不据一般allocator文章盲试旧flags。
 
 先persist元数据再append同一个ordered记录会制造重复entry；保留原JSON/源码后去重，不能数成两次执行或重跑已过Player。每backend独立snapshot。JsonUtility空string序列化为""，不能只允许null错误字段，但必须结合pass/exit/marker/所有数值门槛，不能用空串绕过真错。
+
+
+## F62 / 步骤041：GI32无次级选择来源、空闲字不会自动传，CPU标签不能代替字节布局
+
+原SDK32B信息碰撞证明相同位置/normal/LogLuv/weight/M/age可对应不同次级DI选择，运动后要不同重求。当前secondary缓存也不随T/S选样。不能从位置/RGB反匹配、把age当sourcepixel、写misc/unused就认为SDK默认Pack/Combine会保留，或用新RNG替代同选择。低级Combine bool+opaque ledger只是字段复制见证，不是实际Shade/T/S关联或动态confidence。NRD实际Spatial1样本与pre-S history0分开，端点需验证，主点到旧位置的开区间visibility不证明secondary仍在。
+
+旧CPU Packet语义标签顺序错位但全word比较覆盖仍完整；实际GPU sentinel验证SDK offsets12misc/16LogLuv/24normal，已改未来schemaGI32-v2。历史normal/radiance分类计数不能按字面使用；原全包0 mismatch/texture质量仍成立，原JSON不改、明示解码映射。不把语义标签修正误报为生产GPU ABI更改。
+
+HLSL point是保留字；lazy compute编译可能在首次dispatch才暴露，GetComputeShaderMessages之前空不等于编译成功。保留20788初编译失败，未写buffer导致的后续CPU错不是ABI证据；同步并在readback后复查编译信息。两个buffer75,776B只是payload，假想1080辅助记录190.55MiB不是已实现/已证明充分的VRAM预算，先低分辨率和生命周期/成本，再重求与生产策略。

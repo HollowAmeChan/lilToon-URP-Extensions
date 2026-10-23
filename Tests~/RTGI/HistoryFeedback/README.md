@@ -58,3 +58,6 @@ Final增加约.018432 ms，GI.Total相近但波动很大且顺序固定，不宣
 下一项021直接生产接入与回归：Runtime Final仅在S开启时原样复制packed Temporal2至history0，S关闭保留原store以限制未测HDR行为；同帧T/S/visibility/NRD不改。加实际生产history源断言，跑RG/compat、原环境/材质/Cutout/蒙皮及真实动态响应，构建两个独立Release Player并确保无需GPU探针DLL。结果有硬退化则撤回。020 Generate依赖旧legacy store合同；生产改后不可原样调用它并错标baseline，需使用本步历史源码或显式适配。
 
 完整5%、static base/F39、moment-HDR、正常enabled-camera、1080/完整预算仍未交付。不要因本步有收益标goal complete。
+
+
+041诊断语义更正：当时CPU Packet字段标签偏移与SDK不符，旧normal@12实为misc/M/age、misc@16实为LogLuv radiance、radiance@24实为packed normal。32字节全包Equal覆盖全部word，因此原packed-source复制/texture质量判据仍成立；旧分项normal/radiance计数和JSON标签不能按字面使用。原源/原报告不改，映射和实际GPU ABI验证见[ReplayContract](../ReplayContract/README.md)。

@@ -1,0 +1,68 @@
+#pragma kernel Probe
+#pragma use_dxc
+#pragma target 6.0
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/GI/ReSTIRGIParameters.h"
+RWStructuredBuffer<RTXDI_PackedGIReservoir> _Reservoirs;
+#define RTXDI_GI_RESERVOIR_BUFFER _Reservoirs
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl"
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI/Reservoir.hlsl"
+RWStructuredBuffer<uint4> _Results;
+
+// Deliberately bounded analytic model, not the production secondary estimator.
+bool Blocked(float3 direction,float distance)
+{
+    float3 lo=float3(-.8,-.25,-1.2),hi=float3(-.2,.25,-.8);float nearT=.001,farT=distance-.001;
+    [unroll]for(uint a=0;a<3;a++){
+        if(abs(direction[a])<1e-20){if(0<lo[a]||0>hi[a])return false;}
+        else{float u=lo[a]/direction[a],v=hi[a]/direction[a];nearT=max(nearT,min(u,v));farT=min(farT,max(u,v));}
+    }return nearT<=farT;
+}
+RTXDI_DIReservoir Choice(uint light)
+{
+    RTXDI_DIReservoir r=RTXDI_EmptyDIReservoir();r.lightData=light|RTXDI_DIReservoir_LightValidBit;r.uvData=0xc0004000;r.weightSum=2;r.targetPdf=1;r.M=8;return r;
+}
+float3 Transport(RTXDI_DIReservoir choice,uint mode,bool changed,out bool visible)
+{
+    uint light=RTXDI_GetDIReservoirLightIndex(choice);float3 point=float3(light==0?-1:1,0,-2);float distance=length(point);float3 direction=point/distance;
+    visible=!changed||!Blocked(direction,distance);float3 power=mode==0||light==0?float3(4,2,1):float3(1,4,2);
+    float3 albedo=float3(1,128.0/255.0,64.0/255.0);
+    return visible?albedo*power*(max(0,-direction.z)/(3.141592653589793*distance*distance))*RTXDI_GetDIReservoirInvPdf(choice):0;
+}
+bool EqualPacked(RTXDI_PackedGIReservoir a,RTXDI_PackedGIReservoir b)
+{return all(asuint(a.position)==asuint(b.position))&&a.packed_miscData_age_M==b.packed_miscData_age_M&&a.packed_radiance==b.packed_radiance&&asuint(a.weight)==asuint(b.weight)&&a.packed_normal==b.packed_normal&&asuint(a.unused)==asuint(b.unused);}
+[numthreads(64,1,1)]
+void Probe(uint3 tid:SV_DispatchThreadID)
+{
+    uint id=tid.x;if(id>=64)return;uint mode=id/32,source=id&1;uint at=id*10;
+    RTXDI_ReservoirBufferParameters layout=(RTXDI_ReservoirBufferParameters)0;layout.reservoirBlockRowPitch=1024;layout.reservoirArrayPitch=1024;
+    RTXDI_GIReservoir sentinel=RTXDI_MakeGIReservoir(float3(1.25,-2.5,3.75),normalize(float3(.1,.3,-.9)),float3(1,.5,.25),.25);sentinel.M=7;sentinel.age=11;
+    RTXDI_PackedGIReservoir packed=RTXDI_PackGIReservoir(sentinel,0xcafe0000);packed.unused=asfloat(0x3f000001);
+    uint address=RTXDI_ReservoirPositionToPointer(layout,uint2(id,0),0);_Reservoirs[address]=packed;
+    DeviceMemoryBarrierWithGroupSync();
+    RTXDI_GIReservoir loaded=RTXDI_LoadGIReservoir(layout,uint2(id,0),0);RTXDI_StoreGIReservoir(loaded,layout,uint2(id,0),1);
+    RTXDI_PackedGIReservoir lost=_Reservoirs[address+1024];
+    bool v0,v1;float3 old0=Transport(Choice(0),mode,false,v0),old1=Transport(Choice(1),mode,false,v1);
+    RTXDI_GIReservoir a=RTXDI_MakeGIReservoir(0,float3(0,0,-1),old0,.25),b=RTXDI_MakeGIReservoir(0,float3(0,0,-1),old1,.25);
+    uint collision=EqualPacked(RTXDI_PackGIReservoir(a,0),RTXDI_PackGIReservoir(b,0))?1:0;
+    // Actual SDK streaming decision; the explicit ledger copies the selected
+    // auxiliary record. SDK GI struct has no such fields automatically.
+    RTXDI_GIReservoir mixed=RTXDI_EmptyGIReservoir();uint selected=0;
+    uint4 auxA=uint4(0x80000000,0xc0004000,asuint(2.0),RTXDI_EncodeNormalizedVectorToSnorm2x16(float3(0,0,-1)));
+    uint4 auxB=uint4(0x80000001,0x12345678,asuint(7.5),RTXDI_EncodeNormalizedVectorToSnorm2x16(float3(1,0,0)));uint4 ledger=auxA;
+    RTXDI_CombineGIReservoirs(mixed,a,.5,1);b.weightSum=3*a.weightSum;
+    float q=(id+.5)/64.0;if(RTXDI_CombineGIReservoirs(mixed,b,q,1)){selected=1;ledger=auxB;}
+    RTXDI_DIReservoir original=Choice(source),fresh=Choice(1-source);
+    bool visible;float3 old=Transport(original,mode,false,visible),same=Transport(original,mode,false,visible),changed=Transport(original,mode,true,visible);uint changedVisible=visible?1:0;
+    float3 newStatic=Transport(fresh,mode,false,visible),newChanged=Transport(fresh,mode,true,visible);uint freshVisible=visible?1:0;
+    _Results[at]=uint4(id,mode,collision,selected);
+    _Results[at+1]=uint4(packed.packed_miscData_age_M,lost.packed_miscData_age_M,asuint(lost.unused),0);
+    uint count,stride;_Reservoirs.GetDimensions(count,stride);_Results[at+1].w=stride;
+    _Results[at+2]=asuint(float4(old,a.weightSum));
+    _Results[at+3]=asuint(float4(same,RTXDI_GetDIReservoirInvPdf(original)));
+    _Results[at+4]=asuint(float4(changed,changedVisible));
+    _Results[at+5]=asuint(float4(newStatic,1-source));
+    _Results[at+6]=uint4(packed.packed_miscData_age_M,packed.packed_radiance,packed.packed_normal,asuint(packed.weight));
+    _Results[at+7]=ledger;
+    _Results[at+8]=asuint(float4(newChanged,freshVisible));
+    _Results[at+9]=uint4(original.lightData,original.uvData,asuint(RTXDI_GetDIReservoirInvPdf(original)),RTXDI_EncodeNormalizedVectorToSnorm2x16(float3(0,0,-1)));
+}

@@ -1,0 +1,30 @@
+{
+  "results/initial-compile.json": {
+    "path": "results/initial-compile.json.gz",
+    "rawBytes": 1215,
+    "rawSha256": "3BCB54D27C17F8E80B74ACF7B9002B5E4C0C922D808360FDE56D21C6D723EA90",
+    "archiveBytes": 566,
+    "archiveSha256": "7988FFD11B178F6B18CE573B677388CC437E10972FA6213F1AD355D2CD0D236F"
+  },
+  "results/qualification.json": {
+    "path": "results/qualification.json.gz",
+    "rawBytes": 981,
+    "rawSha256": "99B34C7E0937B9F7CEA5A22AA7F60B685E6A1A860D016DEF76BA45B80D6067BA",
+    "archiveBytes": 460,
+    "archiveSha256": "4ED96801F62554A8510D2C471ACAE8AD6D56C7A8AFA9BC53FA8676E89B9CC596"
+  },
+  "results/initial-compile/contract.bin": {
+    "path": "results/initial-compile/contract.bin.gz",
+    "rawBytes": 10240,
+    "rawSha256": "84FF92691F909A05B224E1C56ABB4864F01B4F8E3C854E4BB4C7BAF1D3F6D652",
+    "archiveBytes": 45,
+    "archiveSha256": "C11BE7D7CB6EA8B7370E7DCAFAB35CBA27A5871A12C3A5D2331D0F328141DA80"
+  },
+  "results/qualification/contract.bin": {
+    "path": "results/qualification/contract.bin.gz",
+    "rawBytes": 10240,
+    "rawSha256": "CF73D83ECEF9D04846F850F708BB955E1DC912973AF3E923F2DBE645737E58F5",
+    "archiveBytes": 375,
+    "archiveSha256": "C7183D2E4020FC77D2F27B6B3201DDF86C1DBC354E40ECF9D54C43024E89F1AA"
+  }
+}
