@@ -1056,3 +1056,9 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 **归档/成本/过滤：** ConfidenceTrial284精确源、4完整logs、16lossless captures约102.08MiB、初保存失败/初CPU错误模型/contract/filter-review/独立verify齐。新增external纹理278528B=.265625MiB/64²，另两NRD core池、既有4MiB端点诊断、双GI AS/NRD、rays/readback不含；非总VRAM/GPU时间/1080预算。只本步Editor/证据/六RTGI文档白名单，Runtime/vendor/DI/生产reset不改、他人描边提交保留。
 
 **047具体下一项：** 不继续只加来源诊断。建立受控固定primary/点灯/有限plane的独立一跳积分reference并核收敛，包含black材质掠射GGX（不能假设纯黑）；先八phase能量/变化像素响应与噪声，再连续/阶跃遮挡（原world-change每帧reset）检验实际收益。若动态门槛无收益则拒绝/搁置，不调指数凑pass。移动primary/相机对应、parallax/任意模型、环境/成本仍未资格，生产保守reset继续。全部原质量/F39/static/复杂动态/环境/1080预算及完整目标active，逐步pre/post review/过滤提交/踩坑/压缩交接继续。
+
+046已白名单过滤提交`6f3c5e3`，提交后ConfidenceTrial verifier再次通过；工作树/index clean。有效41400短16、50092 RG/53052compat各128frame actual0，284源/4logs/16lossless captures约102.08MiB；初46404保存失败与初CPU未模拟LogLuv模型完整保留。原GI32/raw/NRD逐位同，实验NRD首phase逐位同，17140 invalid/首帧/unsupported与162零→亮、8700亮→零confidence严格0，独立full-codec oraclemax.0134466<原.03。只接纳输入实验设施，明确拒绝生产历史/画质接纳；原reset/所有完整目标缺口保留，goal active。
+
+047应直接做独立真值/收益判别，避免无穷诊断。现有matrix/compat像素HGC1：header16B、帧数组[5,4096,RGBAfloat]，顺序physical raw、baseline NRD、blind keep NRD、confidence NRD、confidence texture；只有后3个NRD RGB需×64，不动alpha距离。HGT1为045结构，实际primary位置query16，正式帧128/每phase16；当前世界物理状态0/2/4/6相同，1次级z−1.25，3黑挡片x−.35，5alpha黑面闭合，7secondary绿色；黑面rough1/F0zero仍有GGX。
+
+可评审独立有限面确定性积分：receiver P(z0,N−z)看secondary Q(z<0,N+z)，dA→receiver demod factor=h²/(π*r⁴)，乘次级point-light Lambert+rough1GGX与两段visibility；lights用实际analyticLights，primary取真实query坐标，物理reference的secondary view=normalize(P−Q)，不能用旧cached/sourceview当真值。各面z固定，primary→Q与Q→pointlight穿其它平面的交点对Q.xy仿射，因此遮挡区域是轴对齐矩形，可按投影矩形边界分割积分domain后Gauss-Legendre16/32/64核收敛，避免薄挡片uniform-grid混叠。此为待核方案，先用独立直接ray/alpha和低阶交叉核确保没有漏面/重叠贡献。先64个规则receiver检查当前候选能量/变化像素误差，再一次受控连续/阶跃遮挡验证；如无实质收益按原门槛拒绝/搁置，不调整confidence指数/模糊/阈值/phi来压线。移动primary/相机/环境/任意材质与GPU成本仍未交付，不因这些小夹具缩小原完整目标。
