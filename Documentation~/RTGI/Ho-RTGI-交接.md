@@ -589,3 +589,8 @@ SharedInput约11MiB，259source/9新文本、4完整log/22capture gzip、Frame.c
 
 
 **038直接执行顺序：** 先git status/goal/最新交接核现状；勿找已移除类，037 source-index/source-files中保留实际源码/生成Shader与SHA。恢复实验应新建Editor观察类而非改变Runtime，GI主baseline/branch0继续stock5，branch1固定037 math，IN/common/settings同源，OUT/pool/constants独立。对两分支在相同cmd拷真实stage output，不能额外debug-UAV改公式却称bitexact；先比037 qualification原baseline/candidate完整mean map和原27局部，再确认新增196141参考/guide一致及物理resolve校准。只观察所需有限seed，定位退化开始/后续恢复后才论一个新机制。保持F31/F39/F51/F53/F55/F58范围和全部未完成目标。
+
+
+037已按白名单过滤提交`520935e`，DiffusePolicy verifier提交后再次通过。四个自有进程actual0/全部终态，1024观察帧同源stock与物理GPU校准bitexact；固定DI diffuse bundle新18/旧15总体收益42%/31%、full4/4，但旧196141 B和141157 G/B三通道硬退化，拒绝接入生产，候选覆盖/新增类/Shader/入口均移除并stock复核过。40真实capture/4logs/272源对象和全部收益/失败/取舍留存，Runtime/Editor无最终diff。提交后仅校正JSON属性变更留下的索引行尾缓存，HEAD与worktree原字节相同，没有重写证据。index空、仅他人Ho-GD计划未跟踪。
+
+038继续同源stage观察：原27点加196141至少28点，对stock与固定037策略读取实际Pre/Temporal/Clamp/首Atrous及每个后续ordinal的RGB/variance；先短资格证明observer不改037两分支原输出/物理resolve，再有限seed定位旧退化与帮助传播，新机制后才定候选。不得放宽硬门槛或扫描参数/坐标特判，不重采旧MC/无目的大矩阵；F39/static/复杂动态/1080完整预算、原全部目标和每步review/过滤提交/踩坑/交接约束继续active。

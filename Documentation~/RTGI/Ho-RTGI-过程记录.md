@@ -791,3 +791,8 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **过滤/成本：** 原候选所有源字节/2patch/5Shader/meta/工具、40真实capture lossless gzip、4完整logs、272source对象/SHA和全部34点/相位/方差分析保留Tests~/RTGI/DiffusePolicy约20.6MiB，verify通过。新增类/meta/5shader/meta/覆盖入口已移除，Castle/LocalStage/SharedInput精确恢复HEAD源；过滤后stock/no-op32帧RGBA bitexact。当前build只写Tests重建目录，历史runner拒绝缺入口；不能回滚产品凑旧SHA。额外2NRD/多RT/读回只诊断，不叫产品GPU预算。四进程终态/active=null，白名单只证据和六RTGI文档，Ho-GD计划排除。
 
 **后审：** 是有因果资格的机制收益与失败边界，未交付生产修复。F58禁止因聚合改善直接重开该完整bundle或放宽旧控制；不扫描phi/epsilon/迭代/ratio、不按坐标修复。038先保持同源两个独立分支，用原27+196141至少28点实际Pre/Temporal/Clamp/首Atrous/各ordinal的RGB/variance观察定位旧退化；observer先不改037原版和候选输出，才有限新采证据。新机制前不定算法变体，不重采MC/无新目的完整矩阵。所有原质量/F39/static/复杂动态/1080完整预算和总目标active继续。
+
+
+037已按白名单过滤提交`520935e`，DiffusePolicy verifier提交后再次通过。四个自有进程actual0/全部终态，1024观察帧同源stock与物理GPU校准bitexact；固定DI diffuse bundle新18/旧15总体收益42%/31%、full4/4，但旧196141 B和141157 G/B三通道硬退化，拒绝接入生产，候选覆盖/新增类/Shader/入口均移除并stock复核过。40真实capture/4logs/272源对象和全部收益/失败/取舍留存，Runtime/Editor无最终diff。提交后仅校正JSON属性变更留下的索引行尾缓存，HEAD与worktree原字节相同，没有重写证据。index空、仅他人Ho-GD计划未跟踪。
+
+038继续同源stage观察：原27点加196141至少28点，对stock与固定037策略读取实际Pre/Temporal/Clamp/首Atrous及每个后续ordinal的RGB/variance；先短资格证明observer不改037两分支原输出/物理resolve，再有限seed定位旧退化与帮助传播，新机制后才定候选。不得放宽硬门槛或扫描参数/坐标特判，不重采旧MC/无目的大矩阵；F39/static/复杂动态/1080完整预算、原全部目标和每步review/过滤提交/踩坑/交接约束继续active。
