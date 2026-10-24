@@ -1062,3 +1062,11 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 047应直接做独立真值/收益判别，避免无穷诊断。现有matrix/compat像素HGC1：header16B、帧数组[5,4096,RGBAfloat]，顺序physical raw、baseline NRD、blind keep NRD、confidence NRD、confidence texture；只有后3个NRD RGB需×64，不动alpha距离。HGT1为045结构，实际primary位置query16，正式帧128/每phase16；当前世界物理状态0/2/4/6相同，1次级z−1.25，3黑挡片x−.35，5alpha黑面闭合，7secondary绿色；黑面rough1/F0zero仍有GGX。
 
 可评审独立有限面确定性积分：receiver P(z0,N−z)看secondary Q(z<0,N+z)，dA→receiver demod factor=h²/(π*r⁴)，乘次级point-light Lambert+rough1GGX与两段visibility；lights用实际analyticLights，primary取真实query坐标，物理reference的secondary view=normalize(P−Q)，不能用旧cached/sourceview当真值。各面z固定，primary→Q与Q→pointlight穿其它平面的交点对Q.xy仿射，因此遮挡区域是轴对齐矩形，可按投影矩形边界分割积分domain后Gauss-Legendre16/32/64核收敛，避免薄挡片uniform-grid混叠。此为待核方案，先用独立直接ray/alpha和低阶交叉核确保没有漏面/重叠贡献。先64个规则receiver检查当前候选能量/变化像素误差，再一次受控连续/阶跃遮挡验证；如无实质收益按原门槛拒绝/搁置，不调整confidence指数/模糊/阈值/phi来压线。移动primary/相机/环境/任意材质与GPU成本仍未交付，不因这些小夹具缩小原完整目标。
+
+### 047预审（2026-10-24）：独立有限面一跳积分真值，决定046候选去留
+
+046有接线进展但无画质收益，不能继续仅加诊断或调confidence参数。基于已归档同源128帧两后端，64个预声明规则receiver（x/y=4,12,…60）独立求当前物理一跳reference；只取真实primary位置、实际解析灯buffer和已知fixture几何/常量材质，不把缓存outgoing/sourceview、raw均值或filtered作为真值。面积积分receiver factor=h²/(πr⁴)，次级当前view=P−Q，包含rough1/F0zero的GGX与黑挡片/alpha表面贡献。两个visibility腿通过各固定z平面投影矩形裁切积分域，并用独立直接ray相交随机/边界点交叉核。
+
+Gauss-Legendre16/32/64核收敛，必要仅升128验证积分而非调候选。reference RGB相对L1收敛≤.0025、非零R/B各≤.005，投影/directray0错后才评画质。每phase16帧原全保留，比较末8帧能量/RGB L1、每帧reference误差、首4帧变化receiver响应；变化mask取独立RGB变化>5%max(old,current)能量。物理单位raw不变、NRD RGB×64，不动距离alpha。非零R/B能量5%、mean reference L1 .15、变化receiver首4frame L1 .35作为预声明候选门槛；refG=0单列absolute leakage并计RGB L1，不发明相对分母或给G强行pass。
+
+若046候选连保持阶段独立能量/响应都失败，直接拒绝并搁置，不再为被否定方案做continuous验收，不扫描指数/模糊/阈值/phi；只有这些门槛守住才再一次受控连续/阶跃运动收益验证。此决定不替代原完整RTGI质量/动态/环境/预算目标，生产reset及所有范围不改。保持前后review/失败保留/白名单提交/踩坑/压缩交接。
