@@ -1,0 +1,5 @@
+originalDistance=50 shadows=Soft
+distance50 distance=50 mean=0.109583471944048 max=0.1523438 deltaMean=0 reductionVsBase=0
+distance100 distance=100 mean=0.0192166927656878 max=0.0352478 deltaMean=0.0785758129178734 reductionVsBase=0
+distance150 distance=150 mean=0.00147197080580306 max=0.01145172 deltaMean=0.0963205348777582 reductionVsBase=0
+unshadowed distance=50 mean=0.10957939452915 max=0.1523438 deltaMean=0.0117868888455891 reductionVsBase=0.1328069

@@ -1,0 +1,30 @@
+[
+  {
+    "capture": "distance50",
+    "pixels": 45056,
+    "mean": 0.10958347194404765,
+    "peak": 0.15234375,
+    "sha256": "BE7DA2FF8D861FB359DFE0010DA2391EDAF2A3CC36D090E4E6EF09FABB81E2AB"
+  },
+  {
+    "capture": "distance100",
+    "pixels": 45056,
+    "mean": 0.019216692765687847,
+    "peak": 0.035247802734375,
+    "sha256": "B28A068F215691B133CBECBC0400BB9A3C35BA5E907BBD094906D2BCEABEE674"
+  },
+  {
+    "capture": "distance150",
+    "pixels": 45056,
+    "mean": 0.0014719708058030599,
+    "peak": 0.01145172119140625,
+    "sha256": "DEE982F54A8140B4E48330BE2763B3FAC48C62A5181F33F0227E5FB48C13810E"
+  },
+  {
+    "capture": "unshadowed",
+    "pixels": 45056,
+    "mean": 0.10957939452915029,
+    "peak": 0.15234375,
+    "sha256": "02F83C743DFA84070F912B9A24964314BF1E9B9E7A3B5F157F1612155C06FF08"
+  }
+]

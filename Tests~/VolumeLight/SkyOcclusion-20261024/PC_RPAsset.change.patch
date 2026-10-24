@@ -1,0 +1,13 @@
+diff --git a/.codex-research/SkyOcclusionLive/PC_RPAsset.before.asset b/D:/Unity_Project/BREAK_URP/Assets/Settings/PC_RPAsset.asset
+index b7c73dae..401ff27d 100644
+--- a/.codex-research/SkyOcclusionLive/PC_RPAsset.before.asset
++++ b/D:/Unity_Project/BREAK_URP/Assets/Settings/PC_RPAsset.asset
+@@ -54,7 +54,7 @@ MonoBehaviour:
+   m_ReflectionProbeBlending: 1
+   m_ReflectionProbeBoxProjection: 1
+   m_ReflectionProbeAtlas: 1
+-  m_ShadowDistance: 50
++  m_ShadowDistance: 100
+   m_ShadowCascadeCount: 4
+   m_Cascade2Split: 0.25
+   m_Cascade3Split: {x: 0.046257228, y: 0.3}

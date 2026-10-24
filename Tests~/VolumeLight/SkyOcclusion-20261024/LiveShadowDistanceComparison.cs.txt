@@ -1,0 +1,57 @@
+using System;
+using System.Collections;
+using System.IO;
+using System.Reflection;
+using System.Text;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.VolumeLight;
+[InitializeOnLoad]
+internal static class HoSkyOcclusionDiagnostic
+{
+    const string Root="D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/SkyOcclusionLive";
+    static UniversalRenderPipelineAsset pipeline;static Light sun;static HoVolumeLightRendererFeature feature;
+    static float originalDistance;static LightShadows originalShadows;static int stage,frames;static Color[] baseline;static readonly StringBuilder log=new StringBuilder();
+    const BindingFlags Flags=BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public;
+    static HoSkyOcclusionDiagnostic(){if(!File.Exists(Root+"/comparison.txt")){EditorApplication.delayCall+=Start;AssemblyReloadEvents.beforeAssemblyReload+=Restore;}}
+    static void Start()
+    {
+        pipeline=GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+        foreach(var l in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None))if(l.type==LightType.Directional){sun=l;break;}
+        foreach(var f in Resources.FindObjectsOfTypeAll<HoVolumeLightRendererFeature>())if(f.isActive){feature=f;break;}
+        if(pipeline==null||sun==null||feature==null)return;
+        originalDistance=pipeline.shadowDistance;originalShadows=sun.shadows;
+        log.AppendLine("originalDistance="+originalDistance+" shadows="+originalShadows);
+        RenderPipelineManager.endCameraRendering+=Capture;EditorApplication.update+=Repaint;Repaint();
+    }
+    static void Repaint(){SceneView.RepaintAll();}
+    static void Restore(){if(pipeline!=null)pipeline.shadowDistance=originalDistance;if(sun!=null)sun.shadows=originalShadows;EditorApplication.update-=Repaint;RenderPipelineManager.endCameraRendering-=Capture;}
+    static void Capture(ScriptableRenderContext context,Camera camera)
+    {
+        if(camera.cameraType!=CameraType.SceneView||++frames<16)return;
+        try
+        {
+            var reconstruction=feature.GetType().GetField("reconstruction",Flags).GetValue(feature);
+            var histories=(IDictionary)reconstruction.GetType().GetField("histories",Flags).GetValue(reconstruction);
+            var h=histories[camera.GetInstanceID()];if(h==null)throw new Exception("No SceneView volume history");
+            var handles=(RTHandle[])h.GetType().GetField("color",Flags).GetValue(h);int index=(int)h.GetType().GetField("index",Flags).GetValue(h);
+            var rt=RenderTexture.GetTemporary(256,176,0,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear);var old=RenderTexture.active;var image=new Texture2D(256,176,TextureFormat.RGBAFloat,false,true);
+            try
+            {
+                Graphics.Blit(handles[index].rt,rt);RenderTexture.active=rt;image.ReadPixels(new Rect(0,0,256,176),0,0);image.Apply();var pixels=image.GetPixels();
+                double sum=0,error=0;float max=0,reduction=0;foreach(var p in pixels){sum+=p.r;max=Mathf.Max(max,p.r);}
+                if(baseline==null)baseline=(Color[])pixels.Clone();else for(int i=0;i<pixels.Length;i++){error+=Math.Abs(pixels[i].r-baseline[i].r);if(pixels[i].r>.001f)reduction=Mathf.Max(reduction,(pixels[i].r-baseline[i].r)/pixels[i].r);}
+                string label=new[]{"distance50","distance100","distance150","unshadowed"}[stage];
+                log.AppendLine(label+" distance="+pipeline.shadowDistance+" mean="+(sum/pixels.Length)+" max="+max+" deltaMean="+(error/pixels.Length)+" reductionVsBase="+reduction);
+                File.WriteAllBytes(Root+"/"+label+".exr",image.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));
+                using(var w=new BinaryWriter(File.Open(Root+"/"+label+".float",FileMode.Create)))foreach(var p in pixels)w.Write(p.r);
+                for(int i=0;i<pixels.Length;i++){float v=pixels[i].r/(1+pixels[i].r);pixels[i]=new Color(v,v,v,1);}image.SetPixels(pixels);image.Apply();File.WriteAllBytes(Root+"/"+label+".png",image.EncodeToPNG());
+            }
+            finally{RenderTexture.active=old;RenderTexture.ReleaseTemporary(rt);UnityEngine.Object.DestroyImmediate(image);}
+            frames=0;stage++;if(stage==1)pipeline.shadowDistance=100;else if(stage==2)pipeline.shadowDistance=150;else if(stage==3){pipeline.shadowDistance=originalDistance;sun.shadows=LightShadows.None;}else{Restore();File.WriteAllText(Root+"/comparison.txt",log.ToString());Debug.Log("[HoSkyOcclusionDiagnostic] comparison complete; settings restored");}
+        }
+        catch(Exception e){log.AppendLine(e.ToString());Restore();File.WriteAllText(Root+"/comparison.txt",log.ToString());}
+    }
+}

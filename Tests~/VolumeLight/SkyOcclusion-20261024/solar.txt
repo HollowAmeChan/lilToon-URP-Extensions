@@ -1,0 +1,12 @@
+camera=SceneCamera position=(12.09, 9.63, 58.67) rotation=(0.09, 191.31, 0.29)
+pipeline=Assets/Settings/PC_RPAsset.asset mainShadows=True distance=50 cascades=4
+Sun=Directional Light shadows=Soft strength=1 enabled=True forward=(0.60, -0.61, 0.52)
+VolumeLight=HoVolumeLightRendererFeature active=True status=太阳 HD 可用
+_HoVolumeLightShadow=(1.00, 1.00, 0.00, 0.00)
+_MainLightShadowParams=(1.00, 3.00, 0.00, -0.46)
+_HoVolumeLightParams=(1.00, 100.00, 256.00, 0.67)
+_MainLightPosition=(-0.60, 0.61, -0.52, 0.00)
+_MAIN_LIGHT_SHADOWS=False
+_MAIN_LIGHT_SHADOWS_CASCADE=True
+_MAIN_LIGHT_SHADOWS_SCREEN=False
+_SHADOWS_SOFT=True
