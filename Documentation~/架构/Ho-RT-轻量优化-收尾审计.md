@@ -13,7 +13,7 @@
 | GPU与双路径 | RG/compat配对各74请求；曲面、零albedo、物理HDR1015、正signal5.96e−8；原GI NRD各243请求41check | 完成 |
 | Release Player | 构建actual0，3条精确历史warning原metadata保留；隐藏D3D12/Linear Mono304请求16check，运行时diag0且库hash一致 | 完成 |
 | 前后review/取舍 | 过程记录A02预审/后审、filter-review、禁试/交接和原始run/源SHA | 完成 |
-| 过滤提交与提交后复核 | 待本步骤精确白名单提交后记录实际hash与再次验证 | 提交前待办 |
+| 过滤提交与提交后复核 | e73782f5精确白名单提交，提交后verify_validation.py再次通过 | 完成 |
 | 保留047/他人改动 | 原过程预审和PlanarReference在开始时已存在；不加入本步白名单，未覆盖/清理 | 保持 |
 | 自定停止/重路线搁置 | 目标与停止条件预先明确；primary帧时序/pose共享/heap alias/合并历史/降精度/原GI研究均不做，scratch低收益搁置 | 达到收尾条件 |
 
@@ -21,4 +21,6 @@
 
 当前公开GI功能不启用NRD原生validation pass；未来新增该路径必须重新审查输入/OUT_VALIDATION别名。该将来扩展不列为当前功能已交付。
 
-提交、复核、交接完成后，本有界目标可标完成。
+提交、复核、交接均完成，本有界目标的完成审计通过。
+
+A02已按精确白名单提交`e73782f5`，提交后RenderingReuse verifier再次通过；index为空，仅保留任务开始前的原047过程预审与PlanarReference草稿。实际GPU两路径旧新数值逐位同、显式快照语义/释放与默认8B/像素收益、原GI回归和Release304请求均有权威证据。过程/禁试/交接和完整run/SHA齐备。完成审计已逐项核对本阶段目标，达到预先停止条件，结束本有界轻量优化阶段；不能据此声称原完整GI画质、复杂动态或1080整帧预算已完成。后续如重新请求资源优化，先读本交接和停止取舍，不重做已否定/搁置的重路线。

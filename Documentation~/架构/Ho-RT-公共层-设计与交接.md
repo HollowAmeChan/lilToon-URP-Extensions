@@ -59,3 +59,5 @@ GI的16F输入在NRD消费后复用为filtered发布，已省一张8B/像素纹�
 signal在Resolve之后的内容已是发布单位，Editor旧输入必须显式请求ValidationCaptureSignal并读取ValidationSignal。默认无快照分配；打开快照会额外占8B/像素，如实没有本项节省。raw、32F output、DI/公共NRD、参数/历史/reset、Shader均不变。今后如启用原生NRD validation需再审输入/OUT_VALIDATION别名。
 
 按用户“重的可不做、助手定停止”授权，本阶段在此收尾：不重写共享pose或primary帧末提交，不做native heap alias/合并history/降精度，低收益scratch也搁置。原047过程草稿/PlanarReference保留，不恢复全GI画质研究。新目标的完成只指此有界轻量优化阶段，不能覆写原GI未完成的质量/动态/环境/预算缺口。提交后补实际hash及目标审计结果。
+
+A02已按精确白名单提交`e73782f5`，提交后RenderingReuse verifier再次通过；index为空，仅保留任务开始前的原047过程预审与PlanarReference草稿。实际GPU两路径旧新数值逐位同、显式快照语义/释放与默认8B/像素收益、原GI回归和Release304请求均有权威证据。过程/禁试/交接和完整run/SHA齐备。完成审计已逐项核对本阶段目标，达到预先停止条件，结束本有界轻量优化阶段；不能据此声称原完整GI画质、复杂动态或1080整帧预算已完成。后续如重新请求资源优化，先读本交接和停止取舍，不重做已否定/搁置的重路线。
