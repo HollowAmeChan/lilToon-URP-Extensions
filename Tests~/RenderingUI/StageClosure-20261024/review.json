@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-24",
+  "baseline_commit": "2d36ba913ea32bcb1c445822de26b58657fb4193",
+  "a02_current_sources_except_reviewed_ui_match": true,
+  "source_count": 712,
+  "runtime_diff": [],
+  "editor_reviews": [
+    {
+      "path": "Editor/RTGI/HoRTGIRendererFeatureEditor.cs",
+      "before_sha256": "f80c4341e91f2e42927cfeac86c098d3d1e5df3384c369004cd4dd2f041916a8",
+      "after_sha256": "1e07e2298d531a67c5f2d9b9c7628d8f761a3b31e924cec8781eba7c2114771b",
+      "settings_draws": {
+        "enabled": 1,
+        "inSceneView": 1,
+        "secondaryLightSamples": 1,
+        "temporal": 1,
+        "maxHistory": 1,
+        "spatial": 1,
+        "spatialSamples": 1,
+        "spatialRadius": 1,
+        "useEnvironment": 1,
+        "secondaryEnvironmentSamples": 1,
+        "includeDirectEnvironment": 1,
+        "rayBias": 1,
+        "maxDistance": 1,
+        "geometryLayers": 1,
+        "lightLayers": 1,
+        "excludedRayMaterials": 1,
+        "denoise": 1,
+        "composite": 1,
+        "intensity": 1
+      },
+      "serialized_properties": {
+        "settings": 1,
+        "shader": 1,
+        "rayShader": 1,
+        "secondaryMaterialShader": 1,
+        "compositeShader": 1,
+        "nrdShaders": 1
+      },
+      "volume_fetch": {}
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIVolumeEditor.cs",
+      "before_sha256": "ccb86a487dda0eb2ce039d1bba3e9eca21b6b7862836be0c725492dd668b0dc6",
+      "after_sha256": "03b0216f9f1fec1c1d5b88893761c22a3de044211c08f412fc79554f010eaa25",
+      "settings_draws": {},
+      "serialized_properties": {},
+      "volume_fetch": {
+        "enable": 1,
+        "composite": 1,
+        "intensity": 1,
+        "denoise": 1,
+        "debugMode": 1,
+        "debugInSceneView": 1,
+        "debugInGameView": 1
+      }
+    }
+  ],
+  "compile_errors": 0,
+  "compile_log_sha256": "442f4e72933e5d4d055f4ce5c273d0f4df15278f8339af79638b011b357da638",
+  "navigation_links_checked": 11,
+  "ui_observed": [
+    "GI Feature basic/quality/sky/advanced headers",
+    "GI Feature basic and quality controls expanded",
+    "GI Volume runtime/composition/debug headers",
+    "GI Volume runtime and composition controls expanded"
+  ],
+  "ui_scope": "Unity 6000.3.15f1 BREAK_URP WTD-summer Inspector; foldouts only; no parameter editing or asset saves",
+  "legacy_verifiers": {
+    "A02_before_edit": "PASS",
+    "A01_before_edit": "REJECT current source SHA at HoRTGINrdContext.cs after accepted A02 changes",
+    "A02_after_edit": "Old whole-source SHA guard no longer applies as a current PASS: exactly two reviewed Inspector sources differ"
+  },
+  "gpu_rerun": false,
+  "reason": "Presentation-only editor change; production sources byte-identical to A02 capture; existing GPU evidence kept unchanged",
+  "compile_log_storage": "compile.log.gz; SHA256 is of original decompressed bytes",
+  "final_review_harness_issue": "Initial Git path read used system GBK and failed before commit; repeated with explicit UTF-8; product/capture/threshold unchanged"
+}

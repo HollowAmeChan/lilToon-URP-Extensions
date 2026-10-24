@@ -1,5 +1,7 @@
 # A02：GI NRD输入／发布纹理顺序复用
 
+> 2026-10-24 后续文档/UI整理只改变两个 GI Inspector，旧 Player 源码 SHA guard 会据此拒绝当前整包；不要改旧 SHA 来消除拒绝。渲染核心逐文件一致与新 Editor 编译/界面复核见 [阶段收尾](../../Documentation~/架构/Ho-RT-GIDI-阶段收尾与UI整理.md)。本页以下保留 A02 原协议与证据。
+
 2026-10-24。已验证并接纳：FinalNRD完整写RGBA16F输入→所有NRD dispatch消费→Resolve从独立RGBA32F输出恢复物理单位并覆盖原输入→发布；下帧重新全域写入。删除单独filtered纹理，raw、32F output、normal/viewZ、NRD池/独立历史/reset/精度和Shader均不改。
 
 ## 实际证据

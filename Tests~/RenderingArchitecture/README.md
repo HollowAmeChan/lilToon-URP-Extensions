@@ -1,5 +1,7 @@
 # A01：DI/GI公共NRD执行器与通用契约
 
+> 当前树已包含 A02 资源复用，A01 verifier 的整包源码 SHA guard 会拒绝后续修改；A01 原证据不因此改写。当前基线与文档/UI阶段的复核见 [阶段收尾](../../Documentation~/架构/Ho-RT-GIDI-阶段收尾与UI整理.md)及 [A02](../RenderingReuse/README.md)。
+
 2026-10-24。生产代码数值/布局不改，目标是消除GI依赖DI内部实现和NRD通用执行与DI策略混杂。设计、已测边界和后续内存候选见Documentation~/架构/Ho-RT-公共层-设计与交接.md。
 
 冻结原Context/Native/Timing/Manifest后独立编译，33帧GPU全部540672个RGBA分量逐位同；独立reset对照及恢复过；64组DI native dispatch/资源/上传常量/AppliedSettings逐字节同。DI调度对照不冒称独立DI像素参考。GI真实RG/compat各243请求41check、同输入小矩阵64帧和固定3实例DI+GI RG/compat各42请求10check全部actual0/diagnostics0/drift0；公开开关与resize/释放通过。

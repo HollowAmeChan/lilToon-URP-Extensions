@@ -2,7 +2,7 @@
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳diffuse GI输出及可选的场景加法合成。SDK GI reservoir与时间/空间重采样复用固定原文件；应用bridge适配Ho生产端。最终NPR影色/ramp映射或材质内接收未纳入本阶段。
 
-2026-10-19起的持续推进、实际参考对照、失败与交接见[RTGI入口](RTGI/README.md)。次级天空、显式直接天空归属和正常相机加法合成已有实测；独立GI降噪已接入原版RELAX_DIFFUSE，Linear D3D12 Mono Player两路径已验证真实应用帧下的请求式生产/响应/合成。正常enabled-camera自动呈现、目标场景、GPU预算和完整Player矩阵继续推进，不能由局部对照通过替代。
+2026-10-24状态：核心实现阶段性冻结，转入[文档与 UI 整理](架构/Ho-RT-GIDI-阶段收尾与UI整理.md)。次级天空、正常相机加法合成和独立RELAX_DIFFUSE已有实测；Linear D3D12 Mono Player两路径已完成真实自动相机和512²默认屏幕呈现验证，见[屏幕证据](../Tests~/RTGI/Backbuffer/README.md)。完整画质、复杂动态、AS实例增长与稳定1080预算仍未验收；旧研究下一项不再自动启动。历史参考、失败与逐步交接见[RTGI入口](RTGI/README.md)。
 
 ## 使用与输出
 
@@ -10,7 +10,7 @@ Renderer 添加 **Ho-RTGI**，前面启用 GB / SB；需要天空时再启用 Ho
 
 高级设置「不参与求交的材质」可排除合并模型内的天空壳子网格。`excludedRayMaterials`默认空，按Material对象身份匹配，忽略null/重复项；同名不同对象不会一起排除。使用同一材质引用的所有实例都会受影响，光线会穿过它们。该列表仅影响GI世界求交，不改源mesh、sharedMaterials、raster或GB/SB主表面；与DI的列表相互独立，需要分别配置。排除/恢复改变场景revision并清GI/NRD历史，等价列表不重置。
 
-合成默认关闭。全局或局部Volume的Ho-RTGI提供「合成到场景」及「间接光强度」，可逐相机覆盖Feature高级设置中的未覆盖默认值（强度默认.25）。启用后在透明物之前，把GI加到有效opaque接收面；强度0保留原画面，强度变化不重置采样历史。只支持全视口、Mono、单采样合成，其他情况保留独立生产与原画面。
+合成默认关闭。Volume按「运行」「画面合成」「调试」分组，提供「合成到场景」及「间接光强度」，可逐相机覆盖Feature高级设置中的未覆盖默认值（强度默认.25）。Feature按「基础」「采样质量」「天空照明」「高级」分组；当前采样与天空参数仍在Feature。GI启用未覆盖时沿用Feature，和DI要求显式Volume启用覆盖的规则不同。启用合成后在透明物之前，把GI加到有效opaque接收面；强度0保留原画面，强度变化不重置采样历史。只支持全视口、Mono、单采样合成，其他情况保留独立生产与原画面。
 
 输出已含接收BRDF/albedo，合成不再乘主色、不再添加primary emission；Gamma工程先将原画面转线性相加，再转回显示空间。雾只衰减新增GI，保留原画面雾色；透明物在其后绘制。与DI同时合成时按Feature顺序消费当前camera color，通常将DI放在GI前。已有烘焙/SSGI等间接光仍由原路径负责，需要按场景决定叠加份额，GI不会自动改写它们。
 
@@ -20,13 +20,13 @@ RenderGraph 消费 `HoRTGIRenderGraphResources.diffuse` 并声明读依赖；兼
 
 ### 独立GI降噪
 
-Volume的「独立 GI 降噪」可逐相机覆盖Feature的`denoise`默认值，默认关闭。启用后，每相机分配独立的NRD4.17.3 RELAX_DIFFUSE实例、池和guide/history；不共享DI的历史，不运行DI私有RELAX shader body。借用的只有固定native ABI与dispatch资源调度实现。若库、shader或UAV格式不可用，状态栏给出原因并发布raw。
+Volume的「降噪」（NRD RELAX）可逐相机覆盖Feature高级设置的`denoise`默认值，默认关闭。启用后，每相机分配独立的NRD4.17.3 RELAX_DIFFUSE实例、池和guide/history；不共享DI的历史，不运行DI私有RELAX shader body。两模块共同使用Runtime/NRD的执行器、native ABI与资源调度，GI不经过DI策略对象。若库、shader或UAV格式不可用，状态栏给出原因并发布raw。
 
 Final在乘主表面albedo之前直接产生demodulated diffuse；不从已乘色信号反除。NRD输入使用固定signed-oct normal编码、diffuse roughness=1、正viewZ与实际GI样本/射线命中距离，天空距离限于FP16可表示范围；invalid使用远viewZ并在resolve强制RGB/A清零。输入除64、输出乘64是固定HDR单位转换，保留原信号和raw；不是外观增益，也不承诺任意HDR范围。
 
 RELAX参数采用固定头文件的原版默认值，累计预算按观测到的非缩放渲染时间换算为约.5秒主历史/.1秒快速历史；Scene View使用30/6样本预算。静态世界使用前后相机矩阵及零world motion；几何/灯/材质/天空/采样签名变化保守清历史，暂不处理动态表面速度。关闭降噪释放资源，再启用从新历史开始。
 
-`HoRTGIRenderGraphResources.rawDiffuse` / `_HoRTGIRawDiffuseTexture`始终提供raw；`diffuse` / `_HoRTGIDiffuseTexture`在降噪开启且可用时提供filtered。二者的线性HDR、已乘接收albedo与receiver validity契约相同。启用降噪增加约79B/像素加16×16 tile标记、192KiB常量缓冲，1080p约156.4MiB，尚无目标场景GPU毫秒结论。
+`HoRTGIRenderGraphResources.rawDiffuse` / `_HoRTGIRawDiffuseTexture`始终提供raw；`diffuse` / `_HoRTGIDiffuseTexture`在降噪开启且可用时提供filtered。二者的线性HDR、已乘接收albedo与receiver validity契约相同。A02已把消费后的输入纹理复用为filtered发布，默认外部NRD纹理为36B/像素，另计NRD池、tile标记、192KiB常量缓冲及raw等资源；相对旧实现少8B/像素，1080布局约省15.82MiB/相机，不是1080实测。完整账本与对照见[资源复用证据](../Tests~/RenderingReuse/README.md)，稳定高清整帧预算仍未验收。
 
 ### 天空贡献归属
 
