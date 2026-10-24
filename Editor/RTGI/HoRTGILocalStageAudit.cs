@@ -137,7 +137,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             stream.Write(context.frame-1);stream.Write(Time.frameCount);foreach(int id in CaptureIds)stream.Write(writes[id]);
             for(int stage=0;stage<stageIds.Length;stage++)
             {
-                int id=stageIds[stage];Color[] values=id==-2?raw:id==100?published:id==-1?read(context.nrd.signal.rt):read(captured[id]);
+                int id=stageIds[stage];Color[] values=id==-2?raw:id==100?published:id==-1?read(context.nrd.ValidationSignal.rt):read(captured[id]);
                 for(int p=0;p<reference.Length;p++)
                 {
                     int at=reference[p].y*256+reference[p].x;uint albedo=guides[at].diffuse;

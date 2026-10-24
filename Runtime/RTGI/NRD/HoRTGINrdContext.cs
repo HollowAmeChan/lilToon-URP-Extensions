@@ -16,7 +16,10 @@ namespace lilToon.URP.Extensions.RTGI.NRD
     {
         internal const float SignalScale=64;
         internal readonly HoNrdContext core;
-        internal RTHandle signal,normal,viewZ,output,filtered;
+        // FinalNRD writes packed input; NRD consumes it; Resolve overwrites it
+        // with the public physical result. The next FinalNRD writes every pixel.
+        internal RTHandle signal,normal,viewZ,output;
+        internal RTHandle filtered=>signal;
         internal bool historyValid,lastReset;
         internal Matrix4x4 previousView=Matrix4x4.identity,previousProjection=Matrix4x4.identity;
         readonly Dictionary<string,RenderTargetIdentifier> external=new();
@@ -29,6 +32,9 @@ namespace lilToon.URP.Extensions.RTGI.NRD
         // the NRD unit invalidates only its own history before recording.
         internal float? ValidationSignalScale;
         float validationAppliedScale=SignalScale;
+        internal bool ValidationCaptureSignal;
+        RTHandle validationSignal;
+        internal RTHandle ValidationSignal=>validationSignal??throw new InvalidOperationException("Request a pre-NRD signal snapshot before rendering");
         #endif
         internal float AppliedSignalScale
         {
@@ -53,8 +59,14 @@ namespace lilToon.URP.Extensions.RTGI.NRD
             // Keep low diffuse radiance out of repeated half-precision rounding.
             desc.graphicsFormat=GraphicsFormat.R32G32B32A32_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref output,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI NRD demodulated output");
-            desc.graphicsFormat=GraphicsFormat.R16G16B16A16_SFloat;
-            RenderingUtils.ReAllocateIfNeeded(ref filtered,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI filtered diffuse");
+            #if UNITY_EDITOR
+            if(ValidationCaptureSignal)
+            {
+                desc.graphicsFormat=GraphicsFormat.R16G16B16A16_SFloat;
+                RenderingUtils.ReAllocateIfNeeded(ref validationSignal,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI validation input snapshot");
+            }
+            else{validationSignal?.Release();validationSignal=null;}
+            #endif
             desc.graphicsFormat=GraphicsFormat.R32_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref viewZ,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI NRD viewZ");
             core.Prepare(w,h);
@@ -68,7 +80,10 @@ namespace lilToon.URP.Extensions.RTGI.NRD
         internal void Declare(RenderGraph graph,IUnsafeRenderGraphBuilder builder)
         {
             core.Declare(graph,builder);
-            foreach(var texture in new[]{signal,normal,viewZ,output,filtered})builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
+            foreach(var texture in new[]{signal,normal,viewZ,output})builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
+            #if UNITY_EDITOR
+            if(validationSignal!=null)builder.UseTexture(graph.ImportTexture(validationSignal),AccessFlags.ReadWrite);
+            #endif
         }
         internal void BindFinal(CommandBuffer cmd,ComputeShader shader,int kernel)
         {
@@ -98,6 +113,7 @@ namespace lilToon.URP.Extensions.RTGI.NRD
             common.timeDelta=deltaMs;
             var settings=ReferenceSettings(preview?1f/60:seconds);
             #if UNITY_EDITOR
+            if(ValidationCaptureSignal)cmd.CopyTexture(signal.nameID,ValidationSignal.nameID);
             ValidationRecordInputs?.Invoke(cmd,common,settings,external);
             #endif
             core.Record(cmd,common,external,settings);
@@ -118,6 +134,12 @@ namespace lilToon.URP.Extensions.RTGI.NRD
                 depthThreshold=.003f,lumRelax=.5f,normalRelax=.3f,roughRelax=1,minDiffMaterial=4,minSpecMaterial=4,roughEdge=1
             };
         }
-        public void Dispose(){core.Dispose();signal?.Release();normal?.Release();viewZ?.Release();output?.Release();filtered?.Release();}
+        public void Dispose()
+        {
+            core.Dispose();signal?.Release();normal?.Release();viewZ?.Release();output?.Release();
+            #if UNITY_EDITOR
+            validationSignal?.Release();validationSignal=null;
+            #endif
+        }
     }
 }

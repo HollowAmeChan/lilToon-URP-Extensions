@@ -134,7 +134,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                         {
                             var guides=new Primary[width*height];context.history.GetData(guides);
                             Color[] inputPixels=null;
-                            Accumulate(-1,context.nrd.signal.rt);
+                            Accumulate(-1,context.nrd.ValidationSignal.rt);
                             foreach(var pair in captured)Accumulate(pair.Key,pair.Value);
                             void Accumulate(int key,RenderTexture texture)
                             {
@@ -175,7 +175,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 if(!report.pass)throw new Exception("Castle scene lacks actual supported/lit/composed GI or stable pose cache");
                 Debug.Log("[HoGICastle] PASS actual scene instances="+report.instances+" cutout="+report.cutouts+" valid="+report.valid+" lit="+report.lit+" changed="+report.changedPixels);exit=0;
 
-                void Render(){if(gi.LastContext?.nrd!=null)gi.LastContext.nrd.ValidationTimeSeconds=++clock/60.0;if(lineageTrace?.LastContext?.nrd!=null)lineageTrace.LastContext.nrd.ValidationTimeSeconds=clock/60.0;VolumeManager.instance.Update(camera.transform,0);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});report.frames++;}
+                void Render(){if(gi.LastContext?.nrd!=null){gi.LastContext.nrd.ValidationTimeSeconds=++clock/60.0;gi.LastContext.nrd.ValidationCaptureSignal=stages||denseLocal||localStages;}if(lineageTrace?.LastContext?.nrd!=null)lineageTrace.LastContext.nrd.ValidationTimeSeconds=clock/60.0;VolumeManager.instance.Update(camera.transform,0);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});report.frames++;}
                 Color[] Read(RenderTexture texture){var old=RenderTexture.active;try{RenderTexture.active=texture;image.ReadPixels(new Rect(0,0,width,height),0,0);image.Apply();return image.GetPixels();}finally{RenderTexture.active=old;}}
                 void Save(RenderTexture texture,string name,bool showValidity,float previewExposure=1){var pixels=Read(texture);File.WriteAllBytes(Path.Combine(output,name+".exr"),image.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));var preview=Keep(new Texture2D(width,height,TextureFormat.RGBA32,false,true));for(int i=0;i<pixels.Length;i++){var p=pixels[i];pixels[i]=showValidity&&p.a<.5f?Color.magenta:new Color(Map(p.r*previewExposure),Map(p.g*previewExposure),Map(p.b*previewExposure),1);}preview.SetPixels(pixels);preview.Apply();File.WriteAllBytes(Path.Combine(output,name+".png"),preview.EncodeToPNG());}
             }

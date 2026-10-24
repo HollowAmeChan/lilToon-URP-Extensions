@@ -51,3 +51,11 @@ DI的HoRTDINrdContext只保留DI外观/稳定历史/SceneView预算、Cutout策�
 可复现run_player.ps1已实际重跑47316，第二次隐藏Release同样actual0/304请求/16check、运行时diagnostics0；两次均未使用可见窗口授权。
 
 A01已按精确白名单提交`6d7d3dc6`，提交后RenderingArchitecture verifier再次通过。仅保留原047的未提交过程预审与PlanarReference，index为空；未重启/完成GI目标，所有本步骤进程terminal。数值/格式/独立历史和reset保持，代码解耦与Release插件加载已验，显存收益仍为0。下一次资源优化必须作为独立步骤先审所有读写/帧边界与实际payload，再选可证明无损的复用，不能因本轮架构通过直接接纳共享history或盲降GI FP32。继续时从公共HoNrdContext/HoNrdNative和RayTracing契约入手，历史源/失败不改。
+
+## A02轻量资源优化终态（2026-10-24，提交前）
+
+GI的16F输入在NRD消费后复用为filtered发布，已省一张8B/像素纹理；默认64²/32²实测省32768/8192B，1080布局约15.82MiB/相机，非1080实跑/总显存测量。旧独立NRD+Resolve配对两路径每条1318912RGBA分量逐位同，输入快照/零albedo/曲面/HDR/弱信号/尺寸/独立开关/释放都过；原GI NRD两路径各243请求41check和隐藏Release304请求16check通过。见Tests~/RenderingReuse/README.md与verify_validation.py。
+
+signal在Resolve之后的内容已是发布单位，Editor旧输入必须显式请求ValidationCaptureSignal并读取ValidationSignal。默认无快照分配；打开快照会额外占8B/像素，如实没有本项节省。raw、32F output、DI/公共NRD、参数/历史/reset、Shader均不变。今后如启用原生NRD validation需再审输入/OUT_VALIDATION别名。
+
+按用户“重的可不做、助手定停止”授权，本阶段在此收尾：不重写共享pose或primary帧末提交，不做native heap alias/合并history/降精度，低收益scratch也搁置。原047过程草稿/PlanarReference保留，不恢复全GI画质研究。新目标的完成只指此有界轻量优化阶段，不能覆写原GI未完成的质量/动态/环境/预算缺口。提交后补实际hash及目标审计结果。

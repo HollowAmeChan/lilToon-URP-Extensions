@@ -1,0 +1,247 @@
+[
+  {
+    "directory": "gi-20261023T203149610",
+    "mode": "gi",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "gi-20261023T203149610/filtered.exr",
+        "sha256": "FDBD635F83CE0D90AB2A45D07A2DE0F26303246CD5CECD5FF38D797255EA605E",
+        "bytes": 66891
+      },
+      {
+        "path": "gi-20261023T203149610/filtered.png",
+        "sha256": "A2FA47A2CDE97E1C15FB33A3EB4A46B5D2028CC9FC606DAA6D3D9616D12C5728",
+        "bytes": 2752
+      },
+      {
+        "path": "gi-20261023T203149610/raw.exr",
+        "sha256": "C14203CE4C3601294FFF834CEDE47287CD3EAB18EBCCC9FCAE89E399B881FD27",
+        "bytes": 66891
+      },
+      {
+        "path": "gi-20261023T203149610/raw.png",
+        "sha256": "7443D03E0764C1D02640D6FFAE5197278B6433C6EB00309C013A49E758DF66C1",
+        "bytes": 9521
+      },
+      {
+        "path": "gi-20261023T203149610/report.json",
+        "sha256": "98AC9FFCB0DC1EE3753EC077CCC4DDEEAC9D87A01E710548152E82AD8D69DAFA",
+        "bytes": 3847
+      },
+      {
+        "path": "gi-20261023T203149610/run.json",
+        "sha256": "0C61B2D2965E826D849DB89A343D9362A153EB36205ACCE32CA3462F3F79030E",
+        "bytes": 121720
+      },
+      {
+        "path": "gi-20261023T203149610/unity.log",
+        "sha256": "81613BA5133BFD2EED4174E0AFDB7A35EAB2B32C0F57A212AC4E32E13CF5317A",
+        "bytes": 68733
+      }
+    ]
+  },
+  {
+    "directory": "giCompat-20261023T203159389",
+    "mode": "giCompat",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "giCompat-20261023T203159389/filtered.exr",
+        "sha256": "FDBD635F83CE0D90AB2A45D07A2DE0F26303246CD5CECD5FF38D797255EA605E",
+        "bytes": 66891
+      },
+      {
+        "path": "giCompat-20261023T203159389/filtered.png",
+        "sha256": "A2FA47A2CDE97E1C15FB33A3EB4A46B5D2028CC9FC606DAA6D3D9616D12C5728",
+        "bytes": 2752
+      },
+      {
+        "path": "giCompat-20261023T203159389/raw.exr",
+        "sha256": "C14203CE4C3601294FFF834CEDE47287CD3EAB18EBCCC9FCAE89E399B881FD27",
+        "bytes": 66891
+      },
+      {
+        "path": "giCompat-20261023T203159389/raw.png",
+        "sha256": "7443D03E0764C1D02640D6FFAE5197278B6433C6EB00309C013A49E758DF66C1",
+        "bytes": 9521
+      },
+      {
+        "path": "giCompat-20261023T203159389/report.json",
+        "sha256": "575C3291F6DF51A4190AA5AA51A2460821680CFDE3BD4CABFC415FFCA86FC949",
+        "bytes": 3846
+      },
+      {
+        "path": "giCompat-20261023T203159389/run.json",
+        "sha256": "BE211DF7F933E0C8E2695B11364A1AE3E2D01FBAB342491FA4DE087C6F036C41",
+        "bytes": 121745
+      },
+      {
+        "path": "giCompat-20261023T203159389/unity.log",
+        "sha256": "933A4930A65A5DA4B68DCB9192704C231123D75FF3B4FA515C6B6836188139E4",
+        "bytes": 67383
+      }
+    ]
+  },
+  {
+    "directory": "player-20261023T203536587",
+    "mode": "player",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "player-20261023T203536587/filtered.png",
+        "sha256": "70EBF2F0EC05CA5FC6E97F8CDC3A93BC91866312860263A4070DFF030D401371",
+        "bytes": 4711
+      },
+      {
+        "path": "player-20261023T203536587/payload.json",
+        "sha256": "6B0B3AB75693FEBB4CE7E154D66692D0E85BD238EEECB9753196603CB9EEEA09",
+        "bytes": 707
+      },
+      {
+        "path": "player-20261023T203536587/raw.png",
+        "sha256": "729FDFAFE7E50B8F69681A3B539A09A285D1214BA3E5EB7156E9DFDDBF77BF24",
+        "bytes": 7469
+      },
+      {
+        "path": "player-20261023T203536587/report.json",
+        "sha256": "3A28465ABA43359C1AAA7421642E7097E957FA8DA880F27BADF6024BA3A0E4A6",
+        "bytes": 167735
+      },
+      {
+        "path": "player-20261023T203536587/run.json",
+        "sha256": "D07F925D530D299CF951111D41B4E1C6FF5A0C76996167136C9210725F767395",
+        "bytes": 121824
+      },
+      {
+        "path": "player-20261023T203536587/unity.log",
+        "sha256": "912AEF9E1FB622FF5C2B871898DFBA753DC1D1DD6F6929E69F2EBFCE9DD058B9",
+        "bytes": 4013
+      }
+    ]
+  },
+  {
+    "directory": "playerBuild-20261023T203357575",
+    "mode": "playerBuild",
+    "exitCode": 0,
+    "diagnostics": 3,
+    "accepted": true,
+    "knownWarningReview": true,
+    "artifacts": [
+      {
+        "path": "playerBuild-20261023T203357575/build-warning-review.json",
+        "sha256": "6F4C1F8674CA49D62EAE989B5EC25103CED295C892160649B08F7192A95FBE09",
+        "bytes": 629
+      },
+      {
+        "path": "playerBuild-20261023T203357575/run.json",
+        "sha256": "7F9FC249C642F4318AF223D2D9039AD7E1D2CEB19C4F25EAB91F49E7941E5E35",
+        "bytes": 121743
+      },
+      {
+        "path": "playerBuild-20261023T203357575/unity.log",
+        "sha256": "F6EBBA69FDEBEE9613A449815140E03F4F34B2B21D005B440F8904ACE9BA4ECE",
+        "bytes": 418870
+      }
+    ]
+  },
+  {
+    "directory": "reuse-20261023T202736755",
+    "mode": "reuse",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "reuse-20261023T202736755/report.json",
+        "sha256": "B2FAEDD5CD6540AE6C44F45976E806F05D88C4C28679AB1ED55E33052789B6F7",
+        "bytes": 539
+      },
+      {
+        "path": "reuse-20261023T202736755/reuse-audit.json",
+        "sha256": "FB680B3B3F531F98A7A1068D74ABF5695FB3C7B298A6D41F5B8EC43F6B4CE6E1",
+        "bytes": 17558
+      },
+      {
+        "path": "reuse-20261023T202736755/run.json",
+        "sha256": "F6C04EEC3A7EE5AA80E3E5315050C99D2BEBCC824C5AB4ADED31FB2A6583B10B",
+        "bytes": 121726
+      },
+      {
+        "path": "reuse-20261023T202736755/unity.log",
+        "sha256": "E6F2C9B9B4FE0A19ACBE437A652DA986897D3786E6D643CFE38882A10EE36C1C",
+        "bytes": 30765
+      }
+    ]
+  },
+  {
+    "directory": "reuse-20261023T203126058",
+    "mode": "reuse",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "reuse-20261023T203126058/report.json",
+        "sha256": "F72C57A096FE586E2C4BA2CB238C41E379F1A8F305FD172189C13604071CF62F",
+        "bytes": 539
+      },
+      {
+        "path": "reuse-20261023T203126058/reuse-audit.json",
+        "sha256": "CDB6437DD42F7647A13FDD4192F9FE7EB597B4E1C97C31C1AD2D55210AB0459A",
+        "bytes": 17705
+      },
+      {
+        "path": "reuse-20261023T203126058/run.json",
+        "sha256": "83E856679D09C58529C35230D20D9F3FEEB0DF0CD7E6BA75CB023D00C41719DC",
+        "bytes": 121726
+      },
+      {
+        "path": "reuse-20261023T203126058/unity.log",
+        "sha256": "83B0669AEE5AFD6247250B5D89DF2D300CB06A47F05BDF76C328F3DB3CEB0A91",
+        "bytes": 27281
+      }
+    ]
+  },
+  {
+    "directory": "reuseCompat-20261023T203139320",
+    "mode": "reuseCompat",
+    "exitCode": 0,
+    "diagnostics": 0,
+    "accepted": true,
+    "knownWarningReview": false,
+    "artifacts": [
+      {
+        "path": "reuseCompat-20261023T203139320/report.json",
+        "sha256": "8335BBB2FB93131FAA501CD856669CAA6ECBCDA3A1A11D941DE1B9CEE8D00658",
+        "bytes": 538
+      },
+      {
+        "path": "reuseCompat-20261023T203139320/reuse-audit.json",
+        "sha256": "CDB6437DD42F7647A13FDD4192F9FE7EB597B4E1C97C31C1AD2D55210AB0459A",
+        "bytes": 17705
+      },
+      {
+        "path": "reuseCompat-20261023T203139320/run.json",
+        "sha256": "C9BF516EBA1673F5A99D0DC49D7D0B60BE002196315ABD944864A268F7137529",
+        "bytes": 121751
+      },
+      {
+        "path": "reuseCompat-20261023T203139320/unity.log",
+        "sha256": "2C6B38A9A18D13E87834E5D266C81506DA262575CA52A638CC181B3C6D764EF2",
+        "bytes": 25217
+      }
+    ]
+  }
+]

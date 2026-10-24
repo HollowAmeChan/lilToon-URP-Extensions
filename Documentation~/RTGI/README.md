@@ -101,3 +101,5 @@
 步骤046：同旧样本confidence→两个独立同输入NRD接线过，RG/compat各128帧原GI32/raw/NRD逐位同，零→亮162/亮→零8700严格confidence0，独立几何/BRDF/full-codec oracle过；初stream保存失败及CPU缺LogLuv模型保留。短窗未显示相对原reset噪声收益，拒绝生产接纳。[实验与取舍](../../Tests~/RTGI/ConfidenceTrial/README.md)。047补独立收敛reference及连续/阶跃变化像素能量/残影/噪声后决定去留，不扫描confidence/局部公式；移动primary/环境/成本及全部原缺口和目标active。
 
 2026-10-24用户转向架构优化：A01公共NRD/通用C#契约已解耦，GI不再引用DI C#类型。新旧GPU/DI调度与两路径真实场景回归通过，数值/资源格式/历史reset保持；本步没有显存减少。原047草稿保留、GI研究目标暂停，继续前先读[公共层设计与交接](../架构/Ho-RT-公共层-设计与交接.md)及新的RenderingArchitecture验证入口；旧历史证据不改写。
+
+2026-10-24轻量优化A02：GI的NRD输入在消费后复用为filtered发布，默认少一张RGBA16F（实测64²省32KiB、32²省8KiB，1080仅布局约15.82MiB/相机）；两路径旧新逐位对照、原GI回归与Release304请求通过。后读NRD输入的Editor审计须先请求ValidationCaptureSignal并读ValidationSignal，不能按输入单位/距离读已发布的signal。见[轻量优化目标与停止条件](../架构/Ho-RT-轻量优化-目标与停止条件.md)和[收尾审计](../架构/Ho-RT-轻量优化-收尾审计.md)。按用户授权收尾本轻量阶段，不恢复原047/全GI质量研究，原未验收项及草稿仍保留。

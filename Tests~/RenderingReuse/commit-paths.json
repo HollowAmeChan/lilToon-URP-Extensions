@@ -1,0 +1,17 @@
+[
+  "Runtime/RTGI/NRD/HoRTGINrdContext.cs",
+  "Editor/RTGI/HoRTGICastleValidation.cs",
+  "Editor/RTGI/HoRTGICutoutLightingValidation.cs",
+  "Editor/RTGI/HoRTGIDenseReferenceAudit.cs",
+  "Editor/RTGI/HoRTGIEnvironmentValidation.cs",
+  "Editor/RTGI/HoRTGILocalStageAudit.cs",
+  "Editor/RTGI/HoRTGINrdValidation.cs",
+  "Documentation~/架构/Ho-RT-公共层-过程记录.md",
+  "Documentation~/架构/Ho-RT-公共层-踩坑与禁止重复尝试.md",
+  "Documentation~/架构/Ho-RT-公共层-设计与交接.md",
+  "Documentation~/架构/Ho-RT-轻量优化-目标与停止条件.md",
+  "Documentation~/架构/Ho-RT-轻量优化-收尾审计.md",
+  "Documentation~/RTGI/README.md",
+  "Documentation~/RTGI/Ho-RTGI-交接.md",
+  "Tests~/RenderingReuse"
+]

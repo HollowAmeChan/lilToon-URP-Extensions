@@ -79,6 +79,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         static Color Render()
         {
             if(failure!=null)throw new Exception("Render diagnostic: "+failure);
+            if(cutoutAudit&&gi.LastContext?.nrd!=null)gi.LastContext.nrd.ValidationCaptureSignal=true;
             RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});frames++;
             if(gi.LastContext==null)throw new Exception("GI missing: "+gi.Status);
             var previous=RenderTexture.active;

@@ -1,0 +1,12 @@
+{
+  "step": "A02",
+  "accepted": true,
+  "resourceSaving": "Default -8 bytes/pixel from actual distinct render targets;64^2 -32768 B,32^2 -8192 B;1080 descriptor arithmetic only -16588800 B",
+  "numericalGate": "Old independent NRD/Resolve output+publication1318912RGBA components bitexact perbackend; actual snapshot/source exact; curve/zeroalbedo/HDR/weak/resize and public controls verified",
+  "preserved": "raw/32F output/NRD policies,history/reset,shaders,DI/common backend unchanged",
+  "snapshot": "Editor opt-in adds8B/pixel, savings0 while active; requested before render, copied before NRD, not a product allocation",
+  "tests": "RG/compat paired74 requests41 frames;existing GI NRD243 requests41checks each;Release D3D12 Linear Mono304 requests16checks",
+  "buildWarnings": "Only3 exact existing Backbuffer warning lines; original metadata kept, no new allowance",
+  "deferred": "Common native validation currentlyoff; futureenable requires separate alias review. Crossfeature history/pose/heap alias and lowyieldscratch deferred by bounded user authorization. No fullGI quality claim.",
+  "stopDecision": "Low-risk useful allocation removal completed; remaining candidates heavier or low yield; finish this bounded phase after source/evidence review and exact filtered commit."
+}

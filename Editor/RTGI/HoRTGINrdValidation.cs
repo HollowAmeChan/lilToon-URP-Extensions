@@ -79,6 +79,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             if(failure!=null)throw new Exception("Render diagnostic: "+failure);
             if(gi.LastContext?.nrd!=null)gi.LastContext.nrd.ValidationTimeSeconds=frames/60.0;
+            if(gi.LastContext?.nrd!=null)gi.LastContext.nrd.ValidationCaptureSignal=true;
             VolumeManager.instance.Update(camera.transform,camera.GetUniversalAdditionalCameraData().volumeLayerMask);
             RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});frames++;
             if(gi.LastContext==null)throw new Exception("GI missing: "+gi.Status);
@@ -132,7 +133,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 Near(filteredMean,rawMean,"Stationary diffuse mean within 8% of same-frame raw");
                 Require(rawVariance>1e-5&&filteredVariance<rawVariance*.15,"Measured per-pixel temporal variance reduced at least 85%: raw="+rawVariance+" filtered="+filteredVariance);
                 Save(c.diffuse.rt,"raw");Save(c.PublishedDiffuse.rt,"filtered");
-                var normal=Mean(c.nrd.normal.rt);var depth=Mean(c.nrd.viewZ.rt);var signal=Mean(c.nrd.signal.rt);
+                var normal=Mean(c.nrd.normal.rt);var depth=Mean(c.nrd.viewZ.rt);var signal=Mean(c.nrd.ValidationSignal.rt);
                 Require(depth.r>2.9f&&depth.r<3.1f&&signal.a>1&&signal.a<20,"Real primary viewZ and finite bounce hit distance are supplied");
                 Near(signal*HoRTGINrdContext.SignalScale,Mean(c.diffuse.rt),"Demodulated input is produced before primary albedo",.002f,.0001f);
                 Render();Require(!c.nrd.lastReset,"Stable frames retain denoiser history");
@@ -140,7 +141,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 sky.Settings.constantColor=Color.black;Render();Require(c.nrd.lastReset,"Sky change resets independent GI history immediately");Near(Mean(c.PublishedDiffuse.rt),Color.black,"Old bright history removed on first dark frame",0,.0001f);
                 sky.Settings.constantColor=new Color(.5f,.25f,.125f,1);Render();Require(c.nrd.lastReset,"Restored sky resets history");
                 receiverMaterial.SetColor("_Color",new Color(0,.5f,1,1));Sample(16,32,out var zeroRaw,out var zeroFiltered,out _,out _);
-                Near(zeroFiltered,zeroRaw,"Zero primary albedo channel stays zero after remodulation",.1f);Require(Mathf.Abs(zeroFiltered.r)<.00001f&&Mean(c.nrd.signal.rt).r>0,"Zero albedo never destroys incoming red signal by division");
+                Near(zeroFiltered,zeroRaw,"Zero primary albedo channel stays zero after remodulation",.1f);Require(Mathf.Abs(zeroFiltered.r)<.00001f&&Mean(c.nrd.ValidationSignal.rt).r>0,"Zero albedo never destroys incoming red signal by division");
                 receiverMaterial.SetColor("_Color",Color.white);sky.Settings.constantColor=new Color(1000,500,250,1);
                 Sample(32,32,out hdrRaw,out hdrFiltered,out _,out _);Near(hdrFiltered,hdrRaw,"HDR 1000 sky retains mean and finite moments",.1f,.01f);
                 sky.Settings.constantColor=new Color(.5f,.25f,.125f,1);Render();
@@ -156,7 +157,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 gi.Settings.denoise=true;Render();
                 var first=c.nrd;var other=Keep(new GameObject("Other GI NRD camera")).AddComponent<Camera>();other.CopyFrom(camera);other.enabled=false;other.transform.SetPositionAndRotation(camera.transform.position,camera.transform.rotation);
                 var original=camera;camera=other;Render();Require(gi.LastContext!=c&&gi.LastContext.nrd!=first&&gi.LastContext.nrd.core!=first.core,"Actual second camera owns independent native instance and textures");camera=original;Render();Require(gi.LastContext==c,"Original camera retains its own denoiser");
-                var smaller=Keep(new RenderTexture(32,32,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));smaller.Create();target=smaller;Render();Require(c.nrd.lastReset&&c.nrd.signal.rt.width==32&&c.nrd.filtered.rt.width==32,"Resolution change reallocates all GI guides and resets history");
+                var smaller=Keep(new RenderTexture(32,32,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));smaller.Create();target=smaller;Render();Require(c.nrd.lastReset&&c.nrd.ValidationSignal.rt.width==32&&c.nrd.filtered.rt.width==32,"Resolution change reallocates all GI guides and resets history");
                 foreach(var shader in AssetDatabase.FindAssets("t:ComputeShader",new[]{"Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI"}).Select(x=>AssetDatabase.LoadAssetAtPath<ComputeShader>(AssetDatabase.GUIDToAssetPath(x))))Require(ShaderUtil.GetComputeShaderMessages(shader).Length==0,"Compute has no diagnostics: "+shader.name);
                 if(precisionAudit){CheckPrecisionPools(gi.LastContext.nrd,"final resolution32");Require(precisionEnergyFailures.Count==0,"Precision 5% energy failed for amplitudes: "+string.Join(",",precisionEnergyFailures));}
                 Finish(null);

@@ -1,0 +1,20 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "frames": 74,
+    "error": "",
+    "checks": [
+        "Dedicated project",
+        "Both denoisers active",
+        "Both physical diffuse outputs positive",
+        "Separate native histories",
+        "GI world reset retained",
+        "Shared cutout contract exercised",
+        "DI works with GI off",
+        "GI works with DI off",
+        "Both resize independently",
+        "Both native owners released"
+    ],
+    "diInstance": 2560420168576,
+    "giInstance": 2560341009920
+}

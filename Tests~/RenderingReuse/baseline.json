@@ -1,0 +1,25 @@
+{
+  "revision": "8740faa7b2d07d23ec843d68bb08b66e02a90cb1",
+  "files": [
+    {
+      "path": "Runtime/RTGI/NRD/HoRTGINrdContext.cs",
+      "snapshot": "baseline/HoRTGINrdContext.cs",
+      "sha256": "D641B761856C4D262076448D20E83762772FDD431B231FA4FBB334A1F5B2EF8A"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "snapshot": "baseline/HoRTGIRendererFeature.cs",
+      "sha256": "32823AD703827A955BB5FC9C7E6EC6E83FF61EF4D25BF091A41334E980B6E69A"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute",
+      "snapshot": "baseline/HoRTGI.compute",
+      "sha256": "0B12B95A26BA24A2B991628F0EED4397C3713299EB5C9CAABE401B1E9FACC946"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGINrdSignal.hlsl",
+      "snapshot": "baseline/HoRTGINrdSignal.hlsl",
+      "sha256": "0F475DDA1311587DB6688D9FA9A22A440600B2C3488AFC9FAC895AD2D6EC972D"
+    }
+  ]
+}

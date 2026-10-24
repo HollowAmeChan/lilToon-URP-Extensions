@@ -29,3 +29,21 @@
 可复现run_player.ps1已实际重跑47316，第二次隐藏Release同样actual0/304请求/16check、运行时diagnostics0；两次均未使用可见窗口授权。
 
 A01已按精确白名单提交`6d7d3dc6`，提交后RenderingArchitecture verifier再次通过。仅保留原047的未提交过程预审与PlanarReference，index为空；未重启/完成GI目标，所有本步骤进程terminal。数值/格式/独立历史和reset保持，代码解耦与Release插件加载已验，显存收益仍为0。下一次资源优化必须作为独立步骤先审所有读写/帧边界与实际payload，再选可证明无损的复用，不能因本轮架构通过直接接纳共享history或盲降GI FP32。继续时从公共HoNrdContext/HoNrdNative和RayTracing契约入手，历史源/失败不改。
+
+## A02 预审：GI输入/发布纹理的顺序复用
+
+用户已开启有限的轻量优化目标。已核GI.FinalNRD写完整输入→core.Record全部NRD dispatch消费→ResolveNRD读取独立32F output并写16F filtered→发布；下帧FinalNRD重新全域覆盖。现有input与filtered同尺寸/格式，使用期不重叠；无需合并历史、改算法或跨Feature共享可变资源。复用filtered=signal、删除单独filtered分配/释放/重复图声明；Resolve仍只读独立output32F，避免SRV/UAV同纹理冲突。
+
+已发现6处Editor输入后读；需显式按需捕获NRD前signal到独立诊断快照，不能把发布后的物理RGB/validity当输入单位/距离。仅诊断请求时分配快照，默认Editor/Player均节省一张8B/像素；快照启用时如实计额外payload。原raw与filtered公开输出、精度、历史和reset保留。
+
+先冻结旧wrapper/Feature/Compute/helper，真实同输入旧/新NRD与Resolve对照；原输入快照、矩形/曲面/零albedo/弱信号/HDR/动态/resize/开关及双路径需要实际验证。旧F39增长夹具不反复跑。通过才接纳并过滤提交；其它跨场景共享太重、长期无收益滤波不重开，完成此低风险收益后可按目标收尾。
+
+## A02 后审：删除一张GI发布纹理，接纳并准备阶段收尾
+
+已将filtered改为signal别名，取消独立分配/释放和重复图声明；FinalNRD完整写入、NRD消费后Resolve覆写发布，下帧重写。Resolve仍从独立32F output读取，Shader/原Feature源码字节不改，raw/normal/viewZ/NRD池与独立历史/reset/精度保留。6处后读输入诊断迁移到显式ValidationCaptureSignal/ValidationSignal，8帧快照与旧输入逐位同；不请求时真实快照对象释放，Player无该诊断分配。
+
+44828初RG、46604正式RG/12752compat实际0，正式每条74请求/41配对帧/1318912 output+publication分量逐位同；零albedo/曲面实际见证，物理输入max1015、正signal min5.9604645e−8；默认64²省32768B、32²省8192B（-8B/像素），snapshot开启额外8B/像素如实记0节省。49744/47024原有GI NRD两路径各243请求41checks通过。46324 Release build0/PASS，3旧warning严格精确历史审查，36292隐藏Mono D3D12/Linear Player0/304请求16check、运行Shader/AS/fence/动态链接诊断0。全部终态/source drift0。737源索引复用A01对象与本步新增gzip原字节，7次run完整证据。
+
+收益为少一张全分辨率RGBA16F，1080布局16588800B≈15.82MiB/相机，不冒称1080实际总显存或帧耗优化。接纳候选；本轮产品/GPU实验无失败。Python verifier最初使用error而GINrd报告字段为failure导致KeyError，只修辅助schema读取，GPU数据/门槛不变。NRD原生validation=0未启用，今后开启要审OUT_VALIDATION与输入别名。
+
+停止评审：低风险且实测收益项目已完成，按用户授权本阶段收尾。共享primary历史需统一读旧/帧末提交；共享pose需source/动画版本、引用计数、GPU生命周期；原生堆别名/盲降精度/合并NRD历史不做；匹配scratch约2MiB收益较低不做。未恢复原047研究或扩大范围，原草稿与他人改动保留。过滤提交/提交后复核和正式完成审计之后才关闭目标。

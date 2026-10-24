@@ -83,7 +83,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         static void AuditFinalSegments(lilToon.URP.Extensions.RTGI.HoRTGIContext context,GameObject screen,Material material,Texture2D pattern)
         {
             var visibility=new Vector2[Size*Size];context.finalVisibility.GetData(visibility);
-            var raw=Capture(context.diffuse.rt);var signal=Capture(context.nrd.signal.rt);
+            var raw=Capture(context.diffuse.rt);var signal=Capture(context.nrd.ValidationSignal.rt);
             var mesh=screen.GetComponent<MeshFilter>().sharedMesh;var vertices=mesh.vertices;var uv=mesh.uv;var indices=mesh.GetTriangles(0);
             var a=vertices[indices[0]];var b=vertices[indices[1]];var c=vertices[indices[2]];var e=b-a;var f=c-a;float determinant=e.x*f.y-e.y*f.x;
             var scale=material.GetTextureScale("_MainTex");var offset=material.GetTextureOffset("_MainTex");

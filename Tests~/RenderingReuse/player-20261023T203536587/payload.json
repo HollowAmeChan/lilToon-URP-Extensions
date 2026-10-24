@@ -1,0 +1,22 @@
+[
+  {
+    "sha256": "4E33A14C3EC94BF336FCDEF8E56429F865A2BF5FEF67261AA64713B15BF75D0B",
+    "bytes": 667648,
+    "path": "HoRTGIProbe.exe"
+  },
+  {
+    "sha256": "C3CCCE9EFEAB802D9607D468C8CC770018F77789C0A9DBEA0FF048B43D5B4CB3",
+    "bytes": 51712,
+    "path": "HoRTGIProbe_Data/Managed/Assembly-CSharp.dll"
+  },
+  {
+    "sha256": "50B43CFBA8A42EAA382680A7B6F5E58B07925242ADF077E7F8D6D9537EA22E52",
+    "bytes": 909824,
+    "path": "HoRTGIProbe_Data/Managed/jp.lilxyzw.liltoon.urp.extensions.Runtime.dll"
+  },
+  {
+    "sha256": "5EFF9D42D56DA8B38D305BC483D84263AEE3C31A6C6C3A0A637370DA68220EDB",
+    "bytes": 2826752,
+    "path": "HoRTGIProbe_Data/Plugins/x86_64/HoRTDINRD.dll"
+  }
+]

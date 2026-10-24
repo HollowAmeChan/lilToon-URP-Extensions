@@ -88,10 +88,10 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         GuideSnapshot CaptureGuides(int batch)
         {
             var main=feature.mainContext;var nrd=main?.nrd;if(nrd==null)throw new Exception("Local reference main NRD guides missing");
-            var normal=Read(nrd.normal.rt);var z=Read(nrd.viewZ.rt);var signal=Read(nrd.signal.rt);
+            var normal=Read(nrd.normal.rt);var z=Read(nrd.viewZ.rt);var signal=Read(nrd.ValidationSignal.rt);
             var physical=Read(main.diffuse.rt);var publication=Read(main.PublishedDiffuse.rt);
             var result=new GuideSnapshot{batch=batch,applicationFrame=Time.frameCount,width=main.width,height=main.height,signalScale=nrd.AppliedSignalScale,
-                normalFormat=nrd.normal.rt.graphicsFormat.ToString(),viewZFormat=nrd.viewZ.rt.graphicsFormat.ToString(),signalFormat=nrd.signal.rt.graphicsFormat.ToString(),
+                normalFormat=nrd.normal.rt.graphicsFormat.ToString(),viewZFormat=nrd.viewZ.rt.graphicsFormat.ToString(),signalFormat=nrd.ValidationSignal.rt.graphicsFormat.ToString(),
                 rawFormat=main.diffuse.rt.graphicsFormat.ToString(),filteredFormat=main.PublishedDiffuse.rt.graphicsFormat.ToString(),points=new Guide[receivers.Length]};
             if(result.width!=256||result.height!=256||result.signalScale!=64)throw new Exception("Local guide domain or units changed");
             for(int i=0;i<receivers.Length;i++)
