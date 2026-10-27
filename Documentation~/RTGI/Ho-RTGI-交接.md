@@ -1,8 +1,10 @@
-# Ho-RTGI 当前交接
+# Ho-RTGI 历史交接与阶段证据
 
-**当前交接（2026-10-24）：核心实现阶段性冻结，进入文档与 UI 整理。** 先读[GI/DI阶段收尾与UI整理](../架构/Ho-RT-GIDI-阶段收尾与UI整理.md)、[GI总说明](../Ho-RTGI.md)和[公共层终态](../架构/Ho-RT-公共层-设计与交接.md)。正常自动相机/512²屏幕已于024/025验证；A01公共NRD解耦与A02默认−8B/像素资源复用已接纳。质量、复杂动态、F39和稳定1080整帧预算仍未验收。
+> 状态：**历史阶段交接**，原记录截至 2026-10-24，导航更新于 2026-10-28。现有功能与限制先读 [Ho-RTGI](../Ho-RTGI.md)；新增公共底座、RTShadow 与 SIGMA 的未实现设计见 [Ho-RT](../Ho-RT.md)。下文的 active、进程、工作区及“下一项”均属记录当时，不作为本轮任务。
 
-原047过程预审及`Tests~/RTGI/PlanarReference`草稿保持未提交；不按旧“下一项”自动恢复研究。本轮仅文档与Editor展示，参数默认/序列化/运行时合同保持。以下为历次交接原记录，“active”、进程与工作区条目只属于其记录时间，接手时重新核实。
+2026-10-24 阶段基线：正常自动相机/512²屏幕已于024/025验证；A01公共NRD解耦与A02默认−8B/像素资源复用已接纳。质量、复杂动态、F39和稳定1080整帧预算仍未验收。证据见[GI/DI阶段收尾](../Ho-RT.md#baseline)和[公共层交接](../Ho-RT.md#baseline)。
+
+原047过程预审及`Tests~/RTGI/PlanarReference`草稿的“未提交”状态属于当时工作区记录，接手时应重新核实。U01 当时仅整理文档与 Editor 展示，参数默认/序列化/运行时合同保持。以下保留历次交接原文，不按旧“下一项”自动恢复研究。
 
 ## 历史交接原记录
 
@@ -781,6 +783,6 @@ RG build36184/Player10356、compat build35500/Player40688 all actual0，serializ
 
 可评审独立有限面确定性积分：receiver P(z0,N−z)看secondary Q(z<0,N+z)，dA→receiver demod factor=h²/(π*r⁴)，乘次级point-light Lambert+rough1GGX与两段visibility；lights用实际analyticLights，primary取真实query坐标，物理reference的secondary view=normalize(P−Q)，不能用旧cached/sourceview当真值。各面z固定，primary→Q与Q→pointlight穿其它平面的交点对Q.xy仿射，因此遮挡区域是轴对齐矩形，可按投影矩形边界分割积分domain后Gauss-Legendre16/32/64核收敛，避免薄挡片uniform-grid混叠。此为待核方案，先用独立直接ray/alpha和低阶交叉核确保没有漏面/重叠贡献。先64个规则receiver检查当前候选能量/变化像素误差，再一次受控连续/阶跃遮挡验证；如无实质收益按原门槛拒绝/搁置，不调整confidence指数/模糊/阈值/phi来压线。移动primary/相机/环境/任意材质与GPU成本仍未交付，不因这些小夹具缩小原完整目标。
 
-2026-10-24用户转向架构优化：A01公共NRD/通用C#契约已解耦，GI不再引用DI C#类型。新旧GPU/DI调度与两路径真实场景回归通过，数值/资源格式/历史reset保持；本步没有显存减少。原047草稿保留、GI研究目标暂停，继续前先读[公共层设计与交接](../架构/Ho-RT-公共层-设计与交接.md)及新的RenderingArchitecture验证入口；旧历史证据不改写。
+2026-10-24用户转向架构优化：A01公共NRD/通用C#契约已解耦，GI不再引用DI C#类型。新旧GPU/DI调度与两路径真实场景回归通过，数值/资源格式/历史reset保持；本步没有显存减少。原047草稿保留、GI研究目标暂停，继续前先读[公共层设计与交接](../Ho-RT.md#baseline)及新的RenderingArchitecture验证入口；旧历史证据不改写。
 
-2026-10-24轻量优化A02：GI的NRD输入在消费后复用为filtered发布，默认少一张RGBA16F（实测64²省32KiB、32²省8KiB，1080仅布局约15.82MiB/相机）；两路径旧新逐位对照、原GI回归与Release304请求通过。后读NRD输入的Editor审计须先请求ValidationCaptureSignal并读ValidationSignal，不能按输入单位/距离读已发布的signal。见[轻量优化目标与停止条件](../架构/Ho-RT-轻量优化-目标与停止条件.md)和[收尾审计](../架构/Ho-RT-轻量优化-收尾审计.md)。按用户授权收尾本轻量阶段，不恢复原047/全GI质量研究，原未验收项及草稿仍保留。
+2026-10-24轻量优化A02：GI的NRD输入在消费后复用为filtered发布，默认少一张RGBA16F（实测64²省32KiB、32²省8KiB，1080仅布局约15.82MiB/相机）；两路径旧新逐位对照、原GI回归与Release304请求通过。后读NRD输入的Editor审计须先请求ValidationCaptureSignal并读ValidationSignal，不能按输入单位/距离读已发布的signal。见[轻量优化目标与停止条件](../Ho-RT.md#baseline)和[收尾审计](../Ho-RT.md#baseline)。按用户授权收尾本轻量阶段，不恢复原047/全GI质量研究，原未验收项及草稿仍保留。

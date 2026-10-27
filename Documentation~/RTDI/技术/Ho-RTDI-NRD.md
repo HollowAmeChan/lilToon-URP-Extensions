@@ -4,7 +4,7 @@
 
 ## 2026-10-24 公共NRD分层
 
-NRD ABI/时钟/执行器和原native插件已移至Runtime/NRD，DI仅保留自己的profile/guide策略；GI直接调用公共执行器，不经过DI策略。原DLL/Shader ABI、数值、资源布局及两路独立history保持，GPU逐位/DI调度/真实双模块RG和compat回归通过。此次代码解耦没有显存减少，资源复用需另行实测。见[公共层设计与交接](../../架构/Ho-RT-公共层-设计与交接.md)。下文历史记录保留当时类名与路径。
+NRD ABI/时钟/执行器和原native插件已移至Runtime/NRD，DI仅保留自己的profile/guide策略；GI直接调用公共执行器，不经过DI策略。原DLL/Shader ABI、数值、资源布局及两路独立history保持，GPU逐位/DI调度/真实双模块RG和compat回归通过。此次代码解耦没有显存减少，资源复用需另行实测。见[公共层设计与交接](../../Ho-RT.md#baseline)。下文历史记录保留当时类名与路径。
 
 ## 2026-10-18 当前状态
 

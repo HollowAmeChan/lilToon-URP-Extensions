@@ -426,7 +426,7 @@ C# Runtime/Editor 分程序集编译通过。新增两个 Inspector 的 HelpBox 
 
 验证：Unity 6000.3.15f1，D3D12 RG、D3D11 RG、D3D11 compatibility 均通过；每个路径同时验 raster 与 compute。覆盖双轴离心像素、正交/透视、偏移投影、相机移动/旋转、两种法线与 Geometry Normal 单视图/All、HDR 主色与 emission、原始 roughness/reflectance、可选身份、旧布局标记、cutout/遮挡/缺失/越界/域不匹配/不支持投影以及关闭/恢复后的 payload 清零。已有深度关联与 Emission 用例在 D3D12 RG 回归通过。
 
-读取契约见 [RT 主表面读取](../../Ho-RT-PrimarySurface.md)。下一项为 **HoRTScene 的静态求交、实例/submesh/材质关联与命中调试**；不立即引入 ReSTIR、完整 native fork、降噪和最终合成。
+读取契约见 [RT 主表面读取](../../Ho-RT.md#primary-surface)。下一项为 **HoRTScene 的静态求交、实例/submesh/材质关联与命中调试**；不立即引入 ReSTIR、完整 native fork、降噪和最终合成。
 
 ## 14. 实现进展：HoRTScene 硬件求交尖峰
 
@@ -444,7 +444,7 @@ RenderGraph 使用 graphics queue 上的 unsafe pass，记录 metadata 上传、
 
 本轮同时修复主表面 UV 包装函数的 FXC `out surface` 初始化警告（`c6e4fd4`）；D3D11 RG / compatibility 重跑通过，验证现在将 Compute 警告和错误都作为失败条件。此前 GPU 输出通过没有覆盖编译警告，已补齐验收。
 
-详细接口与支持域见 [HoRTScene](../../Ho-RTScene.md)。下一项是 **世界空间命中的顶点属性读取与材质组分求值**，补上 UV、法线、base color、专用 emission 等 GI 必需输入；少量灯的参考求值随后接入，暂不启动 ReSTIR/降噪/最终合成。
+详细接口与支持域见 [HoRTScene](../../Ho-RT.md#scene-query)。下一项是 **世界空间命中的顶点属性读取与材质组分求值**，补上 UV、法线、base color、专用 emission 等 GI 必需输入；少量灯的参考求值随后接入，暂不启动 ReSTIR/降噪/最终合成。
 
 ## 15. 按用户参考工程移植 DI
 

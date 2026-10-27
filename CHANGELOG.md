@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- **角色阴影接收与滤波**：OB 部件改为整组 / 勾选接收，空指定不接收；PCF 增加密集小核积分与接收面外推保护，PCSS 使用连续 blocker 统计及方向光角直径。D3D11 / D3D12 过滤和完整链路已有独立验证，实际角色残余条纹与宽核限制仍保留。
+
+- **RT / 阴影文档合并**：当前 CS 使用、参数与限制集中到 [Ho-CharacterShadow](Documentation~/Ho-CharacterShadow.md)；共享 RT helper、已接纳基线、公共 host / RTShadow / SIGMA 设计集中到 [Ho-RT](Documentation~/Ho-RT.md)。删除 11 份重复计划、草案和阶段说明，不保留跳转或额外归档；旧全文可从 Git `541d06f2` 查回，下方旧条目中的旧文档路径按当时版本阅读。新 RT 模块尚未实现。
+
 - 加快 Ho-SSGI 对光照/颜色变化的响应：source 历史保留当前帧份额，明显 RGB 变化降低历史权重；几何有效但 source 大变时重置对应像素的 denoiser 历史。Unlit 线性响应夹具中，辐射降至 10% 后首帧残留由 90% 降至约 11%，同时保留稳定输入的历史累积。
 
 - 修复 Ho-SSGI 残留细网纹：大半径的稀疏栅格滤波改为连续像素的两轴 bilateral；阶段参数改为命令顺序绑定，避免共享 Material 的后阶段值覆盖前阶段；移除 16 帧采样循环与浮点 sine hash，按逐相机渲染次数推进采样，并用 GI RT 实际尺寸计算 footprint。新增周期棋盘格/条纹、几何断面、128 帧静止及同 update 重复 RenderRequest 的 GPU 回归；D3D11 / D3D12 通过，真实场景仍待复测。

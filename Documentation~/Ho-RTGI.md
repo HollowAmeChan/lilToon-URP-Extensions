@@ -2,7 +2,9 @@
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳diffuse GI输出及可选的场景加法合成。SDK GI reservoir与时间/空间重采样复用固定原文件；应用bridge适配Ho生产端。最终NPR影色/ramp映射或材质内接收未纳入本阶段。
 
-2026-10-24状态：核心实现阶段性冻结，转入[文档与 UI 整理](架构/Ho-RT-GIDI-阶段收尾与UI整理.md)。次级天空、正常相机加法合成和独立RELAX_DIFFUSE已有实测；Linear D3D12 Mono Player两路径已完成真实自动相机和512²默认屏幕呈现验证，见[屏幕证据](../Tests~/RTGI/Backbuffer/README.md)。完整画质、复杂动态、AS实例增长与稳定1080预算仍未验收；旧研究下一项不再自动启动。历史参考、失败与逐步交接见[RTGI入口](RTGI/README.md)。
+> 状态：**现行功能总文档**，导航更新于 2026-10-28；生产支持域沿用已验证基线。新增公共资源宿主、独立 RTShadow 与 SIGMA 的设计统一见 [Ho-RT](Ho-RT.md)，这些新模块尚未实现。2026-10-24 的[阶段收尾与 UI 整理](Ho-RT.md#baseline)保留为历史记录。
+
+次级天空、正常相机加法合成和独立RELAX_DIFFUSE已有实测；Linear D3D12 Mono Player两路径已完成真实自动相机和512²默认屏幕呈现验证，见[屏幕证据](../Tests~/RTGI/Backbuffer/README.md)。完整画质、复杂动态、AS实例增长与稳定1080预算仍未验收；旧研究下一项不再自动启动。历史参考、失败与逐步交接见[RTGI入口](RTGI/README.md)。
 
 ## 使用与输出
 

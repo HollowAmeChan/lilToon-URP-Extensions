@@ -1,6 +1,6 @@
 # Ho-RTDI：功能、接入与完成度
 
-> 状态：现行总文档，更新于 **2026-10-24**。GI/DI 核心实现阶段性冻结，转入[文档与 UI 整理](架构/Ho-RT-GIDI-阶段收尾与UI整理.md)，完整质量/动态/性能限制仍保留。静止收敛基线：`f537c26`；其后已新增正常相机合成、独立天空照明强度及可选加法模式，复现与证据见 [Composite](../Tests~/RTDI/Composite/README.md)。[专题与证据目录](RTDI/README.md)保存详细合同、审计和历史实验。
+> 状态：**现行功能总文档**，导航更新于 2026-10-28；生产支持域沿用已验证基线，完整质量/动态/性能限制仍保留。新增公共资源宿主、独立 RTShadow 与 SIGMA 的设计统一见 [Ho-RT](Ho-RT.md)，这些新模块尚未实现。2026-10-24 的[阶段收尾与 UI 整理](Ho-RT.md#baseline)保留为历史记录。静止收敛基线：`f537c26`；其后已新增正常相机合成、独立天空照明强度及可选加法模式，复现与证据见 [Composite](../Tests~/RTDI/Composite/README.md)。[专题与证据目录](RTDI/README.md)保存详细合同、审计和历史实验。
 
 Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天空、真实世界遮挡、基础 lilToon Cutout，以及可选 NRD RELAX 降噪。**“合成到画面”支持参考 PBR 替换和加法叠加两种模式**，不必打开调试。替换模式以直接光＋SB 自发光替换旧照明；加法模式保留现有外观，只增加可调强度的 RTDI 直接光。两种模式均保留天空与无效面，透明物随后正常绘制。合成默认关闭，旧资产的模式仍为替换，升级不会自动切换外观。
 
@@ -139,7 +139,7 @@ RenderGraph 读取本轮DI、主表面、相机颜色及深度，写一个新颜
 
 ![开启参考PBR合成](../Tests~/RTDI/Composite/images/after.png)
 
-相关生产端接口见 [HoRTDIRenderGraphResources.cs](../Runtime/RTDI/HoRTDIRenderGraphResources.cs)，主表面输入见 [Ho-RT-PrimarySurface](Ho-RT-PrimarySurface.md)，世界求交见 [Ho-RTScene](Ho-RTScene.md)。
+相关生产端接口见 [HoRTDIRenderGraphResources.cs](../Runtime/RTDI/HoRTDIRenderGraphResources.cs)，主表面输入见 [Ho-RT-PrimarySurface](Ho-RT.md#primary-surface)，世界求交见 [Ho-RTScene](Ho-RT.md#scene-query)。
 
 ## 5. 采样来源与当前生产改进
 

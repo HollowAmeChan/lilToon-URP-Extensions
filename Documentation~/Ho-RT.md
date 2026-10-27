@@ -1,10 +1,21 @@
-# Ho-RT 公共底座与 RTShadow 设计草案
+# Ho-RT：公共底座与 RTShadow
 
-日期：2026-10-28。状态：源码审计、行业实践研究与待实现设计。本轮没有新增运行时 Feature，也没有把下述接口名称当成已存在的 API。
+> 状态：**现行设计与下一轮工作入口，尚未实现**，2026-10-28。合并公共底座、RTShadow、连续 Cast 与 SIGMA 的决策及质量研究结论。下述新接口名称是设计，不是已经存在的 API。
+
+## 0. 先确认实现状态
+
+| 对象 | 当前状态 | 入口 |
+| --- | --- | --- |
+| 栅格化角色 CS | 已有 shadow map / PCF / PCSS，本轮完成勾选与滤波修复，仍有画质限制 | [当前 CS](Ho-CharacterShadow.md) |
+| RTDI / RTGI | 维持各自已验证支持域与光照算法；各自拥有 RT 场景与历史 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
+| 公共 NRD | A01/A02 已完成代码解耦及有界资源复用；生产绑定为 RELAX | 本文 §11 的基线与证据 |
+| Ho-RT host / RTShadow / SIGMA | 本文确定的新设计，待接入和验证 | 本文 §4–8 |
+
+当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
 ## 1. 本轮的架构定位
 
-此前 RTDI / RTGI 的公共层抽离已经完成公共 NRD 执行器与部分 RT 契约的解耦，见 [公共层交接](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构/Ho-RT-公共层-设计与交接.md)。本轮继续解决 RT 场景的资源所有权、准备时序及公共查询能力；之前阶段已经完成的收益与明确保留的问题维持原结论。
+此前 RTDI / RTGI 的公共层抽离已经完成公共 NRD 执行器与部分 RT 契约的解耦，基线及证据压缩保留在本文 §11。本轮继续解决 RT 场景的资源所有权、准备时序及公共查询能力；之前阶段已经完成的收益与明确保留的问题维持原结论。
 
 建议采用两个独立功能模块：
 
@@ -233,6 +244,150 @@ NPR 消费者应明确每条输入是未遮挡照明、已遮挡照明还是独�
 4. 验证姿态复用及兼容 scene view 的 AS 复用，按实测记录收益，不强行把所有策略塞入一个 view。
 5. 扩展 RTShadow 指定灯组与多灯逐项输出，再根据实际 NPR 消费需求加入派生聚合。
 
-无历史与当前帧空间超采样仍按 [Cast 质量研究](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/计划/Ho-CharacterCast-Quality-Research-20261028.md) 验证。空间超采样属于最终图像采样/导出协调能力，不应成为 Ho-RT 启用所有效果时自动施加的固定成本。
+单帧与空间采样按下方 §9 的质量约束验证。正式阴影重建优先 SIGMA；高预算采样与最终颜色空间超采样用于参考及按需导出，属于图像采样协调能力，不因启用 Ho-RT 就自动施加固定成本。
 
 第一阶段不以“全灯、所有材质、所有平台、所有派生输出都具备”为完成条件。完成条件是：公共底座有真实所有权和依赖合约，最小 RTShadow 可独立使用且能提供未经 toon 处理的连续半影估计给 NPR ramp，既有 DI/GI 在迁移范围内保持各自行为，错误状态与资源释放可验证。只有硬投影参考通过，不足以判定 NPR Cast 已完成。
+
+<a id="quality-reference"></a>
+
+## 9. 合并后的质量研究结论
+
+正式主线为 **公共 RT 查询 → 逐灯 RTShadow → SIGMA 解码后的连续 V → NPR ramp**。零角度硬影检查几何正确性，有限光源检查半影重建，最终空间采样检查像素覆盖；三个阶段分别验收。
+
+### 9.1 不再重复调查的结论
+
+- 当前角色 CS 的已检查实际资源是 4096² D32、单 mip、未启用动态缩放，不能用 graph 结束后的 4×4 全局默认纹理反推实际资源被降采样。
+- PCF 重建比较后的可见度，PCSS 用单深度图及 blocker 近似半影；扩大滤波核不能恢复已丢失的几何。紧投影和提高 map 密度仍有价值，但不是任意近景的精度保证。
+- 本地 RTDI `singleDelta` 已有单灯 / 无环境时跳过 Temporal、Spatial 和 RELAX 的路径，清晰硬影不必来自跨帧累计。它目前没有方向光太阳圆盘积分，不能当成已验收的软影参考。
+- 固定表面点的零角度硬影是二值；面积光的方向积分提供半影渐变，空间积分处理像素覆盖。SIGMA 的重建输入必须遵守其真实编码和 guide 规则。
+- 最终 toon 是非线性操作。原始 V 与 ramp 后颜色都要保存对照；最终空间 AA 需在各子像素重新确定表面并执行材质，不能把中心 mask 放大冒充。
+- 准确 RT 仍会暴露低模几何与平滑法线之间的 shadow terminator，也需要稳健的射线起点与 alpha / 双面语义。三角块不能仅凭形状统一归因。
+
+### 9.2 候选技术的保留结论
+
+| 路线 | 本项目结论 |
+| --- | --- |
+| 紧投影 shadow map + 当前滤波 | 保留作栅格化基线及兼容后端 |
+| 多张抖动 map / 更高分辨率 + 最终空间采样 | 可用于无 RT 对照，仍要验证光空间细节与固定成本 |
+| Moment / EVSM | 预滤波与宽软影有优势，仍有分布近似，不作为精确硬影上限 |
+| Virtual Shadow Maps / SMRT | 世界级密度管理成本较高，不为少数角色优先搬整套分页系统 |
+| Alias-Free / Sample-Based Visibility | 非 RT 也可改变采样结构来求精确遮挡，但需专门数据结构与光栅流程 |
+| Deep Shadow Maps | 密集毛发、部分透射或体积需求出现后再评估 |
+| 独立 RT visibility + SIGMA | 当前选定路线；保留单帧无历史与 raw 对照 |
+
+### 9.3 必须覆盖的质量与导出场景
+
+1. 细发片、亚像素间隙、alpha 洞、双面、Cast Off / Shadows Only 与离屏 caster。
+2. 掠射面、近共面遮挡、低模曲面、镜像 / 非均匀缩放及骨骼 / BlendShape 当前姿态。
+3. 原始 V、SIGMA 编码 / 解码值、窄 ramp、多层接收和最终颜色分别检查；包括 banding、漏光、轮廓位置、局部误差与细影覆盖。
+4. 固定时间的冷启动单帧、随机帧顺序、相机切换及微动；无历史导出不依赖前一个输出帧。其他 GI、TAA、反射或模拟的历史另行处理。
+5. 需要空间采样时冻结姿态和 shader 时间，共享该输出时刻的几何快照，完成所有子样本后推进时间。
+6. CPU 蒙皮、AS build / update、射线、降噪、额外着色和完整导出成本分别测量；不以 batch 墙钟时间冒充 GPU 时间，也不预报尚未测得的毫秒数。
+
+### 9.4 一手研究来源
+
+- [PCF 与 shadow map 放大误差](https://developer.nvidia.com/gpugems/gpugems/part-ii-lighting-and-shadows/chapter-11-shadow-map-antialiasing)、[PCSS 原文](https://developer.download.nvidia.com/whitepapers/2008/PCSS_Integration.pdf)。
+- [同帧高质量空间超采样](https://developer.nvidia.com/gpugems/gpugems2/part-iii-high-quality-rendering/chapter-21-high-quality-antialiased-rasterization)、[PBRT 方向光](https://www.pbr-book.org/4ed/Light_Sources/Distant_Lights)。
+- [Alias-Free Shadow Maps](https://users.aalto.fi/~ailat1/publications/aila2004egsr_paper.pdf)、[Sample-Based Visibility](https://publications.graphics.tudelft.nl/papers/616)。
+- [Moment Shadow Mapping 作者资料](https://momentsingraphics.de/GDCEurope2016.html)、[Deep Shadow Maps](https://graphics.stanford.edu/papers/deepshadows/)。
+- [VSM 与 shadow terminator](https://dev.epicgames.com/documentation/en-us/unreal-engine/virtual-shadow-maps-in-unreal-engine)、[稳健射线自相交处理](https://developer.nvidia.com/blog/solving-self-intersection-artifacts-in-directx-raytracing/)。
+
+旧研究、计划与阶段过程已从现行文件中移除；需要逐项追溯时从 Git `541d06f2` 取回，不按其中的旧“下一项”恢复任务。
+
+<a id="current-helpers"></a>
+
+## 10. 当前已实现的 RT Helper 契约
+
+本节描述当前源码，不把 §4–8 的未来 host 当成已有能力。`HoRTScene` 与 `HoRTPrimarySurfaceInputs` 都是内部 helper；RTDI / RTGI 仍各自持有场景、材质 adapter、输出与历史，没有全局 AS 单例或统一 Ho-RT Renderer Feature。
+
+<a id="scene-query"></a>
+
+### 10.1 世界登记、身份与姿态
+
+[HoRTScene](../Runtime/RayTracing/HoRTScene.cs) 使用 Unity 原生 AS，条件为 D3D12 + `SystemInfo.supportsInlineRayTracing`；不支持时 `IsAvailable=false`，不创建 AS / metadata，没有软件 BVH 或屏幕空间回退。
+
+`Synchronize(renderers, mask, excludedMaterials)` 接收与观察相机无关的世界集合；后两个参数可省略。每个 Renderer / submesh 单独登记，要求一材质对应一 submesh、三角形拓扑；支持 MeshRenderer 与 SkinnedMeshRenderer。disabled、inactive、forceRenderingOff、static batch、additional vertex stream、缺失材质等进入拒绝或排除路径。不要传相机 culling results，否则会丢失离屏遮挡物。
+
+默认只登记 opaque；调用者传入共同的 `HoRTCutoutSupport` 和 native hit material 后，DI / GI 均可登记有界 lilToon Cutout。要求 UV0、无 MPB，排除动画主 UV、dissolve、distance fade、dither、多主色、视差等复杂情况。AS 当前关闭 triangle culling，alpha 与表面求值由 adapter 决定；任意 GPU 顶点位移、布料、Terrain、fur、描边壳不在自动支持域。显式登记的几何不会因 `shadowCastingMode=Off` 自动移除，未来 Shadow 的查询策略须单独定义。支持范围见 [DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md) 和 [GI](Ho-RTGI.md)。
+
+蒙皮通过 `BakeMesh(mesh, true)` 获取当前骨骼 / BlendShape 姿态，补偿 Renderer 缩放后由 AS 应用一次 localToWorld。姿态、源 Mesh 或蒙皮质量变化时更新快照及 BLAS，稳定姿态复用；缺失 / 非有限姿态会移除旧实例。源 Mesh 原地编辑必须调用 `MarkGeometryDirty()` 再同步；仅清 TLAS 后重新加入同一个 Mesh 不能保证旧 BLAS 刷新。CPU Bake 与完整 Mesh 副本有成本，DI / GI 当前分别持有，详见 [场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md)。
+
+身份契约：
+
+- RT instance ID 从 1 分配，同一 `Lifetime` 内不复用；0 保留。变换、mask、仅更新 metadata 的材质替换可保留身份；移除重加、Mesh / hit material / cutout 分类变化或显式几何刷新会重新登记。
+- Material ID 是场景服务内身份，不是 Unity InstanceID、OB ID 或材质参数索引。GPU metadata 为 `uint4(submesh, materialId, primitiveCount, valid)`；`TryResolve` 提供 CPU 关联。
+- `Lifetime` 区分服务重建，`Revision` 标记当前输入变化，`StructureRevision` 另标结构 / 材质编辑。历史不能只比较新服务中可能重新从 1 开始的 ID。
+
+### 10.2 场景调度与命中
+
+同步和几何刷新在 Unity 主线程、graph recording 之前完成。RenderGraph 消费者使用非 async unsafe pass，通过 `scene.Read(graph, builder)` 声明 metadata 访问，再于执行回调中 `BuildAndBind(cmd, shader, ...)`。AS 没有原生 RenderGraph 句柄，build、上传和 trace 需要同一 graphics queue 的明确顺序；不能只依赖全局绑定。其他资源依赖由消费者另行声明。兼容路径为 `ReadCompatibility().BuildAndBind(...)`。
+
+输入快照捕获 Revision，record 后修改场景会在执行时拒绝；执行结束前不能 Dispose 或偷偷更换映射。同一服务内仅 dirty 时记录 Build，`BuildCount` 是命令计数而非 GPU 计时；Dispose 可重复调用并释放自有资源。
+
+| 查询路径 | 当前返回与边界 |
+| --- | --- |
+| 公共 inline `HoRTSceneQuery.hlsl` | opaque 最近命中，跳过 non-opaque；含距离、位置、实例 / submesh / 材质 / primitive 身份、重心坐标和 frontFace，不含 UV、法线或 radiance |
+| DI native final visibility | 对支持的 Cutout 执行真实 alpha any-hit，查询所选灯样本的遮挡 |
+| GI native secondary material | 从实际三角形读取 UV0～3、几何 / 插值 / normal-map 法线及支持域内材质组分、emission |
+| GI native visibility adapter | 与 GI 相同的 alpha 规则，适配结果只保证 status / distance，不提供公共 inline 的 metadata 身份字段 |
+
+公共 inline 调用 `HoRTTraceScene(originWS, directionWS, tMin, tMax, mask)`；需要 `#pragma require inlineraytracing`。方向被归一化，距离均以世界单位计。status 为 `0=miss`、`1=hit`、`2=metadata错配`、`3=无效射线`、`4=不可用`；失败 payload 清零，不能按 miss 消费。世界 miss 的天空响应由光照消费者负责。
+
+<a id="primary-surface"></a>
+
+### 10.3 主表面输入与有效域
+
+[HoRTPrimarySurfaceInputs](../Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs) 与 [HLSL 读取](../Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl) 直接借用 GB / SB，不分配第二套 GBuffer，不写相机颜色，也不通过 AC。当前属性为：
+
+| 数据 | 来源与含义 |
+| --- | --- |
+| positionWS / eyeDepth | SB raw depth + 当前实际逆 GPU VP；对应源像素中心，支持标准透视 / 正交、reversed-Z |
+| geometricNormalWS | SB Normal.BA oct 解码的插值网格法线，无 normal map；不是 flat face normal 或 AS 命中法线 |
+| shadingNormalWS | SB Normal.RG oct 解码，包含 normal map |
+| baseColor / emission | SB 的原始线性 HDR 主色 / 独立自发光组分；主色不自动当物理反射率 |
+| roughness / metallic / reflectance | SB Material.RG / Reflection.R；读取层不平方粗糙度或换算 F0 |
+| viewDirectionWS / owner | 当前相机观察方向；按需请求 SB 的 16-bit owner，0 身份不使表面失效 |
+
+Material.A 是 `meshNormalAvailable`，旧 / 自定义 writer 未提供时必须为 0 并拒绝读取。GB 的 lilToon 法线实际也经过 normal map / Tesion，不能代替 SB 的明确网格法线组分。DI / GI demand 会请求 SB Normal 高精度附件，优先 RGBA16 UNorm、其次 RGBA16F；无需求时保留紧凑格式，成本与回退见 [SB](Ho-SurfaceBuffer.md)。DI / GI 当前各自的主表面历史为 20 B/像素，两种法线按 2×16-bit oct 一致保存；不是公共共享历史。
+
+在 GB / SB 生产之后调用 `HoRTPrimarySurfaceInputs.Read(graph, frame, builder, includeOwner)`，raster 使用 `Bind(cmd)`，compute 显式 `Bind(cmd, shader, kernel)`。兼容路径为 `BindCompatibility` / `BindCompatibilityCompute`，读取本相机生产记录，不用 CPU `Shader.GetGlobalTexture` 推测 GPU 绑定。Compute 每个已声明槽都要绑定资源；缺失时绑定已有默认资源并用状态拒绝，不能读取未请求的 owner。
+
+HLSL 使用 `HoRTTryLoadPrimarySurface(pixel, surface)`；`AtUV` 包装会定位源像素并吸附中心，不双线性混合两个表面。先通过 GB / SB 深度关联，只有 status 5 成功；0～6 沿用关联层，7 为不支持的相机 / 投影，8 为属性或网格法线标记缺失，9 为非有限数据 / 无效法线。失败只保留 status，其余 payload 清零。
+
+当前支持 Mono、Texture2D、同分辨率单采样域、标准透视 / 正交，可有 lens shift 和本帧 jitter；不支持 oblique / 非标准深度、XR / array，MSAA resolve 与异分辨率无法确认，硬件动态分辨率尚未验收。快照只用于当前相机当前 graph，不跨帧缓存 TextureHandle，也不提供 motion / temporal。未来 RTShadow 的屏幕输入必须匹配相机、分辨率、jitter 与表面；中心吸附不能替代真正的子像素几何采样。
+
+### 10.4 Helper 验证入口
+
+- [HoRTSceneValidation](../Editor/RayTracing/HoRTSceneValidation.cs)：`Run` / `RunCompatibility` / `RunUnsupported` 覆盖初版 inline 的身份、mask、离屏、重心、双面、更新、生命周期和无效输入；D3D12 两路径及 D3D11 unsupported 已验。其默认 Cutout 排除不代表 native 路径不支持 Cutout。
+- [HoRTPrimarySurfaceValidation](../Editor/RayTracing/HoRTPrimarySurfaceValidation.cs)：`Run` / `RunCompatibility` 同时检查 raster / compute、像素中心、投影、两种法线、HDR / emission、可选身份及失效清零；编译警告与错误都拦截。
+- 初版隔离日志位于 `.codex-research/RTInputValidation`；蒙皮、native alpha、材质命中及 Player 的专项证据分别见 [DI 场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md)、[DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md)、[GI 总说明](Ho-RTGI.md)。这些通过不代表任意材质变形、复杂角色时域或整帧预算已验收。
+
+<a id="baseline"></a>
+
+## 11. 已接纳基线、必须保留的坑与证据
+
+A01 / A02 / U01 是 2026-10-24 已收尾阶段，必要内容合并在这里；过程全文可从 Git `541d06f2` 找回。A02 当时为控制轻量优化范围而搁置共享 pose / primary 提交，这不是本轮 Ho-RT 底座的永久禁令；旧 U02/U03 和 047 的“下一项”也不是当前自动任务。
+
+| 基线 | 已接纳内容与验证 | 限定 |
+| --- | --- | --- |
+| A01，`6d7d3dc6` | 中立 HoNrdContext / Native / Timing、公共灯 / Cutout / primary ABI；GI 不再依赖 DI C# 策略。新旧 33 帧共 540672 RGBA 分量逐位同，DI 64 组 native 调度逐字节同，固定实例 DI+GI 两路径及 Release 验证通过 | 代码解耦未减少 GPU 资源，显存收益为 0；DI 调度对照不是独立像素真值 |
+| A02，`e73782f5` | GI 的 16F signal 在 NRD 消耗后复用为 filtered 发布，取消单独 filtered 分配。两路径各 1318912 RGBA 分量逐位同，原 GI 回归和 Release 304 请求 / 16 checks 通过 | 默认减少 8 B/像素，64² / 32² 实测省 32768 / 8192 B；1080 的约 15.82 MiB 只是布局推算，不是整帧显存 / FPS 实测 |
+| U01，`77c49c0c` | GI Inspector 与文档整理，Runtime / Shader / 序列化合同不变，分程序集编译通过 | 仅展示整理；不等于 GI 完整画质、动态或性能验收 |
+
+必须保持：
+
+- 公共 NRD 不内置 DenseDI 策略；调用者提供自己的 profile。DI / GI 的 permanent 历史、信号单位、lobe、reset 与更新时间不能混用。未来共享 primary 历史须先读旧、统一帧末提交，不能由先执行的 Feature 覆写。
+- A02 的 signal 在 Resolve 后已是发布单位；Editor 若要读旧 NRD 输入，须预先请求 `ValidationCaptureSignal` 并读取 `ValidationSignal`。启用快照多占 8 B/像素，当帧没有这项节省。raw / NRD32F / permanent 不与其混用；将来开启原生 NRD validation 要重审 IN_DIFF / OUT_VALIDATION 别名。
+- 共享姿态需核 source Mesh、骨骼 / BlendShape 版本、同帧多请求、bounds、引用计数和 GPU 生命周期；共享代码、共享 pose、共享 AS 的收益分别证明。
+- F39：动态增加 AS 实例时曾有 D3D12 scratch debug 错误，即使进程退出 0 也拒绝验收；固定初始实例夹具通过不能代替增长路径修复。旧静态非零 base 支持、GI filtered 局部 / 全域质量、正常应用帧物体 motion、复杂动态、半 GI 薄边、稳定 1080 整帧预算及完整平台矩阵仍未完整解决。
+- 不为让旧 SHA guard 通过而重写 run / source-index / 门槛。A02 合法改变过 A01 源码，U01 又改变两个 Editor 文件，旧整包 SHA 拒绝不能冒称当前回归失败或改历史让它通过。保留原失败，新增变更使用匹配当前源码的验证。
+- Shader ABI 字符串、原插件字节 / GUID 与受测参数不能因搬目录或改类型名一起替换。UI 的 InspectorName 可能覆盖 GUIContent，字段扫描通过不等于实际标签已验。
+
+现行组合使用仍遵守各模块合同：同分辨率单采样 GB / SB 先生产，需要天空时启用 Atmosphere；DI 的 Feature 总开关与 Volume 启用覆盖均需生效，GI Volume 则可回退 Feature。DI / GI 同用时避免重复加入主表面直接天空；加法合成保留原照明，参考 PBR 替换按 DI 合同工作，尚未形成完整 lilToon NPR 接收。
+
+证据保留在测试目录，未因本次压缩改写：
+
+- [RenderingArchitecture](../Tests~/RenderingArchitecture/README.md)：A01 ABI、逐位对照、独立历史、固定实例组合与 Release 证据。
+- [RenderingReuse](../Tests~/RenderingReuse/README.md)：A02 signal 生命周期、显式快照、资源账本、双路径逐位对照及 Release。
+- [StageClosure U01](../Tests~/RenderingUI/StageClosure-20261024/README.md)：文档 / Inspector 字段复核、编译和与 A02 的源差异。
+- [RTGI Backbuffer](../Tests~/RTGI/Backbuffer/README.md)：正常自动相机及 512²默认屏幕输出的受限验收；更多未通过项与专项入口看 [GI](Ho-RTGI.md) / [DI](Ho-RTDI.md)。

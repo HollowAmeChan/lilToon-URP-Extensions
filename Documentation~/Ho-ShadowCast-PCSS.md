@@ -1,8 +1,8 @@
 # ShadowCast PCSS：现状与坑
 
-> 状态：**已实现**（2026 文档审核核对）。文件名沿用历史（`*_PLACEHOLDER`），内容已更新为“已实现”现状；本文不再是占位。
+> 状态：**现行栅格化 ShadowCast 实现说明**，2026-10-28。角色 CS 的现行参数和采样见 [Ho-CharacterShadow](Ho-CharacterShadow.md)。
 > 依据：URP17 **没有内置 PCSS**（源码 0 处命中，只有 PCF 软档 `_SHADOWS_SOFT_LOW/MEDIUM/HIGH`），所以 PCSS 是自研的；`Ho-ShadowCast` 的附加灯 atlas 与第二方向光级联都走它。
-> **CS（逐物体阴影）的现行实现见 §6**：方向光以角直径与世界遮挡距离估计半影，另有接收面外推保护，参数语义与 ShadowCast 不完全相同。
+> 本页的边界仅适用于 Ho-ShadowCast；下一轮 RT 公共底座与 RTShadow 设计见 [Ho-RT](Ho-RT.md)。
 
 ## 1. 形态
 
@@ -40,40 +40,11 @@
 2. 关闭时回退 PCF（降级即回退）。
 3. AOV `shadow.*` 导出不受影响。
 
-## 6. CS（逐物体阴影）的现行实现
+## 6. 与 CS / RTShadow 的边界
 
-CS 使用每个接收域独立的高精度正交深度图。逐相机参数来自 HoCharacterShadowVolume，RendererFeature 提供兜底值。
+本页仅说明已实现的栅格化 `Ho-ShadowCast`。上面的组级参数、不做清单和 atlas 采样规则，不约束其他阴影模块。
 
-- 阴影软边（米）：额外的固定滤波半径；0 仍保留基础抗锯齿。
-- 光源角直径（度）：字段名 pcssSoftness，范围 0–8，默认 2。0 关闭距离相关半影；方向光使用真实遮挡距离，不以虚拟近平面作为光源。
-- Blocker 搜索半径（米）：寻找遮挡物的范围，不是软边宽度。
-- 半影半径上限（米）：限制 PCSS 的世界半径；固定软边及基础抗锯齿独立生效。
-- 质量档：Low / Medium / High / Ultra，对应 blocker/filter 次数 8/16、16/32、24/48、32/64。不再按采样预算缩窄世界半径；过大的范围依然需要足够的采样。
+- 当前主光角色局部高精度 shadow map、接收勾选、方向光角直径和连续滤波：[Ho-CharacterShadow](Ho-CharacterShadow.md)。
+- 新的公共 Ho-RT host、独立 RTShadow、逐灯连续可见度与 NRD SIGMA：[Ho-RT](Ho-RT.md)，尚未实现。
 
-半影计算：
-
-    gapMetres = averageBlockerGapDepth * (far - near)
-    radiusMetres = min(maxPenumbraMetres, gapMetres * tan(angularDiameter / 2))
-
-各 blocker 的 gap 先按接收面局部坡度校正。平移正交投影的近远平面不会改变实际遮挡距离；改变深度范围时，归一化深度差与 far-near 相互抵消。
-
-采样契约：
-
-- _HoCSPcssParams = (enabled, tanHalfAngle, blockerRadiusMetres, maxPenumbraMetres)。
-- _HoCSPcssParams2 = (blockerDepthBias, blockerSamples, filterSamples, fixedSoftRadiusMetres)。
-- _HoCSParameters[slice].w = 世界单位每 texel；_HoCSDepthParameters[slice].x = far-near。
-- 先比较四个深度，再对可见度插值。支持 Gather 的平台一次读取四个深度；tile 边缘和不支持 Gather 的平台逐点夹取。
-- 小半径使用精确积分的密集 tent PCF，按 texel 单元面积计算权重并合并相邻单元；全程 float。0 仍保留基础抗锯齿，正半径立即连续增加软度。额外半径 ≤2 texel 时最多 16 个双线性/Gather 四点读取；2–2.5 texel 平滑过渡到匹配二阶矩的固定对称盘。大半径保留稀疏盘，不依赖世界格子随机角或 TAA。
-- 将世界位置导数线性变换到阴影空间，再求接收面梯度，避免对带平移的归一化 UV 做差。在实际采样 texel 中心修正参考深度。屏幕像素覆盖范围也作为滤波下限。
-- 接收面不能无限外推：在 PCF 比较和 PCSS 搜索中，只有存储深度与外推平面的残差不超过约 4–8 个世界 texel 时才逐渐采用坡度补偿，否则回到中心参考深度。滤波同时累积同一批深度的未补偿可见度，约束补偿不能在未补偿核全暗/全亮时制造反相三角块。这是防漏光的启发式保护，不是几何身份判定；非常近的遮挡面仍可能与接收面混淆。
-- Blocker 搜索包含中心；奇数子图案使用中心加完整反向样本对，避免未配对外圈导致偏心。对每个相邻 texel 先判断是否遮挡，再双线性加权累积遮挡覆盖率及深度差，不对原始深度先插值。第一份遮挡覆盖从 0 到一个完整 tap 之间平滑建立半影，避免刚出现极小 blocker 时半径跳变。没有找到 blocker 时使用基础 PCF，不凭空假设最大半影。
-
-ValidateFiltering 使用真实 GPU 和 4096 纹理检验：连续过渡、Gather 与独立四点比较一致、斜面自遮挡、真实遮挡不漏光、相邻 tile 隔离、深度裁剪不变性，以及用户的 0.0001m 固定软边 / 0.072m 搜索 / 0.008m 上限 / 2° 参数。另扫 0、1、1.01、1.6、2、8、16 texel 的核半径，检验掠射接收面在独立遮挡面前后不产生反相块；PCSS 同样验证。ValidatePcss、ValidateRendering、ValidateDistanceRendering、ValidateSceneShadows 检查完整渲染链路。
-
-密集核另与逐单元参考积分比较，并扫 0–4 texel / 八个边缘方向的过渡宽度，避免半径增加反而变硬；blocker 深度台阶、首个细遮挡物进入搜索盘均以 1/128 texel 位移检验连续性，并核对非 Gather 后备路径的 blocker 统计。端到端边宽取多个完整边缘剖面的中位数，排除剖面在到达 10%/90% 前出图的角点；原局部边宽与半影增宽阈值保持。
-
-旧版本的 2px/22px 平面测试只证明过渡宽度可变，不能证明曲面抗锯齿正确；历史记录保留在 Ho-CharacterShadow-Plan.md §0.4–0.5。旧的“降低分辨率让软边变宽”建议已撤回。
-
-限制：接收面修正是局部平面近似，不能替代足够的几何和阴影贴图采样。大范围低采样仍可能出现条带或漏掉细 caster；不把模糊作为恢复已丢失几何细节的方法。
-
-lilToon 的接收发生在各层 toon ramp 前。某层 Blur 为 0 时，过滤后的可见度仍会被该层重阈值，可能把细微滤波波动放大为硬边；这是独立于深度图分辨率的材质响应。验证可在材质克隆上禁用第二/三层接收作对照，不自动修改用户材质。很强的 caster normal bias 与掠射面保护仍有耦合，投影边缘的宽核也可能受到 tile 内夹取影响；本轮不将这些未完整验证的路径称为已修。
+CS 的旧实现说明已合并至其现行文档，本页不再复制另一套 CS 参数或阶段调参建议。

@@ -1,0 +1,18 @@
+[
+  {
+    "path": "Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl",
+    "sha256": "265E9BD66DC6C75C6D5674DA3DE2355DC268BE3207D7BFA002D45E34FF8A0F00"
+  },
+  {
+    "path": "Editor/CharacterShadow/HoCharacterShadowFilteringProbe.shader",
+    "sha256": "A75D415BD00ECEAEC0CEEC9A034FC78F1E037DB3AF449B770F6CEE15AE715CDC"
+  },
+  {
+    "path": "Editor/CharacterShadow/HoCharacterShadowFilteringValidation.cs",
+    "sha256": "5F9872B16C660597A2498FC5A2071FED808C558FAF4CD46A7707ED48A45D948D"
+  },
+  {
+    "path": "Editor/CharacterShadow/HoCharacterShadowValidation.cs",
+    "sha256": "F9E7C933B0B9DE715D56F6C698D56BAAFD0649F5BE0D64EE9BE15E5CBDB305CD"
+  }
+]
