@@ -60,26 +60,25 @@ namespace lilToon.URP.Extensions.CharacterShadow
         [InspectorName("启用"), Tooltip("该相机是否使用局部高精度天光投影。未勾选覆盖时用 Ho-CharacterShadow RendererFeature 的兜底值。")]
         public BoolParameter enable = new BoolParameter(true);
 
-        [InspectorName("单角色分辨率"), Tooltip("每个接收域一张方形深度图的分辨率。可容纳 tile 数 = (图集边长上限/本值)²；容量不足的接收域回退普通天光投影。"
-            + "它同时决定软阴影半径覆盖的世界尺寸：分辨率越高，同样 texel 半径覆盖的世界范围越小。")]
+        [InspectorName("单角色分辨率"), Tooltip("每个接收域的深度图分辨率。可容纳 tile 数 = (图集边长上限/本值)²；容量不足的接收域回退普通天光投影。软边与半影使用米，不随分辨率缩窄。")]
         public HoCharacterShadowResolutionParameter resolution = new HoCharacterShadowResolutionParameter(HoCharacterShadowResolution.R2048);
 
         [InspectorName("启用 PCSS"), Tooltip("blocker search + 按遮挡距离估算的可变半影。关闭后只剩「阴影软边」那一档固定半径滤波。")]
         public BoolParameter pcssEnabled = new BoolParameter(true);
 
-        [InspectorName("阴影软边"), Tooltip("世界单位（米）：始终生效的基础滤波半径，用来盖掉几何锯齿（发丝/低模剪影）；PCSS 在它之上再加半影。0 = 完全硬边。tile 越细同样半径吃掉的 texel 越多，想更软又不出颗粒就降分辨率或提高 PCSS 质量档。")]
+        [InspectorName("阴影软边"), Tooltip("额外固定滤波半径（米）。0 仍保留基础抗锯齿；PCSS 在此基础上增加随遮挡距离变化的半影。")]
         public ClampedFloatParameter softnessRadius = new ClampedFloatParameter(0.005f, 0.0f, 0.2f);
 
         [InspectorName("PCSS 质量档"), Tooltip("只决定 blocker / filter 的采样数，不改变阴影形状。")]
         public HoCharacterShadowPcssQualityParameter pcssQuality = new HoCharacterShadowPcssQualityParameter(HoCharacterShadowPcssQuality.Ultra);
 
-        [InspectorName("半影放大"), Tooltip("PCSS 估出的半影半径再乘它；0 = 只用「阴影软边」那一档（等价回退 PCF）。")]
+        [InspectorName("光源角直径"), Tooltip("方向光角直径（度）。半影半径 = 遮挡距离 × tan(角直径 / 2)，受半影上限限制；0 只用固定软边与基础抗锯齿。")]
         public ClampedFloatParameter pcssSoftness = new ClampedFloatParameter(2.0f, 0.0f, 8.0f);
 
-        [InspectorName("Blocker 搜索半径"), Tooltip("世界单位（米）。它至少要接近半影半径上限，否则半影里的遮挡物会被漏采样、估算值乱跳（表现成斑点）。")]
+        [InspectorName("Blocker 搜索半径"), Tooltip("寻找遮挡物的范围（米），不是软边宽度。过大而采样数不足时可能漏掉细小遮挡物。")]
         public ClampedFloatParameter pcssBlockerSearchRadius = new ClampedFloatParameter(0.02f, 0.001f, 0.2f);
 
-        [InspectorName("半影半径上限"), Tooltip("世界单位（米）：最软能软到什么程度。超出采样预算时会被收窄以免出颗粒（想更软就提高质量档或降低单角色分辨率）。")]
+        [InspectorName("半影半径上限"), Tooltip("PCSS 半影半径上限（米），不随分辨率或质量档缩窄。大范围需要更高采样档以减少颗粒。固定软边与基础抗锯齿独立生效。")]
         public ClampedFloatParameter pcssMaxPenumbraRadius = new ClampedFloatParameter(0.04f, 0.001f, 0.2f);
 
         [InspectorName("Blocker 深度偏移"), Tooltip("判定 blocker 时加在接收深度上的偏移（阴影空间 z）：压自遮挡与深度抖动。留一点默认值，避免 blocker 数量在相邻像素间跳变。")]

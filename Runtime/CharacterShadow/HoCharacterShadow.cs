@@ -12,7 +12,9 @@ namespace lilToon.URP.Extensions.CharacterShadow
 
         [InspectorName("接收组"), Tooltip("接收高精度天光投影的 OB 组。CS 不改写对象身份或材质；一个 OB 组只能有一个 CS 组件。")]
         public HoObjectBufferGroup objectGroup;
-        [InspectorName("接收部件"), Tooltip("留空接收整组；否则只接收这里列出的 OB 部件名（名字必须与组里的部件名一致）。")]
+        [InspectorName("接收整组"), Tooltip("接收该 OB 组的所有部件，包括以后新增的部件。关闭后只接收勾选的部件。")]
+        public bool receiveWholeGroup = true;
+        [InspectorName("接收部件"), Tooltip("从 OB 组已有部件中勾选。物体在 OB 的「部件 → 渲染器」中配置。指定部件模式下，未勾选任何部件就不接收。")]
         public List<string> receiverParts = new List<string>();
         [InspectorName("包围盒锚点"), Tooltip("留空时用本物体。Center/Size 在该锚点的本地空间里解释，场景手柄直接编辑这个盒。")]
         public Transform boundsAnchor;
@@ -37,6 +39,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
         {
             size = Vector3.Max(size, Vector3.one * 0.01f);
             edgeBlend = Mathf.Clamp(edgeBlend, 0, 0.25f);
+        }
+
+        public void GetReceiverRenderers(List<Renderer> destination)
+        {
+            destination.Clear();
+            if (objectGroup == null || (!receiveWholeGroup && receiverParts.Count == 0)) return;
+            objectGroup.GetAssignedRenderers(destination, receiveWholeGroup ? null : receiverParts);
         }
 
         public void GetWorldCorners(Vector3[] corners)

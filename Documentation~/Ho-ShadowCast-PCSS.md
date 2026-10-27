@@ -2,7 +2,7 @@
 
 > 状态：**已实现**（2026 文档审核核对）。文件名沿用历史（`*_PLACEHOLDER`），内容已更新为“已实现”现状；本文不再是占位。
 > 依据：URP17 **没有内置 PCSS**（源码 0 处命中，只有 PCF 软档 `_SHADOWS_SOFT_LOW/MEDIUM/HIGH`），所以 PCSS 是自研的；`Ho-ShadowCast` 的附加灯 atlas 与第二方向光级联都走它。
-> **CS（逐物体阴影）也走同一套形态**（2026-09-22 补）：见 §6。两边的开关/质量档/形状参数命名一致，但半影公式有一处有意的差异。
+> **CS（逐物体阴影）的现行实现见 §6**：方向光以角直径与世界遮挡距离估计半影，另有接收面外推保护，参数语义与 ShadowCast 不完全相同。
 
 ## 1. 形态
 
@@ -40,43 +40,40 @@
 2. 关闭时回退 PCF（降级即回退）。
 3. AOV `shadow.*` 导出不受影响。
 
-## 6. CS（逐物体阴影）的那一套
+## 6. CS（逐物体阴影）的现行实现
 
-同一形态、不同数据源：CS 的图集是**每个接收域一张高精度局部深度图**，所以参数按"逐相机"给（`HoCharacterShadowVolume` 的「软阴影（PCSS）」分组，feature 上是兜底值）。
+CS 使用每个接收域独立的高精度正交深度图。逐相机参数来自 HoCharacterShadowVolume，RendererFeature 提供兜底值。
 
-| 项 | CS | 与 ShadowCast 的差异 |
-| --- | --- | --- |
-| 开关 / 质量档 | `pcssEnabled`（默认开）、`pcssQuality` = `Low / Medium / High / Ultra`（默认 **Ultra**） | 档位采样数不同：8/16、16/32、24/48、32/64 —— CS 的 tile 常比屏幕细，采样要更足才不出颗粒 |
-| 形状参数 | `softnessRadius`（最低软度，米，默认 0.005）、`pcssSoftness`（0~8，默认 2）、`pcssBlockerSearchRadius`（米，默认 0.02）、`pcssMaxPenumbraRadius`（米，默认 0.04）、`pcssDepthBias`（默认 0.0005） | **单位是米（世界单位）**，不是 texel：见下面"半径用世界单位" |
-| 常量 | `_HoCSPcssParams` = `(enabled, softness, blockerRadiusWorld, maxPenumbraRadiusWorld)`；`_HoCSPcssParams2` = `(depthBias, blockerSamples, filterSamples, minSoftnessWorld)`；`_HoCSParameters[i].w` = 该 slice 的 1 texel 等于多少世界单位 | 同构，但多一个 texelSize 通道用来做单位换算 |
-| 采样上限 | `HO_CS_MAX_PCSS_BLOCKER_SAMPLES = 32`、`HO_CS_MAX_PCSS_FILTER_SAMPLES = 64`（`HoCharacterShadowShaderContract` 镜像） | 与 ShadowCast 相同；防漂移由 `HoCharacterShadowValidation.Validate()` 解析 HLSL 比对（batch 里也跑） |
-| PCF 回退 | 关闭 / softness 0 → 半径 = 最低软度的**旋转盘** PCF（不是 3×3 网格） | ShadowCast 用固定 3×3；CS 在 4096 tile 上 3×3 等于没滤波（1 texel ≈ 0.6mm），必须用能按世界单位缩放的盘 |
+- 阴影软边（米）：额外的固定滤波半径；0 仍保留基础抗锯齿。
+- 光源角直径（度）：字段名 pcssSoftness，范围 0–8，默认 2。0 关闭距离相关半影；方向光使用真实遮挡距离，不以虚拟近平面作为光源。
+- Blocker 搜索半径（米）：寻找遮挡物的范围，不是软边宽度。
+- 半影半径上限（米）：限制 PCSS 的世界半径；固定软边及基础抗锯齿独立生效。
+- 质量档：Low / Medium / High / Ultra，对应 blocker/filter 次数 8/16、16/32、24/48、32/64。不再按采样预算缩窄世界半径；过大的范围依然需要足够的采样。
 
-**半影公式（有意与 ShadowCast 不同）**：CS 用物理形式
+半影计算：
 
-```text
-penumbra = saturate((接收距离 - 遮挡距离) / 遮挡距离)
-filterRadius = min(maxPenumbra, softness * maxPenumbra * penumbra)
-```
+    gapMetres = averageBlockerGapDepth * (far - near)
+    radiusMetres = min(maxPenumbraMetres, gapMetres * tan(angularDiameter / 2))
 
-atlas 里的 z 是阴影空间的归一化线性深度，所以"到光源的距离"用 `1 - z`（reversed-Z）表达，归一化的深度范围在分子分母里约掉。**ShadowCast 那边除的是接收深度**（`(blocker - receiver) / receiver`）：接收深度接近 0 时半影会被放大到把整片阴影糊掉 —— CS 试过那个形式，实测阴影核心会漏光到 0.376（`ValidatePcss` 的 `core` 断言直接抓到了），换成除遮挡距离后同样的参数下核心保持 0.000。
+各 blocker 的 gap 先按接收面局部坡度校正。平移正交投影的近远平面不会改变实际遮挡距离；改变深度范围时，归一化深度差与 far-near 相互抵消。
 
-**半径用世界单位（米），不用 texel**（2026-09-22 用户实测后改的）：CS 的 tile 分辨率可以到 4096，盒子只有 1~2 m 时 **1 texel ≈ 0.6mm**，此时"12 texel 半影"只有 7mm —— 屏幕上还是硬边（用户截图里 PCF 的锯齿依旧），而为了看得见把 texel 半径拉大，采样又立刻变稀、出颗粒（用户截图里的"噪声黑点"）。改成米之后换分辨率不用重调，shader 里用 C# 发布的 `_HoCSParameters[slice].w`（该 slice 的 1 texel = 多少世界单位）换算。
+采样契约：
 
-**采样预算收窄**：世界半径 ÷ texel = texel 半径，tile 越细这个值越大；同一个采样数铺在大盘上就会出颗粒。所以换算后按 `budget = sqrt(sampleCount * 6.25)` 收一下（64 采样 ≈ 20 texel 上限）。想更软又不出噪点：**把「单角色分辨率」降到 1024/2048**（让 1 texel 接近 1 像素）或提高质量档。
+- _HoCSPcssParams = (enabled, tanHalfAngle, blockerRadiusMetres, maxPenumbraMetres)。
+- _HoCSPcssParams2 = (blockerDepthBias, blockerSamples, filterSamples, fixedSoftRadiusMetres)。
+- _HoCSParameters[slice].w = 世界单位每 texel；_HoCSDepthParameters[slice].x = far-near。
+- 先比较四个深度，再对可见度插值。支持 Gather 的平台一次读取四个深度；tile 边缘和不支持 Gather 的平台逐点夹取。
+- 小半径使用精确积分的密集 tent PCF，按 texel 单元面积计算权重并合并相邻单元；全程 float。0 仍保留基础抗锯齿，正半径立即连续增加软度。额外半径 ≤2 texel 时最多 16 个双线性/Gather 四点读取；2–2.5 texel 平滑过渡到匹配二阶矩的固定对称盘。大半径保留稀疏盘，不依赖世界格子随机角或 TAA。
+- 将世界位置导数线性变换到阴影空间，再求接收面梯度，避免对带平移的归一化 UV 做差。在实际采样 texel 中心修正参考深度。屏幕像素覆盖范围也作为滤波下限。
+- 接收面不能无限外推：在 PCF 比较和 PCSS 搜索中，只有存储深度与外推平面的残差不超过约 4–8 个世界 texel 时才逐渐采用坡度补偿，否则回到中心参考深度。滤波同时累积同一批深度的未补偿可见度，约束补偿不能在未补偿核全暗/全亮时制造反相三角块。这是防漏光的启发式保护，不是几何身份判定；非常近的遮挡面仍可能与接收面混淆。
+- Blocker 搜索包含中心；奇数子图案使用中心加完整反向样本对，避免未配对外圈导致偏心。对每个相邻 texel 先判断是否遮挡，再双线性加权累积遮挡覆盖率及深度差，不对原始深度先插值。第一份遮挡覆盖从 0 到一个完整 tap 之间平滑建立半影，避免刚出现极小 blocker 时半径跳变。没有找到 blocker 时使用基础 PCF，不凭空假设最大半影。
 
-**采样图案**：旋转盘（黄金角螺旋）而不是固定 3×3 网格；旋转角按**世界位置**取（每个屏幕像素都不同）—— 早期按 atlas texel 取，相邻像素共用同一套图案，噪声表现成 texel 大小的**方块**，正是"一片黑点"的形态。另外 blocker 盘里没找到遮挡物、但中心被遮挡时按"半影最大"处理：早期在这里退回硬 PCF，于是同一半影带里硬像素与软像素混在一起，也是斑点来源。
+ValidateFiltering 使用真实 GPU 和 4096 纹理检验：连续过渡、Gather 与独立四点比较一致、斜面自遮挡、真实遮挡不漏光、相邻 tile 隔离、深度裁剪不变性，以及用户的 0.0001m 固定软边 / 0.072m 搜索 / 0.008m 上限 / 2° 参数。另扫 0、1、1.01、1.6、2、8、16 texel 的核半径，检验掠射接收面在独立遮挡面前后不产生反相块；PCSS 同样验证。ValidatePcss、ValidateRendering、ValidateDistanceRendering、ValidateSceneShadows 检查完整渲染链路。
 
-**回归入口**：`HoCharacterShadowValidation.ValidatePcss`（batch，D3D11/D3D12 都跑）。摆法是标准 PCSS 场景（接收面正对光源、投影物悬在光源与接收面之间），量 **10%–90% 边宽**（按图像梯度方向走，不按屏幕轴走 —— 按轴走会被"边与扫描方向的夹角"放大好几倍，这是量错过两次的坑），另外数**斑点**（4 邻里有 ≥3 个反相的孤立像素）：
+密集核另与逐单元参考积分比较，并扫 0–4 texel / 八个边缘方向的过渡宽度，避免半径增加反而变硬；blocker 深度台阶、首个细遮挡物进入搜索盘均以 1/128 texel 位移检验连续性，并核对非 Gather 后备路径的 blocker 统计。端到端边宽取多个完整边缘剖面的中位数，排除剖面在到达 10%/90% 前出图的角点；原局部边宽与半影增宽阈值保持。
 
-```text
-pcf width=2px core=0.000 lit=1.000 speckles=0 | pcss width=22px core=0.000 lit=1.000 speckles=0 | softness0 width=2px
-4096-tile（用户现场参数）width=6px speckles=0 core=0.000
-```
+旧版本的 2px/22px 平面测试只证明过渡宽度可变，不能证明曲面抗锯齿正确；历史记录保留在 Ho-CharacterShadow-Plan.md §0.4–0.5。旧的“降低分辨率让软边变宽”建议已撤回。
 
-- PCF 边缘窄、核心全黑、外侧全亮、无斑点；
-- PCSS 把边宽从 2px 铺到 22px，核心仍全黑（不漏光）、外侧仍全亮（无光环）、**斑点 0**；
-- softness 0 精确回到 PCF；
-- 4096 tile + 默认参数（用户现场那一档）同样 **斑点 0**。
+限制：接收面修正是局部平面近似，不能替代足够的几何和阴影贴图采样。大范围低采样仍可能出现条带或漏掉细 caster；不把模糊作为恢复已丢失几何细节的方法。
 
-**坑**：`ValidatePcss` 前两版都错在**测量**上，而不是实现上 —— 第一版用斜掠的接收面（PCF 自己就变成 20+px 的锯齿斜坡，量出来的是几何不是滤波），第二版沿屏幕轴量边宽（被夹角放大）。第三版又发现"最接近 0.5 的像素可能整片同值、梯度为 0"，于是加了"必须落在有梯度处"的条件。要加新的软阴影指标时先确认"这个数只反映滤波"。
+lilToon 的接收发生在各层 toon ramp 前。某层 Blur 为 0 时，过滤后的可见度仍会被该层重阈值，可能把细微滤波波动放大为硬边；这是独立于深度图分辨率的材质响应。验证可在材质克隆上禁用第二/三层接收作对照，不自动修改用户材质。很强的 caster normal bias 与掠射面保护仍有耦合，投影边缘的宽核也可能受到 tile 内夹取影响；本轮不将这些未完整验证的路径称为已修。

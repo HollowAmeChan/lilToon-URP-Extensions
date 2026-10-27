@@ -91,7 +91,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             {
                 DrawParameter(pcssEnabled, "启用 PCSS");
                 DrawParameter(pcssQuality, "质量档");
-                DrawParameter(pcssSoftness, "半影放大");
+                DrawParameter(pcssSoftness, "光源角直径（度）");
                 DrawParameter(pcssBlockerSearchRadius, "Blocker 搜索半径（米）");
                 DrawParameter(pcssMaxPenumbraRadius, "半影半径上限（米）");
                 DrawParameter(pcssDepthBias, "Blocker 深度偏移");

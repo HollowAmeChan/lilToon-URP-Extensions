@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 
 namespace lilToon.URP.Extensions.Editor.CharacterShadow
 {
-    public static class HoCharacterShadowValidation
+    public static partial class HoCharacterShadowValidation
     {
         [MenuItem("HoLil/Validation/Validate Ho-CharacterShadow")]
         public static void Validate()
@@ -241,6 +241,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
         // Run with a graphics device, not -nographics.
         public static void ValidateRendering()
         {
+            RunRenderingValidation(false);
+        }
+
+        public static void ValidateReceiverSelectionRendering()
+        {
+            RunRenderingValidation(true);
+        }
+
+        private static void RunRenderingValidation(bool receiverSelectionOnly)
+        {
             Require(Application.isBatchMode, "Rendering validation runs in a separate batch editor only");
             Validate();
             RenderPipelineAsset previousGraphics = GraphicsSettings.defaultRenderPipeline;
@@ -328,9 +338,29 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 float fallback = RenderCenter();
                 Require(fallback > 0.8f, "Disabled CS did not fall back: " + fallback);
                 cs.enabled = true;
+                cs.receiveWholeGroup = false;
                 cs.receiverParts.Add("NotAReceiver");
                 Require(RenderCenter() > 0.8f, "Unselected identity received CS");
                 cs.receiverParts.Clear();
+                var selectedRenderers = new List<Renderer>();
+                cs.GetReceiverRenderers(selectedRenderers);
+                Require(selectedRenderers.Count == 0, "Empty specified selection returned whole-group renderers");
+                Require(RenderCenter() > 0.8f, "Empty specified selection received CS");
+                cs.receiverParts.Add("Receiver");
+                cs.GetReceiverRenderers(selectedRenderers);
+                Require(selectedRenderers.Count == 1 && selectedRenderers[0] == receiverRenderer,
+                    "Selected OB part did not resolve its receiver");
+                Require(RenderCenter() < 0.2f, "Selected OB part did not receive CS");
+                cs.receiverParts.Clear();
+                cs.receiverParts.Add("NotAReceiver");
+                cs.receiveWholeGroup = true;
+                cs.GetReceiverRenderers(selectedRenderers);
+                Require(selectedRenderers.Count == 1 && selectedRenderers[0] == receiverRenderer,
+                    "Whole-group mode applied the specified-part filter");
+                Require(RenderCenter() < 0.2f, "Whole-group mode applied the specified-part shadow mask");
+                cs.receiverParts.Clear();
+                Debug.Log("[Ho-CS Receiver Selection] PASS: specified part, empty selection, whole group, renderer lookup and shadow masks.");
+                if (receiverSelectionOnly) return;
                 feature.SetActive(false);
                 Require(RenderCenter() > 0.8f, "Inactive feature leaked previous camera data");
                 feature.SetActive(true);
@@ -768,57 +798,46 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     return pixels;
                 }
 
-                // 10%–90% 边宽：先找一个刚好在边上的像素（值最接近 0.5），按它那里的**图像梯度方向**
-                // （即边的法线）往两边各走到 0.9 / 0.1，两段长度相加。
-                // 沿固定屏幕方向走会被"边与扫描方向的夹角"放大（斜着穿过一条边，量出来能虚高好几倍），
-                // 这就是本测试前两版量到 20+px 的原因。
+                // Median of normal-direction 10–90% widths across the edge. Reject traces
+                // that exit the image before reaching both endpoints; a single "closest to
+                // 0.5" pixel may sit at a clipped corner and report an unrelated long ramp.
                 float EdgeWidth(float[] pixels)
                 {
-                    int ex = -1, ey = -1;
-                    float bestDistance = 2f;
-                    for (int y = 1; y < 255; y++)
-                        for (int x = 1; x < 255; x++)
-                        {
-                            float distance = Mathf.Abs(pixels[y * 256 + x] - 0.5f);
-                            if (distance >= bestDistance) continue;
-                            // 必须落在**有梯度**的地方：抖动边缘上"最接近 0.5"的像素可能整片同值，
-                            // 那样梯度为 0，量出来会是 0px（踩过）。
-                            float dx = pixels[y * 256 + x + 1] - pixels[y * 256 + x - 1];
-                            float dy = pixels[(y + 1) * 256 + x] - pixels[(y - 1) * 256 + x];
-                            if (dx * dx + dy * dy < 0.0025f) continue;
-                            bestDistance = distance;
-                            ex = x;
-                            ey = y;
-                        }
-
-                    if (ex < 0) return 0f;
-                    float gx = pixels[ey * 256 + ex + 1] - pixels[ey * 256 + ex - 1];
-                    float gy = pixels[(ey + 1) * 256 + ex] - pixels[(ey - 1) * 256 + ex];
-                    float length = Mathf.Sqrt(gx * gx + gy * gy);
-                    if (length < 1e-5f) return 0f;
-                    gx /= length;
-                    gy /= length;
-
-                    int Walk(float stepX, float stepY, float limit, bool below)
+                    float Bilinear(float x, float y)
                     {
-                        float x = ex, y = ey;
-                        int steps = 0;
-                        while (steps < 128)
-                        {
-                            x += stepX; y += stepY;
-                            int sx = Mathf.Clamp(Mathf.RoundToInt(x), 0, 255);
-                            int sy = Mathf.Clamp(Mathf.RoundToInt(y), 0, 255);
-                            float v = pixels[sy * 256 + sx];
-                            steps++;
-                            if (below ? v < limit : v > limit) break;
-                        }
-
-                        return steps;
+                        int ix = (int)x, iy = (int)y;
+                        return Mathf.Lerp(Mathf.Lerp(pixels[iy * 256 + ix], pixels[iy * 256 + ix + 1], x - ix),
+                            Mathf.Lerp(pixels[(iy + 1) * 256 + ix], pixels[(iy + 1) * 256 + ix + 1], x - ix), y - iy);
                     }
-
-                    return Walk(gx, gy, 0.9f, false) + Walk(-gx, -gy, 0.1f, true);
+                    var widths = new List<float>();
+                    for (int y = 2; y < 254; y += 3)
+                        for (int x = 2; x < 254; x += 3)
+                        {
+                            float value = pixels[y * 256 + x];
+                            if (value <= 0.3f || value >= 0.7f) continue;
+                            float gx = pixels[y * 256 + x + 1] - pixels[y * 256 + x - 1];
+                            float gy = pixels[(y + 1) * 256 + x] - pixels[(y - 1) * 256 + x];
+                            float length = Mathf.Sqrt(gx * gx + gy * gy);
+                            if (length < 0.05f) continue;
+                            gx /= length; gy /= length;
+                            float Walk(float direction, float threshold)
+                            {
+                                for (float distance = 0.25f; distance < 64; distance += 0.25f)
+                                {
+                                    float sx = x + direction * gx * distance, sy = y + direction * gy * distance;
+                                    if (sx < 0 || sx >= 255 || sy < 0 || sy >= 255) return -1;
+                                    float sample = Bilinear(sx, sy);
+                                    if (direction > 0 ? sample > threshold : sample < threshold) return distance;
+                                }
+                                return -1;
+                            }
+                            float lit = Walk(1, 0.9f), dark = Walk(-1, 0.1f);
+                            if (lit >= 0 && dark >= 0) widths.Add(lit + dark);
+                        }
+                    Require(widths.Count > 0, "No complete shadow-edge profiles available");
+                    widths.Sort();
+                    return widths[widths.Count / 2];
                 }
-
                 float MinValue(float[] pixels) { float min = 1f; for (int i = 0; i < pixels.Length; i++) min = Mathf.Min(min, pixels[i]); return min; }
                 float MaxValue(float[] pixels) { float max = 0f; for (int i = 0; i < pixels.Length; i++) max = Mathf.Max(max, pixels[i]); return max; }
 

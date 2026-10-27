@@ -12,12 +12,18 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
     {
         private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
         private static readonly Color StatusColor = new Color(0.45f, 0.64f, 0.96f);
+        private static readonly GUIContent[] ReceiverModes =
+        {
+            new GUIContent("整组", "接收该 OB 组的所有部件，包括以后新增的部件。"),
+            new GUIContent("指定部件", "从该 OB 组已有的部件中勾选接收对象。")
+        };
 
         private static bool showRuntime = true;
         private static bool showStatus = true;
 
         private readonly BoxBoundsHandle boundsHandle = new BoxBoundsHandle();
         private SerializedProperty objectGroup;
+        private SerializedProperty receiveWholeGroup;
         private SerializedProperty receiverParts;
         private SerializedProperty boundsAnchor;
         private SerializedProperty center;
@@ -27,6 +33,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
         private void OnEnable()
         {
             objectGroup = serializedObject.FindProperty("objectGroup");
+            receiveWholeGroup = serializedObject.FindProperty("receiveWholeGroup");
             receiverParts = serializedObject.FindProperty("receiverParts");
             boundsAnchor = serializedObject.FindProperty("boundsAnchor");
             center = serializedObject.FindProperty("center");
@@ -44,9 +51,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 MessageType.Info);
 
             DrawRuntime(subject);
-            DrawStatus(subject);
-
             serializedObject.ApplyModifiedProperties();
+            DrawStatus(subject);
         }
 
         private void DrawRuntime(HoCharacterShadow subject)
@@ -61,22 +67,115 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty(objectGroup, "接收组");
-                DrawProperty(receiverParts, "接收部件");
+                DrawReceiverParts();
                 DrawProperty(boundsAnchor, "包围盒锚点");
                 DrawProperty(center, "中心");
                 DrawProperty(size, "尺寸");
                 DrawProperty(edgeBlend, "边缘回退");
 
-                if (GUILayout.Button("从接收对象计算包围盒"))
+                using (new EditorGUI.DisabledScope(objectGroup.objectReferenceValue == null))
                 {
-                    FitBounds(subject);
+                    if (GUILayout.Button(new GUIContent("从接收对象计算包围盒",
+                        "按当前姿态计算一次包围盒，不会每帧跟随蒙皮。动作幅度大的角色需预留空间，或用场景手柄调整。")))
+                    {
+                        // FitBounds reads the component, so commit this event's selection first.
+                        serializedObject.ApplyModifiedProperties();
+                        FitBounds(subject);
+                        serializedObject.Update();
+                    }
                 }
-
-                EditorGUILayout.HelpBox(
-                    "「从接收对象计算包围盒」是一次性工具：按当前姿态把接收部件包进去，不会每帧跟随蒙皮收缩。"
-                    + "动作幅度大的角色留出余量，或用场景里的盒手柄直接调整。",
-                    MessageType.None);
             }
+        }
+
+        private void DrawReceiverParts()
+        {
+            var group = objectGroup.objectReferenceValue as HoObjectBufferGroup;
+            var names = new List<string>();
+            if (group != null)
+            {
+                foreach (var part in group.parts)
+                    if (part != null && !string.IsNullOrEmpty(part.name) && !names.Contains(part.name))
+                        names.Add(part.name);
+            }
+
+            int mode = receiveWholeGroup.boolValue ? 0 : 1;
+            Rect modeRect = EditorGUILayout.GetControlRect();
+            EditorGUI.BeginProperty(modeRect, new GUIContent("接收范围"), receiveWholeGroup);
+            mode = EditorGUI.Popup(modeRect, new GUIContent("接收范围"), mode, ReceiverModes);
+            receiveWholeGroup.boolValue = mode == 0;
+            EditorGUI.EndProperty();
+
+            if (group != null)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button(new GUIContent("配置 OB 部件…", "在 OB 组的「部件 → 渲染器」中拖入物体。"),
+                        EditorStyles.miniButton, GUILayout.Width(110)))
+                    {
+                        serializedObject.ApplyModifiedProperties();
+                        Selection.activeObject = group;
+                        EditorGUIUtility.PingObject(group);
+                        GUIUtility.ExitGUI();
+                    }
+                }
+            }
+
+            string warning = group == null ? "先指定接收组；物体在 OB 的「部件 → 渲染器」中设置。"
+                : names.Count == 0 ? "OB 组还没有具名部件，请先配置 OB 部件与渲染器。" : null;
+
+            if (group != null && mode == 1)
+            {
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUILayout.LabelField("勾选接收部件", EditorStyles.boldLabel);
+                        if (GUILayout.Button("全选", EditorStyles.miniButtonLeft, GUILayout.Width(42)))
+                        {
+                            receiverParts.ClearArray();
+                            foreach (string name in names) AddReceiverPart(name);
+                        }
+                        if (GUILayout.Button("清空", EditorStyles.miniButtonRight, GUILayout.Width(42)))
+                            receiverParts.ClearArray();
+                    }
+                    foreach (string name in names)
+                    {
+                        bool selected = HasReceiverPart(name);
+                        var label = new GUIContent(name, "接收 OB 部件「" + name + "」中的渲染器。物体在 OB 中配置。");
+                        bool next = EditorGUILayout.ToggleLeft(label, selected);
+                        if (next != selected)
+                        {
+                            if (next) AddReceiverPart(name);
+                            else RemoveReceiverPart(name);
+                        }
+                    }
+                }
+                if (names.Count > 0 && !names.Exists(HasReceiverPart))
+                    warning = "尚未勾选接收部件，当前不接收高精度阴影。";
+            }
+            if (warning != null) EditorGUILayout.HelpBox(warning, MessageType.Warning);
+        }
+
+        private bool HasReceiverPart(string name)
+        {
+            for (int i = 0; i < receiverParts.arraySize; i++)
+                if (receiverParts.GetArrayElementAtIndex(i).stringValue == name) return true;
+            return false;
+        }
+
+        private void AddReceiverPart(string name)
+        {
+            int index = receiverParts.arraySize;
+            receiverParts.InsertArrayElementAtIndex(index);
+            receiverParts.GetArrayElementAtIndex(index).stringValue = name;
+        }
+
+        private void RemoveReceiverPart(string name)
+        {
+            for (int i = receiverParts.arraySize - 1; i >= 0; i--)
+                if (receiverParts.GetArrayElementAtIndex(i).stringValue == name)
+                    receiverParts.DeleteArrayElementAtIndex(i);
         }
 
         private void DrawStatus(HoCharacterShadow subject)
@@ -90,8 +189,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             {
                 bool hasGroup = subject.objectGroup != null;
                 EditorGUILayout.LabelField("接收组", hasGroup ? LilUrpEditorSectionGui.FormatAvailable(true) : LilUrpEditorSectionGui.FormatAvailable(false));
-                int matched = CountMatchedParts(subject);
-                EditorGUILayout.LabelField("接收部件匹配", matched + " 个");
+                int matched = CountMatchedRenderers(subject);
+                EditorGUILayout.LabelField("接收渲染器", matched + " 个");
+                if (hasGroup && matched == 0)
+                    EditorGUILayout.HelpBox("当前没有接收对象。请检查 OB 部件的渲染器配置和上方的接收范围。", MessageType.Warning);
                 EditorGUILayout.LabelField("状态", subject.status);
 
                 if (subject.atlasSlice >= 0)
@@ -110,12 +211,12 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             }
         }
 
-        private static int CountMatchedParts(HoCharacterShadow subject)
+        private static int CountMatchedRenderers(HoCharacterShadow subject)
         {
             HoObjectBufferGroup group = subject.objectGroup;
             if (group == null || group.groupId <= 0) return 0;
             var renderers = new List<Renderer>();
-            group.GetAssignedRenderers(renderers, subject.receiverParts);
+            subject.GetReceiverRenderers(renderers);
             return renderers.Count;
         }
 
@@ -136,7 +237,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
         {
             if (subject.objectGroup == null) return;
             var renderers = new List<Renderer>();
-            subject.objectGroup.GetAssignedRenderers(renderers, subject.receiverParts);
+            subject.GetReceiverRenderers(renderers);
             bool found = false;
             Bounds result = default;
             foreach (Renderer renderer in renderers)

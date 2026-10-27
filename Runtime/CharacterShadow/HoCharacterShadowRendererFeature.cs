@@ -457,8 +457,9 @@ namespace lilToon.URP.Extensions.CharacterShadow
             cmd.SetGlobalVectorArray("_HoCSPartMasks", f.partMasks);
             cmd.SetGlobalVectorArray("_HoCSTileRects", f.tileRects);
             cmd.SetGlobalVectorArray("_HoCSParameters", f.parameters);
+            cmd.SetGlobalVectorArray("_HoCSDepthParameters", f.depthParameters);
             cmd.SetGlobalVector("_HoCSAtlasSize", new Vector4(1f / f.atlasSize, 1f / f.atlasSize, f.atlasSize, f.atlasSize));
-            // PCSS：(enabled, softness, blocker 搜索半径, 半影半径上限) + (深度偏移, blocker 采样数, filter 采样数, 0)。
+            // PCSS: (enabled, tanHalfAngle, search metres, cap metres) + (bias, counts, fixed softness).
             cmd.SetGlobalVector("_HoCSPcssParams", f.pcssParams);
             cmd.SetGlobalVector("_HoCSPcssParams2", f.pcssParams2);
             cmd.SetGlobalInt("_HoCSCount", f.slices.Count);
@@ -485,6 +486,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 data.atlas = atlas; data.material = material; data.mode = mode; data.character = character; data.size = DebugSize(graph, destination);
                 builder.UseTexture(atlas, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
+                builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static (PassData d, RasterGraphContext ctx) =>
                 {
                     d.material.SetInt("_HoCSDebugMode", d.mode);

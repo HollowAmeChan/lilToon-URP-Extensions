@@ -16,6 +16,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal readonly Matrix4x4[] worldToBounds = new Matrix4x4[MaxSlices];
         internal readonly Vector4[] tileRects = new Vector4[MaxSlices];
         internal readonly Vector4[] parameters = new Vector4[MaxSlices];
+        internal readonly Vector4[] depthParameters = new Vector4[MaxSlices];
         internal int atlasSize, resolution;
         internal Light light;
         internal Vector3 cameraPosition;
@@ -33,13 +34,11 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 cameraPosition = camera.transform.position, cameraView = cameraView,
                 cameraProjection = cameraProjection, pcssStatus = config.pcssStatus
             };
-            // PCSS 的四个形状参数 + (深度偏移, blocker 采样数, filter 采样数, 0)。
-            // **采样数必须一直发布**：PCSS 关闭时那条 PCF 也走同一个旋转盘（只是半径固定为「PCF 半径」），
-            // 采样数归零会让它退化成单点采样 —— 边缘变成逐像素抖动的噪声边（实测踩过）。
-            // 开关本身由 params.x 决定。
+            // Directional PCSS consumes tan(angular diameter / 2), not a distance to the
+            // arbitrary shadow-camera near plane. PCF keeps its sample budget when PCSS is off.
             frame.pcssParams = new Vector4(
                 config.pcssEnabled ? 1.0f : 0.0f,
-                Mathf.Max(0.0f, config.pcssSoftness),
+                Mathf.Tan(Mathf.Clamp(config.pcssSoftness, 0, 8) * Mathf.Deg2Rad * 0.5f),
                 Mathf.Max(0.0f, config.pcssBlockerRadiusWorld),
                 Mathf.Max(0.0f, config.pcssMaxPenumbraRadiusWorld));
             frame.pcssParams2 = new Vector4(
@@ -94,7 +93,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 bool hasReceiver = false;
                 foreach (string name in group.GetPartNames())
                 {
-                    if (subject.receiverParts.Count != 0 && !subject.receiverParts.Contains(name)) continue;
+                    if (!subject.receiveWholeGroup && !subject.receiverParts.Contains(name)) continue;
                     uint identity = HoObjectBufferRegistry.GetPartId(group.groupId, name);
                     if (identity == 0) continue;
                     int slot = (int)(identity & 255);
@@ -113,6 +112,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                     * Matrix4x4.Translate(-subject.center) * subject.Anchor.worldToLocalMatrix;
                 // .w = 该 slice 的 1 texel 等于多少世界单位：软阴影半径用世界单位给，shader 靠它换算成 texel。
                 frame.parameters[index] = new Vector4(subject.edgeBlend, light.shadowStrength, 0, slice.texelSize);
+                frame.depthParameters[index] = new Vector4(slice.farPlane - slice.nearPlane, 0, 0, 0);
                 subject.atlasSlice = index;
                 subject.depthRange = slice.farPlane - slice.nearPlane;
                 subject.worldUnitsPerTexel = slice.texelSize;

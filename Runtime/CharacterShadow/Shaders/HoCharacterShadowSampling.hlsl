@@ -2,8 +2,7 @@
 #define HO_CHARACTER_SHADOW_SAMPLING_INCLUDED
 #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoRendererIdentity.hlsl"
 #define HO_CS_MAX_SLICES 16
-// PCSS 采样上限。C# 侧 HoCharacterShadowShaderContract 必须与这两个值一致
-// （HoCharacterShadowValidation.Validate() 会解析本文件比对，防漂移）。
+// Mirrored by HoCharacterShadowShaderContract and checked by Validate().
 #define HO_CS_MAX_PCSS_BLOCKER_SAMPLES 32
 #define HO_CS_MAX_PCSS_FILTER_SAMPLES 64
 TEXTURE2D_FLOAT(_HoCSAtlas);
@@ -16,171 +15,245 @@ float4x4 _HoCSWorldToShadow[HO_CS_MAX_SLICES];
 float4x4 _HoCSWorldToBounds[HO_CS_MAX_SLICES];
 float4 _HoCSTileRects[HO_CS_MAX_SLICES];
 float4 _HoCSParameters[HO_CS_MAX_SLICES];
-// (enabled, softness, blocker 搜索半径 **世界单位**, 半影半径上限 **世界单位**)
+// x = orthographic far - near, in world units. No distance to a fictitious light plane.
+float4 _HoCSDepthParameters[HO_CS_MAX_SLICES];
+// (enabled, tan(angular diameter / 2), blocker radius metres, max penumbra metres)
 float4 _HoCSPcssParams;
-// (blocker 深度偏移, blocker 采样数, filter 采样数, 最低软度 **世界单位**)
+// (blocker depth bias, blocker samples, filter samples, additional soft radius metres)
 float4 _HoCSPcssParams2;
-
-float HoCSCompare(float2 uv, float receiverDepth)
-{
-    float depth = SAMPLE_TEXTURE2D_LOD(_HoCSAtlas, sampler_PointClamp, uv, 0).r;
-    #if UNITY_REVERSED_Z
-        return receiverDepth >= depth ? 1.0 : 0.0;
-    #else
-        return receiverDepth <= depth ? 1.0 : 0.0;
-    #endif
-}
 
 float HoCSSampleRawDepth(float2 uv)
 {
     return SAMPLE_TEXTURE2D_LOD(_HoCSAtlas, sampler_PointClamp, uv, 0).r;
 }
 
-// 与 HoCSCompare 同一套深度约定（reversed-Z 下近 = 大）。far 值表示"这里没有遮挡物"。
-bool HoCSIsBlocker(float rawDepth, float receiverDepth, float bias)
+float4 HoCSCompareDepth(float4 rawDepth, float4 receiverDepth)
 {
     #if UNITY_REVERSED_Z
-        if (rawDepth <= 0.00001) return false;
-        return rawDepth > receiverDepth + bias;
+        return step(rawDepth, receiverDepth);
     #else
-        if (rawDepth >= 0.99999) return false;
-        return rawDepth < receiverDepth - bias;
+        return step(receiverDepth, rawDepth);
     #endif
 }
 
-// 固定半径的 3×3 PCF 已被"旋转盘"取代（见 HoCSSampleDisk）：固定网格在斜边上会留下
-// 规律性台阶，用户实测"PCF 边缘锯齿依旧明显"就是它。这里只留一个中心比较。
-float HoCSSampleCenter(float2 uv, float2 lo, float2 hi, float receiverDepth)
+// Derivatives are transformed from world-space deltas BEFORE adding the shadow UV offset.
+// Differencing normalized coordinates near 0.5 loses precision in grazing projections.
+float2 HoCSReceiverPlaneGradient(float3 dx, float3 dy)
 {
-    return HoCSCompare(clamp(uv, lo, hi), receiverDepth);
+    float determinant = dx.x * dy.y - dx.y * dy.x;
+    float scale = max(length(dx.xy) * length(dy.xy), 1e-20);
+    if (abs(determinant) <= scale * 1e-3) return 0;
+    return float2(dy.y * dx.z - dx.y * dy.z, dx.x * dy.z - dy.x * dx.z) / determinant;
 }
 
-// 旋转角按**世界位置**取：每个屏幕像素都不一样。
-// 曾经按 atlas texel 取（floor(uv / texel)），相邻像素共用同一套采样图案，
-// 结果噪声表现成 texel 大小的方块 —— 用户看到的"一片黑点"就是它。
-float HoCSSampleRotation(float3 positionWS)
+float HoCSReceiverDepth(float2 tapUv, float2 receiverUv, float receiverDepth, float3 gradient)
 {
-    float3 cell = floor(positionWS * 1024.0);
-    return frac(sin(dot(cell, float3(12.9898, 78.233, 37.719))) * 43758.5453) * 6.2831853;
+    return receiverDepth + dot(tapUv - receiverUv, gradient.xy);
 }
 
-// 黄金角螺旋盘：把 N 个采样均匀铺在单位圆里，再整体旋转一个角度。
-float2 HoCSSampleOffset(int index, int sampleCount, float rotation)
+// Gather both depths and their actual texel-centre receiver references. The weights are
+// reused by filtering AND blocker search; never interpolate depths before comparison.
+void HoCSReadDepthQuad(float2 tapUv, float2 lo, float2 hi,
+    float2 receiverUv, float receiverDepth, float3 gradient,
+    out float4 depths, out float4 references, out float4 weights)
 {
-    float sampleIndex = (float)index + 0.5;
-    float radius = sqrt(sampleIndex / max((float)sampleCount, 1.0));
-    float angle = sampleIndex * 2.39996323 + rotation;
-    return float2(cos(angle), sin(angle)) * radius;
+    tapUv = clamp(tapUv, lo, hi);
+    float2 p = tapUv * _HoCSAtlasSize.zw - 0.5;
+    float2 f = frac(p);
+    float2 b = (floor(p) + 0.5) * _HoCSAtlasSize.xy;
+    weights = float4((1 - f.x) * f.y, f.x * f.y, f.x * (1 - f.y), (1 - f.x) * (1 - f.y));
+    #if defined(PLATFORM_SUPPORT_GATHER) && SHADER_TARGET >= 45
+    if (all(b >= lo) && all(b + _HoCSAtlasSize.xy <= hi))
+    {
+        // Gather order: upper-left, upper-right, lower-right, lower-left.
+        // Gather at the footprint's centre, not at a fractional boundary: texture-unit
+        // coordinate rounding must not select a different quad than floor(p) above.
+        depths = GATHER_TEXTURE2D(_HoCSAtlas, sampler_PointClamp, b + 0.5 * _HoCSAtlasSize.xy);
+        float reference = HoCSReceiverDepth(b, receiverUv, receiverDepth, gradient);
+        float2 dz = gradient.xy * _HoCSAtlasSize.xy;
+        references = reference + float4(dz.y, dz.x + dz.y, dz.x, 0);
+    }
+    else
+    #endif
+    {
+        // Also isolates adjacent atlas tiles; the sampler only clamps to the whole atlas.
+        float2 a = clamp(b, lo, hi);
+        float2 c = clamp(b + float2(_HoCSAtlasSize.x, 0), lo, hi);
+        float2 d = clamp(b + float2(0, _HoCSAtlasSize.y), lo, hi);
+        float2 e = clamp(b + _HoCSAtlasSize.xy, lo, hi);
+        depths = float4(HoCSSampleRawDepth(d), HoCSSampleRawDepth(e), HoCSSampleRawDepth(c), HoCSSampleRawDepth(a));
+        references = float4(HoCSReceiverDepth(d, receiverUv, receiverDepth, gradient),
+            HoCSReceiverDepth(e, receiverUv, receiverDepth, gradient),
+            HoCSReceiverDepth(c, receiverUv, receiverDepth, gradient),
+            HoCSReceiverDepth(a, receiverUv, receiverDepth, gradient));
+    }
 }
 
-// 世界半径 → texel 半径。**软阴影半径一律用世界单位给**：tile 分辨率越高，1 texel 覆盖的世界尺寸越小，
-// 用 texel 当单位的话同一个数值在不同分辨率下软硬完全不一样（4096 的 tile 上"12 texel"只有 7mm，
-// 看起来还是硬边 —— 用户就是这么踩的）。
-// 再按采样预算收一下：盘面积不能远超采样数，否则采样太稀会出颗粒（用户报的"噪声黑点"）。
-float HoCSRadiusTexels(float worldRadius, float texelWorld, int sampleCount)
+// gradient.xy = depth slope in atlas UV, .z = a world-scaled self-plane residual tolerance.
+// Return (guarded receiver-plane visibility, unbiased visibility) for the SAME depth taps.
+float2 HoCSCompareBilinear(float2 tapUv, float2 lo, float2 hi,
+    float2 receiverUv, float receiverDepth, float3 gradient)
 {
-    float texels = worldRadius / max(texelWorld, 1e-6);
-    float budget = sqrt(max((float)sampleCount, 1.0) * 6.25);
-    return max(min(texels, budget), 0.0);
+    float4 depths, references, weights;
+    HoCSReadDepthQuad(tapUv, lo, hi, receiverUv, receiverDepth, gradient, depths, references, weights);
+    float4 visibility = HoCSCompareDepth(depths, references);
+    float4 rawVisibility = HoCSCompareDepth(depths, receiverDepth.xxxx);
+    // A tangent triangle's plane can extrapolate through an unrelated occluder. Only use
+    // its acne correction when the stored surface actually agrees with that local plane.
+    float4 trust = 1.0 - smoothstep(gradient.z, gradient.z * 2.0, abs(depths - references));
+    visibility = lerp(rawVisibility, visibility, trust);
+    return float2(dot(visibility, weights), dot(rawVisibility, weights));
 }
 
-// 旋转盘滤波：半径按 texel 计（调用方用 HoCSRadiusTexels 换算）。PCF 与 PCSS 的滤波阶段共用它。
+float HoCSTentIntegral(float position, float support)
+{
+    float x = clamp(position / support, -1.0, 1.0);
+    return x < 0 ? 0.5 * (x + 1) * (x + 1) : 1 - 0.5 * (1 - x) * (1 - x);
+}
+
+// Integrate a tent over texel CELLS, then pack adjacent cell weights into bilinear taps.
+// Radius 0 retains base AA; all positive artistic radii continuously increase its variance.
+// Up to 2.5 texels needs at most 8 cells per axis / 16 quads, independent of quality tier.
+float2 HoCSSampleDenseTent(float2 uv, float2 lo, float2 hi, float receiverDepth,
+    float3 gradient, float radiusTexels)
+{
+    float support = sqrt(2.25 + 1.5 * radiusTexels * radiusTexels);
+    float2 position = uv * _HoCSAtlasSize.zw;
+    float2 first = floor(position - support);
+    float4 weightsX, weightsY, offsetsX, offsetsY;
+    [unroll] for (int pair = 0; pair < 4; pair++)
+    {
+        float2 a = first + pair * 2 - position;
+        float2 w0 = float2(HoCSTentIntegral(a.x + 1, support) - HoCSTentIntegral(a.x, support),
+                          HoCSTentIntegral(a.y + 1, support) - HoCSTentIntegral(a.y, support));
+        float2 w1 = float2(HoCSTentIntegral(a.x + 2, support) - HoCSTentIntegral(a.x + 1, support),
+                          HoCSTentIntegral(a.y + 2, support) - HoCSTentIntegral(a.y + 1, support));
+        weightsX[pair] = w0.x + w1.x;
+        weightsY[pair] = w0.y + w1.y;
+        float2 centre = first + pair * 2 + 0.5 + w1 / max(w0 + w1, 1e-8);
+        offsetsX[pair] = centre.x * _HoCSAtlasSize.x;
+        offsetsY[pair] = centre.y * _HoCSAtlasSize.y;
+    }
+    float2 visibility = 0;
+    [unroll] for (int y = 0; y < 4; y++)
+        [unroll] for (int x = 0; x < 4; x++)
+        {
+            float weight = weightsX[x] * weightsY[y];
+            if (weight > 0)
+                visibility += weight * HoCSCompareBilinear(float2(offsetsX[x], offsetsY[y]), lo, hi, uv, receiverDepth, gradient);
+        }
+    return visibility;
+}
+
+// Fixed, symmetric samples: no world-cell hash, temporal dependency or per-pixel noise.
+float2 HoCSSampleOffset(int index, int sampleCount)
+{
+    // Odd search budgets must still have zero centroid: a centre sample plus antipodal pairs.
+    if ((sampleCount & 1) != 0)
+    {
+        if (index == 0) return 0;
+        index--;
+        sampleCount--;
+    }
+    float pair = floor((float)index * 0.5);
+    float radius = sqrt((pair + 0.5) / max(ceil((float)sampleCount * 0.5), 1.0));
+    float angle = pair * 2.39996323;
+    float direction = (index & 1) == 0 ? 1.0 : -1.0;
+    return float2(cos(angle), sin(angle)) * (radius * direction);
+}
+
+float HoCSRadiusTexels(float worldRadius, float texelWorld)
+{
+    // Quality controls sample count, never silently changes the requested world-space radius.
+    return max(worldRadius, 0.0) / max(texelWorld, 1e-6);
+}
+
+float HoCSResolveFilter(float2 visibility)
+{
+    // Corrections belong to an edge, not to a fully lit/shadowed kernel. Fade their allowed
+    // influence over the outer eighth of the unbiased transition instead of a binary gate.
+    // Keep the middle range wide enough for a subtexel-shifted, unoccluded grazing plane.
+    return clamp(visibility.x, saturate(visibility.y * 8.0 - 7.0), saturate(visibility.y * 8.0));
+}
 float HoCSSampleDisk(float2 uv, float2 lo, float2 hi, float receiverDepth,
-    float radiusTexels, int sampleCount, float rotation)
+    float radiusTexels, int sampleCount, float3 gradient)
 {
-    if (radiusTexels <= 0.001 || sampleCount <= 0)
+    if (radiusTexels <= 2.0 || sampleCount <= 0)
+        return HoCSResolveFilter(HoCSSampleDenseTent(uv, lo, hi, receiverDepth, gradient, min(radiusTexels, 2.0)));
+
+    float2 visibility = 0;
+    // Preserve the base-AA variance as artistic softness grows instead of replacing its
+    // kernel with a narrower disk. The dense/sparse transition uses matching second moments.
+    float diskRadius = sqrt(radiusTexels * radiusTexels + 1.5);
+    [loop] for (int i = 0; i < HO_CS_MAX_PCSS_FILTER_SAMPLES; i++)
     {
-        return HoCSSampleCenter(uv, lo, hi, receiverDepth);
+        if (i >= sampleCount) break;
+        float2 tapUv = uv + HoCSSampleOffset(i, sampleCount) * _HoCSAtlasSize.xy * diskRadius;
+        visibility += HoCSCompareBilinear(tapUv, lo, hi, uv, receiverDepth, gradient);
     }
-
-    float2 texel = _HoCSAtlasSize.xy;
-    float visibility = 0.0;
-    [loop] for (int index = 0; index < HO_CS_MAX_PCSS_FILTER_SAMPLES; index++)
-    {
-        if (index >= sampleCount)
-        {
-            break;
-        }
-
-        float2 sampleUv = clamp(uv + HoCSSampleOffset(index, sampleCount, rotation) * texel * radiusTexels, lo, hi);
-        visibility += HoCSCompare(sampleUv, receiverDepth);
-    }
-
-    return visibility / (float)sampleCount;
+    visibility /= (float)sampleCount;
+    // Avoid a shape discontinuity when PCSS transitions out of the small-kernel path.
+    if (radiusTexels < 2.5)
+        visibility = lerp(HoCSSampleDenseTent(uv, lo, hi, receiverDepth, gradient, radiusTexels), visibility, smoothstep(2.0, 2.5, radiusTexels));
+    return HoCSResolveFilter(visibility);
 }
 
-// PCSS：先在 blocker 盘里找遮挡物，用平均遮挡深度估半影宽度，再按该宽度做可变半径滤波。
-// texelWorld = 该 slice 的 1 texel 等于多少世界单位（由 C# 发布在 _HoCSParameters[slice].w）。
-float HoCSSampleAtlasPcss(float2 uv, float2 lo, float2 hi, float receiverDepth, float3 positionWS, float texelWorld)
+float HoCSDirectionalPenumbra(float gapDepth, float depthRange)
 {
-    int filterSampleCount = min((int)round(_HoCSPcssParams2.z), HO_CS_MAX_PCSS_FILTER_SAMPLES);
-    if (filterSampleCount <= 0)
-    {
-        filterSampleCount = 1;
-    }
+    return min(max(_HoCSPcssParams.w, 0.0), gapDepth * depthRange * max(_HoCSPcssParams.y, 0.0));
+}
 
-    float rotation = HoCSSampleRotation(positionWS);
-    float minRadius = HoCSRadiusTexels(max(_HoCSPcssParams2.w, 0.0), texelWorld, filterSampleCount);
-    if (_HoCSPcssParams.x < 0.5 || _HoCSPcssParams.y <= 0.0)
-    {
-        return HoCSSampleDisk(uv, lo, hi, receiverDepth, minRadius, filterSampleCount, rotation);
-    }
+float2 HoCSBlockerStatistics(float2 tapUv, float2 lo, float2 hi,
+    float2 receiverUv, float receiverDepth, float3 gradient)
+{
+    float4 depths, references, weights;
+    HoCSReadDepthQuad(tapUv, lo, hi, receiverUv, receiverDepth, gradient, depths, references, weights);
+    float4 trust = 1.0 - smoothstep(gradient.z, gradient.z * 2.0, abs(depths - references));
+    references = lerp(receiverDepth.xxxx, references, trust);
+    #if UNITY_REVERSED_Z
+        float4 gaps = depths - references;
+        float4 valid = step(0.00001, depths);
+    #else
+        float4 gaps = references - depths;
+        float4 valid = 1.0 - step(0.99999, depths);
+    #endif
+    float4 blockerWeights = weights * valid * (1.0 - step(gaps, _HoCSPcssParams2.x));
+    return float2(dot(max(gaps, 0), blockerWeights), dot(blockerWeights, 1.0));
+}
 
-    int blockerSampleCount = min((int)round(_HoCSPcssParams2.y), HO_CS_MAX_PCSS_BLOCKER_SAMPLES);
-    float blockerRadius = HoCSRadiusTexels(max(_HoCSPcssParams.z, 0.0), texelWorld, max(blockerSampleCount, 1));
-    if (blockerSampleCount <= 0 || blockerRadius <= 0.0)
+float2 HoCSSearchBlockers(float2 uv, float2 lo, float2 hi, float receiverDepth,
+    float3 gradient, float blockerRadius, int sampleCount)
+{
+    float2 statistics = 0;
+    [loop] for (int i = 0; i < HO_CS_MAX_PCSS_BLOCKER_SAMPLES; i++)
     {
-        return HoCSSampleDisk(uv, lo, hi, receiverDepth, minRadius, filterSampleCount, rotation);
+        if (i >= sampleCount) break;
+        float2 offset = i == 0 ? float2(0, 0) : HoCSSampleOffset(i - 1, sampleCount - 1) * blockerRadius;
+        statistics += HoCSBlockerStatistics(uv + offset * _HoCSAtlasSize.xy, lo, hi, uv, receiverDepth, gradient);
     }
+    return statistics;
+}
 
-    float2 texel = _HoCSAtlasSize.xy;
-    float blockerDepthSum = 0.0;
-    int blockerCount = 0;
-    [loop] for (int blockerIndex = 0; blockerIndex < HO_CS_MAX_PCSS_BLOCKER_SAMPLES; blockerIndex++)
+float HoCSSampleAtlasPcss(float2 uv, float2 lo, float2 hi, float receiverDepth,
+    float texelWorld, float depthRange, float3 gradient, float footprintTexels)
+{
+    int filterSamples = clamp((int)round(_HoCSPcssParams2.z), 1, HO_CS_MAX_PCSS_FILTER_SAMPLES);
+    float minRadius = max(HoCSRadiusTexels(_HoCSPcssParams2.w, texelWorld), footprintTexels);
+    if (_HoCSPcssParams.x < 0.5 || _HoCSPcssParams.y <= 0)
+        return HoCSSampleDisk(uv, lo, hi, receiverDepth, minRadius, filterSamples, gradient);
+
+    int blockerSamples = clamp((int)round(_HoCSPcssParams2.y), 1, HO_CS_MAX_PCSS_BLOCKER_SAMPLES);
+    float blockerRadius = HoCSRadiusTexels(_HoCSPcssParams.z, texelWorld);
+    float2 blockers = HoCSSearchBlockers(uv, lo, hi, receiverDepth, gradient, blockerRadius, blockerSamples);
+    float radius = minRadius;
+    if (blockers.y > 0)
     {
-        if (blockerIndex >= blockerSampleCount)
-        {
-            break;
-        }
-
-        float2 sampleUv = clamp(uv + HoCSSampleOffset(blockerIndex, blockerSampleCount, rotation) * texel * blockerRadius, lo, hi);
-        float rawDepth = HoCSSampleRawDepth(sampleUv);
-        if (HoCSIsBlocker(rawDepth, receiverDepth, _HoCSPcssParams2.x))
-        {
-            blockerDepthSum += rawDepth;
-            blockerCount++;
-        }
+        float penumbraWorld = HoCSDirectionalPenumbra(blockers.x / blockers.y, depthRange);
+        // A subtexel sliver entering the search must not jump straight to a full penumbra.
+        // One complete tap of support restores the unmodified distance-based estimate.
+        radius = max(radius, HoCSRadiusTexels(penumbraWorld, texelWorld) * smoothstep(0, 1, blockers.y));
     }
-
-    float penumbra = 1.0;
-    if (blockerCount > 0)
-    {
-        float averageBlockerDepth = blockerDepthSum / (float)blockerCount;
-        // 半影宽度按**物理形式**估：penumbra = (接收距离 - 遮挡距离) / 遮挡距离。
-        // atlas 里的 z 是阴影空间的归一化线性深度，所以"到光源的距离"用 (1 - z)（reversed-Z）表达，
-        // 归一化的深度范围在分子分母里自然约掉。注意这里**除的是遮挡距离**（PCSS 的原始形式）；
-        // ShadowCast 那边除的是接收深度，接收深度接近 0 时半影会被放大到糊掉整片阴影。
-        #if UNITY_REVERSED_Z
-            float receiverDistance = 1.0 - receiverDepth;
-            float blockerDistance = 1.0 - averageBlockerDepth;
-        #else
-            float receiverDistance = receiverDepth;
-            float blockerDistance = averageBlockerDepth;
-        #endif
-        penumbra = saturate((receiverDistance - blockerDistance) / max(blockerDistance, 0.0001));
-    }
-    else if (HoCSSampleCenter(uv, lo, hi, receiverDepth) >= 0.5)
-    {
-        // 盘里没有遮挡物、中心也受光 → 这片确实没有遮挡，按最低软度走一次即可（保持平滑，不引入硬边）。
-        return HoCSSampleDisk(uv, lo, hi, receiverDepth, minRadius, filterSampleCount, rotation);
-    }
-    // 剩下一种：中心被遮挡、但盘里没采到遮挡物 —— 这是**稀疏采样漏掉**了，不是"没有遮挡"。
-    // 早期版本在这里退回 PCF，于是同一个半影带里一半像素是硬边、一半是软边，看起来就是一片斑点。
-    // 现在按"半影最大"处理。
-
-    float maxRadius = HoCSRadiusTexels(max(_HoCSPcssParams.w, 0.0), texelWorld, filterSampleCount);
-    float filterRadius = max(minRadius, min(maxRadius, maxRadius * _HoCSPcssParams.y * penumbra));
-    return HoCSSampleDisk(uv, lo, hi, receiverDepth, filterRadius, filterSampleCount, rotation + 1.731);
+    return HoCSSampleDisk(uv, lo, hi, receiverDepth, radius, filterSamples, gradient);
 }
 
 float HoCSResolveMainCast(float3 positionWS, float sceneCast)
@@ -195,17 +268,24 @@ float HoCSResolveMainCast(float3 positionWS, float sceneCast)
     if (_HoCSPartMasks[slice * 64 + slot / 4u][slot % 4u] < 0.5) return sceneCast;
     float4 parameters = _HoCSParameters[slice];
     if (parameters.z < 0.5) return sceneCast;
-    float3 local = mul(_HoCSWorldToBounds[slice], float4(positionWS, 1)).xyz;
-    float edge = 0.5 - max(abs(local.x), max(abs(local.y), abs(local.z)));
-    if (edge <= 0) return sceneCast;
     float3 shadow = mul(_HoCSWorldToShadow[slice], float4(positionWS, 1)).xyz;
-    if (any(shadow < 0) || any(shadow > 1)) return sceneCast;
     float4 tile = _HoCSTileRects[slice];
     float2 uv = tile.xy + shadow.xy * tile.zw;
+    float3 shadowDx = mul((float3x3)_HoCSWorldToShadow[slice], ddx(positionWS));
+    float3 shadowDy = mul((float3x3)_HoCSWorldToShadow[slice], ddy(positionWS));
+    float planeTolerance = max(4.0 * parameters.w / max(_HoCSDepthParameters[slice].x, 1e-6), 1e-7);
+    float3 gradient = float3(HoCSReceiverPlaneGradient(
+        float3(shadowDx.xy * tile.zw, shadowDx.z), float3(shadowDy.xy * tile.zw, shadowDy.z)), planeTolerance);
+    float2 dx = shadowDx.xy * tile.zw * _HoCSAtlasSize.zw;
+    float2 dy = shadowDy.xy * tile.zw * _HoCSAtlasSize.zw;
+    float footprintTexels = 0.5 * max(length(dx), length(dy));
+    float3 local = mul(_HoCSWorldToBounds[slice], float4(positionWS, 1)).xyz;
+    float edge = 0.5 - max(abs(local.x), max(abs(local.y), abs(local.z)));
+    if (edge <= 0 || any(shadow < 0) || any(shadow > 1)) return sceneCast;
     float2 lo = tile.xy + _HoCSAtlasSize.xy * 0.5;
     float2 hi = tile.xy + tile.zw - _HoCSAtlasSize.xy * 0.5;
-    float visibility = HoCSSampleAtlasPcss(uv, lo, hi, shadow.z, positionWS, parameters.w);
-    // Same level as MainLightRealtimeShadow: shadow strength once, no extra light/AO terms.
+    float visibility = HoCSSampleAtlasPcss(uv, lo, hi, shadow.z, parameters.w,
+        _HoCSDepthParameters[slice].x, gradient, footprintTexels);
     float localCast = lerp(1.0, visibility, parameters.y);
     float blend = parameters.x > 0 ? smoothstep(0, parameters.x, edge) : 1;
     return lerp(sceneCast, localCast, blend);

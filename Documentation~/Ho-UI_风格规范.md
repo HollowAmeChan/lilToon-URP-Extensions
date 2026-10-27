@@ -155,7 +155,7 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
 | **Volume** | 运行 | 启用、单角色分辨率、阴影软边（米） |
-| | 软阴影（PCSS） | 启用 PCSS、质量档、半影放大、Blocker 搜索半径（米）、半影半径上限（米）、Blocker 深度偏移 |
+| | 软阴影（PCSS） | 启用 PCSS、质量档、光源角直径（度）、Blocker 搜索半径（米）、半影半径上限（米）、Blocker 深度偏移 |
 | | 调试 | 调试模式（`Off` / `Atlas` / `Character`）、`Debug In Scene View`、`Debug In Game View`、单角色 tile |
 | **Feature** | 运行（兜底） | 启用、单角色分辨率、阴影软边（米）、同时接收域上限、图集边长上限、深度偏移、法线偏移 |
 | | 软阴影（PCSS，兜底） | 与 Volume 一一对应的六个字段 + 回退/单位说明 |

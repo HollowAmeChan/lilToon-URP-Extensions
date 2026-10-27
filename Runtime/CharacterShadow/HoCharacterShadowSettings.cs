@@ -21,9 +21,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public int maxCharacters = 16;
         [Range(2048, 16384), Tooltip("图集边长上限。可容纳 tile 数 = (本值 / 单角色分辨率)²，再与「同时接收域上限」取小。")]
         public int maxAtlasSize = 8192;
-        [Range(0, 0.2f), Tooltip("**阴影软边**（世界单位，米）：始终生效的基础滤波半径，用来盖掉几何锯齿"
-            + "（发丝/低模剪影）；PCSS 在它之上再加半影。0 = 完全硬边。tile 越细同样半径吃掉的 texel 越多，"
-            + "想更软又不出颗粒就降分辨率或提高 PCSS 质量档。")]
+        [Range(0, 0.2f), Tooltip("额外的固定滤波半径（米），PCSS 在此基础上增加半影。0 仍保留基础抗锯齿；不必放大软边来掩盖 texel 台阶。")]
         public float softnessRadius = 0.005f;
         [Min(0), Tooltip("投影深度偏移（单位：texel）。")]
         public float depthBias = 1;
@@ -35,13 +33,11 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public bool pcssEnabled = true;
         [Tooltip("采样档：只决定 blocker / filter 的采样数，不改变阴影形状。")]
         public HoCharacterShadowPcssQuality pcssQuality = HoCharacterShadowPcssQuality.Ultra;
-        [Range(0, 8), Tooltip("半影放大系数：PCSS 估出的半影半径再乘它；0 = 只用「阴影软边」那一档（等价回退 PCF）。")]
+        [Range(0, 8), Tooltip("方向光的角直径（度）。半影半径 = 遮挡距离 × tan(角直径 / 2)，受半影上限限制。0 只保留固定软边与基础抗锯齿。")]
         public float pcssSoftness = 2;
-        [Range(0.001f, 0.2f), Tooltip("blocker 搜索半径（**世界单位，米**）。它至少要接近半影半径上限，否则半影里的遮挡物会被漏采样、"
-            + "估算值乱跳（表现成斑点）。")]
+        [Range(0.001f, 0.2f), Tooltip("寻找遮挡物的范围（米），不是最终软边宽度。范围太大而采样数不足时可能漏掉细小遮挡物。")]
         public float pcssBlockerSearchRadius = 0.02f;
-        [Range(0.001f, 0.2f), Tooltip("半影半径上限（**世界单位，米**）：最软能软到什么程度。用世界单位跟 tile 分辨率解耦；"
-            + "超出采样预算时会被收窄以免出颗粒（想更软就提高质量档或降低单角色分辨率）。")]
+        [Range(0.001f, 0.2f), Tooltip("PCSS 的半影半径上限（米）。不随分辨率或质量档缩窄；大范围滤波需要更高采样档以避免颗粒。固定软边与基础抗锯齿独立生效。")]
         public float pcssMaxPenumbraRadius = 0.04f;
         [Range(0, 0.02f), Tooltip("blocker 判定的深度偏移（阴影空间 z，1 ≈ 盒子整个深度范围）：压自遮挡与深度抖动。"
             + "默认给一点，避免 blocker 数量在相邻像素之间跳变（那会变成斑点）。")]
@@ -145,7 +141,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 (config.pcssEnabled ? "on" : "off")
                 + ",min=" + config.softnessRadiusWorld.ToString("0.###") + "m"
                 + ",max=" + config.pcssMaxPenumbraRadiusWorld.ToString("0.###") + "m"
-                + ",soft=" + config.pcssSoftness.ToString("0.##")
+                + ",angle=" + config.pcssSoftness.ToString("0.##") + "deg"
                 + "," + config.pcssQuality
                 + ",vol=" + config.pcssVolumeOverrides;
             return config;
