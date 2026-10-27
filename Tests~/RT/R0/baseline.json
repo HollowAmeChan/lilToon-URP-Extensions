@@ -1,0 +1,3216 @@
+{
+  "stage": "R0",
+  "sourceCommit": "e7e0af7591ac0e2454786828ff20dc61816356af",
+  "scope": "Current RT production and validation source; no GPU result is inferred from these hashes.",
+  "files": [
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryEnvironmentStageValidation.cs",
+      "bytes": 12521,
+      "sha256": "19f4a92d4120ede3cb0ab41f4e04fb8e5dc75e4d42c8132ceb81ffe83cfc86e2"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryEnvironmentStageValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "6145f4bf29cee2b635a52971fc362bb41c65ad91e3637dac1b1317d965010905"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryEnvironmentValidation.cs",
+      "bytes": 14094,
+      "sha256": "6ea1cc2aae0ec8845fe49927c8bff075504959db123ec2644de21460c1403cbd"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryEnvironmentValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "5bc5d1b24da3a9d714d487574be72f14abcfd37b52700311535229ccbf90fda6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliarySpatialValidation.cs",
+      "bytes": 5354,
+      "sha256": "ded5dd7c380e7c94b2503eb45deae45b25bc3f2717ce503160739950aace3562"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliarySpatialValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "7c377f3b7d8925e8bf2f21767bf35a6f118f3f13c87c977044e2bae05f687896"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryVisibilitySwitchValidation.cs",
+      "bytes": 10537,
+      "sha256": "d2c685fab85c70be37ce4ff7eedd13b3d50ba20d9192c0f67361fa0ab6f959a6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIAuxiliaryVisibilitySwitchValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "aa0331d2f31d091f97e6fb8f9aaa77573d25f7c172bb76a1a5e27e14d3d6686b"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICastleFrameValidation.cs",
+      "bytes": 11810,
+      "sha256": "cd6a59eac2ce95819ec31bf86fa39b288c8162c4ddccfd745e72a8ca02430382"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICastleFrameValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "c6f85b3448d25445fc89eeff6790e38811509c5809a6ebc3b83b279f23a16992"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIClampingReport.cs",
+      "bytes": 1872,
+      "sha256": "af8b085aa38c4bfdde43292970a8d4c7c177f68ce232e53b005f2bf09e8e4d2a"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIClampingReport.cs.meta",
+      "bytes": 60,
+      "sha256": "514df09ee57ac8d51bb9d16d41c65dde51f84b1fca0034a538ae88ec4fee3a08"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompactAuxiliaryValidation.cs",
+      "bytes": 5259,
+      "sha256": "a40b9c9d124ab67e4522c8f0e3938bcdb871f6f6a361c89274d049ddea5e8c1f"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompactAuxiliaryValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "d8f328688545e0d3391a685c414089860e6a9b0cc4f290ca2929b0861342e159"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIComponentNoiseValidation.cs",
+      "bytes": 7132,
+      "sha256": "e5ddcc29be8c1617c0a89c26417d9e4356a314ca9dd32c35136b462abc91f602"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIComponentNoiseValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "b549f9c9334bb09dd44a9205606604015af3534b733e0eac0f610d494ac04d38"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompositeBlendValidation.cs",
+      "bytes": 10420,
+      "sha256": "7ce78811f3beb8616c6fc0c8ba152a20ec3294fb4a0e50c55a351ba752e65458"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompositeBlendValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "83fd72d625d8029824b5e84226315d1fa6f0e7a26d5eaed72616fd83313f5899"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompositeValidation.cs",
+      "bytes": 14134,
+      "sha256": "e019d66f7b10e947930cdbe6368ce3f5804d26b8e999e7f540f602cad0d02870"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICompositeValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "fe7084c33473280d180c332af57a886477e4ec8d7d48d80437272e882bfb5951"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIConvergenceStatistics.cs",
+      "bytes": 2059,
+      "sha256": "ab383ec28cd374bad5856617b5ca27e64eb8b62f0b4b19a845eb7ee4df070214"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIConvergenceStatistics.cs.meta",
+      "bytes": 62,
+      "sha256": "57998843108043929cf3a7075514ee57d699b370068019b96e5648ad27804440"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIConvergenceValidation.cs",
+      "bytes": 14585,
+      "sha256": "46b55a406b633fef7e6edf7b39c1286bc2194454ad237904ebf4ada5b1edd3c6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIConvergenceValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "aa35eba473c1ae8a776b3d7efa0ad28935b3a11724d72f8973756f1d290b45b0"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICurvedValidation.cs",
+      "bytes": 18193,
+      "sha256": "408a92a34a1fa6d2e77d8605610c675244bf98c90e06891385fb547daafad501"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICurvedValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "c7cf3f69fa69d4532bc477d2e4fd2bb17c854dfaf784e2e7fd37000ba379a345"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutCubeValidation.cs",
+      "bytes": 5254,
+      "sha256": "cebc23103b0a4280253c3ff92edbcc1dff2844bab6d6bcfffc5836f2740e573a"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutCubeValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "1eaae70b610bf83cc3d90c9295e331bb3c9fa7f182cc9c4cd16dae9fe75dec27"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutGpuValidation.cs",
+      "bytes": 2253,
+      "sha256": "b2f096c8ff112cf9cc04d1afeec8b25fc48ca923fa075bf948ea4045052d43a6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutGpuValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "1510ad297d705f5c78ed8601c4c33d6cb772010ea08d9c725ba9ec7cf363803b"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutMultiQualityValidation.cs",
+      "bytes": 19152,
+      "sha256": "0776683f25b395211be24cf54b6c4b3e5c12cfcaae5c0bce9e979825b0c9ecd5"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutMultiQualityValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "c4d115a3c2e4c783b49b7229569b26047baf33932aaf239caad7a7b024d61126"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutQualityValidation.cs",
+      "bytes": 6612,
+      "sha256": "38d645831486c4bad95a127cbc37753a120b66218453af09b3527859e416dc1a"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutQualityValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "405bcb1a6a4c7bcbd3dc891f7eed43d39a9bd72c77a45db4c6001990174c9fda"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionMotionValidation.cs",
+      "bytes": 9877,
+      "sha256": "f82b93632825d6d136b23b11ca14ce86fa9abb79d0257a36c176ee2f893badc0"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionMotionValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "42dabbee178639bf5c85dda50038520e1cdc8ffe1378934634d907ae68fcea46"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionSpecularStageValidation.cs",
+      "bytes": 13022,
+      "sha256": "822dd1251ad251d334ec3a8b83d7b976796a7821c98d83dd3f79a28cdf9d5aa8"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionSpecularStageValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "fa8e3e96d952739bda652edf46cfa212d2fe45a2b53bbd64adb3b7c1405d7786"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionValidation.cs",
+      "bytes": 5197,
+      "sha256": "af243eace2ccb22f26399b6c8a2a4c2e541345a946da3340b462077e002c9f04"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutResolutionValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "d0c9830982a9e39c92df2068792561d3cf818d2eb0baffe4198056eb26cb5c45"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutShadowStageValidation.cs",
+      "bytes": 5522,
+      "sha256": "4ae9b665c432868208c82057aa10d87063a8b90ca4187318d3f721275249b020"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutShadowStageValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "ab5b05f080fecd3ab2606f3f4305ecd1d791877f0122f1622db6c9fd314a5e27"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutValidation.cs",
+      "bytes": 14599,
+      "sha256": "33ae73bf92df9381158f3b771620f3616de80e7c8432a5fe3cca7e75b7e2932c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDICutoutValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "a3903e139cb85da8881033f9e927d2fbfb1d2e1808f6d754585e16c2aaf057dd"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDemodulatedProposalValidation.cs",
+      "bytes": 6606,
+      "sha256": "1b711d369b7bf589b6216434ca547e64a4dab2f031aba5528c8ddc9f6d2f6b46"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDemodulatedProposalValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "26969404326d2584ac43e5ec89d5e15aa58117c84a48140a8bea83ce4940ff0a"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDiffuseColourStageValidation.cs",
+      "bytes": 4049,
+      "sha256": "357702b6d02e5fe6e2a18c106f45e81aa2230686ee615ea5745055b3b2faa729"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDiffuseColourStageValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "47842984cf1cb8bb1fb896e7a146c68b7510e8e1f19c907f47003fcfc060da73"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDiffuseSegmentValidation.cs",
+      "bytes": 4702,
+      "sha256": "658b70415eb35f589090af37a744cae8932fe33ddc6b43a3dea168a7a597627a"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDiffuseSegmentValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "84303c65ee28ad73b7aeacd1106071c126d227dc56e115e8eca63bca673d01d2"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDynamicAuxiliaryCDFValidation.cs",
+      "bytes": 24177,
+      "sha256": "37be87adabc8a999e9cdd3f3c3014910b54e80ad9dea67406ecec72b4cb829e8"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIDynamicAuxiliaryCDFValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "43c38e919237a530e65cf98ecbeaa416a48e6cc30c9682adfbf7236588323384"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentDirectionValidation.cs",
+      "bytes": 4969,
+      "sha256": "29dfeda610a647850267d4546c014b41ee44870fd6033fd133a9f16645261e89"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentDirectionValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "164abde798cb5055eecd8aca57ce678f948c772ded308466b9d29ffd0d626218"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentIntensityValidation.cs",
+      "bytes": 7745,
+      "sha256": "65fd024ebf3ac6977e623fb571e8ad7d909d235d621971a90f1a29f307a3b174"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentIntensityValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "01b90634bfd769989f5c5796017e1685340c408ad8f366d9b890b94dfb24a432"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentValidation.cs",
+      "bytes": 15685,
+      "sha256": "fc5d57ef8213eb7cccabf9284a244a93e38f56dcf291f8b53fbe80abc2bc2a05"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIEnvironmentValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "03b9837e24829ef0233be37885022c9571965b06f66a9c8a7f3d7e8b559264f3"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIF0BoundaryValidation.cs",
+      "bytes": 6904,
+      "sha256": "d11794c4ad224c52ef8924ba6b3bf7ed509265b9b89596bf11ae17e674da0e04"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIF0BoundaryValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "411e3e02f8a4b3bf7dc632c27571dcb90be2c1d4656b0da6b735f7de52228b4c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIGuideDistanceValidation.cs",
+      "bytes": 5515,
+      "sha256": "99cc1ea94d5f4c10ef4910ee73d491feceb879479a011185cbfb6f717bad8c19"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIGuideDistanceValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "a1038411b0842a7bbb25184b3e5764e27d43427d5095693fbe79f3a2e0ce552d"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDILateSpecularExchangeValidation.cs",
+      "bytes": 15541,
+      "sha256": "22b7d8642d2c364a4981235c8b170e44c9bf771a47651fa154d8ae25df1ef316"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDILateSpecularExchangeValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "990a82f7af4339d1fe0d8fb74d0a8ccde85b79b900991ff4cf8dd988b85e6905"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMaterialExclusionValidation.cs",
+      "bytes": 6078,
+      "sha256": "fa8a8ef787a26b3d04cce22258140a97c1bb9be333fdf96a7b7a979a6d867451"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMaterialExclusionValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "5eea6fcd205e99c861d884fde7609655519a676578b4d7a79b51af24d94ecaef"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMotionProtocolValidation.cs",
+      "bytes": 5333,
+      "sha256": "971c05a619ee10c0b7c4de2648dbb918bc8028ef74a756721f35b66dd983c101"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMotionProtocolValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "070acbe9df05399c5e8fa71a066a920df91d18542ea1782eba518e2fa1a1e89b"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMultiCameraMeanValidation.cs",
+      "bytes": 3148,
+      "sha256": "a6f76c876ce6f207a4693e9305de167ea5d649329b4e6fc78f0fd1c28e68daf3"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMultiCameraMeanValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "e00e9477835749ce25d7ad68acf6012f6c2d5d342352c064491b438a2648eaa1"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMultiCameraValidation.cs",
+      "bytes": 20275,
+      "sha256": "9f2504199c9175c18777f8dc7f9e46ac5251ec28bd7afa73767cbad49c65cea7"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIMultiCameraValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "991c3bf6919b7dc23ee423cc908f30b52d8805bdcea9014e1a452d93783563f7"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDINrdRecordingValidation.cs",
+      "bytes": 5722,
+      "sha256": "6f6192b3f7c35f61af4d31459be9c1cd6e0de49b9d10642e870a4cebb1fc74aa"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDINrdRecordingValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "dd6b7c2c6798312a299f98969c96606c0efc702c1d2520a9aa1c6fcf2faffbe9"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDINrdValidation.cs",
+      "bytes": 3210,
+      "sha256": "59189808ae13fd0526e84583b3b998e5f98ad545ae44391f6a636fdba6f0338c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDINrdValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "bcc86f8d6db576dc7a402d56515eec366e0a50697b08fe6ab8ac50b1b5fe24d4"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIOpaqueAuxiliaryValidation.cs",
+      "bytes": 3059,
+      "sha256": "23c483233b68990ac9e9a808cdd9a3633704228f34e31c9d32c60783809749f2"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIOpaqueAuxiliaryValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "b47c3c54f6674b06c44e806a6254fa2687e3ca9a682f23fc2f9824d5e4af8ba2"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIOpaqueDirectAuxiliaryValidation.cs",
+      "bytes": 4158,
+      "sha256": "aba111f45c80bb6772eb4ab033b4ca4561c7c18351bbdb719964424639f1d099"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIOpaqueDirectAuxiliaryValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "9d97da7292858261debb6bcd1c00575ae8d03c53f800dc12d8a28162126fee74"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedFinalSampleValidation.cs",
+      "bytes": 11670,
+      "sha256": "51aa2daeaee8759bd2ffb9a538fe88e06ea2572842a8a674bc1e791b19bf241d"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedFinalSampleValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "5f93c40b403ec5228d93608aadcf59888bc045ce9bd63fb002528e3e4529963a"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedFinalSequenceValidation.cs",
+      "bytes": 4303,
+      "sha256": "a2b65c38a46ea053f29514d834f7f7c6973be567eccb716db6476a48468ebb3c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedFinalSequenceValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "5c665fa6e431acb04d9fb2f7d12a5ce427c08e477d33da0941acc12462349c16"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedLightDomainValidation.cs",
+      "bytes": 16279,
+      "sha256": "01ac3f2228fb3c8da66edde10fc8de913d4159d449cb312bd7c5aed14d2c9950"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedLightDomainValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "879d068a6ea1f2e896302005f3fc9c07fb3d94a282124134ce3728575976f93f"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedPowerCDFValidation.cs",
+      "bytes": 5916,
+      "sha256": "5430b37f87d76faef03fb39b2aa8c81ef20ba638d1f48c4744b37c93c8e3682e"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPairedPowerCDFValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "c0849ab39ac144d5547bf6a0531748a65e6b1ba3438fa4ce4262fcf5ed06279a"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPlayerValidation.cs",
+      "bytes": 11729,
+      "sha256": "05f2eba016700ccb2c386dde0bacead1b87a1243ed2de1d331b03fcbf4ef6d48"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPlayerValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "22b4f0eff09ed8b9864671b9c19f85a4d4a325ef8c6a3b23a6fa8072df5350b3"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPresampleCoherenceValidation.cs",
+      "bytes": 4213,
+      "sha256": "bf301799c6125f4f7a47f76cedac4809c287083f16c84556d52c199baa47f1bf"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPresampleCoherenceValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "4bec7026f9c010ce74e12477d9687a77ba6db0196bec4e138bf20c05eb440e1c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPrimaryMotionValidation.cs",
+      "bytes": 6107,
+      "sha256": "2e7f582117f66a93526655e2d4ffba5b64a72f3bd6261af27a30ec9da0465f6e"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPrimaryMotionValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "d95b65bf628626abae032ef041a1275d80ca535a633d16497a8c1a134d471098"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPrimaryStageValidation.cs",
+      "bytes": 4159,
+      "sha256": "dc23cdf46365a49b76fc5e5190d98b51fd2c0ed0350b94c1d5384435b5db3642"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIPrimaryStageValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "ad710ba8c8fb7f047156715c33960fc744a974373c98e3fd9d58e6a48f3aa79b"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIRendererFeatureEditor.cs",
+      "bytes": 3688,
+      "sha256": "5153befd234f927844ddf6bcebd5990ea14a96ec8490a6779562f9dd449872d0"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIRendererFeatureEditor.cs.meta",
+      "bytes": 59,
+      "sha256": "6551644fdd125c971b2e933eafbb7c67e39da74cf54ca9a5da95be9f0bba61ae"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIResolutionSpecularConfidenceValidation.cs",
+      "bytes": 2537,
+      "sha256": "5c5e7f35ec6caeb89efce41a3f26d1c8b7f105f50c7d3cbc2d24966a44767166"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIResolutionSpecularConfidenceValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "6660da497c788e83743ade7d94d1e2e03a6a7ee85db35ecc50d65bf93dc3c7c0"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIResourceValidation.cs",
+      "bytes": 6371,
+      "sha256": "dff47ac356327b0b08df20fe00bbaa4e528cd4beb3b590ff2550fcdcec00d362"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIResourceValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "8109c3701ab723e0b796793921afb76487193e357a90694faff35f6e2beb0f06"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIReuseNoiseStageValidation.cs",
+      "bytes": 8833,
+      "sha256": "9888a8ca38244f02d8a7a3328d502c28244673231a13a3f84aa8a80af7bcedd2"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIReuseNoiseStageValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "8af956bd08fa462c1d17ee75bb2937a4b0a3d5efaaedfcb4d8e292afbea38a5c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIReuseNoiseValidation.cs",
+      "bytes": 7112,
+      "sha256": "d362f9d86564924124080dda03f156eea732089a299b735651961d706abe8e76"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIReuseNoiseValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "7b6d3fa17912bde76d47856f71691a958ca74969292e06ac852d7413fcf703e6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIRuntimeMultiValidation.cs",
+      "bytes": 8195,
+      "sha256": "b4c081d17aacb9691ef41798b99d8b617fd0a40b9927b12a23cf2cf4de7f7b45"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIRuntimeMultiValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "80f23288d6bc5c82c20fe1d5b5111a42b0234626e1e92110b7793b71a810755c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneValidation.cs",
+      "bytes": 7998,
+      "sha256": "1a98713d76f429d85cb3e9dfbe1b6c0e7e6ca94d5c3d88785c5d4a96956c82fd"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "605ed00b05f00f2134fe1adf1b43befd742a31ce6c63bdc69e504099fdfd9156"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneViewConvergenceValidation.cs",
+      "bytes": 6393,
+      "sha256": "6f5de6d9fa780ed83704b6739f4e8cc523871302e574a86231ad98947b67cc22"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneViewConvergenceValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "61819e41336539d1e3586e08a21e1333c0b96e98899652afa5f26f25e7ec4d44"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneViewRepaint.cs",
+      "bytes": 2310,
+      "sha256": "d5566195746be25372954fb90ae2fd857167b60779c289b8fb0b295246b6fd82"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISceneViewRepaint.cs.meta",
+      "bytes": 62,
+      "sha256": "13eb8f217c9ba33b233a5c4c1435ba0b37cea9ba57a1703b45238e86dbbef5ea"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISecondAuxiliaryValidation.cs",
+      "bytes": 5082,
+      "sha256": "185124e3ed07e69a52662ae95fbf1b20186d139480dd09cf4a6c6d15dd9b2d42"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISecondAuxiliaryValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "33caa23047be01bdd308c605d0161b9946c0e04b5a5316c1b57eb2b7622578fb"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISettingsSnapshotValidation.cs",
+      "bytes": 3204,
+      "sha256": "b4af16417d18fc0e806ac5179d9672a407322556d2fb7e61f8ea826476b49355"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISettingsSnapshotValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "dae971c8ebad643626e15c6d2f6776b1f117b42207de363791559288f4d6173b"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISkinnedValidation.cs",
+      "bytes": 1147,
+      "sha256": "72c784afc26b29eccb3fe6e3834250b518f8d0535efac7e3bf06430d6dd98080"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISkinnedValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "0eaea084f77e68dc9c830fb0009b600fdbd710e537d82592654183c678157e46"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularDistanceControl.cs",
+      "bytes": 4328,
+      "sha256": "17419eb337a65855e28ef84b97468a4651ae187c1f238920729f977e68f112f9"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularDistanceControl.cs.meta",
+      "bytes": 62,
+      "sha256": "691cf37a9d079405abbe2cdc56147ddbef05a540f229ea5983b49a0bef6982ad"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularProposalValidation.cs",
+      "bytes": 4145,
+      "sha256": "ce593ee11db6528a8d4248ab8962b06fb5da698986118df9330139b6db76d739"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularProposalValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "f5c36a08fafa32dd649629c94fd8774ec1413760f62a01f140a1442e5ba93f56"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularReferenceValidation.cs",
+      "bytes": 6264,
+      "sha256": "d5d1d8e4f175726195a0d018c02272d110f70326e4d8b1fcec93f66f9dab18a0"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularReferenceValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "7b108646af97c21e5d3dbb04d1f2c8926d103bef056b6963beb85ffa8c31432f"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularWeightReport.cs",
+      "bytes": 2325,
+      "sha256": "fd70a5ff1f97bd1568d6491053d285d15236e07b3d206cae4185ac9cae854b8c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISpecularWeightReport.cs.meta",
+      "bytes": 60,
+      "sha256": "7ae393ee7f16fbf87a4be24a8c9093e0f45f84e8efebcd5e8a220e6d17e143cc"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIStableSpecularGuideValidation.cs",
+      "bytes": 8241,
+      "sha256": "36fb39a87498b225eb9d9845f48ba6586e5b9c4b709e07c109c60f4e13b38341"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIStableSpecularGuideValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "553872c9653de30d09ce50ced99b3296ea360274f00d365b4312293792b0d53a"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIStratifiedAuxiliaryValidation.cs",
+      "bytes": 5975,
+      "sha256": "d7a2e87c1a33fd822f73f05e8093e2d87e6f7f5372750b1aee08833e946e5949"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIStratifiedAuxiliaryValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "2885a624f0093e127cd47a62422bad1c53352a37a8b45d8b0dc7aca9654ee6ff"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISurfaceAuxiliaryValidation.cs",
+      "bytes": 6985,
+      "sha256": "c92b2bc881e35dfed6e8946456b8585acec29584849824797b22bf4dcce8d9d1"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDISurfaceAuxiliaryValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "4d2ce3ef7e32c3e7a66364511ac82877a712beb6508db768a5cbb1dfd7915a1d"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDITemperedTargetValidation.cs",
+      "bytes": 4212,
+      "sha256": "72ea14b64c4c594efc0679a90441f88d24678dac34bccddf478fce78887c5ba8"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDITemperedTargetValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "a38dd947f4a89eeb25745134cc75278a99fc1ae9f2137524888db2550213d954"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDITemporalJitterValidation.cs",
+      "bytes": 8869,
+      "sha256": "02354714d87ab59dac1f322c6767828c355bd086f9ddfb992b5b0ab4295f1349"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDITemporalJitterValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "f00c4d716f700d9abad85bb69c22d8d25a619e7e3024f67f7a01ff3274b81ebb"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIValidation.cs",
+      "bytes": 124898,
+      "sha256": "1f571b29ee5d8c24251c9d1c709d551b66023d7f385f55b1c6d80bb00064e7bf"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "bc8bcc9d62989e1b16666cf59f4315971d7ee5c9af4534dbc4aee99735d3ee53"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVisibilityConfidenceValidation.cs",
+      "bytes": 4758,
+      "sha256": "4736d43a6bd60257b1f42820f7695f66d2aa5ae5333721b1804d70e4866e736d"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVisibilityConfidenceValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "cdc1c45b437a82e0551eb302676964e25036e93a88bcbf7c8a2eae17c3a13b0c"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVndfProposalValidation.cs",
+      "bytes": 3838,
+      "sha256": "c3c24512f28315c5d5215cffccd03c1ccb53a2378458f6e51520eadde72efdd6"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVndfProposalValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "ee0dafb62ca8a2c3dc0ed88e37d91b50b70c460c75c0517e6598fcb99deb84a3"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVolumeControlsValidation.cs",
+      "bytes": 17007,
+      "sha256": "f8d7926bf871b0fb66d7d661d1fda64c5c3b2ebefbc4ce913e3e857f14b2ccec"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVolumeControlsValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "9290a943e457ed12ee6dc828fec3c00a8a2c93d6ee2e88c21b2fb52825988672"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVolumeEditor.cs",
+      "bytes": 5408,
+      "sha256": "05f5f17f69d89aaabe70b094c029071a90654034418c104b7d2768b7bec55392"
+    },
+    {
+      "path": "Editor/RTDI/HoRTDIVolumeEditor.cs.meta",
+      "bytes": 59,
+      "sha256": "69226d9c5dd0f06c2811b212a106560c5ab74814fa3845c1cc02ac833c9a5ecb"
+    },
+    {
+      "path": "Editor/RTGI/.gitattributes",
+      "bytes": 132,
+      "sha256": "bc10ef616e36c6ad0a4f3cbf46cef4122abd8d40f6ad209f43fa5209021e2361"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIAtrousTrace.cs",
+      "bytes": 8663,
+      "sha256": "63681a4893bc940d244ba1d7259395acc700a70dff3856b538b5af34c017b731"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIAtrousTrace.cs.meta",
+      "bytes": 62,
+      "sha256": "485619550692c5aed8b72fa3e99065fbf60394aa0bf2bd46ba99e27278683c06"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICastleMeshLayoutValidation.cs",
+      "bytes": 6007,
+      "sha256": "cbd620612cfe38acb0a425a734820663f5a1acea24817dd91934d2ccdb755807"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICastleMeshLayoutValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "5d83c2d7cbd756a6379822ddfd41d8058ddece4ce8423d21a1caf6b6ee1a377f"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICastleValidation.cs",
+      "bytes": 27423,
+      "sha256": "3e751e7f233d711203c05d56e351b292c63cef6cd676c0225465fcf34dc0563d"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICastleValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "06333e17521731b76d8faa2799b72b5b4e010ffaf68a5a82f42313077f6a0116"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICompositeValidation.cs",
+      "bytes": 20307,
+      "sha256": "7dc8f257cb2903ffe3af12cc24d8b1bc27954cdd8a3b31bd1ec381db2707fd24"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICompositeValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "111e172b4d497d7529217ebceacbd53b819f1e8e4a415369db8ad39baaff2651"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIConfidenceTrial.cs",
+      "bytes": 8600,
+      "sha256": "f36661252e1a3d31d210a53befbe1e3b1d9f97344d001a15ae51f819c3b8c978"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIConfidenceTrial.cs.meta",
+      "bytes": 62,
+      "sha256": "ccadd144985635d668f56beb9243128ac47794753a12e4e1fd856f967316a78a"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICutoutHitValidation.cs",
+      "bytes": 7143,
+      "sha256": "0130f302e511dd25180f013ea78b6cb4425a5d1ae174d86e73655dc22b9f0b7f"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICutoutHitValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "50891351dbcb729510b3335eaf252ce8e7a4690449857b2e841cc27676c2d472"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICutoutLightingValidation.cs",
+      "bytes": 13328,
+      "sha256": "2373135905410064e7ee4f6e2bc348f2807c98c9598e5352cf1efed370fc1cfb"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICutoutLightingValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "738d4997d356662a8585992f196f9cd6942d4c953d50943c3778b0308ef63221"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIDenseReferenceAudit.cs",
+      "bytes": 14666,
+      "sha256": "480129ec0887ac57c70e5156d454ffcc1840b3e2ca820fc367fad7f0f76b6bf7"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIDenseReferenceAudit.cs.meta",
+      "bytes": 59,
+      "sha256": "061d284c8ccb7b282db9da2e9badc3872700a73ce92fca37065b5b8f2dd8d00f"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIDenseReferenceFeature.cs",
+      "bytes": 12780,
+      "sha256": "3d2a13adb2802d4109f96cdb5b9db741a0e0344b5849fc517388ab0cbbfc4d1f"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIDenseReferenceFeature.cs.meta",
+      "bytes": 59,
+      "sha256": "4b9ca8df29497a439712614df74915fa2e5db5ea359a5c55f9a18a0f33875199"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIEndpointReplayValidation.cs",
+      "bytes": 5506,
+      "sha256": "365f3f927b88503f539b0c039481a1b04ff6b4ee6a07a5f79e6d042546c07e6d"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIEndpointReplayValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "a6a5fdef13419f61397fb816cc17874e06ad57741498b45d883e8767cf991e5b"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIEnvironmentValidation.cs",
+      "bytes": 15072,
+      "sha256": "da6856ae4d0c1fbd30abac71fbbac62eb5a894b3bb79ec57930db030cd33a794"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIEnvironmentValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "771da5003ab0611ce7eb8bbd4288a4d62b3b3a5e3856d7124e87a9346af5b177"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGpuClock.cs",
+      "bytes": 6391,
+      "sha256": "254ca8a289b43e5b4c6bc59cfa98c05d019adeb58a0660823bf28c32a0d47a06"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGpuClock.cs.meta",
+      "bytes": 62,
+      "sha256": "5c75865fd9dd13a24d7a0918cc6d516d8ba0f178ec51a3fd7834751a023d2828"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGpuTimestampValidation.cs",
+      "bytes": 7881,
+      "sha256": "6a1009d1b68e8a2c15f1e3b7eaa380a8bb0bfb7fcb9e5a56926d988e14f78c18"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGpuTimestampValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "3287b2d5f0c3869ac059cd382d979ec5cf7a7c5042a18c1d1178fd10d960a729"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGridValidation.cs",
+      "bytes": 21109,
+      "sha256": "5a00f9ace5a14405596cf5a5e58d78052c021ed12fdad992bca3a89a410adc82"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGridValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "17b06bd51ddb0dc3c9ade8cea840c98cb5d51464a561b052fc59eabfa58620cd"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIHistoryFeedbackAudit.cs",
+      "bytes": 18413,
+      "sha256": "a4fe23c37687d215bbdb6893561cc4ae9f12a470c2f6b2a12bdbc8212a89407c"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIHistoryFeedbackAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "168520577b3214ca9a973ce80419dfd8eaef304501aa3f8102afdb06bda4d964"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIInputStateAudit.cs",
+      "bytes": 5652,
+      "sha256": "fe1ff76a9c461b5dc209766e426b6255c899011e1277e1e361855c7c4cd35f4e"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIInputStateAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "cd3c2a3d53fd077b35a4abf21935e6fcd48064f99879ad3fa267fef6ad3e6697"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGILineageBranchesValidation.cs",
+      "bytes": 3400,
+      "sha256": "3afacfa31b1e42d2f924afa6bc2a617d3c32c9665277830ba807dfd0d837ac1e"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGILineageBranchesValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "4ab09883752075ccf5f0e5af6ad137c893223e3d9e9f5ed2fdb2e7f607db3ea7"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGILocalStageAudit.cs",
+      "bytes": 23163,
+      "sha256": "5374b609b567bffa4c69ce152a50994e740a9a4758c40d38a674b1b446016d4e"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGILocalStageAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "0754f2c94c1f33e446e452f5822e5ff91ca737400ccff7c584b465fac92ba452"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMatchedReferenceValidation.cs",
+      "bytes": 12644,
+      "sha256": "e8a72b46be740efa22f935068803c91d056ecb69d6481af10c053c771e5248f2"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMatchedReferenceValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "214610702254507e5edf51c36fd0a139dc243fa8a51f9321174a4ca91ab88731"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMaterialExclusionValidation.cs",
+      "bytes": 6807,
+      "sha256": "4eb6750b247ecfd97ded92cf5eec7100dce53058b0c2a14e8d61f59de0a0664a"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMaterialExclusionValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "d8bfe4ae368613b0d2380a5084a1d31d78c2dc1a551ea2228804607efd88649e"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMomentAudit.cs",
+      "bytes": 6061,
+      "sha256": "148b9d5a9bc84c72a250e213b19647c58abd04fa793bd0a3f5b8652e33510461"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMomentAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "2096fa8865c2281559d63e581d1c51e941aa0f36084a84121de28be5bb1d898d"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGINrdValidation.cs",
+      "bytes": 16806,
+      "sha256": "62c582ca9f6e63888bc6ef3f7d450192de4526b989f3f1f7c510f4837b04befa"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGINrdValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "77e78226ef82e4448ba4bf04f91816b3db6b37fe0a44304262e16c846d0c01e1"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPairedStageAudit.cs",
+      "bytes": 16675,
+      "sha256": "b1dd0fcd4bfe2703c3a6fb3107d6491f6843c9f5149daed8c3e5c80474cea33c"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPairedStageAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "812f7c8a24d5995f31a05a2acc32e60e526aa7422310f37fda2f82da26ba19db"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPlayerValidation.cs",
+      "bytes": 18837,
+      "sha256": "6c644c93f90cf244c522c18ac166e8f4f43b76a45942b8b5cb59cc2c49c6f298"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPlayerValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "aafefab4b93c308d4e678fc50d14e9f7150385a318d1b82cb2a9f0260315b785"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPoolPrecisionAudit.cs",
+      "bytes": 8919,
+      "sha256": "8cced3bb8f5671ffccd7d919c02a5c6cb5326363ab91d678279b89d88685e5af"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPoolPrecisionAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "1ab8a285974ffcacb15e9765452e9f009c22c07956db6fa3ed0e7525719c568a"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPrecisionRangeValidation.cs",
+      "bytes": 8439,
+      "sha256": "2fd906f141391a3b6c9af07c68a8fd39bc64483b3ef00af4c2eed550e1d76e64"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIPrecisionRangeValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "4b04650b08e74ecb43e56bf47ede68aaec0771ef5bf52c7210fb01f1ae40c797"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIProductionHistoryAudit.cs",
+      "bytes": 4920,
+      "sha256": "59a8363c27f6be03bcc15df17dd85807c695c02fe781f7ec6ffca9f6b8cd6a37"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIProductionHistoryAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "2c52812965a236727f95caf7d15818796f3c11bcd86eb4a053a2da658760252d"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIRendererFeatureEditor.cs",
+      "bytes": 4305,
+      "sha256": "1e07e2298d531a67c5f2d9b9c7628d8f761a3b31e924cec8781eba7c2114771b"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIRendererFeatureEditor.cs.meta",
+      "bytes": 59,
+      "sha256": "0412ecc317015c84cfe35363644e732c320bf5e665a540569b63290dc11da30b"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIReplayContractAudit.cs",
+      "bytes": 6494,
+      "sha256": "8895b7e162d97a789bec9ac9dec0079ba4bae3158d4c10cd4e756af6f9c828af"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIReplayContractAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "438a3cc9df032ef8b427e286a1b89716e9741192f42ba800af2d075d99fcf686"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIResourceAudit.cs",
+      "bytes": 6503,
+      "sha256": "cd83801fde78526df067694da648570ab8f66db98b03e67ae9c4ad129b3fe9a3"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIResourceAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "382c2b4fb510edd3f85b822422944973747357403aa02062bb80017724402948"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISecondaryReplayValidation.cs",
+      "bytes": 925,
+      "sha256": "58f5d25ff43fb9392cebbaeaf39c4943060b397848230a60c554088593cacc68"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISecondaryReplayValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "e534f49c155ea820e521ba170880b828aad8b0254d8f3f746c8e6a4c4df1b54b"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISecondaryValidation.cs",
+      "bytes": 11201,
+      "sha256": "a787fce27f5dd2f4a2f852ba1c3e739a458dba700ba38cf1d15e4e0e5c317562"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISecondaryValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "2a771508fe4d3e78d2a5a2b15ae7341f86c1ab2ef7fd8973afe817d8f6db8bc1"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISeedAudit.cs",
+      "bytes": 22241,
+      "sha256": "c4958ae086f12eb16891f086b2d057ba9f97e7fb1b9ff57b1b5fc6f2e96909e0"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISeedAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "902aeedbc1a5a25db42f3f12cad736b547d10a9a160c846c0c7a10ae0dbd4898"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISelectionLineageAudit.cs",
+      "bytes": 15226,
+      "sha256": "56fee2284fb8b7bd23fd548c22bc57dff3be78e4da3d12c1ee7d6223977fe297"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISelectionLineageAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "282d15ad493717d3f9152a5cfd3093d690fdd297177d1ab058c919e632d71db7"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISelectionLineageValidation.cs",
+      "bytes": 2022,
+      "sha256": "67364d8c4ff0cfc4b430edde5886fec34e16d8ab68e167c95695836f89b85caf"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISelectionLineageValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "529f7020b1bb8f7d49f826de55c48d0dc5a946dbbf5b3cc8a0e099420df9f23b"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISharedInputAudit.cs",
+      "bytes": 12339,
+      "sha256": "8329bd132cde9c9f35c09f86fd6846a07b20ddd87d94bc3d60b0b98ba1eadf8d"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISharedInputAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "79355e3b702d712c26b286f52301135ee28c57f8799a01ca3a5a0073c31027d1"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISkinnedHitValidation.cs",
+      "bytes": 8619,
+      "sha256": "204a5379a07567b1c64e2cdbb23e465cfe78c7519914fefc29d9522cb2382a1e"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISkinnedHitValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "ba174031f043a989c9acb14cb4d0990996ef2ac81c7f423bfdbc70f5a97d4d89"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISkinnedLightingValidation.cs",
+      "bytes": 6801,
+      "sha256": "d0d9a120b42b289e5ba87c83bbd365d27d0fbc497a6730a7342a44419e5c2d04"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISkinnedLightingValidation.cs.meta",
+      "bytes": 62,
+      "sha256": "c691a8eb2ad59f754c1043b1eb709a39ff2fba28e68af9b2f3eb8efe08ad90f4"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISpatialAudit.cs",
+      "bytes": 8144,
+      "sha256": "70cbc1e07974f43ca57060d77050f697c05412110d06745ff27875754120498d"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGISpatialAudit.cs.meta",
+      "bytes": 62,
+      "sha256": "dd70197f9b91beb169befb7e959116bd0230f1fccc3934198a0083add88c9e9a"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIValidation.cs",
+      "bytes": 20101,
+      "sha256": "ee48b5409c68d083b01776fb6cc9440d7fb2683943c214503c81e304bddf21ce"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "2460831eef3b1b8300c276c2ff29b1536e98d77701423dfdd850c73ec7d43636"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIVolumeEditor.cs",
+      "bytes": 2612,
+      "sha256": "03b0216f9f1fec1c1d5b88893761c22a3de044211c08f412fc79554f010eaa25"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIVolumeEditor.cs.meta",
+      "bytes": 59,
+      "sha256": "2146d74cbdae6f3a60d9530f4e763e1239db87dd9979c1a324174dd74b768225"
+    },
+    {
+      "path": "Editor/RTGI/Shaders.meta",
+      "bytes": 169,
+      "sha256": "abb58e7ed843f4f840de090b7d999bf40e9b5c7ae54e8b22eb3e8bf16fa1db3e"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGICutoutReadback.compute",
+      "bytes": 316,
+      "sha256": "61f6073103cecaa732dedc963cf85f8e444e884ca1d14aec536917e93b853c5f"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGICutoutReadback.compute.meta",
+      "bytes": 62,
+      "sha256": "d1ed06a3af8905d74958ee92b77f3e4d093266a1814ec483e7e2720422e1cd68"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIDensePrimary.hlsl",
+      "bytes": 578,
+      "sha256": "0dff51f3184f2cc411d0a10f0a459a4c5812fb6af9b35b265f7d8f862d56705a"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIDensePrimary.hlsl.meta",
+      "bytes": 158,
+      "sha256": "a465a625c75f539c723dd738c3ebe9c36a74a1dd119e7e63696e54b1605d0618"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIDenseReference.compute",
+      "bytes": 2039,
+      "sha256": "fd4e215999f8e4292e374b66aab65c6e7dcf0907f677a3d279b75bee5151be8f"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIDenseReference.compute.meta",
+      "bytes": 158,
+      "sha256": "59a5e467980dd680da01bcb3420cf406c70247baec67aecdc86828097f27ee77"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIDenseReference.raytrace",
+      "bytes": 847,
+      "sha256": "c85201d12306bb4758cd65dcf61f9660a703620f703b1a2051f49a1fe475c551"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIDenseReference.raytrace.meta",
+      "bytes": 161,
+      "sha256": "a847ad12e04ecf7c0ef51a0ab408f8a62abc18445286da7379142bc3fe279f28"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIGpuProbe.compute",
+      "bytes": 340,
+      "sha256": "2472cc8f265b303282c0a7671ddf614ed2af332ab15bf960a9242dc4498b4c60"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIGpuProbe.compute.meta",
+      "bytes": 62,
+      "sha256": "612b8beac3180d9f460fd6638638e874edc6ce8f59d6db66cacdd617edf2c85d"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIGridAudit.compute",
+      "bytes": 3093,
+      "sha256": "139a46c62118236f56f036194f7dffe00774606299e7d2e48f1bceaebcb8cded"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIGridAudit.compute.meta",
+      "bytes": 62,
+      "sha256": "0ca0822ff554bb21f8f7dbd84f78f12497747200bc7818f866d63d30b84c9f8f"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIPairedGather.compute",
+      "bytes": 314,
+      "sha256": "9d5d7fa9c806e83b8c7bf995d8fe4624020d2a94dd97b828cf289862b4be61d6"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIPairedGather.compute.meta",
+      "bytes": 62,
+      "sha256": "5c6a4ca7d5f11ccba56a4d7bc6b433ea90828a246b6d376e3415abc99b9d612c"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIPrecisionCopy.compute",
+      "bytes": 444,
+      "sha256": "dd76704dd414606ed38cbedb46f594611b9a4b5b6cb769928ae0c218a410e258"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIPrecisionCopy.compute.meta",
+      "bytes": 62,
+      "sha256": "5327097f55c54d13759244a4d56b0eb688bf1ced972861f92fd42923ba54cb88"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIReplayContract.compute",
+      "bytes": 5149,
+      "sha256": "65c9dfc1c4885e9578311c884df4696291db548c22ea2c0965febb48977e14cb"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIReplayContract.compute.meta",
+      "bytes": 62,
+      "sha256": "334f39d4c6d3583210c96c1dc521a3a88d36b7a169be001a3a9f8298a9dcd5c0"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGISecondaryValidation.raytrace",
+      "bytes": 1098,
+      "sha256": "fadc32fefa914be7f1d768c23d36b2b18430a1291a881f63ad60e280ad436381"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGISecondaryValidation.raytrace.meta",
+      "bytes": 161,
+      "sha256": "be5e4c9cf405de0f104d3ceec03f22c8d508620c5cd6d457bb51ba0b00bcc24f"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGISelectionCapture.compute",
+      "bytes": 1102,
+      "sha256": "5cf58fcc4f965fd9a25d566e02593771ed50b0936b4f103904d5076db23ff798"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGISelectionCapture.compute.meta",
+      "bytes": 62,
+      "sha256": "73cd92a68b2692946463474db2803dad7a583cf1b3d777462477b13decb63d36"
+    },
+    {
+      "path": "Editor/RayTracing.meta",
+      "bytes": 169,
+      "sha256": "a56957b23c013202316daad6f208f7330429b1f64cec2a61a340ecce5ebad594"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTAccelerationGrowthProbe.cs",
+      "bytes": 5675,
+      "sha256": "e750c7a41f9dcfa04478524ea51c4611698f326f9c24c8448b99522e130f63e2"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTAccelerationGrowthProbe.cs.meta",
+      "bytes": 59,
+      "sha256": "665bf38d14d81418ccae1ff71b2b7ca88f2034dc362f937c2758e2ce691b2881"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.compute",
+      "bytes": 252,
+      "sha256": "c1deeaa7aa4a9fdaff2d62e2f49db2164c398017d870edc8c2dc69c8182c4ee4"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.compute.meta",
+      "bytes": 158,
+      "sha256": "0a182506c49ca7ae810289cbfb77801989be489f10f51bd204f459e4538eb791"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.cs",
+      "bytes": 23638,
+      "sha256": "0369b9056e38c7ce41046fe75f03e60dddfcc9932b824d49262fc7aba5b988bc"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "f64be5765efd509652f2bbff533e966b2b834c8d40c29dc6a17bd7e3407f939a"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.hlsl",
+      "bytes": 1177,
+      "sha256": "0e6375364a0f769eb0b06cad19507db9045c2a10d8ff55e99902374fa4b24b82"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.hlsl.meta",
+      "bytes": 158,
+      "sha256": "508490278f7bf97b6624415249d2765fd1347120241f2ca082c3c567414b246d"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.shader",
+      "bytes": 738,
+      "sha256": "783a52aaa73533ad564a8de5e999cd6ff5a061266eb2f68a0763995cbb085f65"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTPrimarySurfaceValidation.shader.meta",
+      "bytes": 201,
+      "sha256": "0f3f75c1ae9de3645ae3767df436f154eba476bba4cb7f13d6439c95ed071818"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSceneValidation.compute",
+      "bytes": 889,
+      "sha256": "00848c0c66bf421aba2d053af1b1650d0a06e4c3e8bc06fde6fab507f98d4d48"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSceneValidation.compute.meta",
+      "bytes": 158,
+      "sha256": "7a9b3ab7bfada8d3d58a41c20ec42607ea1f924ba16f5d5bdd2beac97e82655a"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSceneValidation.cs",
+      "bytes": 18472,
+      "sha256": "a791c875d5871a8ff819a957929a8b60c875199bb7a4bdb7e86148a1d237a510"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSceneValidation.cs.meta",
+      "bytes": 59,
+      "sha256": "f499db821822c67e057ec606570813c4a34fc2e8cea25169e1136ca5b4a76041"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSkinnedSceneValidation.cs",
+      "bytes": 8742,
+      "sha256": "e633417fb5bf3ba6c0926707b4c0cba2bbfa22152717ff5743ed7d5ce49f6663"
+    },
+    {
+      "path": "Editor/RayTracing/HoRTSkinnedSceneValidation.cs.meta",
+      "bytes": 60,
+      "sha256": "e136cd74287262176478ae54cd88fa5d5ef6aba9de62e9b1a1ce091e9fe6a997"
+    },
+    {
+      "path": "Editor/jp.lilxyzw.liltoon.urp.extensions.Editor.asmdef",
+      "bytes": 590,
+      "sha256": "3c042fd455cac7a92f785631ac901be8a2c016fb099e7e0838d7155d1ce579a6"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdContext.cs",
+      "bytes": 13221,
+      "sha256": "c815fde052b9583507280e9a759c48962e8d8fd6ba1cabc8870e56bf8334751d"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdContext.cs.meta",
+      "bytes": 60,
+      "sha256": "2a62132602feb2b47d17d1439c69bfa12c6e54919d50ae8e1530a2318079d5c5"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdNative.cs",
+      "bytes": 8287,
+      "sha256": "6c6347eca6316a8285a38b89307c6275d4c841c84137282065530b9028ec8a66"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdNative.cs.meta",
+      "bytes": 59,
+      "sha256": "a9674bd303df21ac7ad8184d75ed6b0f7703f760985adb883d0174c2ff733ef2"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdResources.cs",
+      "bytes": 837,
+      "sha256": "32ec6eeea5dd20bb48934a076df0ce04723aad4677d978c95ea8298b2058ad80"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdResources.cs.meta",
+      "bytes": 60,
+      "sha256": "8eeff3cdf95cbc809e947ed1995cec8f111a2587699c07054cd575902f090b17"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdTiming.cs",
+      "bytes": 1096,
+      "sha256": "166e556b3aa4b21cf3a94ad802ecb4be2b384cb1b3e76f1b4cc2d96475b0ea26"
+    },
+    {
+      "path": "Runtime/NRD/HoNrdTiming.cs.meta",
+      "bytes": 59,
+      "sha256": "ef8c503a12e29bfa62df7b4d09e4b2770a8c0443173c92b71447afaf7f81aa65"
+    },
+    {
+      "path": "Runtime/NRD/Plugins.meta",
+      "bytes": 169,
+      "sha256": "45b283f3868db3e6ef02991787e9c856549302d0188b1705b28600c6ffb5936c"
+    },
+    {
+      "path": "Runtime/NRD/Plugins/x86_64.meta",
+      "bytes": 169,
+      "sha256": "63b731cf97c31a8a59c1e971cc3b9bff30987998916afe6f954461d385855577"
+    },
+    {
+      "path": "Runtime/NRD/Plugins/x86_64/HoRTDINRD.dll",
+      "bytes": 2826752,
+      "sha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+    },
+    {
+      "path": "Runtime/NRD/Plugins/x86_64/HoRTDINRD.dll.meta",
+      "bytes": 766,
+      "sha256": "da7c65487f192fc6b0784622134139c1e865baa938d223b5786db34e938add8f"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIAuxiliaryProposal.cs",
+      "bytes": 1729,
+      "sha256": "e5ae9f065c342c71bb560661bcd58c5a995e63c4b02536c01586ec24fbb98512"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIAuxiliaryProposal.cs.meta",
+      "bytes": 60,
+      "sha256": "c0e373379ccb2f32bb9f947460ede8c8e552843895c7eee1641c2ff7cc004da9"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDICompositePass.cs",
+      "bytes": 5400,
+      "sha256": "c094360a9274b2e609697ae360d64ca8b2d7f75e7d2fa8dadbc09e49d061a71d"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDICompositePass.cs.meta",
+      "bytes": 62,
+      "sha256": "e950db6f334895162ef37e5140747c51da836bfacb22d117fb07a9087a43bf6b"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIContext.cs",
+      "bytes": 18048,
+      "sha256": "3d5cb310fc0d6fe836aab4e6db5938f41e1ec81c2e1a245d313e5c14778249e2"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIContext.cs.meta",
+      "bytes": 59,
+      "sha256": "0a0b38e69faae694fc994de0e4bf38c796d5e1e06231009f69b02f308b2a9f79"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIDebugPass.cs",
+      "bytes": 3481,
+      "sha256": "3bff337786065b8506f2b3fb4bdf2b6cebf71a22f9be6b7bcc81938511c992ca"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIDebugPass.cs.meta",
+      "bytes": 59,
+      "sha256": "a42038b26ebf6f4e29f5c0e5ce6737ba33964ed2c38382aa4a8afae90bf10f6e"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIProjectionSample.cs",
+      "bytes": 1285,
+      "sha256": "73b8e8749b098e8f48e1babc0ed176f8cd7d7932841dd722f0be560b894d3b0e"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIProjectionSample.cs.meta",
+      "bytes": 59,
+      "sha256": "f5d329d5dd6d6d35f636c7844fab2ce7ffb7e95807b4dd5d00b9515c33a2e470"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIRenderGraphResources.cs",
+      "bytes": 591,
+      "sha256": "1478278e0a353c89372b9a04012d9266f584499fa66af5f5cc5e35b12b79436a"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIRenderGraphResources.cs.meta",
+      "bytes": 59,
+      "sha256": "2d52a3f29d5ad3afd476c7a3d676fdd58242609d3d54252c5c647e01535f51c1"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIRendererFeature.cs",
+      "bytes": 53295,
+      "sha256": "42e9b771ba17b0193af2837e8238571c3870b82e3986e37c3ce90d902b2e882d"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIRendererFeature.cs.meta",
+      "bytes": 59,
+      "sha256": "dd0a26a5d5c82fa9290de29e742ba313c218805d77341f3a952bc90b43b3a108"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDISettings.cs",
+      "bytes": 4198,
+      "sha256": "7ec6192d5dfb1fa175a30a769adad789f5164bdf134f666f8661fd4d4320890d"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDISettings.cs.meta",
+      "bytes": 59,
+      "sha256": "9b96c34360e8889b4d1541a104392774b461a10a33135f329dc1768505eebe9d"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIViewSettings.cs",
+      "bytes": 3042,
+      "sha256": "a8bc7bfd39240b4a1daad5bfe2b2d1ebb457829ad9a6eda6a1a18b94d4e3fccc"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIViewSettings.cs.meta",
+      "bytes": 59,
+      "sha256": "c162d7d1ab569c53060ae73317f494385eecc90ba9a2e3ae1b805a3107a865a7"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIVisibilityMaterials.cs",
+      "bytes": 4135,
+      "sha256": "2b2470cc964e2785f260a3934f8da99b045488708be8524238e45cbcd12c0e5a"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIVisibilityMaterials.cs.meta",
+      "bytes": 62,
+      "sha256": "a8f445eecec3c1bb09048fa606622e8a8c1924223b6a8c965eb2591f1fe6467d"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIVolume.cs",
+      "bytes": 4884,
+      "sha256": "ae02e14d345f0f497c28f65b43221c2e541309bd683b415a60825b6a33275a7f"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIVolume.cs.meta",
+      "bytes": 59,
+      "sha256": "527b46d854ae42315833bfc51f7cce386628cce8e5396c7b72e317a2fb266feb"
+    },
+    {
+      "path": "Runtime/RTDI/NRD.meta",
+      "bytes": 169,
+      "sha256": "83058913c6afd52845a4ec81f56ecc847079c72af51ffb37b3d74b49e074c63e"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdContext.cs",
+      "bytes": 7682,
+      "sha256": "b2b72d23b0d006b94276457c15e78157715c02a7a963df49ff7bb668bc3ca68d"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdContext.cs.meta",
+      "bytes": 59,
+      "sha256": "c29ee4dac399678930619bc6d613ffee42eebcc9d427507e578513cc3d234f9b"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdManifest.cs",
+      "bytes": 3135,
+      "sha256": "6198c7d480d829ac69b44dfd29678e08433fa026856797f661961863086b9d4a"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdManifest.cs.meta",
+      "bytes": 59,
+      "sha256": "b3269a54d779d6a9cfbd023be8049f8bc18f2ef3a148f5a6c805c087b0e32e88"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdProfile.cs",
+      "bytes": 2270,
+      "sha256": "1bc6757c3fe63e7730aed3ca819663ac6530854565881132ffd85e6d580c729a"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdProfile.cs.meta",
+      "bytes": 60,
+      "sha256": "37f72ce6b5a5840f647edf658bedd2f8d342d148ea64f3d50b1b9794c4b706f5"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders.meta",
+      "bytes": 169,
+      "sha256": "88a8163e87e3bdc23a130ecc09f76e480dd6c709e84d80739a9d080846a568e5"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDI.compute",
+      "bytes": 21692,
+      "sha256": "33d9b39cce3aac629a9e70bfdd65cc873c7367c6a8342ef9a627602f705af1f8"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDI.compute.meta",
+      "bytes": 158,
+      "sha256": "fb592fa4fb91b688641c7d1b5a61e3112dd666bef3d38e80cc64d93a3d223251"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl",
+      "bytes": 16136,
+      "sha256": "cb76ca79a0e8dc2d41f7ee7ac37c88aadd60599c4a08e3b2af10dc3ddefe7127"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl.meta",
+      "bytes": 158,
+      "sha256": "158fa7c1accc096e72e2ecdb8f4135cdef5cb746021dadce112e258889acb226"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIAuxiliary.hlsl",
+      "bytes": 3107,
+      "sha256": "b92bbe8bd11afcea824b0d427a38ff1161c055f3541ad23d863b725e854187df"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIAuxiliary.hlsl.meta",
+      "bytes": 60,
+      "sha256": "7d40b9c962128d0e10b2dd3fe29b2e719259a22980876d88af95c1919d10d2c6"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIComposite.shader",
+      "bytes": 3123,
+      "sha256": "d2b6ec85053bfc52aa4943f14f8a5a060ecd9ec593ffc113a8f5de2f0097575a"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIComposite.shader.meta",
+      "bytes": 62,
+      "sha256": "198e5c97f5755a06d4e775d68ecfe6f5d340834a62d31869eeecd9f01d0c0d4f"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIConfidence.hlsl",
+      "bytes": 5456,
+      "sha256": "8995bae6ce3b6118d70d989b484b9425fb85d3697f090dad277a30a92fa2ec82"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIConfidence.hlsl.meta",
+      "bytes": 165,
+      "sha256": "c4e46d1c937d7caa0f1d50db79a74fb8c399a9751d9c498695adea7b5000b284"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIDebug.shader",
+      "bytes": 1554,
+      "sha256": "77a4030f5018579fcee4f2fbcc35dce87df3f72d849485155642aa4eb1f43a51"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIDebug.shader.meta",
+      "bytes": 201,
+      "sha256": "ec1255c36983001b41aa7e3ae78532fc7beb8811e1eae1141ff3bff45446c40f"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIEnvironment.hlsl",
+      "bytes": 991,
+      "sha256": "c5c4532c1af349a89da3ba151d2aeddb03dca23bb3234741e564231a60285f51"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIEnvironment.hlsl.meta",
+      "bytes": 62,
+      "sha256": "7bb8b159e1ab42bd4e2d2f386083ac61ce11f7a7f180cc3434b12d2dffb353d3"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIFinalVisibility.raytrace",
+      "bytes": 6269,
+      "sha256": "39e5af34942cfa70d08ac8cff77f9eb8a2fed480307ef575f8e3dac761c808fb"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIFinalVisibility.raytrace.meta",
+      "bytes": 62,
+      "sha256": "b7013d551f4851953e22480aa903a50f37278b5b794835138e9f963e57f38bde"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIPrimaryHistory.hlsl",
+      "bytes": 383,
+      "sha256": "ce8fcb2be5a7c088540cc2b7fce969afd4af7aaf7f2d415a367c88e2a647e761"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIPrimaryHistory.hlsl.meta",
+      "bytes": 62,
+      "sha256": "1982a6b985de2e4d432a639d8d63e71ac9cd4ecd7a9278fd247da61f7aec2f62"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityMaterial.shader",
+      "bytes": 3188,
+      "sha256": "c3fc212ac611cac303448473905b6a122c4daef759aedbe15070de144e914968"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityMaterial.shader.meta",
+      "bytes": 62,
+      "sha256": "7c05630cd97702dcded887215786f268c0201e28ef12db30fcdd50007c196f34"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityPayload.hlsl",
+      "bytes": 145,
+      "sha256": "2d0e65fdeea30cf065be6e254ba048c5f9205c07525bf9f5b60e7bdee3eb8fe5"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIVisibilityPayload.hlsl.meta",
+      "bytes": 62,
+      "sha256": "c9d4cd6c6d1414531a1b30c3b74cda644808af0c73f57779a3b0a0866435ec21"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD.meta",
+      "bytes": 169,
+      "sha256": "b89b0853a08effb7b3aea75d664c46bcab99ae2cb9954d19c21dd033805ebd2f"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd00.compute",
+      "bytes": 290,
+      "sha256": "59da12f675fa21111458a82fed1fb9e74b83c3651e162299def959cec5845b5b"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd00.compute.meta",
+      "bytes": 158,
+      "sha256": "3970c1d16412b2a06f3501764ed7cd8eaa537dfd710b1bfe7177d68b50f180d3"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd01.compute",
+      "bytes": 368,
+      "sha256": "14b1ebeab810f583571f4fe5dec96e732224d0c682024a84cde49b00d5fe3720"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd01.compute.meta",
+      "bytes": 158,
+      "sha256": "6b7209fe0820991412e5d50ce95581b080f417d76ba6f5e2733478cb5880c8fa"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd02.compute",
+      "bytes": 368,
+      "sha256": "ef27c8dd53cbd81d8711e928c770f5f2b9ea3bdcf2a38ed8a0ada89f07d2634b"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd02.compute.meta",
+      "bytes": 158,
+      "sha256": "c2d7419bf6072e83dce026163d4171d192c1a90abfa0966261937c924598a63c"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd03.compute",
+      "bytes": 334,
+      "sha256": "65945a50b6c8aa481f5cd51dbacdb45fc356cc6597efb3f60eef15c8874869ce"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd03.compute.meta",
+      "bytes": 158,
+      "sha256": "1e6fdbfdfc9d1c57abcc1a3640fb9114b7365169cb363c37f21ce6e4e3b7f4af"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd04.compute",
+      "bytes": 368,
+      "sha256": "9c96d5aae556371b6b36fb9a2373d832092501a5ef2e85ad2a98fa101999d382"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd04.compute.meta",
+      "bytes": 158,
+      "sha256": "f8459f84d3201b0c59bb1f5a5dfbfd0c79bb0da06aab91763943becb534ae296"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd05.compute",
+      "bytes": 337,
+      "sha256": "44d44aecf51bcb945121d3cbc8c6ae28cce31b732477c9ef395d65b40f5f41a4"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd05.compute.meta",
+      "bytes": 158,
+      "sha256": "5bdc68290fc335df50868b96ec509341b5a402cd556da49dabbbcdfa3740a8b4"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd06.compute",
+      "bytes": 370,
+      "sha256": "4c170d3215a230890bb0fc2c54d5466dd06304228c27a4d79b2679a577e962b9"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd06.compute.meta",
+      "bytes": 158,
+      "sha256": "1d08bec50fb7b3e93f4584ff07ef56733f4be21d9f74d246a74be20ba33de856"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd07.compute",
+      "bytes": 331,
+      "sha256": "ee3d96861b9a440be4d3622be7d41df9a9c0bef7b82ec58a01e02034c6803d98"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd07.compute.meta",
+      "bytes": 158,
+      "sha256": "bfc3ed031c677965b5363d54bfc33ebb50bc94339091038ec61ca0051f86664d"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd08.compute",
+      "bytes": 338,
+      "sha256": "9ee0cb63874a3c3139997e92be3b682f47247556769d4c52835791c2a7d1ad5f"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd08.compute.meta",
+      "bytes": 158,
+      "sha256": "3ccd58b2ebfcec6c5b618e4883147d97e9947575fee82799df9f58d94a4b2388"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd09.compute",
+      "bytes": 369,
+      "sha256": "db31da1daffc35287d78e54dff7e2b6a934aa1b4c4d54451822d6bfc78760fe1"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd09.compute.meta",
+      "bytes": 158,
+      "sha256": "5c95209caed4ed4ad7a14dca1ae2fea34f4662e7fa870912432f344e8dbf4b4e"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute",
+      "bytes": 363,
+      "sha256": "bb542a5fec7671bb0e56f81a767e29f8a45212a871389ac05c6dd8f604ab8227"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute.meta",
+      "bytes": 158,
+      "sha256": "f0c4aff68d3306fa66f251a29ba9371356324c21e89a96b27b252629ee3cbcfe"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd11.compute",
+      "bytes": 338,
+      "sha256": "121a19b28111f44e487a83fe740499b65b390944d5f2c60f052b508eeee8a802"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd11.compute.meta",
+      "bytes": 158,
+      "sha256": "7cf96cbc8db3d8afff7792c68c77ee4961acc7ef4b60c9eee3fd8bd47e3fa01b"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd12.compute",
+      "bytes": 287,
+      "sha256": "50403f1c10831117de4a4bb4fba8badcb2423d479997d009bedcb73f92504765"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd12.compute.meta",
+      "bytes": 158,
+      "sha256": "ca609e24a03b9978f9e8af36ee315c4ba3027cc02c7b776179782eb9d72cae9c"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd13.compute",
+      "bytes": 291,
+      "sha256": "5ee02ced38d38b0afc0dda31313d7834117833da13986d18a9d3ca95bfb8216d"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd13.compute.meta",
+      "bytes": 158,
+      "sha256": "92170a15be1d6d5eedb367f1e274b9c7a6f5e9054755b931defa8886c247df1f"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd14.compute",
+      "bytes": 291,
+      "sha256": "383f50bae14b96d7043c41a544b493fa40bbf61e555188838be2a63e065aded0"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrd14.compute.meta",
+      "bytes": 158,
+      "sha256": "990531d049ce043d3069481e7b7e881448aa06d672129164dc0d81766b31aa31"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl",
+      "bytes": 14364,
+      "sha256": "0d1ec5208684217bde4f532a89408990af35fae0a393c6eb5bbb525bfcf8928b"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl.meta",
+      "bytes": 158,
+      "sha256": "3a6b908e182aa23dd65c48cb9c00d1f58dc87d17f6397a7c691d75d6f82a97db"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl",
+      "bytes": 22765,
+      "sha256": "78f736102c5d27ceba38b3f116e41aa27c2409210d95f162fd74b71e5766f40d"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl.meta",
+      "bytes": 158,
+      "sha256": "d4f415835fc328f677ee590d00e34de0f12c1f846f89b89fe1f966ef9bbe7b04"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdBindings.hlsl",
+      "bytes": 556,
+      "sha256": "dc0aecdfa95698d297d6547bbcf921a92346c72cb8317383ccb09adc98607adb"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdBindings.hlsl.meta",
+      "bytes": 158,
+      "sha256": "88651a7431a1cc39c0f086ff7dbc71195984c971249d7e2be307c2deab5258ef"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdHistoryClamping.hlsl",
+      "bytes": 19895,
+      "sha256": "40d8b01ccc233a9800dc7500ceaa324296569897aecd81162f12eae877e3f7e1"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdHistoryClamping.hlsl.meta",
+      "bytes": 158,
+      "sha256": "ddcaba3a46f4eb7d2c2c5d0b9dfcff6493a4cb00588e3627f509b68cf55633a5"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdMaterialGuide.hlsl",
+      "bytes": 2020,
+      "sha256": "f424a3ac6c8119bff095389c84b5a5f91525b31776606283284a1c7efe6749f9"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdMaterialGuide.hlsl.meta",
+      "bytes": 158,
+      "sha256": "516f8141eb25b35a00c0682e584a4e587f33d55a043ea49ee68a37f34e3d8063"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdTemporal.hlsl",
+      "bytes": 45621,
+      "sha256": "be360b034008e10c10c0ad9625a8cabcbcef3ac94df77b303a88c9abd311aa7f"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/NRD/HoRTDINrdTemporal.hlsl.meta",
+      "bytes": 158,
+      "sha256": "93c1e28811a5fc527a817351d51e71a80986cdd6f63fb16d1c1439f1b71598f5"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty.meta",
+      "bytes": 169,
+      "sha256": "2cdcca83f4fda4dd5ff98170e79935b476797c373e60b8fdfdadc3618534abb0"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NOTICE.md",
+      "bytes": 2761,
+      "sha256": "4fcecde3f32baead0b00f489f2165b6bb1c36819191fb97a208062e19c7e2813"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NOTICE.md.meta",
+      "bytes": 155,
+      "sha256": "bda942da9d50680f9885084d015d4bd4ce16411e444d4e3bda53a387eb6f65bd"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD.meta",
+      "bytes": 169,
+      "sha256": "534980e30b5f920c9f03570f06cd6fb27c4ed6c4afbc92f4ba9b9a5d9873e5d1"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Clear.cs.hlsl",
+      "bytes": 675,
+      "sha256": "24881ebd9e5b16cae635ed569fbcc969acd8af79c6109efd9f3f4c086fc5ccb0"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Clear.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "a3ff060c506465db173b67457a70b9a7a0f6a623609ca6fe6fa485f9db84d970"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Clear.resources.hlsli",
+      "bytes": 1010,
+      "sha256": "82c51b6091070debf1212ecf37975033f8e08e91199001997eb7abfb065c8bb7"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Clear.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "2cec507a8d6b4ee6a6826c98f9729f29bddcd349961d3b755e87eaf3b8c97691"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Common.hlsli",
+      "bytes": 26758,
+      "sha256": "e4f7dd4e9767dfdd2d377e6059c875bf3455e30a2593b97f862c8c802f56c95c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Common.hlsli.meta",
+      "bytes": 152,
+      "sha256": "522852e69de76131316151fbb5574fde87f7c44a551910a15f6e8bbb2a7dac78"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include.meta",
+      "bytes": 169,
+      "sha256": "3530ca7f9ba6bf088441d10781af7bc082737fc90a1b3faa984e1ce3abb8de27"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRD.h",
+      "bytes": 2514,
+      "sha256": "250f990b8f2f200eceff9cb8ecc3615bb7aa719d984d549555cb9c4850924be3"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRD.h.meta",
+      "bytes": 60,
+      "sha256": "08d542240e83d57c97375f399f6a36c8e2db393e70474cfba17641ba02b3601a"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRDDescs.h",
+      "bytes": 19439,
+      "sha256": "f3594a82241cb0a9c03479906dbed2d81421c6a19ce64ba204ed1d2cd285badd"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRDDescs.h.meta",
+      "bytes": 60,
+      "sha256": "6bcd4d452c72a30a0b6ee3d79e9a982db3965ccb31343928ec13183dd1a0edf9"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRDSettings.h",
+      "bytes": 26445,
+      "sha256": "3a1c30d3958c3fc867f0554ed4dbad84e4278a7d890019abc4ee631b1d487b51"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRDSettings.h.meta",
+      "bytes": 60,
+      "sha256": "1167a1196065903a43b69fb720ce36befa8f026467b508af232f1661ca16e95d"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/LICENSE.txt",
+      "bytes": 24727,
+      "sha256": "85201d19c2dc5041d9a2029e9fda9d78105fe41ce21ce9701d4aa7e56184b6e7"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/LICENSE.txt.meta",
+      "bytes": 155,
+      "sha256": "cf9343b7d77590b300f13ca562535eb7d14babad00f967b8973bbefc53da0d2e"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/NOTICE.md",
+      "bytes": 3991,
+      "sha256": "a64c4bb6d02ff2c78fd16bfa5e1d5ca81c9eac40ea67318a42e0498ea6efa879"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/NOTICE.md.meta",
+      "bytes": 60,
+      "sha256": "74fe6d75228008a337ad75bc2ed48ac42d86fab71b9bba7860b107544344985f"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/NRD.hlsli",
+      "bytes": 46853,
+      "sha256": "30abbdfdcdefbe4e1178cc972e923268c945d91954568284612f5ca01f0c31ad"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/NRD.hlsli.meta",
+      "bytes": 152,
+      "sha256": "1158e420764abbe43c3e93e6dbe737c9d89e2560eaa5bc6ff86f6f8a9c3cf037"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/NRDConfig.hlsli",
+      "bytes": 381,
+      "sha256": "de5ac2561205454d4ddab00af062d13928f8d5d8c52f5f6371a8ea4b7b98e939"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/NRDConfig.hlsli.meta",
+      "bytes": 152,
+      "sha256": "130349745949fba9b09a747a68575c3202d5c2dc283a9d09a9e5e26608888fd5"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Poisson.hlsli",
+      "bytes": 19224,
+      "sha256": "66836e654c8eb771c14a01c0e72edaec40a1ac337037e289927259326510dc49"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Poisson.hlsli.meta",
+      "bytes": 152,
+      "sha256": "2093ba303740efb079885750ef4e8e153dc90fa3268812d6a9f369a40c19ff31"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AntiFirefly.cs.hlsl",
+      "bytes": 7021,
+      "sha256": "2a756f16ffb591646853b295b1e99583e935841dad9091fb37b7a349b660dd8c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AntiFirefly.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "6db86b09eb61e7cba89a1f2932724b98f8325ebda77d82378e1fffc7bd6cc589"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AntiFirefly.resources.hlsli",
+      "bytes": 1782,
+      "sha256": "a97b340d9b65f88e4d5c91d6e516db9538513bb1781dc9171ac828f0ff43e236"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AntiFirefly.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "fc28b9b4477e60c94982b2360dc2fde318a942718d86ffb1e1e169fdc35fdad8"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl",
+      "bytes": 13037,
+      "sha256": "bc4c998e30852232ac98e4f2a7f924ef0072d900f44f4de1d725171f9e1508b8"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "25206ad8a14d1e7ed8537d0076d377057b6daf0aeca2dd4034dedf3dc7487a50"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.resources.hlsli",
+      "bytes": 3152,
+      "sha256": "c4eff8e57ace80bf84353576b3fa34e80272ac0f5329b4148603e2373d37e4be"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "e15bd994dd30725e011662798350d2269ecad53f9b68939eddb4329c0956cd26"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.cs.hlsl",
+      "bytes": 21413,
+      "sha256": "58e8b5bdc93cc3b331a8cf9994a784d5137be2b566c78e39ef617ce6be8b289e"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "81041427cb5b0d2de26bfc08d6af4e1cd46b9bdeab0272fe9f5ab8e306a22ad6"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.resources.hlsli",
+      "bytes": 3782,
+      "sha256": "5d6a2ea982b96c6599786f1e0d58bcc6fead846541c39b20b3fcc99ee4f9a5c4"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "b0061bdc1aa8e91607163d195169d6d1cfb2a29df8c6a780dbb07729e99840a8"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_ClassifyTiles.cs.hlsl",
+      "bytes": 1400,
+      "sha256": "3bf9d7f020c0540e951ce7f58cd95cec2e268b1590ac37e24b28d915b047345a"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_ClassifyTiles.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "ad7cf4d1b1e952693a8ed339add2370dc3de84720b8aca6313b7d0608c9ec9b9"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_ClassifyTiles.resources.hlsli",
+      "bytes": 941,
+      "sha256": "6679ca875140ae3877125ae6611b74bd966417ca30ad3e12eeb0c0d413392c67"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_ClassifyTiles.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "fd61114a6f16adb43a450ff6dc213d7dcead986158bfcea391c8ae5a3b486b87"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Common.hlsli",
+      "bytes": 7574,
+      "sha256": "4e0245d75951f6582d13c8257feb56b1b78a2c369bd177113cf1cdaee38c4d8a"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Common.hlsli.meta",
+      "bytes": 152,
+      "sha256": "8b5299e231a23ed6e8286dc353cfc957b9844988397bd0df4a3123b8ea001951"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Config.hlsli",
+      "bytes": 5130,
+      "sha256": "722121cd19aa9961050f6593e344567eb634503235c74549c01d4b2240c5d5fa"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Config.hlsli.meta",
+      "bytes": 152,
+      "sha256": "0eae499e96d04159a82592ca89e64065e6adb411ff53e55fe6da4976d8b70c3c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Copy.cs.hlsl",
+      "bytes": 937,
+      "sha256": "213c2d8d9ae4ab3994035d6d826451cf2f548217ed3bd3626e53cddc50b28894"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Copy.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "43bb4fa3665f71770995bfbdecdca0fc1620b2d779ec16a31bd3901d6732f36e"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Copy.resources.hlsli",
+      "bytes": 1555,
+      "sha256": "005bd298194565e424a35a05b33d509869c47b6ce99ad1b9a107da6bedb0ac38"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Copy.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "0ce062175348f2e5aeb8be4c84f2d5cf1f6a7515b18719eafab640eb2d148828"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.cs.hlsl",
+      "bytes": 18415,
+      "sha256": "9cdac4a0810c72fc2da936b8bbb8633a9f27881b6930e5375d3f3b8e008e40fc"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "be7291daf259df76a7e290828cf17f8b4e2b2e7ed13a648f5fa8dc954aa17d55"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.resources.hlsli",
+      "bytes": 3943,
+      "sha256": "00731bcd49e94fb6db828e21b354d4aa77ac68f3afedf75a13cc5f9e4721c3ce"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "1fa4a92717c124dcb2c50e32e2f5427a9ccab7d5b8c012888c342b29da21c367"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.cs.hlsl",
+      "bytes": 6835,
+      "sha256": "275f5f6807bcc90f72ce1e84da767174aff31bc89d58cedfccb414867f01dab2"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "25a9a264fd427020c9f6e9708047ed7d93b6641df3540a62cc1d41073af5a7f9"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.resources.hlsli",
+      "bytes": 2609,
+      "sha256": "94ba4e657c5c2df16404ef879e7b980233d8f6f943f291ccbf9d91bb8aed0096"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "711c5d9c7c1a22f8e0289ffcdc54b0bc11c8c86dcbb2d872ac9a10891b9f4494"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HitDistReconstruction.cs.hlsl",
+      "bytes": 5845,
+      "sha256": "64803acb9938461633e07ba05df8e9bc732fd6ad178ae250fd08e60b5901fbd1"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HitDistReconstruction.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "14f835ff3358854f29043202986c7c7b7509921407e03c15586b34f72d3b864e"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HitDistReconstruction.resources.hlsli",
+      "bytes": 1899,
+      "sha256": "d9c6184d70eef0ccef97ac3db573cba294a786bcac8510d49723e796b8047fb1"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_HitDistReconstruction.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "51152f276c2f55282f94268808c1999b49176195ea8197c0fe6473587741b670"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_PrePass.cs.hlsl",
+      "bytes": 16265,
+      "sha256": "242cc9463e71ccc1960b5e37b838278754533393314f5e0f25ea5b295da693a4"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_PrePass.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "52e3bdcb16b370285cdde29d1a0414a2128ed7431d413000690e55da2a74e023"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_PrePass.resources.hlsli",
+      "bytes": 2534,
+      "sha256": "37c6c067638750fc58949e2564d1b278f1b57203053edf1979d7a55e57f890e3"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_PrePass.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "8cfe1c2407773a092c8ff4a98a1ebae79cec4ccb5f54cc817c9ba8ed1dace52b"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_SplitScreen.cs.hlsl",
+      "bytes": 2206,
+      "sha256": "7f56cfbc16996a85ff8b9dffb74d5322568960ff2ce1136a870b2522b56da0a6"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_SplitScreen.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "2d372e452679f258e45e3fd87a8f686a7a88ce832b92c79ba2a62f320fdd7fa4"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_SplitScreen.resources.hlsli",
+      "bytes": 2437,
+      "sha256": "a55151f70130c845904c9d880879a33b31cb11d31b78231a69ba8551ed3529f6"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_SplitScreen.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "c5c5333c1361c7e0f431b9096ca25d665cb1894d85f8151f9f1a2dc51274cfb9"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.cs.hlsl",
+      "bytes": 45481,
+      "sha256": "7f323cb68814f99b417e69b607c80d859323f404a8f4095b9407f3b41d053b5f"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "7512d4221666e39d17d1b455711cb9316e77b3d9070c9177cb454323cf6c17fc"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.resources.hlsli",
+      "bytes": 5351,
+      "sha256": "35d062baad5814b21794167a5e141ce856f658ad9bbba5c9bd3b30d11e5c4c31"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "59f7315fc59d1b8410a6169f622892143022b7aedbac323f8de2afb6f19613cf"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Validation.cs.hlsl",
+      "bytes": 7456,
+      "sha256": "b28f75d965e9da90234442de7478fd52cddbe52fa1366edfd1980717dcebc08b"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Validation.cs.hlsl.meta",
+      "bytes": 158,
+      "sha256": "acdec6778eec47bb593a1604cb8f3f258ab78c7dce36c391ef590a725d755157"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Validation.resources.hlsli",
+      "bytes": 1252,
+      "sha256": "e54905dd1a9e21d6550ae49061d2b8ab147866fe0d4bda82758b474c944de389"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/RELAX_Validation.resources.hlsli.meta",
+      "bytes": 152,
+      "sha256": "7fdaa56fa6248cbda86c630ce85448e36cff2e66d25e9d651967f4ef0b65ba62"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/ml.hlsli",
+      "bytes": 110585,
+      "sha256": "aeea3bbec753bbe3c1e16495c109c9e43c676082c11c18186564ea79024aa685"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/ml.hlsli.meta",
+      "bytes": 152,
+      "sha256": "b073bf63887d62180d3fa238e500049bc2c0dab9b1533ceaff653a9eca966b2c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/provenance.json",
+      "bytes": 9195,
+      "sha256": "e7172a46e2269ff120c72d7006e668e9fa79601be646c560284fda29893b5f43"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/provenance.json.meta",
+      "bytes": 155,
+      "sha256": "5ae8d48a654bc05fe7123ecd01a6bb42e63a118dc63e28479168a280dbc1ebcd"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI.meta",
+      "bytes": 169,
+      "sha256": "b3b0e8ab0c6a370341a66b2aabe053fdc5c8a1be7500b1235a71610b6c83ad9d"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI.meta",
+      "bytes": 169,
+      "sha256": "2346ca34f0b3c0efe1c5fc7c08588aef48b851cb355463835570c8a31867b87c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl",
+      "bytes": 25182,
+      "sha256": "b4d0f3283c30c85a4dfe1d269faad3cebd6f47e6ac791f6c6b4c15d7953fc941"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl.meta",
+      "bytes": 158,
+      "sha256": "ad232df8d9f2659b41ba684d5e0ad805ec57fa123768de56043c762ad6bbe024"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/PairwiseStreaming.hlsl",
+      "bytes": 5237,
+      "sha256": "30be10ef4af3296d288ab4ec9e35f1918fa88ab513138690dfe369ba64f0be5f"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/PairwiseStreaming.hlsl.meta",
+      "bytes": 158,
+      "sha256": "259162d48254992099de3731070994acac50ad886c38f0f25b972f2872f9b18c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReSTIRDIParameters.h",
+      "bytes": 8512,
+      "sha256": "870763a51796f34c8afe364789a5a8ebdce9240baf036b28a69c6f6b603e62d7"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReSTIRDIParameters.h.meta",
+      "bytes": 59,
+      "sha256": "64261e3e1812a61717ab206942dc8f0de8dc70183380298ddac3e5d4f0987823"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/Reservoir.hlsl",
+      "bytes": 10081,
+      "sha256": "120fe0447de9f4c4d71425685d8ef6fcbf5e5bf9ea36e9feff642a41e5a143be"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/Reservoir.hlsl.meta",
+      "bytes": 158,
+      "sha256": "fe2f092a8efe47ed54fbfc2db965d7f43da84e0c8af0ed5ab8c27b0ba0bd3157"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReservoirStorage.hlsl",
+      "bytes": 4970,
+      "sha256": "273f08a0a105d66f69c5e00025c72b7158b9bd0da76dbe0a2f930e896a727999"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/ReservoirStorage.hlsl.meta",
+      "bytes": 158,
+      "sha256": "cfc682326498245616b3531fffdadfb06b10fd3a2bb58a83eae9a29a8007b891"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/SpatialResampling.hlsl",
+      "bytes": 14153,
+      "sha256": "8f6c17a81cb9e5270c92711f5d8a8272bc2e60d087a816688ee5ca64cfef9c52"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/SpatialResampling.hlsl.meta",
+      "bytes": 158,
+      "sha256": "fef03ab14804983c810c81345534ea33cc30907088371580c24b8218b10038c3"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/TemporalResampling.hlsl",
+      "bytes": 8933,
+      "sha256": "33c9339ca52e6bcf1a796f4e0c9c577dc661f4d46490f33958d6a03f36098685"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/TemporalResampling.hlsl.meta",
+      "bytes": 158,
+      "sha256": "718d9653c637e8eec5ae96feac3c270f09fd15b9cf2f17dd91cce3430bd58809"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI.meta",
+      "bytes": 169,
+      "sha256": "b8036c887b3a17ed445b5295c159eec970d50881279cb22c14b76a68d415c61b"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/ReSTIRGIParameters.h",
+      "bytes": 7134,
+      "sha256": "05290dc9d6908d7975da80057a6020db68b053ddfa43877e7d2c25ca7aca7610"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/ReSTIRGIParameters.h.meta",
+      "bytes": 59,
+      "sha256": "bdcae8b4dcfc335559cc460aceeefdfd5391b34116696fbc040c6404fe01d3ec"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl",
+      "bytes": 9493,
+      "sha256": "c8bdcd648b7c457b2311ce71af362f12c1bb9a6c4da88ebcc560502fc605c556"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl.meta",
+      "bytes": 158,
+      "sha256": "a4af40f7cc54ab84b5ef57ac1db7545459c80882189df4c1135d10f59dc9d740"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl",
+      "bytes": 9046,
+      "sha256": "99ff8ec88f495e8262aea29db2d56c8ca268ede5f3f468b5c40fbbb23583363b"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl.meta",
+      "bytes": 158,
+      "sha256": "c484b070eb1dbcc9d783ab67a7098981c2310295d4a82e039431c0542d8f72f6"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl",
+      "bytes": 9241,
+      "sha256": "5861641c7ac4703ea04acf826de8b89cab2cc60fafe61e897274ca4a301bca67"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl.meta",
+      "bytes": 158,
+      "sha256": "6befab6e912639ec00532096f7400ce92fbf1d792ee85f0fa6d3009e0398a6b0"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LICENSE.txt",
+      "bytes": 26967,
+      "sha256": "27638e2233a18fbffaa57758a9a5a407d4efca7cc72de60dc4ed6e8627398ef2"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LICENSE.txt.meta",
+      "bytes": 155,
+      "sha256": "e9039bee32a3346212f41b35975e74cfe3d183ab5ad5c073fbb70998862f6194"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling.meta",
+      "bytes": 169,
+      "sha256": "ce3d3c265bae7e28f82cdc9075edac65b8ff22891d71c742cf94f33b22c9fd0e"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/LocalLightSelection.hlsl",
+      "bytes": 4095,
+      "sha256": "edd02c8ed273f21a5f7205f83db0dd938faae5571115711d9f38948cbec17ecc"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/LocalLightSelection.hlsl.meta",
+      "bytes": 158,
+      "sha256": "01c4d68422a86f9b4260c2f1f8675487bc71f7755c66dccc7cbdbb0cdc87b803"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl",
+      "bytes": 8835,
+      "sha256": "df8bb5fc14d69eb3d9cbd436eb888ec39f12238e3246b3b1878c911f4ddabd0c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl.meta",
+      "bytes": 158,
+      "sha256": "fa7da6354257b3043cad247b6a8b73861efd3ce505a7efa3b7213cda6d29781a"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBuffer.hlsl",
+      "bytes": 1584,
+      "sha256": "9e2c1ddb813203b7dc559fbd1223deedc9d16bf146f750c77074f0e4d2729c9a"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBuffer.hlsl.meta",
+      "bytes": 158,
+      "sha256": "c6efd04446af54aa80a7927c3f8ce0088c7664b4e53e2567d51f18d31ef1cf2d"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBufferSegmentParameters.h",
+      "bytes": 968,
+      "sha256": "a8a5f97d654d38410c6490c2fdf16b349f2afbeafc26a554a879e0e5ed52c7c6"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBufferSegmentParameters.h.meta",
+      "bytes": 59,
+      "sha256": "79ffc5525a7b725ad3b62fa8522799318606a7b42b8665ada911a16b0fd68aaf"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/UniformSampling.hlsl",
+      "bytes": 1081,
+      "sha256": "40ecea3503a1eeeb734db65e09fef1f4dbea7574883f80d6043a59dca3a4b86e"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/LightSampling/UniformSampling.hlsl.meta",
+      "bytes": 158,
+      "sha256": "5d01b13196238b8d6cf09d72db4dba4f9feb53ebe39274875c2df973c85880a7"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR.meta",
+      "bytes": 169,
+      "sha256": "fed1edf69659524b119c42aedba70e8220220d1cc51c0fa8fb1d2a439678e82c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRParameters.h",
+      "bytes": 2683,
+      "sha256": "08c35b6ba1c6cb92fdf9e0c684eb09b18453d0f4a9cba6d07a8b4a0cf49dbf05"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRParameters.h.meta",
+      "bytes": 59,
+      "sha256": "4b86cc407345c8508ef4afc0e8e539dcb4a147b5ef8e3e1e7cd3e898b623587c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRSampling.hlsl",
+      "bytes": 9028,
+      "sha256": "a40f21d02df3ae7e546e8e2f1435482fbb0d6cf073a8a08c7d580c2efc6b43a7"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRSampling.hlsl.meta",
+      "bytes": 158,
+      "sha256": "a3dfbc3af25d7315e06f00518b03f44696176584bab0ca04188cdc07345ae06c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiParameters.h",
+      "bytes": 4757,
+      "sha256": "998cfee3b159548e9b5d1e5726fa1644e71c9a2a1e32d63fb90cdda0e24a7761"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiParameters.h.meta",
+      "bytes": 59,
+      "sha256": "1e98072e35f1e0d7b2231b838b4beb0e80d27aee2f4b7893ed4514c24d91a2d1"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiTypes.h",
+      "bytes": 1786,
+      "sha256": "78ad0d8f75acc58ee289e635b926be991bbde1d04fb242118deefbdd0f6f5be5"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiTypes.h.meta",
+      "bytes": 59,
+      "sha256": "3b962ee7824203a94c488d28f395a4569d07a58d6c08cc23259f1912bbcebfcc"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils.meta",
+      "bytes": 169,
+      "sha256": "e0768ec66381444532f1b0102a88039d29dd7757cdb66f6f8c19d276df9819b0"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Checkerboard.hlsl",
+      "bytes": 1710,
+      "sha256": "ce3ec2485c4325a3f32c9d8d58d6c63b62b803da873038ae999584a9d04d6e2f"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Checkerboard.hlsl.meta",
+      "bytes": 158,
+      "sha256": "4dce2618bbf2d683611207db114138f3d6ae218f108886881d152aa8a1da25ac"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Color.hlsl",
+      "bytes": 4529,
+      "sha256": "4ef47f29acaec96b75fe08b310e6b4504f75373cfaa7e4992fab2a7c2bb2db53"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Color.hlsl.meta",
+      "bytes": 158,
+      "sha256": "4dc97d79ac694570e544cac7257e000c011252139ea98716e08ffd30d1cd4f5d"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Math.hlsl",
+      "bytes": 6041,
+      "sha256": "4099bb0359d8e2732f46f80b74ad62a01365cd2012d537786cab66680df9ff82"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/Math.hlsl.meta",
+      "bytes": 158,
+      "sha256": "e9d0d347464af5063c6a9a8e9391409e4271f192164ac545aebe5ab5ae0ef038"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerPerPassSeeds.hlsl",
+      "bytes": 1651,
+      "sha256": "df9e3a92f7a5f8260ddd87f9b565a8583788c422122fff8afdd1352bceaea457"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerPerPassSeeds.hlsl.meta",
+      "bytes": 158,
+      "sha256": "d374433b98d79072c3a866c08312ae00fdda395da4db8b7841694cd5218cf78c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl",
+      "bytes": 3750,
+      "sha256": "70df439bfc7e5163641f9f3f107a1f88d81d7aad7fd593797303a6ce7e71c467"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl.meta",
+      "bytes": 158,
+      "sha256": "908a9081a93a687cbc5539a17a40103c766bf1b033edae7e4538d14bbe328e35"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/ReservoirAddressing.hlsl",
+      "bytes": 2279,
+      "sha256": "cfe65684fb4fd958534e92a107e9db2cf47aae443395164c1c18d833d768b261"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/ReservoirAddressing.hlsl.meta",
+      "bytes": 158,
+      "sha256": "3f9cab42297b0dc39022019d706367a0f7ce3f7468c66034d20288100cec6fda"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/TypePacking.hlsl",
+      "bytes": 3243,
+      "sha256": "9d15b2aa75f133d33870fa2b2cd25a647e7d632fecf01c065c0da19b09dace8f"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/Utils/TypePacking.hlsl.meta",
+      "bytes": 158,
+      "sha256": "1e5c44d46b93f8752fd4f171649216910a69e0620de4c814c2ec4d6772b2ad44"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/confidence-provenance.json",
+      "bytes": 770,
+      "sha256": "c96a4d3d90ad60af0ee602da379c701acf645b4e853ff54db710ed6c168b9c84"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/confidence-provenance.json.meta",
+      "bytes": 162,
+      "sha256": "1c89b885e70bbc5f83695fb54a6e7c000e22b68209149ababf59e20bb6c1f248"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/donut.meta",
+      "bytes": 169,
+      "sha256": "2a3432ec12c265331666d54cb4953dba764dbcbbe67ca6eb467561a5f2aa6735"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/donut/brdf.hlsli",
+      "bytes": 8367,
+      "sha256": "d84207e122e4e5be92baaef801f6b9bb73a7a25497de0864197dd95e877b6253"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/donut/brdf.hlsli.meta",
+      "bytes": 152,
+      "sha256": "f1ad3d2c0cd440b69fff4132542f1b389e761f5862052f0d270589b00817ea68"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/donut/utils.hlsli",
+      "bytes": 7034,
+      "sha256": "00ae446aedf30570a817c04b6d03a66515b40dbf061f8f955087c9a7de4890fd"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/donut/utils.hlsli.meta",
+      "bytes": 152,
+      "sha256": "71a26a0bef3a7662dd71c49b7864e79ab11ff321bd0a93ab1299048721fa0d21"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/provenance.json",
+      "bytes": 4768,
+      "sha256": "c79ffaf6813e75436496717f5a31486f400a0d74436f9ded8db8faefbc0f965f"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/provenance.json.meta",
+      "bytes": 155,
+      "sha256": "0dc007a25921a80df234645880bbf1d4d974bc5490e69287fe62cc753ee1e432"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGICompositePass.cs",
+      "bytes": 4394,
+      "sha256": "4f6994033ad44bbc58214e8f38562ae86d9e4104ec7a82dbdc07d15213accefb"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGICompositePass.cs.meta",
+      "bytes": 60,
+      "sha256": "432003715162bca6e8bfb7bbc80f88f86c342360b8967b47482de54de22f6a9a"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIContext.cs",
+      "bytes": 7467,
+      "sha256": "cffbff3de1cab4cc15c533f11a45c7ebd649478499fd4d3aa0b60aa48c83f35e"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIContext.cs.meta",
+      "bytes": 59,
+      "sha256": "4998164cd00c08f948152b61dc66d59bb753762942bbc31324f8601955723722"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIDebugPass.cs",
+      "bytes": 3016,
+      "sha256": "cd0e785b8285ed32863d421a1979e9c25cf07021359b96fc9e54317d5051dd70"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIDebugPass.cs.meta",
+      "bytes": 59,
+      "sha256": "b09fa92435464af0ba49f815dc3ad098ccce4ec1fb39c49ca1ab06e832c6f731"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIGrid.cs",
+      "bytes": 1702,
+      "sha256": "bdec4cae2dc8231708643b5a981c053dace90e26adcb9da2be68e0d71aa64083"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIGrid.cs.meta",
+      "bytes": 62,
+      "sha256": "9f54f7c12a2f6ab6ec8fd6033c8e508f3e9478ce31d319b4db56bc421a8e9236"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRenderGraphResources.cs",
+      "bytes": 499,
+      "sha256": "39d55746d16be28ad9e2a685cea25d58a3f8304059b02c81f29e0a89083a2469"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRenderGraphResources.cs.meta",
+      "bytes": 59,
+      "sha256": "7e9026f9e32b7ea085ffe5cea2f290ec473f972b118dff7236fa8278017d88db"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "bytes": 32287,
+      "sha256": "32823ad703827a955bb5fc9c7e6ec6e83ff61ef4d25bf091a41334e980b6e69a"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs.meta",
+      "bytes": 59,
+      "sha256": "e62ac8ca7e17334c8b32fe3632961a1168c5a8484f7ad0da8bada5fbfbac20c9"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGISecondaryMaterials.cs",
+      "bytes": 6345,
+      "sha256": "bc86fef2370f1087f7381d33c7a7e6564045c440894823944ce9ed4b1a4435a3"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGISecondaryMaterials.cs.meta",
+      "bytes": 59,
+      "sha256": "56025a5d064a4e6713d75f0db84477ccfd26d0d62172f09c0c5d24fbb64dc763"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGISettings.cs",
+      "bytes": 1385,
+      "sha256": "267fad96a9bfb24e226e4a56e1476d1597d638457cd52ba876e82b568a28ba5c"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGISettings.cs.meta",
+      "bytes": 59,
+      "sha256": "984ea27f154b9111c68c7877bae4a1e7765eb7ec871990ee6f5fb9945bb51ece"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIVolume.cs",
+      "bytes": 1513,
+      "sha256": "d9567404a73fb98c82d219daca35ec1bc204dca9a3ec44ee1b89c679a9a0cae4"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIVolume.cs.meta",
+      "bytes": 59,
+      "sha256": "a9a03e518c5a794051e3cb8944d0eb496aa4c686b5ffee57f0a4eaf253b85407"
+    },
+    {
+      "path": "Runtime/RTGI/NRD.meta",
+      "bytes": 80,
+      "sha256": "870a386143e0182b6b7c3c461ff1ede04d2340e0696568524534112e49038590"
+    },
+    {
+      "path": "Runtime/RTGI/NRD/HoRTGINrdContext.cs",
+      "bytes": 8399,
+      "sha256": "4dd9822953c4f5233d6d823a039d9aee6cca9cf74ae60cfc360c17d46b1f99c4"
+    },
+    {
+      "path": "Runtime/RTGI/NRD/HoRTGINrdContext.cs.meta",
+      "bytes": 60,
+      "sha256": "9f8ac8c7f13fdc8764980aac1124d98aa69183343e4954b0465a0a19ddda016f"
+    },
+    {
+      "path": "Runtime/RTGI/NRD/HoRTGINrdManifest.cs",
+      "bytes": 2562,
+      "sha256": "f5d6594a6f5c1333989d49e6f3ffd3e0f0ede1629646a4a797460b60ac7320d7"
+    },
+    {
+      "path": "Runtime/RTGI/NRD/HoRTGINrdManifest.cs.meta",
+      "bytes": 62,
+      "sha256": "bcfa745e020c49aa5b094b70bcc9b25611fc0c56014ddd67ad962580e63bf48a"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders.meta",
+      "bytes": 169,
+      "sha256": "19363645bfd6b171bcb0fae662d1bc7c207481507e870962787c637bcd54cfac"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute",
+      "bytes": 5670,
+      "sha256": "0b12b95a26ba24a2b991628f0eed4397c3713299eb5c9caabe401b1e9facc946"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute.meta",
+      "bytes": 158,
+      "sha256": "490deeeda74c272baf0d030a3fb7b51d4510841d01691d2d42352a80035ed667"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.raytrace",
+      "bytes": 4858,
+      "sha256": "2e4cebaafbc8feb3a8bf1c711bc44c64020e4567a602f1dc21c7301447ed9144"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.raytrace.meta",
+      "bytes": 161,
+      "sha256": "0876a850268d06d2cb886f2c886488d4779961bb4211d7e7dc52fffd36016f9c"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl",
+      "bytes": 3461,
+      "sha256": "110657137c0413e3ca8808cd1fc74d741792942f818676bec69b4caaad5897bb"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl.meta",
+      "bytes": 158,
+      "sha256": "d1af4f0acc3a47cbac6d2ed13b96569fe350e63e2fe5601f4eb1af586213f86f"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIComposite.shader",
+      "bytes": 2224,
+      "sha256": "730b7b3e806f2d54a62d5556061983417af8dbf3f4a7cd35242e370c28e80479"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIComposite.shader.meta",
+      "bytes": 60,
+      "sha256": "ef0093169762d012f20d660b26085aff28982cf914023bd66811120b76bcc113"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIDebug.shader",
+      "bytes": 1134,
+      "sha256": "418afcdee33fff5565b9550f1f7a79a0aeeed1b4797fb8228d95a20fda6d52fc"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIDebug.shader.meta",
+      "bytes": 201,
+      "sha256": "c5f53089bc9c2f74597bef2248d826e8457236b6d046744e41b423add8aab2d7"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIGrid.hlsl",
+      "bytes": 601,
+      "sha256": "27ce1056448ff1161e407cdaf8e1790a575a62a3d0aa441113473ce458d33beb"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIGrid.hlsl.meta",
+      "bytes": 62,
+      "sha256": "2490ef0fec62b9901d4a63141bb92b0e5e8daeeb2a685e0e5f15ef2a5beb44d9"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl",
+      "bytes": 1408,
+      "sha256": "2aee17fa94a3cc188221e58ac08ec414da5aab333ae8a79bbaae36ec578a12c8"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl.meta",
+      "bytes": 62,
+      "sha256": "d80a52166cbe3314363108452a9c012b757e9c330e2690c7e4d6899c17355ab6"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGINrdSignal.hlsl",
+      "bytes": 482,
+      "sha256": "0f475dda1311587db6688d9fa9a22a440600b2c3488afc9fac895ad2d6ec972d"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGINrdSignal.hlsl.meta",
+      "bytes": 60,
+      "sha256": "5d509b1e4264b059c68d5b6339b8911b507d1789b9c680a72573a09499cc3477"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIResampling.hlsl",
+      "bytes": 2799,
+      "sha256": "fbbb2d1cdf3b54ecfb1c9dbeaa12f72ce7db2b96183b5a0e2fe000a94cad0f79"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIResampling.hlsl.meta",
+      "bytes": 62,
+      "sha256": "9066f51b0cd3aa45c65b998eb4cec0082fb55c99b2c8006628c4330c5a798049"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryData.hlsl",
+      "bytes": 824,
+      "sha256": "dc2e41d583b9b366ba322c1035db558fdd2a64950d78cedab1303770a7e70d3d"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryData.hlsl.meta",
+      "bytes": 158,
+      "sha256": "768b700fe59dabdf723d72725051af64d8838f5fa59590425d28e36d80c7ad3c"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl",
+      "bytes": 7699,
+      "sha256": "4132f4988935b5551431001a042e94ac5b2569485f7195aed6960ffbba784959"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl.meta",
+      "bytes": 158,
+      "sha256": "2221277a71861b66959cb6c324cbf2dbbca14b9ff29a46c689e640121d50d26e"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.shader",
+      "bytes": 1890,
+      "sha256": "60814ec59838a3614f49ef429111ddc9ae3cb1763ec66a7e72042d54e9ab45dc"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.shader.meta",
+      "bytes": 201,
+      "sha256": "5023578622ada01580093262ad2f234bfc90856e1a3039a92a51ee4ecbd9b0e5"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondarySurface.hlsl",
+      "bytes": 780,
+      "sha256": "1ff58f5134abad44a531c96e3b46d15c9240fe630c3c54fa65243b43ba8d4f44"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondarySurface.hlsl.meta",
+      "bytes": 158,
+      "sha256": "ad1b7c49e2784346917ac64e0eb50653c504762ea81d4dfb6d2f3e546d1772f8"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl",
+      "bytes": 4423,
+      "sha256": "a30fb74abf632dd3bd51324352bee3513323fa9e3b6ffe4d6e5932d7db1ec043"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIShadingCommon.hlsl.meta",
+      "bytes": 62,
+      "sha256": "9eed9385361e5e3f85fe06e42b18bb1e4131f452a09d0bade91219af51e2aed6"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD.meta",
+      "bytes": 80,
+      "sha256": "2295f9e839a8704763d59a2dabee52971d966df0fcbeea059e1f60b61ae41a02"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd00.compute",
+      "bytes": 296,
+      "sha256": "6e7d8bc68a6f79ddf1d7a2c636931e3c704f6f145bb69451a45fd66b289bb9fb"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd00.compute.meta",
+      "bytes": 62,
+      "sha256": "5961574df755048074a26fc02d5c6eb257e66fe9da8c5e521b6be425e6b48d4f"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd01.compute",
+      "bytes": 372,
+      "sha256": "ebbb3b83e9777ecc6129a9594897ca1a97940b8c5a858e3671cf01ad4e9555df"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd01.compute.meta",
+      "bytes": 62,
+      "sha256": "bd85942d54c380e5f3cfcc7e9c507ebf978d182ffcf6236433316511ccadc04e"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd02.compute",
+      "bytes": 372,
+      "sha256": "aa0217da7e22cf1b6a0dc57bdc731fdea0e6e60098a2d0327cd5a70c35336287"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd02.compute.meta",
+      "bytes": 62,
+      "sha256": "b3780733d22bbc6183e7d12030141e30c9d2586e985a827fbd08ff97b082b63c"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd03.compute",
+      "bytes": 339,
+      "sha256": "4b66e03ff97fdaee6237bec6e5832a633ef41862ed35e1286dd202b72645b533"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd03.compute.meta",
+      "bytes": 62,
+      "sha256": "b7d193796eeff31cc19876fe33e89ecb5c80453bdccd91c693a31edc843fe25e"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd04.compute",
+      "bytes": 352,
+      "sha256": "375ec673b05662a579d53224dd9075ff53872c428cf5e32b0da8669a07191d96"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd04.compute.meta",
+      "bytes": 62,
+      "sha256": "7a69860b7e0f94ed8e06b76b4840291bee3aa96615248dd30b6a7fe164b8a79b"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd05.compute",
+      "bytes": 342,
+      "sha256": "dd931551b9d007e6ccdae49805e06dfce0c9dd1aa11edcaca3bdac5c87a5d248"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd05.compute.meta",
+      "bytes": 62,
+      "sha256": "387927c613b83a8cf92474f73d2cd4cb38aa9878a1634ccb356ccacaefab59cc"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd06.compute",
+      "bytes": 347,
+      "sha256": "0a173025e7e5f35f25fc83da1dc08def435b1b4598ef4472576a0db0fb82e841"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd06.compute.meta",
+      "bytes": 62,
+      "sha256": "233dfd535b324d2eaed668938934beaa9b28efed3e4df272be5d6dd0ff590e4d"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd07.compute",
+      "bytes": 336,
+      "sha256": "a77f82bb374d542de75f070a1258a6b81a018cbe39597d25292ffc73d5501a84"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd07.compute.meta",
+      "bytes": 62,
+      "sha256": "64bf19e1491afa8f4c3af4931d2899b6439e61a9a5b6bbb42c2c9ba3bb946978"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd08.compute",
+      "bytes": 343,
+      "sha256": "fb62da4dee7f37482a497cf664fa51e2dbba936325f621bc0891a5a594d71b7f"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd08.compute.meta",
+      "bytes": 62,
+      "sha256": "6e29a89d4edbc80e7b128c02c6542140e4b4c45fcf14cd140c2f766c6b578376"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd09.compute",
+      "bytes": 342,
+      "sha256": "c708c755a8dc24349d367c1a23900669a8cc5977d726fecc2486bdd2dfbd9d76"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd09.compute.meta",
+      "bytes": 62,
+      "sha256": "4034e6ca23b03df9e99f5a4d0a4676fb69679695d192eaefa3438b67687a4b69"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd10.compute",
+      "bytes": 338,
+      "sha256": "5c806067a2c00dda3791fd6a335c06070d331750c74380a6ef30d697d5664f7b"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd10.compute.meta",
+      "bytes": 62,
+      "sha256": "87ca32bd4a17f37176ae98233381cb02e80379a44917ad39a21dd826c5e79261"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd11.compute",
+      "bytes": 343,
+      "sha256": "31b678801bf70a5ef674b79b18eabf5b07844fc882645e98c951e11d203531e1"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd11.compute.meta",
+      "bytes": 62,
+      "sha256": "6d8ee12e21b1de4430195c351c2bdf7f6f8fc9aaa52fb2c07c614b0ee03a43ec"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd12.compute",
+      "bytes": 293,
+      "sha256": "646b3e0ce55576c257244f352189147d62ea2eb94589a3c82c695561feaf8ef7"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd12.compute.meta",
+      "bytes": 62,
+      "sha256": "642dcd4bd375ab4ceb78063149f731c635daf5bd032418416caed5c113153736"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd13.compute",
+      "bytes": 297,
+      "sha256": "9b8545bb8b6616dab166be00aba863ab5074c380ce3be4935c0e6d33311daccf"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd13.compute.meta",
+      "bytes": 62,
+      "sha256": "1e932e4cccc12da8e1860fc5ee7c5b88f02be591aa75af9a3b1b596d1533010b"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd14.compute",
+      "bytes": 297,
+      "sha256": "5f00cf9b6c5f2ba121e291d4aea2d333f0adf3d06e549666b4ac9426576de18e"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/NRD/HoRTGINrd14.compute.meta",
+      "bytes": 62,
+      "sha256": "0a0a0b93c5d1e07302f34badb660c9379aa85bc37cde90ef94eeeec9badd30de"
+    },
+    {
+      "path": "Runtime/RayTracing.meta",
+      "bytes": 169,
+      "sha256": "d96bc3d3e370f203a87b8d407016d7ccbd2fa367333b61b60f56e21aeb050953"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTCutoutSupport.cs",
+      "bytes": 2537,
+      "sha256": "f817dfda2ed76f1f0c26038173ada1c009d4dec0ebe515a37d0f3fef38db6a3d"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTCutoutSupport.cs.meta",
+      "bytes": 60,
+      "sha256": "ce4260c8873f3e444b4b48813fd81b011828ba5cdda0fd37bd95f733e777196c"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs",
+      "bytes": 11199,
+      "sha256": "e7817acb6b60425dd9360d479e5533713e384cf5f820cc246d7be8b2458cb265"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs.meta",
+      "bytes": 59,
+      "sha256": "46f245366b71fc0c2a9882a91ed502234c1746cae337629b91609dde29e04208"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTRayMeshIndices.cs",
+      "bytes": 2381,
+      "sha256": "f34f4512c3e51ff328316c96af48ca3547a27cadbf327fba8d724624b7f79d49"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTRayMeshIndices.cs.meta",
+      "bytes": 62,
+      "sha256": "cf2ce0c54cb6c44eba6e09fa975e5a47601f6baa285b0a436912e474575c404f"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTScene.cs",
+      "bytes": 20339,
+      "sha256": "2cdf2ab3781a14d1cded399717b88f9aeba6d3dbcdd69135c1d52efce1dc6d29"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTScene.cs.meta",
+      "bytes": 59,
+      "sha256": "988ee1d52074247ccd71d0f490af3ad6c09a45f2140c50c44d402edcb3d6c087"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTSharedData.cs",
+      "bytes": 424,
+      "sha256": "924c26bab4fd5f750a6c36258979a53c4a7893b58d3e00cef27387190e26eb07"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTSharedData.cs.meta",
+      "bytes": 60,
+      "sha256": "bf7d8501a3a5fee203889abcdad8436c7dc82d08d3842306c390df84b51291e3"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTSkinnedMesh.cs",
+      "bytes": 3361,
+      "sha256": "8ad248ad21f76e7104baa80b0f9ee9c69c34782f102178b8b7ba83be5b95a0b2"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTSkinnedMesh.cs.meta",
+      "bytes": 60,
+      "sha256": "018858643ee59063789357bbb29d3fa34ee9c4d29664aa6877cb056ff5f4140e"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders.meta",
+      "bytes": 169,
+      "sha256": "b82040249e75fb4b81f802f1a90d1862cb22694109abfc49c209c52eb7dba627"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl",
+      "bytes": 4959,
+      "sha256": "682cb34f549394edc44c0e123f8471e5c68a42135614e2c7d98e267bcc96949b"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl.meta",
+      "bytes": 158,
+      "sha256": "815599c3004d578b9b02cab2a5845c68d65005ff1c90887d7a4b31149a030098"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneHit.hlsl",
+      "bytes": 342,
+      "sha256": "5b51fe9913dc064357ff9d1d688708eed7e13491884b1488c57ba76eb2cd42da"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneHit.hlsl.meta",
+      "bytes": 62,
+      "sha256": "31e46724390e697f5c127950a4390868ba251b36e77352d1a37ddd4202664177"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneQuery.hlsl",
+      "bytes": 2225,
+      "sha256": "6cf489a175782cfc06bc7f265d65e0b911b93120a4ff1e1cc4b6b03f73f4063a"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTSceneQuery.hlsl.meta",
+      "bytes": 158,
+      "sha256": "6d2d10bf66fef91515e71c60e0fb6174b998082ebb5d3fe862a33f698fdef886"
+    },
+    {
+      "path": "Runtime/jp.lilxyzw.liltoon.urp.extensions.Runtime.asmdef",
+      "bytes": 464,
+      "sha256": "1bb44cbd1a71cfdf42e654e94e4b5b0378e41f94a57a9deaf2fc0aae2e9dd437"
+    }
+  ],
+  "acceptedEvidence": [
+    {
+      "path": "Tests~/RenderingArchitecture/README.md",
+      "scope": "Historical A01 ABI, independent histories and paired GPU/dispatch checks; old whole-tree guards are not current-tree passes."
+    },
+    {
+      "path": "Tests~/RenderingReuse/README.md",
+      "scope": "Historical A02 signal/publication parity, snapshots and Release checks."
+    },
+    {
+      "path": "Tests~/RTGI/Backbuffer/README.md",
+      "scope": "Existing bounded automatic-camera/Player validation; no full quality or performance acceptance."
+    },
+    {
+      "path": "Tests~/CharacterShadow/Filtering-20261028/README.md",
+      "scope": "Current raster shadow baseline; not RTShadow or SIGMA."
+    }
+  ],
+  "knownUnresolved": [
+    "F39 AS instance-growth scratch diagnostic",
+    "GI filtered local/full-image quality failures and complex dynamic motion",
+    "Full 1080p frame budget/platform matrix",
+    "New Ho-RT host, RTShadow and SIGMA production path are not implemented"
+  ]
+}

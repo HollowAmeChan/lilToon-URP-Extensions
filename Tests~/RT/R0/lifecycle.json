@@ -1,0 +1,27 @@
+{
+  "stage": "R0",
+  "scope": "Read-only source lifecycle audit, not runtime scheduling validation",
+  "sources": [
+    {
+      "path": "D:\\Unity_Fork\\HoUrp17.3.0\\Runtime\\UniversalRenderPipeline.cs",
+      "sha256": "DBBBA254B1452A6599D5BC575BEB7C1DC9A6CDD188A950FCA6A64875704D7046"
+    },
+    {
+      "path": "D:\\Unity_Fork\\HoUrp17.3.0\\Runtime\\ScriptableRenderer.cs",
+      "sha256": "C537CE86CE4608326A59A056EC54334D2413A261FB73DDF1058A511EB9651A4A"
+    },
+    {
+      "path": "D:\\Unity_Fork\\HoUrp17.3.0\\Runtime\\ScriptableRendererFeature.cs",
+      "sha256": "B060C143AFBEE4AE5E2B96FFABC534E3C5717A251DE573B8749E4490D1201B3D"
+    }
+  ],
+  "hookOrder": [
+    "OnCameraPreCull for every active feature",
+    "context.Cull",
+    "AddRenderPasses for every active feature",
+    "RenderGraph or compatibility execution"
+  ],
+  "plannedHostScope": "renderer instance + camera + monotonic render epoch",
+  "poseInvariant": "Shared PoseVersion; every AS view tracks last observed version",
+  "buildInvariant": "Frozen revision inputs; ordered non-async graphics build/trace"
+}

@@ -192,7 +192,7 @@ RT 灯样本的真实遮挡与 blocker 距离
 
 逐灯保留 raw 与 denoised 的身份及状态。使用历史时按相机、灯身份及场景有效性隔离；多灯流式无历史处理与持久保存所有逐灯结果是不同资源方案。
 
-当前仓库的公共执行器与 native 调度 ABI 可以作为基础；生产代码目前只有 RELAX 设置绑定及 DI/GI 的 RELAX manifest。接入需补 SIGMA 的匹配版本参数 ABI、实际 pipeline descriptors、Unity shader wrappers、外部输入输出绑定及验收。本地固定版本为 4.17.3；不能拿上游 master 的设置布局直接覆盖，也不能因头文件存在 SIGMA 就宣称当前 DLL / 生产链已经完成支持。
+当前仓库的公共执行器与 native 调度 ABI 可以作为基础；生产代码目前只有 RELAX 设置绑定及 DI/GI 的 RELAX manifest。R0 已对现用 DLL 实测：NRD 4.17.3、normal encoding 2 / roughness 1，明确支持 `SIGMA_SHADOW`（16）及 `SIGMA_SHADOW_TRANSLUCENCY`（17），两种实例均创建成功，各有 9 pipelines、1 permanent、8 transient。无需为 SIGMA 重编当前 native 插件。接入仍需补匹配版本参数 ABI、Unity shader wrappers、外部输入输出绑定及 GPU 验收；descriptor 成功不等于生产降噪链路已完成。证据见 [R0 inventory](../Tests~/RT/R0/sigma-inventory.json)，可执行 [CPU probe](../Tests~/RT/R0/probe_sigma.py)。
 
 ### 6.4 派生输出按需求提供
 
@@ -315,7 +315,23 @@ Editor/
 
 每阶段先固定输入及当前源码，再审实现、检查数值 / 画质 / 生命周期，匹配证据通过后单独提交。新增结果写回本页对应状态及既有测试位置，不再建立多份计划、交接和收尾文档。失败保留原门槛与原因，不能用过程退出 0 或目录去重冒充正确性 / 性能收益。
 
-当前下一步为 **R0 能力核对，接着 R1 纯迁移**。本次重新规划不执行目录移动、创建 Feature、更换插件或修改用户工程配置。
+### 8.5 目标模式进展与每步评价
+
+用户已授权按本路径持续实施；每步独立过滤提交。设计和阶段评价只更新本页，当前任务证据统一置于 `Tests~/RT/`。不操作用户桌面，不改用户工程资产。只在有实现与验证证据时推进阶段状态，不将已派发任务当完成。
+
+| 阶段 | 状态 | 正确性 / 收益 | 成本与偏航检查 | 后续 |
+| --- | --- | --- | --- | --- |
+| R0 | 已完成 | 637 项 RT 源码 / 资源基线 SHA 已固定；Runtime / Editor 编译 0 errors；现用 DLL 两 SIGMA 描述实例成功；真实 URP hook 已核对 | 生产源码及插件未改，无画质 / 显存收益声明；排除不必要的 native 重编和自动排序设计 | R1 纯迁移 |
+| R1–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
+
+R0 采用的宿主准备合同：
+
+1. Ho-RT 显式排在消费者前。host `OnCameraPreCull` 打开本次 epoch，消费者各自的 pre-cull 提交不可变请求；全部 pre-cull 先于 `context.Cull`，随后才是全部 `AddRenderPasses`，两后端共用此顺序。host 在 Add 聚合扫描与同步并冻结，consumer 在 Add 取得自己的 view；不以仅 compatibility 存在的 `SetupRenderPasses` 做公共 hook。
+2. 定位与有效性键为 renderer 实例、camera 和单调 render epoch，不能仅比较 frameCount。Create 只创建宿主自有状态，不猜当前 renderer。迟到请求、缺 host、错 epoch 明确拒绝；定位表不拥有一个跨所有 renderer 的全局 AS。
+3. 共享蒙皮快照用单调 PoseVersion，每个 AS view 保存已观察的版本。一次 Bake 后所有相关 view 都需要 UpdateInstanceGeometry；不能共享一个被首个同步消耗的 `changed` 布尔。
+4. views 保留自己的相关 revision、材质适配能力和 GPU 使用期；场景或 adapter 的销毁不能破坏其他消费者或已记录输入。AS build 仍在明确的首个 trace 之前执行，保留 stale-input 拒绝与非 async unsafe 依赖。
+
+源码依据与冻结基线见 [baseline.json](../Tests~/RT/R0/baseline.json)，复核入口 [verify_baseline.py](../Tests~/RT/R0/verify_baseline.py)，本次分程序集编译记录 [compile.json](../Tests~/RT/R0/compile.json)。旧 GPU 结果仅用于确定已有验证范围；R0 没有把历史 SHA guard 改成当前通过，也未声称进行了新的 GPU 画质验收。
 
 <a id="quality-reference"></a>
 

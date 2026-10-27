@@ -1,0 +1,12 @@
+{
+  "stage": "R0",
+  "command": "powershell .codex-research/check_compile.ps1",
+  "actualExit": 0,
+  "errors": 0,
+  "warnings": "Existing CS0649 GI/SSGI/PLR validation fields; no suppression added",
+  "sourceCommit": "e7e0af7591ac0e2454786828ff20dc61816356af",
+  "logPath": ".codex-research/ho-rt-r0-compile.log",
+  "logSha256": "442F4E72933E5D4D055F4CE5C273D0F4DF15278F8339AF79638B011B357DA638",
+  "compiler": "Unity 6000.3.15f1 bundled Roslyn, Runtime and Editor assemblies split",
+  "scope": "C# compilation only, not GPU rendering or new RT host"
+}

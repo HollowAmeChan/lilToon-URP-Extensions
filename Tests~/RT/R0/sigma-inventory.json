@@ -1,0 +1,628 @@
+{
+  "scope": "CPU-only library/instance descriptors; no Unity, GPU execution or image-quality validation.",
+  "version": [
+    4,
+    17,
+    3
+  ],
+  "normalEncoding": 2,
+  "roughnessEncoding": 1,
+  "abiSizes": {
+    "library": 40,
+    "creation": 48,
+    "pipeline": 320,
+    "texture": 8,
+    "instance": 112,
+    "sigmaSettings": 20
+  },
+  "sources": [
+    {
+      "path": "Runtime/NRD/Plugins/x86_64/HoRTDINRD.dll",
+      "sha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRDDescs.h",
+      "sha256": "f3594a82241cb0a9c03479906dbed2d81421c6a19ce64ba204ed1d2cd285badd"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRDSettings.h",
+      "sha256": "3a1c30d3958c3fc867f0554ed4dbad84e4278a7d890019abc4ee631b1d487b51"
+    },
+    {
+      "path": "Tests~/RT/R0/probe_sigma.py",
+      "sha256": "143ed54e34d42b632b5dd7288846b09b32b76c9396cc634ecda731718c532f93"
+    }
+  ],
+  "supportedDenoisers": [
+    {
+      "value": 0,
+      "name": "REBLUR_DIFFUSE"
+    },
+    {
+      "value": 1,
+      "name": "REBLUR_DIFFUSE_OCCLUSION"
+    },
+    {
+      "value": 2,
+      "name": "REBLUR_DIFFUSE_SH"
+    },
+    {
+      "value": 3,
+      "name": "REBLUR_SPECULAR"
+    },
+    {
+      "value": 4,
+      "name": "REBLUR_SPECULAR_OCCLUSION"
+    },
+    {
+      "value": 5,
+      "name": "REBLUR_SPECULAR_SH"
+    },
+    {
+      "value": 6,
+      "name": "REBLUR_DIFFUSE_SPECULAR"
+    },
+    {
+      "value": 7,
+      "name": "REBLUR_DIFFUSE_SPECULAR_OCCLUSION"
+    },
+    {
+      "value": 8,
+      "name": "REBLUR_DIFFUSE_SPECULAR_SH"
+    },
+    {
+      "value": 9,
+      "name": "REBLUR_DIFFUSE_DIRECTIONAL_OCCLUSION"
+    },
+    {
+      "value": 10,
+      "name": "RELAX_DIFFUSE"
+    },
+    {
+      "value": 11,
+      "name": "RELAX_DIFFUSE_SH"
+    },
+    {
+      "value": 12,
+      "name": "RELAX_SPECULAR"
+    },
+    {
+      "value": 13,
+      "name": "RELAX_SPECULAR_SH"
+    },
+    {
+      "value": 14,
+      "name": "RELAX_DIFFUSE_SPECULAR"
+    },
+    {
+      "value": 15,
+      "name": "RELAX_DIFFUSE_SPECULAR_SH"
+    },
+    {
+      "value": 16,
+      "name": "SIGMA_SHADOW"
+    },
+    {
+      "value": 17,
+      "name": "SIGMA_SHADOW_TRANSLUCENCY"
+    },
+    {
+      "value": 18,
+      "name": "REFERENCE"
+    }
+  ],
+  "sigma": [
+    {
+      "name": "SIGMA_SHADOW",
+      "type": 16,
+      "createResult": 0,
+      "entry": "main",
+      "registers": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        528
+      ],
+      "constantMax": 528,
+      "samplers": [
+        0,
+        1
+      ],
+      "descriptorPool": [
+        7,
+        2,
+        24,
+        23,
+        19
+      ],
+      "pipelines": [
+        {
+          "identifier": "SIGMA_ClassifyTiles.cs.hlsl|TRANSLUCENCY=0",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 4256,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 2
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_SmoothTiles.cs.hlsl",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 3084,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 1
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_Copy.cs.hlsl",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 2736,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 3
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 2
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_Blur.cs.hlsl|TRANSLUCENCY=0|FIRST_PASS=1",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 19112,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 4
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 2
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_Blur.cs.hlsl|TRANSLUCENCY=0|FIRST_PASS=0",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 19572,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 5
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 2
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_TemporalStabilization.cs.hlsl|TRANSLUCENCY=0",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 9748,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 7
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 2
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_SplitScreen.cs.hlsl|TRANSLUCENCY=0",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 2320,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 2
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "identifier": "Clear.cs.hlsl|FLOAT=1",
+          "hasConstants": false,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 1540,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "identifier": "Clear.cs.hlsl|FLOAT=0",
+          "hasConstants": false,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 1548,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        }
+      ],
+      "permanent": [
+        {
+          "format": "R32_UINT",
+          "value": 28,
+          "downsample": 1
+        }
+      ],
+      "transient": [
+        {
+          "format": "R16_SFLOAT",
+          "value": 17,
+          "downsample": 1
+        },
+        {
+          "format": "R16_SFLOAT",
+          "value": 17,
+          "downsample": 1
+        },
+        {
+          "format": "R8_UNORM",
+          "value": 0,
+          "downsample": 1
+        },
+        {
+          "format": "R8_UNORM",
+          "value": 0,
+          "downsample": 1
+        },
+        {
+          "format": "R8_UNORM",
+          "value": 0,
+          "downsample": 1
+        },
+        {
+          "format": "R32_UINT",
+          "value": 28,
+          "downsample": 1
+        },
+        {
+          "format": "RGBA8_UNORM",
+          "value": 8,
+          "downsample": 16
+        },
+        {
+          "format": "RG8_UNORM",
+          "value": 4,
+          "downsample": 16
+        }
+      ]
+    },
+    {
+      "name": "SIGMA_SHADOW_TRANSLUCENCY",
+      "type": 17,
+      "createResult": 0,
+      "entry": "main",
+      "registers": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        528
+      ],
+      "constantMax": 528,
+      "samplers": [
+        0,
+        1
+      ],
+      "descriptorPool": [
+        7,
+        2,
+        27,
+        23,
+        19
+      ],
+      "pipelines": [
+        {
+          "identifier": "SIGMA_ClassifyTiles.cs.hlsl|TRANSLUCENCY=1",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 4972,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 3
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_SmoothTiles.cs.hlsl",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 3084,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 1
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_Copy.cs.hlsl",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 2736,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 3
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 2
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_Blur.cs.hlsl|TRANSLUCENCY=1|FIRST_PASS=1",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 24124,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 5
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 2
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_Blur.cs.hlsl|TRANSLUCENCY=1|FIRST_PASS=0",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 24408,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 5
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 2
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_TemporalStabilization.cs.hlsl|TRANSLUCENCY=1",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 14136,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 7
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 2
+            }
+          ]
+        },
+        {
+          "identifier": "SIGMA_SplitScreen.cs.hlsl|TRANSLUCENCY=1",
+          "hasConstants": true,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 2480,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "TEXTURE",
+              "value": 0,
+              "count": 3
+            },
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "identifier": "Clear.cs.hlsl|FLOAT=1",
+          "hasConstants": false,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 1540,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        },
+        {
+          "identifier": "Clear.cs.hlsl|FLOAT=0",
+          "hasConstants": false,
+          "bytecodeBytes": {
+            "dxbc": 0,
+            "dxil": 1548,
+            "spirv": 0
+          },
+          "ranges": [
+            {
+              "type": "STORAGE_TEXTURE",
+              "value": 1,
+              "count": 1
+            }
+          ]
+        }
+      ],
+      "permanent": [
+        {
+          "format": "R32_UINT",
+          "value": 28,
+          "downsample": 1
+        }
+      ],
+      "transient": [
+        {
+          "format": "R16_SFLOAT",
+          "value": 17,
+          "downsample": 1
+        },
+        {
+          "format": "R16_SFLOAT",
+          "value": 17,
+          "downsample": 1
+        },
+        {
+          "format": "RGBA8_UNORM",
+          "value": 8,
+          "downsample": 1
+        },
+        {
+          "format": "RGBA8_UNORM",
+          "value": 8,
+          "downsample": 1
+        },
+        {
+          "format": "RGBA8_UNORM",
+          "value": 8,
+          "downsample": 1
+        },
+        {
+          "format": "R32_UINT",
+          "value": 28,
+          "downsample": 1
+        },
+        {
+          "format": "RGBA8_UNORM",
+          "value": 8,
+          "downsample": 16
+        },
+        {
+          "format": "RG8_UNORM",
+          "value": 4,
+          "downsample": 16
+        }
+      ]
+    }
+  ]
+}
