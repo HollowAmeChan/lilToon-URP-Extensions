@@ -1,6 +1,6 @@
 # Ho-RT：公共底座与 RTShadow
 
-> 状态：**现行设计与下一轮工作入口，尚未实现**，2026-10-28。合并公共底座、RTShadow、连续 Cast 与 SIGMA 的决策及质量研究结论。下述新接口名称是设计，不是已经存在的 API。
+> 状态：**现行设计与下一轮工作入口，尚未实现**，2026-10-28。实施路径已按目录迁移、统一资源宿主、现有消费者迁移和独立 RTShadow 重新规划，见 §8。下述新接口名称是设计，不是已经存在的 API。
 
 ## 0. 先确认实现状态
 
@@ -22,7 +22,7 @@
 - **Ho-RT**：公共场景资源、几何与材质查询能力、当前渲染请求的准备与生命周期。
 - **Ho-RTShadow**：按光源与接收域生成 Cast 可见度产品，供 NPR 材质和其他系统按约定消费。
 
-RT 硬投影参考由 RTShadow 的零角度、无历史模式承担，作为公共查询链路的第一个可视验收。DI、GI、反射等直接使用公共查询能力，各自保留光照算法、输出和历史。
+现有 DI / GI 先迁移为公共底座消费者，验证资源归属与行为不变。随后 RTShadow 的零角度、无历史模式提供新增阴影链路的几何基准，再接 SIGMA 与 NPR。各消费者直接使用公共查询能力，保留各自算法、输出和历史。
 
 ## 2. 行业中两条路线同时存在
 
@@ -114,7 +114,9 @@ Cast Off 的表面仍可能需要参与 GI 或反射。单/双面、Shadows Only
 
 ### 5.4 帧准备与多相机
 
-建议由 host 收集消费者声明，准备并冻结当前渲染的场景快照；查询输入声明可读资源与 build 完成依赖。Cast 可在 GB/SB 之后、opaque toon 之前运行，DI/GI 保持自己的后置阶段。不能依赖 RendererFeature Inspector 排列碰巧正确，也不能仅声明同一个 RenderPassEvent 就假定资源已准备好。
+由 host 收集消费者声明，准备并冻结当前渲染的场景快照；查询输入声明可读资源与 build 完成依赖。Cast 可在 GB/SB 之后、opaque toon 之前运行，DI/GI 保持自己的后置阶段。初版沿用现有 [Feature 排序契约](Ho-RenderFeatureOrdering.md)：明确配置宿主准备与生产者 / 消费者的列表次序，同事件按入队顺序记录。校验缺失或顺序错误的依赖，不能依靠未声明的全局资源，也不能仅用相同 RenderPassEvent 假定资源已准备好。RenderGraph 不会替应用自动重排尚未生产的 ContextItem。
+
+宿主的 CPU 请求准备、GPU AS build 和效果执行是三个时机。宿主应在消费者记录之前给出冻结输入，AS build 则在首个实际 trace 前有明确命令依赖；不因此把所有效果搬到同一个 pass，也不要求宿主拥有最早的屏幕绘制。具体注册 / 准备 hook 在 R0 核对现有 URP 生命周期后确定。
 
 RenderGraph 对 AS 的真实访问和 build 依赖需要由公共实现显式处理。现有 [HoRTScene.Inputs](D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RayTracing/HoRTScene.cs:253) 的 revision 检查应保留并扩展到统一所有权；GPU 使用结束前不能更新或释放对应快照。
 
@@ -236,17 +238,84 @@ NPR 消费者应明确每条输入是未遮挡照明、已遮挡照明还是独�
 
 现有 shadow map 与 RTShadow 可以生产同一种受约束的 Cast 接收合约。同一相机、灯与接收域的最终 Cast 要有明确来源选择，避免两路重复应用；具体通过替换还是额外叠加，必须由合成语义明确决定。
 
-## 8. 实施顺序与第一阶段边界
+## 8. 实施路径与阶段验收
 
-1. 定义 Ho-RT host、scene snapshot、查询能力与 consumers 的需求声明，记录与现有公共 NRD 的边界。
-2. 将真实 occlusion / alpha / hit identity 验证置于公共层；RTShadow 单灯、零角度、无历史作为最小几何参考，随后接入 SIGMA 并验证有限光源连续 V 与实际 NPR ramp 接收。
-3. 有界迁移 DI/GI 的资源请求，验证行为不变、独立历史不串用、前后阶段和多相机生命周期正确。
-4. 验证姿态复用及兼容 scene view 的 AS 复用，按实测记录收益，不强行把所有策略塞入一个 view。
-5. 扩展 RTShadow 指定灯组与多灯逐项输出，再根据实际 NPR 消费需求加入派生聚合。
+本轮按 **核对基线 → 纯目录迁移 → 建立宿主 → 迁移既有 DI/GI → 单灯 Cast → SIGMA 与 NPR 接收 → 多灯扩展** 推进。每阶段是可单独审查、验证和提交的边界；当前状态全部为待实施，不因本文写出接口就视为完成。
 
-单帧与空间采样按下方 §9 的质量约束验证。正式阴影重建优先 SIGMA；高预算采样与最终颜色空间超采样用于参考及按需导出，属于图像采样协调能力，不因启用 Ho-RT 就自动施加固定成本。
+先让现有消费者证明公共资源宿主正确，再增加新阴影功能。SIGMA 的 DLL 能力探测提前做，正式信号接入则等待 Cast 提供真实、正确的距离与表面数据。
 
-第一阶段不以“全灯、所有材质、所有平台、所有派生输出都具备”为完成条件。完成条件是：公共底座有真实所有权和依赖合约，最小 RTShadow 可独立使用且能提供未经 toon 处理的连续半影估计给 NPR ramp，既有 DI/GI 在迁移范围内保持各自行为，错误状态与资源释放可验证。只有硬投影参考通过，不足以判定 NPR Cast 已完成。
+### 8.1 目标目录与模块归属
+
+```text
+Runtime/
+  RT/                  # 由现有 RayTracing 整体迁入，加 HoRTRendererFeature
+    Shaders/           # 通用 query / hit / primary / alpha 等公共实现
+  RTShadow/            # 新增阴影 feature、采样、逐灯输出、SIGMA 信号适配
+  RTDI/                # 保留直接光策略、输出、采样、合成与独立历史
+  RTGI/                # 保留间接光策略、输出、采样、合成与独立历史
+  NRD/                 # 通用 native ABI、执行器与插件，继续独立
+Editor/
+  RT/                  # 由现有 Editor/RayTracing 迁入
+  RTShadow/            # 新阴影 Inspector 与验证入口
+```
+
+`Runtime/RayTracing` 与 `Editor/RayTracing` 迁移后不留平行目录或转发类。C# 公共命名空间同步由 `.RayTracing` 收敛到 `.RT`，`HoRTScene` 等类型名称保留。新 host 管资源，RTShadow 管阴影产品；公共 NRD 不并入某个效果。SIGMA 的通用执行支持进 `NRD`，阴影前后端输入、逐灯状态与 manifest 由 RTShadow 适配。
+
+### 8.2 分阶段交付
+
+| 阶段 | 工作与边界 | 完成条件 |
+| --- | --- | --- |
+| **R0 基线与能力核对** | 固定当前 DI/GI、CS 与资源基线；确认真实 URP 准备 hook；读取当前 NRD DLL 的支持列表及 SIGMA descriptors | 有可复现的支持 / 缺失结论、当前源与验证对应关系、资源所有权及调度合同；不改生产效果 |
+| **R1 纯目录迁移** | RayTracing → RT，保留 `.meta` GUID，更新命名空间、include 和当前验证工具路径 | 源码差异限于迁移与引用；Runtime/Editor 编译及必要 shader / 求交回归通过，DI/GI 画面行为不变 |
+| **R2 Ho-RT 宿主与共享场景数据** | 新建 HoRTRendererFeature，提供 renderer / render-view 域内的快照与查询 view；统一几何登记、姿态快照和生命周期 | 两个独立测试消费者取得正确输入，兼容姿态不重复 Bake，依赖 / 失效 / 释放 / 多相机隔离可验证 |
+| **R3 DI/GI 资源迁移** | 先 DI、再 GI，从私有 new / Synchronize / Dispose 改为请求 host；保持各自光照算法、输出、材质求值和历史 | 单独与同时启用、开关 / 重建 / resize / 材质与姿态变化通过；匹配输入下 raw / filtered 与基线一致，没有隐藏私有场景回退 |
+| **R4 单灯 RTShadow** | 新增独立 HoRTShadowRendererFeature，先做一个方向光的角色 Cast；提供逐灯身份、raw 可见度、真实 blocker 距离与明确有效性 | opaque / cutout / 离屏遮挡 / 投射规则正确，主光接收来源明确，未接 SIGMA 时可独立调试与作硬影参考 |
+| **R5 SIGMA 与 NPR 正式接收** | 补通公共 NRD 的 SIGMA 支持，逐灯降噪、官方解码后进入现有 ramp；提供预览与无历史导出模式 | 连续 V、窄 / 多层 ramp、角色微动及冷启动单帧验收通过，历史不串灯，当前固定状态可独立导出 |
+| **R6 多灯与派生输出** | 扩展点 / 聚光及经过单独验证的光源形状；按请求生成灯组 / 全部相关灯的逐灯产品 | Light ID / slot 重排、灯增删、不同接收域和逐灯采样正确；按需保存或流式汇总，成本和有效性明确 |
+
+### 8.3 各阶段必须落实的内容
+
+**R0：先消除接入不确定性。** 用当前 pinned NRD 4.17.3 的 DLL 读取 supported denoisers、创建 SIGMA 实例、检查实际资源格式与 pipelines。若当前 DLL 已包含 SIGMA，复用原插件；确实未包含时才设计匹配版本的构建，不为这一步顺带升级 SDK。确认 SIGMA 所需距离、NoL、guides、平方解码及禁用 stabilization 的合同。结果更新到本文 §6.3，不另开新的过程文档。
+
+同时审计 `Create / AddRenderPasses / RecordRenderGraph / Dispose` 与当前 renderer / camera 作用域。确定消费者怎样声明需求、host 在何时冻结快照、何处验证顺序；不以一个跨所有 RendererData 的静态全局 AS 代替所有权设计。记录当前 DI/GI 配置、输出、历史和已知失败作为迁移基线，历史 run / SHA 保留原样。
+
+**R1：迁移与渲染行为分开。** 使用保留文件和目录 `.meta` 的移动，更新当前 C# 引用、Shader include、资源加载及可执行测试 / 生成器路径；核查 `Shader.Find`，保留与目录无关的既有 Shader 名称。保留材质 Shader GUID、shader globals、native ABI 字符串和数值。历史源码快照、run、source-index 和旧 SHA 不批量改写；当前测试若硬编码旧路径，迁移执行入口并标注其与历史记录的关系。
+
+**R2：公共所有权需要覆盖实际资源。** host 持有世界登记和可复用的几何 / 蒙皮快照，`HoRTScene` 继续是其内部实现。view 根据几何过滤、用途策略和 hit-material 能力确定；保留当前 DI / GI 不同 hit group，先允许相同姿态供多个 AS view 使用。此阶段不把所有材质求值重写成一个超级 shader，也不承诺一个 AS 能满足全部策略。
+
+请求至少表达当前 renderer / 相机渲染域、所需集合与查询能力；返回值带可用性、lifetime / revision 与 GPU 使用期。只做遮挡和最近命中是不同能力。相同快照内的相同姿态由共享缓存提供；构建次数、Bake 次数、实际持有 Mesh / buffer 的计数证明复用，不能仅靠把两个 scene 字段包进 host 就算完成。场景 / Prefab Stage / Editor 同帧变化、多相机、重复 Create / Dispose、消费者中途停用和 GPU 使用期均需覆盖。
+
+首版沿用显式 Feature 排序并检查依赖，见 §5.4。生产 host / GB / SB 需要先于相应消费者准备或记录；GPU build 在首次 trace 前建立顺序，消费者 pass 自己声明所有读写。缺 host、错误顺序或 unsupported 返回明确状态，不能读取上一次相机的全局资源。
+
+**R3：一条消费者一条消费者迁移。** DI 与 GI 分别完成审查和提交，保留其几何 / 材质排除、采样参数、灯选择、合成方式、NRD profile、独立历史和失效条件。消费者提供用途与材质 adapter，host 拥有相应 view 及几何数据；消费者停止不释放别的效果仍在使用的共享资源。最终移除 DI/GI 对场景的私有创建、同步与释放，不提供缺 host 时静默重建原私有场景的路径。
+
+资源共享不随意改变 revision 的语义：一个无关 view 的改变不应在没有输入变化时清掉另一效果历史，真实相关变化也不能漏报。DI 单灯精确路径、多灯 / 环境路径、GI raw / NRD / 合成均保留匹配输入的对照。原本失败的质量或 AS 增长夹具继续作为未解决项，不能因本轮迁移修改门槛或改写历史。
+
+**R4：明确 Shadow 与公共几何查询之间的边界。** RTShadow 独立依赖 Ho-RT，先使用 native raygeneration 与现有已支持的 alpha 能力；公共 alpha 判定和支持域归入 RT，DI / GI 的完整材质与辐射求值仍由自身负责。接收集合限角色不代表 caster 只含角色，Cast Off、Shadows Only、单 / 双面与 layer / linking 是 Shadow 的显式用途策略。
+
+零角度方向光验证精确二值遮挡；非零角度验证实际光源样本及正确距离，不能把硬影复制多次称为半影。为 SIGMA 准备的数据按最近有效命中计算，不能使用任意 first-hit 的距离。先保存 raw 数据；无效表面、无请求、未支持和 miss 分开。屏幕输入必须匹配 GB/SB 的相机、jitter、分辨率和 owner。
+
+正式 Cast 通过现有材质接收位置进入，保留各层 receive / Mask / ramp。选定主光与接收域的来源在 RT、当前 CS / URP 回退间明确解析，不能重复叠乘；不影响其他附加灯的原通道。主光和接收域采用稳定身份，接口可表示多灯，但此阶段不预分配全灯全屏纹理。
+
+**R5：SIGMA 作为生产链路，不把 RELAX 改名使用。** 公共 NRD 补类型独立的 settings 提交、匹配的 `SigmaSettings` ABI 及实际格式支持，RTShadow 补按当前 descriptors 生成的 manifest、原版 shader wrappers、输入绑定和官方前后端。原 RELAX 调度、参数和 shader 不因新增 SIGMA 改变。先验证一个独立 SIGMA 输入夹具，再连接真实角色 Cast，并保留 raw / denoised 对照。
+
+预览允许逐相机、逐灯的时空稳定；导出验证 `maxStabilizedFrameNum=0`。同帧多样本若用于提高质量，必须明确匹配该 SDK 的输入统计和编码，不能把平均可见度或平均命中距离随意填进 `IN_PENUMBRA`。高预算无降噪图可作为独立参考。不同模式的 seed / frame index、reset、切镜头、灯移动与 slot 重用均有明确定义。
+
+验收以 SIGMA **解码后的连续 V** 和实际窄 / 多层 ramp 为准，检查 banding、漏光、细发片丢失、拖尾和对象边界。完整本影仍允许为 0，不要求降噪凭空制造内部梯度。最终颜色的空间 AA 与物理半影分开评价。固定场景、时间及样本种子下，冷启动 / 任意帧序结果要符合无历史合同；其他 GI / TAA / 模拟的历史另行处理。
+
+**R6：只在单灯质量闭环后扩展。** 用稳定 Light ID → 本次 slot 的元数据发布逐灯结果，维护灯增删 / 重排 / 类型变化和历史隔离。“全部灯”限定为当前支持且被请求的显式灯集合，不自动包含环境光、所有发光网格或间接光。灯组 / 加权遮挡是明确定义的可选派生输出，完整直接光积分继续属于 DI。只请求主光时不承担全灯存储与追踪成本。
+
+### 8.4 里程碑、验证与停止边界
+
+- **底座里程碑（R0–R3）**：目录归属明确，Ho-RT 是真实资源宿主，DI/GI 已迁入且保持各自行为；共享几何 / 姿态有可测证据，多 view 和多相机生命周期正确。
+- **NPR 阴影里程碑（R4–R5）**：独立 RTShadow 可供角色材质使用，SIGMA 输出正确解码的连续 V，保留实际 ramp 语义，预览和无历史单帧分别验收。硬影参考通过不等于该里程碑完成。
+- **多灯里程碑（R6）**：多个受支持灯的逐项可见度和按需输出稳定，身份、历史、采样及成本记录完整。
+
+每步按影响范围运行 Runtime / Editor 分程序集编译、相关 shader 编译与 D3D12 RenderGraph / compatibility GPU 检查；涉及 unsupported 则保留 D3D11 安全分支，涉及资源迁移则检查实际 Player 加载和释放。只对必要变化扩大回归，不重复无关实验。验证使用独立工程或隐藏测试进程，遵守用户不操作桌面的约束。
+
+每阶段先固定输入及当前源码，再审实现、检查数值 / 画质 / 生命周期，匹配证据通过后单独提交。新增结果写回本页对应状态及既有测试位置，不再建立多份计划、交接和收尾文档。失败保留原门槛与原因，不能用过程退出 0 或目录去重冒充正确性 / 性能收益。
+
+当前下一步为 **R0 能力核对，接着 R1 纯迁移**。本次重新规划不执行目录移动、创建 Feature、更换插件或修改用户工程配置。
 
 <a id="quality-reference"></a>
 
