@@ -7,6 +7,8 @@ RWTexture2D<float4> _HoRTShadowOutput;
 float4 _HoRTShadowDirection; // toward centre, 1-cos(angular radius), computed with sin to retain tiny angles
 float4 _HoRTShadowParameters; // full output size, min/max metres
 uint _HoRTShadowSamples,_HoRTShadowSeed;
+float4 _HoRTShadowLocalPosition,_HoRTShadowLocalForward;
+uint _HoRTShadowLightType; // 0 directional, 1 delta point, 2 delta spot
 
 uint HoRTShadowHash(uint x)
 {x^=x>>16;x*=0x7feb352du;x^=x>>15;x*=0x846ca68bu;x^=x>>16;return x;}
@@ -34,11 +36,23 @@ void Cast()
     if(owner==0||owner>65535||(_HoRTShadowReceivers[owner>>5]&(1u<<(owner&31)))==0)
     {_HoRTShadowOutput[pixel]=0;return;}
     if(any((uint2)_HoRTPrimarySize.xy!=(uint2)_HoRTShadowParameters.xy))return;
+    float3 localDirection=0;float maximum=_HoRTShadowParameters.w;
+    if(_HoRTShadowLightType!=0)
+    {
+        float3 delta=_HoRTShadowLocalPosition.xyz-surface.positionWS;float distanceToLight=length(delta);
+        if(distanceToLight<=_HoRTShadowParameters.z*2||distanceToLight>_HoRTShadowLocalPosition.w)
+        {_HoRTShadowOutput[pixel]=float4(0,0,3,owner);return;}
+        localDirection=delta/distanceToLight;
+        if(_HoRTShadowLightType==2&&dot(-localDirection,_HoRTShadowLocalForward.xyz)<_HoRTShadowLocalForward.w)
+        {_HoRTShadowOutput[pixel]=float4(0,0,3,owner);return;}
+        if(distanceToLight>maximum){_HoRTShadowOutput[pixel]=float4(0,0,4,owner);return;}
+        maximum=distanceToLight-_HoRTShadowParameters.z;
+    }
     uint visible=0;float closest=65504;
     for(uint sampleIndex=0;sampleIndex<_HoRTShadowSamples;sampleIndex++)
     {
-        float3 direction=HoRTShadowSampleDirection(pixel,sampleIndex);
-        HoRTVisibilityHit hit=HoRTTraceClosestVisibility(surface.positionWS,direction,_HoRTShadowParameters.z,_HoRTShadowParameters.w,255);
+        float3 direction=_HoRTShadowLightType==0?HoRTShadowSampleDirection(pixel,sampleIndex):localDirection;
+        HoRTVisibilityHit hit=HoRTTraceClosestVisibility(surface.positionWS,direction,_HoRTShadowParameters.z,maximum,255);
         if(hit.status>1){_HoRTShadowOutput[pixel]=float4(0,0,10+hit.status,owner);return;}
         if(hit.status==0)visible++;else closest=min(closest,hit.distance);
     }

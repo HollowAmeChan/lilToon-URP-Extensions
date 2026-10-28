@@ -10,7 +10,7 @@
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | 生产 DI/GI 保留 RELAX；新增 typed SIGMA ABI、格式与 9 个官方 pipeline，独立夹具及真实 Cast 的有界 GPU 接入已验，默认仍为 Raw | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | 独立 Feature 的单主方向灯 raw / OB 接收身份 / 有限光源同帧采样已验；NPR gate 已定位为测试 AO 输入并修正，真实三层接收已验；SIGMA 已连真实 Cast，默认仍为 Raw，最终质量与多灯待完成 | 本文 §4–8 |
+| RTShadow / SIGMA | 独立 Feature 已有主光 / 声明集合 / 全部支持灯的逐灯产品；方向光有限角度和 delta 点聚光有界 Editor 验收，SIGMA / 实际三层 NPR / 单帧与薄蒙皮及单灯 Player 已验；多灯 Player、最终图像采样与总审计待验 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -335,7 +335,7 @@ Editor/
 | R5 同帧无历史估计 | 已完成有界验收 | 1–64 次独立 SIGMA 后线性平均，16 次改善真实 V / 窄 ramp MSE；六项回归通过 | 成本随次数增长，滤波偏差仍在，简单平面不是角色最终画质 | 薄蒙皮 cutout / 微动 / Player |
 | R5 薄蒙皮 / 微动 | 已完成有界验收 | 十二张实际 rigged cutout 窄卡片及骨骼 / BlendShape 微动；同预算原始比例约束显著降低误差，四项回归通过 | 256 次成本高、约 88% 暗侧保留，未等于任意角色 / AA / Player | serialized Player，随后 R6 |
 | R5 serialized Player | 已完成有界资格 | RG / compatibility 两个 Win64 Mono Player 各 21 Update / 34 checks，实际 SIGMA / NPR / 蒙皮，退出警告清零；原 CS 滤波与八片元变体通过 | 不代替 enabled-camera / backbuffer / XR / IL2CPP / 任意角色，冷构建成本高 | R6 |
-| R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 单灯闭环后扩展 |
+| R6 逐灯集合 | 已完成有界 Editor 验收 | Main / Declared / AllSupported、稳定 LightId、方向光 / delta 点聚光、逐灯接收域、当前 graph / compatibility 产品；六项 GPU 回归通过 | 不含未验证局部面积形状、cookie 或受限 caster linking；多灯 Player 与最终空间采样 / 总审计待验 | 多灯 Player，最终图像采样与完整目标审计 |
 
 R0 采用的宿主准备合同：
 
@@ -441,6 +441,20 @@ R5 serialized Win64 Mono Player 有界资格见 [Player review](../Tests~/RT/R5/
 严格 Player 构建还暴露原 CS helper 的 imaginary sqrt 与两条初始化警告。修复限平方根输入非负保护、显式局部向量初始化及 dense/sparse / PCSS 分支单一 return，不改有效有限输入的采样运算。前两轮不充分的候选和被拒绝构建保留；最后 8 个实际 Forward 片元变体无警告通过，原 CS GPU Filtering 完整专项通过（18601 灰阶、最大相邻跳变 0.020452、subtexelMotionDelta 0.001452），最终 Player 构建无这组警告。曾考虑退出此局部尝试，取消前恰好进程自行完成 PASS；identity lookup 与 Stop-Process 之间退出导致取消未执行，实际终态、完整日志和解释保留，未凭 timeout 重启。失败日志不改、新警告不白名单。
 
 本步收益是把 Editor 内 RTShadow / SIGMA / NPR 链路推进到实际序列化与打包执行，清理诊断也完成；成本是冷材质编译曾持续数分钟，明确不是运行时帧耗时。范围限定 Mono Win64 / D3D12、64/96²显式请求，不等于 enabled-camera/backbuffer / XR / IL2CPP 或任意生产角色的完整资格。单灯已有原始、重建、原 ramp、同帧导出及薄蒙皮微动的有界闭环，下一步 R6 逐灯请求 / 稳定身份 / 点聚灯和多输出，完整目标仍活跃。
+
+R6 逐灯产品有界 Editor 验收见 [R6 review](../Tests~/RT/R6/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R6`。Feature 灯范围为 Main（默认，仅 URP 主方向灯）、Declared（场景 Light 上启用 `Ho-RTShadow Light`）或 AllSupported（请求层内启用且 active 的全部灯，包含相机外可能照到 receiver 的灯）；声明组件可逐方向灯设角直径。receiver 保持 OB 整组 / 指定部件，可选接收全部请求灯或显式 Light 集合。只请求主光时只创建一个产品，省去全灯贴图与追踪；没有自动在用户场景或 Renderer 资产添加声明。
+
+`HoRTLightIdentity.Get(Light)` 是该运行期 Light 对象寿命的单调 long ID，不取决于可见灯 / reservoir / 临时 slot；停用重启保留，同对象类型改变保留，销毁重建分配新值，Unity InstanceID 重用也不继承旧历史。它不是跨程序存档 ID。每个 `(ScriptableRenderer, Camera, Light)` 独立拥有 raw / receiver 资源和必要 SIGMA 实例；兼容 caster 集合仍借同一个 host view / AS，不为每灯重复烘姿态。未再请求 / unsupported / 无 receiver 的旧资源通过 host fence 退休。不同方向灯历史独立，改一盏角度不会重置另一盏。
+
+公共 `HoRTShadowRenderGraphResources.Products` / `TryGet(lightId, out product)` 提供该相机当前 graph 的逐灯 `HoRTShadowProduct`：Light / LightId、Slot、RenderSerial、尺寸、samples / estimates、scene lifetime / revision、实际 Reconstruction、Raw / Visibility 和 Status / Reason。Available、Unsupported 与 NoReceivers 不混淆；unsupported 没有假白纹理。下游在 Feature 列表中放生产者之后，同事件 `BeforeRenderingOpaques` 记录，从 ContextItem 取产品后对真正读取的 TextureHandle 声明 `UseTexture`，不可跨 graph 缓存句柄。compatibility pass 在当前 producer 后调用 Feature 的 `TryGetCompatibilityProduct(camera, light, out product)` 借 RTHandle / LightId / Slot / serial；该接口检查当前请求 view 和生产序列，不是 CPU / GPU 同步或跨相机历史缓存。`UnavailableProducts` 只属于当前相机请求；未请求灯不等于 unsupported。
+
+目前形状支持：方向光原有均匀立体角有限角度样本，可选 SIGMA；点 / 聚光为 delta 灯，追向实际有限端点的单条射线，直接发布精确 Raw（metadata 实际 Reconstruction=Raw），不虚构面积光半影。范围按到灯中心的世界距离，聚光外锥体外的表面为 pixel status 3；射线预算小于所需端点为 status 4，不能因截短射线谎称全部可见。pixel status 0 未请求、1 有效（V=0 遮挡 / V=1 miss）、2 无效主表面、3 灯域外、4 射线预算不足，10+native 为 query error；只有 status 1 的 V 可消费。方向光和 local 的颜色 / 强度不烘入核心 V。零 radiance 请求仍可用于几何查询参考；灯能量与 BRDF / cosine 由后续系统处理。
+
+cookie、baked-only、受限 Light.cullingMask caster linking，以及其他未验证灯形状都会显式 Unsupported；局部有限半径 / rect / disc / tube 的物理采样与降噪本阶段不假设支持。AllSupported 不自动包含环境或 emissive 网格，也不输出含义模糊的“全部灯平均灰度”；声明集合就是一组明确逐灯产品，后续若派生灯组 / 加权遮挡须另外说明算子与有效分母。NPR 主光 alias 只由实际 URP 主方向灯发布，其他产品不会覆盖或叠乘它；局部灯单独请求时 `_HoRTShadowActive` 保持 0，原主光来源回退。
+
+实际夹具四灯（两方向、一点、一聚）使用下游 compute 真正读取每个 Raw / Visibility，RG / compatibility 各 54 checks / 21 请求。覆盖离屏有限 blocker、点光前后端点、range / spot cone 外、ray limit、灯增删 / 声明倒序 / 类型改变、能量不改 V、逐灯 receiver、main alias、单灯预算、AllSupported 发现无声明灯、unsupported cookie 元数据、Light 销毁重建及双 SIGMA 独立历史；原 NPR 两路径、真实 SIGMA 与无历史同帧质量共 6 项 GPU 回归通过，编译 0 错误。早期 helper 强制必须有主光、额外光能污染主光 beauty oracle、点光错误 cookie 贴图类型的测试失败保留，之后按真实 API 语义修夹具，未修改原画质门槛来通过。
+
+本步收益是从只供主光的内部纹理变成有稳定身份、域与状态的可消费逐灯产品；几何 host 与各效果仍解耦。成本为每灯全分辨率 Raw / 位表，方向光按模式再增 SIGMA 外部纹理与独立池 / 历史，同帧估计预算乘在每盏相应方向灯上，没有“灯数无关成本”或毫秒收益声明。支持范围和无效性明确，不扩称全灯面积积分或完整 NPR 附加灯照明合成完成。接下来多灯 serialized Player、最终空间采样与整体 R0–R6 审计，目标继续。
 
 <a id="quality-reference"></a>
 

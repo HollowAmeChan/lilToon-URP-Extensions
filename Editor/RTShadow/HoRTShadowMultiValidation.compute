@@ -1,0 +1,12 @@
+#pragma kernel Consume
+#pragma use_dxc
+#pragma target 6.0
+Texture2D<float4> _Raw,_Visibility;
+RWTexture2D<float4> _Output;
+uint _Slot;
+[numthreads(1,1,1)]
+void Consume(uint3 id:SV_DispatchThreadID)
+{
+    _Output[uint2(_Slot,0)]=_Raw[uint2(32,32)];
+    _Output[uint2(_Slot,1)]=_Visibility[uint2(32,32)];
+}

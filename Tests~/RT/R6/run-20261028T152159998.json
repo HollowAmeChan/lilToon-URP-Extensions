@@ -1,0 +1,26 @@
+{
+  "stage": "R6",
+  "sourceCommit": "bc886ed39f24db77b960f29f25ee11254509d9a9",
+  "startedUtc": "2026-10-28T15:22:00.4903452Z",
+  "sourcesFile": "sources-20261028T152159998.json",
+  "runnerSha256": "F55C8EF57FF7D60E3E199BCA17242DA2EC015AE1CB18960509538239B43DE7C5",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "multi-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Unsupported cookie has metadata reason and no texture product\r"
+      ],
+      "logSha256": "D09A6EB96C234A7551ADF8380B3636BF6BE75D8A51867A0BA21DDC9F3D47354B",
+      "seconds": 11.4029605,
+      "pass": false,
+      "logFile": "ho-rt-r6-multi-rg-20261028T152159998.log"
+    }
+  ]
+}

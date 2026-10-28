@@ -12,6 +12,8 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
         {
             serializedObject.Update();
             EditorGUILayout.PropertyField(serializedObject.FindProperty("objectGroup"));
+            var allLights=serializedObject.FindProperty("receiveAllLights");EditorGUILayout.PropertyField(allLights);
+            if(!allLights.boolValue)EditorGUILayout.PropertyField(serializedObject.FindProperty("lights"),true);
             var whole=serializedObject.FindProperty("receiveWholeGroup");EditorGUILayout.PropertyField(whole);
             var group=serializedObject.FindProperty("objectGroup").objectReferenceValue as HoObjectBufferGroup;
             if(group==null)EditorGUILayout.HelpBox("先指定 OB 接收组，物体在该组的「部件 → 渲染器」里配置。RT 接收无需 shadow-map 包围盒。",MessageType.Info);

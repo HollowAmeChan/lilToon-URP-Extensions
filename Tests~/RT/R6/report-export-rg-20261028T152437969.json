@@ -1,0 +1,22 @@
+{
+    "pass": true,
+    "samples": 16,
+    "singleMse": 0.0034259678795933725,
+    "multiMse": 0.0008333086734637618,
+    "singleRampMse": 0.02061673440039158,
+    "multiRampMse": 0.0041287560015916828,
+    "arithmeticMaxError": 5.960464477539063e-8,
+    "checks": [
+        "Raw debug product is the final independent single-sample input, never an averaged distance",
+        "Same-request output matches separately decoded SIGMA average bounded by actual raw sample statistics",
+        "Same-frame decoded visibility improves against 4096-spp independent reference: 0.003425968 -> 0.0008333087",
+        "Actual narrow NPR ramp improves in the same request: 0.02061673 -> 0.004128756",
+        "All estimates explicitly disable temporal stabilization",
+        "Batch result repeats exactly in cold no-history mode",
+        "Maximum single-frame estimate count is supported",
+        "Preview does not silently multiply its tracing budget",
+        "No-history export immediately follows alpha/caster change",
+        "Same-frame averaging cannot create values for unrequested surfaces",
+        "All same-frame sum resources survive execution-time feature recreation"
+    ]
+}

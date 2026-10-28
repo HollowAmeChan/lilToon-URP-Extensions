@@ -1,0 +1,26 @@
+{
+  "stage": "R6",
+  "sourceCommit": "bc886ed39f24db77b960f29f25ee11254509d9a9",
+  "startedUtc": "2026-10-28T15:20:50.6567752Z",
+  "sourcesFile": "sources-20261028T152050152.json",
+  "runnerSha256": "F55C8EF57FF7D60E3E199BCA17242DA2EC015AE1CB18960509538239B43DE7C5",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "multi-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Shadow request scheduled: 请求 4 灯 / 生产 1 / 不可用 3\r"
+      ],
+      "logSha256": "3896C1E9F439D6DA2AD8E32E1DFE7D24CA68571A70BAD07AEB9E62BA2380CA5E",
+      "seconds": 11.7679123,
+      "pass": false,
+      "logFile": "ho-rt-r6-multi-rg-20261028T152050152.log"
+    }
+  ]
+}

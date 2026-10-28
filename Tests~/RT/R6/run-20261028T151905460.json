@@ -1,0 +1,26 @@
+{
+  "stage": "R6",
+  "sourceCommit": "bc886ed39f24db77b960f29f25ee11254509d9a9",
+  "startedUtc": "2026-10-28T15:19:05.9612094Z",
+  "sourcesFile": "sources-20261028T151905460.json",
+  "runnerSha256": "F55C8EF57FF7D60E3E199BCA17242DA2EC015AE1CB18960509538239B43DE7C5",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "multi-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Last additional product cannot overwrite main NPR Cast\r"
+      ],
+      "logSha256": "331DF5842CFD85C87000B014C3F100527C6BD11030B2CEFC58914DD288895ACC",
+      "seconds": 61.159498,
+      "pass": false,
+      "logFile": "ho-rt-r6-multi-rg-20261028T151905460.log"
+    }
+  ]
+}

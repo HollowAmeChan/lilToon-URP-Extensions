@@ -1,0 +1,55 @@
+{
+  "stage": "R6 bounded per-light collection and analytic point/spot products",
+  "accepted": {
+    "multi-rg": "run-20261028T152437969.json",
+    "multi-compat": "run-20261028T152437969.json",
+    "npr-rg": "run-20261028T152437969.json",
+    "npr-compat": "run-20261028T152437969.json",
+    "shadow-sigma-rg": "run-20261028T152437969.json",
+    "export-rg": "run-20261028T152437969.json"
+  },
+  "multiReports": {
+    "multi-rg": {
+      "run": "run-20261028T152437969.json",
+      "requests": 21,
+      "checks": 54,
+      "report": "report-multi-rg-20261028T152437969.json"
+    },
+    "multi-compat": {
+      "run": "run-20261028T152437969.json",
+      "requests": 21,
+      "checks": 54,
+      "report": "report-multi-compat-20261028T152437969.json"
+    }
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T151905460.json",
+      "case": "multi-rg",
+      "diagnostics": [
+        "Exception: Last additional product cannot overwrite main NPR Cast\r"
+      ]
+    },
+    {
+      "run": "run-20261028T152050152.json",
+      "case": "multi-rg",
+      "diagnostics": [
+        "Exception: Shadow request scheduled: \u8bf7\u6c42 4 \u706f / \u751f\u4ea7 1 / \u4e0d\u53ef\u7528 3\r"
+      ]
+    },
+    {
+      "run": "run-20261028T152159998.json",
+      "case": "multi-rg",
+      "diagnostics": [
+        "Exception: Unsupported cookie has metadata reason and no texture product\r"
+      ]
+    }
+  ],
+  "referenceCommit": "bc886ed3",
+  "unchangedDiGiNrdCharacterShadowFiles": 392,
+  "benefit": "Explicit Main/Declared/AllSupported selection, lifetime-stable LightId independent of slot and separate per-light resources/history. Real finite point/spot segments and domain statuses, per-light receiver declarations, unavailable metadata and current graph/compat borrowing APIs. Actual downstream compute consumes each raw/visibility product. Additional products cannot overwrite main NPR alias.",
+  "cost": "Per-light owned full-resolution raw/receiver resources; finite-angle directional SIGMA adds per-light SDK/input/output/history. Resources for omitted/unsupported requests retire through host fence. Single main request does not pay all-light storage/tracing. No light-count-independent cost or GPU milliseconds claim.",
+  "supportedMeasure": "Directional finite angular disk uses the existing uniform-solid-angle samples; delta point/spot are exact one-direction visibility with no invented source radius or soft reconstruction. Local outside range/cone is pixel status 3, ray budget shorter than light endpoint is status 4. Color/intensity are not part of V.",
+  "limits": "No finite-radius local/rect/disc/tube emitter, cookies, baked-only lights or restricted caster light linking. These are explicit unsupported scope, not approximated. No universal all-lights grey mask is produced. Graph TextureHandle lifetime stays current camera graph; compatibility borrowing is valid only after current producer commands, not a GPU completion promise. R6 Player, final spatial AA/export scope and completion audit remain.",
+  "next": "Validate final multi-light production in serialized Player and final image sampling; audit original R0-R6 requirements before deciding goal completion."
+}

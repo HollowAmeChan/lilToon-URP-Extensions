@@ -73,6 +73,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                 near=Quad(new Vector3(2.5f,0,-4),new Vector3(1.2f,3,1),true);far=Quad(new Vector3(3.75f,0,-6),new Vector3(1.2f,3,1),true);
                 alpha=near.sharedMaterial;near.shadowCastingMode=far.shadowCastingMode=ShadowCastingMode.ShadowsOnly;
                 if(thinAudit)SetupThinRig();
+                if(multiAudit)SetupMultiLight();
                 EditorApplication.update+=Tick;Debug.Log("[HoRTShadowValidation] START compatibility="+compatibility);
             }
             catch(Exception error){Finish(error);}
@@ -91,6 +92,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             try
             {
                 if(++tick<3){Render();return;}
+                if(multiAudit){ValidateMultiLight();Finish(null);return;}
                 if(thinAudit){ValidateThinRig();Finish(null);return;}
                 if(singleFrameAudit){ValidateSingleFrameQuality();Finish(null);return;}
                 if(nprIntegration){ValidateNprIntegration();Finish(null);return;}
