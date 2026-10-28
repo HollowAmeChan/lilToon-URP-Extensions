@@ -1,0 +1,84 @@
+{
+  "stage": "R5 same-request no-history quality",
+  "accepted": {
+    "export-rg": "run-20261028T060515178.json",
+    "export-compat": "run-20261028T060515178.json",
+    "npr-rg": "run-20261028T060515178.json",
+    "npr-compat": "run-20261028T060515178.json",
+    "shadow-sigma-rg": "run-20261028T060515178.json",
+    "shadow-raw-rg": "run-20261028T060515178.json"
+  },
+  "metrics": {
+    "export-rg": {
+      "singleMse": 0.0034259678849099065,
+      "multiMse": 0.000834106599542218,
+      "singleRampMse": 0.02061673358480931,
+      "multiRampMse": 0.00404817876915331
+    },
+    "export-compat": {
+      "singleMse": 0.0034259678849099065,
+      "multiMse": 0.000834106599542218,
+      "singleRampMse": 0.02061673358480931,
+      "multiRampMse": 0.00404817876915331
+    }
+  },
+  "signals": {
+    "export-rg": {
+      "reference-visibility": {
+        "file": "export-rg-20261028T060515178-export-reference-visibility.rgba32",
+        "sha256": "75a9e351d03f6c215395096dbb447ea69a6201fd261998cba14dc14321d8f3be"
+      },
+      "reference-beauty": {
+        "file": "export-rg-20261028T060515178-export-reference-beauty.rgba32",
+        "sha256": "b24ed5c041769f204ae292cdb1809724b23a5b9b4d821e19daa93eb1ce71825e"
+      },
+      "single-visibility": {
+        "file": "export-rg-20261028T060515178-export-single-visibility.rgba32",
+        "sha256": "7a609fcd05a45f8e53ebe78cb0a8921d52da5cf7b63c5c9aa23d5b8db00f8614"
+      },
+      "single-beauty": {
+        "file": "export-rg-20261028T060515178-export-single-beauty.rgba32",
+        "sha256": "077911e8278ccbdfdd5f2d66b05ed765f74519c1109fa09658b2daf16d1ef06d"
+      },
+      "multi-visibility": {
+        "file": "export-rg-20261028T060515178-export-multi-visibility.rgba32",
+        "sha256": "f4d4f0e315a8e291e3f9d7b3f442c4ba4cfa8f3656ad59369fea2fa88d915849"
+      },
+      "multi-beauty": {
+        "file": "export-rg-20261028T060515178-export-multi-beauty.rgba32",
+        "sha256": "5098e3e8f9123c576d24b8264acb39ea96529152e09f13fa12ce1e301154459f"
+      }
+    },
+    "export-compat": {
+      "reference-visibility": {
+        "file": "export-compat-20261028T060515178-export-reference-visibility.rgba32",
+        "sha256": "75a9e351d03f6c215395096dbb447ea69a6201fd261998cba14dc14321d8f3be"
+      },
+      "reference-beauty": {
+        "file": "export-compat-20261028T060515178-export-reference-beauty.rgba32",
+        "sha256": "b24ed5c041769f204ae292cdb1809724b23a5b9b4d821e19daa93eb1ce71825e"
+      },
+      "single-visibility": {
+        "file": "export-compat-20261028T060515178-export-single-visibility.rgba32",
+        "sha256": "7a609fcd05a45f8e53ebe78cb0a8921d52da5cf7b63c5c9aa23d5b8db00f8614"
+      },
+      "single-beauty": {
+        "file": "export-compat-20261028T060515178-export-single-beauty.rgba32",
+        "sha256": "077911e8278ccbdfdd5f2d66b05ed765f74519c1109fa09658b2daf16d1ef06d"
+      },
+      "multi-visibility": {
+        "file": "export-compat-20261028T060515178-export-multi-visibility.rgba32",
+        "sha256": "f4d4f0e315a8e291e3f9d7b3f442c4ba4cfa8f3656ad59369fea2fa88d915849"
+      },
+      "multi-beauty": {
+        "file": "export-compat-20261028T060515178-export-multi-beauty.rgba32",
+        "sha256": "5098e3e8f9123c576d24b8264acb39ea96529152e09f13fa12ce1e301154459f"
+      }
+    }
+  },
+  "referenceCommit": "e84577c1",
+  "unchangedDiGiNrdCharacterShadowFiles": 392,
+  "benefit": "Each independent real single light sample is reconstructed by original SIGMA, officially decoded and averaged as linear visibility before NPR ramp. Four-estimate same-request result equals separately reconstructed samples exactly. 16 estimates improve both V and actual 0.01-width ramp against 4096-spp reference; RG/compat signals match exactly.",
+  "costAndLimits": "1-64 full trace/prepare/SIGMA/decode executions in one request; linear GPU/CPU scheduling cost. One 32F sum adds 4 B/pixel only when estimates>1. Default 1; static preview always one estimate. Raw product retains final single sample and nearest distance, not an unbiased multi-sample raw product. Bias from SIGMA filtering is not eliminated by averaging. This 64x64 two-plane test does not qualify thin character cards, animation, coverage AA, Player or multilight.",
+  "next": "Qualify thin/skinned/cutout geometry and micro-motion against per-request reference, then Player and R6. Full goal stays active."
+}

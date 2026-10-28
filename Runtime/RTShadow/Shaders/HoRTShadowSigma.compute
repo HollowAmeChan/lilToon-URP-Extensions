@@ -1,5 +1,6 @@
 #pragma kernel Prepare
 #pragma kernel Decode
+#pragma kernel Accumulate HO_SIGMA_ACCUMULATE=1
 #pragma use_dxc
 #pragma target 6.0
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -11,6 +12,10 @@ RWTexture2D<float> _HoRTShadowViewZ,_HoRTShadowPenumbra;
 Texture2D<float> _HoRTShadowSigmaEncoded,_HoRTShadowSigmaViewZ;
 RWTexture2D<float4> _HoRTShadowSigmaVisibility;
 float4 _HoRTShadowSigmaSize,_HoRTShadowSigmaLight;
+#if defined(HO_SIGMA_ACCUMULATE)
+RWTexture2D<float> _HoRTShadowSigmaSum;
+uint _HoRTShadowEstimateIndex;
+#endif
 [numthreads(8,8,1)]
 void Prepare(uint2 pixel:SV_DispatchThreadID)
 {
@@ -29,12 +34,22 @@ void Prepare(uint2 pixel:SV_DispatchThreadID)
     _HoRTShadowNormal[pixel]=NRD_FrontEnd_PackNormalAndRoughness(surface.geometricNormalWS,.5,0);
     _HoRTShadowPenumbra[pixel]=SIGMA_FrontEnd_PackPenumbra(raw.y,_HoRTShadowSigmaLight.w);
 }
-[numthreads(8,8,1)]
-void Decode(uint2 pixel:SV_DispatchThreadID)
+void DecodeVisibility(uint2 pixel)
 {
     if(any(pixel>=(uint2)_HoRTShadowSigmaSize.xy))return;
     float4 raw=_HoRTShadowRaw[pixel];
     if(raw.z==1&&_HoRTShadowSigmaViewZ[pixel]<500000)
         raw.x=saturate(SIGMA_BackEnd_UnpackShadow(_HoRTShadowSigmaEncoded[pixel]));
+    #if defined(HO_SIGMA_ACCUMULATE)
+        // Average only linear, officially decoded visibility. Each upstream
+        // denoiser execution sees a single actual hit or miss and resets history.
+        float sum=(_HoRTShadowEstimateIndex==0?0:_HoRTShadowSigmaSum[pixel])+raw.x;
+        _HoRTShadowSigmaSum[pixel]=sum;
+        raw.x=sum/(_HoRTShadowEstimateIndex+1);
+    #endif
     _HoRTShadowSigmaVisibility[pixel]=raw;
 }
+[numthreads(8,8,1)]
+void Decode(uint2 pixel:SV_DispatchThreadID){DecodeVisibility(pixel);}
+[numthreads(8,8,1)]
+void Accumulate(uint2 pixel:SV_DispatchThreadID){DecodeVisibility(pixel);}

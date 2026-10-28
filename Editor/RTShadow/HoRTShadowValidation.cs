@@ -90,6 +90,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             try
             {
                 if(++tick<3){Render();return;}
+                if(singleFrameAudit){ValidateSingleFrameQuality();Finish(null);return;}
                 if(nprIntegration){ValidateNprIntegration();Finish(null);return;}
                 if(sigmaAudit){ValidateProductionSigma();Finish(null);return;}
                 var image=Render();Valid(image,32,32,0,bodyId,"Opaque offscreen shadow");Near(image[32*64+32].g,(-4)/Direction.z,"Nearest blocker distance",.005f);

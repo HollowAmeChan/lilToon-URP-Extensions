@@ -12,7 +12,8 @@ namespace lilToon.URP.Extensions.RTShadow
     // changes reset stabilization until matching surface motion is available.
     internal sealed class HoRTShadowSigmaContext : IDisposable
     {
-        internal readonly RTHandle normal, motion, viewZ, penumbra, encoded, visibility;
+        internal readonly RTHandle normal, motion, viewZ, penumbra, encoded, visibility, visibilitySum;
+        internal readonly int Estimates;
         internal readonly HoNrdContext nrd;
         private readonly List<RTHandle> textures = new();
         private readonly int width, height;
@@ -26,9 +27,9 @@ namespace lilToon.URP.Extensions.RTShadow
         internal int LastFrame { get; private set; }
         internal int DispatchCount => nrd.LastDispatchCount;
 
-        internal HoRTShadowSigmaContext(int width, int height, ComputeShader[] shaders)
+        internal HoRTShadowSigmaContext(int width, int height, ComputeShader[] shaders, int estimates = 1)
         {
-            this.width = width; this.height = height;
+            this.width = width; this.height = height; Estimates = Mathf.Clamp(estimates, 1, 64);
             try
             {
                 nrd = new HoNrdContext(shaders, 16, HoRTShadowSigmaManifest.Identifiers, HoRTShadowSigmaManifest.Resources);
@@ -39,6 +40,7 @@ namespace lilToon.URP.Extensions.RTShadow
                 penumbra = Allocate(GraphicsFormat.R16_SFloat, "Penumbra");
                 encoded = Allocate(GraphicsFormat.R16_SFloat, "Encoded shadow");
                 visibility = Allocate(GraphicsFormat.R32G32B32A32_SFloat, "Visibility");
+                if (Estimates > 1) visibilitySum = Allocate(GraphicsFormat.R32_SFloat, "Decoded visibility sum");
             }
             catch { Dispose(); throw; }
         }
@@ -65,9 +67,9 @@ namespace lilToon.URP.Extensions.RTShadow
             return LastFrame;
         }
         internal void Record(CommandBuffer cmd, ComputeShader shader, RTHandle raw, Vector3 direction, float tanAngularRadius,
-            Matrix4x4 view, Matrix4x4 projection, bool preview)
+            Matrix4x4 view, Matrix4x4 projection, bool preview, int estimateIndex = 0)
         {
-            int prepare = shader.FindKernel("Prepare"), decode = shader.FindKernel("Decode");
+            int prepare = shader.FindKernel("Prepare"), decode = shader.FindKernel(Estimates > 1 ? "Accumulate" : "Decode");
             cmd.SetComputeVectorParam(shader, "_HoRTShadowSigmaSize", new Vector4(width, height, 1f / width, 1f / height));
             cmd.SetComputeVectorParam(shader, "_HoRTShadowSigmaLight", new Vector4(direction.x, direction.y, direction.z, tanAngularRadius));
             cmd.SetComputeTextureParam(shader, prepare, "_HoRTShadowRaw", raw.nameID);
@@ -89,6 +91,11 @@ namespace lilToon.URP.Extensions.RTShadow
             cmd.SetComputeTextureParam(shader, decode, "_HoRTShadowSigmaEncoded", encoded.nameID);
             cmd.SetComputeTextureParam(shader, decode, "_HoRTShadowSigmaViewZ", viewZ.nameID);
             cmd.SetComputeTextureParam(shader, decode, "_HoRTShadowSigmaVisibility", visibility.nameID);
+            if (Estimates > 1)
+            {
+                cmd.SetComputeTextureParam(shader, decode, "_HoRTShadowSigmaSum", visibilitySum.nameID);
+                cmd.SetComputeIntParam(shader, "_HoRTShadowEstimateIndex", estimateIndex);
+            }
             cmd.DispatchCompute(shader, decode, (width + 7) / 8, (height + 7) / 8, 1);
             previousView = view; previousProjection = projection; historyValid = true; produced = true; frame++;
         }

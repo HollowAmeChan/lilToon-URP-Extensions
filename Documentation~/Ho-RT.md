@@ -332,6 +332,7 @@ Editor/
 | R5 独立 SIGMA | 已完成有界夹具 | 20-byte 独立 ABI、9 个原版 pipeline、官方编解码；连续灰阶 / MSE / 无历史重复 / 实际时域 pass 开关及原 RELAX 两路径通过 | 128×64 静态合成信号，不代表角色、NPR、动态、Player 或多灯画质 | 接真实 Cast 单样本、guides、按相机 / 灯状态与 reset |
 | R5 真实 Cast 接入 | 已完成有界接入；R5 未完成 | 两路径各 34 请求 / 59 checks，真实单样本 blocker → 官方编码 → SIGMA → 解码；4096-spp 参考与保存信号复核，五项回归通过 | 尚非真实角色发片、复杂动态、coplanar owner 边界、Player 或最终窄 ramp 验收；相机 / 场景变化保守 reset | 完成实际 NPR 接收与 ramp 质量 |
 | R4 / R5 NPR 接收 | 已完成有界实际材质检查；最终质量未完成 | 关闭 URP 主光 map，真实三层 receive / mask / strength / fallback；透视 / jitter 与窄 ramp 调阈值检查 | 默认 AO 无生产者曾掩盖测试；单样本重建仍可被窄 ramp 放大噪声，不能据此宣称最高清晰度 | 提高同帧导出质量并验角色薄片 / 微动 / Player |
+| R5 同帧无历史估计 | 已完成有界验收 | 1–64 次独立 SIGMA 后线性平均，16 次改善真实 V / 窄 ramp MSE；六项回归通过 | 成本随次数增长，滤波偏差仍在，简单平面不是角色最终画质 | 薄蒙皮 cutout / 微动 / Player |
 | R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 单灯闭环后扩展 |
 
 R0 采用的宿主准备合同：
@@ -416,6 +417,12 @@ NPR 失败点的编译审计见 [NPR review](../Tests~/RT/R4/NPR/review.json)，
 本轮实际接收验收见 [NPR results](../Tests~/RT/R5/NPR/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R5Npr`：实际 NPR 两路径各 18 请求 / 32 checks，原 CS 部件接收的 D3D12 RG / compatibility 与 D3D11、真实 SIGMA 两路径、DI / GI native Cutout 共 9 项通过，分程序集编译 0 错误；完整源指纹包含相邻 lilToon 的 HLSL，三处 source patch / SHA / 依赖提交 `lilToon 24ae82d` 保存在同目录。旧完整 CS atlas-debug 失败不被这项部件专项替代。中间编译失败、错误的二层 ramp 前提、SIGMA 回归进程未出结果就退出 1 都保留；后一项没有 marker 即拒绝，未将上一请求的旧 report 冒充本次通过。补强 runner 只复制本进程启动后产生的报告，核对退出后单独重跑剩余四项通过。冷编译长达约 352 秒，有编译器实际 CPU 进展，不能用它宣称每帧性能退化或无成本；无 GPU 帧时收益承诺。
 
 此阶段可接纳的收益是 NPR 接收语义、原有 mask / 三层 ramp / fallback 在真实 shader 上可用，且可在不生产 URP 主光 map 时单独使用 RT Cast。最终画质依然不满足“最高精度最清楚”的完整目标：单样本 SIGMA 的局部噪声会被窄 ramp 放大。因此下一步先提高同帧无历史质量并核薄片 / 微动、导出 / Player，再进入 R6；不能因为接口通过就提前把角色画质和多灯输出算完。
+
+R5 无历史同帧质量步骤见 [Export review](../Tests~/RT/R5/Export/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R5Export`。Feature 新增“无历史同帧估计数”1–64（默认 1，仅 SIGMA 无历史模式生效）。每次完整追踪一个真实灯样本、官方 PackPenumbra、执行 reset / maxStabilizedFrameNum=0 的原 SIGMA、平方解码，再累加线性 V；最后平均值交给原 NPR ramp。没有将平均 hit distance / V 填进 IN_PENUMBRA，也没有用 temporal stabilization 假扮同帧积分。Raw 调试输出仍为最后一次单样本及其真实最近距离；graph 同时携带 samples=1 与 estimates=N，不能把 Raw 当成 N spp 平均产品。所有估计在同一 render request 中完成，不需要等待后续应用帧稳定。
+
+真实 GPU 核四次同请求估计与四次独立请求的解码平均，最大误差 0。16 次时连续 V MSE 0.003425968 → 0.0008341066，真实 blur=0.01 / border=0.5 的 NPR 颜色 MSE 0.02061673 → 0.004048179；参考为独立 Raw 4096 spp，完整浮点 V / beauty 与 PNG 留测试目录，verifier 重算两组误差，RG / compatibility 输出逐字节相同。固定状态重复、最大 64 次、alpha 改动立即响应、未请求身份、执行中重建释放，以及原 NPR 两路径 / 单样本 SIGMA / Raw 共 6 项回归通过；编译 0 错误，原 DI/GI/公共 NRD 与 CS 本步不改。
+
+本步收益是减少窄 ramp 放大的单样本重建噪声，单帧导出不依赖等待历史；成本是 N 次完整 trace + prepare + SIGMA + decode，CPU 调度和 GPU 执行随 N 增长，N>1 额外一张 R32F sum（4 B/像素），SDK 历史池仍仅一份顺序复用。preview 固定只做一次，不悄悄乘预算；默认 1 保持既有行为。平均重建值会保留 SIGMA 的滤波偏差，不能靠 N 自动收敛到无偏高预算真值；64² 简单平面视觉仍非角色最终质量。下一步转向薄蒙皮 / cutout 发片、微动的每请求参考验证，而不是继续只优化这张平面；空间覆盖 AA、Player、R6 和总体完成仍待验收。
 
 <a id="quality-reference"></a>
 

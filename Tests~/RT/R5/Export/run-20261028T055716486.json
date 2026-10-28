@@ -1,0 +1,24 @@
+{
+  "stage": "R5Export",
+  "sourceCommit": "e84577c1a058318d3ad38767a76ecb67a03ee4c4",
+  "startedUtc": "2026-10-28T05:57:18.0821716Z",
+  "sourcesFile": "sources-20261028T055716486.json",
+  "runnerSha256": "BAF2D9A6C17EA0CC4255536D04FDD8C5B89622DCEE583A46AC8F7C514853DF40",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "export-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSingleFrame",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "5FE42A11260453FB7F6AC5B93D75B4EACFCCE18F917B679228BE5FBE7743BFA1",
+      "seconds": 61.1749031,
+      "pass": true,
+      "logFile": "ho-rt-r5export-export-rg-20261028T055716486.log"
+    }
+  ]
+}
