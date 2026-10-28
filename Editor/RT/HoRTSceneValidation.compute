@@ -1,6 +1,6 @@
 #pragma kernel CSMain
 #pragma require inlineraytracing
-#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RayTracing/Shaders/HoRTSceneQuery.hlsl"
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders/HoRTSceneQuery.hlsl"
 struct TestRay { float4 originMin, directionMax; uint4 options; };
 StructuredBuffer<TestRay> _TestRays;
 RWTexture2D<float4> _TestOutput;

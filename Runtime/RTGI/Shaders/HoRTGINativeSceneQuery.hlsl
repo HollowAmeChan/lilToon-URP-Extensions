@@ -3,7 +3,7 @@
 // Native RAB visibility must execute the same material any-hit as secondary
 // generation. Do not import the inline implementation which culls non-opaque.
 #define HO_RT_SCENE_QUERY_INCLUDED
-#include "../../RayTracing/Shaders/HoRTSceneHit.hlsl"
+#include "../../RT/Shaders/HoRTSceneHit.hlsl"
 #include "HoRTGISecondarySurface.hlsl"
 RaytracingAccelerationStructure _HoRTSceneAccelerationStructure;
 float4 _HoRTSceneState;

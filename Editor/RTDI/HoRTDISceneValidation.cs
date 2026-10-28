@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTDI;
 using UnityEditor;
 using UnityEditor.SceneManagement;

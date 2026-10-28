@@ -1,0 +1,8 @@
+{
+  "stage": "R1",
+  "actualExit": 0,
+  "errors": 0,
+  "scope": "Runtime/Editor split C# compilation before GPU migration checks",
+  "log": ".codex-research/ho-rt-r1-compile.log",
+  "logSha256": "442F4E72933E5D4D055F4CE5C273D0F4DF15278F8339AF79638B011B357DA638"
+}

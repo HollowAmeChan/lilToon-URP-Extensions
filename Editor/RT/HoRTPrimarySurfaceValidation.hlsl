@@ -1,4 +1,4 @@
-#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl"
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders/HoRTPrimarySurface.hlsl"
 int _TestQuery;
 float4 HoRTValidationPixel(uint2 outputPixel)
 {

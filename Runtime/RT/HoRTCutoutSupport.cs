@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Rendering;
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     // Shared bounded alpha domain; shading adapters remain owned by their channels.
     internal static class HoRTCutoutSupport

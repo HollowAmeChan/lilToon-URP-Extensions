@@ -1,7 +1,7 @@
 #ifndef HO_RTGI_DENSE_PRIMARY_INCLUDED
 #define HO_RTGI_DENSE_PRIMARY_INCLUDED
 // Include the original declaration before mapping subsequent GI call sites.
-#include "../../../Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl"
+#include "../../../Runtime/RT/Shaders/HoRTPrimarySurface.hlsl"
 StructuredBuffer<uint2> _HoGIDensePixels;
 bool HoGIDenseLoadPrimary(uint2 samplePixel,out HoRTPrimarySurface surface)
 {

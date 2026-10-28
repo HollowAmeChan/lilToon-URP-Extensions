@@ -1,6 +1,6 @@
 #pragma warning disable CS0618,CS0672
 using System;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;

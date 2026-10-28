@@ -1,0 +1,12 @@
+{
+  "stage": "R1",
+  "controlCommit": "bddd8268",
+  "scope": "CPU/GPU pre-migration control; failure is not accepted as a quality pass",
+  "activeProcess": null,
+  "actualExit": 0,
+  "sameAssertion": false,
+  "otherShaderErrors": [],
+  "logFile": "ho-rt-r1-baseline-transform-20261027T233741004.log",
+  "logSha256": "D1C54377D16FAADEF1C6C39918E3B290B8680B37497E096466BBFF4E08EB2D1D",
+  "seconds": 25.8773725
+}

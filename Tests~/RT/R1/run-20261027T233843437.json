@@ -1,0 +1,23 @@
+{
+  "stage": "R1",
+  "sourceCommit": "bddd826859df40922a01625d4a14fe078dbfd8cf",
+  "startedUtc": "2026-10-27T23:38:44.1649454Z",
+  "sourcesFile": "sources-20261027T233843437.json",
+  "runnerSha256": "A250932F99E497756AD3A797AC877418F51F253C5B9DCA046FB08899DC3C338A",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "scene-rg",
+      "entry": "lilToon.URP.Extensions.RT.HoRTSceneValidation.Run",
+      "api": "d3d12",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "072C28FCFD1362C8A99762BE5F12C61E5C7DB481AFE4069D5564A67E9095EEFF",
+      "seconds": 17.496725,
+      "pass": true,
+      "logFile": "ho-rt-r1-scene-rg-20261027T233843437.log"
+    }
+  ]
+}

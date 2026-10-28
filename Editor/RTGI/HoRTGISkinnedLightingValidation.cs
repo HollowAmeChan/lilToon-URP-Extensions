@@ -1,6 +1,6 @@
 using System;
 using System.IO;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.RTGI

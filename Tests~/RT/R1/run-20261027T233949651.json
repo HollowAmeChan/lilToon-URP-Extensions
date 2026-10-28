@@ -1,0 +1,51 @@
+{
+  "stage": "R1",
+  "sourceCommit": "bddd826859df40922a01625d4a14fe078dbfd8cf",
+  "startedUtc": "2026-10-27T23:39:50.1054284Z",
+  "sourcesFile": "sources-20261027T233949651.json",
+  "runnerSha256": "A250932F99E497756AD3A797AC877418F51F253C5B9DCA046FB08899DC3C338A",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "scene-rg",
+      "entry": "lilToon.URP.Extensions.RT.HoRTSceneValidation.Run",
+      "api": "d3d12",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "2F04FB9256619A4EBC3D207EA4A192D2A543E83D8C50B3F96F354F19CE7F2DE9",
+      "seconds": 8.15403,
+      "pass": true,
+      "logFile": "ho-rt-r1-scene-rg-20261027T233949651.log"
+    },
+    {
+      "name": "scene-compat",
+      "entry": "lilToon.URP.Extensions.RT.HoRTSceneValidation.RunCompatibility",
+      "api": "d3d12",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "3B0897BEB20D3E8285C4E872472E35E8367BC9365745D348F5A68F188C1AFC94",
+      "seconds": 8.4870494,
+      "pass": true,
+      "logFile": "ho-rt-r1-scene-compat-20261027T233949651.log"
+    },
+    {
+      "name": "primary-rg",
+      "entry": "lilToon.URP.Extensions.RT.HoRTPrimarySurfaceValidation.Run",
+      "api": "d3d12",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: orthographic metallic: expected 0.4, got 0.1333333\r"
+      ],
+      "logSha256": "8DAFE0A118C46F6ED09DDE79BE8D336FA329A5E3751D6032FB08928289B40260",
+      "seconds": 37.9408806,
+      "pass": false,
+      "logFile": "ho-rt-r1-primary-rg-20261027T233949651.log"
+    }
+  ]
+}

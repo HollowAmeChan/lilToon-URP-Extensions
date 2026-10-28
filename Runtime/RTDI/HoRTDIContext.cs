@@ -1,4 +1,4 @@
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 // Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
 // Neighbor-offset generation is adapted from UnityPathTracing's RtxdiUtils.
 // NVIDIA portions are governed by ThirdParty/RTXDI/LICENSE.txt, not the package MIT license.

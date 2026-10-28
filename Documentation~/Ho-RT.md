@@ -118,7 +118,7 @@ Cast Off 的表面仍可能需要参与 GI 或反射。单/双面、Shadows Only
 
 宿主的 CPU 请求准备、GPU AS build 和效果执行是三个时机。宿主应在消费者记录之前给出冻结输入，AS build 则在首个实际 trace 前有明确命令依赖；不因此把所有效果搬到同一个 pass，也不要求宿主拥有最早的屏幕绘制。具体注册 / 准备 hook 在 R0 核对现有 URP 生命周期后确定。
 
-RenderGraph 对 AS 的真实访问和 build 依赖需要由公共实现显式处理。现有 [HoRTScene.Inputs](D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RayTracing/HoRTScene.cs:253) 的 revision 检查应保留并扩展到统一所有权；GPU 使用结束前不能更新或释放对应快照。
+RenderGraph 对 AS 的真实访问和 build 依赖需要由公共实现显式处理。现有 [HoRTScene.Inputs](D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RT/HoRTScene.cs:253) 的 revision 检查应保留并扩展到统一所有权；GPU 使用结束前不能更新或释放对应快照。
 
 世界数据只在兼容域内复用；相机屏幕输入、接收域、输出、采样和历史按 render view 管理。GameView、SceneView、Prefab Stage、不同 RendererData 和过滤配置不能混用。有效性不能只看 `Time.frameCount`。
 
@@ -322,7 +322,8 @@ Editor/
 | 阶段 | 状态 | 正确性 / 收益 | 成本与偏航检查 | 后续 |
 | --- | --- | --- | --- | --- |
 | R0 | 已完成 | 637 项 RT 源码 / 资源基线 SHA 已固定；Runtime / Editor 编译 0 errors；现用 DLL 两 SIGMA 描述实例成功；真实 URP hook 已核对 | 生产源码及插件未改，无画质 / 显存收益声明；排除不必要的 native 重编和自动排序设计 | R1 纯迁移 |
-| R1–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
+| R1 | 已完成 | RayTracing→RT，2098 个产品文件规范化核对仅有允许的命名 / 引用变化，20 份移动 metadata 与基线字节一致；编译 0 errors；10 项真实 GPU / unsupported 回归通过 | 只统一模块归属，无画质 / 性能收益声明；旧验证源码 / SHA 未改，初次冷导入 stale-transform 失败保留，后续同条件原码与当前码通过但原因未证明 | R2 宿主与共享姿态 |
+| R2–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
 
 R0 采用的宿主准备合同：
 
@@ -332,6 +333,8 @@ R0 采用的宿主准备合同：
 4. views 保留自己的相关 revision、材质适配能力和 GPU 使用期；场景或 adapter 的销毁不能破坏其他消费者或已记录输入。AS build 仍在明确的首个 trace 之前执行，保留 stale-input 拒绝与非 async unsafe 依赖。
 
 源码依据与冻结基线见 [baseline.json](../Tests~/RT/R0/baseline.json)，复核入口 [verify_baseline.py](../Tests~/RT/R0/verify_baseline.py)，本次分程序集编译记录 [compile.json](../Tests~/RT/R0/compile.json)。旧 GPU 结果仅用于确定已有验证范围；R0 没有把历史 SHA guard 改成当前通过，也未声称进行了新的 GPU 画质验收。
+
+R1 复核见 [migration.json](../Tests~/RT/R1/migration.json) 与 [review.json](../Tests~/RT/R1/review.json)，入口为 `python Tests~/RT/R1/verify_migration.py`、`python Tests~/RT/R1/verify_results.py`。10 项覆盖场景、主表面、蒙皮的 RG / compatibility，DI 两路径真实 Cutout、GI native Cutout 和 D3D11 unsupported。主表面既有夹具按原 Gamma 域断言 `[Gamma]` 参数；Linear 域运行被拒绝，未改断言。旧 A01 对照工程命名空间编译失败、空工程 ShaderGraph cache EPERM 和冷导入失败均保留；正式空 RT 工程通过后才接纳迁移。当前 runner 与初始化入口集中 `Tests~/RT/`，没有批量重写历史测试脚本。
 
 <a id="quality-reference"></a>
 
@@ -389,7 +392,7 @@ R0 采用的宿主准备合同：
 
 ### 10.1 世界登记、身份与姿态
 
-[HoRTScene](../Runtime/RayTracing/HoRTScene.cs) 使用 Unity 原生 AS，条件为 D3D12 + `SystemInfo.supportsInlineRayTracing`；不支持时 `IsAvailable=false`，不创建 AS / metadata，没有软件 BVH 或屏幕空间回退。
+[HoRTScene](../Runtime/RT/HoRTScene.cs) 使用 Unity 原生 AS，条件为 D3D12 + `SystemInfo.supportsInlineRayTracing`；不支持时 `IsAvailable=false`，不创建 AS / metadata，没有软件 BVH 或屏幕空间回退。
 
 `Synchronize(renderers, mask, excludedMaterials)` 接收与观察相机无关的世界集合；后两个参数可省略。每个 Renderer / submesh 单独登记，要求一材质对应一 submesh、三角形拓扑；支持 MeshRenderer 与 SkinnedMeshRenderer。disabled、inactive、forceRenderingOff、static batch、additional vertex stream、缺失材质等进入拒绝或排除路径。不要传相机 culling results，否则会丢失离屏遮挡物。
 
@@ -422,7 +425,7 @@ R0 采用的宿主准备合同：
 
 ### 10.3 主表面输入与有效域
 
-[HoRTPrimarySurfaceInputs](../Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs) 与 [HLSL 读取](../Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl) 直接借用 GB / SB，不分配第二套 GBuffer，不写相机颜色，也不通过 AC。当前属性为：
+[HoRTPrimarySurfaceInputs](../Runtime/RT/HoRTPrimarySurfaceInputs.cs) 与 [HLSL 读取](../Runtime/RT/Shaders/HoRTPrimarySurface.hlsl) 直接借用 GB / SB，不分配第二套 GBuffer，不写相机颜色，也不通过 AC。当前属性为：
 
 | 数据 | 来源与含义 |
 | --- | --- |
@@ -443,8 +446,8 @@ HLSL 使用 `HoRTTryLoadPrimarySurface(pixel, surface)`；`AtUV` 包装会定位
 
 ### 10.4 Helper 验证入口
 
-- [HoRTSceneValidation](../Editor/RayTracing/HoRTSceneValidation.cs)：`Run` / `RunCompatibility` / `RunUnsupported` 覆盖初版 inline 的身份、mask、离屏、重心、双面、更新、生命周期和无效输入；D3D12 两路径及 D3D11 unsupported 已验。其默认 Cutout 排除不代表 native 路径不支持 Cutout。
-- [HoRTPrimarySurfaceValidation](../Editor/RayTracing/HoRTPrimarySurfaceValidation.cs)：`Run` / `RunCompatibility` 同时检查 raster / compute、像素中心、投影、两种法线、HDR / emission、可选身份及失效清零；编译警告与错误都拦截。
+- [HoRTSceneValidation](../Editor/RT/HoRTSceneValidation.cs)：`Run` / `RunCompatibility` / `RunUnsupported` 覆盖初版 inline 的身份、mask、离屏、重心、双面、更新、生命周期和无效输入；D3D12 两路径及 D3D11 unsupported 已验。其默认 Cutout 排除不代表 native 路径不支持 Cutout。
+- [HoRTPrimarySurfaceValidation](../Editor/RT/HoRTPrimarySurfaceValidation.cs)：`Run` / `RunCompatibility` 同时检查 raster / compute、像素中心、投影、两种法线、HDR / emission、可选身份及失效清零；编译警告与错误都拦截。
 - 初版隔离日志位于 `.codex-research/RTInputValidation`；蒙皮、native alpha、材质命中及 Player 的专项证据分别见 [DI 场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md)、[DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md)、[GI 总说明](Ho-RTGI.md)。这些通过不代表任意材质变形、复杂角色时域或整帧预算已验收。
 
 <a id="baseline"></a>

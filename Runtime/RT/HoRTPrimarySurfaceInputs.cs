@@ -5,7 +5,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     // Per-pass borrowed handles + a camera snapshot. No output allocation or lighting model.
     internal readonly struct HoRTPrimarySurfaceInputs

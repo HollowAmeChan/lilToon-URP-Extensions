@@ -12,7 +12,7 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using Object = UnityEngine.Object;
 
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     // Isolated batch validation. The two large output RTs are test readbacks, never runtime GBuffer copies.
     public static class HoRTPrimarySurfaceValidation
@@ -49,7 +49,7 @@ namespace lilToon.URP.Extensions.RayTracing
                 renderer.rendererFeatures.Add(gb); renderer.rendererFeatures.Add(sb);
                 probe = Keep(ScriptableObject.CreateInstance<HoRTPrimaryProbeFeature>());
                 probe.material = Mat("Hidden/lilToon/URP/RayTracing/PrimarySurfaceValidation");
-                probe.shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RayTracing/HoRTPrimarySurfaceValidation.compute");
+                probe.shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTPrimarySurfaceValidation.compute");
                 Require(probe.shader != null, "Missing compute probe");
                 raster = Output(false); compute = Output(true); probe.raster = raster; probe.compute = compute;
                 var legacy = Keep(new Texture2D(1, 1, TextureFormat.RGBA32, false, true)); legacy.SetPixel(0, 0, new Color(.4f, .4f, 0, 0)); legacy.Apply();

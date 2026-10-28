@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     // An owned current-pose mesh for the world visibility registry. Raster data is untouched.
     // BakeMesh is CPU work: unchanged bone/blend-shape poses reuse the snapshot and BLAS.

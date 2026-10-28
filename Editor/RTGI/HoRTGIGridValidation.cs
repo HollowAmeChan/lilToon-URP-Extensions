@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using lilToon.URP.Extensions.GeometryBuffer;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI;
 using lilToon.URP.Extensions.SurfaceBuffer;
 using UnityEditor;

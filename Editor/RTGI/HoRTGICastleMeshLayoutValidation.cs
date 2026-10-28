@@ -7,7 +7,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using System.Security.Cryptography;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 
 namespace lilToon.URP.Extensions.Editor.RTGI
 {

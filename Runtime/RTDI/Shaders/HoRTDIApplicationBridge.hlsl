@@ -4,8 +4,8 @@
 // RAB_VisibilityTest and ShadingHelpers. SDK resampling remains in ThirdParty/RTXDI.
 #ifndef HO_RTDI_APPLICATION_BRIDGE_INCLUDED
 #define HO_RTDI_APPLICATION_BRIDGE_INCLUDED
-#include "../../RayTracing/Shaders/HoRTPrimarySurface.hlsl"
-#include "../../RayTracing/Shaders/HoRTSceneQuery.hlsl"
+#include "../../RT/Shaders/HoRTPrimarySurface.hlsl"
+#include "../../RT/Shaders/HoRTSceneQuery.hlsl"
 #include "HoRTDIPrimaryHistory.hlsl"
 #include "../ThirdParty/donut/brdf.hlsli"
 #if defined(HO_RTDI_ENVIRONMENT_ENABLED)

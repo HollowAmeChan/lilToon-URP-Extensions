@@ -1,0 +1,375 @@
+{
+  "stage": "R1",
+  "baseCommit": "bddd8268",
+  "trackedProductFilesChecked": 2098,
+  "movedMetadataByteIdentical": 20,
+  "approvedChanges": [
+    {
+      "before": "Editor/RTDI/HoRTDICastleFrameValidation.cs",
+      "after": "Editor/RTDI/HoRTDICastleFrameValidation.cs",
+      "workingSha256": "d656172260344e67e59a924ce9540d3cc01b337b7d96cd4118dcb2f1c8d90113"
+    },
+    {
+      "before": "Editor/RTDI/HoRTDIDynamicAuxiliaryCDFValidation.cs",
+      "after": "Editor/RTDI/HoRTDIDynamicAuxiliaryCDFValidation.cs",
+      "workingSha256": "7e22e49cfe0a3485731df1ad425a818144ad65b948c50bbbcf8c96949763df29"
+    },
+    {
+      "before": "Editor/RTDI/HoRTDIMaterialExclusionValidation.cs",
+      "after": "Editor/RTDI/HoRTDIMaterialExclusionValidation.cs",
+      "workingSha256": "3e8f5a52e9aad4d2bc5eb4e11c0433ca6b737ad024143a5fd7b712593f334862"
+    },
+    {
+      "before": "Editor/RTDI/HoRTDIRuntimeMultiValidation.cs",
+      "after": "Editor/RTDI/HoRTDIRuntimeMultiValidation.cs",
+      "workingSha256": "aa7e48b5b62467ae408483f570ea6f6ce0515de37409f2b12c230034b00bb404"
+    },
+    {
+      "before": "Editor/RTDI/HoRTDISceneValidation.cs",
+      "after": "Editor/RTDI/HoRTDISceneValidation.cs",
+      "workingSha256": "19b3011839e125b17ec2a044f53d5bfbf52272aeb4a3cfed02975793b46b3ff8"
+    },
+    {
+      "before": "Editor/RTDI/HoRTDIValidation.cs",
+      "after": "Editor/RTDI/HoRTDIValidation.cs",
+      "workingSha256": "935637cc764d0b070251708968b4a6756e6a321b9c3bca61dbc7726f59b057c0"
+    },
+    {
+      "before": "Editor/RTDI/HoRTDIVisibilityConfidenceValidation.cs",
+      "after": "Editor/RTDI/HoRTDIVisibilityConfidenceValidation.cs",
+      "workingSha256": "48aef11020f90827a9d0acd65bbbf051ad342fccf5ea205d3b93bcf5dc68f902"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGICastleMeshLayoutValidation.cs",
+      "after": "Editor/RTGI/HoRTGICastleMeshLayoutValidation.cs",
+      "workingSha256": "34ac0ce2b0a63b6e304acae7289cae27088d5d027e4b5035c8e4e09dda3b0b4b"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGICastleValidation.cs",
+      "after": "Editor/RTGI/HoRTGICastleValidation.cs",
+      "workingSha256": "c59963a721812c170e52053b26622ff6b6b64afcb5ac4113a15804b40f4ddf4d"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGICutoutHitValidation.cs",
+      "after": "Editor/RTGI/HoRTGICutoutHitValidation.cs",
+      "workingSha256": "af851be418be5aa02e238fdd32af3cefafc6b46ad6e2c92c58bb66b80d33e41c"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGICutoutLightingValidation.cs",
+      "after": "Editor/RTGI/HoRTGICutoutLightingValidation.cs",
+      "workingSha256": "f394030ee7c7e80bd89bc4b52006d8b590cd26052851717fe845f352f7805c71"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGIDenseReferenceFeature.cs",
+      "after": "Editor/RTGI/HoRTGIDenseReferenceFeature.cs",
+      "workingSha256": "8956bbd24160a9f4f4a61ef1a43b5c498d4f9d316f89f73e62932b7250b81d86"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGIGridValidation.cs",
+      "after": "Editor/RTGI/HoRTGIGridValidation.cs",
+      "workingSha256": "d12c2814afbd021efc12e2d5a23331bd2141a8ff43a710df84f3f1e78675b953"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGIInputStateAudit.cs",
+      "after": "Editor/RTGI/HoRTGIInputStateAudit.cs",
+      "workingSha256": "d9b17867b1de809e290f65eb81593631f9ec05a675372340c98feabe2470f061"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGIMaterialExclusionValidation.cs",
+      "after": "Editor/RTGI/HoRTGIMaterialExclusionValidation.cs",
+      "workingSha256": "f338c6b1263b86a546386a9cfcb9b65a751dee7dd7bfba20b4cc1e54cb471d22"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGIResourceAudit.cs",
+      "after": "Editor/RTGI/HoRTGIResourceAudit.cs",
+      "workingSha256": "944a61bcf0498a2c082605dab5196892ef0c731a4c003db3a71bff6155161f9f"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGISecondaryValidation.cs",
+      "after": "Editor/RTGI/HoRTGISecondaryValidation.cs",
+      "workingSha256": "740ea45808dc83f0b76aac866a03200b10f6f8f230d1d922b949af46ec12126e"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGISelectionLineageAudit.cs",
+      "after": "Editor/RTGI/HoRTGISelectionLineageAudit.cs",
+      "workingSha256": "18863073c3873b0fab8e45bc0be6ac1862b44dc51606a71bfbd84a1087fa2b0c"
+    },
+    {
+      "before": "Editor/RTGI/HoRTGISkinnedLightingValidation.cs",
+      "after": "Editor/RTGI/HoRTGISkinnedLightingValidation.cs",
+      "workingSha256": "a0adf37912916fc087e1e579a2858fd001a6ebb8891e9c3f9aee69a91c09e1b6"
+    },
+    {
+      "before": "Editor/RTGI/Shaders/HoRTGIDensePrimary.hlsl",
+      "after": "Editor/RTGI/Shaders/HoRTGIDensePrimary.hlsl",
+      "workingSha256": "5d55b022a688717b3cb28abd776ed80e1fb32f3f996eb7ffaa5f30fc0ee1f568"
+    },
+    {
+      "before": "Editor/RTGI/Shaders/HoRTGIGridAudit.compute",
+      "after": "Editor/RTGI/Shaders/HoRTGIGridAudit.compute",
+      "workingSha256": "dd0016fd8e4a51a600712718715fa590a183e52eb5ebef5b57540e574b90905f"
+    },
+    {
+      "before": "Editor/RayTracing.meta",
+      "after": "Editor/RT.meta",
+      "workingSha256": "a56957b23c013202316daad6f208f7330429b1f64cec2a61a340ecce5ebad594"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTAccelerationGrowthProbe.cs",
+      "after": "Editor/RT/HoRTAccelerationGrowthProbe.cs",
+      "workingSha256": "d766810d8b060c8390db33c30c75e1c220d4c08f53497b98b09864da63202249"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTAccelerationGrowthProbe.cs.meta",
+      "after": "Editor/RT/HoRTAccelerationGrowthProbe.cs.meta",
+      "workingSha256": "665bf38d14d81418ccae1ff71b2b7ca88f2034dc362f937c2758e2ce691b2881"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTPrimarySurfaceValidation.compute",
+      "after": "Editor/RT/HoRTPrimarySurfaceValidation.compute",
+      "workingSha256": "c1deeaa7aa4a9fdaff2d62e2f49db2164c398017d870edc8c2dc69c8182c4ee4"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTPrimarySurfaceValidation.compute.meta",
+      "after": "Editor/RT/HoRTPrimarySurfaceValidation.compute.meta",
+      "workingSha256": "0a182506c49ca7ae810289cbfb77801989be489f10f51bd204f459e4538eb791"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTPrimarySurfaceValidation.cs",
+      "after": "Editor/RT/HoRTPrimarySurfaceValidation.cs",
+      "workingSha256": "e35366fa1aa2f44c4e6e7e46eefc69917262f1adbef8d10a5a0c284ca878ec19"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTPrimarySurfaceValidation.cs.meta",
+      "after": "Editor/RT/HoRTPrimarySurfaceValidation.cs.meta",
+      "workingSha256": "f64be5765efd509652f2bbff533e966b2b834c8d40c29dc6a17bd7e3407f939a"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTPrimarySurfaceValidation.hlsl",
+      "after": "Editor/RT/HoRTPrimarySurfaceValidation.hlsl",
+      "workingSha256": "818b7b516397db28e52b44c4ece0168155a9517736d1d36f3c7506574b3bccc9"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTPrimarySurfaceValidation.hlsl.meta",
+      "after": "Editor/RT/HoRTPrimarySurfaceValidation.hlsl.meta",
+      "workingSha256": "508490278f7bf97b6624415249d2765fd1347120241f2ca082c3c567414b246d"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTPrimarySurfaceValidation.shader",
+      "after": "Editor/RT/HoRTPrimarySurfaceValidation.shader",
+      "workingSha256": "783a52aaa73533ad564a8de5e999cd6ff5a061266eb2f68a0763995cbb085f65"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTPrimarySurfaceValidation.shader.meta",
+      "after": "Editor/RT/HoRTPrimarySurfaceValidation.shader.meta",
+      "workingSha256": "0f3f75c1ae9de3645ae3767df436f154eba476bba4cb7f13d6439c95ed071818"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTSceneValidation.compute",
+      "after": "Editor/RT/HoRTSceneValidation.compute",
+      "workingSha256": "74ac2a7cd4692908134a0de1a32601920988f97cee738482d829cb059f2926e7"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTSceneValidation.compute.meta",
+      "after": "Editor/RT/HoRTSceneValidation.compute.meta",
+      "workingSha256": "7a9b3ab7bfada8d3d58a41c20ec42607ea1f924ba16f5d5bdd2beac97e82655a"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTSceneValidation.cs",
+      "after": "Editor/RT/HoRTSceneValidation.cs",
+      "workingSha256": "c0116f3fb0d11ed4b754ed92f20bb630df0c7058792f950f0f6689d4b38e11a1"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTSceneValidation.cs.meta",
+      "after": "Editor/RT/HoRTSceneValidation.cs.meta",
+      "workingSha256": "f499db821822c67e057ec606570813c4a34fc2e8cea25169e1136ca5b4a76041"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTSkinnedSceneValidation.cs",
+      "after": "Editor/RT/HoRTSkinnedSceneValidation.cs",
+      "workingSha256": "f28760c7d7c59ea758cc524a460c815333fd31d65256df5e26a787eaf8a95839"
+    },
+    {
+      "before": "Editor/RayTracing/HoRTSkinnedSceneValidation.cs.meta",
+      "after": "Editor/RT/HoRTSkinnedSceneValidation.cs.meta",
+      "workingSha256": "e136cd74287262176478ae54cd88fa5d5ef6aba9de62e9b1a1ce091e9fe6a997"
+    },
+    {
+      "before": "Runtime/RTDI/HoRTDIAuxiliaryProposal.cs",
+      "after": "Runtime/RTDI/HoRTDIAuxiliaryProposal.cs",
+      "workingSha256": "41630c96d08413684ea4f46a9e29eef233dfb0a0d3507e611d1f045b203cfc2e"
+    },
+    {
+      "before": "Runtime/RTDI/HoRTDICompositePass.cs",
+      "after": "Runtime/RTDI/HoRTDICompositePass.cs",
+      "workingSha256": "58cd28999e21b127d0b3db908227dc4e3b517769876ba9f754aa032d339238e1"
+    },
+    {
+      "before": "Runtime/RTDI/HoRTDIContext.cs",
+      "after": "Runtime/RTDI/HoRTDIContext.cs",
+      "workingSha256": "71adbeafeb348e22745b0bea30d430b94764d83744270f151ec9aa8a69fa3a91"
+    },
+    {
+      "before": "Runtime/RTDI/HoRTDIRendererFeature.cs",
+      "after": "Runtime/RTDI/HoRTDIRendererFeature.cs",
+      "workingSha256": "e18dea613931fb08dafb9deec65d815042aa2d4a2e746680268a9af07a5a18e6"
+    },
+    {
+      "before": "Runtime/RTDI/HoRTDIVisibilityMaterials.cs",
+      "after": "Runtime/RTDI/HoRTDIVisibilityMaterials.cs",
+      "workingSha256": "e32d8ea55d402c10708888d8b75953add7543755220ce5c2147352429846dcbb"
+    },
+    {
+      "before": "Runtime/RTDI/NRD/HoRTDINrdContext.cs",
+      "after": "Runtime/RTDI/NRD/HoRTDINrdContext.cs",
+      "workingSha256": "9679aee4cab7c63b2a6c4f8d41a2972ebdb6b7f5d2bc428af5928a248c0b5d5d"
+    },
+    {
+      "before": "Runtime/RTDI/Shaders/HoRTDI.compute",
+      "after": "Runtime/RTDI/Shaders/HoRTDI.compute",
+      "workingSha256": "676ebb5bd87df421bf0f7fd56a9900b220b0681cea218cba4328be9f6b178ab2"
+    },
+    {
+      "before": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl",
+      "after": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl",
+      "workingSha256": "ecbddc3320eadb1b188c152d8fb6eba3129c647137529d10b4443e4b13dae6ad"
+    },
+    {
+      "before": "Runtime/RTDI/Shaders/HoRTDIComposite.shader",
+      "after": "Runtime/RTDI/Shaders/HoRTDIComposite.shader",
+      "workingSha256": "7eea0dc517bd9b659d257219d103efd85c2c6971d052abe4cd2c3954047b0e29"
+    },
+    {
+      "before": "Runtime/RTGI/HoRTGICompositePass.cs",
+      "after": "Runtime/RTGI/HoRTGICompositePass.cs",
+      "workingSha256": "886a1a0a5e55539d54c9a8966fd314dfe4b3adbcdb2f3d209f585fc52f352122"
+    },
+    {
+      "before": "Runtime/RTGI/HoRTGIContext.cs",
+      "after": "Runtime/RTGI/HoRTGIContext.cs",
+      "workingSha256": "9abd5b13c6505e0db614f072334a7f7772b9b0c0bcc4d09001abd339a7dcb8d6"
+    },
+    {
+      "before": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "after": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "workingSha256": "2b76c28620e9f5f452878eed58160fcb028a29697d818f5e52aca2feb61161ec"
+    },
+    {
+      "before": "Runtime/RTGI/HoRTGISecondaryMaterials.cs",
+      "after": "Runtime/RTGI/HoRTGISecondaryMaterials.cs",
+      "workingSha256": "3d197481435a08a9a406af6ee4a1fd80a140000817d16c5959e9a392e5d89762"
+    },
+    {
+      "before": "Runtime/RTGI/Shaders/HoRTGIComposite.shader",
+      "after": "Runtime/RTGI/Shaders/HoRTGIComposite.shader",
+      "workingSha256": "c973743b9e3f2bb07fb1a0d60c9d80c5cb17889f66a096458a95aeededf0cdd4"
+    },
+    {
+      "before": "Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl",
+      "after": "Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl",
+      "workingSha256": "f141478a32e7fe5fccde86c5e8393a0ad6ed241d11f5b11612fc5642e6f8721c"
+    },
+    {
+      "before": "Runtime/RayTracing.meta",
+      "after": "Runtime/RT.meta",
+      "workingSha256": "d96bc3d3e370f203a87b8d407016d7ccbd2fa367333b61b60f56e21aeb050953"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTCutoutSupport.cs",
+      "after": "Runtime/RT/HoRTCutoutSupport.cs",
+      "workingSha256": "1481824f09d438efe50c5f24d9355c2964bb9f3919c662cc41feb0c5bf6b4daa"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTCutoutSupport.cs.meta",
+      "after": "Runtime/RT/HoRTCutoutSupport.cs.meta",
+      "workingSha256": "ce4260c8873f3e444b4b48813fd81b011828ba5cdda0fd37bd95f733e777196c"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs",
+      "after": "Runtime/RT/HoRTPrimarySurfaceInputs.cs",
+      "workingSha256": "2cf5551fde502f318aad5df4cf81a4187227c7ba0129321f70c6f38b04cdd5bf"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs.meta",
+      "after": "Runtime/RT/HoRTPrimarySurfaceInputs.cs.meta",
+      "workingSha256": "46f245366b71fc0c2a9882a91ed502234c1746cae337629b91609dde29e04208"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTRayMeshIndices.cs",
+      "after": "Runtime/RT/HoRTRayMeshIndices.cs",
+      "workingSha256": "c3dac98429c70bd5fb023ac838bf7e54ed832a01ebad2f4b0ef655e2fa38dfea"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTRayMeshIndices.cs.meta",
+      "after": "Runtime/RT/HoRTRayMeshIndices.cs.meta",
+      "workingSha256": "cf2ce0c54cb6c44eba6e09fa975e5a47601f6baa285b0a436912e474575c404f"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTScene.cs",
+      "after": "Runtime/RT/HoRTScene.cs",
+      "workingSha256": "153ed199c6f5e491d0052f5daf6d5e5b9149fddb60ce8fb15bf5e3493d93279e"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTScene.cs.meta",
+      "after": "Runtime/RT/HoRTScene.cs.meta",
+      "workingSha256": "988ee1d52074247ccd71d0f490af3ad6c09a45f2140c50c44d402edcb3d6c087"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTSharedData.cs",
+      "after": "Runtime/RT/HoRTSharedData.cs",
+      "workingSha256": "14140be3a19ba86201ef03ba1ad21f06c790b2a4c3e27d70468524dc51da7a77"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTSharedData.cs.meta",
+      "after": "Runtime/RT/HoRTSharedData.cs.meta",
+      "workingSha256": "bf7d8501a3a5fee203889abcdad8436c7dc82d08d3842306c390df84b51291e3"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTSkinnedMesh.cs",
+      "after": "Runtime/RT/HoRTSkinnedMesh.cs",
+      "workingSha256": "3ddcc617fe4e35b9e0734b75921a852e4847322e0834610e191381393ad6a4e1"
+    },
+    {
+      "before": "Runtime/RayTracing/HoRTSkinnedMesh.cs.meta",
+      "after": "Runtime/RT/HoRTSkinnedMesh.cs.meta",
+      "workingSha256": "018858643ee59063789357bbb29d3fa34ee9c4d29664aa6877cb056ff5f4140e"
+    },
+    {
+      "before": "Runtime/RayTracing/Shaders.meta",
+      "after": "Runtime/RT/Shaders.meta",
+      "workingSha256": "b82040249e75fb4b81f802f1a90d1862cb22694109abfc49c209c52eb7dba627"
+    },
+    {
+      "before": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl",
+      "after": "Runtime/RT/Shaders/HoRTPrimarySurface.hlsl",
+      "workingSha256": "682cb34f549394edc44c0e123f8471e5c68a42135614e2c7d98e267bcc96949b"
+    },
+    {
+      "before": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl.meta",
+      "after": "Runtime/RT/Shaders/HoRTPrimarySurface.hlsl.meta",
+      "workingSha256": "815599c3004d578b9b02cab2a5845c68d65005ff1c90887d7a4b31149a030098"
+    },
+    {
+      "before": "Runtime/RayTracing/Shaders/HoRTSceneHit.hlsl",
+      "after": "Runtime/RT/Shaders/HoRTSceneHit.hlsl",
+      "workingSha256": "5b51fe9913dc064357ff9d1d688708eed7e13491884b1488c57ba76eb2cd42da"
+    },
+    {
+      "before": "Runtime/RayTracing/Shaders/HoRTSceneHit.hlsl.meta",
+      "after": "Runtime/RT/Shaders/HoRTSceneHit.hlsl.meta",
+      "workingSha256": "31e46724390e697f5c127950a4390868ba251b36e77352d1a37ddd4202664177"
+    },
+    {
+      "before": "Runtime/RayTracing/Shaders/HoRTSceneQuery.hlsl",
+      "after": "Runtime/RT/Shaders/HoRTSceneQuery.hlsl",
+      "workingSha256": "6cf489a175782cfc06bc7f265d65e0b911b93120a4ff1e1cc4b6b03f73f4063a"
+    },
+    {
+      "before": "Runtime/RayTracing/Shaders/HoRTSceneQuery.hlsl.meta",
+      "after": "Runtime/RT/Shaders/HoRTSceneQuery.hlsl.meta",
+      "workingSha256": "6d2d10bf66fef91515e71c60e0fb6174b998082ebb5d3fe862a33f698fdef886"
+    }
+  ],
+  "errors": [],
+  "scope": "Approved text/path migration only; GPU behavior is checked separately."
+}

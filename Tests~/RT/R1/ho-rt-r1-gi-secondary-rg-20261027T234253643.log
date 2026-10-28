@@ -1,0 +1,1070 @@
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12" at "2026-10-27T23:45:32.3949885Z"
+Built from '6000.3/staging' branch; Version is '6000.3.15f1 (c1aa84e375f6) revision 12692100'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) CoreCountrySpecific' Language: 'zh' Physical Memory: 31908 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-27T23:45:32Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe
+-batchmode
+-force-d3d12
+-projectPath
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation
+-executeMethod
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout
+-logFile
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\ho-rt-r1-gi-secondary-rg-20261027T234253643.log
+-force-d3d12-debug
+Successfully changed project path to: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation
+D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [36344]  Target information:
+
+Player connection [36344]  * "[IP] 26.182.211.171 [Port] 55505 [Flags] 2 [Guid] 2208120588 [EditorId] 2208120588 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [36344]  * "[IP] 192.168.1.6 [Port] 55505 [Flags] 2 [Guid] 2208120588 [EditorId] 2208120588 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [36344] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [36344] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-59812" after 0.2 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.1'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-hhh12"
+[Licensing::IpcConnector] LicenseClient-hhh12 channel disconnected successfully.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15" at "2026-10-27T23:45:33.2480644Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 53828, path: "C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              5ef24080f9fc4dd8a4c48136c2870c2b
+  Correlation Id:          7dac4180420c0a14ec519b057330f5bd
+  External correlation Id: 7406942112805717440
+  Machine Id:              1CwKlLouk/VY6hjRtF7o1PKDkww=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-hhh12-6000.3.15" (connect: 0.00s, validation: 0.00s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15-notifications" at "2026-10-27T23:45:33.2534176Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: ewogICJzdWJzR3JvdXAiIDogInVuaXR5IGVkaXRvciIsCiAgIm5hbWVzcGFjZSIgOiAidW5pdHlfZWRpdG9yIiwKICAidHlwZSIgOiAiRURJVE9SIiwKICAidGFnIiA6ICJVbml0eVBlcnNvbmFsXXXX
+  Product: Unity Personal Version
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.87s
+[Licensing::Module] Licensing is initialized (took 0.57s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Artifact Garbage Collection - Removed 1 unused hashed content files
+Refreshing native plugins compatible for Editor in 1.66 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.15f1 (c1aa84e375f6)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation/Assets
+Forcing GfxDevice: Direct3D 12
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 4060 (ID=0x2882)
+    Vendor:          NVIDIA
+    VRAM:            7956 MB
+    App VRAM Budget: 7188 MB
+    Driver:          32.0.16.1742
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56812
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.003649 seconds.
+- Loaded All Assemblies, in  0.316 seconds
+Native extension for WindowsStandalone target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.226 seconds
+Domain Reload Profiling: 534ms
+	BeginReloadAssembly (129ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (18ms)
+	RebuildCommonClasses (24ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (42ms)
+	LoadAllAssembliesAndSetupDomain (106ms)
+		LoadAssemblies (104ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (103ms)
+			TypeCache.Refresh (101ms)
+				TypeCache.ScanAssembly (92ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (226ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (203ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (31ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (43ms)
+			ProcessInitializeOnLoadAttributes (75ms)
+			ProcessInitializeOnLoadMethodAttributes (52ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 28 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.burst@1.8.29 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.burst@6bb9aca3ef38)
+    com.unity.mathematics@1.3.3 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.collections@2.6.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.collections@12999e356c23)
+    com.unity.searcher@4.9.4 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.searcher@d45a78918735)
+    com.unity.nuget.mono-cecil@1.11.6 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.test-framework.performance@3.4.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework.performance@aa81a99c4a75)
+  Built-in packages:
+    com.unity.modules.imgui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.ui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.imageconversion@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.unitywebrequest@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.terrain@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.physics@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.animation@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.particlesystem@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.audio@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.screencapture@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.hierarchycore@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.render-pipelines.core@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.render-pipelines.core@648b47f96bf1)
+    com.unity.shadergraph@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.shadergraph@2da3a5f87f4a)
+    com.unity.ugui@2.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ugui@23e8d17bfaf9)
+    com.unity.test-framework@1.6.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework@aebcb98460c6)
+    com.unity.ext.nunit@2.0.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+  Local packages:
+    com.unity.render-pipelines.universal@file:D:\Unity_Fork\HoUrp17.3.0 (location: D:\Unity_Fork\HoUrp17.3.0)
+    com.unity.render-pipelines.universal-config@file:D:\Unity_Fork\HoUrpConfig17.0.3 (location: D:\Unity_Fork\HoUrpConfig17.0.3)
+    jp.lilxyzw.liltoon@file:D:\Unity_Fork\lilToon\Assets\lilToon (location: D:\Unity_Fork\lilToon\Assets\lilToon)
+    jp.lilxyzw.liltoon.urp.extensions@file:D:\Unity_Fork\lilToon-URP-Extensions (location: D:\Unity_Fork\lilToon-URP-Extensions)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.01 seconds
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 0s349ms
+[464/576    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+*** Tundra build success (0.31 seconds), 1 items updated, 576 evaluated
+AssetDatabase: script compilation time: 0.675424s
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.672 seconds
+Refreshing native plugins compatible for Editor in 2.06 ms, found 1 plugins.
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 1.74 ms, found 1 plugins.
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.689 seconds
+Domain Reload Profiling: 2349ms
+	BeginReloadAssembly (325ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (35ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (149ms)
+	RebuildCommonClasses (26ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (33ms)
+	LoadAllAssembliesAndSetupDomain (268ms)
+		LoadAssemblies (297ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (81ms)
+			TypeCache.Refresh (56ms)
+				TypeCache.ScanAssembly (51ms)
+			BuildScriptInfoCaches (17ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (1689ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (1549ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (16ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (105ms)
+			ProcessInitializeOnLoadAttributes (1355ms)
+			ProcessInitializeOnLoadMethodAttributes (52ms)
+			AfterProcessingInitializeOnLoad (19ms)
+			EditorAssembliesLoaded (1ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (29ms)
+Asset Pipeline Refresh (id=823186b3dc629e24fb70374c7f8df3ef): Total: 3.610 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=2072 ms
+		Asset DB Callback time: managed=128 ms, native=15 ms
+		Scripting: domain reloads=1, domain reload time=672 ms, compile time=677 ms, other=45 ms
+		Project Asset Count: scripts=837, non-scripts=2120
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.002ms
+	InvokePackagesCallback: 20.484ms
+	ApplyChangesToAssetFolders: 0.857ms
+	Scan: 99.761ms
+	OnSourceAssetsModified: 0.004ms
+	CategorizeAssetsWithTransientArtifact: 13.569ms
+	ProcessAssetsWithTransientArtifactChanges: 29.588ms
+	CategorizeAssets: 40.750ms
+	ImportOutOfDateAssets: 1697.385ms (1019.486ms without children)
+		CompileScripts: 677.075ms
+		ReloadNativeAssets: 0.001ms
+		UnloadImportedAssets: 0.241ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.223ms
+		InitializingProgressBar: 0.000ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
+		OnDemandSchedulerStart: 0.357ms
+	PostProcessAllAssets: 128.120ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.001ms
+	UnloadStreamsBegin: 3.153ms
+	PersistCurrentRevisions: 0.068ms
+	UnloadStreamsEnd: 0.002ms
+	GenerateScriptTypeHashes: 1.670ms
+	Untracked: 1576.385ms
+
+Application.AssetDatabase Initial Refresh End
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.01 seconds
+Scanning for USB devices : 15.584ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-RTInputValidation
+Unloading 171 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3812 unused Assets / (6.7 MB). Loaded Objects now: 4733.
+Memory consumption went from 278.1 MB to 271.4 MB.
+Total: 6.562700 ms (FindLiveObjects: 0.453400 ms CreateObjectMapping: 0.085400 ms MarkObjects: 4.342700 ms  DeleteObjects: 1.680000 ms)
+
+Unloading 6 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 5 unused Assets / (15.7 KB). Loaded Objects now: 4735.
+Memory consumption went from 237.5 MB to 237.5 MB.
+Total: 5.194200 ms (FindLiveObjects: 0.214300 ms CreateObjectMapping: 0.054800 ms MarkObjects: 4.904300 ms  DeleteObjects: 0.020000 ms)
+
+[HoGICutoutHit] CHECK Missing GI hit shaders
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Run () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:45)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:RunCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:15)
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[Project] Loading completed in 7.313 seconds
+	Project init time: 				6.374 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.764 seconds
+		Asset Database init time: 		0.184 seconds
+		Global illumination init time: 	0.002 seconds
+		Assemblies load time: 			0.566 seconds
+		Unity extensions init time: 	0.015 seconds
+		Asset Database refresh time: 	3.610 seconds
+	Scene opening time: 			0.301 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1793144739129,"processId":59812,"projectLoad":7.3131249,"projectInit":6.3741147,"templateInit":0.0,"packageManagerInit":0.7643149,"assetDatabaseInit":0.1841001,"globalIlluminationInit":0.0024942,"assembliesLoad":0.5664656,"unityExtensionsInit":0.0147586,"assetDatabaseRefresh":3.6102434,"sceneOpening":0.3014535}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1793144739129,"processId":59812,"editorVersion":"6000.3.15f1 (c1aa84e375f6)","branch":"6000.3/staging","buildType":"Release","platform":"Windows"}
+[Licensing::Client] Successfully resolved entitlement details
+Start Indexing on Editor startup
+[Indexing] Starting Initial Indexing for Assets
+[HoGICutoutHit] INPUT shader=Hidden/lilToonCutout queue=2450 tag=TransparentCutout mask=0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:21)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs Line: 21)
+
+[HoGICutoutHit] CHECK Basic static Cutout classifier accepted
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:22)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:24)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Accepted Cutout is registered non-opaque and evaluated
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:24)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Cutout closest distance: 1 != 1
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near (single,single,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:136)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:24)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:25)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Color alpha hole ignores intersection
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:25)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:29)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK UV .6 selects solid main alpha texel
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:29)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:30)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Main alpha offset selects hole
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:30)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:31)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Main alpha scale selects repeated hole
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:31)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:32)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Static main rotation selects hole
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:32)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:34)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Unshifted backface alpha selects hole
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:34)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:35)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Backface UV shift precedes main ST
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:35)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Backface geometric normal X: 0 != 0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near (single,single,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:136)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near3 (UnityEngine.Vector3,UnityEngine.Vector3,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:137)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:35)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Backface geometric normal Y: 0 != 0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near (single,single,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:136)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near3 (UnityEngine.Vector3,UnityEngine.Vector3,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:137)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:35)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Backface geometric normal Z: 1 != 1
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near (single,single,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:136)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near3 (UnityEngine.Vector3,UnityEngine.Vector3,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:137)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:35)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:41)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Mask replace accepts equality at cutoff
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:41)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:42)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Mask multiply rejects quarter alpha
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:42)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:43)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Mask add restores alpha
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:43)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:44)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Mask subtract rejects alpha
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:44)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:45)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Mask scale and positive bias accept
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:45)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:45)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Mask negative bias rejects
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:45)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:46)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Independent mask UV solid texel
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:46)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:46)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Independent mask ST selects hole
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:46)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:47)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Visibility-only native payload returns blocker status
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:47)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Visibility-only actual distance: 1 != 1
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near (single,single,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:136)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:47)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Visibility query skips expensive emission evaluation X: 0 != 0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near (single,single,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:136)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near3 (UnityEngine.Vector3,UnityEngine.Vector3,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:137)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:47)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Visibility query skips expensive emission evaluation Y: 0 != 0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near (single,single,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:136)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near3 (UnityEngine.Vector3,UnityEngine.Vector3,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:137)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:47)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Visibility query skips expensive emission evaluation Z: 0 != 0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near (single,single,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:136)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Near3 (UnityEngine.Vector3,UnityEngine.Vector3,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:137)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:47)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK World-space miss was not preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Trace (bool) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:83)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:48)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Visibility-only rays execute the same alpha any-hit
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:48)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Unsupported multilayer Cutout remains outside bounded domain
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:49)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] CHECK Animated alpha UV remains outside bounded domain
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:135)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:49)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs Line: 135)
+
+[HoGICutoutHit] PASS native alpha/mask/UV/backface/visibility payload
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:ValidateCutout () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs:51)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation:Validate () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGISecondaryValidation.cs:93)
+UnityEditor.EditorApplication:Internal_CallDelayFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGICutoutHitValidation.cs Line: 51)
+
+Curl error 42: Callback aborted
+Request timed out while processing request "https://public-cdn.cloud.unity3d.com/config/production", HTTP error code 0
+.[UnityConnect] Request timed out.
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-hhh12-6000.3.15-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-hhh12-6000.3.15 channel disconnected successfully.
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+Leak Detected : Persistent allocates 4 individual allocations. To find out more please enable 'Preferences > Jobs > Leak Detection Level > Enabled With Stack Trace' and reproduce the leak again.
+There are unreleased allocations left in a heap that is released!
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1793144740812,"processId":59812,"allocatedMemory":18225342,"memoryLabels":[{"Default":29313},{"Permanent":15236},{"NewDelete":68457},{"Thread":4238040},{"Manager":39357},{"VertexData":8},{"Geometry":816},{"Texture":296},{"Shader":116245},{"Material":24},{"GfxDevice":60377},{"GfxThread":96},{"Animation":392},{"Audio":3040},{"FreeType":8},{"FontEngine":736},{"Physics":2090},{"Physics2D":16},{"Serialization":656},{"Input":14984},{"JobScheduler":33024},{"TextLib":216},{"Mono":32},{"MonoCode":64},{"ScriptingNativeRuntime":155060},{"BaseObject":1620208},{"Resource":1336},{"Renderer":3000},{"Transform":4685},{"File":1016},{"WebCam":616},{"Culling":32},{"Terrain":11394},{"Wind":24},{"STL":40},{"String":13797},{"DynamicArray":94663},{"HashMap":3863632},{"Utility":2662998},{"Curl":1828},{"PoolAlloc":2152},{"AI":80},{"TypeTree":5341},{"ScriptManager":512},{"RuntimeInitializeOnLoadManager":64},{"SpriteAtlas":112},{"GI":7792},{"Director":8240},{"CloudService":8064},{"WebRequest":5489},{"VR":47994},{"SceneManager":504},{"Video":208},{"LazyScriptCache":32},{"Camera":17},{"Secure":2113},{"SerializationCache":1576},{"APIUpdating":10320},{"Subsystems":336},{"VirtualTexturing":57888},{"StaticSafetyDebugInfo":278528},{"Analytics":384},{"Hierarchy":608},{"CoreStats":13032},{"Identifiers":12960},{"Gui":96},{"EditorUtility":108145},{"VersionControl":4},{"Undo":947},{"AssetDatabase":4548912},{"EditorGi":328},{"UnityConnect":29232},{"Upm":1896},{"AssetCompliance":64},{"DrivenProperties":72},{"LocalIPC":211},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2867},{"Licensing":664},{"AssetReference":32},{"IPCStream":32}]}

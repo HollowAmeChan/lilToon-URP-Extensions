@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     internal static class HoRTRayMeshIndices
     {

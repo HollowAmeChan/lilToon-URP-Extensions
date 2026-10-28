@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.Atmosphere;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI.NRD;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;

@@ -1,6 +1,6 @@
 // Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
 // NVIDIA portions are governed by ../ThirdParty/RTXDI/LICENSE.txt.
-// Pass sequence adapted from UnityPathTracing/Assets/Shaders/RayTracing/DI.
+// Pass sequence adapted from UnityPathTracing/Assets/Shaders/RT/DI.
 #pragma kernel Initial
 #pragma kernel Temporal
 #pragma kernel Spatial

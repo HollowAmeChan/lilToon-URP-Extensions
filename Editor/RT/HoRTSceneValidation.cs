@@ -10,7 +10,7 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using Object = UnityEngine.Object;
 
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     public static partial class HoRTSceneValidation
     {
@@ -54,7 +54,7 @@ namespace lilToon.URP.Extensions.RayTracing
                 scene = new HoRTScene();
                 var renderer = Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
                 probe = Keep(ScriptableObject.CreateInstance<HoRTSceneProbeFeature>()); probe.scene = scene;
-                probe.shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RayTracing/HoRTSceneValidation.compute");
+                probe.shader = AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTSceneValidation.compute");
                 Require(probe.shader != null, "Scene compute shader missing");
                 var output = Keep(new RenderTexture(8, 4, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear) { enableRandomWrite = true }); output.Create();
                 capture = RTHandles.Alloc(output); probe.output = capture;

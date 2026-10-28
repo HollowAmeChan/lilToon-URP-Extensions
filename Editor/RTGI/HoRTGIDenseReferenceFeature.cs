@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using lilToon.URP.Extensions.Atmosphere;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI;
 using UnityEditor;
 using UnityEngine;

@@ -13,7 +13,7 @@ Shader "Hidden/lilToon/URP/RTGI/Composite"
             #pragma multi_compile_fog
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "../../RayTracing/Shaders/HoRTPrimarySurface.hlsl"
+            #include "../../RT/Shaders/HoRTPrimarySurface.hlsl"
             TEXTURE2D(_HoRTGICompositeDiffuse);
             TEXTURE2D_FLOAT(_CameraDepthTexture);
             float _HoRTGICompositeIntensity;

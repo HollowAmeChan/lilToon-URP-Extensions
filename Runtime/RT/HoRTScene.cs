@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     // Explicit, camera-independent registry for opaque mesh world visibility.
     // No lighting, material evaluation, renderer feature or automatic scene scan.

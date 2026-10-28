@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     // Editor-only reproduction using Unity's API directly, independent of HoRTScene.
     public static class HoRTAccelerationGrowthProbe

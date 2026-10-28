@@ -1,0 +1,36 @@
+{
+  "stage": "R1",
+  "sourceCommit": "bddd826859df40922a01625d4a14fe078dbfd8cf",
+  "startedUtc": "2026-10-27T23:30:15.9334992Z",
+  "sourcesFile": "sources-20261027T233015456.json",
+  "runnerSha256": "2B15DE21C7573B7FF3C57E1EBA79B20CEB2CD26093AC39AEEBF0C4E93A560012",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "scene-rg",
+      "entry": "lilToon.URP.Extensions.RT.HoRTSceneValidation.Run",
+      "api": "d3d12",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "[Licensing::Module] Error: Failed to handshake to channel: \"LicenseClient-hhh12\"\r",
+        "[Licensing::Module] LicensingClient has failed validation; ignoring\r",
+        "[Licensing::Module] Error: Access token is unavailable; failed to update\r",
+        "Starting: C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.15f1\\Editor\\Data\\Tools\\BuildPipeline\\bee_backend.exe --ipc --defer-dag-verification --dagfile=\"Library/Bee/1900b0aE.dag\" --continue-on-failure --profile=\"Library/Bee/backend1.traceevents\" ScriptAssemblies\r",
+        "Starting: C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.15f1\\Editor\\Data\\Tools\\BuildPipeline\\bee_backend.exe --ipc --defer-dag-verification --dagfile=\"Library/Bee/1900b0aE.dag\" --continue-on-failure --dagfilejson=\"Library\\Bee\\1900b0aE.dag.json\" --profile=\"Library/Bee/backend2.traceevents\" ScriptAssemblies\r",
+        "Assets\\HoNrdArchitecture\\HoLegacyNrdContext.cs(10,30): error CS0234: The type or namespace name 'RayTracing' does not exist in the namespace 'lilToon.URP.Extensions' (are you missing an assembly reference?)\r",
+        "Assets\\HoNrdArchitecture\\HoLegacyNrdContext.cs(152,58): error CS0246: The type or namespace name 'HoRTPrimarySurfaceInputs' could not be found (are you missing a using directive or an assembly reference?)\r",
+        "*** Tundra build failed (1.25 seconds), 8 items updated, 731 evaluated\r",
+        "Assets\\HoNrdArchitecture\\HoLegacyNrdContext.cs(10,30): error CS0234: The type or namespace name 'RayTracing' does not exist in the namespace 'lilToon.URP.Extensions' (are you missing an assembly reference?)\r",
+        "Assets\\HoNrdArchitecture\\HoLegacyNrdContext.cs(152,58): error CS0246: The type or namespace name 'HoRTPrimarySurfaceInputs' could not be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\HoNrdArchitecture\\HoLegacyNrdContext.cs(10,30): error CS0234: The type or namespace name 'RayTracing' does not exist in the namespace 'lilToon.URP.Extensions' (are you missing an assembly reference?)\r",
+        "Assets\\HoNrdArchitecture\\HoLegacyNrdContext.cs(152,58): error CS0246: The type or namespace name 'HoRTPrimarySurfaceInputs' could not be found (are you missing a using directive or an assembly reference?)\r"
+      ],
+      "logSha256": "1F8C07EFB1B4A8FD6BC7B1FD756213C311B53A6B5DD66B58380808E67CFB02D1",
+      "seconds": 6.2695571,
+      "pass": false,
+      "logFile": "ho-rt-r1-scene-rg-20261027T233015456.log"
+    }
+  ]
+}

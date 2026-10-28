@@ -1,4 +1,4 @@
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using UnityEngine;
 using lilToon.URP.Extensions.RTDI;
 namespace lilToon.URP.Extensions.Editor.RTDI

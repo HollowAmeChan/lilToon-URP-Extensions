@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
-namespace lilToon.URP.Extensions.RayTracing
+namespace lilToon.URP.Extensions.RT
 {
     [StructLayout(LayoutKind.Sequential)]
     internal struct HoRTAnalyticLight

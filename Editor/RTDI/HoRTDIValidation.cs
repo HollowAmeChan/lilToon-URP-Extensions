@@ -1,4 +1,4 @@
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.NRD;
 #pragma warning disable CS0618
 using System;

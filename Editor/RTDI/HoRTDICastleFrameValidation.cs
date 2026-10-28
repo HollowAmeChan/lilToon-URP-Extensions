@@ -88,7 +88,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     report.observedFrames=samples;report.rawTemporalVariance=variances[0]/(points*3);report.filteredTemporalVariance=variances[1]/(points*3);report.rawMean=averages[0]/(points*3);report.filteredMean=averages[1]/(points*3);pixels=image.GetPixels();
                     c.nrd.ValidationTimeSeconds=null;
                 }
-                var scene=(lilToon.URP.Extensions.RayTracing.HoRTScene)di.GetType().GetField("scene",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(di);report.acceptedInstances=scene.InstanceCount;report.rejections=scene.Rejections.ToArray();
+                var scene=(lilToon.URP.Extensions.RT.HoRTScene)di.GetType().GetField("scene",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(di);report.acceptedInstances=scene.InstanceCount;report.rejections=scene.Rejections.ToArray();
                 foreach(var pixel in pixels)
                 {
                     if(!float.IsFinite(pixel.r)||!float.IsFinite(pixel.g)||!float.IsFinite(pixel.b)||!float.IsFinite(pixel.a)||pixel.r<0||pixel.g<0||pixel.b<0)throw new Exception("Castle output contains invalid radiance");

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.Atmosphere;
 using System.Runtime.InteropServices;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTDI.NRD;
 using lilToon.URP.Extensions.Debugging;
 using UnityEngine;

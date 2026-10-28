@@ -1,0 +1,20 @@
+{
+  "stage": "R1",
+  "acceptedRun": "run-20261027T234253643.json",
+  "cases": 10,
+  "currentProductFingerprintsChecked": 1929,
+  "rejectedAttempts": [
+    "run-20261027T233015456.json",
+    "run-20261027T233123412.json",
+    "run-20261027T233300868.json",
+    "run-20261027T233949651.json"
+  ],
+  "scope": "Pure migration with supported-domain query/consumer checks, not host/SIGMA/full NPR acceptance.",
+  "knownCaveats": [
+    "First cold-import current scene run returned old transform distance; pre-migration control and subsequent current runs passed. Cause not proven.",
+    "Original PrimarySurface raw [Gamma] property assertions run in their original Gamma domain; the rejected Linear-domain attempt remains recorded.",
+    "Initial old validation project contained a frozen A01 namespace dependency; clean RT project is now used.",
+    "First empty-project package resolution encountered ShaderGraph cache EPERM; matching existing independent-project cache was copied, without source changes.",
+    "Existing four-allocation persistent cleanup warning remains in full Unity logs."
+  ]
+}

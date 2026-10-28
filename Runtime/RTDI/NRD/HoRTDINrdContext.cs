@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using lilToon.URP.Extensions.NRD;
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;

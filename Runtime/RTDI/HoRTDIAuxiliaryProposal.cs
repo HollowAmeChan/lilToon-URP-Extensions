@@ -1,4 +1,4 @@
-using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RT;
 using System;
 
 namespace lilToon.URP.Extensions.RTDI
