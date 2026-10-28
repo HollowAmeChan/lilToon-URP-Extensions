@@ -1,0 +1,26 @@
+{
+  "stage": "R5 serialized Player",
+  "mode": "rg",
+  "sourceCommit": "304d7157861e9177d3bdac46ecc63bea93abd561",
+  "sourcesFile": "sources-20261028T061752710.json",
+  "probeSha256": "C5FD00040715E9C9A490CE53172A966094B0A515AE1B94686E567B2C4A4033A7",
+  "buildSourceSha256": "6279799C9A8892F43869D27260DA1E0B9DF3529E86D51FA185840987B9C216B6",
+  "activeProcess": null,
+  "buildExit": 0,
+  "buildLog": "build-rg-20261028T061752710.log",
+  "buildLogSha256": "37BC03CC7F568D2DD598D0502B458D39B3893062B7E9A43E40A84C004108C231",
+  "reviewedExistingBuildWarnings": [
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+  ],
+  "buildDiagnostics": [
+    "Shader warning in 'Hidden/lilToonCutout': imaginary square root at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(160) (on d3d11)",
+    "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(183) (on d3d11)",
+    "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(244) (on d3d11)",
+    "Shader warning in 'lilToon': imaginary square root at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(160) (on d3d11)",
+    "Shader warning in 'lilToon': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(183) (on d3d11)",
+    "Shader warning in 'lilToon': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(244) (on d3d11)"
+  ]
+}

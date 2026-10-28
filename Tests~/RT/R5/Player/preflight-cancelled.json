@@ -1,0 +1,13 @@
+{
+  "scope": "Cancel non-required legacy CS refactor preflight",
+  "reason": "Return to unchanged CS algorithm after repeated warning-only local work without RTShadow benefit",
+  "unityPid": 20228,
+  "children": [
+    null
+  ],
+  "timeUtc": "2026-10-28T14:59:34.3907470Z",
+  "result": "Preflight PASS is supported by completed log; original wrapper observation expired while process was live.",
+  "actualOutcome": "Cancellation was not performed: process exited between verified identity lookup and Stop-Process. Stop-Process reported process absent; subsequent log inspection proved the 8-variant preflight PASS. No source revert or native worker termination was reached.",
+  "log": "preflight-single-return.log",
+  "logSha256": "a9a866428ea194b0674c5888aad699706ffd14f6a15ab81c917382745501549b"
+}

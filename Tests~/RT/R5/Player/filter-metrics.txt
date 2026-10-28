@@ -1,0 +1,208 @@
+raw-point: min=0.000000, max=1.000000, mean=0.476563
+small-radius: min=0.000000, max=1.000000, mean=0.475613
+gather-reference-error: min=0.000000, max=0.000000, mean=0.000000
+sloped-unoccluded: min=1.000000, max=1.000000, mean=1.000000
+sloped-unoccluded-pcss: min=1.000000, max=1.000000, mean=1.000000
+grazing-unoccluded: min=1.000000, max=1.000000, mean=1.000000
+grazing-unoccluded-pcss: min=1.000000, max=1.000000, mean=1.000000
+sloped-occluded: min=0.000000, max=0.000000, mean=0.000000
+foreign-shadow-r0: min=0.000000, max=0.000000, mean=0.000000
+foreign-lit-r0: min=1.000000, max=1.000000, mean=1.000000
+foreign-shadow-r1: min=0.000000, max=0.000000, mean=0.000000
+foreign-lit-r1: min=0.999999, max=1.000000, mean=1.000000
+foreign-shadow-r1.01: min=0.000000, max=0.000000, mean=0.000000
+foreign-lit-r1.01: min=0.999999, max=1.000000, mean=1.000000
+foreign-shadow-r1.6: min=0.000000, max=0.000000, mean=0.000000
+foreign-lit-r1.6: min=0.999999, max=1.000000, mean=1.000000
+foreign-shadow-r2: min=0.000000, max=0.000000, mean=0.000000
+foreign-lit-r2: min=0.999999, max=1.000000, mean=1.000000
+foreign-shadow-r8: min=0.000000, max=0.000000, mean=0.000000
+foreign-lit-r8: min=1.000000, max=1.000000, mean=1.000000
+foreign-shadow-r16: min=0.000000, max=0.000000, mean=0.000000
+foreign-lit-r16: min=1.000000, max=1.000000, mean=1.000000
+foreign-shadow-pcss: min=0.000000, max=0.000000, mean=0.000000
+foreign-lit-pcss: min=0.999999, max=1.000000, mean=1.000000
+tile-boundary: min=1.000000, max=1.000000, mean=1.000000
+fallback-reference-error: min=0.000000, max=0.000000, mean=0.000000
+fallback-grazing-unoccluded: min=1.000000, max=1.000000, mean=1.000000
+depth-range-invariance: min=0.017455, max=0.017455, mean=0.017455
+user-4096-pcss: min=0.000000, max=1.000000, mean=0.496872
+user-4096-shifted: min=0.000000, max=1.000000, mean=0.496994
+blocker-depth-step: min=0.000976, max=0.049976, mean=0.025476
+blocker-depth-step-shifted: min=0.000976, max=0.049976, mean=0.025488
+previous-blocker-depth-step: min=0.000976, max=0.049976, mean=0.025404
+previous-blocker-depth-step-shifted: min=0.000976, max=0.049976, mean=0.025410
+blocker-coverage: min=0.199976, max=0.199976, mean=0.199976
+blocker-coverage-shifted: min=0.199976, max=0.199976, mean=0.199976
+first-thin-blocker: min=0.000000, max=3.489308, mean=2.642854
+first-thin-blocker-shifted: min=0.000000, max=3.489308, mean=2.642854
+fallback-blocker-statistics: min=0.000976, max=0.049976, mean=0.025476
+firstBlockerRadiusMotionDelta=0.02772593, lowSupportPixels=4096, fallbackBlockerError=0.00000000
+blockerDepthMotionDelta=0.00004785, previousPointSearchMotionDelta=0.00153126, blockerCoverageMotionDelta=0.00147867
+dense-reference-r0: min=0.000000, max=0.000096, mean=0.000021
+dense-reference-r0.5: min=0.000000, max=0.000104, mean=0.000023
+dense-reference-r1: min=0.000000, max=0.000074, mean=0.000016
+dense-reference-r1.6: min=0.000000, max=0.000047, mean=0.000010
+dense-reference-r2: min=0.000000, max=0.000035, mean=0.000008
+dense-reference-r2.49: min=0.000000, max=0.000014, mean=0.000003
+radius-0-angle-0: min=0.000000, max=1.000000, mean=0.500000
+radius=0, angle=0, edgeWidthPixels=53.000
+radius-0.5-angle-0: min=0.000000, max=1.000000, mean=0.500000
+radius=0.5, angle=0, edgeWidthPixels=57.250
+radius-1-angle-0: min=0.000000, max=1.000000, mean=0.500001
+radius=1, angle=0, edgeWidthPixels=68.500
+radius-1.25-angle-0: min=0.000000, max=1.000000, mean=0.500000
+radius=1.25, angle=0, edgeWidthPixels=75.750
+radius-1.5-angle-0: min=0.000000, max=1.000000, mean=0.499999
+radius=1.5, angle=0, edgeWidthPixels=83.750
+radius-2-angle-0: min=0.000000, max=1.000000, mean=0.499999
+radius=2, angle=0, edgeWidthPixels=101.500
+radius-2.25-angle-0: min=0.000000, max=1.000000, mean=0.500000
+radius=2.25, angle=0, edgeWidthPixels=112.500
+radius-2.5-angle-0: min=0.000000, max=1.000000, mean=0.500000
+radius=2.5, angle=0, edgeWidthPixels=123.000
+radius-3-angle-0: min=0.000000, max=1.000000, mean=0.500000
+radius=3, angle=0, edgeWidthPixels=142.750
+radius-4-angle-0: min=0.000000, max=1.000000, mean=0.500000
+radius=4, angle=0, edgeWidthPixels=185.750
+radius-0-angle-22.5: min=0.000000, max=1.000000, mean=0.472692
+radius=0, angle=22.5, edgeWidthPixels=56.250
+radius-0.5-angle-22.5: min=0.000000, max=1.000000, mean=0.472715
+radius=0.5, angle=22.5, edgeWidthPixels=59.875
+radius-1-angle-22.5: min=0.000000, max=1.000000, mean=0.472799
+radius=1, angle=22.5, edgeWidthPixels=69.875
+radius-1.25-angle-22.5: min=0.000000, max=1.000000, mean=0.472868
+radius=1.25, angle=22.5, edgeWidthPixels=76.500
+radius-1.5-angle-22.5: min=0.000000, max=1.000000, mean=0.472949
+radius=1.5, angle=22.5, edgeWidthPixels=84.125
+radius-2-angle-22.5: min=0.000000, max=1.000000, mean=0.473122
+radius=2, angle=22.5, edgeWidthPixels=101.250
+radius-2.25-angle-22.5: min=0.000000, max=1.000000, mean=0.473228
+radius=2.25, angle=22.5, edgeWidthPixels=112.750
+radius-2.5-angle-22.5: min=0.000000, max=1.000000, mean=0.473340
+radius=2.5, angle=22.5, edgeWidthPixels=124.125
+radius-3-angle-22.5: min=0.000000, max=1.000000, mean=0.473496
+radius=3, angle=22.5, edgeWidthPixels=144.375
+radius-4-angle-22.5: min=0.000000, max=1.000000, mean=0.473746
+radius=4, angle=22.5, edgeWidthPixels=185.875
+radius-0-angle-45: min=0.000000, max=1.000000, mean=0.470250
+radius=0, angle=45, edgeWidthPixels=53.625
+radius-0.5-angle-45: min=0.000000, max=1.000000, mean=0.470350
+radius=0.5, angle=45, edgeWidthPixels=57.500
+radius-1-angle-45: min=0.000000, max=1.000000, mean=0.470621
+radius=1, angle=45, edgeWidthPixels=68.000
+radius-1.25-angle-45: min=0.000000, max=1.000000, mean=0.470801
+radius=1.25, angle=45, edgeWidthPixels=74.625
+radius-1.5-angle-45: min=0.000000, max=1.000000, mean=0.471000
+radius=1.5, angle=45, edgeWidthPixels=82.375
+radius-2-angle-45: min=0.000000, max=1.000000, mean=0.471441
+radius=2, angle=45, edgeWidthPixels=99.250
+radius-2.25-angle-45: min=0.000000, max=1.000000, mean=0.471742
+radius=2.25, angle=45, edgeWidthPixels=109.875
+radius-2.5-angle-45: min=0.000000, max=1.000000, mean=0.472051
+radius=2.5, angle=45, edgeWidthPixels=120.875
+radius-3-angle-45: min=0.000000, max=1.000000, mean=0.472559
+radius=3, angle=45, edgeWidthPixels=140.000
+radius-4-angle-45: min=0.000000, max=1.000000, mean=0.473624
+radius=4, angle=45, edgeWidthPixels=179.125
+radius-0-angle-67.5: min=0.000000, max=1.000000, mean=0.472692
+radius=0, angle=67.5, edgeWidthPixels=56.250
+radius-0.5-angle-67.5: min=0.000000, max=1.000000, mean=0.472715
+radius=0.5, angle=67.5, edgeWidthPixels=59.875
+radius-1-angle-67.5: min=0.000000, max=1.000000, mean=0.472799
+radius=1, angle=67.5, edgeWidthPixels=69.875
+radius-1.25-angle-67.5: min=0.000000, max=1.000000, mean=0.472868
+radius=1.25, angle=67.5, edgeWidthPixels=76.500
+radius-1.5-angle-67.5: min=0.000000, max=1.000000, mean=0.472949
+radius=1.5, angle=67.5, edgeWidthPixels=84.125
+radius-2-angle-67.5: min=0.000000, max=1.000000, mean=0.473122
+radius=2, angle=67.5, edgeWidthPixels=101.250
+radius-2.25-angle-67.5: min=0.000000, max=1.000000, mean=0.473236
+radius=2.25, angle=67.5, edgeWidthPixels=112.000
+radius-2.5-angle-67.5: min=0.000000, max=1.000000, mean=0.473359
+radius=2.5, angle=67.5, edgeWidthPixels=123.000
+radius-3-angle-67.5: min=0.000000, max=1.000000, mean=0.473521
+radius=3, angle=67.5, edgeWidthPixels=142.250
+radius-4-angle-67.5: min=0.000000, max=1.000000, mean=0.473773
+radius=4, angle=67.5, edgeWidthPixels=180.625
+radius-0-angle-90: min=0.000000, max=1.000000, mean=0.500000
+radius=0, angle=90, edgeWidthPixels=53.000
+radius-0.5-angle-90: min=0.000000, max=1.000000, mean=0.500000
+radius=0.5, angle=90, edgeWidthPixels=57.250
+radius-1-angle-90: min=0.000000, max=1.000000, mean=0.500001
+radius=1, angle=90, edgeWidthPixels=68.500
+radius-1.25-angle-90: min=0.000000, max=1.000000, mean=0.500000
+radius=1.25, angle=90, edgeWidthPixels=75.750
+radius-1.5-angle-90: min=0.000000, max=1.000000, mean=0.499999
+radius=1.5, angle=90, edgeWidthPixels=83.750
+radius-2-angle-90: min=0.000000, max=1.000000, mean=0.499999
+radius=2, angle=90, edgeWidthPixels=101.500
+radius-2.25-angle-90: min=0.000000, max=1.000000, mean=0.500000
+radius=2.25, angle=90, edgeWidthPixels=112.000
+radius-2.5-angle-90: min=0.000000, max=1.000000, mean=0.500000
+radius=2.5, angle=90, edgeWidthPixels=122.750
+radius-3-angle-90: min=0.000000, max=1.000000, mean=0.500000
+radius=3, angle=90, edgeWidthPixels=142.750
+radius-4-angle-90: min=0.000000, max=1.000000, mean=0.500000
+radius=4, angle=90, edgeWidthPixels=184.000
+radius-0-angle-112.5: min=0.000000, max=1.000000, mean=0.472692
+radius=0, angle=112.5, edgeWidthPixels=56.250
+radius-0.5-angle-112.5: min=0.000000, max=1.000000, mean=0.472715
+radius=0.5, angle=112.5, edgeWidthPixels=59.875
+radius-1-angle-112.5: min=0.000000, max=1.000000, mean=0.472799
+radius=1, angle=112.5, edgeWidthPixels=69.875
+radius-1.25-angle-112.5: min=0.000000, max=1.000000, mean=0.472868
+radius=1.25, angle=112.5, edgeWidthPixels=76.500
+radius-1.5-angle-112.5: min=0.000000, max=1.000000, mean=0.472949
+radius=1.5, angle=112.5, edgeWidthPixels=84.125
+radius-2-angle-112.5: min=0.000000, max=1.000000, mean=0.473122
+radius=2, angle=112.5, edgeWidthPixels=101.250
+radius-2.25-angle-112.5: min=0.000000, max=1.000000, mean=0.473236
+radius=2.25, angle=112.5, edgeWidthPixels=113.375
+radius-2.5-angle-112.5: min=0.000000, max=1.000000, mean=0.473359
+radius=2.5, angle=112.5, edgeWidthPixels=125.250
+radius-3-angle-112.5: min=0.000000, max=1.000000, mean=0.473521
+radius=3, angle=112.5, edgeWidthPixels=145.375
+radius-4-angle-112.5: min=0.000000, max=1.000000, mean=0.473778
+radius=4, angle=112.5, edgeWidthPixels=187.375
+radius-0-angle-135: min=0.000000, max=1.000000, mean=0.470250
+radius=0, angle=135, edgeWidthPixels=53.625
+radius-0.5-angle-135: min=0.000000, max=1.000000, mean=0.470350
+radius=0.5, angle=135, edgeWidthPixels=57.500
+radius-1-angle-135: min=0.000000, max=1.000000, mean=0.470621
+radius=1, angle=135, edgeWidthPixels=68.000
+radius-1.25-angle-135: min=0.000000, max=1.000000, mean=0.470801
+radius=1.25, angle=135, edgeWidthPixels=74.750
+radius-1.5-angle-135: min=0.000000, max=1.000000, mean=0.471000
+radius=1.5, angle=135, edgeWidthPixels=82.375
+radius-2-angle-135: min=0.000000, max=1.000000, mean=0.471442
+radius=2, angle=135, edgeWidthPixels=99.250
+radius-2.25-angle-135: min=0.000000, max=1.000000, mean=0.471804
+radius=2.25, angle=135, edgeWidthPixels=113.000
+radius-2.5-angle-135: min=0.000000, max=1.000000, mean=0.472189
+radius=2.5, angle=135, edgeWidthPixels=126.875
+radius-3-angle-135: min=0.000000, max=1.000000, mean=0.472720
+radius=3, angle=135, edgeWidthPixels=147.750
+radius-4-angle-135: min=0.000000, max=1.000000, mean=0.473839
+radius=4, angle=135, edgeWidthPixels=191.375
+radius-0-angle-157.5: min=0.000000, max=1.000000, mean=0.472692
+radius=0, angle=157.5, edgeWidthPixels=56.250
+radius-0.5-angle-157.5: min=0.000000, max=1.000000, mean=0.472715
+radius=0.5, angle=157.5, edgeWidthPixels=59.875
+radius-1-angle-157.5: min=0.000000, max=1.000000, mean=0.472799
+radius=1, angle=157.5, edgeWidthPixels=69.875
+radius-1.25-angle-157.5: min=0.000000, max=1.000000, mean=0.472868
+radius=1.25, angle=157.5, edgeWidthPixels=76.500
+radius-1.5-angle-157.5: min=0.000000, max=1.000000, mean=0.472949
+radius=1.5, angle=157.5, edgeWidthPixels=84.125
+radius-2-angle-157.5: min=0.000000, max=1.000000, mean=0.473122
+radius=2, angle=157.5, edgeWidthPixels=101.250
+radius-2.25-angle-157.5: min=0.000000, max=1.000000, mean=0.473227
+radius=2.25, angle=157.5, edgeWidthPixels=114.625
+radius-2.5-angle-157.5: min=0.000000, max=1.000000, mean=0.473340
+radius=2.5, angle=157.5, edgeWidthPixels=127.750
+radius-3-angle-157.5: min=0.000000, max=1.000000, mean=0.473496
+radius=3, angle=157.5, edgeWidthPixels=148.375
+radius-4-angle-157.5: min=0.000000, max=1.000000, mean=0.473755
+radius=4, angle=157.5, edgeWidthPixels=188.750
+levels=18601, maximumAdjacentJump=0.020452, subtexelMotionDelta=0.001452

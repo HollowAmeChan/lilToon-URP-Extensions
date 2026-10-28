@@ -1,0 +1,9 @@
+{
+  "scope": "Initial legacy-filter attempt before the final initialization guard; retained rejected evidence",
+  "log": "filter-regression.log",
+  "sha256": "505aa4b970ecf5ab027762f1be219d94b63295c26b8527955c663a34b339195b",
+  "ownedUnityPid": 9400,
+  "terminalObservation": "PID absent on resumption; process was not restarted based only on a timeout",
+  "result": "Rejected: no filter PASS marker and compiler protocol disconnects in log. No exit code inferred.",
+  "limits": "Not evidence that the filtering algorithm failed; no completed numerical validation was obtained."
+}

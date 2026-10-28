@@ -334,6 +334,7 @@ Editor/
 | R4 / R5 NPR 接收 | 已完成有界实际材质检查；最终质量未完成 | 关闭 URP 主光 map，真实三层 receive / mask / strength / fallback；透视 / jitter 与窄 ramp 调阈值检查 | 默认 AO 无生产者曾掩盖测试；单样本重建仍可被窄 ramp 放大噪声，不能据此宣称最高清晰度 | 提高同帧导出质量并验角色薄片 / 微动 / Player |
 | R5 同帧无历史估计 | 已完成有界验收 | 1–64 次独立 SIGMA 后线性平均，16 次改善真实 V / 窄 ramp MSE；六项回归通过 | 成本随次数增长，滤波偏差仍在，简单平面不是角色最终画质 | 薄蒙皮 cutout / 微动 / Player |
 | R5 薄蒙皮 / 微动 | 已完成有界验收 | 十二张实际 rigged cutout 窄卡片及骨骼 / BlendShape 微动；同预算原始比例约束显著降低误差，四项回归通过 | 256 次成本高、约 88% 暗侧保留，未等于任意角色 / AA / Player | serialized Player，随后 R6 |
+| R5 serialized Player | 已完成有界资格 | RG / compatibility 两个 Win64 Mono Player 各 21 Update / 34 checks，实际 SIGMA / NPR / 蒙皮，退出警告清零；原 CS 滤波与八片元变体通过 | 不代替 enabled-camera / backbuffer / XR / IL2CPP / 任意角色，冷构建成本高 | R6 |
 | R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 单灯闭环后扩展 |
 
 R0 采用的宿主准备合同：
@@ -432,6 +433,14 @@ R5 薄蒙皮 Cutout 与微动步骤见 [Thin review](../Tests~/RT/R5/Thin/review
 实现只改无历史多估计的 decode 合成：顺序累加两路数（SIGMA 官方解码 V 与每次真实二值 V），以原始同帧比例的 Wilson score 形状区间约束 SIGMA 平均，抑制多次实际射线一致时的空间滤波偏差。它是保护细节的约束，不声称对相关采样序列具备严格统计置信保证。每次 SIGMA 的输入仍是单个实际最近 blocker，原版算法 / ABI / 内部历史不改。最大同帧估计数由 64 扩到 256，默认 1、preview 单次保持；累计纹理由 R32F 改为 RG32F，N>1 额外占 8 B/像素（相比原平均再多 4 B/像素），GPU 和 CPU 调度仍随 N 线性增长。四次同请求输出与独立 SIGMA 解码平均加 CPU 同形状约束的最大误差约 5.96e-8，宽影 V 与窄 ramp 仍比单次更好。
 
 收益是从简单平面转到真正蒙皮 / 不可读 cutout 窄卡片后保留更多薄影，并验证微动当前帧正确；当前仍只有约 88% 暗侧保留，不是完美轮廓恢复。此夹具不是任意生产角色、复杂自相交 / coplanar 身份边界、空间覆盖 AA 或 Player 资格，不能宣称最高精度已全部实现。下一步做独立 serialized Player / 同帧导出验证，再继续 R6；文档只在本入口维护，失败及数值证据留 Tests~/RT/。
+
+R5 serialized Win64 Mono Player 有界资格见 [Player review](../Tests~/RT/R5/Player/review.json)，独立入口 `Tests~/RT/R5/Player/run_player.ps1`（另加 `-Compatibility`）。专用构建将 Ho-RT / GB / SB / RTShadow 和 9 个 SIGMA wrapper 引用写入隔离 Renderer 资产，原生 DLL 打包后 SHA 与 pinned DLL 一致；用户工程不改。两条路径各 21 个实际 Update、每 Update 一个显式相机请求，共 34 checks，原始 Cast / 原材质 ramp、连续 SIGMA、无历史重复、实际蒙皮 Cutout 的 alpha / bone 改变、静止 preview 历史与运动 reset、缺 host / 空 receiver、resize / Create 均通过；当前姿态 V 相对高预算 Raw MSE 均为 0.0008049865。最终构建 / Player 退出均 0，运行 diagnostics 为空，host domain / consumer retired 都为 0，退出无 GraphicsBuffer GC 警告，不使用旧 4 条警告额度。
+
+初始 Player 已通过功能，但 8 条 OB GC 警告仍拒绝。该私有探针运行期创建 OB group 却没有 OB feature 管理全应用退出，因此退出前停止本探针的 receiver / group 声明，释放 OB 实表和四个占位 GraphicsBuffer；最后一次 ReadPixels 已等待该请求 GPU 完成，之后不再渲染。修正仅在独立探针，不冒称生产 OB 全局 shutdown 已修复。原有 GB fallback / MSAA resolve Shader 在此打包夹具未被引用，日志明确提示未找到；本夹具使用真实 lilToon GB writer、单采样，没有把 fallback writers / MSAA 说成通过。
+
+严格 Player 构建还暴露原 CS helper 的 imaginary sqrt 与两条初始化警告。修复限平方根输入非负保护、显式局部向量初始化及 dense/sparse / PCSS 分支单一 return，不改有效有限输入的采样运算。前两轮不充分的候选和被拒绝构建保留；最后 8 个实际 Forward 片元变体无警告通过，原 CS GPU Filtering 完整专项通过（18601 灰阶、最大相邻跳变 0.020452、subtexelMotionDelta 0.001452），最终 Player 构建无这组警告。曾考虑退出此局部尝试，取消前恰好进程自行完成 PASS；identity lookup 与 Stop-Process 之间退出导致取消未执行，实际终态、完整日志和解释保留，未凭 timeout 重启。失败日志不改、新警告不白名单。
+
+本步收益是把 Editor 内 RTShadow / SIGMA / NPR 链路推进到实际序列化与打包执行，清理诊断也完成；成本是冷材质编译曾持续数分钟，明确不是运行时帧耗时。范围限定 Mono Win64 / D3D12、64/96²显式请求，不等于 enabled-camera/backbuffer / XR / IL2CPP 或任意生产角色的完整资格。单灯已有原始、重建、原 ramp、同帧导出及薄蒙皮微动的有界闭环，下一步 R6 逐灯请求 / 稳定身份 / 点聚灯和多输出，完整目标仍活跃。
 
 <a id="quality-reference"></a>
 

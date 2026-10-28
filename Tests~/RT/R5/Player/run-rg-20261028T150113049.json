@@ -1,0 +1,36 @@
+{
+  "stage": "R5 serialized Player",
+  "mode": "rg",
+  "sourceCommit": "304d7157861e9177d3bdac46ecc63bea93abd561",
+  "sourcesFile": "sources-20261028T150113049.json",
+  "probeSha256": "C5FD00040715E9C9A490CE53172A966094B0A515AE1B94686E567B2C4A4033A7",
+  "buildSourceSha256": "0C889BA9451F748827447E63ACDFE952653940E0B4E000DF1D6194DC15FAA6D1",
+  "activeProcess": null,
+  "buildExit": 0,
+  "buildLog": "build-rg-20261028T150113049.log",
+  "buildLogSha256": "EC9822954028AA5F25D4399E1CB2AE44B15004396E8BA80A6C83F14CA6D08187",
+  "reviewedExistingBuildWarnings": [
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+  ],
+  "buildDiagnostics": [],
+  "packedNativeSha256": "5EFF9D42D56DA8B38D305BC483D84263AEE3C31A6C6C3A0A637370DA68220EDB",
+  "playerExit": 0,
+  "playerLog": "player-rg-20261028T150113049.log",
+  "playerLogSha256": "C458E4D8F7960CCD4EE3D8B33E3A75E3B67CF6286E1CABF0D58D3EAFF333A2F8",
+  "reviewedExistingCleanupWarnings": [],
+  "playerDiagnostics": [
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer."
+  ],
+  "playerReport": "report-rg-20261028T150113049.json",
+  "pass": false
+}

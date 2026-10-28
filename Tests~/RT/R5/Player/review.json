@@ -1,0 +1,72 @@
+{
+  "stage": "R5 bounded serialized Win64 Mono Players",
+  "accepted": {
+    "compat": {
+      "run": "run-compat-20261028T151037161.json",
+      "updates": 21,
+      "checks": 34,
+      "currentPoseMse": 0.0008049864554777741,
+      "packedNativeSha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+    },
+    "rg": {
+      "run": "run-rg-20261028T150931545.json",
+      "updates": 21,
+      "checks": 34,
+      "currentPoseMse": 0.0008049864554777741,
+      "packedNativeSha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+    }
+  },
+  "rejectedEvidence": [
+    {
+      "run": "run-rg-20261028T061752710.json",
+      "buildDiagnostics": [
+        "Shader warning in 'Hidden/lilToonCutout': imaginary square root at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(160) (on d3d11)",
+        "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(183) (on d3d11)",
+        "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(244) (on d3d11)",
+        "Shader warning in 'lilToon': imaginary square root at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(160) (on d3d11)",
+        "Shader warning in 'lilToon': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(183) (on d3d11)",
+        "Shader warning in 'lilToon': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(244) (on d3d11)"
+      ],
+      "playerDiagnostics": []
+    },
+    {
+      "run": "run-rg-20261028T144128777.json",
+      "buildDiagnostics": [
+        "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(186) (on d3d11)",
+        "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(247) (on d3d11)",
+        "Shader warning in 'lilToon': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(186) (on d3d11)",
+        "Shader warning in 'lilToon': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(247) (on d3d11)"
+      ],
+      "playerDiagnostics": []
+    },
+    {
+      "run": "run-rg-20261028T144416031.json",
+      "buildDiagnostics": [
+        "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(186) (on d3d11)",
+        "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(247) (on d3d11)",
+        "Shader warning in 'lilToon': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(186) (on d3d11)",
+        "Shader warning in 'lilToon': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(247) (on d3d11)"
+      ],
+      "playerDiagnostics": []
+    },
+    {
+      "run": "run-rg-20261028T150113049.json",
+      "buildDiagnostics": [],
+      "playerDiagnostics": [
+        "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+        "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+        "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+        "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+        "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+        "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+        "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.",
+        "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer."
+      ]
+    }
+  ],
+  "benefit": "Serialized host/GB/SB/RTShadow, nine SIGMA pipelines and exact native DLL execute actual Cast and original NPR reception in Player. One request per Update checks export reproducibility, continuous V, native skinned Cutout, alpha/bone updates, independent preview history, missing host/receivers, resize/Create and actual retirement.",
+  "compilerFix": "Existing CS helper square-root folding and early-return false initialization diagnostics blocked strict build. Nonnegative sqrt, explicit local initialization and single-return equivalent finite-domain branches eliminate warnings. Eight exact Forward variants and original GPU filter validation pass. Failed candidate repairs and rejected builds retained; no new warning whitelist.",
+  "cleanup": "Initial probe passed functional checks but eight OB-owned GraphicsBuffer GC warnings caused rejection. Private probe teardown disables its OB declaration, releases its actual table and four placeholders after readback; final logs have zero such warnings and both retirement counts zero. This does not claim production-wide OB application shutdown is fixed.",
+  "limits": "64/96-square explicit camera render requests in 21 real Update calls, Mono Win64/D3D12 only. Existing GB fallback/MSAA resolve shaders absent in packed fixture; actual lilToon GB writer used and MSAA disabled. Not qualification of fallback writers, normal enabled-camera/backbuffer/XR/IL2CPP, arbitrary production characters or multilight outputs.",
+  "next": "R6 stable per-light requested products and analytic point/spot support. Full objective remains active."
+}

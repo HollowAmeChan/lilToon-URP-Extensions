@@ -95,7 +95,7 @@ void HoCSReadDepthQuad(float2 tapUv, float2 lo, float2 hi,
 float2 HoCSCompareBilinear(float2 tapUv, float2 lo, float2 hi,
     float2 receiverUv, float receiverDepth, float3 gradient)
 {
-    float4 depths, references, weights;
+    float4 depths = 0, references = 0, weights = 0;
     HoCSReadDepthQuad(tapUv, lo, hi, receiverUv, receiverDepth, gradient, depths, references, weights);
     float4 visibility = HoCSCompareDepth(depths, references);
     float4 rawVisibility = HoCSCompareDepth(depths, receiverDepth.xxxx);
@@ -121,7 +121,7 @@ float2 HoCSSampleDenseTent(float2 uv, float2 lo, float2 hi, float receiverDepth,
     float support = sqrt(2.25 + 1.5 * radiusTexels * radiusTexels);
     float2 position = uv * _HoCSAtlasSize.zw;
     float2 first = floor(position - support);
-    float4 weightsX, weightsY, offsetsX, offsetsY;
+    float4 weightsX = 0, weightsY = 0, offsetsX = 0, offsetsY = 0;
     [unroll] for (int pair = 0; pair < 4; pair++)
     {
         float2 a = first + pair * 2 - position;
@@ -157,7 +157,10 @@ float2 HoCSSampleOffset(int index, int sampleCount)
         sampleCount--;
     }
     float pair = floor((float)index * 0.5);
-    float radius = sqrt((pair + 0.5) / max(ceil((float)sampleCount * 0.5), 1.0));
+    // Some Player variants fold the inactive centre-sample branch with index
+    // -1 before control-flow pruning. Valid paired indices already have a
+    // nonnegative numerator; keep the folded expression defined as well.
+    float radius = sqrt(max(pair + 0.5, 0.0) / max(ceil((float)sampleCount * 0.5), 1.0));
     float angle = pair * 2.39996323;
     float direction = (index & 1) == 0 ? 1.0 : -1.0;
     return float2(cos(angle), sin(angle)) * (radius * direction);
@@ -179,23 +182,28 @@ float HoCSResolveFilter(float2 visibility)
 float HoCSSampleDisk(float2 uv, float2 lo, float2 hi, float receiverDepth,
     float radiusTexels, int sampleCount, float3 gradient)
 {
+    float2 visibility = 1;
     if (radiusTexels <= 2.0 || sampleCount <= 0)
-        return HoCSResolveFilter(HoCSSampleDenseTent(uv, lo, hi, receiverDepth, gradient, min(radiusTexels, 2.0)));
-
-    float2 visibility = 0;
-    // Preserve the base-AA variance as artistic softness grows instead of replacing its
-    // kernel with a narrower disk. The dense/sparse transition uses matching second moments.
-    float diskRadius = sqrt(radiusTexels * radiusTexels + 1.5);
-    [loop] for (int i = 0; i < HO_CS_MAX_PCSS_FILTER_SAMPLES; i++)
     {
-        if (i >= sampleCount) break;
-        float2 tapUv = uv + HoCSSampleOffset(i, sampleCount) * _HoCSAtlasSize.xy * diskRadius;
-        visibility += HoCSCompareBilinear(tapUv, lo, hi, uv, receiverDepth, gradient);
+        visibility = HoCSSampleDenseTent(uv, lo, hi, receiverDepth, gradient, min(radiusTexels, 2.0));
     }
-    visibility /= (float)sampleCount;
-    // Avoid a shape discontinuity when PCSS transitions out of the small-kernel path.
-    if (radiusTexels < 2.5)
-        visibility = lerp(HoCSSampleDenseTent(uv, lo, hi, receiverDepth, gradient, radiusTexels), visibility, smoothstep(2.0, 2.5, radiusTexels));
+    else
+    {
+        visibility = 0;
+        // Preserve the base-AA variance as artistic softness grows instead of replacing its
+        // kernel with a narrower disk. The dense/sparse transition uses matching second moments.
+        float diskRadius = sqrt(radiusTexels * radiusTexels + 1.5);
+        [loop] for (int i = 0; i < HO_CS_MAX_PCSS_FILTER_SAMPLES; i++)
+        {
+            if (i >= sampleCount) break;
+            float2 tapUv = uv + HoCSSampleOffset(i, sampleCount) * _HoCSAtlasSize.xy * diskRadius;
+            visibility += HoCSCompareBilinear(tapUv, lo, hi, uv, receiverDepth, gradient);
+        }
+        visibility /= (float)sampleCount;
+        // Avoid a shape discontinuity when PCSS transitions out of the small-kernel path.
+        if (radiusTexels < 2.5)
+            visibility = lerp(HoCSSampleDenseTent(uv, lo, hi, receiverDepth, gradient, radiusTexels), visibility, smoothstep(2.0, 2.5, radiusTexels));
+    }
     return HoCSResolveFilter(visibility);
 }
 
@@ -207,7 +215,7 @@ float HoCSDirectionalPenumbra(float gapDepth, float depthRange)
 float2 HoCSBlockerStatistics(float2 tapUv, float2 lo, float2 hi,
     float2 receiverUv, float receiverDepth, float3 gradient)
 {
-    float4 depths, references, weights;
+    float4 depths = 0, references = 0, weights = 0;
     HoCSReadDepthQuad(tapUv, lo, hi, receiverUv, receiverDepth, gradient, depths, references, weights);
     float4 trust = 1.0 - smoothstep(gradient.z, gradient.z * 2.0, abs(depths - references));
     references = lerp(receiverDepth.xxxx, references, trust);
@@ -240,19 +248,19 @@ float HoCSSampleAtlasPcss(float2 uv, float2 lo, float2 hi, float receiverDepth,
 {
     int filterSamples = clamp((int)round(_HoCSPcssParams2.z), 1, HO_CS_MAX_PCSS_FILTER_SAMPLES);
     float minRadius = max(HoCSRadiusTexels(_HoCSPcssParams2.w, texelWorld), footprintTexels);
-    if (_HoCSPcssParams.x < 0.5 || _HoCSPcssParams.y <= 0)
-        return HoCSSampleDisk(uv, lo, hi, receiverDepth, minRadius, filterSamples, gradient);
-
-    int blockerSamples = clamp((int)round(_HoCSPcssParams2.y), 1, HO_CS_MAX_PCSS_BLOCKER_SAMPLES);
-    float blockerRadius = HoCSRadiusTexels(_HoCSPcssParams.z, texelWorld);
-    float2 blockers = HoCSSearchBlockers(uv, lo, hi, receiverDepth, gradient, blockerRadius, blockerSamples);
     float radius = minRadius;
-    if (blockers.y > 0)
+    if (_HoCSPcssParams.x >= 0.5 && _HoCSPcssParams.y > 0)
     {
-        float penumbraWorld = HoCSDirectionalPenumbra(blockers.x / blockers.y, depthRange);
-        // A subtexel sliver entering the search must not jump straight to a full penumbra.
-        // One complete tap of support restores the unmodified distance-based estimate.
-        radius = max(radius, HoCSRadiusTexels(penumbraWorld, texelWorld) * smoothstep(0, 1, blockers.y));
+        int blockerSamples = clamp((int)round(_HoCSPcssParams2.y), 1, HO_CS_MAX_PCSS_BLOCKER_SAMPLES);
+        float blockerRadius = HoCSRadiusTexels(_HoCSPcssParams.z, texelWorld);
+        float2 blockers = HoCSSearchBlockers(uv, lo, hi, receiverDepth, gradient, blockerRadius, blockerSamples);
+        if (blockers.y > 0)
+        {
+            float penumbraWorld = HoCSDirectionalPenumbra(blockers.x / blockers.y, depthRange);
+            // A subtexel sliver entering the search must not jump straight to a full penumbra.
+            // One complete tap of support restores the unmodified distance-based estimate.
+            radius = max(radius, HoCSRadiusTexels(penumbraWorld, texelWorld) * smoothstep(0, 1, blockers.y));
+        }
     }
     return HoCSSampleDisk(uv, lo, hi, receiverDepth, radius, filterSamples, gradient);
 }
