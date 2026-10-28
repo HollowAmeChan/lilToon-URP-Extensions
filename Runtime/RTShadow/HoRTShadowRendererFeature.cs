@@ -2,8 +2,6 @@
 using System;
 using System.Collections.Generic;
 using lilToon.URP.Extensions.AttributeComposite;
-using lilToon.URP.Extensions.GeometryData;
-using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.SurfaceBuffer;
 using UnityEngine;
@@ -37,8 +35,6 @@ namespace lilToon.URP.Extensions.RTShadow
         [InspectorName("排除投射材质")] public List<Material> excludedRayMaterials = new();
         [InspectorName("射线偏移（米）"), Min(0.000001f), Tooltip("沿出射侧网格法线移动起点，并作为沿射线的最小距离，减少掠射角自遮挡。过大会丢失紧贴表面的真实细影。")]
         public float rayBias = .0001f;
-        [InspectorName("阴影终止线校正"), Range(0,1), Tooltip("用顶点切平面重建平滑曲面的射线起点，减轻低模曲面逐三角面的阴影终止线。0 为原三角网格参考；1 为完整校正。会改变自影几何近似，并额外检查位移路径以保留附近真实遮挡。")]
-        public float terminatorCorrection;
         [InspectorName("射线距离上限（米）"), Range(.01f, 65504)] public float maxDistance = 10000;
         [InspectorName("光源角直径（度）"), Range(0, 8)] public float angularDiameter;
         [InspectorName("原始参考样本数"), Range(1, 4096), Tooltip("只用于原始参考。SIGMA 按官方统计契约每像素输入一个真实光源样本。")]
@@ -82,7 +78,7 @@ namespace lilToon.URP.Extensions.RTShadow
                 foreach (var output in scheduled)
                     yield return new HoRTShadowLightDiagnostics(output.light, HoRTLightIdentity.Get(output.light), output.slot,
                         output.width, output.height, output.reconstruction, output.sigma?.LastReset ?? false, output.sigma?.LastFrame ?? 0,
-                        output.actualAngle, output.samples, output.receiverCount, output.sigma?.Estimates ?? 1, output.terminatorCorrection);
+                        output.actualAngle, output.samples, output.receiverCount, output.sigma?.Estimates ?? 1);
             }
         }
         private readonly Dictionary<(ScriptableRenderer renderer, Camera camera, Light light), Output> outputs = new();
@@ -90,21 +86,17 @@ namespace lilToon.URP.Extensions.RTShadow
         private object profileKey; private bool registered;
         private long serial;
         public HoRTShadowSettings Settings => settings;
-        public static bool SupportsTerminatorCorrection => false;
-        public static bool ProductionSuspended => true;
         public string Status { get; private set; } = "未生产";
         internal Output LastOutput { get; private set; }
         private readonly List<Output> scheduled = new();
-        private readonly InactivePass inactivePass = new();
         private readonly List<HoRTShadowProduct> rejected = new();
         private Camera currentCamera;
-        private readonly List<HoRTScene.Instance> originInstances = new();
         public IReadOnlyList<HoRTShadowProduct> UnavailableProducts => rejected;
         public bool TryGetCompatibilityProduct(Camera camera, Light light, out HoRTShadowCompatibilityProduct product)
         {
             product=default;if(camera!=currentCamera||light==null)return false;
             foreach(var output in scheduled)if(output.light==light&&output.lastView.IsValid&&output.producedSerial==output.renderSerial)
-            {product=new HoRTShadowCompatibilityProduct(light,HoRTLightIdentity.Get(light),output.renderSerial,output.raw,output.Visibility,output.reconstruction,output.slot,output.terminatorCorrection);return true;}
+            {product=new HoRTShadowCompatibilityProduct(light,HoRTLightIdentity.Get(light),output.renderSerial,output.raw,output.Visibility,output.reconstruction,output.slot);return true;}
             return false;
         }
         internal Output OutputForLight(Light light){foreach(var output in scheduled)if(output.light==light)return output;return null;}
@@ -115,7 +107,6 @@ namespace lilToon.URP.Extensions.RTShadow
             internal readonly int width, height;
             internal readonly RTHandle raw;
             internal readonly GraphicsBuffer receivers;
-            internal readonly GraphicsBuffer instanceOwners;
             internal readonly HoRTShadowReconstruction reconstruction;
             internal readonly HoRTShadowSigmaContext sigma;
             internal RTHandle Visibility => sigma?.visibility ?? raw;
@@ -123,11 +114,10 @@ namespace lilToon.URP.Extensions.RTShadow
             internal Light light; internal long renderSerial, producedSerial;
             internal int slot;
             internal float actualAngle;
-            internal float terminatorCorrection;
             internal int samples, receiverCount;
             internal readonly ShadowPass pass = new();
             private bool disposed;
-            internal Output(int width, int height, HoRTShadowReconstruction reconstruction, ComputeShader[] pipelines, int estimates, int ownerCapacity)
+            internal Output(int width, int height, HoRTShadowReconstruction reconstruction, ComputeShader[] pipelines, int estimates)
             {
                 this.width = width; this.height = height; this.reconstruction = reconstruction;
                 try
@@ -136,11 +126,10 @@ namespace lilToon.URP.Extensions.RTShadow
                     var descriptor = new RenderTextureDescriptor(width, height) { graphicsFormat = GraphicsFormat.R32G32B32A32_SFloat, depthBufferBits = 0, msaaSamples = 1, enableRandomWrite = true, dimension = TextureDimension.Tex2D };
                     raw = RTHandles.Alloc(descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "HoRTShadow Raw");
                     receivers = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 2048, sizeof(uint)) { name = "HoRTShadow receiver identities" };
-                    instanceOwners = new GraphicsBuffer(GraphicsBuffer.Target.Structured, ownerCapacity, sizeof(uint)) { name = "HoRTShadow AS owner identities" };
                 }
                 catch { Dispose(); throw; }
             }
-            public void Dispose() { if (disposed) return; disposed = true; sigma?.Dispose(); raw?.Release(); receivers?.Dispose(); instanceOwners?.Dispose(); }
+            public void Dispose() { if (disposed) return; disposed = true; sigma?.Dispose(); raw?.Release(); receivers?.Dispose(); }
             internal void ReleaseAfterUse() { lastView.ReleaseAfterUse(this); }
         }
         public override void Create()
@@ -167,12 +156,7 @@ namespace lilToon.URP.Extensions.RTShadow
         private HoRTShadowSettings ResolveSettings(out int overrides)
         {
             var stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
-            var effective = HoRTShadowVolume.Resolve(settings, stack?.GetComponent<HoRTShadowVolume>(), out overrides);
-            // The vertex-tangent displacement has a real-character regression.
-            // Saved nonzero Feature/Volume values must not silently reactivate it.
-            if (!SupportsTerminatorCorrection) effective.terminatorCorrection = 0;
-            if (ProductionSuspended) { effective.enabled = false; effective.debugMode = HoRTShadowDebugMode.Off; }
-            return effective;
+            return HoRTShadowVolume.Resolve(settings, stack?.GetComponent<HoRTShadowVolume>(), out overrides);
         }
         public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData data)
         {
@@ -206,7 +190,6 @@ namespace lilToon.URP.Extensions.RTShadow
         private void AddProductionPasses(ScriptableRenderer renderer, ref RenderingData data, HoRTShadowSettings settings)
         {
             LastOutput = null; scheduled.Clear(); rejected.Clear(); currentCamera=data.cameraData.camera;
-            if (ProductionSuspended) { renderer.EnqueuePass(inactivePass); Status = "RTShadow 生产与材质接收已暂停：真实角色回归，回退原有栅格投影"; return; }
             if (!CameraSupported(data.cameraData, settings)) { Status = "当前相机未请求（检查 Feature 总开关 / Volume 启用 / Scene View）"; return; }
             if (!HoRTScene.IsSupported || !SystemInfo.supportsRayTracing || shader == null || visibilityMaterialShader == null)
             { Status = "需要 D3D12 native RT 与阴影 Shader"; return; }
@@ -227,11 +210,6 @@ namespace lilToon.URP.Extensions.RTShadow
             var selected=new HashSet<Light>(requested);
             dead.Clear();foreach(var pair in outputs)if(pair.Key.camera==null||pair.Key.light==null||(ReferenceEquals(pair.Key.renderer,renderer)&&pair.Key.camera==data.cameraData.camera&&!selected.Contains(pair.Key.light)))dead.Add(pair.Key);
             foreach(var key in dead){outputs[key].ReleaseAfterUse();outputs.Remove(key);}
-            HoObjectBufferRegistry.EnsureBuilt();
-            view.Scene.CopyInstances(originInstances); uint highestIdentity = 0;
-            foreach (var instance in originInstances) highestIdentity = Math.Max(highestIdentity, instance.identity);
-            var instanceOwners = new uint[Mathf.NextPowerOfTwo(Math.Max(16, checked((int)highestIdentity + 1)))];
-            foreach (var instance in originInstances) instanceOwners[instance.identity] = HoGeometryRendererBinding.GetManagedValue(instance.renderer) & 65535u;
             foreach(var requestedLight in requested)
             {
                 long id=HoRTLightIdentity.Get(requestedLight);
@@ -248,13 +226,13 @@ namespace lilToon.URP.Extensions.RTShadow
                 {rejected.Add(new HoRTShadowProduct(requestedLight,id,-1,++serial,descriptor.width,descriptor.height,0,0,view.Scene.Lifetime,view.Scene.Revision,mode,TextureHandle.nullHandle,TextureHandle.nullHandle,HoRTShadowProductStatus.Unsupported,"Complete SIGMA shader library missing"));continue;}
                 var key=(renderer,data.cameraData.camera,requestedLight);
                 int estimates=mode==HoRTShadowReconstruction.SigmaSingleFrame?Mathf.Clamp(settings.singleFrameEstimates,1,256):1;
-                if(outputs.TryGetValue(key,out var output)&&(output.width!=descriptor.width||output.height!=descriptor.height||output.reconstruction!=mode||output.instanceOwners.count!=instanceOwners.Length||(output.sigma!=null&&output.sigma.Estimates!=estimates)))
+                if(outputs.TryGetValue(key,out var output)&&(output.width!=descriptor.width||output.height!=descriptor.height||output.reconstruction!=mode||(output.sigma!=null&&output.sigma.Estimates!=estimates)))
                 {output.ReleaseAfterUse();outputs.Remove(key);output=null;}
-                if(output==null){output=new Output(descriptor.width,descriptor.height,mode,sigmaPipelines,estimates,instanceOwners.Length);outputs.Add(key,output);}
+                if(output==null){output=new Output(descriptor.width,descriptor.height,mode,sigmaPipelines,estimates);outputs.Add(key,output);}
                 output.lastView=view;output.light=requestedLight;output.renderSerial=++serial;output.producedSerial=0;
                 bool isMain=requestedLight==light&&requestedLight.type==LightType.Directional;
                 if(isMain)LastOutput=output;
-                output.pass.Setup(output,view,shader,sigmaShader,mask,settings,requestedLight,isMain,scheduled.Count,instanceOwners);
+                output.pass.Setup(output,view,shader,sigmaShader,mask,settings,requestedLight,isMain,scheduled.Count);
                 output.receiverCount = receiverCount;
                 output.slot=scheduled.Count;
                 scheduled.Add(output);
@@ -276,49 +254,19 @@ namespace lilToon.URP.Extensions.RTShadow
             {var resources=frame.GetOrCreate<HoRTShadowRenderGraphResources>();resources.Camera=camera;foreach(var product in products)resources.Add(product);}
             public override void Execute(ScriptableRenderContext context,ref RenderingData data){}
         }
-        private sealed class InactivePass : ScriptableRenderPass
-        {
-            private sealed class Data { }
-            internal InactivePass() { renderPassEvent = RenderPassEvent.BeforeRenderingOpaques; }
-            public override void RecordRenderGraph(RenderGraph graph, ContextContainer frame)
-            {
-                using (var builder = graph.AddUnsafePass<Data>("Ho-RTShadow suspended: clear GPU receiver", out _))
-                {
-                    builder.AllowGlobalStateModification(true);builder.AllowPassCulling(false);
-                    var black=graph.defaultResources.blackTexture;builder.UseTexture(black);
-                    builder.SetGlobalTextureAfterPass(black,Shader.PropertyToID("_HoRTShadowRawTexture"));
-                    builder.SetGlobalTextureAfterPass(black,Shader.PropertyToID("_HoRTShadowVisibilityTexture"));
-                    builder.SetGlobalTextureAfterPass(black,Shader.PropertyToID("_HoRTShadowDepthTexture"));
-                    builder.SetRenderFunc(static (Data data, UnsafeGraphContext context) => context.cmd.SetGlobalFloat(Shader.PropertyToID("_HoRTShadowActive"),0));
-                }
-            }
-            public override void Execute(ScriptableRenderContext context, ref RenderingData data)
-            {
-                var cmd=CommandBufferPool.Get("Ho-RTShadow suspended: clear GPU receiver");
-                cmd.SetGlobalFloat("_HoRTShadowActive",0);
-                cmd.SetGlobalTexture("_HoRTShadowRawTexture",Texture2D.blackTexture);
-                cmd.SetGlobalTexture("_HoRTShadowVisibilityTexture",Texture2D.blackTexture);
-                cmd.SetGlobalTexture("_HoRTShadowDepthTexture",Texture2D.blackTexture);
-                context.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
-            }
-        }
         private void ReleaseOutputs() { foreach (var output in outputs.Values) output.ReleaseAfterUse(); outputs.Clear(); scheduled.Clear(); rejected.Clear(); LastOutput = null; HoAttributeCompositeConsumerRegistry.Remove(this); }
         protected override void Dispose(bool disposing)
         { if (registered) RenderPipelineManager.beginCameraRendering -= ResetCamera; registered = false; ResetCamera(default, null); ReleaseOutputs(); debugPass?.ReleaseDebugResources(); CoreUtils.Destroy(debugMaterial); debugMaterial = null; }
 
         internal sealed class ShadowPass : ScriptableRenderPass
         {
-            private Output output; private HoRTView view; private RayTracingShader shader; private uint[] receivers, instanceOwners;
+            private Output output; private HoRTView view; private RayTracingShader shader; private uint[] receivers;
             private ComputeShader sigmaShader;
-            private float terminatorCorrection;
             private Vector4 lightDirection, parameters, localPosition, localForward; private bool main; private int slot; private int samples, seed, signature; private float strength, tanRadius;
             internal ShadowPass() { renderPassEvent = RenderPassEvent.BeforeRenderingOpaques; }
-            internal void Setup(Output output, HoRTView view, RayTracingShader shader, ComputeShader sigmaShader, uint[] receivers, HoRTShadowSettings settings, Light light, bool main, int slot, uint[] instanceOwners)
+            internal void Setup(Output output, HoRTView view, RayTracingShader shader, ComputeShader sigmaShader, uint[] receivers, HoRTShadowSettings settings, Light light, bool main, int slot)
             {
                 this.output = output; this.view = view; this.shader = shader; this.receivers = receivers;
-                this.instanceOwners = instanceOwners;
-                terminatorCorrection = Mathf.Clamp01(settings.terminatorCorrection);
-                output.terminatorCorrection = terminatorCorrection;
                 this.sigmaShader = sigmaShader; this.main=main;this.slot=slot;
                 var position=light.transform.position;localPosition=new Vector4(position.x,position.y,position.z,Mathf.Max(.0001f,light.range));
                 var forward=light.transform.forward;localForward=new Vector4(forward.x,forward.y,forward.z,Mathf.Cos(Mathf.Clamp(light.spotAngle,0,179)*Mathf.Deg2Rad*.5f));
@@ -331,21 +279,17 @@ namespace lilToon.URP.Extensions.RTShadow
                 output.actualAngle = light.type == LightType.Directional ? Mathf.Clamp(angle, 0, 8) : 0; output.samples = samples;
                 tanRadius = Mathf.Tan(Mathf.Clamp(angle, 0, 8) * Mathf.Deg2Rad * .5f);
                 unchecked { signature = view.MaterialSignature ^ lightDirection.GetHashCode() ^ parameters.GetHashCode() ^ seed ^ localPosition.GetHashCode() ^ localForward.GetHashCode(); foreach (uint bits in receivers) signature = signature * 397 ^ (int)bits; }
-                unchecked { foreach(uint identity in instanceOwners) signature=signature*397^(int)identity; signature=signature*397^terminatorCorrection.GetHashCode(); }
             }
             private sealed class Data
             {
                 internal Output output; internal HoRTScene.Inputs scene; internal HoRTPrimarySurfaceInputs primary;
-                internal RayTracingShader shader; internal TextureHandle raw; internal uint[] receivers, instanceOwners;
-                internal float terminatorCorrection;
+                internal RayTracingShader shader; internal TextureHandle raw; internal uint[] receivers;
                 internal Vector4 direction, parameters, localPosition, localForward; internal int lightType, slot;internal bool main; internal int samples, seed; internal float strength;
                 internal ComputeShader sigmaShader; internal Matrix4x4 cameraView, projection; internal long lifetime; internal uint revision; internal int signature, lightId; internal float tanRadius; internal double time;
             }
             private void Snapshot(Data d, Camera camera, Matrix4x4 cameraView, Matrix4x4 projection)
             {
                 d.output = output; d.shader = shader; d.receivers = receivers; d.direction = lightDirection; d.parameters = parameters; d.samples = samples; d.seed = seed; d.strength = strength; d.main=main;d.slot=slot;d.localPosition=localPosition;d.localForward=localForward;d.lightType=output.light.type==LightType.Directional?0:output.light.type==LightType.Point?1:2;
-                d.instanceOwners = instanceOwners;
-                d.terminatorCorrection = terminatorCorrection;
                 d.sigmaShader = sigmaShader; d.cameraView = cameraView; d.projection = projection; d.lifetime = view.Scene.Lifetime; d.revision = view.Scene.Revision; d.signature = signature; d.lightId = output.light.GetInstanceID(); d.tanRadius = tanRadius;
                 d.time = Time.unscaledTimeAsDouble;
                 #if UNITY_EDITOR
@@ -359,7 +303,6 @@ namespace lilToon.URP.Extensions.RTShadow
                     var camera = frame.Get<UniversalCameraData>(); Snapshot(d, camera.camera, camera.GetViewMatrix(), camera.GetProjectionMatrix());
                     d.scene = view.Read(graph, builder); d.primary = HoRTPrimarySurfaceInputs.Read(graph, frame, builder, true);
                     d.raw = graph.ImportTexture(output.raw); builder.UseTexture(d.raw, output.sigma == null ? AccessFlags.WriteAll : AccessFlags.ReadWrite); builder.UseBuffer(graph.ImportBuffer(output.receivers), AccessFlags.ReadWrite);
-                    builder.UseBuffer(graph.ImportBuffer(output.instanceOwners),AccessFlags.ReadWrite);
                     if(main)builder.SetGlobalTextureAfterPass(d.raw, Shader.PropertyToID("_HoRTShadowRawTexture"));
                     var visibility = graph.ImportTexture(output.Visibility);
                     if (output.sigma != null) output.sigma.Declare(graph, builder);
@@ -368,7 +311,7 @@ namespace lilToon.URP.Extensions.RTShadow
                     if (!surfaceDepth.IsValid()) surfaceDepth = graph.defaultResources.blackTexture;
                     builder.UseTexture(surfaceDepth); if(main)builder.SetGlobalTextureAfterPass(surfaceDepth, Shader.PropertyToID("_HoRTShadowDepthTexture"));
                     var resources = frame.GetOrCreate<HoRTShadowRenderGraphResources>();
-                    resources.Add(new HoRTShadowProduct(output.light,HoRTLightIdentity.Get(output.light),slot,output.renderSerial,output.width,output.height,samples,output.sigma?.Estimates??1,view.Scene.Lifetime,view.Scene.Revision,output.reconstruction,d.raw,visibility,terminatorCorrection:terminatorCorrection));
+                    resources.Add(new HoRTShadowProduct(output.light,HoRTLightIdentity.Get(output.light),slot,output.renderSerial,output.width,output.height,samples,output.sigma?.Estimates??1,view.Scene.Lifetime,view.Scene.Revision,output.reconstruction,d.raw,visibility));
                     if(main)
                     {
                         resources.raw = d.raw; resources.visibility = visibility; resources.reconstruction = output.reconstruction; resources.camera = frame.Get<UniversalCameraData>().camera; resources.light = output.light; resources.lightId = output.light.GetInstanceID();
@@ -401,10 +344,6 @@ namespace lilToon.URP.Extensions.RTShadow
                     d.seed = unchecked(d.seed ^ frame * (int)0x9e3779b9u);
                 }
                 d.scene.BuildAndBind(cmd, d.shader); cmd.SetBufferData(d.output.receivers, d.receivers);
-                cmd.SetBufferData(d.output.instanceOwners,d.instanceOwners);
-                cmd.SetRayTracingBufferParam(d.shader,"_HoRTShadowInstanceOwners",d.output.instanceOwners);
-                cmd.SetRayTracingIntParam(d.shader,"_HoRTShadowInstanceOwnerCount",d.instanceOwners.Length);
-                cmd.SetRayTracingFloatParam(d.shader,"_HoRTShadowTerminatorCorrection",d.terminatorCorrection);
                 cmd.SetRayTracingShaderPass(d.shader, "HoRTVisibility"); cmd.SetRayTracingBufferParam(d.shader, "_HoRTShadowReceivers", d.output.receivers);
                 cmd.SetRayTracingTextureParam(d.shader, "_HoRTShadowOutput", d.output.raw.nameID); cmd.SetRayTracingVectorParam(d.shader, "_HoRTShadowDirection", d.direction);
                 cmd.SetRayTracingVectorParam(d.shader, "_HoRTShadowParameters", d.parameters); cmd.SetRayTracingIntParam(d.shader, "_HoRTShadowSamples", d.samples); cmd.SetRayTracingIntParam(d.shader, "_HoRTShadowSeed", d.seed);

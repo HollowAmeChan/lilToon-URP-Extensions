@@ -38,8 +38,6 @@ namespace lilToon.URP.Extensions.RTShadow
         public BoolParameter enable = new(true);
         [InspectorName("阴影重建")]
         public HoRTShadowReconstructionParameter reconstruction = new(HoRTShadowReconstruction.Raw);
-        [InspectorName("阴影终止线校正"), Tooltip("0 为原始三角几何，1 为顶点切平面曲面近似。针对低模平滑曲面自影逐面跳变；不是软阴影样本数或屏幕模糊。")]
-        public ClampedFloatParameter terminatorCorrection = new(0, 0, 1);
         [InspectorName("默认角直径（度）"), Tooltip("未声明方向灯的默认角直径；Ho-RTShadow Light 上的逐灯角度优先。点 / 聚光当前是 delta 硬影。")]
         public ClampedFloatParameter angularDiameter = new(0, 0, 8);
         [InspectorName("原始参考样本数"), Tooltip("只在原始参考模式生效。SIGMA 每次估计只接收一个真实光源样本。")]
@@ -70,7 +68,6 @@ namespace lilToon.URP.Extensions.RTShadow
             if (volume == null || !volume.active) return resolved;
             Apply(volume.enable, ref resolved.enabled, ref overrides);
             Apply(volume.reconstruction, ref resolved.reconstruction, ref overrides);
-            Apply(volume.terminatorCorrection, ref resolved.terminatorCorrection, ref overrides);
             Apply(volume.angularDiameter, ref resolved.angularDiameter, ref overrides);
             Apply(volume.samplesPerPixel, ref resolved.samplesPerPixel, ref overrides);
             Apply(volume.singleFrameEstimates, ref resolved.singleFrameEstimates, ref overrides);

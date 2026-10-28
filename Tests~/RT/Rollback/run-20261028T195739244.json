@@ -1,0 +1,24 @@
+{
+  "stage": "R4Query",
+  "sourceCommit": "c3b638142c66edd15186372c8ebf2a02a6456a40",
+  "startedUtc": "2026-10-28T19:57:39.8136465Z",
+  "sourcesFile": "sources-20261028T195739244.json",
+  "runnerSha256": "068E56EA10E56A83BF8C302B8BF2FA9B1E7FD4B00505D71D994755AD2C6FAB59",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "native-query-rg",
+      "entry": "lilToon.URP.Extensions.RT.HoRTVisibilityValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "04D41A337191A4C1646172DC2C22D6F65B542F74E2F0650964C73BFF28F29565",
+      "seconds": 12.9142186,
+      "pass": true,
+      "logFile": "ho-rt-r4query-native-query-rg-20261028T195739244.log"
+    }
+  ]
+}

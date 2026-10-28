@@ -1,0 +1,70 @@
+{
+  "stage": "Self",
+  "sourceCommit": "c3b638142c66edd15186372c8ebf2a02a6456a40",
+  "startedUtc": "2026-10-28T19:50:11.3999719Z",
+  "sourcesFile": "sources-20261028T195010839.json",
+  "runnerSha256": "068E56EA10E56A83BF8C302B8BF2FA9B1E7FD4B00505D71D994755AD2C6FAB59",
+  "activeProcess": {
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\ho-rt-self-export-rg-20261028T195010839.log",
+    "id": 59612,
+    "name": "export-rg"
+  },
+  "entries": [
+    {
+      "name": "self-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSelf",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "0663645BCEB5AAB69AAE71D5D6D3C335714A10F9740D74545338D8C64C17D5F8",
+      "seconds": 14.364142,
+      "pass": true,
+      "logFile": "ho-rt-self-self-rg-20261028T195010839.log"
+    },
+    {
+      "name": "self-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSelfCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "575523F66ABFA99D9B85A98C41195BD53A851CF448BE5CFBE209119BBCE24F8A",
+      "seconds": 9.3440193,
+      "pass": true,
+      "logFile": "ho-rt-self-self-compat-20261028T195010839.log"
+    },
+    {
+      "name": "multi-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "27DCB64820612B622EB85F0C495CD56166A6BBB4E943104B5EF697A01CD43ED0",
+      "seconds": 14.3033378,
+      "pass": true,
+      "logFile": "ho-rt-self-multi-rg-20261028T195010839.log"
+    },
+    {
+      "name": "multi-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMultiCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "76D4D44C769B4152618F4519B2C764BEF4440114CE0224D17A2B7F04F25A92C5",
+      "seconds": 10.4761387,
+      "pass": true,
+      "logFile": "ho-rt-self-multi-compat-20261028T195010839.log"
+    }
+  ]
+}

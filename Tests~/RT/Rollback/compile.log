@@ -1,0 +1,96 @@
+check_compile.ps1 - 2026-10-29 03:49:12
+source rev    : 18211DDBD1999F0A  (sha1-16 over Runtime+Editor .cs contents)
+repo          : D:/Unity_Fork/lilToon-URP-Extensions
+unity editor  : C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor
+compiler      : Unity Roslyn csc.dll via Unity's private dotnet (C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\NetCoreRuntime\dotnet.exe)
+urp refs from : D:\Unity_Project\BREAK_URP\Library\ScriptAssemblies
+references    : 277 assemblies (unity=139, netstandard=104, urp=17)
+sources       : Runtime=302  Editor=279
+defines       : UNITY_EDITOR;UNITY_EDITOR_WIN;UNITY_EDITOR_64;UNITY_STANDALONE;UNITY_STANDALONE_WIN;NET_STANDARD_2_1;NET_UNITY_4_8;CSHARP_7_3_OR_NEWER;UNITY_5_3_OR_NEWER;UNITY_2017_1_OR_NEWER;UNITY_2018_1_OR_NEWER;UNITY_2019_1_OR_NEWER;UNITY_2019_2_OR_NEWER;UNITY_2019_3_OR_NEWER;UNITY_2019_4_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2020_2_OR_NEWER;UNITY_2020_3_OR_NEWER;UNITY_2021_1_OR_NEWER;UNITY_2021_2_OR_NEWER;UNITY_2021_3_OR_NEWER;UNITY_2022_1_OR_NEWER;UNITY_2022_2_OR_NEWER;UNITY_2022_3_OR_NEWER;UNITY_2023_1_OR_NEWER;UNITY_2023_2_OR_NEWER;UNITY_2023_3_OR_NEWER;UNITY_6000_0_OR_NEWER;UNITY_6000_1_OR_NEWER;UNITY_6000_2_OR_NEWER;UNITY_6000_3_OR_NEWER
+
+================ PASS 1/2  jp.lilxyzw.liltoon.urp.extensions.Runtime ================
+csc @D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\compile_check_out\runtime.rsp
+Runtime\SSGI\HoSSGIRendererFeature.cs(565,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirAux' is never assigned to, and will always have its default value 
+Runtime\SSGI\HoSSGIRendererFeature.cs(569,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.output' is never assigned to, and will always have its default value 
+Runtime\PlanarReflection\HoPlanarReflectionSurface.cs(72,27): warning CS0649: Field 'HoPlanarReflectionSurface.planeTransform' is never assigned to, and will always have its default value null
+Runtime\SSGI\HoSSGIRendererFeature.cs(564,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirColor' is never assigned to, and will always have its default value 
+Runtime\SSGI\HoSSGIRendererFeature.cs(566,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirRay' is never assigned to, and will always have its default value 
+Runtime\SSGI\HoSSGIRendererFeature.cs(563,29): warning CS0649: Field 'HoSSGIPass.SpatialPassData.material' is never assigned to, and will always have its default value null
+Runtime\SSGI\HoSSGIRendererFeature.cs(568,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.geometry' is never assigned to, and will always have its default value 
+Runtime\SSGI\HoSSGIRendererFeature.cs(567,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.temporal' is never assigned to, and will always have its default value 
+Runtime\SSGI\HoSSGIRendererFeature.cs(571,25): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirReuse' is never assigned to, and will always have its default value false
+Runtime\SSGI\HoSSGIRendererFeature.cs(570,26): warning CS0649: Field 'HoSSGIPass.SpatialPassData.radius' is never assigned to, and will always have its default value 0
+Runtime\SSGI\HoSSGIRendererFeature.cs(572,25): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirValidation' is never assigned to, and will always have its default value false
+
+================ PASS 2/2  jp.lilxyzw.liltoon.urp.extensions.Editor ================
+csc @D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\compile_check_out\editor.rsp
+Editor\RTGI\HoRTGIPairedStageAudit.cs(114,90): warning CS0649: Field 'HoRTGIPairedStageAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,67): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.height' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,71): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.path' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGISeedAudit.cs(25,43): warning CS0649: Field 'HoRTGISeedAudit.Local.rawVariance' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGISeedAudit.cs(20,84): warning CS0649: Field 'HoRTGISeedAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(111,79): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInputs.entries' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,150): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.secondHalfMean' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,114): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,81): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.sha256' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,197): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.mainFiltered' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,113): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.batchMeanStandardError' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,76): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.name' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,189): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.mainRaw' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGISeedAudit.cs(25,33): warning CS0649: Field 'HoRTGISeedAudit.Local.filtered' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,165): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.splitRelativeDifference' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGISeedAudit.cs(25,28): warning CS0649: Field 'HoRTGISeedAudit.Local.raw' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGIConfidenceTrial.cs(18,156): warning CS0649: Field 'HoRTGIConfidenceTrial.Frame.unchangedBranch1' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIConfidenceTrial.cs(18,139): warning CS0649: Field 'HoRTGIConfidenceTrial.Frame.unchangedBranch0' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,136): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.firstHalfMean' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGIHistoryFeedbackAudit.cs(37,97): warning CS0649: Field 'HoRTGIHistoryFeedbackAudit.Report.qualityQualified' is never assigned to, and will always have its default value false
+Editor\RTGI\HoRTGISeedAudit.cs(21,104): warning CS0649: Field 'HoRTGISeedAudit.ReferencePoints.points' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGISeedAudit.cs(25,56): warning CS0649: Field 'HoRTGISeedAudit.Local.filteredVariance' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,99): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.referenceMean' is never assigned to, and will always have its default value 
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,61): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.width' is never assigned to, and will always have its default value 0
+
+================ SUMMARY ================
+source rev (before compile): 18211DDBD1999F0A
+source rev (after  compile): 18211DDBD1999F0A
+tree stable during compile : True
+distinct error CS lines  : 0
+distinct warning CS lines: 35
+runtime dll built        : True
+editor  dll built        : True
+
+--- WARNINGS ---
+Editor\RTGI\HoRTGIConfidenceTrial.cs(18,139): warning CS0649: Field 'HoRTGIConfidenceTrial.Frame.unchangedBranch0' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIConfidenceTrial.cs(18,156): warning CS0649: Field 'HoRTGIConfidenceTrial.Frame.unchangedBranch1' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,113): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.batchMeanStandardError' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,136): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.firstHalfMean' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,150): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.secondHalfMean' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,165): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.splitRelativeDifference' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,189): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.mainRaw' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,197): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.mainFiltered' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,99): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.referenceMean' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIHistoryFeedbackAudit.cs(37,97): warning CS0649: Field 'HoRTGIHistoryFeedbackAudit.Report.qualityQualified' is never assigned to, and will always have its default value false
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,114): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,61): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.width' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,67): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.height' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,71): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.path' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,76): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.name' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,81): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.sha256' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(111,79): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInputs.entries' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(114,90): warning CS0649: Field 'HoRTGIPairedStageAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGISeedAudit.cs(20,84): warning CS0649: Field 'HoRTGISeedAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGISeedAudit.cs(21,104): warning CS0649: Field 'HoRTGISeedAudit.ReferencePoints.points' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGISeedAudit.cs(25,28): warning CS0649: Field 'HoRTGISeedAudit.Local.raw' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGISeedAudit.cs(25,33): warning CS0649: Field 'HoRTGISeedAudit.Local.filtered' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGISeedAudit.cs(25,43): warning CS0649: Field 'HoRTGISeedAudit.Local.rawVariance' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGISeedAudit.cs(25,56): warning CS0649: Field 'HoRTGISeedAudit.Local.filteredVariance' is never assigned to, and will always have its default value
+Runtime\PlanarReflection\HoPlanarReflectionSurface.cs(72,27): warning CS0649: Field 'HoPlanarReflectionSurface.planeTransform' is never assigned to, and will always have its default value null
+Runtime\SSGI\HoSSGIRendererFeature.cs(563,29): warning CS0649: Field 'HoSSGIPass.SpatialPassData.material' is never assigned to, and will always have its default value null
+Runtime\SSGI\HoSSGIRendererFeature.cs(564,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirColor' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(565,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirAux' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(566,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirRay' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(567,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.temporal' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(568,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.geometry' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(569,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.output' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(570,26): warning CS0649: Field 'HoSSGIPass.SpatialPassData.radius' is never assigned to, and will always have its default value 0
+Runtime\SSGI\HoSSGIRendererFeature.cs(571,25): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirReuse' is never assigned to, and will always have its default value false
+Runtime\SSGI\HoSSGIRendererFeature.cs(572,25): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirValidation' is never assigned to, and will always have its default value false

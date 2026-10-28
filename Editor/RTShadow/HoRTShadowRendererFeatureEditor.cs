@@ -20,7 +20,6 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
         {
             serializedObject.Update(); settings = serializedObject.FindProperty("settings");
             EditorGUILayout.HelpBox("需要 Ho-RT、同分辨率单采样 GB / SB 与 D3D12。接收角色在 Ho-RTShadow Receiver 中声明；本处设默认值，Ho-RTShadow Volume 可逐相机覆盖质量及调试。", MessageType.Info);
-            if (HoRTShadowRendererFeature.ProductionSuspended) EditorGUILayout.HelpBox("RTShadow 因真实角色回归临时暂停生产和材质接收，配置保留；当前回退原有栅格投影。", MessageType.Error);
             if (targets.Length == 1)
             {
                 var path = AssetDatabase.GetAssetPath(target);
@@ -42,8 +41,6 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 Draw("reconstruction", "阴影重建"); Draw("angularDiameter", "默认角直径（度）");
-                using (new EditorGUI.DisabledScope(!HoRTShadowRendererFeature.SupportsTerminatorCorrection)) Draw("terminatorCorrection", "阴影终止线校正");
-                if (!HoRTShadowRendererFeature.SupportsTerminatorCorrection) EditorGUILayout.HelpBox("曲面位移校正存在真实角色回归，暂时停用；实际按 0 运行，原参数保留。", MessageType.Warning);
                 EditorGUILayout.HelpBox("Ho-RTShadow Light 的逐灯角度优先于这里和 Volume 的默认值。0 度为二值硬影；增加样本不能给零角度光源制造半影。", MessageType.None);
                 // Keep both budgets visible: a Volume can choose a different mode.
                 Draw("samplesPerPixel", "原始参考样本数"); Draw("singleFrameEstimates", "无历史同帧估计数"); Draw("samplingSeed", "采样种子");
@@ -80,7 +77,6 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                     EditorGUILayout.LabelField("Volume 覆盖字段", feature.VolumeOverrideCount.ToString());
                     EditorGUILayout.LabelField("当前请求质量", $"{effective.reconstruction} / Raw {effective.samplesPerPixel} / 无历史 {effective.singleFrameEstimates}");
                     EditorGUILayout.LabelField("当前默认角度", effective.angularDiameter.ToString("0.####") + "°");
-                    EditorGUILayout.LabelField("当前终止线校正", effective.terminatorCorrection.ToString("0.###"));
                     EditorGUILayout.LabelField("当前调试", effective.debugMode + " / slot " + effective.debugLight);
                 }
                 foreach (var item in feature.LightDiagnostics)

@@ -1,0 +1,4 @@
+# Keep GPU evidence byte-exact across checkout for the recorded SHA256 values.
+* -text whitespace=cr-at-eol
+# Generated diagnostic logs include trailing spaces; preserve them verbatim.
+*.log -whitespace

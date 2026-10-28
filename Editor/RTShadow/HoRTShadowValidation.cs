@@ -91,9 +91,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
         {
             try
             {
-                if(safePolicyAudit){ValidateSafePolicy();Finish(null);return;}
                 if(++tick<3){Render();return;}
-                if(curvedAudit){ValidateCurvedNormals();Finish(null);return;}
                 if(selfAudit){ValidateSelfVisibility();Finish(null);return;}
                 if(inputOrderAudit){ValidateInputOrder();Finish(null);return;}
                 if(spatialAudit){ValidateSpatialSampling();Finish(null);return;}

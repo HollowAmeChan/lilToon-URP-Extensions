@@ -1,0 +1,24 @@
+{
+  "stage": "Return RTShadow to the pre-curved-correction baseline",
+  "baselineCommit": "c4840135",
+  "productionQualifiedForRealCharacter": false,
+  "scope": "All tracked Runtime and Editor files match c4840135; no scene, renderer, Volume, material or model asset edits. This is a rollback, not a complete artifact fix.",
+  "accepted": [
+    {"run": "run-20261028T195010839.json", "names": ["self-rg", "self-compat", "multi-rg", "multi-compat"], "partialRun": true},
+    {"run": "run-20261028T195428259.json", "names": ["export-rg"], "partialRun": false},
+    {"run": "run-20261028T195739244.json", "names": ["native-query-rg"], "partialRun": false},
+    {"run": "run-20261028T195753350.json", "names": ["native-query-compat"], "partialRun": false}
+  ],
+  "rejectedOrIncomplete": [
+    {"run": "run-20261028T194923521.json", "reason": "Private validation project retained a Curved Player probe referencing removed APIs. This failed compilation is preserved; private probe then restored from the pre-curved Self snapshot."},
+    {"run": "run-20261028T195010839.json", "reason": "Four cases completed, but the runner did not finalize export-rg. Its activeProcess record is historical and the process is no longer running. Only the four completed cases are accepted after independent log and current-source verification; export was rerun separately."}
+  ],
+  "compile": {"log": "compile.log", "errors": 0, "warnings": "Existing CS0649 warnings in other modules remain; no zero-warning claim."},
+  "benefit": "Removes the failed curved-origin approximation, short-primary association, expanded hit payload and UI coupling; restores a comparable functional baseline while keeping original ordering diagnostics and existing ray-origin guard.",
+  "limitations": [
+    "Tests cover analytic self-shadowing, bounded skinned motion, a 2mm contact occluder, multiple lights, same-frame SIGMA and native nearest/cutout/culling contracts.",
+    "No actual full-character material or animation quality acceptance. The baseline still uses a raster position and interpolated mesh normal, with rayBias also used as TMin.",
+    "Saved user rayBias values are preserved. Code rollback does not restore scene parameter values.",
+    "Isolated experimental branch codex/rtshadow-origin-repair remains unmerged. Research and next-step gates are consolidated in Documentation~/Ho-RT.md sections 9.5-9.7."
+  ]
+}

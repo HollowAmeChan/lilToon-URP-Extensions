@@ -1,0 +1,24 @@
+{
+  "stage": "Self",
+  "sourceCommit": "c3b638142c66edd15186372c8ebf2a02a6456a40",
+  "startedUtc": "2026-10-28T19:54:29.3142964Z",
+  "sourcesFile": "sources-20261028T195428259.json",
+  "runnerSha256": "068E56EA10E56A83BF8C302B8BF2FA9B1E7FD4B00505D71D994755AD2C6FAB59",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "export-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSingleFrame",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "CD5944E8BA325BB246A7E1063D0DA0D993C5E8F1129B2995EA6B6C8CBCBE70B3",
+      "seconds": 10.0217849,
+      "pass": true,
+      "logFile": "ho-rt-self-export-rg-20261028T195428259.log"
+    }
+  ]
+}

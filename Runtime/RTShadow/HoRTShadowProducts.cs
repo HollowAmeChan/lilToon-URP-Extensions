@@ -14,11 +14,10 @@ namespace lilToon.URP.Extensions.RTShadow
         public readonly HoRTShadowReconstruction Reconstruction;
         public readonly bool HistoryReset;
         public readonly float AngularDiameter;
-        public readonly float TerminatorCorrection;
         public readonly int Samples, Receivers, Estimates;
         internal HoRTShadowLightDiagnostics(Light light, long id, int slot, int width, int height, HoRTShadowReconstruction reconstruction, bool reset, int frame,
-            float angle, int samples, int receivers, int estimates, float terminatorCorrection)
-        { Light = light; LightId = id; Slot = slot; Width = width; Height = height; Reconstruction = reconstruction; HistoryReset = reset; HistoryFrame = frame; AngularDiameter = angle; Samples = samples; Receivers = receivers; Estimates = estimates; TerminatorCorrection = terminatorCorrection; }
+            float angle, int samples, int receivers, int estimates)
+        { Light = light; LightId = id; Slot = slot; Width = width; Height = height; Reconstruction = reconstruction; HistoryReset = reset; HistoryFrame = frame; AngularDiameter = angle; Samples = samples; Receivers = receivers; Estimates = estimates; }
     }
     // Texture handles are borrowed only in this current camera RenderGraph.
     public readonly struct HoRTShadowProduct
@@ -28,14 +27,13 @@ namespace lilToon.URP.Extensions.RTShadow
         public readonly int Slot, Width, Height, Samples, Estimates;
         public readonly uint SceneRevision;
         public readonly HoRTShadowReconstruction Reconstruction;
-        public readonly float TerminatorCorrection;
         public readonly HoRTShadowProductStatus Status;
         public readonly string Reason;
         public readonly TextureHandle Raw, Visibility;
         internal HoRTShadowProduct(Light light, long id, int slot, long serial, int width, int height, int samples, int estimates,
             long sceneLifetime, uint sceneRevision, HoRTShadowReconstruction mode, TextureHandle raw, TextureHandle visibility,
-            HoRTShadowProductStatus status = HoRTShadowProductStatus.Available, string reason = null, float terminatorCorrection = 0)
-        { Light=light;LightId=id;Slot=slot;RenderSerial=serial;Width=width;Height=height;Samples=samples;Estimates=estimates;SceneLifetime=sceneLifetime;SceneRevision=sceneRevision;Reconstruction=mode;Raw=raw;Visibility=visibility;Status=status;Reason=reason;TerminatorCorrection=terminatorCorrection; }
+            HoRTShadowProductStatus status = HoRTShadowProductStatus.Available, string reason = null)
+        { Light=light;LightId=id;Slot=slot;RenderSerial=serial;Width=width;Height=height;Samples=samples;Estimates=estimates;SceneLifetime=sceneLifetime;SceneRevision=sceneRevision;Reconstruction=mode;Raw=raw;Visibility=visibility;Status=status;Reason=reason; }
     }
     public sealed class HoRTShadowRenderGraphResources : ContextItem
     {
@@ -56,8 +54,7 @@ namespace lilToon.URP.Extensions.RTShadow
     {
         public readonly long LightId, RenderSerial; public readonly Light Light; public readonly RTHandle Raw, Visibility;public readonly int Slot;
         public readonly HoRTShadowReconstruction Reconstruction;
-        public readonly float TerminatorCorrection;
-        internal HoRTShadowCompatibilityProduct(Light light,long id,long serial,RTHandle raw,RTHandle visibility,HoRTShadowReconstruction reconstruction,int slot,float terminatorCorrection)
-        {Light=light;LightId=id;RenderSerial=serial;Raw=raw;Visibility=visibility;Reconstruction=reconstruction;Slot=slot;TerminatorCorrection=terminatorCorrection;}
+        internal HoRTShadowCompatibilityProduct(Light light,long id,long serial,RTHandle raw,RTHandle visibility,HoRTShadowReconstruction reconstruction,int slot)
+        {Light=light;LightId=id;RenderSerial=serial;Raw=raw;Visibility=visibility;Reconstruction=reconstruction;Slot=slot;}
     }
 }

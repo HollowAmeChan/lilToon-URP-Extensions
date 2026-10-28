@@ -1,0 +1,43 @@
+{
+  "stage": "Self",
+  "sourceCommit": "c3b638142c66edd15186372c8ebf2a02a6456a40",
+  "startedUtc": "2026-10-28T19:49:24.0983282Z",
+  "sourcesFile": "sources-20261028T194923521.json",
+  "runnerSha256": "068E56EA10E56A83BF8C302B8BF2FA9B1E7FD4B00505D71D994755AD2C6FAB59",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "self-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSelf",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(151,18): error CS1061: 'HoRTShadowVolume' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowVolume' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,97): error CS1061: 'HoRTShadowCompatibilityProduct' does not contain a definition for 'TerminatorCorrection' and no accessible extension method 'TerminatorCorrection' accepting a first argument of type 'HoRTShadowCompatibilityProduct' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,153): error CS1061: 'HoRTShadowSettings' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowSettings' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,196): error CS1061: 'HoRTShadowSettings' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowSettings' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(153,18): error CS1061: 'HoRTShadowVolume' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowVolume' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(158,123): error CS1061: 'HoRTShadowCompatibilityProduct' does not contain a definition for 'TerminatorCorrection' and no accessible extension method 'TerminatorCorrection' accepting a first argument of type 'HoRTShadowCompatibilityProduct' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(151,18): error CS1061: 'HoRTShadowVolume' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowVolume' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,97): error CS1061: 'HoRTShadowCompatibilityProduct' does not contain a definition for 'TerminatorCorrection' and no accessible extension method 'TerminatorCorrection' accepting a first argument of type 'HoRTShadowCompatibilityProduct' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,153): error CS1061: 'HoRTShadowSettings' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowSettings' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,196): error CS1061: 'HoRTShadowSettings' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowSettings' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(153,18): error CS1061: 'HoRTShadowVolume' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowVolume' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(158,123): error CS1061: 'HoRTShadowCompatibilityProduct' does not contain a definition for 'TerminatorCorrection' and no accessible extension method 'TerminatorCorrection' accepting a first argument of type 'HoRTShadowCompatibilityProduct' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(151,18): error CS1061: 'HoRTShadowVolume' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowVolume' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,97): error CS1061: 'HoRTShadowCompatibilityProduct' does not contain a definition for 'TerminatorCorrection' and no accessible extension method 'TerminatorCorrection' accepting a first argument of type 'HoRTShadowCompatibilityProduct' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,153): error CS1061: 'HoRTShadowSettings' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowSettings' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(152,196): error CS1061: 'HoRTShadowSettings' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowSettings' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(153,18): error CS1061: 'HoRTShadowVolume' does not contain a definition for 'terminatorCorrection' and no accessible extension method 'terminatorCorrection' accepting a first argument of type 'HoRTShadowVolume' could be found (are you missing a using directive or an assembly reference?)\r",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(158,123): error CS1061: 'HoRTShadowCompatibilityProduct' does not contain a definition for 'TerminatorCorrection' and no accessible extension method 'TerminatorCorrection' accepting a first argument of type 'HoRTShadowCompatibilityProduct' could be found (are you missing a using directive or an assembly reference?)\r"
+      ],
+      "logSha256": "1E9ADB5C8A029FA0E08CD93E9301D8449020A4BC8C24D784D8D6526BB576F743",
+      "seconds": 7.7579692,
+      "pass": false,
+      "logFile": "ho-rt-self-self-rg-20261028T194923521.log"
+    }
+  ]
+}
