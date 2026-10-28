@@ -1,6 +1,6 @@
 # Ho-RT：公共底座与 RTShadow
 
-> 状态：**现行实现 / 设计总入口**，2026-10-29。用户真实角色上的细条 / 斑点回归尚未解决；当前 **RTShadow 整条生产、NPR 接收及调试替换已临时暂停**，画面回退原有投影。仅关终止线曲面位移不足以遏制用户报告的问题。配置保留，后续起点实验在独立工作区进行，不直接热改用户引用的生产目录。暂停验证见 §8.8；以下旧阶段记录只证明当时受测范围，不作为当前可用性或角色画质验收。
+> 状态：**现行实现 / 设计总入口**，2026-10-29。按用户要求，生产代码已完整回到曲面修正前的 `c4840135` 行为：恢复 RTShadow 生产、接收及调试，撤出后加的主表面追踪、曲面位移与对应 UI / payload。保留此前数值自相交保护、逐灯 / SIGMA / UI / 排序检查。**这次回退不代表真实角色的面片感、细条和运动稳定性已经解决**；回退范围、验证和研究取舍见 §8.8、§9。实验分支不合入，用户场景及参数资产不改。旧阶段记录只证明当时受测范围。
 
 ## 0. 先确认实现状态
 
@@ -10,7 +10,7 @@
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | 生产 DI/GI 保留 RELAX；新增 typed SIGMA ABI、格式与 9 个官方 pipeline，独立夹具及真实 Cast 的有界 GPU 接入已验，默认仍为 Raw | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | 独立 Feature 提供主光 / 声明集合 / 全部支持灯的逐灯产品；方向光有限角度和 delta 点聚光、SIGMA / 实际三层 NPR / 单帧薄蒙皮、Volume / 六种调试及 Player 均有有界验收，最终颜色空间采样与整体审计已通过 | 本文 §4–8 |
+| RTShadow / SIGMA | 已回到曲面修正前基线，保留逐灯产品、SIGMA、NPR、Volume / 调试。历史有界验收不等于真实角色终止线质量通过；当前问题与后续路径见 §8.8、§9 | 本文 §4–9 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -504,17 +504,7 @@ RTShadow 现在用已有 `rayBias` 同时沿出射侧网格法线偏移起点、
 
 专项见 [Self review](../Tests~/RT/Self/review.json)，GPU 入口 `Tests~/RT/run_validation.ps1 -Stage Self`，复核 `python Tests~/RT/Self/verify_results.py`；独立 Player 入口为 `Tests~/RT/Self/Player/run_player.ps1`（另加 `-Compatibility`）。修正后同一 143131 样本误遮挡与 jitter 翻转均为 0，2mm 真正遮挡片的 8448 遮挡像素保留，四个骨骼姿态共 33792 有效样本没有错误自影；原多灯双路径和 SIGMA 无历史同帧质量回归通过。三次失败原样保留：首次同时包含接触片参与 raster 的夹具错误，修正该夹具后旧生产代码仍以相同自影 / 翻转数量失败；补蒙皮时又错误地让接触片重新参与 raster，造成有效样本不足，禁用夹具接触片后恢复，而非降低有效样本门槛。两路径保存的原始信号一致；两个序列化 Player 各 21 Update / 148 checks，另验打包射线 Shader 的掠射自投影与八组 jitter，构建 / 运行均退出 0，原生插件字节一致，无新增运行诊断或 GC 警告额度；分程序集编译 0 错误。
 
-**2026-10-29 平滑法线细条与 shadow terminator 后续修正。** 用户进一步看到细长条、碎片断裂，并指出转灯时像整片三角形爬过曲面。前一轮的平面 / 常量法线验收没有覆盖这两项：① 插值顶点法线不是 AS 求交的真实三角面法线，按它判定偏移侧仍会错误穿入面片；② 即使数值完全正确，低模三角几何的自影也可能与材质的平滑法线曲面不一致。类似的终止线问题及几何校正已有生产渲染器实践，见 [Blender 4.5 说明](https://developer.blender.org/docs/release_notes/4.5/eevee/)；曲面起点近似的依据为 [Hanika：Hacking the Shadow Terminator](https://link.springer.com/chapter/10.1007/978-1-4842-7185-8_4)。基于 reflectance / BRDF 的终止线软化会改材质受光，本轮采用几何起点路线，保留原 NPR ramp。
-
-第一层修正：从 raster 表面附近发一条很短的相机方向 native 查询，只有匹配当前 OB owner 的命中才借用它的实际三角平面法线；不把 raster 位置直接吸附到旁边表面，也不按距离粗暴删掉命中。原来 reserved 的 payload 字段保存 flat normal 的 2×16-bit oct 编码；公共 scene 只新增只读实例快照接口，OB owner 映射由 RTShadow 自己持有，不写进共享 AS metadata、DI / GI 策略或 native NRD ABI。平滑顶点法线不变，继续用于原材质受光和 SIGMA guide。
-
-第二层修正：在匹配的三角形上，用重心坐标与三个顶点切平面构造向外的平滑起点位移，凹向投影夹住，强度由上述 0–1 控制；没有用 `N·L` 直接伪造 V 或执行 toon 阈值。位移起点到目标之间再做一条独立遮挡查询，遇到附近真实几何则在其前面限定位移，再从实际起点追光源射线。位移检查的距离不会冒充灯的 blocker 输入；SIGMA 使用的仍是实际灯样本查询结果。点 / 聚光会重新瞄准真实有限端点，切强度会失效相应历史。
-
-证据见 [Curved review](../Tests~/RT/Curved/review.json)，复核 `python Tests~/RT/Curved/verify_results.py`，GPU 入口 `Tests~/RT/run_validation.ps1 -Stage Curved`，Player 入口 `Tests~/RT/Curved/Player/run_player.ps1`（另加 `-Compatibility`）。原生产代码在平滑顶点法线的解析平面中产生 32516 / 78152 个错误自遮挡；真实面法线保护后为 0。另用真实八边形封闭肢体旋转光源 16 次，3936 个平滑法线朝光、实际三角面背光的终止线样本，在原几何参考下全遮挡、强度 1 后这组遮挡为 0。2mm 独立遮挡片仍有 8448 / 8448 个有效遮挡，没有被曲面位移穿过。两条路径的原始信号逐字节一致；原自影 / 骨骼微动、多灯、native 最近 / Cutout / culling、SIGMA 同帧算术与薄蒙皮共十项 GPU 专项通过。两个 Player 各 21 Update / 165 checks，新增实际平滑法线蒙皮接收面、八个骨骼微动 / jitter 请求及 Volume / 产品几何策略元数据验证；构建和运行均退出 0，插件字节一致，无新增运行诊断或 GC 警告额度，分程序集编译 0 错误。
-
-原错误自影失败、两个中间接触距离断言失败都保留。后者的真实 V 始终为有效遮挡，旧断言误把距离当作从不动的 raster 点测量；校正起点逼近遮挡片后，实际灯射线距离为 0.175–0.199mm。最终检查仍要求同一个 2mm 物理遮挡片、8448 个有效 V=0 和严格正的实际射线距离，不通过删除该片或把无效输出当阴影通过。原 DI / GI / NRD / CS 运行文件与宿主姿态 / 场景生命周期算法保留；共同 native payload 和材质 helper 有明确新增字段及 GPU 回归，不将旧整包 SHA 改成当前通过。
-
-成本增加为每接收像素每估计一次局部 native 查询，曲面位移非零时再加一次路径检查；没有新屏幕纹理、AS 或历史等待。每灯新增按实例容量计的 uint owner buffer，经既有 host fence 退休，hit payload 新增 float3 曲面位移。它是顶点法线曲面的近似，不是真正细分、normal-map 几何、布料或任意 GPU 位移；局部 owner / 深度窗口也不是唯一 raster primitive ID，极近重叠层、硬法线裂缝、极低细分和复杂凹面仍有边界。强度 0 可核原几何参考，特别敏感的角色可按场景调低；当前有界测试不能替代用户模型全视角的最终观察。
+**已撤回的曲面修正（历史记录）。** `c3c4c515` 曾通过局部相机查询取得 flat normal，再按顶点切平面移动起点并检查位移路径；新增 Feature / Volume 强度、实例 owner 表和公共 payload。解析平面、八边柱、2mm 遮挡片以及两个 Player 的有界数据保存在 [Curved review](../Tests~/RT/Curved/review.json)，但用户真实角色出现更多斑点 / 细条和运动闪烁，故不能据此宣称问题解决。该功能和专用编译探针现已完整撤回，原算法、测试与失败可从该提交追溯；旧 `-Stage Curved` 入口不再属于当前 runner。不要再根据这一历史段落恢复位移或把简化模型的通过当作角色验收，当前状态见 §8.8，研究取舍见 §9.5–9.7。
 
 ### 8.7 本轮交付审计与保留边界
 
@@ -524,13 +514,13 @@ RTShadow 现在用已有 `rayBias` 同时沿出射侧网格法线偏移起点、
 
 完成范围是当前已明确支持的 D3D12 / Win64 Mono、对齐单采样主表面、opaque / 有界 Cutout、受支持蒙皮快照、方向光有限角度和 delta 点聚光。局部面积形状、cookie / 受限 caster linking、全物体 motion 重投影、XR / IL2CPP / MSAA / 硬件动态分辨率、任意材质形变或完整高清帧时预算仍不作支持声明。旧 DI 完整 proposal / 能量失败和 native AS 增长 F39 对照未注销；本轮的有限夹具与独立阴影交付不替代这些旧问题修复。可选的加权灯组派生信号与附加灯 NPR BRDF 合成也未混入核心 V。后续扩展应由明确的新需求确定，不能把上述限制和旧历史变成无界自动实验。
 
-### 8.8 真实角色回归的遏制与隔离
+### 8.8 真实角色回归、完整回退与隔离
 
-**当前生产状态：整条暂停。** 用户在只关闭曲面位移后仍报告更差且持续闪烁，因此 `ProductionSuspended=true` 会关闭实际生产、主光材质接收和调试替换，不发布当前产品；保留用户 Feature / Volume / debug 的原设置。Inspector 和运行状态明确说明原因。`BeforeRenderingOpaques` 仍提交一个仅清理 GPU 全局绑定的 pass，将 `_HoRTShadowActive` 置零、旧 raw / visibility / depth 绑定置黑，避免只清 CPU 状态而让旧 GPU 状态或已释放纹理继续进入材质。
+**当前生产状态：恢复曲面修正前的功能基线。** 本次按用户要求撤回 `c3c4c515` 引入的整组改动及后续停用策略，受影响的 Runtime / Editor 文件与 `c4840135` 一致。删除终止线曲面位移、短相机射线匹配、实例 owner 查询表、扩展命中 payload 及对应控制项；保留此前的数值起点保护、逐灯产品、SIGMA、NPR 接收、Volume / 调试与排序诊断。只撤相关文件，不重置仓库，不改变用户模型、材质、Renderer、场景或 Volume 资产。现存用户射线偏移仍按保存值运行，不能把源码回退等同于参数恢复。
 
-用户确认终止线强度调为 0 后斑点减少，且改变射线偏移会使图像成片改变。此前实现将偏移同时用于主表面匹配窗口、曲面位移门槛和保护路径，简化平面 / 圆柱并未覆盖这些真实角色情况。后续未提交的重心位置重建 / 误差界 / source primitive 实验又直接触发了用户 Unity 的包热重编译，用户报告进一步恶化。该过程不作为成功修复：生产 Runtime 已恢复到前一提交版本，并通过 `SupportsTerminatorCorrection=false` 强制关闭曲面位移；已有配置不改，诊断和产品元数据均报告实际 0。
+用户确认终止线强度调为 0 后斑点减少，且改变射线偏移会使图像成片改变。此前实现将偏移同时用于主表面匹配窗口、曲面位移门槛和保护路径，简化平面 / 圆柱并未覆盖这些真实角色情况。后续重心位置重建 / 误差界 / source primitive 实验又直接触发了用户 Unity 的包热重编译，用户报告进一步恶化。仅设置校正为 0 并没有撤掉其他新逻辑，因此不能视为回到原版本。这组修正未通过真实角色验收，本次完整撤回，不继续在其上叠补丁。
 
-恢复证据集中 [SafePolicy](../Tests~/RT/SafePolicy/review.json)，GPU 入口 `Tests~/RT/run_validation.ps1 -Stage SafePolicy`。两路径核查保存的 Feature=1、Volume=1、debug=All 都不能重新启用，原值仍保留；相机图像一致、不发布当前或旧产品。GPU 正控制在无清理 pass 时能观察到人为注入的 active=1，重新启用暂停模块后，下游 shader 实际读到 active=0，避免仅用 `Shader.GetGlobalFloat` 的 CPU 值判断。分程序集编译 0 错误。一次隔离工程包引用指向实验副本、入口不存在的尝试保留为失败；runner 已增加包路径与受测源码 checkout 一致性检查。暂停只用于移除该模块的画面影响，不宣称角色问题已根治，也不保证旧栅格效果没有各自限制。
+[SafePolicy](../Tests~/RT/SafePolicy/review.json) 是 `c3b63814` 的历史整条暂停证据，不是当前生产策略。`Curved` / `SafePolicy` 的专用 Editor 探针及 runner 入口随功能一起撤出；历史源码可由对应提交恢复，原始报告与失败记录保留。runner 保留包路径与受测 checkout 一致性检查，避免验证错误的副本。本次证据见 [Rollback review](../Tests~/RT/Rollback/review.json)，复核 `python Tests~/RT/Rollback/verify_results.py`：全部 Runtime / Editor 与 `c4840135` 一致，分程序集编译 0 错误，七个有界 GPU 检查完成（自影、多灯和共享 native 查询各两路径，以及 SIGMA 单帧导出）。解析自影每路径 143131 个有效样本无错误，2mm 遮挡片 8448 个遮挡像素保留；单帧 16 次估计的 narrow-ramp MSE 在该夹具中从 0.02061 降到 0.00411。保留一次私有工程遗留曲面 Player 探针导致的编译失败和一次未完成的 runner 记录；四个已完成项另经原始指纹复核，未完成的 export 独立重跑通过。本轮没有重新打包 Player，也没有获得真实角色画质验收，不覆盖旧报告或放宽断言。
 
 未完成实验和原始证据已按 SHA 核对复制到托管隔离工作区的 `codex/rtshadow-origin-repair` 分支。角色 FBX 仅只读复制到独立验证工程，源模型 / 场景 / Renderer / Volume 资产不改，模型文件不纳入产品提交。后续必须检查真实身体三角网格、实际 FBX 骨骼层级、近贴多层表面及相机裁剪 / TMin 扫描；先确认收益、保留真实遮挡并完成回归，再决定是否回写生产目录。早期敏感度下降的实验数字不等于已接纳修复，不能为了旧 source guard 把历史报告改成当前通过。
 
@@ -579,6 +569,46 @@ RTShadow 现在用已有 `rayBias` 同时沿出射侧网格法线偏移起点、
 - [VSM 与 shadow terminator](https://dev.epicgames.com/documentation/en-us/unreal-engine/virtual-shadow-maps-in-unreal-engine)、[稳健射线自相交处理](https://developer.nvidia.com/blog/solving-self-intersection-artifacts-in-directx-raytracing/)。
 
 旧研究、计划与阶段过程已从现行文件中移除；需要逐项追溯时从 Git `541d06f2` 取回，不按其中的旧“下一项”恢复任务。
+
+### 9.5 曲面修正回退后的代码复核
+
+以下是对 `c4840135` 基线代码的复核，不把截图上的所有三角形都预先认定为几何终止线：
+
+| 位置 | 已确认的实现 / 缺口 | 对后续工作的意义 |
+| --- | --- | --- |
+| `HoRTPrimarySurface.hlsl` | `positionWS` 从 raster depth 与 inverse VP 重建；名为 `geometricNormalWS` 的 BA 值实际是插值网格法线，不是 `cross(edge1, edge2)` 的 flat normal；owner 也不是 primitive ID | 无法直接满足基于精确命中重建的完整误差界前提；后续契约应明确区分三种法线，不能只改名字就声称修复 |
+| `HoRTShadow.raytrace` | 起点沿出射侧插值网格法线移动；同一个 `rayBias` 同时控制位移和 TMin；世界坐标项仅是可表达位移保护 | 已修解析平面的特定故障，但仍是启发式。`1e-6` 与 `1e-4` 的敏感度、贴面真遮挡和掠射三角形必须一起检查；大 bias 不能作为画质方案 |
+| `HoSurfaceBufferPass.cs` | RenderGraph 深度显式 `Depth24`，兼容路径按 descriptor 选深度格式；RTShadow 输出为 full-resolution `R32G32B32A32_SFloat`，无中间降采样 | 精度不一致是待实测候选；不能只凭该格式认定所有细条来自深度，也不能为阴影问题盲改共享 SB / DI / GI |
+| 光源采样 | 零角度直接返回同一中心方向；有限角度才遍历方向样本，样本 seed 无跨帧累计需求 | 零角度增加 Raw spp 会重复同一测试；有限角度增加 spp 才是在降低半影估计误差 |
+| SIGMA 与消费 | guide 使用 SB 网格法线；NPR 背光域保留 Raw。先产生连续 V，再执行非线性 ramp | 错误命中不能交给降噪掩盖；需要分别检查 Raw、重建 V 和最终颜色，不能把 diffuse BRDF 校正直接塞进 Cast |
+
+**当前收益判断：** 完整回退移除了失败的曲面近似和匹配耦合，恢复了可比基线；没有消除基线原有的三角感或全部细条。隔离分支中“完整主射线 + 重心起点 / 误差界”的早期改善只覆盖白材质身体与有限视角，且曾直接热改生产目录造成回归，现不合入。后续不能以“更接近论文”替代实际角色质量证据。
+
+### 9.6 业内如何处理，以及多采样的作用
+
+这些问题在离线路径追踪器中也存在，RT 硬件准确求交不等于自动得到平滑曲面的遮挡。需要按问题选择办法：
+
+| 问题 | 业内做法及依据 | 本 NPR 管线的取舍 |
+| --- | --- | --- |
+| 数值自相交 / 假细条 | 从真实三角形命中重建位置，以 flat normal 和重建 / 变换误差界确定最小安全起点；只忽略源 primitive 仍无法处理邻接近共面面片。[NVIDIA DXR](https://developer.nvidia.com/blog/solving-self-intersection-artifacts-in-directx-raytracing/) | 优先保证受光查询本身正确。该文的误差界不包含 raster 深度重建误差，不能把现有 SB 位置直接代入就宣布稳健 |
+| 平滑法线与粗三角形的终止线 | 真正增加几何细分；Iray 也有自动起点偏移，但明确提示近邻几何暗斑等副作用，仍推荐足够细分。[Iray §14.1.4](https://raytracing-docs.nvidia.com/iray/manual/manual.260601.LTR.pdf) | 性能不敏感使真实几何方案值得保留。平面线性一分四不会改变原曲面；需真正平滑细分，并处理硬边、UV / 法线缝、薄发片、骨骼姿态和 raster / AS 一致性 |
+| 不改网格的终止线近似 | Hanika 以顶点切平面近似平滑起点；原文也讨论了偏离真实 Bézier 曲面及阴影边缘可能更晃的限制。[Ray Tracing Gems II 第 4 章](https://link.springer.com/content/pdf/10.1007/978-1-4842-7185-8_4.pdf) | 是有代价的近似，不是 RT 必需基础设施。本次已失败，不继续作为默认方案；若未来再评估，必须逐对象可选且由真实角色回归决定 |
+| 材质 / normal-map 的终止线 | Disney Chiang / Imageworks Estevez 在 BSDF 响应上补偿 / 软化终止线，不是恢复原本被挡方向的几何可见度。[作者的 Takua 实践比较](https://blog.yiningkarlli.com/2020/02/shadow-terminator-in-takua.html) | 可作为未来材质受光策略研究，不能混入独立 Cast 的 V；NPR ramp 和自定义受光法线不应被一套 PBR 暗化项暗中改变 |
+| 面积光半影噪声 | 对光源立体角 / 表面增加每像素每帧样本；HDRP 暴露独立 Sample Count 和 Denoise。[HDRP 17.3](https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@17.3/manual/Ray-Traced-Shadows.html)、[PBRT 光接口](https://www.pbr-book.org/4ed/Light_Sources/Light_Interface) | 适合本需求：固定时刻同帧多采样，不要求等待前几帧稳定；高样本 Raw 是 SIGMA 偏差的参照。增大光源会改变影形，不能把它冒充修错 |
+| 像素边缘锯齿与运动闪变 | 改变像素内采样位置并重建最终图像。[PBRT 采样理论](https://www.pbr-book.org/4ed/Sampling_and_Reconstruction/Sampling_Theory) | 需要真实重新取得子像素表面并执行 NPR 着色；同一个中心表面多发光线不能替代最终颜色的空间 AA |
+
+多采样应明确采哪个域。固定像素表面 `P` 的有限光源可见度是 `V(P) = mean_i visible(P, lightSample_i)`；角度为 0 时所有 light sample 相同，重复 4096 次也不会改变几何判定。最终颜色则需要 `mean_j Shade(P_j, normal_j, V(P_j))`。由于 ramp 非线性，先平均不同表面的 V 再过一次 ramp，通常不等于逐子样本着色再平均。
+
+因此**高质量 Cast 可以使用无历史的同帧光源采样 + 最终颜色空间采样**，无需把“支持 RT”与“必须跨帧收敛”绑定。它能减少采样噪声与像素台阶，也会忠实保留真实低模几何的终止线。错误起点、错位姿态或粗几何的系统偏差不能靠增加相同分布的样本根治。这是基于上表来源与本地采样代码作出的工程判断，不是已经测得的本项目质量收益。
+
+### 9.7 下一轮实施顺序与退出条件
+
+1. **先固定真实角色对照。** 在独立工程保留原 FBX 骨骼层级、实际材质 / alpha / 双面语义、近贴多层几何，固定输出时间；同时保存基线 Raw / V / beauty，复现转灯和相机 / 角色运动。现有白材质身体实验只能作局部诊断。先做逐帧可重放对照，再改算法。
+2. **单独解决数值错误。** 零角度、无历史、无曲面位移下审查 raster / AS 的姿态、相机、命中表面关联和起点误差；真实命中信息与 raster 精度的方案必须独立比较。只有错误细条减少、没有新增无效像素 / 贴面漏光，并在运动时保持收益，才提交生产修正。没有这些证据就停止该候选，不继续叠新参数。
+3. **用同帧多采样评估画质上限。** 固定光源角度对比 1 / 16 / 64 / 256 个真实光源样本，分别测 Raw 与 SIGMA；空间域对比原分辨率与 Render Scale=2 的完整着色。这是待测矩阵，不是已验证推荐参数。随机序列、帧时间和姿态固定，不靠累计前帧；若只降低噪声而三角边界不变，就把后者归入几何 / 受光语义问题，停止加 spp。
+4. **只有剩余问题确属几何终止线时才选曲面路线。** 优先在独立资产副本对比真实平滑细分后的 raster / AS 同源结果，测细影、接触、发片与动画边界；只细分 AS 而保留粗 raster 起点可能产生新错配，不能默认采用。材质终止线补偿和起点偏移另列为显式近似，不在基础数值修复中夹带。
+
+每一步评价“实际减少了哪些错误、是否改变真遮挡 / ramp、付出多少完整帧成本、还有哪些未覆盖”，分别提交通过项；没有证据的代码留在隔离工作区。文档继续只维护本文和总览排序，机器证据放 `Tests~/RT/`；不再新增平行计划 / 交接文档。
 
 <a id="current-helpers"></a>
 
