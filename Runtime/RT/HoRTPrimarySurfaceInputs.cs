@@ -66,12 +66,11 @@ namespace lilToon.URP.Extensions.RT
         {
             association.Bind(cmd); camera.Bind(cmd);
             cmd.SetGlobalVector(StateId, state); cmd.SetGlobalVector(SizeId, size);
-            if (state.x > .5f)
-            {
-                cmd.SetGlobalTexture(ColorId, color); cmd.SetGlobalTexture(NormalId, normal);
-                cmd.SetGlobalTexture(MaterialId, material); cmd.SetGlobalTexture(ReflectionId, reflection);
-            }
-            if (state.z > .5f) cmd.SetGlobalTexture(OwnerId, owner);
+            // Native raygeneration needs every declared texture slot even
+            // when its validity branch returns before sampling that slot.
+            cmd.SetGlobalTexture(ColorId, color); cmd.SetGlobalTexture(NormalId, normal);
+            cmd.SetGlobalTexture(MaterialId, material); cmd.SetGlobalTexture(ReflectionId, reflection);
+            cmd.SetGlobalTexture(OwnerId, owner);
         }
 
         internal void Bind(ComputeCommandBuffer cmd, ComputeShader shader, int kernel)
@@ -89,12 +88,12 @@ namespace lilToon.URP.Extensions.RT
             var camera = new CameraSnapshot(data); var source = CompatibilitySource(ref camera, includeOwner, out var state, out var size);
             camera.Bind(CommandBufferHelpers.GetRasterCommandBuffer(cmd));
             cmd.SetGlobalVector(StateId, state); cmd.SetGlobalVector(SizeId, size);
-            if (state.x > .5f)
-            {
-                cmd.SetGlobalTexture(ColorId, source.ColorTexture.nameID); cmd.SetGlobalTexture(NormalId, source.NormalTexture.nameID);
-                cmd.SetGlobalTexture(MaterialId, source.MaterialTexture.nameID); cmd.SetGlobalTexture(ReflectionId, source.ReflectionTexture.nameID);
-            }
-            if (state.z > .5f) cmd.SetGlobalTexture(OwnerId, source.OwnerTexture.nameID);
+            var fallback = new RenderTargetIdentifier(Texture2D.blackTexture);
+            cmd.SetGlobalTexture(ColorId, state.x > .5f ? source.ColorTexture.nameID : fallback);
+            cmd.SetGlobalTexture(NormalId, state.x > .5f ? source.NormalTexture.nameID : fallback);
+            cmd.SetGlobalTexture(MaterialId, state.x > .5f ? source.MaterialTexture.nameID : fallback);
+            cmd.SetGlobalTexture(ReflectionId, state.x > .5f ? source.ReflectionTexture.nameID : fallback);
+            cmd.SetGlobalTexture(OwnerId, state.z > .5f ? source.OwnerTexture.nameID : fallback);
         }
 
         internal static void BindCompatibilityCompute(CommandBuffer cmd, ComputeShader shader, int kernel, CameraData data, bool includeOwner = false)

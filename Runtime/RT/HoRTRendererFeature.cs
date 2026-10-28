@@ -63,6 +63,10 @@ namespace lilToon.URP.Extensions.RT
         { var scene = Scene; domain.capturedInput = true; return scene.Read(graph, builder); }
         internal HoRTScene.Inputs ReadCompatibility()
         { var scene = Scene; domain.capturedInput = true; return scene.ReadCompatibility(); }
+        // Consumer-owned GPU resources can outlive Create/Dispose while a
+        // captured view is still executing. Reuse the host's completion fence.
+        internal void ReleaseAfterUse(IDisposable resource)
+        { HoRTRendererFeature.ReleaseAfterUse(domain, resource); }
     }
 
     [DisallowMultipleRendererFeature("Ho-RT")]
@@ -71,6 +75,7 @@ namespace lilToon.URP.Extensions.RT
         // This registry locates owned domains. It does not own one global AS.
         private static readonly Dictionary<ScriptableRenderer, Domain> active = new();
         private static readonly List<Domain> retiring = new();
+        private static readonly List<(Domain domain, IDisposable resource)> retiringResources = new();
         private static bool retirementHooked;
         private readonly Dictionary<ScriptableRenderer, Domain> domains = new();
         private FencePass fencePass;
@@ -79,6 +84,7 @@ namespace lilToon.URP.Extensions.RT
         internal uint BakeCount { get { uint count = 0; foreach (var d in domains.Values) count += d.geometry.BakeCount; return count; } }
         internal int ViewCount { get { int count = 0; foreach (var d in domains.Values) count += d.views.Count; return count; } }
         internal static int RetiredDomainCount => retiring.Count;
+        internal static int RetiredResourceCount => retiringResources.Count;
         internal int ActiveDomainCount => domains.Count;
 
         internal sealed class View : IDisposable
@@ -230,7 +236,17 @@ namespace lilToon.URP.Extensions.RT
                 retiring.Add(pair.Value);
             }
             domains.Clear(); CollectRetired();
-            if (retiring.Count > 0 && !retirementHooked)
+            EnsureRetirementHook();
+        }
+        internal static void ReleaseAfterUse(Domain domain, IDisposable resource)
+        {
+            if (resource == null) return;
+            if (domain == null || domain.CanDispose) { resource.Dispose(); return; }
+            retiringResources.Add((domain, resource)); EnsureRetirementHook();
+        }
+        private static void EnsureRetirementHook()
+        {
+            if ((retiring.Count > 0 || retiringResources.Count > 0) && !retirementHooked)
             {
                 retirementHooked = true;
                 RenderPipelineManager.endFrameRendering += CollectRetiredFrame;
@@ -242,9 +258,12 @@ namespace lilToon.URP.Extensions.RT
         private static void CollectRetiredFrame(ScriptableRenderContext context, Camera[] cameras) => CollectRetired();
         internal static void CollectRetired()
         {
+            for (int i = retiringResources.Count - 1; i >= 0; i--)
+                if (retiringResources[i].domain.CanDispose)
+                { retiringResources[i].resource.Dispose(); retiringResources.RemoveAt(i); }
             for (int i = retiring.Count - 1; i >= 0; i--)
                 if (retiring[i].CanDispose) { retiring[i].Dispose(); retiring.RemoveAt(i); }
-            if (retiring.Count == 0 && retirementHooked)
+            if (retiring.Count == 0 && retiringResources.Count == 0 && retirementHooked)
             {
                 retirementHooked = false;
                 RenderPipelineManager.endFrameRendering -= CollectRetiredFrame;

@@ -1,0 +1,46 @@
+#pragma max_recursion_depth 1
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "../../RT/Shaders/HoRTPrimarySurface.hlsl"
+#include "../../RT/Shaders/HoRTNativeVisibility.hlsl"
+StructuredBuffer<uint> _HoRTShadowReceivers;
+RWTexture2D<float4> _HoRTShadowOutput;
+float4 _HoRTShadowDirection; // toward centre, 1-cos(angular radius), computed with sin to retain tiny angles
+float4 _HoRTShadowParameters; // full output size, min/max metres
+uint _HoRTShadowSamples,_HoRTShadowSeed;
+
+uint HoRTShadowHash(uint x)
+{x^=x>>16;x*=0x7feb352du;x^=x>>15;x*=0x846ca68bu;x^=x>>16;return x;}
+float3 HoRTShadowSampleDirection(uint2 pixel,uint sampleIndex)
+{
+    float3 centre=normalize(_HoRTShadowDirection.xyz);
+    if(_HoRTShadowDirection.w<=0)return centre;
+    uint hash=HoRTShadowHash(pixel.x+pixel.y*(uint)_HoRTShadowParameters.x+_HoRTShadowSeed*0x9e3779b9u);
+    float2 rotation=float2(hash&65535u,hash>>16)/65536.0;
+    float2 u=frac(rotation+float2((sampleIndex+.5)/_HoRTShadowSamples,frac(sampleIndex*.6180339887498948)));
+    float delta=_HoRTShadowDirection.w*u.x;
+    float cosTheta=1-delta,sinTheta=sqrt(max(0,delta*(2-delta)));
+    float3 tangent=normalize(cross(abs(centre.z)<.999?float3(0,0,1):float3(0,1,0),centre));
+    float3 bitangent=cross(centre,tangent);float si,co;sincos(6.28318530718*u.y,si,co);
+    return centre*cosTheta+(tangent*co+bitangent*si)*sinTheta;
+}
+[shader("raygeneration")]
+void Cast()
+{
+    uint2 pixel=DispatchRaysIndex().xy;
+    _HoRTShadowOutput[pixel]=float4(0,0,2,0);
+    HoRTPrimarySurface surface;
+    if(!HoRTTryLoadPrimarySurface(pixel,surface)||surface.ownerAvailable==0)return;
+    uint owner=surface.owner;
+    if(owner==0||owner>65535||(_HoRTShadowReceivers[owner>>5]&(1u<<(owner&31)))==0)
+    {_HoRTShadowOutput[pixel]=0;return;}
+    if(any((uint2)_HoRTPrimarySize.xy!=(uint2)_HoRTShadowParameters.xy))return;
+    uint visible=0;float closest=65504;
+    for(uint sampleIndex=0;sampleIndex<_HoRTShadowSamples;sampleIndex++)
+    {
+        float3 direction=HoRTShadowSampleDirection(pixel,sampleIndex);
+        HoRTVisibilityHit hit=HoRTTraceClosestVisibility(surface.positionWS,direction,_HoRTShadowParameters.z,_HoRTShadowParameters.w,255);
+        if(hit.status>1){_HoRTShadowOutput[pixel]=float4(0,0,10+hit.status,owner);return;}
+        if(hit.status==0)visible++;else closest=min(closest,hit.distance);
+    }
+    _HoRTShadowOutput[pixel]=float4((float)visible/_HoRTShadowSamples,closest,1,owner);
+}

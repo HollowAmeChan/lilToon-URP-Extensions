@@ -1,0 +1,31 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "failure": "System.Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r\n  at lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Check (System.Boolean condition, System.String text) [0x0001a] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowValidation.cs:139 \r\n  at lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Tick () [0x0046e] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowValidation.cs:104 ",
+    "requests": 8,
+    "fractionalPixels": 0,
+    "distinctLevels": 0,
+    "toonShadow": 0.001041412353515625,
+    "toonReceiveOff": 0.001041412353515625,
+    "toonLit": 0.001041412353515625,
+    "checks": [
+        "Stable distinct receiver identities",
+        "Shadow request scheduled: 已安排主灯 -1404 / 2 接收身份 / 64×64 / 1 spp",
+        "Shadow request scheduled: 已安排主灯 -1404 / 2 接收身份 / 64×64 / 1 spp",
+        "Shadow request scheduled: 已安排主灯 -1404 / 2 接收身份 / 64×64 / 1 spp",
+        "Opaque offscreen shadow status/identity: RGBA(0.000, 4.717, 1.000, 256.000)",
+        "Opaque offscreen shadow visibility: 0 / 0",
+        "Nearest blocker distance: 4.716991 / 4.71699",
+        "Unblocked receiver status/identity: RGBA(1.000, 65504.000, 1.000, 256.000)",
+        "Unblocked receiver visibility: 1 / 1",
+        "Second receiver identity status/identity: RGBA(1.000, 65504.000, 1.000, 257.000)",
+        "Second receiver identity visibility: 1 / 1",
+        "Output keeps exact main light identity",
+        "Full-resolution 32F output",
+        "Caster is outside camera frustum",
+        "Shadow request scheduled: 已安排主灯 -1404 / 2 接收身份 / 64×64 / 1 spp",
+        "Shadow request scheduled: 已安排主灯 -1404 / 2 接收身份 / 64×64 / 1 spp",
+        "Shadow request scheduled: 已安排主灯 -1404 / 2 接收身份 / 64×64 / 1 spp",
+        "Shadow request scheduled: 已安排主灯 -1404 / 2 接收身份 / 64×64 / 1 spp"
+    ]
+}

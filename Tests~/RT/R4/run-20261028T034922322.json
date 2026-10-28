@@ -1,0 +1,26 @@
+{
+  "stage": "R4",
+  "sourceCommit": "338dd35f8ee313f1055cc6d5a8639bf407afabb6",
+  "startedUtc": "2026-10-28T03:49:22.7908421Z",
+  "sourcesFile": "sources-20261028T034922322.json",
+  "runnerSha256": "CF4EC3BA671E1BF8CD3D442689B0FD2AFFACAA09C9AAB2B6006681321FDD9D73",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "raster-fallback",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRasterFallback",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "InvalidOperationException: [Ho-CS Validation] lilToon reception did not respond: 0.000 / 0.000\r"
+      ],
+      "logSha256": "CAA041087F6E3288A38BC96F153A6F8DB2FE59292ECC4DFE41C775B26C12092B",
+      "seconds": 8.15365,
+      "pass": false,
+      "logFile": "ho-rt-r4-raster-fallback-20261028T034922322.log"
+    }
+  ]
+}

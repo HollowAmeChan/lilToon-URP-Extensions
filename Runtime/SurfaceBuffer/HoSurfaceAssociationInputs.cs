@@ -49,8 +49,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         internal void Bind(RasterCommandBuffer cmd)
         {
             cmd.SetGlobalVector(StateId, state);
-            if (state.x > .5f) { cmd.SetGlobalTexture(SurfaceDepthId, surfaceDepth); cmd.SetGlobalTexture(WriterId, writer); }
-            if (state.y > .5f) { cmd.SetGlobalTexture(GeometryDepthId, geometryDepth); cmd.SetGlobalTexture(GeometryId, geometry); }
+            cmd.SetGlobalTexture(SurfaceDepthId, state.x > .5f ? surfaceDepth : fallback);
+            cmd.SetGlobalTexture(WriterId, state.x > .5f ? writer : fallback);
+            cmd.SetGlobalTexture(GeometryDepthId, state.y > .5f ? geometryDepth : fallback);
+            cmd.SetGlobalTexture(GeometryId, state.y > .5f ? geometry : fallback);
         }
 
         internal void Bind(ComputeCommandBuffer cmd, ComputeShader shader, int kernel)
@@ -67,8 +69,11 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         {
             Vector4 state = CompatibilityState(out var s, out var w, out var gb);
             cmd.SetGlobalVector(StateId, state);
-            if (state.x > .5f) { cmd.SetGlobalTexture(SurfaceDepthId, s.nameID); cmd.SetGlobalTexture(WriterId, w.nameID); }
-            if (state.y > .5f) { cmd.SetGlobalTexture(GeometryDepthId, gb.DepthTexture.nameID); cmd.SetGlobalTexture(GeometryId, gb.NormalDepthTexture.nameID); }
+            var fallback = new RenderTargetIdentifier(Texture2D.blackTexture);
+            cmd.SetGlobalTexture(SurfaceDepthId, state.x > .5f ? s.nameID : fallback);
+            cmd.SetGlobalTexture(WriterId, state.x > .5f ? w.nameID : fallback);
+            cmd.SetGlobalTexture(GeometryDepthId, state.y > .5f ? gb.DepthTexture.nameID : fallback);
+            cmd.SetGlobalTexture(GeometryId, state.y > .5f ? gb.NormalDepthTexture.nameID : fallback);
         }
 
         internal static void BindCompatibilityCompute(CommandBuffer cmd, ComputeShader shader, int kernel)

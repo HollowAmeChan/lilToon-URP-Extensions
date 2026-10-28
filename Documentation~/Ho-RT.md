@@ -1,6 +1,6 @@
 # Ho-RT：公共底座与 RTShadow
 
-> 状态：**现行实现 / 设计总入口**，2026-10-28。目录迁移、R2 公共资源宿主及共享姿态的有界验收已完成；DI/GI 有界迁移及 Player 资格已完成；RTShadow 与 SIGMA 生产链仍未完成，精确进展见 §8.5。实现状态与后续接口建议分开阅读。
+> 状态：**现行实现 / 设计总入口**，2026-10-28。目录迁移、R2 公共资源宿主及共享姿态的有界验收已完成；DI/GI 有界迁移及 Player 资格已完成；RTShadow raw 已有有界验收，NPR 接收与 SIGMA 生产链仍未完成，精确进展见 §8.5。实现状态与后续接口建议分开阅读。
 
 ## 0. 先确认实现状态
 
@@ -10,7 +10,7 @@
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | A01/A02 已完成代码解耦及有界资源复用；生产绑定为 RELAX | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | R4 的公共 native 最近命中 / alpha / caster 策略已验；Feature、SIGMA 和 NPR 生产链尚未实现 | 本文 §4–8 |
+| RTShadow / SIGMA | 独立 Feature 的单主方向灯 raw / OB 接收身份 / 有限光源同帧采样已验；NPR gate 被拒绝，SIGMA 尚未接入 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -327,7 +327,8 @@ Editor/
 | R2 | 已完成有界验收 | host / 请求 epoch / cache 已实现；RG / compatibility 普通夹具各 93 checks / 11 请求，初始、骨骼和源 Mesh 编辑共 Bake=3，两个 view 均更新；各自退休专项 29 checks / 4 请求，profiles 完整释放；9 项组合回归通过 | 保留多 AS view，初版在 CPU 等待前一 fence 后再修改，无帧时间收益声明；缺失完成 fence 的异常 work 保守隔离，完整取消恢复仍未验收 | R3：先 DI，再 GI |
 | R3-DI | 已完成有界迁移验收 | DI 不再私有创建 / 同步 / 释放场景；scene lifetime 变化清对应相机历史，profile 由 host 持有；247 个核心文件及全部 65 个 shader 文件未变，9 项宿主 / Cutout / RELAX / unsupported 回归通过 | 旧全量 core 原码与迁移版均出现同一 4 条 F39 scratch 诊断及 power-proposal 断言，继续拒绝该夹具；不扩称全量 core 或生产双模块共享通过，Player 在组合迁移后验证 | R3-GI |
 | R3-GI | 已完成有界迁移验收 | GI 不再私有创建 / 扫描 / 释放场景；81 核心文件及全部 59 shader 文件未变；9 项回归、生产 DI/GI 共享姿态 / 独立历史 / 双 NRD dispatch 两路径、GI Mono Player 两路径通过 | 4 条退出 GC 警告与原 Backbuffer Player 日志 SHA / 精确数量一致，宿主显式退休域为 0；不是全管线退出清理或旧质量缺口通过 | R4 |
-| R4 公共查询前置步骤 | 已完成有界验收；R4 未完成 | native 最近 / occlusion 入口、共享 alpha 和 ShadowCasters 用途；两路径各 122 checks / 13 请求，另 4 项原回归通过 | 仍需独立 RTShadow、逐灯产品和 NPR 接收；多用途可保留多 AS，不声称最终质量或性能提升 | R4 单方向灯原始 Cast Feature |
+| R4 公共查询前置步骤 | 已完成有界验收 | native 最近 / occlusion 入口、共享 alpha 和 ShadowCasters 用途；两路径各 122 checks / 13 请求，另 4 项原回归通过 | 多用途可保留多 AS，不声称最终质量或性能提升 | R4 raw |
+| R4 raw Cast | 已完成有界验收；R4 未完成 | 独立 Ho-RTShadow、主方向灯全分辨率 32F raw / status / owner / 最近 blocker；OB 部件接收、同帧有限角度采样及消费资源 fence 释放；8 项组合回归通过 | 真实 lilToon NPR 接收 gate 失败，撤回主光替换；SIGMA 未实现；不能宣称阴影最终画质完成 | 独立 SIGMA 夹具与生产信号，同时保留 R4 NPR 待完成项 |
 | R5–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
 
 R0 采用的宿主准备合同：
@@ -366,6 +367,18 @@ R4 公共查询前置步骤见 [Query review](../Tests~/RT/R4/Query/review.json)
 GPU 夹具在 `BeforeRenderingOpaques` 使用真实 host view，核最近遮挡物、透明洞后的远 blocker、离屏 caster、变换、用途与裁剪模式切换、mask、invalid、fresh generation；镜像缩放与实际 URP raster 的两个观察侧直接对照。RG / compatibility 各 122 checks / 13 请求，原 DI native Cutout 两路径、GI native alpha / mask / UV / backface、原 Surface 场景回归通过。首次缺失 native metadata 绑定、夹具初始反面前提及镜像预期错误都保留失败记录，未通过改像素门槛掩盖。
 
 本步收益为去掉三路 alpha 判定分叉、提供 SIGMA 必需的正确距离与独立 caster 策略；成本为用途不兼容时额外 AS view。没有提高采样预算或增加 temporal 依赖，没有最终阴影清晰度收益声明。停止扩展公共层，下一步直接做独立 RTShadow 的单方向灯全分辨率 raw / 有效性 / 接收域产品；本步骤通过不代表 R4 或连续 ramp 里程碑完成。
+
+R4 raw Cast 的限定验收见 [R4 review](../Tests~/RT/R4/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R4`。新增 `Runtime/RTShadow/` 与 `Editor/RTShadow/`，Renderer 列表显式顺序为 Ho-RT、GB、SB、Ho-RTShadow，使用同一 `BeforeRenderingOpaques` 事件；用户 Renderer 资产不会自动改写。Feature 的 Shader 引用在编辑器补齐，需持久保存后打包。只有主方向灯、无 cookie、未限制 Light.cullingMask、Mono 全视口单采样请求被接受；设备或依赖缺失清当前激活，不偷偷创建私有 RT 场景。
+
+场景添加 `Ho-RTShadow Receiver`，关联 OB 组，选择整组或勾选该组已有部件。它与 raster CS 声明独立，没有 shadow-map 接收盒限制；通用对象也可登记 OB 后接收。当前按 16-bit SB owner 请求，未请求状态是 invalid，而不是伪造完全可见。Raw RGBA32F 的四通道为 `[V, 最近实际 blocker 距离, status, owner]`：status 1 有效、0 未请求、2 主表面无效、10+native status 为查询错误；全部 miss 的距离为 65504。valid miss 的 V=1，有 blocker 的单样本 V=0。该阶段不将 N·L、阴影强度、灯颜色或 ramp 烘进核心 V。
+
+非零光源角直径在实际方向圆锥内按均匀立体角抽样；1–4096 个同帧样本，固定 seed / pixel / sample，不依赖时域累计或等待稳定。角度很小时用 `2*sin(radius/2)^2` 保留精度。多样本 V 是等权可见比例，距离通道保存这些样本的最小实际 hit 距离，仅作参考 / 调试，**不能拿它和平均 V 直接填 SIGMA IN_PENUMBRA**。SIGMA 需要自己的官方单样本前端信号。真实空间子像素覆盖仍未实现；提高同帧光源采样不等于几何边缘 AA。
+
+RG / compatibility raw 夹具各 52 checks / 19 请求，包含离屏 ShadowsOnly caster、透明洞后的远 blocker、精确距离、Cast Off、接收部件 / 空选区、GB 半分辨率失配、SB / host 缺失、开关、受限 light linking 拒绝、resize 与执行中 Feature.Create。256 spp 各产生 1244 个半影像素、199 个不同灰阶，固定种子重复结果逐分量一致；不是 SIGMA 或最终窄 ramp 的质量验收。主表面 raster/compute 两路径、host 退休两路径、生产 DI/GI 组合及 DI native Cutout 共 8 项通过，349 个原 DI/GI/CharacterShadow 文件的规范化字节不变。
+
+资源成本为每 renderer / camera 16 B/像素 raw 和 8 KiB 接收位表，另有 shadow 用途 AS。输出按相机和 renderer 隔离；旧输出在 resize / Create / Dispose 时经 host 的实际完成 fence 延迟释放，包含宿主独立退休 pump。公共输入补齐所有 native raygeneration 已声明纹理槽的 fallback，缺少 SB 时安全返回 invalid。没有性能提升或整帧显存预算声明。
+
+**NPR 接收仍未通过，不能关闭 R4。** 真实 lilToon 的 shadow / receive-off / lit 测量均停在 0.001041412，已有 raster-only `ValidateRendering` 在当前隔离环境也失败为 0/0；这只是当前对照，未证明迁移前就存在此问题。隔离诊断曾读到异常材质参数，原因尚不明确，不以猜测修生产材质或常量布局。错误日志、断言和异常进程退出均保留；诊断 Shader 仅写入独立工程且已清除。主光替换 hook 已撤回，原 CharacterShadow 采样算法保持；新增 `HoRTShadowSampling.hlsl` 是尚待接入验收的候选消费者。完整 `-Case shadow-rg` / `shadow-compat` 与 `raster-fallback` 仍是诊断 gate，不属于上述 raw 通过。此点反复调材质已无充分收益，因此停止局部试错，先做能独立验证的 SIGMA 前后端、再回到真实 NPR 接收；R4 / R5 / R6 与最终质量均保持未完成。
 
 <a id="quality-reference"></a>
 

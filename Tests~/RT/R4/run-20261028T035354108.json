@@ -1,0 +1,34 @@
+{
+  "stage": "R4",
+  "sourceCommit": "338dd35f8ee313f1055cc6d5a8639bf407afabb6",
+  "startedUtc": "2026-10-28T03:53:54.5443883Z",
+  "sourcesFile": "sources-20261028T035354108.json",
+  "runnerSha256": "CF4EC3BA671E1BF8CD3D442689B0FD2AFFACAA09C9AAB2B6006681321FDD9D73",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "shadow-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Shader error in 'Hidden/HoRTShadow/NprDiagnostic': Fragment program 'frag': Unrecognized sampler 'sampler_maintex' - does not match any texture and is not a recognized inline name (should contain filter and wrap modes).\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': imaginary square root at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(160) (on d3d11)\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(183) (on d3d11)\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(244) (on d3d11)\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': use of potentially uninitialized variable (lilEmissionComponent) at /Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl(1788) (on d3d11)\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': use of potentially uninitialized variable (lilEmission2ndComponent) at /Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl(1852) (on d3d11)\r",
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ],
+      "logSha256": "07D55534FE5DEE021BF14E083863C32C17349300B11F58459122ACA70BA34A5B",
+      "seconds": 39.5131464,
+      "pass": false,
+      "logFile": "ho-rt-r4-shadow-rg-20261028T035354108.log"
+    }
+  ]
+}

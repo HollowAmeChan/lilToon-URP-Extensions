@@ -1,0 +1,24 @@
+{
+  "stage": "R4",
+  "sourceCommit": "338dd35f8ee313f1055cc6d5a8639bf407afabb6",
+  "startedUtc": "2026-10-28T03:33:24.6799128Z",
+  "sourcesFile": "sources-20261028T033324156.json",
+  "runnerSha256": "995B4E566515690C1D7500757F7922FC4A213B581E78739758FB13CC4D0C3380",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "shadow-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "560A84AB3E93BD15A01A9DD488677390E51ECBBB4AF8FE6AE58E5985E4E6539C",
+      "seconds": 11.9376443,
+      "pass": true,
+      "logFile": "ho-rt-r4-shadow-rg-20261028T033324156.log"
+    }
+  ]
+}

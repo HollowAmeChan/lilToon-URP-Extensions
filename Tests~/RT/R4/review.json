@@ -1,0 +1,110 @@
+{
+  "stage": "R4 raw Cast only; R4 incomplete",
+  "accepted": {
+    "shadow-raw-rg": "run-20261028T041142083.json",
+    "shadow-raw-compat": "run-20261028T041142083.json",
+    "primary-rg": "run-20261028T041142083.json",
+    "primary-compat": "run-20261028T041142083.json",
+    "host-retirement-rg": "run-20261028T041142083.json",
+    "host-retirement-compat": "run-20261028T041142083.json",
+    "gi-host-rg": "run-20261028T041142083.json",
+    "di-cutout-rg": "run-20261028T041142083.json"
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T033756925.json",
+      "case": "shadow-rg",
+      "exit": 1,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    },
+    {
+      "run": "run-20261028T034200109.json",
+      "case": "shadow-rg",
+      "exit": 1,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    },
+    {
+      "run": "run-20261028T034805383.json",
+      "case": "shadow-rg",
+      "exit": 1,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    },
+    {
+      "run": "run-20261028T034922322.json",
+      "case": "raster-fallback",
+      "exit": 1,
+      "diagnostics": [
+        "InvalidOperationException: [Ho-CS Validation] lilToon reception did not respond: 0.000 / 0.000\r"
+      ]
+    },
+    {
+      "run": "run-20261028T035354108.json",
+      "case": "shadow-rg",
+      "exit": 1,
+      "diagnostics": [
+        "Shader error in 'Hidden/HoRTShadow/NprDiagnostic': Fragment program 'frag': Unrecognized sampler 'sampler_maintex' - does not match any texture and is not a recognized inline name (should contain filter and wrap modes).\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': imaginary square root at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(160) (on d3d11)\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': use of potentially uninitialized variable (HoCSSampleDisk) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(183) (on d3d11)\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': use of potentially uninitialized variable (HoCSSampleAtlasPcss) at /Unity_Fork/lilToon-URP-Extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl(244) (on d3d11)\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': use of potentially uninitialized variable (lilEmissionComponent) at /Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl(1788) (on d3d11)\r",
+        "Shader warning in 'Hidden/HoRTShadow/NprDiagnostic': use of potentially uninitialized variable (lilEmission2ndComponent) at /Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl(1852) (on d3d11)\r",
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    },
+    {
+      "run": "run-20261028T035532945.json",
+      "case": "shadow-rg",
+      "exit": 1,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    },
+    {
+      "run": "run-20261028T040650702.json",
+      "case": "shadow-rg",
+      "exit": 1,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    },
+    {
+      "run": "run-20261028T040853150.json",
+      "case": "shadow-rg",
+      "exit": 1,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    },
+    {
+      "run": "run-20261028T040941190.json",
+      "case": "shadow-rg",
+      "exit": -1073741819,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    },
+    {
+      "run": "run-20261028T041030708.json",
+      "case": "shadow-rg",
+      "exit": -1073741819,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ]
+    }
+  ],
+  "referenceCommit": "338dd35f",
+  "unchangedDiGiCharacterShadowFiles": 349,
+  "benefit": "Independent host-backed full-resolution 32F main directional Cast, explicit raw visibility/status/owner/blocker distance, OB part selection, real finite-cone sampling, fixed-seed no-history mode and fenced consumer resources.",
+  "evidence": "Two modes each 52 checks / 19 requests, 1244 fractional pixels and 199 distinct raw levels at 256 spp. Alpha hole selects the far actual blocker; miss sentinel, unsupported domain/linking, missing host/SB, resize, feature toggle and mid-frame Create covered. Primary and host retirement regression pairs plus production DI/GI and DI cutout pass.",
+  "cost": "16 B/pixel raw plus 8 KiB receiver mask per renderer/camera, distinct shadow-purpose AS view. Samples grow tracing cost; no frame-time claim. Closest of multiple sampled blocker distances is reference/debug data, never directly SIGMA input.",
+  "nprGate": "Rejected: actual lilToon shadow/receive/lit samples all stayed 0.001041412 in isolated test; current raster-only existing validation also failed 0/0. Cause unproven; no assertion of a pre-existing baseline defect. Diagnostic shader imported only in private project was removed. Main Cast hook reverted; existing CharacterShadow bytes/algorithm retained. Sampling helper is preparatory and not a qualified NPR integration.",
+  "next": "R4 NPR gate remains open. Proceed with the independent matching-version SIGMA fixture and production signal while retaining this gate, then complete actual material/ramp reception. No R4-R6 or final quality completion claim."
+}

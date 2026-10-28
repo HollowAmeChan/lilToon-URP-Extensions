@@ -1,0 +1,26 @@
+{
+  "stage": "R4",
+  "sourceCommit": "338dd35f8ee313f1055cc6d5a8639bf407afabb6",
+  "startedUtc": "2026-10-28T04:08:53.6322837Z",
+  "sourcesFile": "sources-20261028T040853150.json",
+  "runnerSha256": "CF4EC3BA671E1BF8CD3D442689B0FD2AFFACAA09C9AAB2B6006681321FDD9D73",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "shadow-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412\r"
+      ],
+      "logSha256": "AE1001F8528CEF61C3813D5FD7E1D0D8AB6F500A2B02B57C8BD8EF822E64FAD1",
+      "seconds": 14.6362956,
+      "pass": false,
+      "logFile": "ho-rt-r4-shadow-rg-20261028T040853150.log"
+    }
+  ]
+}

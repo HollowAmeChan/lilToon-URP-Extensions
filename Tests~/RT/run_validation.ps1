@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1','R2','R3DI','R3GI','R4Query')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
@@ -83,6 +83,23 @@ if ($Stage -eq 'R4Query') {
         @{name='scene-rg';api='d3d12';entry='lilToon.URP.Extensions.RT.HoRTSceneValidation.Run';marker='[HoRTSceneValidation] PASS'}
     )
 }
+if ($Stage -eq 'R4') {
+    $taskCases = @(
+        @{name='shadow-raw-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRaw';marker='[HoRTShadowValidation] PASS scope=raw-only; NPR acceptance pending'},
+        @{name='shadow-raw-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRawCompatibility';marker='[HoRTShadowValidation] PASS scope=raw-only; NPR acceptance pending'},
+        @{name='primary-rg';api='d3d12';entry='lilToon.URP.Extensions.RT.HoRTPrimarySurfaceValidation.Run';marker='[HoRTPrimarySurfaceValidation] PASS'},
+        @{name='primary-compat';api='d3d12';entry='lilToon.URP.Extensions.RT.HoRTPrimarySurfaceValidation.RunCompatibility';marker='[HoRTPrimarySurfaceValidation] PASS'},
+        @{name='host-retirement-rg';api='d3d12';entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunRetirement';marker='[HoRTHostValidation] PASS'},
+        @{name='host-retirement-compat';api='d3d12';entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunRetirementCompatibility';marker='[HoRTHostValidation] PASS'},
+        @{name='gi-host-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunHost';marker='[HoRTGIHostValidation] PASS'},
+        @{name='di-cutout-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutout';marker='[HoRTDIValidation] PASS native cutout:'}
+    )
+    # Complete NPR acceptance remains rejected. Explicit diagnosis only until
+    # actual material/ramp behavior is qualified; never a raw-stage pass.
+    if($Case -in @('shadow-rg','shadow-compat','raster-fallback')) {
+        $taskCases+=@{name=$Case;api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.'+$(if($Case -eq 'raster-fallback'){'RunRasterFallback'}elseif($Case -eq 'shadow-compat'){'RunCompatibility'}else{'Run'});marker=$(if($Case -eq 'raster-fallback'){'[HoRTShadowRasterFallback] PASS'}else{'[HoRTShadowValidation] PASS scope=NPR'})}
+    }
+}
 if ($Case) { $taskCases = @($taskCases | Where-Object { $_.name -eq $Case }); if ($taskCases.Count -eq 0) { throw 'Unknown validation case' } }
 $taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } elseif ($Stage -eq 'R4Query') { 'R4/Query' } else { $Stage })
 New-Item -ItemType Directory -Force -Path $taskResults | Out-Null
@@ -132,6 +149,10 @@ foreach ($taskJob in $taskCases) {
     if ($taskJob.name.StartsWith('native-query-')) {
         $taskQueryReport=Join-Path $taskProject 'ho-rt-visibility/report.json'
         if(Test-Path -LiteralPath $taskQueryReport){Copy-Item -LiteralPath $taskQueryReport -Destination (Join-Path $taskResults ('report-'+$taskJob.name+'-'+$taskStamp+'.json'))}
+    }
+    if ($taskJob.name.StartsWith('shadow-')) {
+        $taskShadowReport=Join-Path $taskProject 'ho-rt-shadow/report.json'
+        if(Test-Path -LiteralPath $taskShadowReport){Copy-Item -LiteralPath $taskShadowReport -Destination (Join-Path $taskResults ('report-'+$taskJob.name+'-'+$taskStamp+'.json'))}
     }
     Write-Output ('END ' + $taskJob.name + ' exit=' + $taskRecord.actualExit + ' marker=' + $taskRecord.marker + ' diagnostics=' + $taskDiagnostics.Count + ' pass=' + $taskRecord.pass)
     if (-not $taskRecord.pass) { throw ('Validation rejected: ' + $taskJob.name + '; inspect ' + $taskRunPath) }
