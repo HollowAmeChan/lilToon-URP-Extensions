@@ -13,7 +13,7 @@ Texture2D<float> _HoRTShadowSigmaEncoded,_HoRTShadowSigmaViewZ;
 RWTexture2D<float4> _HoRTShadowSigmaVisibility;
 float4 _HoRTShadowSigmaSize,_HoRTShadowSigmaLight;
 #if defined(HO_SIGMA_ACCUMULATE)
-RWTexture2D<float> _HoRTShadowSigmaSum;
+RWTexture2D<float2> _HoRTShadowSigmaSum;
 uint _HoRTShadowEstimateIndex;
 #endif
 [numthreads(8,8,1)]
@@ -38,14 +38,25 @@ void DecodeVisibility(uint2 pixel)
 {
     if(any(pixel>=(uint2)_HoRTShadowSigmaSize.xy))return;
     float4 raw=_HoRTShadowRaw[pixel];
+    float measuredVisibility=raw.x;
     if(raw.z==1&&_HoRTShadowSigmaViewZ[pixel]<500000)
         raw.x=saturate(SIGMA_BackEnd_UnpackShadow(_HoRTShadowSigmaEncoded[pixel]));
     #if defined(HO_SIGMA_ACCUMULATE)
         // Average only linear, officially decoded visibility. Each upstream
         // denoiser execution sees a single actual hit or miss and resets history.
-        float sum=(_HoRTShadowEstimateIndex==0?0:_HoRTShadowSigmaSum[pixel])+raw.x;
+        float2 sum=(_HoRTShadowEstimateIndex==0?0:_HoRTShadowSigmaSum[pixel])+float2(raw.x,measuredVisibility);
         _HoRTShadowSigmaSum[pixel]=sum;
-        raw.x=sum/(_HoRTShadowEstimateIndex+1);
+        float count=_HoRTShadowEstimateIndex+1;
+        float estimate=sum.x/count,measured=sum.y/count;
+        // Wilson's score interval supplies a conservative binomial-inspired
+        // bound. These spatially randomized rays are not a confidence guarantee:
+        // the purpose is to stop spatial reconstruction erasing a thin feature
+        // when independent actual samples agree. Original SIGMA stays untouched.
+        float zSquared=3.8416;
+        float denominator=1+zSquared/count;
+        float centre=(measured+zSquared/(2*count))/denominator;
+        float radius=1.96*sqrt(measured*(1-measured)/count+zSquared/(4*count*count))/denominator;
+        raw.x=clamp(estimate,max(0,centre-radius),min(1,centre+radius));
     #endif
     _HoRTShadowSigmaVisibility[pixel]=raw;
 }

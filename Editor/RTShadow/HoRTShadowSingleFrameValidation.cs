@@ -21,17 +21,24 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             var reference=Render();var referenceBeauty=Read(target);
             shadow.Settings.reconstruction=HoRTShadowReconstruction.SigmaSingleFrame;
             var oneRaw=Render();var one=Read(shadow.LastOutput.Visibility.rt);var oneBeauty=Read(target);
-            var expected=new float[one.Length];Color[] lastRaw=null;
+            var expected=new float[one.Length];var measured=new float[one.Length];Color[] lastRaw=null;
             for(int estimate=0;estimate<4;estimate++)
             {
                 shadow.Settings.samplingSeed=unchecked(estimate*(int)0x85ebca6bu);lastRaw=Render();var filtered=Read(shadow.LastOutput.Visibility.rt);
-                for(int i=0;i<filtered.Length;i++)expected[i]+=filtered[i].r*.25f;
+                for(int i=0;i<filtered.Length;i++){expected[i]+=filtered[i].r*.25f;measured[i]+=lastRaw[i].r*.25f;}
             }
             shadow.Settings.samplingSeed=0;shadow.Settings.singleFrameEstimates=4;
             var batchRaw=Render();var batch=Read(shadow.LastOutput.Visibility.rt);
-            for(int i=0;i<batch.Length;i++)evaluation.arithmeticMaxError=Mathf.Max(evaluation.arithmeticMaxError,Mathf.Abs(batch[i].r-expected[i]));
+            for(int i=0;i<batch.Length;i++)
+            {
+                if(batch[i].b!=1)continue;
+                float denominator=1+3.8416f/4,centre=(measured[i]+3.8416f/8)/denominator;
+                float radius=1.96f*Mathf.Sqrt(measured[i]*(1-measured[i])/4+3.8416f/64)/denominator;
+                float bounded=Mathf.Clamp(expected[i],Mathf.Max(0,centre-radius),Mathf.Min(1,centre+radius));
+                evaluation.arithmeticMaxError=Mathf.Max(evaluation.arithmeticMaxError,Mathf.Abs(batch[i].r-bounded));
+            }
             ExportCheck(Equal(batchRaw,lastRaw),"Raw debug product is the final independent single-sample input, never an averaged distance");
-            ExportCheck(evaluation.arithmeticMaxError<.000001f,"Same-request output equals the average of separately decoded official SIGMA estimates");
+            ExportCheck(evaluation.arithmeticMaxError<.000001f,"Same-request output matches separately decoded SIGMA average bounded by actual raw sample statistics");
             shadow.Settings.singleFrameEstimates=16;Render();var multi=Read(shadow.LastOutput.Visibility.rt);var multiBeauty=Read(target);evaluation.samples=16;
             double single=0,multiple=0,singleRamp=0,multipleRamp=0;int count=0;
             for(int i=0;i<reference.Length;i++)if(reference[i].b==1&&reference[i].a==bodyId)
@@ -45,7 +52,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             ExportCheck(shadow.LastOutput.sigma.nrd.AppliedSigmaSettings.maxStabilizedFrameNum==0&&shadow.LastOutput.sigma.LastFrame==0,"All estimates explicitly disable temporal stabilization");
             Render();ExportCheck(Equal(multi,Read(shadow.LastOutput.Visibility.rt)),"Batch result repeats exactly in cold no-history mode");
             SaveExport("reference",reference,referenceBeauty);SaveExport("single",one,oneBeauty);SaveExport("multi",multi,multiBeauty);
-            shadow.Settings.singleFrameEstimates=64;Render();ExportCheck(shadow.LastOutput.sigma.Estimates==64,"Maximum single-frame estimate count is supported");
+            shadow.Settings.singleFrameEstimates=256;Render();ExportCheck(shadow.LastOutput.sigma.Estimates==256,"Maximum single-frame estimate count is supported");
             shadow.Settings.singleFrameEstimates=16;shadow.Settings.reconstruction=HoRTShadowReconstruction.SigmaPreview;Render();ExportCheck(shadow.LastOutput.sigma.Estimates==1&&shadow.LastOutput.sigma.visibilitySum==null,"Preview does not silently multiply its tracing budget");
             shadow.Settings.reconstruction=HoRTShadowReconstruction.SigmaSingleFrame;Render();
             alpha.SetColor("_Color",new Color(1,1,1,0));Render();var unblocked=Read(shadow.LastOutput.Visibility.rt);ExportCheck(unblocked[32*64+32].r>.99f,"No-history export immediately follows alpha/caster change");alpha.SetColor("_Color",Color.white);Render();

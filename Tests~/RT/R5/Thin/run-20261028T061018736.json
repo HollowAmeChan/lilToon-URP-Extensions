@@ -1,0 +1,27 @@
+{
+  "stage": "R5Thin",
+  "sourceCommit": "360a98eac6b7ef9611e602de807c62320ca9f946",
+  "startedUtc": "2026-10-28T06:10:19.2127731Z",
+  "sourcesFile": "sources-20261028T061018736.json",
+  "runnerSha256": "AC8DE997FF61499AD2BD51FAE72FC0A127F72B78DFB463D860E8F33E9A94F4C7",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "thin-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunThin",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Shader error in 'HoRTShadowSigma': use of undeclared identifier 'measuredVisibility' at kernel Accumulate at Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/HoRTShadowSigma.compute(47) (on d3d11)\r",
+        "Exception: Thin-cutout export matches high-budget current-pose reference: V=0.8164249 ramp=0.8191131\r"
+      ],
+      "logSha256": "9A3DA8BEC27A9764C2D6E49A466186382134F64C99694C9AA63A17C283ED7C47",
+      "seconds": 11.7055917,
+      "pass": false,
+      "logFile": "ho-rt-r5thin-thin-rg-20261028T061018736.log"
+    }
+  ]
+}

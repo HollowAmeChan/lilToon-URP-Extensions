@@ -1,0 +1,24 @@
+{
+  "stage": "R5Thin",
+  "sourceCommit": "360a98eac6b7ef9611e602de807c62320ca9f946",
+  "startedUtc": "2026-10-28T06:08:01.2295868Z",
+  "sourcesFile": "sources-20261028T060800725.json",
+  "runnerSha256": "AC8DE997FF61499AD2BD51FAE72FC0A127F72B78DFB463D860E8F33E9A94F4C7",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "thin-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunThin",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "A05F31FBD17B95517D98CCE4EC5FEAB5113CC48FF838D138198F91A65B913C2E",
+      "seconds": 14.477123,
+      "pass": true,
+      "logFile": "ho-rt-r5thin-thin-rg-20261028T060800725.log"
+    }
+  ]
+}

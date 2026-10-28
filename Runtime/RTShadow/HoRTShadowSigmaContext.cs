@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.RTShadow
 
         internal HoRTShadowSigmaContext(int width, int height, ComputeShader[] shaders, int estimates = 1)
         {
-            this.width = width; this.height = height; Estimates = Mathf.Clamp(estimates, 1, 64);
+            this.width = width; this.height = height; Estimates = Mathf.Clamp(estimates, 1, 256);
             try
             {
                 nrd = new HoNrdContext(shaders, 16, HoRTShadowSigmaManifest.Identifiers, HoRTShadowSigmaManifest.Resources);
@@ -40,7 +40,7 @@ namespace lilToon.URP.Extensions.RTShadow
                 penumbra = Allocate(GraphicsFormat.R16_SFloat, "Penumbra");
                 encoded = Allocate(GraphicsFormat.R16_SFloat, "Encoded shadow");
                 visibility = Allocate(GraphicsFormat.R32G32B32A32_SFloat, "Visibility");
-                if (Estimates > 1) visibilitySum = Allocate(GraphicsFormat.R32_SFloat, "Decoded visibility sum");
+                if (Estimates > 1) visibilitySum = Allocate(GraphicsFormat.R32G32_SFloat, "Decoded and raw visibility sums");
             }
             catch { Dispose(); throw; }
         }

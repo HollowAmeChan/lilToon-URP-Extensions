@@ -1,0 +1,66 @@
+{
+  "stage": "R5Thin",
+  "sourceCommit": "360a98eac6b7ef9611e602de807c62320ca9f946",
+  "startedUtc": "2026-10-28T06:13:47.9662161Z",
+  "sourcesFile": "sources-20261028T061347410.json",
+  "runnerSha256": "AC8DE997FF61499AD2BD51FAE72FC0A127F72B78DFB463D860E8F33E9A94F4C7",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "thin-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunThin",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "D3EB35C3E44E96836A4D562143B1DD5809820B7A3F1C8BC297F3FD9E4C003DA1",
+      "seconds": 13.6478668,
+      "pass": true,
+      "logFile": "ho-rt-r5thin-thin-rg-20261028T061347410.log"
+    },
+    {
+      "name": "thin-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunThinCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "7B7C713353DC7E62666FA8EFDAB7A2ED42E23ED26A066FA337A5EA01C5B0E0D8",
+      "seconds": 10.4638012,
+      "pass": true,
+      "logFile": "ho-rt-r5thin-thin-compat-20261028T061347410.log"
+    },
+    {
+      "name": "export-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSingleFrame",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "6C17789CD57D5B28BBDAFCE743DFFB670EF7BDA1D4E32F6EAAEB36A4BBD8A13E",
+      "seconds": 9.0889585,
+      "pass": true,
+      "logFile": "ho-rt-r5thin-export-rg-20261028T061347410.log"
+    },
+    {
+      "name": "gi-host-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunHost",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "3E622E9B54FBA4F2002942053DB7E00D3D1E0213E7DF2237C989F781987AC64D",
+      "seconds": 8.8247103,
+      "pass": true,
+      "logFile": "ho-rt-r5thin-gi-host-rg-20261028T061347410.log"
+    }
+  ]
+}

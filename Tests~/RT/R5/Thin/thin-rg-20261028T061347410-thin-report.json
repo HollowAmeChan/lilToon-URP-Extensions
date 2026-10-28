@@ -1,0 +1,30 @@
+{
+    "pass": true,
+    "size": 128,
+    "referenceSpp": 1024,
+    "estimates": 256,
+    "shadowPixels": 1341,
+    "retainedPixels": 1177,
+    "unboundedRetainedPixels": 826,
+    "mse": 0.0006041169981472194,
+    "rampMse": 0.0022130897268652918,
+    "movedMse": 0.0006295691709965467,
+    "blendMse": 0.0006338999955914915,
+    "minimumVisibility": 0.014784391038119793,
+    "unboundedMse": 0.014005439355969429,
+    "checks": [
+        "Raw-statistics bounds improve thin-detail retention at the exact same 256-sample budget: MSE=0.01400544 -> 0.000604117 retained=826 -> 1177",
+        "Thin alpha-clipped cards produce measurable narrow shadows",
+        "Reconstruction retains thin-card shadow support instead of erasing it: 1177 / 1341 min=0.01478439",
+        "Thin-cutout export matches high-budget current-pose reference: V=0.000604117 ramp=0.00221309",
+        "One-third-pixel bone movement changes the current shadow",
+        "Skinned motion rejects old stabilized geometry",
+        "Bone-moved output matches independently traced pose without settling frames",
+        "BlendShape micro-bend export follows current pose without history",
+        "Cutout alpha change opens all thin-card rays immediately",
+        "Returning to exact pose reproduces export independent of prior motion",
+        "Static skinned pose can retain preview history",
+        "Actual skinned pose revision resets preview history",
+        "Production RT host actually refreshed skinned snapshots"
+    ]
+}

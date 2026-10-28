@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4','R5Sigma','R5Cast','R5Npr','R5Export')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4','R5Sigma','R5Cast','R5Npr','R5Export','R5Thin')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
@@ -141,8 +141,16 @@ if($Stage -eq 'R5Export') {
         @{name='shadow-raw-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRaw';marker='[HoRTShadowValidation] PASS scope=raw-only; NPR acceptance pending'}
     )
 }
+if($Stage -eq 'R5Thin') {
+    $taskCases=@(
+        @{name='thin-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunThin';marker='[HoRTShadowThin] PASS'},
+        @{name='thin-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunThinCompatibility';marker='[HoRTShadowThin] PASS'},
+        @{name='export-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSingleFrame';marker='[HoRTShadowSingleFrame] PASS'},
+        @{name='gi-host-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunHost';marker='[HoRTGIHostValidation] PASS'}
+    )
+}
 if ($Case) { $taskCases = @($taskCases | Where-Object { $_.name -eq $Case }); if ($taskCases.Count -eq 0) { throw 'Unknown validation case' } }
-$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } elseif ($Stage -eq 'R4Query') { 'R4/Query' } elseif($Stage -eq 'R5Sigma') {'R5'} elseif($Stage -eq 'R5Cast') {'R5/Production'} elseif($Stage -eq 'R5Npr') {'R5/NPR'} elseif($Stage -eq 'R5Export') {'R5/Export'} else { $Stage })
+$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } elseif ($Stage -eq 'R4Query') { 'R4/Query' } elseif($Stage -eq 'R5Sigma') {'R5'} elseif($Stage -eq 'R5Cast') {'R5/Production'} elseif($Stage -eq 'R5Npr') {'R5/NPR'} elseif($Stage -eq 'R5Export') {'R5/Export'} elseif($Stage -eq 'R5Thin') {'R5/Thin'} else { $Stage })
 New-Item -ItemType Directory -Force -Path $taskResults | Out-Null
 $taskStamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')
 $taskRunPath = Join-Path $taskResults ('run-' + $taskStamp + '.json')
@@ -150,7 +158,7 @@ $taskSources = @(Get-ChildItem -LiteralPath (Join-Path $taskRoot 'Runtime'),(Joi
     @{path=$_.FullName.Substring($taskRoot.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
 })
 $taskSourcePath = Join-Path $taskResults ('sources-' + $taskStamp + '.json')
-if($Stage -in @('R5Npr','R5Export')) {
+if($Stage -in @('R5Npr','R5Export','R5Thin')) {
     $taskSharedIncludes=[IO.Path]::GetFullPath((Join-Path $taskRoot '../lilToon/Assets/lilToon/Shader/Includes'))
     $taskSources+=@(Get-ChildItem -LiteralPath $taskSharedIncludes -Recurse -File -Filter '*.hlsl'|ForEach-Object{@{path=[IO.Path]::GetRelativePath($taskRoot,$_.FullName).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName).Hash}})
 }
@@ -223,6 +231,11 @@ foreach ($taskJob in $taskCases) {
         $taskExportReport=Join-Path $taskProject 'ho-rt-shadow/single-frame-report.json'
         if((Test-Path -LiteralPath $taskExportReport) -and (Get-Item -LiteralPath $taskExportReport).LastWriteTimeUtc -ge $taskStarted){Copy-Item -LiteralPath $taskExportReport -Destination (Join-Path $taskResults ('report-'+$taskJob.name+'-'+$taskStamp+'.json'))}
         Get-ChildItem -LiteralPath (Join-Path $taskProject 'ho-rt-shadow') -Filter 'export-*' -File |Where-Object{$_.LastWriteTimeUtc -ge $taskStarted}|ForEach-Object{Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $taskResults ($taskJob.name+'-'+$taskStamp+'-'+$_.Name))}
+    }
+    if($taskJob.name.StartsWith('thin-')) {
+        $taskThinReport=Join-Path $taskProject 'ho-rt-shadow/thin-report.json'
+        if((Test-Path -LiteralPath $taskThinReport) -and (Get-Item -LiteralPath $taskThinReport).LastWriteTimeUtc -ge $taskStarted){Copy-Item -LiteralPath $taskThinReport -Destination (Join-Path $taskResults ('report-'+$taskJob.name+'-'+$taskStamp+'.json'))}
+        Get-ChildItem -LiteralPath (Join-Path $taskProject 'ho-rt-shadow') -Filter 'thin-*' -File |Where-Object{$_.LastWriteTimeUtc -ge $taskStarted}|ForEach-Object{Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $taskResults ($taskJob.name+'-'+$taskStamp+'-'+$_.Name))}
     }
     Write-Output ('END ' + $taskJob.name + ' exit=' + $taskRecord.actualExit + ' marker=' + $taskRecord.marker + ' diagnostics=' + $taskDiagnostics.Count + ' pass=' + $taskRecord.pass)
     if (-not $taskRecord.pass) { throw ('Validation rejected: ' + $taskJob.name + '; inspect ' + $taskRunPath) }

@@ -32,7 +32,7 @@ namespace lilToon.URP.Extensions.RTShadow
         public int samplesPerPixel = 1;
         [InspectorName("采样种子")] public int samplingSeed;
         [InspectorName("阴影重建")] public HoRTShadowReconstruction reconstruction = HoRTShadowReconstruction.Raw;
-        [InspectorName("无历史同帧估计数"), Range(1, 64), Tooltip("只用于 SIGMA 无历史模式。每次追单个灯样本并独立降噪，再平均线性可见度；成本随次数增加，不等待后续帧。")]
+        [InspectorName("无历史同帧估计数"), Range(1, 256), Tooltip("只用于 SIGMA 无历史模式。每次追单个灯样本并独立降噪，再平均线性可见度；原始遮挡统计约束薄影丢失，成本随次数增加，不等待后续帧。")]
         public int singleFrameEstimates = 1;
     }
 
@@ -140,7 +140,7 @@ namespace lilToon.URP.Extensions.RTShadow
             dead.Clear(); foreach (var pair in outputs) if (pair.Key.Item2 == null) dead.Add(pair.Key);
             foreach (var key in dead) { outputs[key].ReleaseAfterUse(); outputs.Remove(key); }
             var current = (renderer, data.cameraData.camera);
-            int estimates = settings.reconstruction == HoRTShadowReconstruction.SigmaSingleFrame ? Mathf.Clamp(settings.singleFrameEstimates, 1, 64) : 1;
+            int estimates = settings.reconstruction == HoRTShadowReconstruction.SigmaSingleFrame ? Mathf.Clamp(settings.singleFrameEstimates, 1, 256) : 1;
             if (outputs.TryGetValue(current, out var output) && (output.width != descriptor.width || output.height != descriptor.height || output.reconstruction != settings.reconstruction || (output.sigma != null && output.sigma.Estimates != estimates)))
             { output.ReleaseAfterUse(); outputs.Remove(current); output = null; }
             if (output == null) { output = new Output(descriptor.width, descriptor.height, settings.reconstruction, sigmaPipelines, estimates); outputs.Add(current, output); }

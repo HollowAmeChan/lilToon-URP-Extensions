@@ -1,0 +1,172 @@
+{
+  "stage": "R5 bounded rigged thin Cutout quality",
+  "accepted": {
+    "thin-rg": "run-20261028T061347410.json",
+    "thin-compat": "run-20261028T061347410.json",
+    "export-rg": "run-20261028T061347410.json",
+    "gi-host-rg": "run-20261028T061347410.json"
+  },
+  "rejectedCandidates": [
+    {
+      "run": "run-20261028T061018736.json",
+      "case": "thin-rg",
+      "diagnostics": [
+        "Shader error in 'HoRTShadowSigma': use of undeclared identifier 'measuredVisibility' at kernel Accumulate at Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/HoRTShadowSigma.compute(47) (on d3d11)\r",
+        "Exception: Thin-cutout export matches high-budget current-pose reference: V=0.8164249 ramp=0.8191131\r"
+      ]
+    },
+    {
+      "run": "run-20261028T061053141.json",
+      "case": "thin-rg",
+      "diagnostics": [
+        "Exception: Reconstruction retains thin-card shadow support instead of erasing it: 929 / 1341 min=0.1849799\r"
+      ]
+    },
+    {
+      "run": "run-20261028T061127235.json",
+      "case": "thin-rg",
+      "diagnostics": [
+        "Exception: Reconstruction retains thin-card shadow support instead of erasing it: 1114 / 1341 min=0.05662603\r"
+      ]
+    }
+  ],
+  "metrics": {
+    "thin-rg": {
+      "restMse": 0.0006041169823396946,
+      "referenceShadowPixels": 1341,
+      "retained": 1177,
+      "retention": 0.877703206562267,
+      "unboundedMse": 0.014005438981763848,
+      "unboundedRetained": 826,
+      "rampMse": 0.002213089788614381,
+      "boneMse": 0.0006295691923284084,
+      "blendMse": 0.000633899983458498
+    },
+    "thin-compat": {
+      "restMse": 0.0006041169823396946,
+      "referenceShadowPixels": 1341,
+      "retained": 1177,
+      "retention": 0.877703206562267,
+      "unboundedMse": 0.014005438981763848,
+      "unboundedRetained": 826,
+      "rampMse": 0.002213089788614381,
+      "boneMse": 0.0006295691923284084,
+      "blendMse": 0.000633899983458498
+    }
+  },
+  "signals": {
+    "thin-rg": {
+      "rest-reference-visibility.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-rest-reference-visibility.rgba32",
+        "sha256": "50c380332828741e7b7e8ec5a59d2c37cb0a796f4ad5068f579357895d58386a"
+      },
+      "rest-sigma-visibility.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-rest-sigma-visibility.rgba32",
+        "sha256": "9f4b8ae0c9b38bf3f826f9384bf54885e0efef72a4f5f58ca054a94923608afa"
+      },
+      "rest-reference-beauty.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-rest-reference-beauty.rgba32",
+        "sha256": "65158dd6d4ce147e1eee9ae6f5769d2307f6d0eee5157837566801f89047989f"
+      },
+      "rest-sigma-beauty.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-rest-sigma-beauty.rgba32",
+        "sha256": "0391c8b9c7e35dc3e08c106f869e3b79b7f3a7ae39d2823b7739332cf851b183"
+      },
+      "rest-unbounded-visibility.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-rest-unbounded-visibility.rgba32",
+        "sha256": "67f51e74a479620312cbb62b3952a1a825961d8cbed268036af02c39de1ac17e"
+      },
+      "bone-reference-visibility.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-bone-reference-visibility.rgba32",
+        "sha256": "22952a48ea5ee0b0c38e1f12595ef1c267ec1d4f91ca6175240bf53d56fb6b78"
+      },
+      "bone-sigma-visibility.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-bone-sigma-visibility.rgba32",
+        "sha256": "cfce48d52c1835b8814d25936666ac0719b3a6e7a3880c7cf04d6420dcdb8748"
+      },
+      "bone-reference-beauty.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-bone-reference-beauty.rgba32",
+        "sha256": "ec3e6aa7640e782d6c09fd8967f4807d8f8740db5c6c09953042558b6ea2d99a"
+      },
+      "bone-sigma-beauty.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-bone-sigma-beauty.rgba32",
+        "sha256": "a86dd8cba3f30df88472db5b86691433c79703b3be6ea46260162c66a0f6db8a"
+      },
+      "blend-reference-visibility.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-blend-reference-visibility.rgba32",
+        "sha256": "eee610b39b9c24519e261aec7b42b299e631b50fec2f2296c22318d3689aed81"
+      },
+      "blend-sigma-visibility.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-blend-sigma-visibility.rgba32",
+        "sha256": "6c69a79559616e2aa4eeb17ee4be093a4fd1225be0c0242ff74b85206f5fee37"
+      },
+      "blend-reference-beauty.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-blend-reference-beauty.rgba32",
+        "sha256": "6540437447df89f543d717fd9d8e9e4fb84d0b22c8b8f10503c32e763c7ab81b"
+      },
+      "blend-sigma-beauty.rgba32": {
+        "file": "thin-rg-20261028T061347410-thin-blend-sigma-beauty.rgba32",
+        "sha256": "54cff2388d99e272aa2d48ccec3a80e7d34745d41594c2b72b69e073bd934567"
+      }
+    },
+    "thin-compat": {
+      "rest-reference-visibility.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-rest-reference-visibility.rgba32",
+        "sha256": "50c380332828741e7b7e8ec5a59d2c37cb0a796f4ad5068f579357895d58386a"
+      },
+      "rest-sigma-visibility.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-rest-sigma-visibility.rgba32",
+        "sha256": "9f4b8ae0c9b38bf3f826f9384bf54885e0efef72a4f5f58ca054a94923608afa"
+      },
+      "rest-reference-beauty.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-rest-reference-beauty.rgba32",
+        "sha256": "65158dd6d4ce147e1eee9ae6f5769d2307f6d0eee5157837566801f89047989f"
+      },
+      "rest-sigma-beauty.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-rest-sigma-beauty.rgba32",
+        "sha256": "0391c8b9c7e35dc3e08c106f869e3b79b7f3a7ae39d2823b7739332cf851b183"
+      },
+      "rest-unbounded-visibility.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-rest-unbounded-visibility.rgba32",
+        "sha256": "67f51e74a479620312cbb62b3952a1a825961d8cbed268036af02c39de1ac17e"
+      },
+      "bone-reference-visibility.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-bone-reference-visibility.rgba32",
+        "sha256": "22952a48ea5ee0b0c38e1f12595ef1c267ec1d4f91ca6175240bf53d56fb6b78"
+      },
+      "bone-sigma-visibility.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-bone-sigma-visibility.rgba32",
+        "sha256": "cfce48d52c1835b8814d25936666ac0719b3a6e7a3880c7cf04d6420dcdb8748"
+      },
+      "bone-reference-beauty.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-bone-reference-beauty.rgba32",
+        "sha256": "ec3e6aa7640e782d6c09fd8967f4807d8f8740db5c6c09953042558b6ea2d99a"
+      },
+      "bone-sigma-beauty.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-bone-sigma-beauty.rgba32",
+        "sha256": "a86dd8cba3f30df88472db5b86691433c79703b3be6ea46260162c66a0f6db8a"
+      },
+      "blend-reference-visibility.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-blend-reference-visibility.rgba32",
+        "sha256": "eee610b39b9c24519e261aec7b42b299e631b50fec2f2296c22318d3689aed81"
+      },
+      "blend-sigma-visibility.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-blend-sigma-visibility.rgba32",
+        "sha256": "6c69a79559616e2aa4eeb17ee4be093a4fd1225be0c0242ff74b85206f5fee37"
+      },
+      "blend-reference-beauty.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-blend-reference-beauty.rgba32",
+        "sha256": "6540437447df89f543d717fd9d8e9e4fb84d0b22c8b8f10503c32e763c7ab81b"
+      },
+      "blend-sigma-beauty.rgba32": {
+        "file": "thin-compat-20261028T061347410-thin-blend-sigma-beauty.rgba32",
+        "sha256": "54cff2388d99e272aa2d48ccec3a80e7d34745d41594c2b72b69e073bd934567"
+      }
+    }
+  },
+  "unchangedDiGiNrdCharacterShadowFiles": 392,
+  "benefit": "At identical 256 independent SIGMA estimates, binomial-inspired raw-sample bounds reduce thin-detail reconstruction bias. Bone and BlendShape micro-motion match independently traced current-pose reference, exact pose return reproduces, alpha changes apply immediately and static/moving preview history rules remain.",
+  "costAndLimits": "256 full trace/prepare/SIGMA/decode estimates per single-frame request. Sum changes R32F to RG32F (+4 B/pixel versus plain averaging), total 8 B/pixel sum for estimates>1. Default 1 and preview unchanged. Wilson-score-shaped bounds are a detail constraint, not a statistical confidence guarantee for correlated sample sequences. Shadow retention is ~88%, not perfect; 128-square twelve-card fixture is not arbitrary production characters, final subpixel coverage AA, Player or multilight.",
+  "rejectedHistory": "Initial loose mechanical gate passed at 16 but visual quality was rejected (833/1341 retained). Stronger >85% gate rejects 16 and 64 bound candidates. One shader compile mistake retained. No old result/hash/threshold was rewritten; final source and matched-budget counterfactual are independently verified.",
+  "next": "Player and coverage/character acceptance remain, then R6 requested stable per-light outputs. Keep full goal active."
+}

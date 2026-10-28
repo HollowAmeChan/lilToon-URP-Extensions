@@ -333,6 +333,7 @@ Editor/
 | R5 真实 Cast 接入 | 已完成有界接入；R5 未完成 | 两路径各 34 请求 / 59 checks，真实单样本 blocker → 官方编码 → SIGMA → 解码；4096-spp 参考与保存信号复核，五项回归通过 | 尚非真实角色发片、复杂动态、coplanar owner 边界、Player 或最终窄 ramp 验收；相机 / 场景变化保守 reset | 完成实际 NPR 接收与 ramp 质量 |
 | R4 / R5 NPR 接收 | 已完成有界实际材质检查；最终质量未完成 | 关闭 URP 主光 map，真实三层 receive / mask / strength / fallback；透视 / jitter 与窄 ramp 调阈值检查 | 默认 AO 无生产者曾掩盖测试；单样本重建仍可被窄 ramp 放大噪声，不能据此宣称最高清晰度 | 提高同帧导出质量并验角色薄片 / 微动 / Player |
 | R5 同帧无历史估计 | 已完成有界验收 | 1–64 次独立 SIGMA 后线性平均，16 次改善真实 V / 窄 ramp MSE；六项回归通过 | 成本随次数增长，滤波偏差仍在，简单平面不是角色最终画质 | 薄蒙皮 cutout / 微动 / Player |
+| R5 薄蒙皮 / 微动 | 已完成有界验收 | 十二张实际 rigged cutout 窄卡片及骨骼 / BlendShape 微动；同预算原始比例约束显著降低误差，四项回归通过 | 256 次成本高、约 88% 暗侧保留，未等于任意角色 / AA / Player | serialized Player，随后 R6 |
 | R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 单灯闭环后扩展 |
 
 R0 采用的宿主准备合同：
@@ -423,6 +424,14 @@ R5 无历史同帧质量步骤见 [Export review](../Tests~/RT/R5/Export/review.
 真实 GPU 核四次同请求估计与四次独立请求的解码平均，最大误差 0。16 次时连续 V MSE 0.003425968 → 0.0008341066，真实 blur=0.01 / border=0.5 的 NPR 颜色 MSE 0.02061673 → 0.004048179；参考为独立 Raw 4096 spp，完整浮点 V / beauty 与 PNG 留测试目录，verifier 重算两组误差，RG / compatibility 输出逐字节相同。固定状态重复、最大 64 次、alpha 改动立即响应、未请求身份、执行中重建释放，以及原 NPR 两路径 / 单样本 SIGMA / Raw 共 6 项回归通过；编译 0 错误，原 DI/GI/公共 NRD 与 CS 本步不改。
 
 本步收益是减少窄 ramp 放大的单样本重建噪声，单帧导出不依赖等待历史；成本是 N 次完整 trace + prepare + SIGMA + decode，CPU 调度和 GPU 执行随 N 增长，N>1 额外一张 R32F sum（4 B/像素），SDK 历史池仍仅一份顺序复用。preview 固定只做一次，不悄悄乘预算；默认 1 保持既有行为。平均重建值会保留 SIGMA 的滤波偏差，不能靠 N 自动收敛到无偏高预算真值；64² 简单平面视觉仍非角色最终质量。下一步转向薄蒙皮 / cutout 发片、微动的每请求参考验证，而不是继续只优化这张平面；空间覆盖 AA、Player、R6 和总体完成仍待验收。
+
+R5 薄蒙皮 Cutout 与微动步骤见 [Thin review](../Tests~/RT/R5/Thin/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R5Thin`。测试换为 128²、十二张独立窄卡片的实际 SkinnedMeshRenderer，原生 alpha any-hit 使用不可 CPU Read/Write 的 4×1 alpha Texture2D；单骨骼和顶部 BlendShape 微弯都走生产 host 姿态快照。每个姿态另追 1024 spp Raw 参考，不用旧帧作为真值；骨骼平移 0.011 米（约三分之一像素）与顶部 0.03 米弯曲，均无需等历史稳定即可匹配当前姿态。回到精确原姿态后结果逐分量复现，alpha 改动立即打开射线，静止预览可保留历史而动骨骼 reset。
+
+原同帧平均在 16 次预算的机械检查曾通过，但视觉只有 833/1341（约 62%）参考暗像素仍处于暗侧，明确不作为最终画质通过。新增 >85% 薄影保留 gate；原始比例约束的 16 / 64 预算仍被拒绝，另一次局部 Shader 变量放错作用域的编译失败也保留。没有重写旧 SHA / pass / 门槛来制造当前通过。最后在相同 256 预算读取解码累加值作未约束对照：V MSE 0.01400544 → 0.000604117，参考暗像素保留 826 → 1177 / 1341（约 87.77%），实际 blur=0.01 ramp 颜色 MSE 0.00221309；骨骼 / BlendShape 姿态 V MSE 分别 0.000629569 / 0.000633900。完整三姿态 reference / visibility / beauty、未约束 V 和 PNG 保留，verifier 重算 MSE / 暗像素，RG / compatibility 全部对应浮点信号逐字节一致。薄影两路径、同帧算术 / 原有宽影误差回归及实际 DI/GI host 组合共 4 项通过，编译 0 错误。
+
+实现只改无历史多估计的 decode 合成：顺序累加两路数（SIGMA 官方解码 V 与每次真实二值 V），以原始同帧比例的 Wilson score 形状区间约束 SIGMA 平均，抑制多次实际射线一致时的空间滤波偏差。它是保护细节的约束，不声称对相关采样序列具备严格统计置信保证。每次 SIGMA 的输入仍是单个实际最近 blocker，原版算法 / ABI / 内部历史不改。最大同帧估计数由 64 扩到 256，默认 1、preview 单次保持；累计纹理由 R32F 改为 RG32F，N>1 额外占 8 B/像素（相比原平均再多 4 B/像素），GPU 和 CPU 调度仍随 N 线性增长。四次同请求输出与独立 SIGMA 解码平均加 CPU 同形状约束的最大误差约 5.96e-8，宽影 V 与窄 ramp 仍比单次更好。
+
+收益是从简单平面转到真正蒙皮 / 不可读 cutout 窄卡片后保留更多薄影，并验证微动当前帧正确；当前仍只有约 88% 暗侧保留，不是完美轮廓恢复。此夹具不是任意生产角色、复杂自相交 / coplanar 身份边界、空间覆盖 AA 或 Player 资格，不能宣称最高精度已全部实现。下一步做独立 serialized Player / 同帧导出验证，再继续 R6；文档只在本入口维护，失败及数值证据留 Tests~/RT/。
 
 <a id="quality-reference"></a>
 

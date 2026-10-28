@@ -1,0 +1,26 @@
+{
+  "stage": "R5Thin",
+  "sourceCommit": "360a98eac6b7ef9611e602de807c62320ca9f946",
+  "startedUtc": "2026-10-28T06:11:27.6954247Z",
+  "sourcesFile": "sources-20261028T061127235.json",
+  "runnerSha256": "AC8DE997FF61499AD2BD51FAE72FC0A127F72B78DFB463D860E8F33E9A94F4C7",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "thin-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunThin",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Reconstruction retains thin-card shadow support instead of erasing it: 1114 / 1341 min=0.05662603\r"
+      ],
+      "logSha256": "F91CAAADCCBD2B1AA98A3BB5A49F344128E29FB7DD64C1D0AEAEEEBE9D3F60ED",
+      "seconds": 14.5096993,
+      "pass": false,
+      "logFile": "ho-rt-r5thin-thin-rg-20261028T061127235.log"
+    }
+  ]
+}
