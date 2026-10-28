@@ -50,6 +50,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                 lifetime=Keep(ScriptableObject.CreateInstance<HoRTShadowLifetimeProbeFeature>());lifetime.shadow=shadow;
                 renderer.rendererFeatures.Add(host);renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(shadow);renderer.rendererFeatures.Add(lifetime);
                 var pipeline=Keep(UniversalRenderPipelineAsset.Create(renderer));pipeline.msaaSampleCount=1;pipeline.supportsHDR=true;
+                if(nprIntegration){var serializedPipeline=new SerializedObject(pipeline);serializedPipeline.FindProperty("m_MainLightShadowsSupported").boolValue=false;serializedPipeline.ApplyModifiedPropertiesWithoutUndo();}
                 GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
                 #if URP_COMPATIBILITY_MODE
                 GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode=compatibility;
@@ -62,6 +63,9 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                 var body=Quad(new Vector3(0,0,0),new Vector3(3,3,1),false);var detail=Quad(new Vector3(1,0,-.05f),new Vector3(.5f,1,1),false);
                 toon=Keep(new Material(Shader.Find("lilToon")));body.sharedMaterial=toon;toon.SetColor("_Color",Color.white);toon.SetTexture("_MainTex",Texture2D.whiteTexture);toon.SetFloat("_Cull",0);
                 toon.SetFloat("_UseShadow",1);toon.SetFloat("_ShadowReceive",1);toon.SetFloat("_ShadowStrength",1);toon.SetFloat("_LightMinLimit",0);toon.SetColor("_ShadowColor",Color.black);
+                // Cast/ramp oracle has no AO producer. The material's default
+                // realtime AO otherwise samples a fallback grey and masks Cast.
+                if(!rawOnly||nprIntegration)toon.SetFloat("_UseRealtimeAO",0);
                 group=Keep(new GameObject("RTShadow generic receiver group")).AddComponent<HoObjectBufferGroup>();
                 group.parts=new List<HoObjectBufferPartEntry>{new(){name="body",renderers=new Object[]{body}},new(){name="detail",renderers=new Object[]{detail}}};group.Apply();
                 bodyId=HoObjectBufferRegistry.GetPartId(group.groupId,"body");detailId=HoObjectBufferRegistry.GetPartId(group.groupId,"detail");Check(bodyId!=0&&detailId!=0&&bodyId!=detailId,"Stable distinct receiver identities");
@@ -86,6 +90,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             try
             {
                 if(++tick<3){Render();return;}
+                if(nprIntegration){ValidateNprIntegration();Finish(null);return;}
                 if(sigmaAudit){ValidateProductionSigma();Finish(null);return;}
                 var image=Render();Valid(image,32,32,0,bodyId,"Opaque offscreen shadow");Near(image[32*64+32].g,(-4)/Direction.z,"Nearest blocker distance",.005f);
                 Valid(image,16,32,1,bodyId,"Unblocked receiver");Valid(image,48,32,1,detailId,"Second receiver identity");

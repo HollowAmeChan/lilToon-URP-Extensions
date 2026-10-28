@@ -1,0 +1,105 @@
+{
+  "stage": "R4 actual NPR reception + bounded R5 ramp acceptance",
+  "accepted": {
+    "npr-rg": "run-20261028T053958884.json",
+    "npr-compat": "run-20261028T053958884.json",
+    "raster-rg": "run-20261028T053958884.json",
+    "raster-compat": "run-20261028T053958884.json",
+    "raster-d3d11": "run-20261028T053958884.json",
+    "shadow-sigma-rg": "run-20261028T054542199.json",
+    "shadow-sigma-compat": "run-20261028T055136927.json",
+    "di-cutout-rg": "run-20261028T055200504.json",
+    "gi-native-cutout": "run-20261028T055241177.json"
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T051917460.json",
+      "case": "npr-rg",
+      "diagnostics": [
+        "Exception: Second shadow layer independently consumes the same RT visibility\r"
+      ]
+    },
+    {
+      "run": "run-20261028T053157115.json",
+      "case": "npr-rg",
+      "diagnostics": [
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowNprValidation.cs(23,60): error CS0246: The type or namespace name 'RenderGraphSettings' could not be found (are you missing a using directive or an assembly reference?)\r",
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowNprValidation.cs(23,60): error CS0246: The type or namespace name 'RenderGraphSettings' could not be found (are you missing a using directive or an assembly reference?)\r",
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowNprValidation.cs(23,60): error CS0246: The type or namespace name 'RenderGraphSettings' could not be found (are you missing a using directive or an assembly reference?)\r"
+      ]
+    },
+    {
+      "run": "run-20261028T053726118.json",
+      "case": "raster-rg",
+      "diagnostics": [
+        "NullReferenceException: Object reference not set to an instance of an object\r"
+      ]
+    },
+    {
+      "run": "run-20261028T053958884.json",
+      "case": "shadow-sigma-rg",
+      "diagnostics": []
+    }
+  ],
+  "materialMetrics": {
+    "npr-rg": {
+      "requests": 18,
+      "checks": 32,
+      "shadow": 0,
+      "receiveOff": 1,
+      "lit": 1,
+      "alignment": [
+        "Asymmetric perspective/jitter Cast aligns with its actual surface pixels: lit=2416 shadow=160 maxError=0",
+        "Asymmetric perspective/jitter Cast aligns with its actual surface pixels: lit=2354 shadow=140 maxError=0"
+      ],
+      "ramp": "Real narrow ramp thresholds reshape continuous SIGMA Cast: 234 -> 1081; continuous=1639"
+    },
+    "npr-compat": {
+      "requests": 18,
+      "checks": 32,
+      "shadow": 0,
+      "receiveOff": 1,
+      "lit": 1,
+      "alignment": [
+        "Asymmetric perspective/jitter Cast aligns with its actual surface pixels: lit=2416 shadow=160 maxError=0",
+        "Asymmetric perspective/jitter Cast aligns with its actual surface pixels: lit=2354 shadow=140 maxError=0"
+      ],
+      "ramp": "Real narrow ramp thresholds reshape continuous SIGMA Cast: 234 -> 1081; continuous=1639"
+    }
+  },
+  "signals": {
+    "npr-rg": {
+      "narrow": {
+        "file": "npr-rg-20261028T053958884-narrow.rgba32",
+        "sha256": "e5f2ceb1ece28bfe8b7f4da830f103701256eaabf9ec2c6198a3c670228dade8",
+        "preview": "npr-rg-20261028T053958884-narrow.png"
+      },
+      "wide": {
+        "file": "npr-rg-20261028T053958884-wide.rgba32",
+        "sha256": "7c118edd365c02f5c4edc89e1b17a2f9577909528d796829eb4aa0cfcb6639b1",
+        "preview": "npr-rg-20261028T053958884-wide.png"
+      }
+    },
+    "npr-compat": {
+      "narrow": {
+        "file": "npr-compat-20261028T053958884-narrow.rgba32",
+        "sha256": "e5f2ceb1ece28bfe8b7f4da830f103701256eaabf9ec2c6198a3c670228dade8",
+        "preview": "npr-compat-20261028T053958884-narrow.png"
+      },
+      "wide": {
+        "file": "npr-compat-20261028T053958884-wide.rgba32",
+        "sha256": "7c118edd365c02f5c4edc89e1b17a2f9577909528d796829eb4aa0cfcb6639b1",
+        "preview": "npr-compat-20261028T053958884-wide.png"
+      }
+    }
+  },
+  "lilToonIncludeSha256": {
+    "lil_common_macro.hlsl": "66f67747a32f7ca3ffefbea5fee6a9c22e068f6b93a606dc90865295efedfeb8",
+    "lil_common_frag.hlsl": "9fc634df0db84dc32e47972b52692213bd3687cd60ede5f6fd9da360bdbcb37d",
+    "lil_pass_forward_normal.hlsl": "f8f78a94cca1b76a0b2d14c026ce17a572cf6b53c53f0161778b943cf4dd496f"
+  },
+  "benefit": "Actual lilToon receives raw or SIGMA Cast before its existing layered ramps, including when URP has no main shadow-map keyword. Material receive masks, nested per-layer switches, one light strength and fallback remain. Asymmetric perspective/jitter reception matches actual primary pixels.",
+  "rootCause": "Original Cast test enabled realtime AO by default without an AO producer. Replay showed ~0.2158203 AO suppressing the ramp; only private test material AO was disabled. Original failed logs remain, and production AO settings/algorithm were not changed.",
+  "costAndScope": "Extra guarded screen loads before the existing ramp, no new global shadow keyword or lighting-composition rewrite. 64x64 two-part fixture only; no claim of animation/character hair, AA convergence, normal automatic camera Player qualification, or multilight outputs. Original CS receiver-selection regression passes D3D12 RG/compat and D3D11. Full CS atlas-debug test is retained as separate rejected evidence.",
+  "next": "Qualify character thin/cutout dynamic behavior and no-history export; extend stable per-light request/output contract in R6. Full goal remains active."
+}

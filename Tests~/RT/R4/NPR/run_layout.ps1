@@ -1,4 +1,4 @@
-param([string]$Unity='C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',[ValidateSet('Run','RunRenderingAfterBootstrap','RunIntegerRendering','RunReimportRendering')][string]$Entry='Run')
+param([string]$Unity='C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',[ValidateSet('Run','RunRenderingAfterBootstrap','RunIntegerRendering','RunReimportRendering','RunDeferredRendering','RunAoIsolatedRendering')][string]$Entry='Run')
 $ErrorActionPreference='Stop'
 $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../../..'))
 $taskProject=Join-Path $taskRoot '.codex-research/RTValidation'

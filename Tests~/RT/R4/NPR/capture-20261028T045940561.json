@@ -1,0 +1,12 @@
+{
+  "scope": "Independent hidden forward draw capture; RT feature and casters disabled",
+  "backend": "Mcp",
+  "captureCli": "D:/Unity_Fork/renderdoc-mcp/bin\\renderdoc-cli.exe",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "sourceSha256": "4125FAB7BB7B7BAAC1FDABCE6328792FD5EA3B5E4B5293A439C3720664F1DC09",
+  "activeProcess": {
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\Tests~\\RT\\R4\\NPR\\capture-forward-20261028T045940561.log",
+    "id": 12344
+  },
+  "captureTemplate": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTValidation\\npr-forward-20261028T045940561"
+}

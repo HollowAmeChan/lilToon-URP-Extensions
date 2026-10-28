@@ -1,0 +1,37 @@
+{
+  "api": "D3D12",
+  "depthTarget": {
+    "format": "D32S8",
+    "height": 64,
+    "name": "_CameraDepthAttachment_64x64_D32_SFloat_S8_UInt_Tex2D",
+    "resourceId": "ResourceId::743",
+    "width": 64
+  },
+  "pixelShader": {
+    "entryPoint": "main",
+    "resourceId": "ResourceId::774"
+  },
+  "renderTargets": [
+    {
+      "format": "R16G16B16A16_FLOAT",
+      "height": 64,
+      "name": "_CameraTargetAttachment_64x64_R16G16B16A16_SFloat_Tex2D",
+      "resourceId": "ResourceId::742",
+      "width": 64
+    }
+  ],
+  "vertexShader": {
+    "entryPoint": "main",
+    "resourceId": "ResourceId::773"
+  },
+  "viewports": [
+    {
+      "height": 64.0,
+      "maxDepth": 1.0,
+      "minDepth": 0.0,
+      "width": 64.0,
+      "x": 0.0,
+      "y": 0.0
+    }
+  ]
+}

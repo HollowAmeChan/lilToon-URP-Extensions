@@ -1,0 +1,53 @@
+diff --git a/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl b/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl
+index c45c50c..ee02c64 100644
+--- a/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl
++++ b/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl
+@@ -961,7 +961,7 @@
+             #endif
+ 
+             // Shadow
+-            #if (defined(LIL_USE_SHADOW) || defined(LIL_LIGHTMODE_SHADOWMASK)) && defined(LIL_FEATURE_RECEIVE_SHADOW)
++            #if (defined(LIL_USE_SHADOW) || defined(LIL_LIGHTMODE_SHADOWMASK) || defined(LIL_USE_HO_CAST)) && defined(LIL_FEATURE_RECEIVE_SHADOW)
+                 float calculatedShadow = saturate(fd.attenuation + distance(fd.L, fd.origL));
+                 lns.x *= lerp(1.0, calculatedShadow, _ShadowReceive * shadowReceiveMask);
+                 lns.y *= lerp(1.0, calculatedShadow, _Shadow2ndReceive * shadowReceiveMask);
+diff --git a/Assets/lilToon/Shader/Includes/lil_common_macro.hlsl b/Assets/lilToon/Shader/Includes/lil_common_macro.hlsl
+index 8e9bb47..11f3213 100644
+--- a/Assets/lilToon/Shader/Includes/lil_common_macro.hlsl
++++ b/Assets/lilToon/Shader/Includes/lil_common_macro.hlsl
+@@ -804,6 +804,11 @@ float4 GetShadowCoord(float3 positionWS, float4 positionCS)
+     return GetShadowCoord(vertexInput);
+ }
+ 
++// A dedicated Cast producer can exist without URP's shadow-map keyword. Keep
++// this separate from LIL_USE_SHADOW so lightmap/lighting branches stay intact.
++#if defined(LIL_URP) && defined(LIL_PASS_FORWARD) && defined(LIL_FEATURE_RECEIVE_SHADOW)
++    #define LIL_USE_HO_CAST
++#endif
+ #if defined(LIL_USE_SHADOW)
+     #if defined(_MAIN_LIGHT_SHADOWS_SCREEN)
+         #define LIL_SHADOW_COORDS(idx)              float4 shadowCoord : TEXCOORD##idx;
+@@ -818,6 +823,10 @@ float4 GetShadowCoord(float3 positionWS, float4 positionCS)
+         #define LIL_TRANSFER_SHADOW(vi,uv,o)        o.shadowCoord = GetShadowCoord(vi.positionWS, vi.positionCS);
+         #define LIL_LIGHT_ATTENUATION(atten,i)      atten = HoCSResolveMainCast(i.positionWS, MainLightRealtimeShadow(i.shadowCoord)) * HoShadowCastAttenuation(i.positionWS)
+     #endif
++#elif defined(LIL_USE_HO_CAST)
++    #define LIL_SHADOW_COORDS(idx)
++    #define LIL_TRANSFER_SHADOW(vi,uv,o)
++    #define LIL_LIGHT_ATTENUATION(atten,i) atten = HoCSResolveMainCast(i.positionWS, 1.0) * HoShadowCastAttenuation(i.positionWS)
+ #else
+     #define LIL_SHADOW_COORDS(idx)
+     #define LIL_TRANSFER_SHADOW(vi,uv,o)
+diff --git a/Assets/lilToon/Shader/Includes/lil_pass_forward_normal.hlsl b/Assets/lilToon/Shader/Includes/lil_pass_forward_normal.hlsl
+index 1a791d0..0f0a0eb 100644
+--- a/Assets/lilToon/Shader/Includes/lil_pass_forward_normal.hlsl
++++ b/Assets/lilToon/Shader/Includes/lil_pass_forward_normal.hlsl
+@@ -139,7 +139,7 @@ LIL_FORWARD_FRAGMENT_RETURN_TYPE frag(v2f input LIL_VFACE(facing)) LIL_FORWARD_F
+     #elif LIL_RENDER == 2 && !defined(LIL_REFRACTION) && !defined(LIL_OUTLINE)
+         clip(0.5 - _lilOITEnabled * _lilOITActive);
+     #endif
+-    #if defined(LIL_V2F_SHADOW) || defined(LIL_PASS_FORWARDADD)
++    #if defined(LIL_V2F_SHADOW) || defined(LIL_PASS_FORWARDADD) || defined(LIL_USE_HO_CAST)
+         LIL_LIGHT_ATTENUATION(fd.attenuation, input);
+     #endif
+ 

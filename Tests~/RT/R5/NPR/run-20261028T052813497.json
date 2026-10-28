@@ -1,0 +1,24 @@
+{
+  "stage": "R5Npr",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "startedUtc": "2026-10-28T05:28:14.3958640Z",
+  "sourcesFile": "sources-20261028T052813497.json",
+  "runnerSha256": "50615356BE2BDF5520F4D6B4F72BD45B63B01FC096C0F1122BCF6E7F48826FBA",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "npr-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunNpr",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "076F6C0D64C5B88B586E594FB5518B9736563335FACDA5FE4F611BF5C265F3F1",
+      "seconds": 12.7717626,
+      "pass": true,
+      "logFile": "ho-rt-r5npr-npr-rg-20261028T052813497.log"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "sourceRoot": "D:\\Unity_Fork\\lilToon",
+  "baseCommit": "b124f7eb4e92db853d904fae3745c4c12ec07737",
+  "patch": "liltoon-source.patch",
+  "patchSha256": "82b29ab0717a9ecf1599601331542a81adaf2c5752a36497bcf159a8f67470f2",
+  "files": [
+    {
+      "path": "Assets/lilToon/Shader/Includes/lil_common_macro.hlsl",
+      "sha256": "66f67747a32f7ca3ffefbea5fee6a9c22e068f6b93a606dc90865295efedfeb8"
+    },
+    {
+      "path": "Assets/lilToon/Shader/Includes/lil_common_frag.hlsl",
+      "sha256": "9fc634df0db84dc32e47972b52692213bd3687cd60ede5f6fd9da360bdbcb37d"
+    },
+    {
+      "path": "Assets/lilToon/Shader/Includes/lil_pass_forward_normal.hlsl",
+      "sha256": "f8f78a94cca1b76a0b2d14c026ce17a572cf6b53c53f0161778b943cf4dd496f"
+    }
+  ],
+  "scope": "Only the three Cast-consumer source edits are included. Existing input_opt, presets, prefab and CurrentRP changes are excluded.",
+  "acceptedCommit": "24ae82da7503e3593ca205dd881a73b038c549e5"
+}

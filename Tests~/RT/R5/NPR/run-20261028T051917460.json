@@ -1,0 +1,26 @@
+{
+  "stage": "R5Npr",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "startedUtc": "2026-10-28T05:19:18.1755016Z",
+  "sourcesFile": "sources-20261028T051917460.json",
+  "runnerSha256": "7F5C3C7C1EA7F289FC9C0CFC5A5A9B58541EDC731DB8698540DE0D3AC3F5C836",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "npr-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunNpr",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Second shadow layer independently consumes the same RT visibility\r"
+      ],
+      "logSha256": "C7F1F2BABFE2342C3D26FE7C48AC7930D94BDE654BA7EA8701041DF6EBF0C610",
+      "seconds": 407.0192718,
+      "pass": false,
+      "logFile": "ho-rt-r5npr-npr-rg-20261028T051917460.log"
+    }
+  ]
+}

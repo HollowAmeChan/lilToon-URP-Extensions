@@ -1,0 +1,10 @@
+{
+  "scope": "Independent hidden ShaderData layout diagnosis only",
+  "entry": "RunDeferredRendering",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "sourceSha256": "C987357FBC23E2C9CA5E4703FAE06ADD0EBF0A5D5AC1B7C25386EDBC7A772D4B",
+  "activeProcess": null,
+  "exit": 1,
+  "logSha256": "B309D487F21734EFB5B94C0CB0B85C50882DAA77DB010A0EE2FCC330EFA3E51D",
+  "output": "layout-20261028T051007605"
+}

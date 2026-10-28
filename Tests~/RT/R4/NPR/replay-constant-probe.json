@@ -1,0 +1,48 @@
+{
+  "scope": "Read only a replacement shader during replay; original shader restored. Exact raw-JSON uint64 ID was required, rounded probe was discarded.",
+  "source": "cbuffer cbuffer4 : register(b4) { float4 values[175]; }; float4 main(float4 p : SV_Position) : SV_Target { int i=(int(p.x)-8)+(int(p.y)-8)*48; if(i<0 || i>=175)return float4(1,0,1,1); return values[i]; }",
+  "shaderId": "1000000000000000371",
+  "event": 942,
+  "rows": {
+    "Color": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"color\":{\"floatValue\":[1.0,1.0,1.0,1.0],\"intValue\":[1065353216,1065353216,1065353216,1065353216],\"uintValue\":[1065353216,1065353216,1065353216,1065353216]},\"eventId\":942,\"targetId\":\"ResourceId::742\",\"targetIndex\":0,\"x\":10,\"y\":8}"
+        }
+      ]
+    },
+    "AsUnlitCutoff": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"color\":{\"floatValue\":[0.0,0.0,0.0,1.0],\"intValue\":[0,0,0,1065353216],\"uintValue\":[0,0,0,1065353216]},\"eventId\":942,\"targetId\":\"ResourceId::742\",\"targetIndex\":0,\"x\":9,\"y\":10}"
+        }
+      ]
+    },
+    "LightLimits": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"color\":{\"floatValue\":[0.0,0.0,0.0,1.0],\"intValue\":[0,0,0,1065353216],\"uintValue\":[0,0,0,1065353216]},\"eventId\":942,\"targetId\":\"ResourceId::742\",\"targetIndex\":0,\"x\":10,\"y\":10}"
+        }
+      ]
+    },
+    "ShadowReceive": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"color\":{\"floatValue\":[0.0,0.0,0.0799560546875,1.0],\"intValue\":[0,0,1034141696,1065353216],\"uintValue\":[0,0,1034141696,1065353216]},\"eventId\":942,\"targetId\":\"ResourceId::742\",\"targetIndex\":0,\"x\":22,\"y\":10}"
+        }
+      ]
+    },
+    "UseShadow": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"color\":{\"floatValue\":[0.0,0.0,0.0,1.0],\"intValue\":[0,0,0,1065353216],\"uintValue\":[0,0,0,1065353216]},\"eventId\":942,\"targetId\":\"ResourceId::742\",\"targetIndex\":0,\"x\":14,\"y\":11}"
+        }
+      ]
+    }
+  }
+}

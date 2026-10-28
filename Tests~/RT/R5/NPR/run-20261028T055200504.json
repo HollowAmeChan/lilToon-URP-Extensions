@@ -1,0 +1,24 @@
+{
+  "stage": "R5Npr",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "startedUtc": "2026-10-28T05:52:00.8848116Z",
+  "sourcesFile": "sources-20261028T055200504.json",
+  "runnerSha256": "D43AB4D9BFC52BE4C5C76F74676D13CC223CF04763747DC8EB4C9521B112049D",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "di-cutout-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutout",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "216CD0FE5AD981D7452E49AFBBC5BA719A0B634231B559692243ED44C3C9B123",
+      "seconds": 40.0098097,
+      "pass": true,
+      "logFile": "ho-rt-r5npr-di-cutout-rg-20261028T055200504.log"
+    }
+  ]
+}

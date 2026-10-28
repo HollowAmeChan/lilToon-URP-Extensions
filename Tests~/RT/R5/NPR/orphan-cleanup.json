@@ -1,0 +1,8 @@
+{
+  "scope": "Only the verified compiler child of the terminal failed independent validation",
+  "child": 42144,
+  "formerParent": 46184,
+  "commandLine": "\"C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.15f1\\Editor\\Data\\Tools\\UnityShaderCompiler.exe\" \"C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data\" \"./Logs/shadercompiler-UnityShaderCompiler.exe-0.log\" \"0\" \"-local-ipc-stream=ShaderCompilerIPC-46184-27760\" \"C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/PlaybackEngines\"",
+  "timeUtc": "2026-10-28T05:46:54.6965551Z",
+  "reason": "Parent has exited with code 1. Orphan cannot deliver compiled data back to it."
+}

@@ -9,6 +9,50 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 public static class HoRTNprLayoutAudit
 {
+    public static void RunAoIsolatedRendering()
+    {
+        try
+        {
+            lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Run();
+            var field=typeof(lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation).GetField("toon",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic);
+            var material=(Material)field.GetValue(null);material.SetFloat("_UseRealtimeAO",0);
+            Debug.Log("[HoRTNprAoControl] Only realtime AO disabled on the private test material; no AO producer exists in this fixture");
+        }
+        catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
+    }
+    public static void RunDeferredRendering()
+    {
+        var type=typeof(lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation);var flags=System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic;
+        try
+        {
+            lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Run();
+            var original=(EditorApplication.CallbackFunction)Delegate.CreateDelegate(typeof(EditorApplication.CallbackFunction),type.GetMethod("Tick",flags));EditorApplication.update-=original;
+            var material=(Material)type.GetField("toon",flags).GetValue(null);var target=(RenderTexture)type.GetField("target",flags).GetValue(null);
+            int step=0;float shadow=0,off=0,lit=0;EditorApplication.CallbackFunction tick=null;
+            tick=()=>
+            {
+                try
+                {
+                    type.GetMethod("Render",flags).Invoke(null,new object[]{false});
+                    var values=(Color[])type.GetMethod("Read",flags).Invoke(null,new object[]{target});float value=values[32*64+32].r;
+                    Debug.Log("[HoRTNprDeferred] step="+step+" frame="+Time.frameCount+" red="+value);
+                    if(step==2){shadow=value;material.SetFloat("_ShadowReceive",0);}
+                    if(step==3){off=value;material.SetFloat("_ShadowReceive",1);foreach(string name in new[]{"near","far"})((Renderer)type.GetField(name,flags).GetValue(null)).shadowCastingMode=ShadowCastingMode.Off;}
+                    if(step==4)
+                    {
+                        lit=value;EditorApplication.update-=tick;
+                        if(!(off>shadow+.05f&&lit>shadow+.05f))throw new Exception("Deferred NPR reception still fails: "+shadow+" / "+off+" / "+lit);
+                        Debug.Log("[HoRTNprDeferred] PASS separate application updates "+shadow+" / "+off+" / "+lit);
+                        type.GetMethod("Finish",flags).Invoke(null,new object[]{null});return;
+                    }
+                    step++;
+                }
+                catch(Exception error){EditorApplication.update-=tick;Debug.LogException(error);EditorApplication.Exit(1);}
+            };
+            EditorApplication.update+=tick;
+        }
+        catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
+    }
     public static void RunReimportRendering()
     {
         try

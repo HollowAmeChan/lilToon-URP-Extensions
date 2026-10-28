@@ -1,0 +1,11 @@
+{
+  "status": "fulfilled",
+  "value": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[{\"drawIndex\":0,\"eventId\":260,\"flags\":\"PushMarker\",\"name\":\"DrawOpaqueObjects\",\"numIndices\":0,\"numInstances\":0},{\"drawIndex\":0,\"eventId\":480,\"flags\":\"PushMarker\",\"name\":\"DrawOpaqueObjects\",\"numIndices\":0,\"numInstances\":0},{\"drawIndex\":0,\"eventId\":699,\"flags\":\"PushMarker\",\"name\":\"DrawOpaqueObjects\",\"numIndices\":0,\"numInstances\":0},{\"drawIndex\":0,\"eventId\":918,\"flags\":\"PushMarker\",\"name\":\"DrawOpaqueObjects\",\"numIndices\":0,\"numInstances\":0}]"
+      }
+    ]
+  }
+}

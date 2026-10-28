@@ -1,0 +1,16 @@
+{
+  "scope": "Independent hidden forward draw capture; RT feature and casters disabled",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "sourceSha256": "4125FAB7BB7B7BAAC1FDABCE6328792FD5EA3B5E4B5293A439C3720664F1DC09",
+  "activeProcess": null,
+  "captureTemplate": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTValidation\\npr-forward-20261028T045633636",
+  "launcherExit": 0,
+  "logSha256": "FF3CF609E34847CEF4E76722054ACC17387C96C2FA35EE0748AACB67FD00F26A",
+  "captures": [
+    {
+      "bytes": 9188648,
+      "sha256": "05713E7B0CCC132568871988CCC3DDDC70A91A62E7EEA815C494098253C2293E",
+      "path": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTValidation\\npr-forward-20261028T045633636_capture.rdc"
+    }
+  ]
+}

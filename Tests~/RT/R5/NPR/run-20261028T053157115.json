@@ -1,0 +1,28 @@
+{
+  "stage": "R5Npr",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "startedUtc": "2026-10-28T05:31:58.3122744Z",
+  "sourcesFile": "sources-20261028T053157115.json",
+  "runnerSha256": "646DD9B1126CB78DC02A2A75E8272D76971CB47FED61BEF311FC28D9BE3CF6B1",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "npr-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunNpr",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowNprValidation.cs(23,60): error CS0246: The type or namespace name 'RenderGraphSettings' could not be found (are you missing a using directive or an assembly reference?)\r",
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowNprValidation.cs(23,60): error CS0246: The type or namespace name 'RenderGraphSettings' could not be found (are you missing a using directive or an assembly reference?)\r",
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowNprValidation.cs(23,60): error CS0246: The type or namespace name 'RenderGraphSettings' could not be found (are you missing a using directive or an assembly reference?)\r"
+      ],
+      "logSha256": "154C214ED5B10EB34733B968085987735617420E35078E2891CE54E4606CCBB9",
+      "seconds": 10.4627795,
+      "pass": false,
+      "logFile": "ho-rt-r5npr-npr-rg-20261028T053157115.log"
+    }
+  ]
+}

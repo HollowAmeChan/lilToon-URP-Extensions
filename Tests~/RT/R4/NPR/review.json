@@ -1,5 +1,5 @@
 {
-  "scope": "NPR diagnosis only; actual material gate is not achieved",
+  "scope": "NPR diagnosis; original gate was masked by the private test material realtime AO without a producer",
   "layoutAudits": [
     {
       "run": "run-20261028T044125442.json",
@@ -69,9 +69,25 @@
       "entry": "RunReimportRendering",
       "exit": 1,
       "conclusion": "No NPR reception pass; bootstrap changed failure stage, Integer and reimport retained same response assertion."
+    },
+    {
+      "run": "run-20261028T051007605.json",
+      "entry": "RunDeferredRendering",
+      "exit": 1,
+      "conclusion": "No NPR reception pass; bootstrap changed failure stage, Integer and reimport retained same response assertion."
     }
   ],
+  "aoIsolatedControl": {
+    "run": "run-20261028T051507078.json",
+    "result": "layout-20261028T051507078/render-report.json",
+    "shadow": 0,
+    "receiveOff": 1,
+    "lit": 1
+  },
+  "capture": "forward-control.rdc",
+  "captureSha256": "8432e99c0c03be2c024cd930f715ccd26462448d7476c840fbc97377dcc71445",
+  "sampledAo": 0.2158203125,
   "eliminated": "The 20 selected URP stage variants agree on every reflected material field index/type and 2800-byte buffer size. Integer setter and active-URP reimport do not resolve reception. No production shader/constant-layout change is justified by this evidence.",
   "limits": "Reflection proves compiled layouts, not GPU-bound bytes or actual forward keyword/state. Initial zero-variant run is rejected. Older wrapper copies of the prior layout report are stale shared artifacts, not fresh control evidence; use accepted audit only.",
-  "next": "Inspect actual forward draw constants/state and isolate the inactive/active Cast consumer. Preserve existing failed reception oracle and independent RTShadow/SIGMA results."
+  "next": "Keep AO disabled only in Cast-focused test material. Qualify real RT Cast with URP map keywords absent, per-layer/mask/strength/fallback and SIGMA continuous ramp; final character/Player/multilight work remains."
 }

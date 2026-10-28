@@ -1,0 +1,24 @@
+{
+  "stage": "R5Npr",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "startedUtc": "2026-10-28T05:52:41.5528048Z",
+  "sourcesFile": "sources-20261028T055241177.json",
+  "runnerSha256": "D43AB4D9BFC52BE4C5C76F74676D13CC223CF04763747DC8EB4C9521B112049D",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "gi-native-cutout",
+      "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "DF296AC53F2C01825298095B40D24BBFA69729A85043E8F68ACA95FEEA59EB95",
+      "seconds": 10.5587821,
+      "pass": true,
+      "logFile": "ho-rt-r5npr-gi-native-cutout-20261028T055241177.log"
+    }
+  ]
+}

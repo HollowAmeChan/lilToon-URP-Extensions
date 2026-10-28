@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"constantBlocks\":[{\"bindPoint\":0,\"byteSize\":38064,\"name\":\"cbuffer0\",\"variableCount\":2379},{\"bindPoint\":1,\"byteSize\":16384,\"name\":\"cbuffer1\",\"variableCount\":1024},{\"bindPoint\":2,\"byteSize\":256,\"name\":\"cbuffer2\",\"variableCount\":16},{\"bindPoint\":3,\"byteSize\":448,\"name\":\"cbuffer3\",\"variableCount\":28},{\"bindPoint\":4,\"byteSize\":2608,\"name\":\"cbuffer4\",\"variableCount\":163}],\"entryPoint\":\"main\",\"inputSignature\":[{\"regIndex\":0,\"semanticIndex\":0,\"semanticName\":\"SV_POSITION\",\"varName\":\"\"},{\"regIndex\":1,\"semanticIndex\":0,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":2,\"semanticIndex\":1,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":3,\"semanticIndex\":2,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":4,\"semanticIndex\":3,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":4,\"semanticIndex\":9,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":5,\"semanticIndex\":4,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":6,\"semanticIndex\":5,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":7,\"semanticIndex\":6,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":8,\"semanticIndex\":7,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":9,\"semanticIndex\":10,\"semanticName\":\"TEXCOORD\",\"varName\":\"\"},{\"regIndex\":10,\"semanticIndex\":0,\"semanticName\":\"SV_IsFrontFace\",\"varName\":\"\"}],\"outputSignature\":[{\"regIndex\":0,\"semanticIndex\":0,\"semanticName\":\"SV_Target\",\"varName\":\"\"}],\"resourceId\":\"ResourceId::774\",\"stage\":\"ps\"}"
+    }
+  ]
+}

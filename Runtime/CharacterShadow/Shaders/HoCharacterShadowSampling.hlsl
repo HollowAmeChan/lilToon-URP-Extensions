@@ -1,6 +1,7 @@
 #ifndef HO_CHARACTER_SHADOW_SAMPLING_INCLUDED
 #define HO_CHARACTER_SHADOW_SAMPLING_INCLUDED
 #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoRendererIdentity.hlsl"
+#include "../../RTShadow/Shaders/HoRTShadowSampling.hlsl"
 #define HO_CS_MAX_SLICES 16
 // Mirrored by HoCharacterShadowShaderContract and checked by Validate().
 #define HO_CS_MAX_PCSS_BLOCKER_SAMPLES 32
@@ -258,6 +259,8 @@ float HoCSSampleAtlasPcss(float2 uv, float2 lo, float2 hi, float receiverDepth,
 
 float HoCSResolveMainCast(float3 positionWS, float sceneCast)
 {
+    float rtCast;
+    if (HoRTShadowTryMainCast(positionWS, HoRendererIdentity(), rtCast)) return rtCast;
     if (_HoCSActive < 0.5) return sceneCast;
     uint identity = HoRendererIdentity();
     uint group = HoRendererIdentityGroup(identity);

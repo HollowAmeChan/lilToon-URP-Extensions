@@ -1,6 +1,6 @@
 # Ho-RT：公共底座与 RTShadow
 
-> 状态：**现行实现 / 设计总入口**，2026-10-28。目录迁移、R2 公共资源宿主及共享姿态的有界验收已完成；DI/GI 有界迁移及 Player 资格已完成；RTShadow raw 已有有界验收，NPR 接收与最终画质仍未完成，SIGMA 已有真实 Cast 的有界接入验收，精确进展见 §8.5。实现状态与后续接口建议分开阅读。
+> 状态：**现行实现 / 设计总入口**，2026-10-28。目录迁移、R2 公共资源宿主及共享姿态的有界验收已完成；DI/GI 有界迁移及 Player 资格已完成；RTShadow raw 已有有界验收，实际 NPR 三层接收已通过有界检查，最终单帧画质与 R6 尚未完成；SIGMA 已有真实 Cast 的有界接入验收，精确进展见 §8.5。实现状态与后续接口建议分开阅读。
 
 ## 0. 先确认实现状态
 
@@ -10,7 +10,7 @@
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | 生产 DI/GI 保留 RELAX；新增 typed SIGMA ABI、格式与 9 个官方 pipeline，独立夹具及真实 Cast 的有界 GPU 接入已验，默认仍为 Raw | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | 独立 Feature 的单主方向灯 raw / OB 接收身份 / 有限光源同帧采样已验；NPR gate 尚未解决；SIGMA 已连真实 Cast，两路径有界验收通过，默认仍为 Raw | 本文 §4–8 |
+| RTShadow / SIGMA | 独立 Feature 的单主方向灯 raw / OB 接收身份 / 有限光源同帧采样已验；NPR gate 已定位为测试 AO 输入并修正，真实三层接收已验；SIGMA 已连真实 Cast，默认仍为 Raw，最终质量与多灯待完成 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -328,9 +328,10 @@ Editor/
 | R3-DI | 已完成有界迁移验收 | DI 不再私有创建 / 同步 / 释放场景；scene lifetime 变化清对应相机历史，profile 由 host 持有；247 个核心文件及全部 65 个 shader 文件未变，9 项宿主 / Cutout / RELAX / unsupported 回归通过 | 旧全量 core 原码与迁移版均出现同一 4 条 F39 scratch 诊断及 power-proposal 断言，继续拒绝该夹具；不扩称全量 core 或生产双模块共享通过，Player 在组合迁移后验证 | R3-GI |
 | R3-GI | 已完成有界迁移验收 | GI 不再私有创建 / 扫描 / 释放场景；81 核心文件及全部 59 shader 文件未变；9 项回归、生产 DI/GI 共享姿态 / 独立历史 / 双 NRD dispatch 两路径、GI Mono Player 两路径通过 | 4 条退出 GC 警告与原 Backbuffer Player 日志 SHA / 精确数量一致，宿主显式退休域为 0；不是全管线退出清理或旧质量缺口通过 | R4 |
 | R4 公共查询前置步骤 | 已完成有界验收 | native 最近 / occlusion 入口、共享 alpha 和 ShadowCasters 用途；两路径各 122 checks / 13 请求，另 4 项原回归通过 | 多用途可保留多 AS，不声称最终质量或性能提升 | R4 raw |
-| R4 raw Cast | 已完成有界验收；R4 未完成 | 独立 Ho-RTShadow、主方向灯全分辨率 32F raw / status / owner / 最近 blocker；OB 部件接收、同帧有限角度采样及消费资源 fence 释放；8 项组合回归通过 | 真实 lilToon NPR 接收 gate 失败，撤回主光替换；SIGMA 未实现；不能宣称阴影最终画质完成 | 独立 SIGMA 夹具与生产信号，同时保留 R4 NPR 待完成项 |
+| R4 raw Cast | 已完成有界验收 | 独立 Ho-RTShadow、主方向灯全分辨率 32F raw / status / owner / 最近 blocker；OB 部件接收、同帧有限角度采样及消费资源 fence 释放；8 项组合回归通过 | 当时 NPR gate 失败记录保留，后续定位与接入见下行；不是最终质量验收 | R4 / R5 NPR 接收 |
 | R5 独立 SIGMA | 已完成有界夹具 | 20-byte 独立 ABI、9 个原版 pipeline、官方编解码；连续灰阶 / MSE / 无历史重复 / 实际时域 pass 开关及原 RELAX 两路径通过 | 128×64 静态合成信号，不代表角色、NPR、动态、Player 或多灯画质 | 接真实 Cast 单样本、guides、按相机 / 灯状态与 reset |
 | R5 真实 Cast 接入 | 已完成有界接入；R5 未完成 | 两路径各 34 请求 / 59 checks，真实单样本 blocker → 官方编码 → SIGMA → 解码；4096-spp 参考与保存信号复核，五项回归通过 | 尚非真实角色发片、复杂动态、coplanar owner 边界、Player 或最终窄 ramp 验收；相机 / 场景变化保守 reset | 完成实际 NPR 接收与 ramp 质量 |
+| R4 / R5 NPR 接收 | 已完成有界实际材质检查；最终质量未完成 | 关闭 URP 主光 map，真实三层 receive / mask / strength / fallback；透视 / jitter 与窄 ramp 调阈值检查 | 默认 AO 无生产者曾掩盖测试；单样本重建仍可被窄 ramp 放大噪声，不能据此宣称最高清晰度 | 提高同帧导出质量并验角色薄片 / 微动 / Player |
 | R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 单灯闭环后扩展 |
 
 R0 采用的宿主准备合同：
@@ -403,6 +404,18 @@ R5 真实 Cast 的有界接入见 [Production review](../Tests~/RT/R5/Production
 NPR 失败点的编译审计见 [NPR review](../Tests~/RT/R4/NPR/review.json)，诊断入口 [run_layout.ps1](../Tests~/RT/R4/NPR/run_layout.ps1)。显式选择 URP subshader 0，原 lilToon / Cutout 的 Forward（含主光 shadow keyword 两种）、SB、GB、ShadowCaster 共 20 个 vertex / fragment 阶段均编译和预处理成功；反射到的 323 个已使用材质字段，其 index / type / 形状在各阶段一致，UnityPerMaterial 均为 2800 字节，_Color=32、_AsUnlit=1552、_LightMinLimit=1576、_ShadowReceive=1772、_UseShadow=2412。因此没有证据支持修改材质常量布局。初次误选运行前的 builtin active subshader 得到 0 个变体，明确不作为通过。
 
 三个有界渲染对照仍未通过 NPR 接收：预先启动 URP 后原 CS 验证改在 atlas debug 阶段失败；强制 Integer setter 和在已激活的 URP 下重导入 lilToon，均保留原 shadow / receive-off / lit 不响应断言。旧 `Int` ShaderLab 属性的 Unity 属性类型实际为 Float，不能凭源码标签假设必须改 setter。这些诊断没有修改生产 shader，也没有把对照失败扩大解释为确定的历史缺陷。完整日志、编译反射、预处理常量段和无损压缩的源码输出都保留；旧 wrapper 复制的上一轮 layout 报告明确标为共享旧副本，只接纳真正执行的 20 变体审计。收益是排除布局 / setter / 简单导入状态猜测，成本为一次受限编译审计和三个短对照；下一步检查实际前向 draw 的绑定字节 / keyword / 输出过程，继续保留原 gate，不再盲改布局。
+
+本轮 NPR gate 的根因证据补充在 [NPR diagnosis](../Tests~/RT/R4/NPR/review.json)。独立隐藏 RenderDoc capture 中关闭 RT / caster 后，前向 draw 942 仍为约 0.001041；D3D12 capture 有 44 draws / 321 events、无 HIGH 诊断。匹配版本 MCP 的 pixel trace 确认白色主色与正确光照先形成约 0.92137 ramp 坐标，随后 `_UseRealtimeAO` 分支采到约 0.2158203 的实时 AO，在没有 AO 生产者的隔离夹具中将 ramp 压到约 0.19885。只在私有测试材质关闭 `_UseRealtimeAO`，原 shadow / receive-off / lit 对照即为 0 / 1 / 1；跨 update、setter 和 reimport 都没有解决，是保留的排除对照。用户材质及 AO 算法没有修改。它修正的是 Cast 夹具的无关输入，不能据此宣称管线里“AO 缺少生产者的 fallback”已修复。
+
+捕获链首次系统 RenderDoc 与 MCP 回放版本不匹配被拒绝，改用 MCP 相同 runtime 后捕获成功；CLI 等待超时不等于 native capture 结束，补充终态与 capture SHA 后才用于回放。首次 shader replacement 的 64-bit ResourceId 被 JS Number 舍入、实际未替换，观察被丢弃；改用精确 raw JSON uint64 后确认材质白色参数已绑定，完成后全部 restore。`.rdc`、完整 pixel trace、反汇编 / pipeline snapshot 与 AO 单变量对照均留测试目录。此前单靠不匹配诊断 Shader 的异常读值猜测布局有误是不充分的，本轮没有改 UnityPerMaterial 布局。
+
+接收实现将 RTShadow 置于 `HoCSResolveMainCast` 的有效域优先级：RT 有效则直接返回，其他表面继续 CS / URP，不重复相乘两个主光 Cast。RT V 保持浮点和线性，先按灯 shadowStrength 组合，再交给原 lilToon receive mask、三层嵌套 receive 和 ramp。lilToon 三处 source 条件增加独立 `LIL_USE_HO_CAST`，即使 URP 未启用 main shadow-map keyword，原 forward 仍可接收公共 Cast；没有强行定义全局 `LIL_USE_SHADOW`，不改 lightmap / DI / GI 分支。无 RT / CS 时原正常来源继续生效。跨仓改动仅 `lil_common_macro.hlsl`、`lil_common_frag.hlsl` 和 `lil_pass_forward_normal.hlsl`，已有 input_opt、preset、prefab 和 CurrentRP 改动不属于本提交。
+
+实际 NPR 夹具刻意关闭 URP 主光 shadow-map 支持，Raw 下 shadow / receive-off / lit 为 0 / 1 / 1；保留接收 mask、灯强度一次应用、未请求 / disabled / 缺 SB 回退，二层红蓝及三层蓝绿切换符合原嵌套 ramp。透视与非对称 jitter 夹具检查真实阴影对应像素，稳定内区 maxError=0。SIGMA 无历史输出交给宽度 0.01 的原 ramp，border 0.2 → 0.8 时 body 暗区 234 → 1081，连续 V 像素 1639，两路径保存完整颜色信号与预览。此为实际接口和分层语义的有界验收；预览可见单样本重建噪声被窄 ramp 放大，尚不能作为最高精度清晰投影的最终质量。后续需要同帧多估计、薄发片和微动 / 单帧导出 / Player 验收，目标仍持续。
+
+本轮实际接收验收见 [NPR results](../Tests~/RT/R5/NPR/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R5Npr`：实际 NPR 两路径各 18 请求 / 32 checks，原 CS 部件接收的 D3D12 RG / compatibility 与 D3D11、真实 SIGMA 两路径、DI / GI native Cutout 共 9 项通过，分程序集编译 0 错误；完整源指纹包含相邻 lilToon 的 HLSL，三处 source patch / SHA / 依赖提交 `lilToon 24ae82d` 保存在同目录。旧完整 CS atlas-debug 失败不被这项部件专项替代。中间编译失败、错误的二层 ramp 前提、SIGMA 回归进程未出结果就退出 1 都保留；后一项没有 marker 即拒绝，未将上一请求的旧 report 冒充本次通过。补强 runner 只复制本进程启动后产生的报告，核对退出后单独重跑剩余四项通过。冷编译长达约 352 秒，有编译器实际 CPU 进展，不能用它宣称每帧性能退化或无成本；无 GPU 帧时收益承诺。
+
+此阶段可接纳的收益是 NPR 接收语义、原有 mask / 三层 ramp / fallback 在真实 shader 上可用，且可在不生产 URP 主光 map 时单独使用 RT Cast。最终画质依然不满足“最高精度最清楚”的完整目标：单样本 SIGMA 的局部噪声会被窄 ramp 放大。因此下一步先提高同帧无历史质量并核薄片 / 微动、导出 / Player，再进入 R6；不能因为接口通过就提前把角色画质和多灯输出算完。
 
 <a id="quality-reference"></a>
 

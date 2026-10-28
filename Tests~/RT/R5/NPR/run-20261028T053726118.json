@@ -1,0 +1,54 @@
+{
+  "stage": "R5Npr",
+  "sourceCommit": "f425f19c41633b18dc96e46a81711c89b91c2a36",
+  "startedUtc": "2026-10-28T05:37:28.6256302Z",
+  "sourcesFile": "sources-20261028T053726118.json",
+  "runnerSha256": "646DD9B1126CB78DC02A2A75E8272D76971CB47FED61BEF311FC28D9BE3CF6B1",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "npr-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunNpr",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "C80646AD8124D2206A76711EA9722586BEBA4E6CCAE8BB30566ACF05182F25A9",
+      "seconds": 85.5364594,
+      "pass": true,
+      "logFile": "ho-rt-r5npr-npr-rg-20261028T053726118.log"
+    },
+    {
+      "name": "npr-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunNprCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "8B1918E27D73D10BB48552C565800C29500E4025C1B1E92BB78E5D95B5A1B902",
+      "seconds": 11.1561052,
+      "pass": true,
+      "logFile": "ho-rt-r5npr-npr-compat-20261028T053726118.log"
+    },
+    {
+      "name": "raster-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRasterRegression",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "NullReferenceException: Object reference not set to an instance of an object\r"
+      ],
+      "logSha256": "4FCFD75F604162B7A081CC0AB19EC77F214650C7A145CBD1D3B19CCCA5D9D007",
+      "seconds": 10.5623223,
+      "pass": false,
+      "logFile": "ho-rt-r5npr-raster-rg-20261028T053726118.log"
+    }
+  ]
+}

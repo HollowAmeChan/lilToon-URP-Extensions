@@ -1,0 +1,50 @@
+using System;
+using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.RTShadow;
+public static class HoRTNprCaptureForward
+{
+    // Native function slots verified against installed renderdoc_app.h API 1.0:
+    // 19 StartFrameCapture, 20 IsFrameCapturing, 21 EndFrameCapture.
+    [DllImport("renderdoc",CallingConvention=CallingConvention.Cdecl)] private static extern int RENDERDOC_GetAPI(int version,out IntPtr api);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate void StartCapture(IntPtr device,IntPtr window);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate uint EndCapture(IntPtr device,IntPtr window);
+    [UnmanagedFunctionPointer(CallingConvention.Cdecl)] private delegate uint IsCapturing();
+    private static readonly BindingFlags Flags=BindingFlags.Static|BindingFlags.NonPublic;
+    public static void Run()
+    {
+        Type fixture=typeof(lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation);
+        try
+        {
+            if(!Application.isBatchMode||!Application.dataPath.Replace('\\','/').Contains("/.codex-research/"))throw new Exception("Independent hidden batch project required");
+            lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Run();
+            var tick=(EditorApplication.CallbackFunction)Delegate.CreateDelegate(typeof(EditorApplication.CallbackFunction),fixture.GetMethod("Tick",Flags));EditorApplication.update-=tick;
+            ((ScriptableRendererFeature)fixture.GetField("shadow",Flags).GetValue(null)).SetActive(false);
+            ((ScriptableRendererFeature)fixture.GetField("host",Flags).GetValue(null)).SetActive(false);
+            foreach(string field in new[]{"near","far"})((Renderer)fixture.GetField(field,Flags).GetValue(null)).shadowCastingMode=ShadowCastingMode.Off;
+            var camera=(Camera)fixture.GetField("camera",Flags).GetValue(null);var target=(RenderTexture)fixture.GetField("target",Flags).GetValue(null);
+            var material=(Material)fixture.GetField("toon",Flags).GetValue(null);
+            for(int i=0;i<3;i++)Render();
+            if(RENDERDOC_GetAPI(10000,out var api)!=1)throw new Exception("RenderDoc API 1.0 unavailable; launch through official capture CLI");
+            var start=Marshal.GetDelegateForFunctionPointer<StartCapture>(Marshal.ReadIntPtr(api,19*IntPtr.Size));
+            var active=Marshal.GetDelegateForFunctionPointer<IsCapturing>(Marshal.ReadIntPtr(api,20*IntPtr.Size));
+            var end=Marshal.GetDelegateForFunctionPointer<EndCapture>(Marshal.ReadIntPtr(api,21*IntPtr.Size));
+            if(active()!=0)throw new Exception("Refuse overlapping capture");
+            start(IntPtr.Zero,IntPtr.Zero);if(active()==0)throw new Exception("Native capture did not start");
+            Render();
+            var old=RenderTexture.active;var image=new Texture2D(1,1,TextureFormat.RGBAFloat,false,true);Color pixel;
+            try{RenderTexture.active=target;image.ReadPixels(new Rect(32,32,1,1),0,0);image.Apply();pixel=image.GetPixel(0,0);}finally{RenderTexture.active=old;UnityEngine.Object.DestroyImmediate(image);}
+            uint saved=end(IntPtr.Zero,IntPtr.Zero);
+            Debug.Log("[HoRTNprCaptureForward] pixel="+pixel+" saved="+saved+" shader="+material.shader.name+" color="+material.GetColor("_Color")+" useShadow="+material.GetFloat("_UseShadow")+" asUnlit="+material.GetFloat("_AsUnlit"));
+            if(saved==0)throw new Exception("Capture was not saved");
+            fixture.GetMethod("Finish",Flags).Invoke(null,new object[]{null});
+            void Render()=>RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});
+        }
+        catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
+    }
+}

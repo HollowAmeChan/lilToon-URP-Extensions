@@ -1,0 +1,8 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"count\":4,\"passes\":[{\"dispatchCount\":0,\"drawCount\":11,\"eventId\":72,\"name\":\"Camera.CustomRender\"},{\"dispatchCount\":0,\"drawCount\":11,\"eventId\":332,\"name\":\"Camera.CustomRender\"},{\"dispatchCount\":0,\"drawCount\":11,\"eventId\":551,\"name\":\"Camera.CustomRender\"},{\"dispatchCount\":0,\"drawCount\":11,\"eventId\":770,\"name\":\"Camera.CustomRender\"}]}"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "scope": "Terminal native capture completion after frontend timeout; does not rewrite initial launcher failure",
+  "nativePid": 20300,
+  "nativeLog": "capture-forward-20261028T045940561.log",
+  "capture": "forward-control.rdc",
+  "captureSha256": "8432e99c0c03be2c024cd930f715ccd26462448d7476c840fbc97377dcc71445",
+  "captureBytes": 9260637,
+  "replay": "MCP successfully opens D3D12, 44 draws / 321 events, no high debug messages",
+  "discardedProbe": "First shader-replace used an unsafe rounded JavaScript numeric ID and had no effect. Only exact raw-JSON uint64 replacement observations are used. All replacements restored."
+}
