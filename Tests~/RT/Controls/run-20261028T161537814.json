@@ -1,0 +1,26 @@
+{
+  "stage": "Controls",
+  "sourceCommit": "63b8097e294aa2681c66ef9cf480c966706d1433",
+  "startedUtc": "2026-10-28T16:15:38.3202226Z",
+  "sourcesFile": "sources-20261028T161537814.json",
+  "runnerSha256": "17CF700A3FDA28D5549C05B6FE13C057852196FCFD7BAB2B34CB80643E2CF205",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "controls-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunControls",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Second camera Volume layer mask prevents override leakage\r"
+      ],
+      "logSha256": "F878F6AC06B4489AB2CAC182937D4DDEF8A077BDEDB34C81696FA6D5E77E8471",
+      "seconds": 60.3733506,
+      "pass": false,
+      "logFile": "ho-rt-controls-controls-rg-20261028T161537814.log"
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "stage": "Controls",
+  "sourceCommit": "63b8097e294aa2681c66ef9cf480c966706d1433",
+  "startedUtc": "2026-10-28T16:18:14.3889018Z",
+  "sourcesFile": "sources-20261028T161813860.json",
+  "runnerSha256": "17CF700A3FDA28D5549C05B6FE13C057852196FCFD7BAB2B34CB80643E2CF205",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "controls-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunControls",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "9616DADC6046CDC6CE196626E5251FEB2E8BF8435113AF0E66F2587992C782F2",
+      "seconds": 10.7063899,
+      "pass": true,
+      "logFile": "ho-rt-controls-controls-rg-20261028T161813860.log"
+    },
+    {
+      "name": "controls-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunControlsCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "205E3C3D1D88B92B3E7B459B5C301020421284F1D2B759652EAF094B92F96A6F",
+      "seconds": 8.3520538,
+      "pass": true,
+      "logFile": "ho-rt-controls-controls-compat-20261028T161813860.log"
+    },
+    {
+      "name": "multi-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMultiLight",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [],
+      "logSha256": "05EB576FFF7B5FF78DBACD7F289ED939219A5060FC1B0454B5D9FAE6599BDF8E",
+      "seconds": 6.9347543,
+      "pass": false,
+      "logFile": "ho-rt-controls-multi-rg-20261028T161813860.log"
+    }
+  ]
+}

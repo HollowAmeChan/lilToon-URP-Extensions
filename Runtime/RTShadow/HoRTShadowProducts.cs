@@ -6,6 +6,19 @@ namespace lilToon.URP.Extensions.RTShadow
 {
     public enum HoRTShadowProductStatus { Available, Unsupported, NoReceivers }
     public enum HoRTShadowPixelStatus { Unrequested = 0, Valid = 1, InvalidSurface = 2, OutsideLightDomain = 3, RayLimitTooShort = 4 }
+    public readonly struct HoRTShadowLightDiagnostics
+    {
+        public readonly Light Light;
+        public readonly long LightId;
+        public readonly int Slot, Width, Height, HistoryFrame;
+        public readonly HoRTShadowReconstruction Reconstruction;
+        public readonly bool HistoryReset;
+        public readonly float AngularDiameter;
+        public readonly int Samples, Receivers, Estimates;
+        internal HoRTShadowLightDiagnostics(Light light, long id, int slot, int width, int height, HoRTShadowReconstruction reconstruction, bool reset, int frame,
+            float angle, int samples, int receivers, int estimates)
+        { Light = light; LightId = id; Slot = slot; Width = width; Height = height; Reconstruction = reconstruction; HistoryReset = reset; HistoryFrame = frame; AngularDiameter = angle; Samples = samples; Receivers = receivers; Estimates = estimates; }
+    }
     // Texture handles are borrowed only in this current camera RenderGraph.
     public readonly struct HoRTShadowProduct
     {

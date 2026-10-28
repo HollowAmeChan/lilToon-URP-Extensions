@@ -1,0 +1,66 @@
+{
+  "stage": "Controls",
+  "sourceCommit": "63b8097e294aa2681c66ef9cf480c966706d1433",
+  "startedUtc": "2026-10-28T16:23:00.5905140Z",
+  "sourcesFile": "sources-20261028T162300071.json",
+  "runnerSha256": "3B4CACBCA813FCCA4ADB47C8C3950DA6E2D9C18BB6BE72AAED3F66A5D80A2D7C",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "controls-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunControls",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "4DEFCD6DB788C3679DAFBE0F076A13E6FAB2917D2F3CD1E88AD4B65FDDF39604",
+      "seconds": 12.3598267,
+      "pass": true,
+      "logFile": "ho-rt-controls-controls-rg-20261028T162300071.log"
+    },
+    {
+      "name": "controls-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunControlsCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "934946B07B4EF88497061D7647E41B65A339B80FB3D1A1CC4DA61BD8C3EF469D",
+      "seconds": 8.3907269,
+      "pass": true,
+      "logFile": "ho-rt-controls-controls-compat-20261028T162300071.log"
+    },
+    {
+      "name": "multi-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "2434D00E3FB7944CCA50018E7684EF340E19937868F53D8C681523789A9593EF",
+      "seconds": 8.4027971,
+      "pass": true,
+      "logFile": "ho-rt-controls-multi-rg-20261028T162300071.log"
+    },
+    {
+      "name": "multi-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMultiCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "C9CA30B5B0E8C5A3649CE0F224E109BAAEB558869EE68118F1BFEE222BC5666D",
+      "seconds": 8.4422889,
+      "pass": true,
+      "logFile": "ho-rt-controls-multi-compat-20261028T162300071.log"
+    }
+  ]
+}

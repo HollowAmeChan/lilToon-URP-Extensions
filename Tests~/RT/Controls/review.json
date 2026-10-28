@@ -1,0 +1,43 @@
+{
+  "stage": "RTShadow camera Volume / inspectors / per-light diagnostic presentation",
+  "acceptedGpu": {
+    "controls-rg": "run-20261028T162300071.json",
+    "controls-compat": "run-20261028T162300071.json",
+    "multi-rg": "run-20261028T162300071.json",
+    "multi-compat": "run-20261028T162300071.json"
+  },
+  "serializedPlayers": {
+    "compat": "run-compat-20261028T162511835.json",
+    "rg": "run-rg-20261028T162359169.json"
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T161537814.json",
+      "case": "controls-rg",
+      "diagnostics": [
+        "Exception: Second camera Volume layer mask prevents override leakage\r"
+      ],
+      "marker": false
+    },
+    {
+      "run": "run-20261028T161725798.json",
+      "case": "controls-rg",
+      "diagnostics": [
+        "Exception: Actual nearest blocker metres displayed: 0.479248 / 0.4716991\r"
+      ],
+      "marker": false
+    },
+    {
+      "run": "run-20261028T161813860.json",
+      "case": "multi-rg",
+      "diagnostics": [],
+      "marker": false
+    }
+  ],
+  "unchangedRuntimeRtDiGiNrdCharacterShadowFiles": 427,
+  "referenceCommit": "63b8097e",
+  "benefit": "Camera-specific quality without mutating Feature defaults; master switch, inactive and other-camera fallback verified. Six actual per-light debug views and All grid use the shared final presentation, missing product is explicit purple. Main alias unaffected; debug-off beauty identical. Host and light inspectors explain ownership, supported domains and actual parameters.",
+  "cost": "Diagnostic color target and six fullscreen draws only for enabled All debug; single view one draw. Snapshot copies and CPU diagnostics added, no trace count change from UI alone. SIGMA quality overrides retain their existing full per-estimate cost.",
+  "limits": "Shader pixels, serialization, inspector type selection and compile verified in hidden independent project; no desktop/UI operation or claim of manually inspected GUI layout. Win64 Mono D3D12 explicit requests only. Debug raw is last single sample during repeated SIGMA, difference is not a ground-truth error image. Final spatial AA/export and full goal audit remain.",
+  "next": "Finish deterministic final-color spatial sampling and original R0-R6 requirement audit; retain bounded qualification scope."
+}

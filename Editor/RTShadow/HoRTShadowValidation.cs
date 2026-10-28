@@ -92,6 +92,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             try
             {
                 if(++tick<3){Render();return;}
+                if(uiAudit){ValidateControls();Finish(null);return;}
                 if(multiAudit){ValidateMultiLight();Finish(null);return;}
                 if(thinAudit){ValidateThinRig();Finish(null);return;}
                 if(singleFrameAudit){ValidateSingleFrameQuality();Finish(null);return;}
@@ -137,7 +138,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
         private static byte[] Bytes(Color[] pixels){var f=new float[pixels.Length*4];for(int i=0;i<pixels.Length;i++){f[i*4]=pixels[i].r;f[i*4+1]=pixels[i].g;f[i*4+2]=pixels[i].b;f[i*4+3]=pixels[i].a;}var bytes=new byte[f.Length*4];Buffer.BlockCopy(f,0,bytes,0,bytes.Length);return bytes;}
         private static RenderTexture Target(int size){var texture=Keep(new RenderTexture(size,size,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));texture.Create();return texture;}
         private static Color[] Render(bool read=true)
-        {report.requests++;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});if(!read)return null;Check(shadow.LastOutput!=null,"Shadow request scheduled: "+shadow.Status);return Read(shadow.LastOutput.raw.rt);}
+        {report.requests++;VolumeManager.instance.Update(camera.transform,camera.GetUniversalAdditionalCameraData().volumeLayerMask);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});if(!read)return null;Check(shadow.LastOutput!=null,"Shadow request scheduled: "+shadow.Status);return Read(shadow.LastOutput.raw.rt);}
         private static Color[] Read(RenderTexture source)
         {var old=RenderTexture.active;var image=new Texture2D(source.width,source.height,TextureFormat.RGBAFloat,false,true);try{RenderTexture.active=source;image.ReadPixels(new Rect(0,0,source.width,source.height),0,0);image.Apply();return image.GetPixels();}finally{RenderTexture.active=old;Object.DestroyImmediate(image);}}
         private static void Valid(Color[] image,int x,int y,float v,uint owner,string label){var p=image[y*64+x];Check(p.b==1&&p.a==owner,label+" status/identity: "+p);Near(p.r,v,label+" visibility",.0001f);}

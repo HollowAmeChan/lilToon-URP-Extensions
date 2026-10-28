@@ -1,0 +1,26 @@
+{
+  "stage": "Controls",
+  "sourceCommit": "63b8097e294aa2681c66ef9cf480c966706d1433",
+  "startedUtc": "2026-10-28T16:17:26.3045995Z",
+  "sourcesFile": "sources-20261028T161725798.json",
+  "runnerSha256": "17CF700A3FDA28D5549C05B6FE13C057852196FCFD7BAB2B34CB80643E2CF205",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "controls-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunControls",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Actual nearest blocker metres displayed: 0.479248 / 0.4716991\r"
+      ],
+      "logSha256": "C96F9380A901931700125FE7747DF364B717F52A2F2292436AE3EC199D0CDB48",
+      "seconds": 10.3011931,
+      "pass": false,
+      "logFile": "ho-rt-controls-controls-rg-20261028T161725798.log"
+    }
+  ]
+}

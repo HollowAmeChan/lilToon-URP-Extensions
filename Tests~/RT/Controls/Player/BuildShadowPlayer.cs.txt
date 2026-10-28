@@ -1,0 +1,80 @@
+using System;
+using System.IO;
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.RT;
+using lilToon.URP.Extensions.RTShadow;
+using lilToon.URP.Extensions.SurfaceBuffer;
+using UnityEditor;
+using UnityEditor.Build;
+using UnityEditor.Build.Reporting;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+public static class BuildShadowPlayer
+{
+    public static void PreflightShaders()
+    {
+        try
+        {
+            ShaderUtil.allowAsyncCompilation=false;int count=0;
+            foreach(string name in new[]{"lilToon","Hidden/lilToonCutout"})
+            {
+                var shader=Shader.Find(name);var sub=ShaderUtil.GetShaderData(shader).GetSubshader(0);
+                for(int i=0;i<sub.PassCount;i++)
+                {
+                    var pass=sub.GetPass(i);if(!string.Equals(pass.Name,"FORWARD",StringComparison.OrdinalIgnoreCase))continue;
+                    foreach(string[] keywords in new[]{Array.Empty<string>(),new[]{"_MAIN_LIGHT_SHADOWS"},new[]{"_ADDITIONAL_LIGHTS"},new[]{"_MAIN_LIGHT_SHADOWS","_ADDITIONAL_LIGHTS"}})
+                    {
+                        var compiled=pass.CompileVariant(UnityEditor.Rendering.ShaderType.Fragment,keywords,UnityEditor.Rendering.ShaderCompilerPlatform.D3D,BuildTarget.StandaloneWindows64,false);
+                        foreach(var message in compiled.Messages)if(message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error||message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning)throw new Exception("Preflight "+name+" "+string.Join(" ",keywords)+": "+message.message);
+                        if(!compiled.Success)throw new Exception("Preflight compile failed "+name);count++;
+                    }
+                }
+            }
+            if(count!=8)throw new Exception("Wrong preflight coverage "+count);
+            Debug.Log("[HoRTShadowPlayerPreflight] PASS 8 actual Forward fragment variants");EditorApplication.Exit(0);
+        }
+        catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
+    }
+    public static void ValidateLegacyFiltering()
+    {try{lilToon.URP.Extensions.Editor.CharacterShadow.HoCharacterShadowValidation.ValidateFiltering();Debug.Log("[HoRTShadowPlayerFilter] PASS");EditorApplication.Exit(0);}catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}}
+    public static void Build()=>Build(false);
+    public static void BuildCompatibility()=>Build(true);
+    private static void Build(bool compatibility)
+    {
+        try
+        {
+            string root=Directory.GetParent(Application.dataPath).FullName;
+            if(!root.Replace('\\','/').EndsWith("/.codex-research/RTValidation"))throw new Exception("Dedicated independent project required");
+            string folder="Assets/RTShadowControlsPlayer"+(compatibility?"Compatibility/":"/");Directory.CreateDirectory(Path.Combine(root,folder));
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);RenderSettings.fog=false;
+            var renderer=ScriptableObject.CreateInstance<UniversalRendererData>();AssetDatabase.CreateAsset(renderer,folder+"Renderer.asset");
+            var host=ScriptableObject.CreateInstance<HoRTRendererFeature>();var gb=ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>();gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
+            var sb=ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>();sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
+            var shadow=ScriptableObject.CreateInstance<HoRTShadowRendererFeature>();shadow.Create();
+            foreach(var feature in new ScriptableRendererFeature[]{host,gb,sb,shadow}){if(MonoScript.FromScriptableObject(feature)?.GetClass()!=feature.GetType())throw new Exception("Serialized script mapping missing: "+feature.GetType());feature.name=feature.GetType().Name;AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(feature);}
+            var serialized=new SerializedObject(shadow);foreach(string name in new[]{"shader","visibilityMaterialShader","sigmaShader","debugShader"})if(serialized.FindProperty(name).objectReferenceValue==null)throw new Exception("Missing serialized shadow shader "+name);
+            var library=serialized.FindProperty("sigmaPipelines");if(library.arraySize!=9)throw new Exception("Incomplete SIGMA library");for(int i=0;i<9;i++)if(library.GetArrayElementAtIndex(i).objectReferenceValue==null)throw new Exception("SIGMA shader missing "+i);
+            var pipeline=UniversalRenderPipelineAsset.Create(renderer);pipeline.msaaSampleCount=1;pipeline.supportsHDR=true;AssetDatabase.CreateAsset(pipeline,folder+"Pipeline.asset");GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
+            var sp=new SerializedObject(pipeline);sp.FindProperty("m_MainLightShadowsSupported").boolValue=false;sp.ApplyModifiedPropertiesWithoutUndo();
+            #if URP_COMPATIBILITY_MODE
+            GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode=compatibility;
+            #endif
+            PlayerSettings.colorSpace=ColorSpace.Linear;PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,new[]{UnityEngine.Rendering.GraphicsDeviceType.Direct3D12});PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64,false);
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);PlayerSettings.runInBackground=true;PlayerSettings.defaultScreenWidth=64;PlayerSettings.defaultScreenHeight=64;
+            var surface=new Material(Shader.Find("lilToon"));surface.SetColor("_Color",Color.white);surface.SetTexture("_MainTex",Texture2D.whiteTexture);surface.SetFloat("_UseRealtimeAO",0);surface.SetFloat("_UseShadow",1);surface.SetFloat("_ShadowReceive",1);surface.SetFloat("_LightMinLimit",0);surface.SetColor("_ShadowColor",Color.black);surface.SetFloat("_Cull",0);AssetDatabase.CreateAsset(surface,folder+"Surface.mat");
+            var cutout=new Material(Shader.Find("Hidden/lilToonCutout"));cutout.renderQueue=2450;cutout.SetOverrideTag("RenderType","TransparentCutout");cutout.SetColor("_Color",Color.white);cutout.SetTexture("_MainTex",Texture2D.whiteTexture);cutout.SetFloat("_Cull",0);cutout.SetFloat("_Cutoff",.5f);
+            foreach(string name in new[]{"_UseMain2ndTex","_UseMain3rdTex","_UseParallax","_UseDither","_AlphaMaskMode"})cutout.SetFloat(name,0);cutout.SetVector("_MainTex_ScrollRotate",Vector4.zero);cutout.SetVector("_DissolveParams",Vector4.zero);cutout.SetVector("_DistanceFade",Vector4.zero);AssetDatabase.CreateAsset(cutout,folder+"Cutout.mat");
+            var probe=new GameObject("HoRTShadow serialized Player probe").AddComponent<HoRTShadowPlayerProbe>();probe.host=host;probe.shadow=shadow;probe.surfaceMaterial=surface;probe.cutoutMaterial=cutout;
+            var profile=ScriptableObject.CreateInstance<VolumeProfile>();AssetDatabase.CreateAsset(profile,folder+"Overrides.asset");
+            var controls=profile.Add<HoRTShadowVolume>(false);AssetDatabase.AddObjectToAsset(controls,profile);EditorUtility.SetDirty(profile);
+            var volume=new GameObject("Serialized RTShadow Volume").AddComponent<Volume>();volume.isGlobal=true;volume.priority=100;volume.sharedProfile=profile;probe.controls=controls;
+            EditorUtility.SetDirty(renderer);AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),folder+"Probe.unity");
+            var result=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{folder+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,"PlayerRTShadowControls"+(compatibility?"Compatibility":""),"HoRTShadowProbe.exe"),options=BuildOptions.None});
+            if(result.summary.result!=BuildResult.Succeeded)throw new Exception("Shadow build failed: "+result.summary.result);
+            Debug.Log("[HoRTShadowControlsPlayerBuild] PASS serialized host / GB / SB / RTShadow / 9 SIGMA pipelines; bytes="+result.summary.totalSize);EditorApplication.Exit(0);
+        }
+        catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
+    }
+}

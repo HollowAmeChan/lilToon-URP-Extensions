@@ -1,6 +1,6 @@
 # Ho-RT：公共底座与 RTShadow
 
-> 状态：**现行实现 / 设计总入口**，2026-10-28。目录迁移、R2 公共资源宿主及共享姿态的有界验收已完成；DI/GI 有界迁移及 Player 资格已完成；RTShadow raw 已有有界验收，实际 NPR 三层接收已通过有界检查，最终单帧画质与 R6 尚未完成；SIGMA 已有真实 Cast 的有界接入验收，精确进展见 §8.5。实现状态与后续接口建议分开阅读。
+> 状态：**现行实现 / 设计总入口**，2026-10-29。目录迁移、公共资源宿主与 DI/GI 接入已完成有界验收；独立 RTShadow、真实 SIGMA、NPR 三层接收、同帧薄蒙皮质量、逐灯集合及其 serialized Player 均已有有界验收，Volume / Inspector / 调试已补齐。最终颜色空间采样与完整目标审计仍在推进，精确证据和限制见 §8.5。以下阶段过程保留当时结论，不作为当前待办重复执行。
 
 ## 0. 先确认实现状态
 
@@ -10,7 +10,7 @@
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | 生产 DI/GI 保留 RELAX；新增 typed SIGMA ABI、格式与 9 个官方 pipeline，独立夹具及真实 Cast 的有界 GPU 接入已验，默认仍为 Raw | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | 独立 Feature 已有主光 / 声明集合 / 全部支持灯的逐灯产品；方向光有限角度和 delta 点聚光有界 Editor / 多灯 Player 验收，SIGMA / 实际三层 NPR / 单帧与薄蒙皮已验；Volume / Inspector / 调试、最终图像采样与总审计继续推进 | 本文 §4–8 |
+| RTShadow / SIGMA | 独立 Feature 已有主光 / 声明集合 / 全部支持灯的逐灯产品；方向光有限角度和 delta 点聚光有界 Editor / 多灯 Player 验收，SIGMA / 实际三层 NPR / 单帧与薄蒙皮已验；Volume / Inspector / 六种调试已补齐，最终图像采样与总审计继续推进 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -193,7 +193,7 @@ RT 灯样本的真实遮挡与 blocker 距离
 
 逐灯保留 raw 与 denoised 的身份及状态。使用历史时按相机、灯身份及场景有效性隔离；多灯流式无历史处理与持久保存所有逐灯结果是不同资源方案。
 
-当前仓库的公共执行器与 native 调度 ABI 可以作为基础；生产 DI/GI 仍使用原 RELAX 设置绑定及 manifest；R5 独立前置步骤已补 typed SigmaSettings、9 个官方 shader wrappers 与 manifest，GPU 证据见 §8.5，尚未接入真实 Cast。R0 已对现用 DLL 实测：NRD 4.17.3、normal encoding 2 / roughness 1，明确支持 `SIGMA_SHADOW`（16）及 `SIGMA_SHADOW_TRANSLUCENCY`（17），两种实例均创建成功，各有 9 pipelines、1 permanent、8 transient。无需为 SIGMA 重编当前 native 插件。接入仍需补匹配版本参数 ABI、Unity shader wrappers、外部输入输出绑定及 GPU 验收；descriptor 成功不等于生产降噪链路已完成。证据见 [R0 inventory](../Tests~/RT/R0/sigma-inventory.json)，可执行 [CPU probe](../Tests~/RT/R0/probe_sigma.py)。
+公共执行器现已支持 typed SigmaSettings、9 个匹配版本的官方 shader wrappers / manifest，以及真实 Cast 的编码、guide、逐灯重建与官方解码；生产 DI/GI 保留原 RELAX 设置绑定和独立历史。实际 GPU / NPR / Player 范围见 §8.5。R0 对现用 DLL 实测为 NRD 4.17.3、normal encoding 2 / roughness 1，支持 `SIGMA_SHADOW`（16）及 `SIGMA_SHADOW_TRANSLUCENCY`（17），各有 9 pipelines、1 permanent、8 transient；当前使用 16，不声称透射阴影已验收。无需重编 pinned native 插件；其能力清单见 [R0 inventory](../Tests~/RT/R0/sigma-inventory.json) 和 [CPU probe](../Tests~/RT/R0/probe_sigma.py)，不能单凭 descriptor 成功替代生产图像证据。
 
 ### 6.4 派生输出按需求提供
 
@@ -335,7 +335,8 @@ Editor/
 | R5 同帧无历史估计 | 已完成有界验收 | 1–64 次独立 SIGMA 后线性平均，16 次改善真实 V / 窄 ramp MSE；六项回归通过 | 成本随次数增长，滤波偏差仍在，简单平面不是角色最终画质 | 薄蒙皮 cutout / 微动 / Player |
 | R5 薄蒙皮 / 微动 | 已完成有界验收 | 十二张实际 rigged cutout 窄卡片及骨骼 / BlendShape 微动；同预算原始比例约束显著降低误差，四项回归通过 | 256 次成本高、约 88% 暗侧保留，未等于任意角色 / AA / Player | serialized Player，随后 R6 |
 | R5 serialized Player | 已完成有界资格 | RG / compatibility 两个 Win64 Mono Player 各 21 Update / 34 checks，实际 SIGMA / NPR / 蒙皮，退出警告清零；原 CS 滤波与八片元变体通过 | 不代替 enabled-camera / backbuffer / XR / IL2CPP / 任意角色，冷构建成本高 | R6 |
-| R6 逐灯集合 | 已完成有界 Editor / Player 验收 | Main / Declared / AllSupported、稳定 LightId、方向光 / delta 点聚光、逐灯接收域、当前 graph / compatibility 产品；六项 GPU 回归和两路径多灯 Player 各 121 checks 通过 | 不含未验证局部面积形状、cookie 或受限 caster linking；最终空间采样 / 总审计待验 | 补齐 Volume / Inspector / 调试，再完成最终图像采样与完整目标审计 |
+| R6 逐灯集合 | 已完成有界 Editor / Player 验收 | Main / Declared / AllSupported、稳定 LightId、方向光 / delta 点聚光、逐灯接收域、当前 graph / compatibility 产品；六项 GPU 回归和两路径多灯 Player 各 121 checks 通过 | 不含未验证局部面积形状、cookie 或受限 caster linking；最终空间采样 / 总审计待验 | 最终图像采样与完整目标审计 |
+| Volume / UI / 调试 | 已完成有界 GPU / Player 验收 | 相机覆盖与默认值隔离；Host / Shadow / Light / Volume 检查器；六种逐灯调试及 All 平铺，两路径各 51 checks / 26 请求、原多灯回归、两 Player 各 132 checks 通过 | 未操作桌面检查 GUI 排版；调试不提升采样精度，Raw 差值不是质量真值 | 最终颜色空间采样，随后审计原目标 |
 
 R0 采用的宿主准备合同：
 
@@ -458,6 +459,32 @@ cookie、baked-only、受限 Light.cullingMask caster linking，以及其他未�
 
 本步收益是从只供主光的内部纹理变成有稳定身份、域与状态的可消费逐灯产品；几何 host 与各效果仍解耦。成本为每灯全分辨率 Raw / 位表，方向光按模式再增 SIGMA 外部纹理与独立池 / 历史，同帧估计预算乘在每盏相应方向灯上，没有“灯数无关成本”或毫秒收益声明。支持范围和无效性明确，不扩称全灯面积积分或完整 NPR 附加灯照明合成完成。接下来多灯 serialized Player、最终空间采样与整体 R0–R6 审计，目标继续。
 
+Volume / UI / 调试步骤证据见 [Controls review](../Tests~/RT/Controls/review.json)，复核 `python Tests~/RT/Controls/verify_results.py`，GPU 入口 `Tests~/RT/run_validation.ps1 -Stage Controls`，Player 入口 `Tests~/RT/Controls/Player/run_player.ps1`（另加 `-Compatibility`）。两条实际 GPU 路径各 51 checks / 26 请求，验证逐相机覆盖、inactive / master switch、实际重建预算、逐灯角度优先、六种视图、附加灯选择、缺产品 / 主表面和图内 Create 生命周期；关闭调试后 beauty 与原图逐像素相同，七份调试浮点信号跨路径逐字节一致。原多灯两路径各 54 checks / 21 请求保持通过。两个序列化 Player 各 21 Update / 132 checks，额外验证打包 Volume 资产、debug Shader 引用、覆盖与附加灯切换；native 字节一致、退休计数 0、无额外运行诊断或 GC 警告额度。427 个 RT host / DI / GI / NRD / CS 既有运行资源与前一提交相同，分程序集编译 0 错误。
+
+两项前期夹具断言和一次 executeMethod 名字错误保留为失败：standalone SingleCameraRequest 不自动更新 Volume 栈，调用者须按当前相机的 mask / trigger 更新；有限角度下的距离视图应对照实际 sampled ray，而非光源中心。没有通过放宽容差或重写旧 pass 消除失败。图内 Create 保留已经记录的诊断 pass / material，生产纹理仍由 host fence 退休；调试选择不改变主光 Cast alias。
+
+本步收益是参数覆盖可见、逐灯结果与失效原因可诊断，降低后续把接收域 / 原始采样 / 重建混为一种锯齿的风险；不是画质提升。启用调试时增加一张全分辨率颜色附件和一次最终呈现，单视图一次绘制、All 六视图加标签；未启用不提交诊断绘制。配置快照 / Inspector 数据增加少量 CPU 工作，没有 GPU 毫秒收益声明。未操纵桌面或用户 Renderer / Volume 资产，未宣称手动验证 Inspector 排版；实测范围为独立工程 Mono Win64 / D3D12 显式请求。下一步转到最终颜色的空间积分，不继续堆叠调试入口。
+
+### 8.6 当前配置与调试入口
+
+Renderer 的顺序为 Ho-RT、GB / SB、Ho-RTShadow；接收角色根节点添加 `Ho-RTShadow Receiver` 并指定 OB 组，整组 / 部件和逐灯接收在这里选择。声明灯在 Unity Light 上添加 `Ho-RTShadow Light`，逐方向灯角直径优先于 Feature 和 Volume 的默认值。Ho-RT 只显示资源宿主状态，没有独立质量 Volume；质量属于消费者。
+
+Feature 检查器分为生产、灯与接收域、重建质量、调试、高级、运行状态。其生产总开关始终有效，关闭后 Volume 不能重新开启。`Add Override → Post-processing → Ho-RTShadow → 光追投影` 提供逐相机启用、重建方式、默认角度、Raw 样本数、无历史估计数、种子及调试覆盖；未勾覆盖使用 Feature 默认值，inactive 组件回退默认，Camera Volume layer mask / trigger 决定参与的 Volume。Raw 与无历史的两个预算只对相应模式有效，切模式时不把另一个预算乘进去。
+
+运行状态显示当前相机、覆盖数量、实际重建参数、每灯名称 / 稳定 LightId / 当前 slot / 分辨率 / 样本与估计 / receiver 数量 / 历史 reset，以及不可用产品原因。Host Inspector 显示场景 View、累计共享 Bake、CPU fence 等待和待退休数量；这些不是整帧 GPU 耗时。调试默认仅允许 Scene View，Game View 须显式开启；所选 slot 从 0 开始，对应本次生产列表，灯集合改变可能重排，不能把 slot 当稳定 LightId。
+
+| 调试视图 | 含义 |
+| --- | --- |
+| 重建可见度 | 官方 SIGMA 解码后的线性 V；Raw 模式与 Raw 相同 |
+| 原始可见度 | 真实 raw V；多次 SIGMA 估计时仅为最后一个单样本，不是 N 次原始平均 |
+| 差值 | `abs(重建 V - raw V)`，用于观察重建改动，不是真值误差 |
+| 最近遮挡距离 | 当前实际采样射线的最近距离，按显示上限映射黑到白，无 blocker 为蓝色 |
+| 接收对象身份 | OB owner 伪彩色；不表示额外的 RT instance / primitive ID |
+| 像素状态 | 黑=未请求、绿=有效、红=主表面无效、蓝=灯域外、橙=射线预算不足、紫=查询错误 |
+| 全部视图 | 六种视图平铺并标注，在最终 AA / blit 后呈现 |
+
+整个所选槽无当前产品时为紫色，不沿用旧相机纹理或当成无遮挡；生产关闭 / 缺 host 时仍可通过调试观察这一状态。屏幕上有效的 `V=0` 才表示完全遮挡。多个 Feature 同时请求调试时沿用公共 HoDebugRenderPass 的确定性选择规则，当前只会最终呈现其中一个。
+
 <a id="quality-reference"></a>
 
 ## 9. 合并后的质量研究结论
@@ -518,7 +545,7 @@ cookie、baked-only、受限 Light.cullingMask caster linking，以及其他未�
 
 `Synchronize(renderers, mask, excludedMaterials)` 接收与观察相机无关的世界集合；后两个参数可省略。每个 Renderer / submesh 单独登记，要求一材质对应一 submesh、三角形拓扑；支持 MeshRenderer 与 SkinnedMeshRenderer。disabled、inactive、forceRenderingOff、static batch、additional vertex stream、缺失材质等进入拒绝或排除路径。不要传相机 culling results，否则会丢失离屏遮挡物。
 
-默认只登记 opaque；调用者传入共同的 `HoRTCutoutSupport` 和 native hit material 后，DI / GI 均可登记有界 lilToon Cutout。要求 UV0、无 MPB，排除动画主 UV、dissolve、distance fade、dither、多主色、视差等复杂情况。AS 当前关闭 triangle culling，alpha 与表面求值由 adapter 决定；任意 GPU 顶点位移、布料、Terrain、fur、描边壳不在自动支持域。显式登记的几何不会因 `shadowCastingMode=Off` 自动移除，未来 Shadow 的查询策略须单独定义。支持范围见 [DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md) 和 [GI](Ho-RTGI.md)。
+默认只登记 opaque；调用者传入共同的 `HoRTCutoutSupport` 和 native hit material 后，可登记有界 lilToon Cutout。要求 UV0、无 MPB，排除动画主 UV、dissolve、distance fade、dither、多主色、视差等复杂情况。DI / GI 的 Surface 用途仍关闭 triangle culling，并保留 `shadowCastingMode=Off` 的可见几何；RTShadow 的 ShadowCasters 用途排除 Cast Off，包含 ShadowsOnly，并按 TwoSided / 材质 `_Cull` 处理射线面向与 AS flags。alpha / surface 运算由 adapter 负责；任意 GPU 顶点位移、布料、Terrain、fur、描边壳不在自动支持域。支持范围见 [DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md)、[GI](Ho-RTGI.md) 与本页 §8.5。
 
 蒙皮通过 `BakeMesh(mesh, true)` 获取当前骨骼 / BlendShape 姿态，补偿 Renderer 缩放后由 AS 应用一次 localToWorld。姿态、源 Mesh 或蒙皮质量变化时更新快照及 BLAS，稳定姿态复用；缺失 / 非有限姿态会移除旧实例。源 Mesh 原地编辑必须调用 `MarkGeometryDirty()` 再同步；仅清 TLAS 后重新加入同一个 Mesh 不能保证旧 BLAS 刷新。CPU Bake 与完整 Mesh 副本仍有成本，兼容 pose 已由 host 共享；[场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md) 中的双副本账本属于历史时点，不能用于推算现状。
 
@@ -539,6 +566,7 @@ R2 的 [HoRTGeometryCache](../Runtime/RT/HoRTGeometryCache.cs) 可由宿主注�
 | 查询路径 | 当前返回与边界 |
 | --- | --- |
 | 公共 inline `HoRTSceneQuery.hlsl` | opaque 最近命中，跳过 non-opaque；含距离、位置、实例 / submesh / 材质 / primitive 身份、重心坐标和 frontFace，不含 UV、法线或 radiance |
+| 公共 native `HoRTNativeVisibility.hlsl` | 支持共享 Cutout any-hit 的真正最近 blocker 与独立 occlusion 入口；最近查询不使用 first-hit shortcut，返回 status / 距离 / 实例与 primitive / 重心 / 面向，失败 payload 不可作为 miss |
 | DI native final visibility | 对支持的 Cutout 执行真实 alpha any-hit，查询所选灯样本的遮挡 |
 | GI native secondary material | 从实际三角形读取 UV0～3、几何 / 插值 / normal-map 法线及支持域内材质组分、emission |
 | GI native visibility adapter | 与 GI 相同的 alpha 规则，适配结果只保证 status / distance，不提供公共 inline 的 metadata 身份字段 |
@@ -566,7 +594,7 @@ Material.A 是 `meshNormalAvailable`，旧 / 自定义 writer 未提供时必须
 
 HLSL 使用 `HoRTTryLoadPrimarySurface(pixel, surface)`；`AtUV` 包装会定位源像素并吸附中心，不双线性混合两个表面。先通过 GB / SB 深度关联，只有 status 5 成功；0～6 沿用关联层，7 为不支持的相机 / 投影，8 为属性或网格法线标记缺失，9 为非有限数据 / 无效法线。失败只保留 status，其余 payload 清零。
 
-当前支持 Mono、Texture2D、同分辨率单采样域、标准透视 / 正交，可有 lens shift 和本帧 jitter；不支持 oblique / 非标准深度、XR / array，MSAA resolve 与异分辨率无法确认，硬件动态分辨率尚未验收。快照只用于当前相机当前 graph，不跨帧缓存 TextureHandle，也不提供 motion / temporal。未来 RTShadow 的屏幕输入必须匹配相机、分辨率、jitter 与表面；中心吸附不能替代真正的子像素几何采样。
+当前支持 Mono、Texture2D、同分辨率单采样域、标准透视 / 正交，可有 lens shift 和本帧 jitter；不支持 oblique / 非标准深度、XR / array，MSAA resolve 与异分辨率无法确认，硬件动态分辨率尚未验收。快照只用于当前相机当前 graph，不跨帧缓存 TextureHandle，也不提供 motion / temporal。生产 RTShadow 已借用此输入并核对相机、分辨率、jitter 与表面；中心吸附不能替代真正的子像素几何采样。
 
 ### 10.4 Helper 验证入口
 

@@ -42,6 +42,7 @@ namespace lilToon.URP.Extensions.Debugging
                 AddRange(views, lilToon.URP.Extensions.VolumeLight.HoVolumeLightDebugViewInfo.Views);
                 AddRange(views, lilToon.URP.Extensions.RTDI.HoRTDIDebugViewInfo.Views);
                 AddRange(views, lilToon.URP.Extensions.RTGI.HoRTGIDebugViewInfo.Views);
+                AddRange(views, lilToon.URP.Extensions.RTShadow.HoRTShadowDebugViewInfo.Views);
                 return views;
             }
         }

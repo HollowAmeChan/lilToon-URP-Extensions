@@ -1,0 +1,27 @@
+{
+  "stage": "RTShadow controls serialized Player",
+  "mode": "rg",
+  "sourceCommit": "63b8097e294aa2681c66ef9cf480c966706d1433",
+  "sourcesFile": "sources-20261028T162359169.json",
+  "probeSha256": "C53C282C1F3AAFCA5082951E615F8A8DFE10E655FD0B6038C97D01F63D7FE7D6",
+  "buildSourceSha256": "D7182AE961B04887665D1D998D036D24BB3F311192448DB1A9E0D83F61E34721",
+  "activeProcess": null,
+  "buildExit": 0,
+  "buildLog": "build-rg-20261028T162359169.log",
+  "buildLogSha256": "8D6F7BC436A2DC823AACBDCBD49632539D94039E84239FA79BADA175C64F2225",
+  "reviewedExistingBuildWarnings": [
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+  ],
+  "buildDiagnostics": [],
+  "packedNativeSha256": "5EFF9D42D56DA8B38D305BC483D84263AEE3C31A6C6C3A0A637370DA68220EDB",
+  "playerExit": 0,
+  "playerLog": "player-rg-20261028T162359169.log",
+  "playerLogSha256": "55026EA29EC64BDAD1253050C9B816E8801F6203FACC2A28C738B84EB080A3C8",
+  "reviewedExistingCleanupWarnings": [],
+  "playerDiagnostics": [],
+  "playerReport": "report-rg-20261028T162359169.json",
+  "pass": true
+}
