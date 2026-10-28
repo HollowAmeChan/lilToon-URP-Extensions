@@ -1,0 +1,80 @@
+{
+  "stage": "Self",
+  "sourceCommit": "bcd83abfe8b4adf17919e46d79a4f80336d72ff0",
+  "startedUtc": "2026-10-28T17:10:40.5388569Z",
+  "sourcesFile": "sources-20261028T171040052.json",
+  "runnerSha256": "36AE3D9C18D370A11C5B2F484A9411694DC004F91C582CDB5E9703779948B34F",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "self-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSelf",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "E7F384CD6BEABB927D771CAEC1A0BA1E91C1A3CF10614550E4649C24304B2A97",
+      "seconds": 10.2004671,
+      "pass": true,
+      "logFile": "ho-rt-self-self-rg-20261028T171040052.log"
+    },
+    {
+      "name": "self-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSelfCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "14A72DEC42C4D023C04B41B559D5C517093F8340E10BB1E44DDC37FC88205917",
+      "seconds": 8.4576937,
+      "pass": true,
+      "logFile": "ho-rt-self-self-compat-20261028T171040052.log"
+    },
+    {
+      "name": "multi-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "5B649594415156BEAA85B53181546DCBF8B0879A53BF4089FE0DCB4F60968A16",
+      "seconds": 8.701574,
+      "pass": true,
+      "logFile": "ho-rt-self-multi-rg-20261028T171040052.log"
+    },
+    {
+      "name": "multi-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMultiCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "57834A6A6064D846465FB93BCCA3BFD3C927FE5981E28C816CA705C85E3E33E2",
+      "seconds": 9.0982339,
+      "pass": true,
+      "logFile": "ho-rt-self-multi-compat-20261028T171040052.log"
+    },
+    {
+      "name": "export-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSingleFrame",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "FF4154371ADC8968DB001E87CF05379AC9E655BA15C5FE6DA4EDA5F9CA08A220",
+      "seconds": 9.1859954,
+      "pass": true,
+      "logFile": "ho-rt-self-export-rg-20261028T171040052.log"
+    }
+  ]
+}

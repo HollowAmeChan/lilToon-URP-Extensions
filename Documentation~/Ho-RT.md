@@ -496,9 +496,15 @@ Feature 检查器分为生产、灯与接收域、重建质量、调试、高级
 
 高精度出图的两个预算分别设置：灯的有限角度决定物理半影，Raw 样本数或 SIGMA 无历史估计数决定该表面点的光源积分；**URP Asset 的 Render Scale** 决定主表面和最终颜色的空间采样。Render Scale=2 是已验收的 2×边长路线，GB / SB 维持 Full / 同分辨率单采样，RTShadow 自动匹配内部域。不要只放大阴影纹理或先缩 V 再执行 ramp。需要无历史软影可使用 SIGMA 无历史并提高估计数；需要对照滤波偏差则使用 Raw 高样本参考。零角度硬影只需单方向查询，高 Raw spp 不会增加其半影。默认值不是自动最高质量预设；薄影当前约 88%暗侧保留的限制依然成立。
 
+**2026-10-29 原始自遮挡修正。** 用户在接好接收域和顺序后看到 Raw / Visibility 同形的大块暗斑，运动时闪烁。独立解析自投影平面重现：只有沿射线 `TMin=0.0001m` 的旧生产代码，在 143131 个有效样本里误遮挡 64233 次，124889 组稳定接收像素比较中随子像素投影翻转 3096 次；最近错误 blocker 约 0.0001004m。这是 raster 深度重建与 AS 几何的舍入差异被掠射角放大的一种明确故障，不能靠 PCSS / SIGMA 调参消掉，也不证明用户场景中的所有块状阴影都只有这一个原因。
+
+RTShadow 现在用已有 `rayBias` 同时沿出射侧网格法线偏移起点、设置沿射线最小距离，并以世界位置舍入量保留可表达位移；delta 点 / 聚光从新起点重新瞄准实际有限灯端点。使用 SB 的插值网格法线，不使用 normal-map 法线，没有跳过整个接收物体或丢弃任意近命中。取法线方向避免自相交的依据见 [NVIDIA DXR 自相交说明](https://developer.nvidia.com/blog/solving-self-intersection-artifacts-in-directx-raytracing/)；本实现是 raster 起点保护，**没有声称实现该文需要三角形重建 / 变换误差界的完整保证**。过大偏移仍会丢失贴面细影，不能用大 bias 把几何 / 姿态错配遮住；完整 motion 重投影和任意材质位移仍不在该修复范围。
+
+专项见 [Self review](../Tests~/RT/Self/review.json)，GPU 入口 `Tests~/RT/run_validation.ps1 -Stage Self`，复核 `python Tests~/RT/Self/verify_results.py`；独立 Player 入口为 `Tests~/RT/Self/Player/run_player.ps1`（另加 `-Compatibility`）。修正后同一 143131 样本误遮挡与 jitter 翻转均为 0，2mm 真正遮挡片的 8448 遮挡像素保留，四个骨骼姿态共 33792 有效样本没有错误自影；原多灯双路径和 SIGMA 无历史同帧质量回归通过。三次失败原样保留：首次同时包含接触片参与 raster 的夹具错误，修正该夹具后旧生产代码仍以相同自影 / 翻转数量失败；补蒙皮时又错误地让接触片重新参与 raster，造成有效样本不足，禁用夹具接触片后恢复，而非降低有效样本门槛。两路径保存的原始信号一致；两个序列化 Player 各 21 Update / 148 checks，另验打包射线 Shader 的掠射自投影与八组 jitter，构建 / 运行均退出 0，原生插件字节一致，无新增运行诊断或 GC 警告额度；分程序集编译 0 错误。
+
 ### 8.7 本轮交付审计与保留边界
 
-[完整机器审计](../Tests~/RT/completion-audit.json) 的复核入口为 `python Tests~/RT/verify_completion.py`。R0–R6、补充 UI 和最终空间采样均已有对应实现 / 源指纹 / 有界验证；当前 Runtime / 检查器与实际序列化 Player 的生产提交连续，原 native DLL 与 R0 字节一致，20 份迁移 metadata 保持原字节，生产源码无旧模块命名空间或平行 RayTracing 目录。RTDI / RTGI 的场景所有权已收敛到 host，仍保留效果算法、adapter 能力、独立历史和 NRD；当前没有本轮必做实现步骤待完成。
+[完整机器审计](../Tests~/RT/completion-audit.json) 及 `python Tests~/RT/verify_completion.py` 记录 R0–R6 收尾时点的生产版本：对应实现 / 源指纹 / 有界验证完整，Runtime / 检查器与当时 serialized Player 连续，native DLL 与 R0 字节一致，20 份迁移 metadata 保持原字节，无旧模块命名空间或平行 RayTracing 目录。后续排序诊断与上述自遮挡修正分别使用 InputOrder / Self 的新指纹和新回归，不重写旧审计来声称它们自动适用于后来源码。RTDI / RTGI 仍借 host，保留效果算法、adapter 能力、独立历史和 NRD；本次自遮挡改动只在独立 RTShadow 出射起点，未扩改两路光照算法。
 
 审计同时核查现行主文档和导航的本地链接，修正仍宣称“host / RTShadow / SIGMA 未实现”的索引及旧 GI 私有 scene 生命周期说明；只保留一个 Ho-RT 架构 / 使用 / 阶段结论入口，没有再开计划或交接文档。历史交接正文、旧失败、来源 SHA 和当时的“下一项”保留为证据，不重新标成当前任务。
 

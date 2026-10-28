@@ -1,0 +1,83 @@
+{
+  "stage": "RTShadow grazing raster-origin self-intersection guard",
+  "referenceCommit": "bcd83abf",
+  "accepted": {
+    "self-rg": "run-20261028T171040052.json",
+    "self-compat": "run-20261028T171040052.json",
+    "multi-rg": "run-20261028T171040052.json",
+    "multi-compat": "run-20261028T171040052.json",
+    "export-rg": "run-20261028T171040052.json"
+  },
+  "reports": {
+    "self-rg": {
+      "pass": true,
+      "compatibility": false,
+      "validPixels": 143131,
+      "falseShadowPixels": 0,
+      "stableCompared": 124889,
+      "jitterFlips": 0,
+      "contactBlocked": 8448,
+      "skinnedValid": 33792,
+      "skinnedFalse": 0,
+      "nearestSelfDistance": 65504.0,
+      "evidence": [
+        "Self-shadowing plane is analytically unoccluded on its outgoing hemisphere; two-sided source remains in AS",
+        "Sixteen current jittered surface requests exercise perspective and orthographic raster depth reconstruction",
+        "Nearby separate surface at 2mm must remain a real occluder",
+        "Four moving bone poses keep the self-caster raster and shared RT skinned snapshot aligned"
+      ]
+    },
+    "self-compat": {
+      "pass": true,
+      "compatibility": true,
+      "validPixels": 143131,
+      "falseShadowPixels": 0,
+      "stableCompared": 124889,
+      "jitterFlips": 0,
+      "contactBlocked": 8448,
+      "skinnedValid": 33792,
+      "skinnedFalse": 0,
+      "nearestSelfDistance": 65504.0,
+      "evidence": [
+        "Self-shadowing plane is analytically unoccluded on its outgoing hemisphere; two-sided source remains in AS",
+        "Sixteen current jittered surface requests exercise perspective and orthographic raster depth reconstruction",
+        "Nearby separate surface at 2mm must remain a real occluder",
+        "Four moving bone poses keep the self-caster raster and shared RT skinned snapshot aligned"
+      ]
+    }
+  },
+  "serializedPlayers": {
+    "compat": "run-compat-20261028T171353151.json",
+    "rg": "run-rg-20261028T171133640.json"
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T170618469.json",
+      "case": "self-rg",
+      "diagnostics": [
+        "Exception: Self Cast false=64233 / 143131 jitterFlips=3096 nearest=0.000100393 contact=0\r"
+      ]
+    },
+    {
+      "run": "run-20261028T170719547.json",
+      "case": "self-rg",
+      "diagnostics": [
+        "Exception: Self Cast false=64233 / 143131 jitterFlips=3096 nearest=0.000100393 contact=8448\r"
+      ]
+    },
+    {
+      "run": "run-20261028T170958925.json",
+      "case": "self-rg",
+      "diagnostics": [
+        "Exception: Self Cast false=0 / 143131 jitterFlips=0 nearest=65504 contact=8448 skinned=0 / 576\r"
+      ]
+    }
+  ],
+  "originalProductionControl": [
+    "self-rg-20261028T170719547-self-report.json"
+  ],
+  "unchangedRuntimeHostDiGiNrdCharacterShadowFiles": 427,
+  "benefit": "Outgoing mesh-normal ray origin guard eliminates 64233/143131 false self-shadows and 3096 jitter-induced visibility flips in an analytically unoccluded two-sided plane. Four bone poses remain lit; a real 2mm blocker retains 8448 occluded samples. Per-light and current no-history SIGMA regressions remain valid. Both serialized Players verify packed grazing jitter plus original 132 controls.",
+  "cost": "Small per-ray origin arithmetic, no new texture, history, trace or AS. Delta local direction and finite endpoint are recomputed from the actual shifted origin.",
+  "limits": "Normal clearance uses existing world-metre rayBias and a representable world-position rounding floor; not the full triangle-reconstruction error-bound algorithm. Interpolated mesh normal is not flat primitive normal. Excessive bias can still detach tiny contacts. Explicit projection jitter and bone poses are tested; no desktop/live user scene or complete TAA reprojection qualification. Screenshot matching is an evidence-based cause hypothesis, not proof that every artifact in the user scene is removed."
+}

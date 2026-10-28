@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4','R5Sigma','R5Cast','R5Npr','R5Export','R5Thin','R6','Controls','Spatial','InputOrder')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4','R5Sigma','R5Cast','R5Npr','R5Export','R5Thin','R6','Controls','Spatial','InputOrder','Self')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
@@ -179,6 +179,15 @@ if($Stage -eq 'InputOrder') {
         @{name='input-order-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunInputOrderCompatibility';marker='[HoRTShadowInputOrder] PASS'}
     )
 }
+if($Stage -eq 'Self') {
+    $taskCases=@(
+        @{name='self-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSelf';marker='[HoRTShadowSelf] PASS'},
+        @{name='self-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSelfCompatibility';marker='[HoRTShadowSelf] PASS'},
+        @{name='multi-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti';marker='[HoRTShadowMulti] PASS'},
+        @{name='multi-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMultiCompatibility';marker='[HoRTShadowMulti] PASS'},
+        @{name='export-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSingleFrame';marker='[HoRTShadowSingleFrame] PASS'}
+    )
+}
 if ($Case) { $taskCases = @($taskCases | Where-Object { $_.name -eq $Case }); if ($taskCases.Count -eq 0) { throw 'Unknown validation case' } }
 $taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } elseif ($Stage -eq 'R4Query') { 'R4/Query' } elseif($Stage -eq 'R5Sigma') {'R5'} elseif($Stage -eq 'R5Cast') {'R5/Production'} elseif($Stage -eq 'R5Npr') {'R5/NPR'} elseif($Stage -eq 'R5Export') {'R5/Export'} elseif($Stage -eq 'R5Thin') {'R5/Thin'} else { $Stage })
 New-Item -ItemType Directory -Force -Path $taskResults | Out-Null
@@ -188,7 +197,7 @@ $taskSources = @(Get-ChildItem -LiteralPath (Join-Path $taskRoot 'Runtime'),(Joi
     @{path=$_.FullName.Substring($taskRoot.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
 })
 $taskSourcePath = Join-Path $taskResults ('sources-' + $taskStamp + '.json')
-if($Stage -in @('R5Npr','R5Export','R5Thin','R6','Controls','Spatial','InputOrder')) {
+if($Stage -in @('R5Npr','R5Export','R5Thin','R6','Controls','Spatial','InputOrder','Self')) {
     $taskSharedIncludes=[IO.Path]::GetFullPath((Join-Path $taskRoot '../lilToon/Assets/lilToon/Shader/Includes'))
     $taskSources+=@(Get-ChildItem -LiteralPath $taskSharedIncludes -Recurse -File -Filter '*.hlsl'|ForEach-Object{@{path=[IO.Path]::GetRelativePath($taskRoot,$_.FullName).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName).Hash}})
 }
@@ -284,6 +293,9 @@ foreach ($taskJob in $taskCases) {
     if($taskJob.name.StartsWith('input-order-')) {
         $taskOrderReport=Join-Path $taskProject 'ho-rt-shadow/report.json'
         if((Test-Path -LiteralPath $taskOrderReport) -and (Get-Item -LiteralPath $taskOrderReport).LastWriteTimeUtc -ge $taskStarted){Copy-Item -LiteralPath $taskOrderReport -Destination (Join-Path $taskResults ('report-'+$taskJob.name+'-'+$taskStamp+'.json'))}
+    }
+    if($taskJob.name.StartsWith('self-')) {
+        Get-ChildItem -LiteralPath (Join-Path $taskProject 'ho-rt-shadow') -Filter 'self-*' -File |Where-Object{$_.LastWriteTimeUtc -ge $taskStarted}|ForEach-Object{Copy-Item -LiteralPath $_.FullName -Destination (Join-Path $taskResults ($taskJob.name+'-'+$taskStamp+'-'+$_.Name))}
     }
     Write-Output ('END ' + $taskJob.name + ' exit=' + $taskRecord.actualExit + ' marker=' + $taskRecord.marker + ' diagnostics=' + $taskDiagnostics.Count + ' pass=' + $taskRecord.pass)
     if (-not $taskRecord.pass) { throw ('Validation rejected: ' + $taskJob.name + '; inspect ' + $taskRunPath) }

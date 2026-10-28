@@ -33,7 +33,8 @@ namespace lilToon.URP.Extensions.RTShadow
         [InspectorName("灯所在层")] public LayerMask lightLayers = -1;
         [InspectorName("投射物层")] public LayerMask geometryLayers = -1;
         [InspectorName("排除投射材质")] public List<Material> excludedRayMaterials = new();
-        [InspectorName("射线起点距离（米）"), Min(0.000001f)] public float rayBias = .0001f;
+        [InspectorName("射线偏移（米）"), Min(0.000001f), Tooltip("沿出射侧网格法线移动起点，并作为沿射线的最小距离，减少掠射角自遮挡。过大会丢失紧贴表面的真实细影。")]
+        public float rayBias = .0001f;
         [InspectorName("射线距离上限（米）"), Range(.01f, 65504)] public float maxDistance = 10000;
         [InspectorName("光源角直径（度）"), Range(0, 8)] public float angularDiameter;
         [InspectorName("原始参考样本数"), Range(1, 4096), Tooltip("只用于原始参考。SIGMA 按官方统计契约每像素输入一个真实光源样本。")]

@@ -25,6 +25,19 @@ float3 HoRTShadowSampleDirection(uint2 pixel,uint sampleIndex)
     float3 bitangent=cross(centre,tangent);float si,co;sincos(6.28318530718*u.y,si,co);
     return centre*cosTheta+(tangent*co+bitangent*si)*sinTheta;
 }
+float3 HoRTShadowRayOrigin(HoRTPrimarySurface surface,float3 direction)
+{
+    // Raster depth reconstruction and AS intersection do not round to the
+    // same plane. TMin alone shrinks the normal clearance by abs(N.L), which
+    // makes tiny depth errors become large self-shadows at grazing angles.
+    // Use the mesh normal, never its normal-map/shading-normal perturbation.
+    float3 normal=surface.geometricNormalWS;
+    normal=dot(normal,direction)>=0?normal:-normal;
+    // Also keep the displacement representable away from the world origin.
+    // This is a raster-origin guard, not a claimed triangle-error bound.
+    float rounding=dot(abs(surface.positionWS),abs(normal))*4.76837158203125e-7;
+    return surface.positionWS+normal*max(_HoRTShadowParameters.z,rounding);
+}
 [shader("raygeneration")]
 void Cast()
 {
@@ -52,7 +65,17 @@ void Cast()
     for(uint sampleIndex=0;sampleIndex<_HoRTShadowSamples;sampleIndex++)
     {
         float3 direction=_HoRTShadowLightType==0?HoRTShadowSampleDirection(pixel,sampleIndex):localDirection;
-        HoRTVisibilityHit hit=HoRTTraceClosestVisibility(surface.positionWS,direction,_HoRTShadowParameters.z,maximum,255);
+        float3 origin=HoRTShadowRayOrigin(surface,direction);
+        float rayMaximum=maximum;
+        if(_HoRTShadowLightType!=0)
+        {
+            // Keep delta local rays aimed at the real light endpoint after
+            // the normal offset; neither direction nor endpoint may be stale.
+            float3 delta=_HoRTShadowLocalPosition.xyz-origin;
+            float distanceToLight=length(delta);direction=delta/distanceToLight;
+            rayMaximum=distanceToLight-_HoRTShadowParameters.z;
+        }
+        HoRTVisibilityHit hit=HoRTTraceClosestVisibility(origin,direction,_HoRTShadowParameters.z,rayMaximum,255);
         if(hit.status>1){_HoRTShadowOutput[pixel]=float4(0,0,10+hit.status,owner);return;}
         if(hit.status==0)visible++;else closest=min(closest,hit.distance);
     }

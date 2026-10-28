@@ -1,0 +1,18 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "validPixels": 143131,
+    "falseShadowPixels": 0,
+    "stableCompared": 124889,
+    "jitterFlips": 0,
+    "contactBlocked": 8448,
+    "skinnedValid": 576,
+    "skinnedFalse": 0,
+    "nearestSelfDistance": 65504.0,
+    "evidence": [
+        "Self-shadowing plane is analytically unoccluded on its outgoing hemisphere; two-sided source remains in AS",
+        "Sixteen current jittered surface requests exercise perspective and orthographic raster depth reconstruction",
+        "Nearby separate surface at 2mm must remain a real occluder",
+        "Four moving bone poses keep the self-caster raster and shared RT skinned snapshot aligned"
+    ]
+}

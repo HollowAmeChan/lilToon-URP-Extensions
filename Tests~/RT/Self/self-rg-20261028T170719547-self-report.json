@@ -1,0 +1,15 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "validPixels": 143131,
+    "falseShadowPixels": 64233,
+    "stableCompared": 124889,
+    "jitterFlips": 3096,
+    "contactBlocked": 8448,
+    "nearestSelfDistance": 0.0001003930447041057,
+    "evidence": [
+        "Self-shadowing plane is analytically unoccluded on its outgoing hemisphere; two-sided source remains in AS",
+        "Sixteen current jittered surface requests exercise perspective and orthographic raster depth reconstruction",
+        "Nearby separate surface at 2mm must remain a real occluder"
+    ]
+}

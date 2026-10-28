@@ -56,7 +56,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             if (Header(ref advanced, "高级", "射线 / Shader", AdvancedColor))
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                Draw("rayBias", "射线起点距离（米）"); Draw("maxDistance", "射线距离上限（米）");
+                Draw("rayBias", "射线偏移（米）"); Draw("maxDistance", "射线距离上限（米）");
                 foreach (string field in new[] { "shader", "visibilityMaterialShader", "sigmaShader", "sigmaPipelines", "debugShader" })
                     EditorGUILayout.PropertyField(serializedObject.FindProperty(field), true);
             }
