@@ -27,10 +27,10 @@
 ## 1. 层模型（6 层）
 
 ```text
-[L0 灯光/阴影]   ShadowCast（附加灯 atlas + URP 主光阴影）                    → shadow.main / shadow.add0..N
+[L0 栅格灯影]    ShadowCast / CharacterShadow + URP 主光阴影                → shadow.main / shadow.add0..N / 局部 CS
 [L1 输入缓冲]    GB（几何轴） / OB（逐物体轴） / SB（表面轴）                  → 见 §3 的归属表
 [L2 属性合成]    AC：typed ID 解压 + 逐像素 object/surface 语义合成 + `constant < surface` 数值属性
-[L3 屏幕效果]    GTAO / SSGI / SSS / PLR·SSR / 角色特化 / OIT                 → ao, gi, sss, reflection, eyecolor/eyedata …
+[L3 照明/效果]   RTDI / RTGI / GTAO / SSGI / SSS / PLR·SSR / 角色特化 / OIT   → 光照或各自效果产品
 [L4 图像链]      ImageProcess（只读 camera color）
 [L5 输出/调试]   AOV 导出层（多通道 EXR）+ DebugTile
 ```
@@ -52,8 +52,9 @@
 
 | 位置 | 谁 | 前置条件 |
 | --- | --- | --- |
-| **opaque 之前** | 阴影 → GB / OB / SB → **AC SemanticResolve + AttributeComposite** → **GTAO** | AC 发布 GB 覆盖范围并合成 OB/SB 语义与属性；GTAO 与 opaque ForwardLit 可在登记后查询 AC |
-| **opaque 之后** | **SSGI** → SSS → OIT → PLR → 角色特化 → ScreenProcess | SSGI 需要 opaque color；后续消费者读 pre-opaque 产生的 AC 资源 |
+| **CPU 准备 / 相机开始** | GeometryData、Ho-RT 的请求 epoch、PLR source 更新 | Ho-RT 必须在 RT 消费者之前处理 pre-cull；这部分不能只用 GPU Pass Event 排序 |
+| **opaque 之前** | 栅格阴影 → GB / OB / SB → **RTShadow**、**AC SemanticResolve + AttributeComposite** → **GTAO** | RTShadow 借 GB / SB 与 host AS，先提供 NPR Cast；AC / GTAO 提供语义与 AO，均在 Forward 前就绪 |
+| **opaque 之后** | SSGI 生产；RTDI / RTGI、SSS、体积光、OIT、PLR、角色特化按各 pass 时机执行 | RTDI / RTGI 目前在后续 pass 合成照明，RTShadow 在 Forward 前提供可见度；具体列表与时机看 §2.1，不能把一个多 pass Feature 当单个时间点 |
 | **图像链** | ImageProcess | 只读 camera color |
 | **最后** | AOV 导出（可选） → 公共调试显示 | 调试最后，不依赖 feature 顺序 |
 
@@ -65,10 +66,12 @@
 [3]  GB：Ho-GeometryBuffer                                  → 几何法线 / depth / 几何覆盖率（+ 描边视觉壳 / sky 可选）
 [4]  OB：Ho-ObjectBuffer                                    → 4 层身份 + 覆盖率（自建 MSAA resolve）+ 朝向
 [5]  SB：Ho-SurfaceBuffer                                   → 五张数值图 + owner + 语义 lane + Scalar V1 单采样 W/V
+[5.5] Ho-RTShadow（借 Ho-RT + GB / SB）                     → 逐灯 V；实际主光 V 在下方 Forward 的 NPR ramp 前接收
 [6]  AC：SemanticResolve + AttributeComposite               → Selection 池（每张两条 `(SemanticId, coverage)`）
 [6.5] Ho-GTAO（独立 feature）                               → ao / aointent   ★ 必须在 opaque 之前
         ── URP opaque / cutout 常规绘制 ──────────────────────────────
 [7]  Ho-SSGI（独立 feature，读 gisexclude）                  → gi              ★ 需要 opaque 后的颜色
+[7.5] Ho-RTDI / Ho-RTGI（可选）                           → 独立直接 / 间接光；正常合成在透明前，纯产品可在后处理前
 [8]  AC 资源由 after-opaque 消费者直接读，不在这里重做一趟合成
 [9]  Ho-SubsurfaceScattering                                 → sss
 [10] Ho-WeightedOIT（透明合成）
@@ -85,15 +88,18 @@
 
 | 约束 | 为什么 |
 | --- | --- |
-| `Ho-ShadowCast → 所有效果`（**含 OIT**） | 实机确认 OIT 在 ShadowCast 之后，所以"材质/效果都吃阴影"成立 |
+| `Ho-ShadowCast / Ho-CharacterShadow → 对应材质消费者`（**含 OIT**） | 这里指栅格 shadow-map；RTShadow 自己还需要 GB / SB，不能被安排在全部输入缓冲之前 |
 | `GB ↮ OB`、`GB ↮ SB`、`OB ↮ SB` | 三个数值生产轴独立；显式例外：OB raw/ranked → SB Scalar V1 关联归约 → AC |
 | **`GTAO → opaque`** | 材质 forward 里采样 AO |
 | **`opaque → SSGI`** | GI 要 opaque 后的颜色 |
 | `{GB, OB, SB} → AC → GTAO → opaque` | AC 消费三轴输入；几何与身份覆盖范围独立，按 typed 查询读取 |
+| `Ho-RT → {RTShadow, RTDI, RTGI}` | pre-cull 请求在消费者声明前打开；宿主 Add 准备 / 冻结后消费者才可借 view |
+| `{GB, SB} → RTShadow → opaque Forward` | 当前 RTShadow 的位置、法线、深度和 owner 输入来自同域主表面；不能读取尚未 Record 的 SB，也不能挪到 Forward 之后 |
+| `Atmosphere → {RTDI, RTGI, VolumeLight}`（启用相应天空输入时） | 借当前相机的天空 HDR / 参数快照；缺失按各模块的显式规则停用天空贡献，不借旧相机结果 |
 | `AC → GTAO / opaque ForwardLit / SSS / OIT / PLR / 角色特化 / ScreenProcess` | AC 在 pre-opaque 产出语义与属性；消费者按登记的需求查询 |
 
 > GB/OB/SB/AC/GTAO 默认都在 `BeforeRenderingOpaques`，同事件内的先后由 Renderer Feature 列表表达
-> `{GB, OB, SB} → AC → GTAO`。这些 `passEvent` 不是可任意打破偏序的自由项。
+> `GB → OB → SB → RTShadow / AC → GTAO`。RTShadow 与 AC 是同阶段的两条消费支路，两者互不依赖，表中采用 RTShadow 在 AC 前的推荐摆法。这些 `passEvent` 不是可任意打破偏序的自由项。
 
 **实机校准过的三条顺序**（以实机 Frame Debugger 为准，与推导冲突时按这里）：
 
@@ -113,6 +119,47 @@ Probe/Sky 是 source miss 时的材质 fallback，不另占 fullscreen pass。`_
 strength 归零，`_UsePlanarReflection` 只能在总开关打开时生效；`roughness = perceptualRoughness²`，
 `F0 = lerp(reflectance, saturate(baseColor), metallic)`。
 
+### 2.1 推荐 Renderer Feature 列表
+
+下面是默认设置下的推荐列表，未使用的模块可省略。**列表顺序和 Pass Event 必须同时满足**：URP 先按 `renderPassEvent` 稳定排序，同事件保留 Enqueue 顺序，通常就是 Renderer Feature 列表顺序及该 Feature 内的 Enqueue 顺序。CPU 的 pre-cull / source callback 另有阶段约束，不受这个 GPU 排序代替。一个 Feature 有多个 pass 时，主生产、合成与调试分别在自己的时机执行。
+
+| 推荐位置 | Feature | 当前主要阶段 / 默认时机 | 必须先就绪的输入与后续消费者 |
+| --- | --- | --- | --- |
+| 1 | Ho-GeometryData | 发布与 Tension 为 `BeforeRendering` | 为后续几何 writer、描边与材质提供公共几何数据 |
+| 2 | Ho-RT | pre-cull 开 epoch → Add 准备场景 → `AfterRendering` 完成 fence | 列表上在 RTShadow / RTDI / RTGI 前；只管公共资源，不输出最终照明 |
+| 3 | Ho-CharacterShadow | `BeforeRenderingShadows` | 局部栅格 Cast 在 Forward 接收前完成 |
+| 4 | Ho-ShadowCast | `BeforeRenderingPrePasses`，实际限制为不早于该事件 | 附加灯 atlas 在材质和 OIT 消费前完成 |
+| 5 | Ho-Atmosphere | 环境产品 `AfterRenderingPrePasses` | 天空 HDR / 太阳参数供后续 RTDI / RTGI / VolumeLight；具体合成按该模块的 pass |
+| 6 | Ho-PlanarReflection | source 在相机开始回调更新；可选特殊 resolve 默认 `BeforeRenderingPostProcessing` | source 在主相机材质消费前完成；特殊 resolve 在 OIT composite 后，不能把列表早放误当所有 pass 都早执行 |
+| 7 | Ho-GeometryBuffer | `BeforeRenderingOpaques` | 为 SB 关联检查、RT 主表面和 AC 等生产几何输入 |
+| 8 | Ho-ObjectBuffer | `BeforeRenderingOpaques` | 身份与覆盖先于 SB Scalar V1 关联和 AC；并不因此使普通 SB 数值面依赖 OB 纹理 |
+| 9 | Ho-SurfaceBuffer | `BeforeRenderingOpaques` | 为 RTShadow / RTDI / RTGI 和 AC 提供表面、深度与 owner；RT 当前要求与 GB 同分辨率、单采样 |
+| 10 | Ho-RTShadow | 固定 `BeforeRenderingOpaques` | **同事件时必须在 GB / SB 下方**；逐灯 V、主光 Cast alias 在 opaque / cutout Forward 的 NPR ramp 前可用 |
+| 11 | Ho-AttributeComposite | `BeforeRenderingOpaques` | GB / OB / SB 后，GTAO、Forward 与后续语义消费者前 |
+| 12 | Ho-GTAO | 固定 pre-opaque `BeforeRenderingOpaques` | AC 后，Forward 接收 AO 前 |
+| 13 | Ho-SSGI | 生产默认 `AfterRenderingOpaques`；合成默认 `BeforeRenderingPostProcessing` | 生产要 opaque color 和已就绪 AC；不要把“生产在 SSS 前”误写成“最终合成也一定在 SSS 前” |
+| 14 | Ho-RTDI | 正常合成启用时生产 / 合成为 `BeforeRenderingTransparents`；纯产品模式生产为 `BeforeRenderingPostProcessing` | Ho-RT + GB / SB，天空按需借 Atmosphere；若消费其产品，必须检查所选模式的实际生产时机 |
+| 15 | Ho-RTGI | 时机同上，拥有独立算法与历史 | 建议在 DI 后叠加；使用 DI 替换模式时，GI 加法应在替换之后，避免被后续替换擦掉 |
+| 16 | Ho-SubsurfaceScattering | composite 默认 `BeforeRenderingTransparents` | AC / SB 与要处理的当前 camera color 先就绪 |
+| 17 | Ho-VolumeLight | 体积光和 dust 默认 `BeforeRenderingTransparents` | 太阳 / 天空参数、相机深度先就绪；若希望 OIT 使用含体积光的 opaque copy，放在其 copy pass 之前并核实际事件 |
+| 18 | WeightedOIT | opaque copy 在 accumulation 前；accumulation 默认 `BeforeRenderingTransparents`、composite 默认 `AfterRenderingTransparents` | 阴影、材质与 opaque 输入先就绪；composite 在角色特化前。opaque copy 默认事件 449，前一行仅调整列表不能让事件 450 的体积光进入该副本 |
+| 19 | Ho-CharacterSpecialization | 默认 `AfterRenderingTransparents` | AC / GB / 身份和透明合成先就绪；同事件放在 OIT 下方 |
+| 20 | Ho-ScreenProcess | 固定 `AfterRenderingPostProcessing` | 读取已完成语义与正常场景颜色，在最终图像链之前 |
+| 21 | Ho-ImageProcess | 固定 `AfterRenderingPostProcessing + 1` | ScreenProcess 之后执行最终图像链；自定义后处理也须声明与其先后关系 |
+| 最终显示 | 模块 debug / Ho-DebugTile | debug 捕获默认 `AfterRenderingPostProcessing`，统一 presenter 为 `AfterRendering + 4` | 诊断绕开正常颜色合成，在最终 AA / blit 后呈现；多个模块同时开启按公共确定性规则选择，列表排序不是调试选择器 |
+| 按导出需求 | AOV / export 消费者（可选） | 在所需产品完成后、句柄释放前；最终 beauty 则在图像链后读取 | 必须逐输出说明采样时机；不能凭 Feature 名称统一放到一个事件 |
+
+这些位置描述的是组合关系，不要求给独立分支添加不存在的依赖。外部 Feature（例如 Shoost 或自定义后处理）接入时也要声明自己读取的颜色阶段、替换 / 加法语义和对应事件；未声明前，不把某个项目当前列表当通用排序依据。
+
+### 2.2 顺序错误的判定
+
+- **同事件、列表排反**：把消费者放到生产者下方。实际例子为 `RTShadow → SB` 且两者事件均 250，RTShadow Record 时拿不到 SB；即使显示“生产 1”，它也只是已调度，像素仍会全部 `InvalidSurface`，调试状态为红、接收身份为黑。正确为 `SB → RTShadow`。
+- **生产事件更晚**：先修 `passEvent`，单独拖列表无效。例如 SB 在 `AfterRenderingOpaques`、RTShadow 在 `BeforeRenderingOpaques`，后者必定先读。RTShadow 要给 Forward 提供 Cast，不能移到 opaque 后来迁就晚到的输入。
+- **CPU 准备顺序错误**：例如 Ho-RT 位于 RT 消费者之后，epoch / view 请求会失败；更改某个 GPU pass 的事件不能补这个缺口。
+- **生产域不一致**：GB Half / Quarter、MSAA resolve 与 SB 单采样等会使中心采样域不同；排好顺序仍须满足消费者的尺寸、采样和相机合同。
+
+RenderGraph 的资源依赖不能补救尚未创建或发布的 ContextItem 句柄，也不自动替你移动 Feature。现行 RTShadow Inspector 会检查启用状态、GB Full、Ho-RT pre-cull 顺序、GB / SB 的事件与同事件相对位置；这是告警，排序仍由 Renderer 资产显式表达。
+
 ---
 
 ## 3. 数据归属与"谁能读谁"
@@ -130,6 +177,8 @@ strength 归零，`_UsePlanarReflection` 只能在总开关打开时生效；`ro
 2. **遮罩只有一个来源 = AC**：任何屏幕效果都不许自己再攒一套语义图。
 3. **消费者读合成结果，不读原始通道**；`crypto_*` ID/manifest 只属于 AOV 导出层。
 
+已登记的数值输入例外：公共 `HoRTPrimarySurfaceInputs` 为 RTShadow / RTDI / RTGI 直接借同相机 GB / SB，执行深度关联和采样域校验，提供世界位置、两种法线及可选 owner。这是原生 RT 查询的主表面数值输入，不另做一套语义遮罩；语义 Selection / 属性覆盖仍走 AC。此例外的生产 / 消费顺序必须遵守 §2。
+
 **法线分家**（已定论）：**GB = 几何法线**（AO/GI 遮挡、shadow bias、物理遮挡、描边）；
 **SB = 着色法线**（PBR 光照、SSR 反射方向，以及后续一切吃法线贴图的 feature）。两者平行、不互为来源。
 
@@ -143,11 +192,11 @@ strength 归零，`_UsePlanarReflection` 只能在总开关打开时生效；`ro
 | OB `Id0` / `Id1` / `Coverage` | 4 层 ranked `(组 8 bit, 槽位 8 bit)` + 4 层覆盖率；ID 点采样 + `round(v*255)`；覆盖率线性、不归一化。请求 N=4，实际 4/2/1；只承诺"每 sample 唯一前表面 ID"的 `K≥N` 不丢 | ✅（自建 MSAA，与相机 AA 解耦） |
 | AC `Selection` | `HoSemanticSchema` 把 8-bit SemanticId 绑到最多 16 个 lane；AC 按 IdentityId 解压 object membership，与 SB 的 `(SemanticId, value)` 按 `sourceMode` 合成，再 resolve 成 `(SemanticId, coverage)` | ✅（4 张 RGBA8 = 8 lane；16-lane 分批未做） |
 | SB `Color.rgb` | linear HDR base color；producer 不钳制；`Color.a` 不承载覆盖率 | ✅ |
-| SB `Material.rgba` | `perceptualRoughness / metallic / thickness / reserved` | ✅ |
+| SB `Material.rgba` | `perceptualRoughness / metallic / thickness / meshNormalAvailable`；A 标记 BA 网格法线是否可供原生 RT 消费 | ✅ |
 | SB `Reflection.rgba` | `reflectance / plrStrength / reserved / reserved` | ✅ |
 | SB `Classification.rgba` | `sssProfileIdByte / curvatureHint / transmittanceHint / materialClassIdByte`；R/A 以 `round(v*255)` 还原 | ✅ |
 | SB `SurfaceOwner` | 16-bit IdentityId；0 = 未写；AC 与 OB layer 0 比较后才接受数值属性 | ✅ |
-| SB `Normal.rgba` | `octa(shadingNormal).rg` + reserved | ✅ |
+| SB `Normal.rgba` | `octa(shadingNormal).rg` + `octa(interpolatedMeshNormal).ba`；RT 需求时请求高精度，不把它当 flat triangle normal | ✅ |
 
 `SurfaceColor.a = coverage` 这条旧约定**已随 MetadataBuffer 删除**；覆盖率只有 OB/AC 一个来源。
 
@@ -192,7 +241,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 
 ## 6. Renderer Feature 清单
 
-> 顺序见 §2；这里只登记各 feature 的现状。`Ho-MetadataBuffer` 已删除，不在清单内。
+> 推荐顺序与实际事件见 §2.1；下面的编号只是登记号，不是 Renderer 排序。`Ho-MetadataBuffer` 已删除，不在清单内。
 
 | # | Feature | 现状 |
 | --- | --- | --- |
@@ -210,6 +259,14 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 12 | Ho-ScreenProcess | ✅ 语义屏幕效果（遮罩吃 AC/OB 的覆盖率） |
 | 13 | Ho-ImageProcess | ✅ 最终图像链 |
 | 14 | Ho-DebugTile | APV 等外部系统调试；模块调试走自己的入口 |
+| 15 | Ho-GeometryData | ✅ 公共描边 / Tension 数据，在几何绘制前发布 |
+| 16 | Ho-CharacterShadow | ✅ 角色局部栅格 Cast；与 RTShadow 独立配置 |
+| 17 | Ho-Atmosphere | ✅ 天空 HDR 与太阳参数的公共生产者 |
+| 18 | Ho-VolumeLight | ✅ 独立体积太阳光与 dust，借已有天空 / 深度 |
+| 19 | Ho-RT | ✅ 公共 RT 资源宿主、请求 epoch、共享姿态及 fence 寿命 |
+| 20 | Ho-RTShadow | ✅ 逐灯几何可见度、SIGMA 连续 V 与 NPR 主光接收；有界支持域见 Ho-RT |
+| 21 | Ho-RTDI | ✅ 独立直接光输出及参考 PBR 替换 / 加法合成；自身历史 |
+| 22 | Ho-RTGI | ✅ 独立一跳间接光输出及加法合成；自身历史 |
 
 **场景基线**（朱木古堂 / `New Scene.unity`）：40 盏灯 = 1×Directional（软阴影）+ 39×Point（全无阴影），
 是多光 + ShadowCast 收集的用例场景；Volume Profile 走当前新栈无 Missing；舞台 55 个材质与角色共用 lilToon 变体家族；
@@ -237,6 +294,23 @@ ShadowCast = **cast 组**（每组一张 atlas，灯按 slice 排布，首版 2 
    消费者声明的名字解析不到 → 视图里标出 + 告警；
 7. **UI 按家规写**：调试入口在 Volume（`HoXxxVolume` 的「调试」分组），feature 只放高级设置 + 兜底默认值；
    分节走 `LilUrpEditorSectionGui`，色板与摘要格式见 `Ho-UI_风格规范.md`。
+8. **声明全管线位置**：每个新 Feature 必须按下节登记推荐列表位置、实际 hook / pass 事件、输入就绪条件和后续消费者；只写“BeforeRenderingOpaques”或“放在最后”不算完成接入。
+
+### 7.1 新 Feature 的排序声明（接入必填）
+
+新建 Feature、增加 pass、增加生产者依赖或改变生产时机时，必须同步更新本文 §2.1 / §6 和该模块的现行使用入口。推荐排序集中维护在本文，模块文档链接回来并说明自身特例，不各自复制一份会漂移的全管线清单。
+
+| 声明项 | 必须写清的内容 |
+| --- | --- |
+| 全管线位置 | 属于输入、查询、语义合成、Forward 前接收、后续照明 / 图像合成还是最终输出；推荐紧邻谁之前 / 之后 |
+| 逐 pass / hook 时机 | pre-cull / beginCamera 等 CPU 阶段，以及主生产、resolve、composite、退休 fence、debug 各自的实际 `RenderPassEvent`；可配置值要写默认、限制和模式分支 |
+| 必需 / 可选输入 | 谁生产、读取哪个当前相机产品、何时就绪；缺失是停用、报错还是有明确语义的可选分支 |
+| 同事件顺序 | 必须在谁下方、谁上方；多 pass 的 Enqueue 顺序；不能只依赖偶然的资产排列 |
+| 后续消费者 | 材质、Feature 或导出在哪个阶段读；产品是借用当前 graph、持久纹理还是独立历史；替换与加法合成是否会擦除前一结果 |
+| 有效域与失败诊断 | 相机 / 分辨率 / MSAA / 身份与深度关联要求；顺序错、输入缺失时能看到具体原因，不能只写“已生产” |
+| 验证 | 涉及依赖 / 时机的改动需检查正确顺序、缺失生产者、同事件排反 / 过晚事件及修复后的实际消费；CPU 请求与 GPU 排序分别验证 |
+
+资源宿主这类不直接产颜色的 Feature 也必须声明自己的请求与寿命阶段；不能强行给它造一个无意义的颜色调试图。未登记位置与依赖的新 Feature 不计为已接入当前管线。
 
 ---
 

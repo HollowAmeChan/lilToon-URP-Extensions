@@ -1,0 +1,30 @@
+{
+    "pass": true,
+    "compatibility": true,
+    "rawOnly": true,
+    "sigma": false,
+    "failure": "",
+    "requests": 4,
+    "fractionalPixels": 0,
+    "distinctLevels": 0,
+    "toonShadow": 0.0,
+    "toonReceiveOff": 0.0,
+    "toonLit": 0.0,
+    "rawMse": 0.0,
+    "filteredMse": 0.0,
+    "checks": [
+        "Stable distinct receiver identities",
+        "Shadow request scheduled: 请求 1 灯 / 生产 1 / 不可用 0",
+        "Shadow request scheduled: 请求 1 灯 / 生产 1 / 不可用 0",
+        "Normal producer order has no dependency warning",
+        "Inspector names the SB read-before-producer dependency",
+        "Shadow request scheduled: 请求 1 灯 / 生产 1 / 不可用 0",
+        "Misordered same-event SB reproduces all-red InvalidSurface raw output",
+        "Shadow request scheduled: 请求 1 灯 / 生产 1 / 不可用 0",
+        "SB before RTShadow restores current receiver shadow status/identity: RGBA(0.000, 4.717, 1.000, 256.000)",
+        "SB before RTShadow restores current receiver shadow visibility: 0 / 0",
+        "Fixed ordering clears Inspector dependency warning",
+        "Inspector distinguishes late event from same-event list ordering",
+        "Host pre-cull dependency remains a list-order constraint"
+    ]
+}

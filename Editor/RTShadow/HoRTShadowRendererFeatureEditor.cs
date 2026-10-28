@@ -1,6 +1,11 @@
+using System.Collections.Generic;
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTShadow;
+using lilToon.URP.Extensions.SurfaceBuffer;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.Editor.RTShadow
 {
@@ -15,6 +20,13 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
         {
             serializedObject.Update(); settings = serializedObject.FindProperty("settings");
             EditorGUILayout.HelpBox("需要 Ho-RT、同分辨率单采样 GB / SB 与 D3D12。接收角色在 Ho-RTShadow Receiver 中声明；本处设默认值，Ho-RTShadow Volume 可逐相机覆盖质量及调试。", MessageType.Info);
+            if (targets.Length == 1)
+            {
+                var path = AssetDatabase.GetAssetPath(target);
+                var renderer = string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadMainAssetAtPath(path) as ScriptableRendererData;
+                foreach (string warning in DependencyWarnings(renderer, (HoRTShadowRendererFeature)target))
+                    EditorGUILayout.HelpBox(warning, MessageType.Error);
+            }
             if (Header(ref runtime, "生产", "总开关 / 相机", RuntimeColor))
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             { Draw("enabled", "生产总开关"); Draw("inSceneView", "Scene View 中生产"); }
@@ -58,6 +70,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             {
                 EditorGUILayout.LabelField("当前相机", feature.LastCamera != null ? feature.LastCamera.name : "暂无帧");
                 EditorGUILayout.LabelField("生产状态", feature.Status, EditorStyles.wordWrappedLabel);
+                EditorGUILayout.LabelField("生产数表示已调度；逐像素是否有效请看状态视图。", EditorStyles.wordWrappedMiniLabel);
                 var effective = feature.LastEffectiveSettings;
                 if (effective != null)
                 {
@@ -75,6 +88,38 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                 foreach (var item in feature.UnavailableProducts)
                     EditorGUILayout.HelpBox($"{(item.Light != null ? item.Light.name : "已销毁")} · ID {item.LightId} · {item.Status}\n{item.Reason}", MessageType.Warning);
                 EditorGUILayout.HelpBox("状态图：黑=未请求，绿=有效，红=主表面无效，蓝=灯域外，橙=射线预算不足，紫=查询错误 / 缺产品。有效像素的 V=0 才是完全遮挡。", MessageType.None);
+            }
+        }
+        internal static List<string> DependencyWarnings(ScriptableRendererData renderer, HoRTShadowRendererFeature feature)
+        {
+            var warnings = new List<string>();
+            if (renderer == null) return warnings;
+            var features = renderer.rendererFeatures;
+            int consumer = features.IndexOf(feature);
+            if (consumer < 0) return warnings;
+            int host = features.FindIndex(item => item is HoRTRendererFeature && item.isActive);
+            if (host < 0) warnings.Add("缺少已启用的 Ho-RT。请添加公共宿主并放在 RTShadow 前面。");
+            else if (host > consumer) warnings.Add("Ho-RT 必须位于 RTShadow 前面：pre-cull 请求依赖列表顺序，修改 Pass Event 不能代替宿主排序。");
+            int gb = features.FindIndex(item => item is HoGeometryBufferRendererFeature value && item.isActive && value.Settings.enabled);
+            int sb = features.FindIndex(item => item is HoSurfaceBufferRendererFeature value && item.isActive && value.Settings.enabled);
+            if (gb < 0) warnings.Add("缺少已启用的 Ho-GeometryBuffer；RTShadow 需要当前相机的 GB 主表面输入。");
+            else
+            {
+                var settings = ((HoGeometryBufferRendererFeature)features[gb]).Settings;
+                CheckProducer("Ho-GeometryBuffer", gb, settings.passEvent);
+                if (settings.renderScale != HoGeometryBufferRenderScale.Full)
+                    warnings.Add("Ho-GeometryBuffer 的 Render Scale 必须为 Full：缩小的 GB 与 SB / RTShadow 不属于同一像素采样域。");
+            }
+            if (sb < 0) warnings.Add("缺少已启用的 Ho-SurfaceBuffer；RTShadow 需要当前相机的 SB 表面、深度和 owner。");
+            else CheckProducer("Ho-SurfaceBuffer", sb, ((HoSurfaceBufferRendererFeature)features[sb]).Settings.passEvent);
+            return warnings;
+
+            void CheckProducer(string name, int producer, RenderPassEvent eventValue)
+            {
+                if (eventValue > RenderPassEvent.BeforeRenderingOpaques)
+                    warnings.Add(name + " 的 Pass Event 晚于 RTShadow 的 BeforeRenderingOpaques；请先修正生产时机，单独调整列表位置无效。");
+                else if (eventValue == RenderPassEvent.BeforeRenderingOpaques && producer > consumer)
+                    warnings.Add(name + " 排在 RTShadow 后面，且两者同为 BeforeRenderingOpaques，RTShadow 读取时输入尚未产出。请把 RTShadow 移到 " + name + " 下方。");
             }
         }
         private SerializedProperty Find(string name) => settings.FindPropertyRelative(name);

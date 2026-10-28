@@ -1,0 +1,38 @@
+{
+  "stage": "InputOrder",
+  "sourceCommit": "f0e8ba5298d09456ae86a7959253bcbeac4d4206",
+  "startedUtc": "2026-10-28T17:04:39.0867388Z",
+  "sourcesFile": "sources-20261028T170438090.json",
+  "runnerSha256": "F80EEBF759D6E192EC2E60F0EA63219A91C8A811BED91D571AA69914C83CF16A",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "input-order-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunInputOrder",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "3001476B18A5DF56F79C3C65A4A7EC5CB55296A6DB9AE3FF383B0E3A43AEEFC2",
+      "seconds": 11.9870253,
+      "pass": true,
+      "logFile": "ho-rt-inputorder-input-order-rg-20261028T170438090.log"
+    },
+    {
+      "name": "input-order-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunInputOrderCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "BE16F6B16F5EE3CF644BD260FB6E0C51BF7F53B2E8A44E2C4CF5EA9993C28F11",
+      "seconds": 8.6951577,
+      "pass": true,
+      "logFile": "ho-rt-inputorder-input-order-compat-20261028T170438090.log"
+    }
+  ]
+}

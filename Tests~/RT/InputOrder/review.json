@@ -1,0 +1,20 @@
+{
+  "stage": "RTShadow producer order diagnosis",
+  "accepted": {
+    "input-order-rg": {
+      "run": "run-20261028T170438090.json",
+      "checks": 13,
+      "requests": 4
+    },
+    "input-order-compat": {
+      "run": "run-20261028T170438090.json",
+      "checks": 13,
+      "requests": 4
+    }
+  },
+  "unfinishedRunsPreserved": [
+    "run-20261028T165713225.json"
+  ],
+  "benefit": "Inspector identifies missing/inactive host/GB/SB, wrong host pre-cull order, GB scale mismatch, same-event list reversal and too-late producer event. Both GPU paths reproduce all InvalidSurface for SB after RTShadow, and restore actual valid Cast by correcting order.",
+  "limits": "Scheduling count does not prove valid GPU pixels; diagnosis does not change renderer assets or silently reorder dependencies. Runtime algorithms unchanged. Canonical whole-pipeline placement and required new Feature declarations live in Documentation~/Ho-管线总览.md."
+}

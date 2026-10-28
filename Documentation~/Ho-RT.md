@@ -476,6 +476,8 @@ Volume / UI / 调试步骤证据见 [Controls review](../Tests~/RT/Controls/revi
 
 Renderer 的顺序为 Ho-RT、GB / SB、Ho-RTShadow；接收角色根节点添加 `Ho-RTShadow Receiver` 并指定 OB 组，整组 / 部件和逐灯接收在这里选择。声明灯在 Unity Light 上添加 `Ho-RTShadow Light`，逐方向灯角直径优先于 Feature 和 Volume 的默认值。Ho-RT 只显示资源宿主状态，没有独立质量 Volume；质量属于消费者。
 
+全管线推荐顺序与新 Feature 位置声明统一维护在 [管线总览 §2.1 / §7.1](Ho-管线总览.md)。GB / SB 与 RTShadow 默认同为 `BeforeRenderingOpaques`，所以列表上 GB / SB 必须在 RTShadow 上方；否则即使“生产 1”也只是已调度，raw 仍可能全为无效表面。Inspector 会指出缺失 / 停用生产者、GB 非 Full、Ho-RT pre-cull 列表错误，以及 GB / SB 的同事件排反或事件过晚。独立输入排序专项见 [InputOrder](../Tests~/RT/InputOrder/review.json)，双路径真实重现全红，并在把 SB 放到 RTShadow 前后恢复有效阴影。此前进程无终态的未完成 run 原样保留，不当作通过证据；没有修改用户 Renderer 资产。
+
 Feature 检查器分为生产、灯与接收域、重建质量、调试、高级、运行状态。其生产总开关始终有效，关闭后 Volume 不能重新开启。`Add Override → Post-processing → Ho-RTShadow → 光追投影` 提供逐相机启用、重建方式、默认角度、Raw 样本数、无历史估计数、种子及调试覆盖；未勾覆盖使用 Feature 默认值，inactive 组件回退默认，Camera Volume layer mask / trigger 决定参与的 Volume。Raw 与无历史的两个预算只对相应模式有效，切模式时不把另一个预算乘进去。
 
 运行状态显示当前相机、覆盖数量、实际重建参数、每灯名称 / 稳定 LightId / 当前 slot / 分辨率 / 样本与估计 / receiver 数量 / 历史 reset，以及不可用产品原因。Host Inspector 显示场景 View、累计共享 Bake、CPU fence 等待和待退休数量；这些不是整帧 GPU 耗时。调试默认仅允许 Scene View，Game View 须显式开启；所选 slot 从 0 开始，对应本次生产列表，灯集合改变可能重排，不能把 slot 当稳定 LightId。

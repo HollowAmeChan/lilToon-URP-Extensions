@@ -1,0 +1,13 @@
+{
+  "stage": "InputOrder",
+  "sourceCommit": "f0e8ba5298d09456ae86a7959253bcbeac4d4206",
+  "startedUtc": "2026-10-28T16:57:13.7903165Z",
+  "sourcesFile": "sources-20261028T165713225.json",
+  "runnerSha256": "F80EEBF759D6E192EC2E60F0EA63219A91C8A811BED91D571AA69914C83CF16A",
+  "activeProcess": {
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\ho-rt-inputorder-input-order-rg-20261028T165713225.log",
+    "name": "input-order-rg",
+    "id": 23148
+  },
+  "entries": []
+}

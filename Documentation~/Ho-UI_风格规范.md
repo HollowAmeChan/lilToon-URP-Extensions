@@ -14,6 +14,8 @@
 2. **分节一律走 `LilUrpEditorSectionGui.DrawSectionHeader(ref expanded, "标题", summary, color)`** + `new EditorGUILayout.VerticalScope(EditorStyles.helpBox)`；**不许自造 foldout / 颜色 / 标题控件**。
 3. **标签用中文**，英文原名 / 缩写放括号里（`Debug In Scene View`、`passEvent` 这类保留英文原样）。
 
+Feature 接入同时遵守 [管线总览 §2 的推荐排序及 §7.1 的位置声明](Ho-管线总览.md)。Inspector 须说明其前置生产者与时机；同事件排序、过晚的 Pass Event 和 CPU 请求阶段应分别诊断。新增模块必须登记在整个管线中的位置。
+
 ## 1. 色板（语义固定，跨 feature 复用）
 
 | 用途 | 颜色 | 用在 |
