@@ -244,6 +244,7 @@ public static class HoMmdStageLighting
     }
     static void Exterior(Light light)
     {
+        light.cullingMask=1;
         var data=light.GetUniversalAdditionalLightData();data.renderingLayers=(RenderingLayerMask)2u;
         data.customShadowLayers=true;data.shadowRenderingLayers=(RenderingLayerMask)uint.MaxValue;
     }

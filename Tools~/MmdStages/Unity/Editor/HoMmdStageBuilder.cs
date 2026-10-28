@@ -96,6 +96,8 @@ public static class HoMmdStageBuilder
             path=Path.Combine(HoMmdStageWork.Work,r.name+"-diagnostic.png");
         int outputIndex=Array.IndexOf(Environment.GetCommandLineArgs(),"-hoOutputSuffix");
         if(outputIndex>=0)path=Path.Combine(HoMmdStageWork.Work,r.name+"-"+Environment.GetCommandLineArgs()[outputIndex+1]+".png");
+        int widthIndex=Array.IndexOf(Environment.GetCommandLineArgs(),"-hoWidth");
+        if(widthIndex>=0){request.width=int.Parse(Environment.GetCommandLineArgs()[widthIndex+1]);request.height=request.width*9/16;}
         HoMmdStageCapture.Begin(Root+r.name+"/"+r.name+".unity",path,request.width,request.height,done,failed,
             camera=>{
                 if(Environment.GetCommandLineArgs().Contains("-hoDiagnostic"))
@@ -110,7 +112,8 @@ public static class HoMmdStageBuilder
                     foreach(var feature in renderer.rendererFeatures.OfType<HoVolumeLightRendererFeature>())feature.SetActive(false);
                 }
                 if(request.view==1){camera.transform.position=r.camera+new Vector3(3,1,2);camera.transform.LookAt(r.target);}
-            },24);
+                HoMmdStageAdvanced.ConfigureCapture(camera);
+            },32);
     }
     [Serializable] public sealed class Recipe
     {

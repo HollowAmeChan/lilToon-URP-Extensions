@@ -47,6 +47,12 @@ Ho ImageProcess 的末尾依次是柔光、2.39:1 电影边框和 Hollow Logo。
 
 圣诞万花镜新增十三盏点光，十二盏位于低处，为地面、礼物和树脚补光，一盏照树冠。树光直接以导入后的树网格 bounds 定位，避免源 PMX 坐标翻转后照错位置。ShadowCast 使用 Medium 容量以容纳这些有阴影的局部灯；灯饰自发光仍受单独限制。
 
+第三轮进阶版：八个场景统一使用独立 Ho-RT host、RTGI 一跳漫反射和 RELAX diffuse 降噪，明确把各自天空球材质排除出 RT 求交。五份地面 PLR 提高到 1024；按场景加入 Oklab 渐变映射、基于法线的主体分区塑形、贴地空气层、扩散柔光和星芒，三个日景带轻微镜头光晕。电影边框与 Logo 始终最后叠加，保持纯色边框与对比色字标。
+
+用户明确要求：**禁止使用 SSGI，因为会破坏角色渲染；GI 只允许 RTGI。** 本套 Renderer 和 Volume 中已彻底移除 SSGI，包括 inactive/orphaned subassets；制作工具不提供 SSGI 分支，验收要求其 Feature/Volume 数量都为零。无 DXR 的设备不回落到 SSGI。
+
+RTGI 使用 D3D12 DXR；本机实拍也以 D3D12 运行。各自 Rendering/进阶效果.json 保存本轮配方，后处理与 Feature 均直接存在本场景资产中，不依赖先运行脚本才能显示。可在 Inspector 关闭某层，或调低 GI / 调色 / 雾 / 柔光的份额。花吐电気的三盏室外专用艺术灯只影响 raster 照明，不参与尚未支持该灯光链接的 RTGI 解析灯采样。
+
 ## Unity 制作工具
 
 Unity/ 是本机 Assets/mmd场景测试/_制作工具 的源码快照，不包含第三方模型或贴图：
@@ -54,6 +60,7 @@ Unity/ 是本机 Assets/mmd场景测试/_制作工具 的源码快照，不包�
 - HoMmdStageBuilder：初建、调整入口及场景初始配方。
 - HoMmdStagePolish：本套场景的美术配方。重跑会重设相关材质和灯光，日常使用请直接修改场景。
 - HoMmdStageLighting：第二轮光影配方，读取各自 Rendering/光影精调.json；初始局部灯强度保存在原灯光记录.json，以免重复运行后强度不断缩小。新增摄影灯位于“06 摄影灯光”。重跑会重设这套配方控制的材质、灯光和后处理，日常直接编辑场景/Volume。
+- HoMmdStageAdvanced：只叠加进阶配方，不重新执行灯光配方。重复执行只替换名称以“进阶 · ”开头的后处理层，保留现有灯位、曝光、窗景、品牌层。JSON 持久保存美术取值；本工具的 GI 读回是 Editor 诊断，通过反射读取本相机的持久结果，不以可能被反射相机重置的 shader global 当作证据。
 - HoMmdStageCapture：Single 场景隔离、跨帧 StandardRequest、HDR 异步 GPU 读回、在写 PNG 前执行一次线性到 sRGB 编码。
 - HoMmdStageAudit：真实 Unity 依赖闭包、相机、材质、环境、全部模型投影、天空球、景深、底部 Logo/边框对比色与独立配置检查。背景天空球使用专用天空 shader，模型继续全部使用 Ho lilToon。
 - HoMmdStageEnvironment：按活动场景临时选择 Quality Pipeline 和环境，离开/重载时恢复。
@@ -72,14 +79,17 @@ python Tools~/MmdStages/stage-cli.py render 花吐电気
 -batchmode -nographics -executeMethod HoMmdStagePolish.RunBatch
 -batchmode -nographics -executeMethod HoMmdStageLighting.RunBatch
 -batchmode -force-d3d11 -executeMethod HoMmdStageLighting.RefineAndRenderBatch
+-batchmode -force-d3d12 -executeMethod HoMmdStageAdvanced.ApplyAndRenderBatch
 -batchmode -force-d3d11 -executeMethod HoMmdStageBuilder.RenderAllBatch
 -batchmode -nographics -executeMethod HoMmdStageAudit.RunBatch
 ~~~
 
 构建入口只创建缺失场景。Polish 只修改本套场景，截图前拒绝自动丢弃未保存的场景。截帧完毕会恢复原场景布局和管线。不要使用 Camera.Render() 替代 SRP 截帧入口；本机最初的直接路径出现过原生渲染断言崩溃，后续 StandardRequest 已完成八场景输出。
 
-当前主视角使用 24 个独立帧预热体积历史；Library/HoMmdStages/*-lighting-state.json 记录实际提交的体积状态、SP/IP 写入图层数、焦点和曝光。RenderOneBatch 支持 -hoNoVolume -hoOutputSuffix without-volume，便于在 Library 输出体积光开关对比而不替换正式 PNG。截图从 HDR float 读回后只进行一次 sRGB 编码。
+当前主视角使用 32 个独立帧预热体积与 GI 历史；Library/HoMmdStages/*-lighting-state.json 记录实际提交的体积状态、SP/IP 写入图层数、焦点和曝光，*-advanced-state.json 保存主相机 GI 的实际尺寸、线性 HDR 读回统计及 RTGI/RELAX 状态。RenderOneBatch 支持 -hoNoVolume -hoOutputSuffix without-volume，便于在 Library 输出体积光开关对比而不替换正式 PNG。截图从 HDR float 读回后只进行一次 sRGB 编码。
 
 只更新指定场景时，RefineAndRenderBatch 可传 -hoStages 花吐电気,圣诞万花镜。重新制作前先保存手工修改；该入口会按制作配方重设所选场景的受控参数。
+
+进阶版只更新指定场景同样传 -hoStages；用 HoMmdStageAdvanced.RenderSelectedBatch -hoNoGi -hoOutputSuffix without-gi 可以只做关闭 GI 的对照，不重设制作配方、不覆盖正式 PNG 或 GI 诊断。-hoGiOnly 输出独立 GI 调试图，-hoWidth 960 供制作预览。正式八场景仍为 1280×720。
 
 本机详细证据放 Temp~/MmdStages/，不进入包资源或 Git。当前验证是场景搭建与主相机输出，不是 MME 逐像素还原或性能认证。

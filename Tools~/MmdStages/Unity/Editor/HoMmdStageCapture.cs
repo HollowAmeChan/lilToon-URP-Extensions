@@ -135,8 +135,10 @@ public static class HoMmdStageCapture
                 "{\"time\":\""+DateTime.UtcNow.ToString("O")+"\",\"phase\":\""+phase+"\",\"frames\":"+frames+",\"status\":\""+status+"\"}");
             try
             {
-                if (EditorApplication.timeSinceStartup - began > 180)
-                    throw new TimeoutException("场景截帧超过 180 秒：" + status);
+                // Complex multi-light DXR scenes can take several seconds per warmup
+                // frame on the authoring GPU. Keep a bounded session, with live status.
+                if (EditorApplication.timeSinceStartup - began > 600)
+                    throw new TimeoutException("场景截帧超过 600 秒：" + status);
                 if (EditorApplication.isCompiling || EditorApplication.isUpdating) { Pump(); return; }
                 if (camera == null || !captureScene.IsValid() || SceneManager.GetActiveScene() != captureScene)
                     throw new InvalidOperationException("截帧期间相机或活动场景发生变化。");
@@ -161,6 +163,7 @@ public static class HoMmdStageCapture
                         var warmup = new RenderPipeline.StandardRequest { destination = target };
                         RenderPipeline.SubmitRenderRequest(camera, warmup);
                         HoMmdStageLighting.RecordRenderState(camera,scenePath,frames+1);
+                        HoMmdStageAdvanced.Record(camera,frames+1);
                         var stack=VolumeManager.instance.stack;
                         var bloom=stack.GetComponent<Bloom>();
                         var adjustments=stack.GetComponent<ColorAdjustments>();
