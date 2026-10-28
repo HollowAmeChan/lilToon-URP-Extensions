@@ -43,6 +43,10 @@ AL+ 命名或附加 UV Morph 是 MME 控制约定，不等于源文件包含 Uni
 
 Ho ImageProcess 的末尾依次是柔光、2.39:1 电影边框和 Hollow Logo。日景为白边黑标，夜景为黑边白标；用户指定的透明 PNG 每场景单独保存，Logo 位于底部正中。导入保留 NPOT 尺寸，防止宽字标被纹理导入器压扁。所有效果都在本场景的后处理 Inspector 修改，图层可独立关闭。
 
+花吐电気以高亮窗景为重点，三盏“窗外晴日”灯只照室外六类网格（Rendering Layer 2），室内保留原照明组；天空 HDR、太阳体积光、Bloom、空气透视和 Ho SkyTyndall 一起控制晴日空气感。该场景 GB 开启天空缓存，并从 1500 队列开始收集，避免背景天空球把窗景天空信号遮住。
+
+圣诞万花镜新增十三盏点光，十二盏位于低处，为地面、礼物和树脚补光，一盏照树冠。树光直接以导入后的树网格 bounds 定位，避免源 PMX 坐标翻转后照错位置。ShadowCast 使用 Medium 容量以容纳这些有阴影的局部灯；灯饰自发光仍受单独限制。
+
 ## Unity 制作工具
 
 Unity/ 是本机 Assets/mmd场景测试/_制作工具 的源码快照，不包含第三方模型或贴图：
@@ -75,5 +79,7 @@ python Tools~/MmdStages/stage-cli.py render 花吐电気
 构建入口只创建缺失场景。Polish 只修改本套场景，截图前拒绝自动丢弃未保存的场景。截帧完毕会恢复原场景布局和管线。不要使用 Camera.Render() 替代 SRP 截帧入口；本机最初的直接路径出现过原生渲染断言崩溃，后续 StandardRequest 已完成八场景输出。
 
 当前主视角使用 24 个独立帧预热体积历史；Library/HoMmdStages/*-lighting-state.json 记录实际提交的体积状态、SP/IP 写入图层数、焦点和曝光。RenderOneBatch 支持 -hoNoVolume -hoOutputSuffix without-volume，便于在 Library 输出体积光开关对比而不替换正式 PNG。截图从 HDR float 读回后只进行一次 sRGB 编码。
+
+只更新指定场景时，RefineAndRenderBatch 可传 -hoStages 花吐电気,圣诞万花镜。重新制作前先保存手工修改；该入口会按制作配方重设所选场景的受控参数。
 
 本机详细证据放 Temp~/MmdStages/，不进入包资源或 Git。当前验证是场景搭建与主相机输出，不是 MME 逐像素还原或性能认证。

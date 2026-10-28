@@ -5,6 +5,7 @@ using System.Linq;
 using Hollow.HoMmdStages;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.GTAO;
+using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.PostProcessing;
 using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.VolumeLight;
@@ -29,6 +30,7 @@ public static class HoMmdStageLighting
         public float frameAspect = 2.39f;
         public bool whiteFrame;
         public float ambientIntensity=.65f, contrast=17, shadowStrength=.92f, emissionScale=1, bloomThreshold=1.1f;
+        public float exteriorLightPower, windowScatter, vignette=.22f;
     }
     static Color C(float r, float g, float b) => new Color(r,g,b,1);
     static string Argument(string key)
@@ -73,11 +75,12 @@ public static class HoMmdStageLighting
             case "花吐电気":
                 v.sunAngles=new Vector3(34,-145,0);v.sun=C(1,.96f,.86f);v.sunPower=3.4f;
                 v.ambient=C(.38f,.46f,.55f);v.shadow=C(.48f,.52f,.6f);v.ambientIntensity=1;
-                v.focus=7.5f;v.aperture=3.5f;v.shafts=14;v.airDensity=.014f;v.dofRadius=6;
-                v.exposure=.6f;v.bloom=.28f;v.contrast=6;v.shadowStrength=.65f;v.existingLocalScale=.85f;v.emissionScale=.6f;v.whiteFrame=true;break;
+                v.focus=7.5f;v.aperture=3.5f;v.shafts=18;v.airDensity=.018f;v.dofRadius=6;
+                v.exposure=.4f;v.bloom=.45f;v.bloomThreshold=1;v.contrast=6;v.shadowStrength=.65f;v.existingLocalScale=.85f;v.emissionScale=.6f;v.whiteFrame=true;
+                v.exteriorLightPower=360;v.windowScatter=.18f;v.vignette=.08f;v.ambientAir=.18f;v.fogDensity=.01f;v.fogOpacity=.22f;break;
             case "乐园·深命": v.sunAngles=new Vector3(35,-125,0);v.sun=C(1,.95f,.84f);v.sunPower=4.2f;v.focus=18;v.aperture=4;v.shafts=12;v.airDensity=.012f;v.exposure=.1f;v.dofRadius=6;v.whiteFrame=true;break;
             case "茉莉庭院": v.sunAngles=new Vector3(28,35,0);v.sun=C(1,.91f,.69f);v.sunPower=2.2f;v.focus=12;v.aperture=3.4f;v.shafts=5;v.airDensity=.009f;v.fog=C(.53f,.75f,.72f);v.bloom=.35f;v.exposure=-.1f;v.ambientAir=.1f;v.whiteFrame=true;break;
-            case "圣诞万花镜": v.sunAngles=new Vector3(22,125,0);v.sun=C(.48f,.67f,1);v.sunPower=1.5f;v.ambient=C(.055f,.075f,.13f);v.focus=34;v.aperture=2.4f;v.shafts=6;v.airDensity=.01f;v.bloom=.22f;v.fog=C(.2f,.31f,.49f);v.exposure=-.1f;v.emissionScale=.4f;v.bloomThreshold=1.3f;break;
+            case "圣诞万花镜": v.sunAngles=new Vector3(22,125,0);v.sun=C(.48f,.67f,1);v.sunPower=1.5f;v.ambient=C(.055f,.075f,.13f);v.focus=34;v.aperture=2.4f;v.shafts=6;v.airDensity=.01f;v.bloom=.22f;v.fog=C(.2f,.31f,.49f);v.exposure=-.1f;v.emissionScale=.4f;v.bloomThreshold=1.3f;v.contrast=9;v.vignette=.12f;break;
             case "琉璃万花镜": v.sunAngles=new Vector3(25,-125,0);v.sun=C(.5f,.75f,1);v.sunPower=2.3f;v.ambient=C(.045f,.07f,.14f);v.focus=23;v.aperture=2.8f;v.shafts=7;v.airDensity=.01f;v.bloom=.4f;v.exposure=-.05f;v.fog=C(.19f,.35f,.57f);break;
             case "六角花台绣球": v.sunAngles=new Vector3(46,145,0);v.sun=C(.78f,.84f,1);v.sunPower=1.2f;v.ambient=C(.035f,.035f,.09f);v.shadow=C(.17f,.16f,.3f);v.focus=11;v.aperture=2.8f;v.shafts=4;v.airDensity=.01f;v.bloom=.6f;v.fog=C(.23f,.19f,.48f);v.exposure=0;break;
             case "古典机械剧场": v.sunAngles=new Vector3(32,155,0);v.sun=C(.65f,.73f,1);v.sunPower=.9f;v.ambient=C(.07f,.05f,.085f);v.shadow=C(.25f,.18f,.28f);v.focus=24;v.aperture=3.2f;v.shafts=6;v.airDensity=.009f;v.bloom=.45f;v.fog=C(.35f,.2f,.19f);v.exposure=.15f;break;
@@ -121,6 +124,14 @@ public static class HoMmdStageLighting
             F(m,"_ShadowBlur",.38f);F(m,"_ShadowEnvStrength",.12f);F(m,"_ShadowBorder",.5f);
             if(m.HasProperty("_ShadowColor"))m.SetColor("_ShadowColor",look.shadow);
             string n=SurfaceName(m);
+            if(name=="花吐电気"&&new[]{"樹幹","圍欄","石","草","灌木","樹葉"}.Contains(n))
+            {
+                // Keep the three exterior lights off the indoor surfaces, while ordinary
+                // scene lights continue to illuminate both groups through layer 1.
+                surface.renderingLayerMask|=2u;
+                F(m,"_ShadowStrength",.45f);F(m,"_ShadowEnvStrength",.35f);
+                if(m.HasProperty("_ShadowColor"))m.SetColor("_ShadowColor",C(.65f,.71f,.64f));
+            }
             if(name=="六角花台绣球"&&n.Contains("花")&&n!="花纹")m.SetColor("_Color",C(.9f,.85f,1));
             if(name=="古典机械剧场"&&(n.Contains("齿轮")||n.Contains("鐘")||n.Contains("圆环")||n.Contains("圓圈")))
             {F(m,"_UseReflection",1);F(m,"_ApplySpecular",1);F(m,"_ApplySpecularFA",1);F(m,"_SpecularToon",0);F(m,"_ApplyReflection",0);F(m,"_Smoothness",.7f);F(m,"_Metallic",.25f);m.SetColor("_ReflectionColor",C(.75f,.52f,.15f));}
@@ -136,7 +147,7 @@ public static class HoMmdStageLighting
         }
         var oldRig=root.transform.Find("06 摄影灯光");if(oldRig!=null)Object.DestroyImmediate(oldRig.gameObject);
         var rig=new GameObject("06 摄影灯光").transform;rig.SetParent(root.transform,false);
-        AddLighting(name,rig);
+        AddLighting(name,rig,look,root);
         SkySphere(root,env,folder,name);
         T Component<T>() where T:VolumeComponent
         {
@@ -146,7 +157,7 @@ public static class HoMmdStageLighting
         var bloom=Component<Bloom>();bloom.intensity.Override(look.bloom);bloom.threshold.Override(look.bloomThreshold);bloom.scatter.Override(.76f);bloom.highQualityFiltering.Override(true);
         var grade=Component<ColorAdjustments>();grade.postExposure.Override(look.exposure);grade.contrast.Override(look.contrast);grade.saturation.Override(-5);grade.colorFilter.Override(Color.white);
         var split=Component<SplitToning>();split.shadows.Override(C(.45f,.48f,.55f));split.highlights.Override(C(.55f,.515f,.46f));split.balance.Override(8);
-        var vignette=Component<Vignette>();vignette.intensity.Override(.22f);vignette.smoothness.Override(.68f);
+        var vignette=Component<Vignette>();vignette.intensity.Override(look.vignette);vignette.smoothness.Override(.68f);
         var grain=Component<FilmGrain>();grain.type.Override(FilmGrainLookup.Thin1);grain.intensity.Override(.045f);grain.response.Override(.85f);
         var chromatic=Component<ChromaticAberration>();chromatic.intensity.Override(.025f);
         var ao=Component<HoGTAOVolume>();ao.worldSpaceRadius.Override(.7f);ao.debugIntensity.Override(1.6f);ao.quality.Override(HoGTAOQuality.High);
@@ -166,6 +177,18 @@ public static class HoMmdStageLighting
                 parameters0=new Vector4(1,look.focus,50,look.aperture),parameters1=new Vector4(10,30,look.dofRadius,1),
                 parameters2=new Vector4(7,1,15,0),parameters3=new Vector4(look.dofGain,1.3f,.8f,1)}
         };
+        if(name=="花吐电気"&&look.windowScatter>0)
+        {
+            screen.layers.value.Insert(0,new ScreenProcessLayer{name="晴日窗景 · 天空散射",effect=ScreenProcessEffect.SkyTyndall,
+                blendMode=ScreenProcessBlendMode.Screen,color=C(1,.97f,.88f),intensity=look.windowScatter,
+                parameters0=new Vector4(.56f,1.1f,.8f,1.2f),parameters1=new Vector4(.35f,.62f,.89f,2),
+                parameters2=new Vector4(.2f,.12f,1.2f,.7f),parameters3=new Vector4(.55f,0,1,1),
+                parameters4=new Vector4(-.6f,.8f,126,1),parameters5=new Vector4(.035f,2,0,.8f)});
+            var gb=renderer.rendererFeatures.OfType<HoGeometryBufferRendererFeature>().First();
+            gb.Settings.enableSkyBuffer=true;
+            // The background sphere must not occlude the sky signal captured through the windows.
+            gb.Settings.minRenderQueue=1500;EditorUtility.SetDirty(gb);
+        }
         var image=Component<ImageProcessStackVolume>();image.Enable.Override(true);image.layers.overrideState=true;
         image.layers.value=new List<ImageProcessLayer>{new ImageProcessLayer{name="灯饰柔光与轻微星芒",effect=ImageProcessEffect.Glow,
             intensity=.22f,blendMode=ImageProcessBlendMode.Add,parameters0=new Vector4(.8f,.1f,2.5f,2),parameters1=new Vector4(.2f,0,0,.8f),parameters2=new Vector4(4,25,0,0)}};
@@ -174,6 +197,7 @@ public static class HoMmdStageLighting
         EnsureFeature<ImageProcessRendererFeature>(renderer,"Ho 镜头柔光").UseVolumes=true;
         var shadow=renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().FirstOrDefault();
         if(shadow!=null){shadow.Settings.shadowStrength=1;shadow.Settings.punctualShadowStrength=.85f;shadow.Settings.pcssEnabled=true;shadow.Settings.pcssMaxPenumbraRadius=5;EditorUtility.SetDirty(shadow);}
+        if(shadow!=null&&name=="圣诞万花镜"){shadow.Settings.lightCapacity=HoShadowCastLightCapacity.Medium;EditorUtility.SetDirty(shadow);}
         var lighting=renderer.rendererFeatures.OfType<HoVolumeLightRendererFeature>().First();
         lighting.FeatureSettings.stepCount=96;lighting.FeatureSettings.antialiasing=HoVolumeLightAntialiasing.Temporal;EditorUtility.SetDirty(lighting);
         var pipeline=new SerializedObject(env.pipeline);
@@ -211,20 +235,37 @@ public static class HoMmdStageLighting
         }
         texture.SetPixels(colors);texture.Apply(false,true);AssetDatabase.CreateAsset(texture,path);return texture;
     }
-    static void Spot(Transform rig,string name,Vector3 position,Vector3 target,Color tint,float intensity,float angle,float range)
+    static Light Spot(Transform rig,string name,Vector3 position,Vector3 target,Color tint,float intensity,float angle,float range)
     {
         var light=new GameObject(name).AddComponent<Light>();light.transform.SetParent(rig,false);light.transform.position=position;light.transform.LookAt(target);
         light.type=LightType.Spot;light.color=tint;light.intensity=intensity;light.range=range;light.spotAngle=angle;light.innerSpotAngle=angle*.55f;
         light.shadows=LightShadows.Soft;light.shadowStrength=.9f;light.shadowBias=.035f;light.shadowNormalBias=.08f;light.shadowResolution=LightShadowResolution.High;
+        return light;
     }
-    static void AddLighting(string name,Transform rig)
+    static void Exterior(Light light)
+    {
+        var data=light.GetUniversalAdditionalLightData();data.renderingLayers=(RenderingLayerMask)2u;
+        data.customShadowLayers=true;data.shadowRenderingLayers=(RenderingLayerMask)uint.MaxValue;
+    }
+    static void Point(Transform rig,string name,Vector3 position,Color tint,float intensity,float range,bool shadows=true)
+    {
+        var light=new GameObject(name).AddComponent<Light>();light.transform.SetParent(rig,false);light.transform.position=position;
+        light.type=LightType.Point;light.color=tint;light.intensity=intensity;light.range=range;
+        light.shadows=shadows?LightShadows.Soft:LightShadows.None;light.shadowStrength=.8f;
+        light.shadowBias=.025f;light.shadowNormalBias=.06f;light.shadowResolution=LightShadowResolution.Medium;
+    }
+    static void AddLighting(string name,Transform rig,Look look,GameObject root)
     {
         switch(name)
         {
             case "花吐电気":
                 Spot(rig,"明媚窗光",new Vector3(6,5,-4),new Vector3(-2,.4f,0),C(1,.96f,.86f),90,58,20);
                 Spot(rig,"室内天光反弹",new Vector3(0,2.8f,3),new Vector3(0,1,-4),C(.87f,.94f,1),35,100,14);
-                Spot(rig,"桌椅柔光",new Vector3(-2,3,-5),new Vector3(-2,.7f,-6),C(1,.94f,.8f),16,65,7);break;
+                var table=root.GetComponentsInChildren<MeshRenderer>().First(x=>SurfaceName(x.sharedMaterial)=="桌子").bounds.center;
+                Spot(rig,"桌椅柔光",table+new Vector3(-1,2,-1),table,C(1,.94f,.8f),16,65,7);
+                Exterior(Spot(rig,"窗外晴日 · 后庭",new Vector3(0,9,-17),new Vector3(0,1,-11),C(1,.98f,.9f),look.exteriorLightPower,100,30));
+                Exterior(Spot(rig,"窗外晴日 · 左庭",new Vector3(-11,8,-3),new Vector3(-6,1,-3),C(.9f,.96f,1),look.exteriorLightPower,100,26));
+                Exterior(Spot(rig,"窗外晴日 · 右庭",new Vector3(11,8,-3),new Vector3(6,1,-3),C(1,.98f,.9f),look.exteriorLightPower,100,26));break;
             case "乐园·深命":
                 Spot(rig,"天窗纵深主光",new Vector3(5,15,-15),new Vector3(-4,0,-3),C(1,.86f,.56f),360,43,35);
                 Spot(rig,"青色藤蔓轮廓",new Vector3(-10,8,-8),new Vector3(0,4,-2),C(.28f,.65f,1),160,55,25);break;
@@ -232,8 +273,18 @@ public static class HoMmdStageLighting
                 Spot(rig,"庭院天窗暖光",new Vector3(4,8,-1),new Vector3(-2,0,1),C(1,.92f,.78f),70,50,20);
                 Spot(rig,"长椅冷色勾边",new Vector3(-5,4,5),new Vector3(0,1,1),C(.38f,.83f,1),55,55,15);break;
             case "圣诞万花镜":
-                Spot(rig,"圣诞树金色主光",new Vector3(5,9,-6),new Vector3(0,3,-13),C(1,.72f,.4f),180,52,28);
-                Spot(rig,"红绿彩窗冷侧光",new Vector3(-8,8,-13),new Vector3(0,2,-4),C(.23f,.7f,.85f),170,42,25);break;
+                var tree=root.GetComponentsInChildren<MeshRenderer>().First(x=>SurfaceName(x.sharedMaterial)=="树").bounds;
+                Spot(rig,"圣诞树金色主光",tree.center+new Vector3(-4,4,4),tree.center,C(1,.82f,.55f),70,65,18);
+                Spot(rig,"红绿彩窗冷侧光",new Vector3(-8,8,-13),new Vector3(0,2,-4),C(.23f,.7f,.85f),100,42,25);
+                for(int i=0;i<5;i++)
+                {
+                    float z=13-i*7;
+                    Point(rig,"地面暖光池 "+(i+1),new Vector3(-2.4f,1.4f,z),C(1,.8f,.55f),8,9);
+                    Point(rig,"地面冷光池 "+(i+1),new Vector3(2.4f,1.6f,z-2),C(.5f,.72f,1),6,9);
+                }
+                Point(rig,"中央树脚 · 暖光",new Vector3(tree.center.x-1.7f,1.5f,tree.center.z+1),C(1,.77f,.39f),8,6);
+                Point(rig,"中央树冠 · 柔光",tree.center+new Vector3(-1.5f,0,1.5f),C(1,.9f,.65f),5,5);
+                Point(rig,"礼物中心 · 小暖光",new Vector3(0,1.3f,11),C(1,.88f,.65f),5,6);break;
             case "琉璃万花镜":
                 Spot(rig,"左彩窗冰蓝光",new Vector3(-8,10,-7),new Vector3(2,0,-3),C(.35f,.64f,1),240,42,28);
                 Spot(rig,"长廊月光",new Vector3(6,9,-18),new Vector3(-2,1,-10),C(.55f,.85f,1),260,48,28);break;
@@ -263,6 +314,8 @@ public static class HoMmdStageLighting
         material.SetColor("_SunColor",day?C(4,3.1f,1.9f):C(.9f,1.2f,1.8f));
         material.SetVector("_SunDirection",-env.sun.transform.forward);material.SetFloat("_Stars",day?0:1);
         material.SetFloat("_SunSize",day?.006f:.012f);
+        if(name=="花吐电気")
+        {material.SetColor("_Top",C(.6f,1.05f,1.8f));material.SetColor("_Horizon",C(2.1f,2.3f,2.5f));}
         env.skybox.SetColor("_Top",material.GetColor("_Top"));
         env.skybox.SetColor("_Bottom",material.GetColor("_Horizon"));EditorUtility.SetDirty(env.skybox);
         var old=root.transform.Find("04 环境与后处理/天空球");if(old!=null)Object.DestroyImmediate(old.gameObject);
@@ -297,7 +350,8 @@ public static class HoMmdStageLighting
     {
         public string stage,volumeStatus,screenReason,imageReason;
         public int frame,screenLayers,imageLayers,dustClusters;
-        public bool screenReady,imageReady;
+        public bool screenReady,imageReady,skyBufferReady;
+        public int lowPointLights;
         public float shafts,airDensity,focus,bloom,exposure;
     }
     public static void RecordRenderState(Camera camera,string scenePath,int frame)
@@ -312,6 +366,8 @@ public static class HoMmdStageLighting
         var state=new CaptureState{stage=name,frame=frame,volumeStatus=feature.Status,dustClusters=feature.DustClusterCount,
             screenReady=screen.CameraName==camera.name&&screen.Ready,imageReady=image.CameraName==camera.name&&image.Ready,
             screenLayers=screen.WrittenLayerCount,imageLayers=image.WrittenLayerCount,screenReason=screen.Reason,imageReason=image.Reason,
+            skyBufferReady=screen.SkyTextureAvailable,
+            lowPointLights=camera.transform.root.GetComponentsInChildren<Light>().Count(x=>x.enabled&&x.type==LightType.Point&&x.transform.parent.name=="06 摄影灯光"&&x.transform.position.y<2),
             shafts=stack.GetComponent<HoVolumeLightVolume>().intensity.value,focus=dof!=null?dof.parameters0.y:0,
             bloom=stack.GetComponent<Bloom>().intensity.value,exposure=stack.GetComponent<ColorAdjustments>().postExposure.value,
             airDensity=camera.GetComponentInParent<Transform>().root.GetComponentInChildren<HoAtmosphereRegion>().density};

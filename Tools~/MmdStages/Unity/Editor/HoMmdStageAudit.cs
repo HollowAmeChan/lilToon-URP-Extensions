@@ -11,11 +11,12 @@ using UnityEngine.SceneManagement;
 using Hollow.HoMmdStages;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.PostProcessing;
+using lilToon.URP.Extensions.ShadowCast;
 
 public static class HoMmdStageAudit
 {
     [Serializable]sealed class Audit
-    {public string stage,scene,pipeline,profile;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast;}
+    {public string stage,scene,pipeline,profile;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation;}
     [Serializable]sealed class Report{public string date;public Audit[] stages;public string[] errors;}
     public static void RunBatch()
     {
@@ -48,6 +49,11 @@ public static class HoMmdStageAudit
                 bool centeredLogo=logo!=null&&logo.logoTexture0!=null&&Mathf.Abs(logo.parameters0.x-.5f)<.001f&&logo.parameters0.y<.15f&&
                     AssetDatabase.GetAssetPath(logo.logoTexture0)==folder+"/Rendering/Hollow Logo.png";
                 bool contrast=bars!=null&&logo!=null&&Mathf.Abs(bars.color.r+logo.color.r-1)<.001f&&Mathf.Abs(bars.color.r-logo.color.r)>.9f;
+                var sceneLights=roots.SelectMany(x=>x.GetComponentsInChildren<Light>()).ToArray();
+                var exterior=sceneLights.Where(x=>x.name.StartsWith("窗外晴日")).ToArray();
+                int lowPoints=sceneLights.Count(x=>x.enabled&&x.type==LightType.Point&&x.transform.parent.name=="06 摄影灯光"&&x.transform.position.y<2);
+                bool layerIsolation=exterior.Length>0&&exterior.All(x=>(uint)x.GetUniversalAdditionalLightData().renderingLayers==2u)&&
+                    modelRenderers.Count(x=>(x.renderingLayerMask&2u)!=0)==6;
                 int triangleCount=meshes.Sum(x=>(int)x.sharedMesh.GetIndexCount(0)/3);
                 var audit=new Audit{stage=recipe.name,scene=path,pipeline=AssetDatabase.GetAssetPath(env.pipeline),
                     profile=AssetDatabase.GetAssetPath(profile),meshes=meshes.Length,triangles=triangleCount,materials=mats.Length,
@@ -56,6 +62,7 @@ public static class HoMmdStageAudit
                     regions=roots.SelectMany(x=>x.GetComponentsInChildren<HoAtmosphereRegion>()).Count(),
                     modelRenderers=modelRenderers.Length,modelShadowCasters=modelRenderers.Count(x=>x.shadowCastingMode!=ShadowCastingMode.Off&&x.receiveShadows),skySphere=skySphere,depthOfField=dof,
                     cinematicBars=bars!=null,centeredLogo=centeredLogo,logoContrast=contrast,
+                    lowFillPoints=lowPoints,exteriorLights=exterior.Length,exteriorLayerIsolation=layerIsolation,
                     hasCamera=camera!=null,postProcessing=camera!=null&&camera.GetUniversalAdditionalCameraData().renderPostProcessing,
                     features=renderer.rendererFeatures.Where(x=>x.isActive).Select(x=>x.GetType().Name).ToArray(),
                     externalStageReferences=invalid,missingShaders=missing};
@@ -64,6 +71,10 @@ public static class HoMmdStageAudit
                     !audit.pipeline.StartsWith(folder+"/")||!audit.profile.StartsWith(folder+"/")||!skySphere||!dof||!audit.cinematicBars||!centeredLogo||!contrast||audit.modelShadowCasters!=audit.modelRenderers||
                     modelRenderers.Any(x=>x.sharedMaterial!=null&&!x.sharedMaterial.GetShaderPassEnabled("ShadowCaster")))
                     errors.Add(recipe.name+": scene dependency/state audit failed");
+                if(recipe.name=="花吐电気"&&(!layerIsolation||exterior.Length!=3||!screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.SkyTyndall)))
+                    errors.Add(recipe.name+": exterior lighting / sky scattering audit failed");
+                if(recipe.name=="圣诞万花镜"&&(lowPoints!=12||(int)renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().Single().Settings.lightCapacity<(int)HoShadowCastLightCapacity.Medium))
+                    errors.Add(recipe.name+": low point fill / shadow capacity audit failed");
             }
             File.WriteAllText(Path.Combine(HoMmdStageWork.Work,"scene-audit.json"),JsonUtility.ToJson(new Report{
                 date=DateTime.UtcNow.ToString("O"),stages=results.ToArray(),errors=errors.ToArray()},true));
