@@ -38,7 +38,7 @@ namespace lilToon.URP.Extensions.RTShadow
         [InspectorName("射线偏移（米）"), Min(0.000001f), Tooltip("沿出射侧网格法线移动起点，并作为沿射线的最小距离，减少掠射角自遮挡。过大会丢失紧贴表面的真实细影。")]
         public float rayBias = .0001f;
         [InspectorName("阴影终止线校正"), Range(0,1), Tooltip("用顶点切平面重建平滑曲面的射线起点，减轻低模曲面逐三角面的阴影终止线。0 为原三角网格参考；1 为完整校正。会改变自影几何近似，并额外检查位移路径以保留附近真实遮挡。")]
-        public float terminatorCorrection = 1;
+        public float terminatorCorrection;
         [InspectorName("射线距离上限（米）"), Range(.01f, 65504)] public float maxDistance = 10000;
         [InspectorName("光源角直径（度）"), Range(0, 8)] public float angularDiameter;
         [InspectorName("原始参考样本数"), Range(1, 4096), Tooltip("只用于原始参考。SIGMA 按官方统计契约每像素输入一个真实光源样本。")]
@@ -90,6 +90,7 @@ namespace lilToon.URP.Extensions.RTShadow
         private object profileKey; private bool registered;
         private long serial;
         public HoRTShadowSettings Settings => settings;
+        public static bool SupportsTerminatorCorrection => false;
         public string Status { get; private set; } = "未生产";
         internal Output LastOutput { get; private set; }
         private readonly List<Output> scheduled = new();
@@ -164,7 +165,11 @@ namespace lilToon.URP.Extensions.RTShadow
         private HoRTShadowSettings ResolveSettings(out int overrides)
         {
             var stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
-            return HoRTShadowVolume.Resolve(settings, stack?.GetComponent<HoRTShadowVolume>(), out overrides);
+            var effective = HoRTShadowVolume.Resolve(settings, stack?.GetComponent<HoRTShadowVolume>(), out overrides);
+            // The vertex-tangent displacement has a real-character regression.
+            // Saved nonzero Feature/Volume values must not silently reactivate it.
+            if (!SupportsTerminatorCorrection) effective.terminatorCorrection = 0;
+            return effective;
         }
         public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData data)
         {

@@ -1,0 +1,41 @@
+
+
+--- WARNINGS ---
+Editor\RTGI\HoRTGIConfidenceTrial.cs(18,139): warning CS0649: Field 'HoRTGIConfidenceTrial.Frame.unchangedBranch0' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIConfidenceTrial.cs(18,156): warning CS0649: Field 'HoRTGIConfidenceTrial.Frame.unchangedBranch1' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,113): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.batchMeanStandardError' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,136): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.firstHalfMean' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,150): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.secondHalfMean' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,165): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.splitRelativeDifference' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,189): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.mainRaw' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,197): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.mainFiltered' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIDenseReferenceAudit.cs(17,99): warning CS0649: Field 'HoRTGIDenseReferenceAudit.Point.referenceMean' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGIHistoryFeedbackAudit.cs(37,97): warning CS0649: Field 'HoRTGIHistoryFeedbackAudit.Report.qualityQualified' is never assigned to, and will always have its default value false
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,114): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,61): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.width' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGILocalStageAudit.cs(44,67): warning CS0649: Field 'HoRTGILocalStageAudit.ReferenceFile.height' is never assigned to, and will always have its default value 0
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,71): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.path' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,76): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.name' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(110,81): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInput.sha256' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(111,79): warning CS0649: Field 'HoRTGIPairedStageAudit.PolicyInputs.entries' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGIPairedStageAudit.cs(114,90): warning CS0649: Field 'HoRTGIPairedStageAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGISeedAudit.cs(20,84): warning CS0649: Field 'HoRTGISeedAudit.ReferenceFile.denseReference' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGISeedAudit.cs(21,104): warning CS0649: Field 'HoRTGISeedAudit.ReferencePoints.points' is never assigned to, and will always have its default value null
+Editor\RTGI\HoRTGISeedAudit.cs(25,28): warning CS0649: Field 'HoRTGISeedAudit.Local.raw' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGISeedAudit.cs(25,33): warning CS0649: Field 'HoRTGISeedAudit.Local.filtered' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGISeedAudit.cs(25,43): warning CS0649: Field 'HoRTGISeedAudit.Local.rawVariance' is never assigned to, and will always have its default value
+Editor\RTGI\HoRTGISeedAudit.cs(25,56): warning CS0649: Field 'HoRTGISeedAudit.Local.filteredVariance' is never assigned to, and will always have its default value
+Runtime\PlanarReflection\HoPlanarReflectionSurface.cs(72,27): warning CS0649: Field 'HoPlanarReflectionSurface.planeTransform' is never assigned to, and will always have its default value null
+Runtime\SSGI\HoSSGIRendererFeature.cs(563,29): warning CS0649: Field 'HoSSGIPass.SpatialPassData.material' is never assigned to, and will always have its default value null
+Runtime\SSGI\HoSSGIRendererFeature.cs(564,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirColor' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(565,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirAux' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(566,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirRay' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(567,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.temporal' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(568,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.geometry' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(569,34): warning CS0649: Field 'HoSSGIPass.SpatialPassData.output' is never assigned to, and will always have its default value
+Runtime\SSGI\HoSSGIRendererFeature.cs(570,26): warning CS0649: Field 'HoSSGIPass.SpatialPassData.radius' is never assigned to, and will always have its default value 0
+Runtime\SSGI\HoSSGIRendererFeature.cs(571,25): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirReuse' is never assigned to, and will always have its default value false
+Runtime\SSGI\HoSSGIRendererFeature.cs(572,25): warning CS0649: Field 'HoSSGIPass.SpatialPassData.reservoirValidation' is never assigned to, and will always have its default value false
+
+log: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\compile_check.log
+ERRORS: 0

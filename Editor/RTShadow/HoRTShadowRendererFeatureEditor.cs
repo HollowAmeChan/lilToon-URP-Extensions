@@ -41,7 +41,8 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 Draw("reconstruction", "阴影重建"); Draw("angularDiameter", "默认角直径（度）");
-                Draw("terminatorCorrection", "阴影终止线校正");
+                using (new EditorGUI.DisabledScope(!HoRTShadowRendererFeature.SupportsTerminatorCorrection)) Draw("terminatorCorrection", "阴影终止线校正");
+                if (!HoRTShadowRendererFeature.SupportsTerminatorCorrection) EditorGUILayout.HelpBox("曲面位移校正存在真实角色回归，暂时停用；实际按 0 运行，原参数保留。", MessageType.Warning);
                 EditorGUILayout.HelpBox("Ho-RTShadow Light 的逐灯角度优先于这里和 Volume 的默认值。0 度为二值硬影；增加样本不能给零角度光源制造半影。", MessageType.None);
                 // Keep both budgets visible: a Volume can choose a different mode.
                 Draw("samplesPerPixel", "原始参考样本数"); Draw("singleFrameEstimates", "无历史同帧估计数"); Draw("samplingSeed", "采样种子");
