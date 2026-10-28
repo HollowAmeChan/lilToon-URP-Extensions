@@ -39,7 +39,9 @@ AL+ 命名或附加 UV Morph 是 MME 控制约定，不等于源文件包含 Uni
 
 八份 1280×720 主机位 PNG 位于各自 Renders/，来自本机 Unity 6000.3.15f1、HoURP 与 Ho lilToon 的实际渲染。主目录的“场景索引.md”连接场景和截图，“Rendering-check.json”记录图片哈希、灯光数和场景检查。
 
-本机使用实时光照，不依赖共享 Lightmap。五个场景带独立地面平面反射，其余按各自材质/空间需要保留大气、GTAO、软阴影、透明 OIT、Bloom 和调色配置。原始 MME 程序没有在 Unity 中执行，AL+ 灯具以 Ho lilToon 自发光和真实局部灯重新制作。
+本机使用实时光照，不依赖共享 Lightmap。五个场景带独立地面平面反射。第二轮为八个场景补了独立天空球、全部模型投影、摄影灯光、Ho 太阳体积光与尘粒、Ho 空气透视和 Bokeh 景深，以及 Bloom、分离色调、暗角、轻微色差与颗粒。原始 MME 程序没有在 Unity 中执行，AL+ 灯具以 Ho lilToon 自发光和真实局部灯重新制作。
+
+Ho ImageProcess 的末尾依次是柔光、2.39:1 电影边框和 Hollow Logo。日景为白边黑标，夜景为黑边白标；用户指定的透明 PNG 每场景单独保存，Logo 位于底部正中。导入保留 NPOT 尺寸，防止宽字标被纹理导入器压扁。所有效果都在本场景的后处理 Inspector 修改，图层可独立关闭。
 
 ## Unity 制作工具
 
@@ -47,8 +49,9 @@ Unity/ 是本机 Assets/mmd场景测试/_制作工具 的源码快照，不包�
 
 - HoMmdStageBuilder：初建、调整入口及场景初始配方。
 - HoMmdStagePolish：本套场景的美术配方。重跑会重设相关材质和灯光，日常使用请直接修改场景。
+- HoMmdStageLighting：第二轮光影配方，读取各自 Rendering/光影精调.json；初始局部灯强度保存在原灯光记录.json，以免重复运行后强度不断缩小。新增摄影灯位于“06 摄影灯光”。重跑会重设这套配方控制的材质、灯光和后处理，日常直接编辑场景/Volume。
 - HoMmdStageCapture：Single 场景隔离、跨帧 StandardRequest、HDR 异步 GPU 读回、在写 PNG 前执行一次线性到 sRGB 编码。
-- HoMmdStageAudit：真实 Unity 依赖闭包、相机、材质、环境与独立配置检查。
+- HoMmdStageAudit：真实 Unity 依赖闭包、相机、材质、环境、全部模型投影、天空球、景深、底部 Logo/边框对比色与独立配置检查。背景天空球使用专用天空 shader，模型继续全部使用 Ho lilToon。
 - HoMmdStageEnvironment：按活动场景临时选择 Quality Pipeline 和环境，离开/重载时恢复。
 
 当前目标工程正在打开时，用 stage-cli.py 与 Library/HoMmdStages 文件队列通信；不需要鼠标键盘操作。命令超时仅表示观察超时，先检查真实进程和 running.json，不要直接重复提交。
@@ -63,10 +66,14 @@ python Tools~/MmdStages/stage-cli.py render 花吐电気
 ~~~text
 -batchmode -nographics -executeMethod HoMmdStageBuilder.BuildRemainingBatch
 -batchmode -nographics -executeMethod HoMmdStagePolish.RunBatch
+-batchmode -nographics -executeMethod HoMmdStageLighting.RunBatch
+-batchmode -force-d3d11 -executeMethod HoMmdStageLighting.RefineAndRenderBatch
 -batchmode -force-d3d11 -executeMethod HoMmdStageBuilder.RenderAllBatch
 -batchmode -nographics -executeMethod HoMmdStageAudit.RunBatch
 ~~~
 
 构建入口只创建缺失场景。Polish 只修改本套场景，截图前拒绝自动丢弃未保存的场景。截帧完毕会恢复原场景布局和管线。不要使用 Camera.Render() 替代 SRP 截帧入口；本机最初的直接路径出现过原生渲染断言崩溃，后续 StandardRequest 已完成八场景输出。
+
+当前主视角使用 24 个独立帧预热体积历史；Library/HoMmdStages/*-lighting-state.json 记录实际提交的体积状态、SP/IP 写入图层数、焦点和曝光。RenderOneBatch 支持 -hoNoVolume -hoOutputSuffix without-volume，便于在 Library 输出体积光开关对比而不替换正式 PNG。截图从 HDR float 读回后只进行一次 sRGB 编码。
 
 本机详细证据放 Temp~/MmdStages/，不进入包资源或 Git。当前验证是场景搭建与主相机输出，不是 MME 逐像素还原或性能认证。

@@ -51,10 +51,15 @@ public static class HoMmdStageBuilder
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
     }
     static int captureIndex;
+    static string[] captureStages;
     static readonly List<string> captured=new List<string>();
     public static void RenderAllBatch()
     {
-        captureIndex=0;captured.Clear();
+        RenderStagesBatch(Recipes().Select(x=>x.name));
+    }
+    public static void RenderStagesBatch(IEnumerable<string> stages)
+    {
+        captureIndex=0;captured.Clear();captureStages=stages.ToArray();
         EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
         EditorApplication.delayCall+=CaptureNext;
     }
@@ -70,9 +75,9 @@ public static class HoMmdStageBuilder
     }
     static void CaptureNext()
     {
-        if(captureIndex==Recipes().Length)
+        if(captureIndex==captureStages.Length)
         {File.WriteAllLines(Path.Combine(HoMmdStageWork.Work,"all-captures.txt"),captured);EditorApplication.Exit(0);return;}
-        string stage=Recipes()[captureIndex].name;
+        string stage=captureStages[captureIndex];
         try
         {
             BeginRender(new HoMmdStageWork.Request{stage=stage,width=1280,height=720},path=>{
@@ -89,6 +94,8 @@ public static class HoMmdStageBuilder
         string path=Root+r.name+"/Renders/"+r.name+(request.view==0?"_主视角":"_副视角")+".png";
         if(Environment.GetCommandLineArgs().Contains("-hoDiagnostic"))
             path=Path.Combine(HoMmdStageWork.Work,r.name+"-diagnostic.png");
+        int outputIndex=Array.IndexOf(Environment.GetCommandLineArgs(),"-hoOutputSuffix");
+        if(outputIndex>=0)path=Path.Combine(HoMmdStageWork.Work,r.name+"-"+Environment.GetCommandLineArgs()[outputIndex+1]+".png");
         HoMmdStageCapture.Begin(Root+r.name+"/"+r.name+".unity",path,request.width,request.height,done,failed,
             camera=>{
                 if(Environment.GetCommandLineArgs().Contains("-hoDiagnostic"))
@@ -97,8 +104,13 @@ public static class HoMmdStageBuilder
                     foreach(var f in renderer.rendererFeatures)f.SetActive(false);
                 }
                 if(Environment.GetCommandLineArgs().Contains("-hoNoPost"))camera.GetUniversalAdditionalCameraData().renderPostProcessing=false;
+                if(Environment.GetCommandLineArgs().Contains("-hoNoVolume"))
+                {
+                    var renderer=Asset<UniversalRendererData>(Root+r.name+"/Rendering/Ho Renderer.asset");
+                    foreach(var feature in renderer.rendererFeatures.OfType<HoVolumeLightRendererFeature>())feature.SetActive(false);
+                }
                 if(request.view==1){camera.transform.position=r.camera+new Vector3(3,1,2);camera.transform.LookAt(r.target);}
-            },2);
+            },24);
     }
     [Serializable] public sealed class Recipe
     {

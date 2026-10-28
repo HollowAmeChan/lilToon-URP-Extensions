@@ -10,11 +10,12 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using Hollow.HoMmdStages;
 using lilToon.URP.Extensions.Atmosphere;
+using lilToon.URP.Extensions.PostProcessing;
 
 public static class HoMmdStageAudit
 {
     [Serializable]sealed class Audit
-    {public string stage,scene,pipeline,profile;public int meshes,triangles,materials,lights,regions;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing;}
+    {public string stage,scene,pipeline,profile;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast;}
     [Serializable]sealed class Report{public string date;public Audit[] stages;public string[] errors;}
     public static void RunBatch()
     {
@@ -37,18 +38,31 @@ public static class HoMmdStageAudit
                 var invalid=AssetDatabase.GetDependencies(path,true).Where(x=>
                     (x.StartsWith("Assets/mmd场景测试/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/mmd场景测试/_制作工具/"))||
                     x=="Assets/Settings/PC_Renderer.asset"||x=="Assets/Settings/PC_RPAsset.asset").ToArray();
-                var missing=mats.Where(x=>x==null||x.shader==null||!x.shader.name.Contains("lilToon")).Select(x=>x==null?"null":x.name).ToArray();
+                var modelRenderers=renderers.Where(x=>x.transform.parent.name!="04 环境与后处理").ToArray();
+                bool skySphere=renderers.Any(x=>x.name=="天空球"&&x.sharedMaterial!=null&&x.sharedMaterial.shader!=null&&x.sharedMaterial.shader.name=="Ho/MMD Stage Sky Sphere");
+                var missing=mats.Where(x=>x==null||x.shader==null||(!x.shader.name.Contains("lilToon")&&x.shader.name!="Ho/MMD Stage Sky Sphere")).Select(x=>x==null?"null":x.name).ToArray();
+                bool dof=profile.TryGet<ScreenProcessStackVolume>(out var screen)&&screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.DepthOfField);
+                profile.TryGet<ImageProcessStackVolume>(out var image);
+                var bars=image!=null?image.layers.value.FirstOrDefault(x=>x.enabled&&x.effect==ImageProcessEffect.CinematicBars):null;
+                var logo=image!=null?image.layers.value.FirstOrDefault(x=>x.enabled&&x.effect==ImageProcessEffect.LogoOverlay):null;
+                bool centeredLogo=logo!=null&&logo.logoTexture0!=null&&Mathf.Abs(logo.parameters0.x-.5f)<.001f&&logo.parameters0.y<.15f&&
+                    AssetDatabase.GetAssetPath(logo.logoTexture0)==folder+"/Rendering/Hollow Logo.png";
+                bool contrast=bars!=null&&logo!=null&&Mathf.Abs(bars.color.r+logo.color.r-1)<.001f&&Mathf.Abs(bars.color.r-logo.color.r)>.9f;
                 int triangleCount=meshes.Sum(x=>(int)x.sharedMesh.GetIndexCount(0)/3);
                 var audit=new Audit{stage=recipe.name,scene=path,pipeline=AssetDatabase.GetAssetPath(env.pipeline),
                     profile=AssetDatabase.GetAssetPath(profile),meshes=meshes.Length,triangles=triangleCount,materials=mats.Length,
                     lights=roots.SelectMany(x=>x.GetComponentsInChildren<Light>()).Count(),
+                    enabledLights=roots.SelectMany(x=>x.GetComponentsInChildren<Light>()).Count(x=>x.enabled),
                     regions=roots.SelectMany(x=>x.GetComponentsInChildren<HoAtmosphereRegion>()).Count(),
+                    modelRenderers=modelRenderers.Length,modelShadowCasters=modelRenderers.Count(x=>x.shadowCastingMode!=ShadowCastingMode.Off&&x.receiveShadows),skySphere=skySphere,depthOfField=dof,
+                    cinematicBars=bars!=null,centeredLogo=centeredLogo,logoContrast=contrast,
                     hasCamera=camera!=null,postProcessing=camera!=null&&camera.GetUniversalAdditionalCameraData().renderPostProcessing,
                     features=renderer.rendererFeatures.Where(x=>x.isActive).Select(x=>x.GetType().Name).ToArray(),
                     externalStageReferences=invalid,missingShaders=missing};
                 results.Add(audit);
                 if(invalid.Length>0||missing.Length>0||!audit.hasCamera||!audit.postProcessing||audit.regions!=1||
-                    !audit.pipeline.StartsWith(folder+"/")||!audit.profile.StartsWith(folder+"/"))
+                    !audit.pipeline.StartsWith(folder+"/")||!audit.profile.StartsWith(folder+"/")||!skySphere||!dof||!audit.cinematicBars||!centeredLogo||!contrast||audit.modelShadowCasters!=audit.modelRenderers||
+                    modelRenderers.Any(x=>x.sharedMaterial!=null&&!x.sharedMaterial.GetShaderPassEnabled("ShadowCaster")))
                     errors.Add(recipe.name+": scene dependency/state audit failed");
             }
             File.WriteAllText(Path.Combine(HoMmdStageWork.Work,"scene-audit.json"),JsonUtility.ToJson(new Report{

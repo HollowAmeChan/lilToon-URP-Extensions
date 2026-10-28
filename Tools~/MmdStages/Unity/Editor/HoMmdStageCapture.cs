@@ -135,8 +135,8 @@ public static class HoMmdStageCapture
                 "{\"time\":\""+DateTime.UtcNow.ToString("O")+"\",\"phase\":\""+phase+"\",\"frames\":"+frames+",\"status\":\""+status+"\"}");
             try
             {
-                if (EditorApplication.timeSinceStartup - began > 90)
-                    throw new TimeoutException("场景截帧超过 90 秒：" + status);
+                if (EditorApplication.timeSinceStartup - began > 180)
+                    throw new TimeoutException("场景截帧超过 180 秒：" + status);
                 if (EditorApplication.isCompiling || EditorApplication.isUpdating) { Pump(); return; }
                 if (camera == null || !captureScene.IsValid() || SceneManager.GetActiveScene() != captureScene)
                     throw new InvalidOperationException("截帧期间相机或活动场景发生变化。");
@@ -160,6 +160,7 @@ public static class HoMmdStageCapture
                         lastFrame = Time.frameCount;
                         var warmup = new RenderPipeline.StandardRequest { destination = target };
                         RenderPipeline.SubmitRenderRequest(camera, warmup);
+                        HoMmdStageLighting.RecordRenderState(camera,scenePath,frames+1);
                         var stack=VolumeManager.instance.stack;
                         var bloom=stack.GetComponent<Bloom>();
                         var adjustments=stack.GetComponent<ColorAdjustments>();
