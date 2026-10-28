@@ -1,0 +1,38 @@
+{
+  "stage": "Curved",
+  "sourceCommit": "c484013599b3ea153e8f6bfc8f4ab2cd39591ff4",
+  "startedUtc": "2026-10-28T17:30:49.7854578Z",
+  "sourcesFile": "sources-20261028T173049110.json",
+  "runnerSha256": "D4E7AA444952ED94DF433EB57B6A527585D8F262216EC5EDFB361A4D26F5CC36",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "curved-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunCurved",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "8BD9D7E509C241B785B9EBFCDCE157EA6156CBC6B1AE84A59923AFB7706E437C",
+      "seconds": 15.8879684,
+      "pass": true,
+      "logFile": "ho-rt-curved-curved-rg-20261028T173049110.log"
+    },
+    {
+      "name": "curved-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunCurvedCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "0013612828BCA7C7178C9EC91CEE761152828112A8CEEE05DBEB84E268E8FF9C",
+      "seconds": 8.6758583,
+      "pass": true,
+      "logFile": "ho-rt-curved-curved-compat-20261028T173049110.log"
+    }
+  ]
+}

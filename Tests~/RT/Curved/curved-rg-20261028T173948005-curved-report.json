@@ -1,0 +1,20 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "valid": 78152,
+    "falseShadows": 0,
+    "contactBlocked": 0,
+    "contactOccluded": 8448,
+    "contactVisible": 0,
+    "terminatorSamples": 3936,
+    "geometricBlocked": 3936,
+    "correctedBlocked": 0,
+    "contactMinimum": 0.00017529726028442383,
+    "contactMaximum": 0.00019931793212890625,
+    "evidence": [
+        "Smooth interpolated mesh normals vary across the two exact planar triangles, like a facet of a smooth limb; no real occluder can explain interior strips",
+        "Perspective and ortho current jittered raster samples keep the original two-sided receiver in the native AS",
+        "Independent parallel blocker at 2mm remains real geometry, even when absent from raster",
+        "Sixteen rotating light directions over an actual eight-sided limb compare exact polygon geometry against smooth vertex-normal terminator region"
+    ]
+}

@@ -3,6 +3,9 @@
 #include "../../RT/Shaders/HoRTPrimarySurface.hlsl"
 #include "../../RT/Shaders/HoRTNativeVisibility.hlsl"
 StructuredBuffer<uint> _HoRTShadowReceivers;
+StructuredBuffer<uint> _HoRTShadowInstanceOwners;
+uint _HoRTShadowInstanceOwnerCount;
+float _HoRTShadowTerminatorCorrection;
 RWTexture2D<float4> _HoRTShadowOutput;
 float4 _HoRTShadowDirection; // toward centre, 1-cos(angular radius), computed with sin to retain tiny angles
 float4 _HoRTShadowParameters; // full output size, min/max metres
@@ -25,13 +28,13 @@ float3 HoRTShadowSampleDirection(uint2 pixel,uint sampleIndex)
     float3 bitangent=cross(centre,tangent);float si,co;sincos(6.28318530718*u.y,si,co);
     return centre*cosTheta+(tangent*co+bitangent*si)*sinTheta;
 }
-float3 HoRTShadowRayOrigin(HoRTPrimarySurface surface,float3 direction)
+float3 HoRTShadowRayOrigin(HoRTPrimarySurface surface,float3 direction,float3 triangleNormal)
 {
     // Raster depth reconstruction and AS intersection do not round to the
     // same plane. TMin alone shrinks the normal clearance by abs(N.L), which
     // makes tiny depth errors become large self-shadows at grazing angles.
     // Use the mesh normal, never its normal-map/shading-normal perturbation.
-    float3 normal=surface.geometricNormalWS;
+    float3 normal=triangleNormal;
     normal=dot(normal,direction)>=0?normal:-normal;
     // Also keep the displacement representable away from the world origin.
     // This is a raster-origin guard, not a claimed triangle-error bound.
@@ -49,6 +52,35 @@ void Cast()
     if(owner==0||owner>65535||(_HoRTShadowReceivers[owner>>5]&(1u<<(owner&31)))==0)
     {_HoRTShadowOutput[pixel]=0;return;}
     if(any((uint2)_HoRTPrimarySize.xy!=(uint2)_HoRTShadowParameters.xy))return;
+    // Smooth vertex normals are not the plane that AS traversal intersects.
+    // Resolve only a very local camera segment, and accept a face normal only
+    // from the current receiver identity. Keep the original raster position:
+    // do not snap a receiver onto a neighbouring layer or discard close hits.
+    float3 triangleNormal=surface.geometricNormalWS;
+    float window=max(_HoRTShadowParameters.z*4,surface.eyeDepth*2e-6+dot(abs(surface.positionWS),1.0)*9.5367431640625e-7);
+    HoRTVisibilityHit primary=HoRTTraceClosestVisibility(surface.positionWS+surface.viewDirectionWS*window,-surface.viewDirectionWS,0,window*2,255);
+    if(primary.status>1){_HoRTShadowOutput[pixel]=float4(0,0,10+primary.status,owner);return;}
+    if(primary.status==1&&primary.instance<_HoRTShadowInstanceOwnerCount&&_HoRTShadowInstanceOwners[primary.instance]==owner)
+    {
+        float3 actualNormal=HoRTVisibilityUnpackNormal(primary.triangleNormal);
+        if(abs(dot(actualNormal,surface.geometricNormalWS))>.25)triangleNormal=actualNormal;
+        float3 offset=primary.smoothOffset*saturate(_HoRTShadowTerminatorCorrection);
+        // The smooth surface is an explicit approximation, separate from
+        // numerical bias. Do not move through a nearby blocker while applying
+        // it: clamp the displacement before the first real bridge intersection.
+        float lengthSquared=dot(offset,offset);
+        if(lengthSquared>4*_HoRTShadowParameters.z*_HoRTShadowParameters.z&&dot(offset,actualNormal)*dot(surface.geometricNormalWS,actualNormal)>0)
+        {
+            float3 bridgeNormal=dot(offset,actualNormal)>=0?actualNormal:-actualNormal;
+            float3 bridgeStart=surface.positionWS+bridgeNormal*_HoRTShadowParameters.z;
+            float3 bridgeDelta=surface.positionWS+offset-bridgeStart;
+            float bridgeLength=length(bridgeDelta);
+            HoRTVisibilityHit bridge=HoRTTraceClosestVisibility(bridgeStart,bridgeDelta/bridgeLength,_HoRTShadowParameters.z,bridgeLength,255);
+            if(bridge.status>1){_HoRTShadowOutput[pixel]=float4(0,0,10+bridge.status,owner);return;}
+            float fraction=bridge.status==1?saturate((bridge.distance-2*_HoRTShadowParameters.z)/bridgeLength):1;
+            surface.positionWS+=offset*fraction;
+        }
+    }
     float3 localDirection=0;float maximum=_HoRTShadowParameters.w;
     if(_HoRTShadowLightType!=0)
     {
@@ -65,7 +97,7 @@ void Cast()
     for(uint sampleIndex=0;sampleIndex<_HoRTShadowSamples;sampleIndex++)
     {
         float3 direction=_HoRTShadowLightType==0?HoRTShadowSampleDirection(pixel,sampleIndex):localDirection;
-        float3 origin=HoRTShadowRayOrigin(surface,direction);
+        float3 origin=HoRTShadowRayOrigin(surface,direction,triangleNormal);
         float rayMaximum=maximum;
         if(_HoRTShadowLightType!=0)
         {

@@ -18,6 +18,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 Draw("reconstruction", "阴影重建"); Draw("angularDiameter", "默认角直径（度）");
+                Draw("terminatorCorrection", "阴影终止线校正");
                 Draw("samplesPerPixel", "原始参考样本数"); Draw("singleFrameEstimates", "无历史同帧估计数"); Draw("samplingSeed", "采样种子");
                 EditorGUILayout.HelpBox("逐灯声明角度优先。Raw 只使用原始样本数；SIGMA 无历史只使用同帧估计数，次数增加会增加完整降噪成本；稳定预览每请求一次。点 / 聚光当前始终输出 delta 硬影。", MessageType.None);
             }

@@ -281,6 +281,15 @@ namespace lilToon.URP.Extensions.RT
             instance = default; return false;
         }
 
+        // A consumer may attach its own identities to this frozen AS view.
+        // Keep OB/receiver policy out of the shared scene metadata ABI.
+        internal void CopyInstances(List<Instance> destination)
+        {
+            ThrowIfDisposed(); destination.Clear();
+            foreach (var e in entries.Values)
+                destination.Add(new Instance(e.identity, e.materialId, e.triangles, e.renderer, e.mesh, e.material, e.submesh));
+        }
+
         private void EnsureMetadataCapacity()
         {
             if (!IsAvailable) return;

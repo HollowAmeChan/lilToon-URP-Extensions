@@ -480,6 +480,8 @@ Renderer 的顺序为 Ho-RT、GB / SB、Ho-RTShadow；接收角色根节点添�
 
 Feature 检查器分为生产、灯与接收域、重建质量、调试、高级、运行状态。其生产总开关始终有效，关闭后 Volume 不能重新开启。`Add Override → Post-processing → Ho-RTShadow → 光追投影` 提供逐相机启用、重建方式、默认角度、Raw 样本数、无历史估计数、种子及调试覆盖；未勾覆盖使用 Feature 默认值，inactive 组件回退默认，Camera Volume layer mask / trigger 决定参与的 Volume。Raw 与无历史的两个预算只对相应模式有效，切模式时不把另一个预算乘进去。
 
+“重建质量”中的**阴影终止线校正**为独立的 0–1 几何近似强度，默认 1；Volume 可逐相机覆盖。0 保留原三角网格参考，仍执行必要的数值起点保护；1 用顶点切平面重建平滑曲面起点，减轻转灯时低模自影逐面跳变。它与光源角度、PCF / PCSS、SIGMA 和最终像素 AA 分别作用，不能相互替代。当前输出与运行状态公开实际强度，`HoRTShadowProduct` / compatibility 产品的 `TerminatorCorrection` 记录该请求采用的值；原始 V 在强度大于 0 时描述该曲面近似的真实光源射线查询，不宣称等于未修改三角表面的可见度真值。
+
 运行状态显示当前相机、覆盖数量、实际重建参数、每灯名称 / 稳定 LightId / 当前 slot / 分辨率 / 样本与估计 / receiver 数量 / 历史 reset，以及不可用产品原因。Host Inspector 显示场景 View、累计共享 Bake、CPU fence 等待和待退休数量；这些不是整帧 GPU 耗时。调试默认仅允许 Scene View，Game View 须显式开启；所选 slot 从 0 开始，对应本次生产列表，灯集合改变可能重排，不能把 slot 当稳定 LightId。
 
 | 调试视图 | 含义 |
@@ -501,6 +503,18 @@ Feature 检查器分为生产、灯与接收域、重建质量、调试、高级
 RTShadow 现在用已有 `rayBias` 同时沿出射侧网格法线偏移起点、设置沿射线最小距离，并以世界位置舍入量保留可表达位移；delta 点 / 聚光从新起点重新瞄准实际有限灯端点。使用 SB 的插值网格法线，不使用 normal-map 法线，没有跳过整个接收物体或丢弃任意近命中。取法线方向避免自相交的依据见 [NVIDIA DXR 自相交说明](https://developer.nvidia.com/blog/solving-self-intersection-artifacts-in-directx-raytracing/)；本实现是 raster 起点保护，**没有声称实现该文需要三角形重建 / 变换误差界的完整保证**。过大偏移仍会丢失贴面细影，不能用大 bias 把几何 / 姿态错配遮住；完整 motion 重投影和任意材质位移仍不在该修复范围。
 
 专项见 [Self review](../Tests~/RT/Self/review.json)，GPU 入口 `Tests~/RT/run_validation.ps1 -Stage Self`，复核 `python Tests~/RT/Self/verify_results.py`；独立 Player 入口为 `Tests~/RT/Self/Player/run_player.ps1`（另加 `-Compatibility`）。修正后同一 143131 样本误遮挡与 jitter 翻转均为 0，2mm 真正遮挡片的 8448 遮挡像素保留，四个骨骼姿态共 33792 有效样本没有错误自影；原多灯双路径和 SIGMA 无历史同帧质量回归通过。三次失败原样保留：首次同时包含接触片参与 raster 的夹具错误，修正该夹具后旧生产代码仍以相同自影 / 翻转数量失败；补蒙皮时又错误地让接触片重新参与 raster，造成有效样本不足，禁用夹具接触片后恢复，而非降低有效样本门槛。两路径保存的原始信号一致；两个序列化 Player 各 21 Update / 148 checks，另验打包射线 Shader 的掠射自投影与八组 jitter，构建 / 运行均退出 0，原生插件字节一致，无新增运行诊断或 GC 警告额度；分程序集编译 0 错误。
+
+**2026-10-29 平滑法线细条与 shadow terminator 后续修正。** 用户进一步看到细长条、碎片断裂，并指出转灯时像整片三角形爬过曲面。前一轮的平面 / 常量法线验收没有覆盖这两项：① 插值顶点法线不是 AS 求交的真实三角面法线，按它判定偏移侧仍会错误穿入面片；② 即使数值完全正确，低模三角几何的自影也可能与材质的平滑法线曲面不一致。类似的终止线问题及几何校正已有生产渲染器实践，见 [Blender 4.5 说明](https://developer.blender.org/docs/release_notes/4.5/eevee/)；曲面起点近似的依据为 [Hanika：Hacking the Shadow Terminator](https://link.springer.com/chapter/10.1007/978-1-4842-7185-8_4)。基于 reflectance / BRDF 的终止线软化会改材质受光，本轮采用几何起点路线，保留原 NPR ramp。
+
+第一层修正：从 raster 表面附近发一条很短的相机方向 native 查询，只有匹配当前 OB owner 的命中才借用它的实际三角平面法线；不把 raster 位置直接吸附到旁边表面，也不按距离粗暴删掉命中。原来 reserved 的 payload 字段保存 flat normal 的 2×16-bit oct 编码；公共 scene 只新增只读实例快照接口，OB owner 映射由 RTShadow 自己持有，不写进共享 AS metadata、DI / GI 策略或 native NRD ABI。平滑顶点法线不变，继续用于原材质受光和 SIGMA guide。
+
+第二层修正：在匹配的三角形上，用重心坐标与三个顶点切平面构造向外的平滑起点位移，凹向投影夹住，强度由上述 0–1 控制；没有用 `N·L` 直接伪造 V 或执行 toon 阈值。位移起点到目标之间再做一条独立遮挡查询，遇到附近真实几何则在其前面限定位移，再从实际起点追光源射线。位移检查的距离不会冒充灯的 blocker 输入；SIGMA 使用的仍是实际灯样本查询结果。点 / 聚光会重新瞄准真实有限端点，切强度会失效相应历史。
+
+证据见 [Curved review](../Tests~/RT/Curved/review.json)，复核 `python Tests~/RT/Curved/verify_results.py`，GPU 入口 `Tests~/RT/run_validation.ps1 -Stage Curved`，Player 入口 `Tests~/RT/Curved/Player/run_player.ps1`（另加 `-Compatibility`）。原生产代码在平滑顶点法线的解析平面中产生 32516 / 78152 个错误自遮挡；真实面法线保护后为 0。另用真实八边形封闭肢体旋转光源 16 次，3936 个平滑法线朝光、实际三角面背光的终止线样本，在原几何参考下全遮挡、强度 1 后这组遮挡为 0。2mm 独立遮挡片仍有 8448 / 8448 个有效遮挡，没有被曲面位移穿过。两条路径的原始信号逐字节一致；原自影 / 骨骼微动、多灯、native 最近 / Cutout / culling、SIGMA 同帧算术与薄蒙皮共十项 GPU 专项通过。两个 Player 各 21 Update / 165 checks，新增实际平滑法线蒙皮接收面、八个骨骼微动 / jitter 请求及 Volume / 产品几何策略元数据验证；构建和运行均退出 0，插件字节一致，无新增运行诊断或 GC 警告额度，分程序集编译 0 错误。
+
+原错误自影失败、两个中间接触距离断言失败都保留。后者的真实 V 始终为有效遮挡，旧断言误把距离当作从不动的 raster 点测量；校正起点逼近遮挡片后，实际灯射线距离为 0.175–0.199mm。最终检查仍要求同一个 2mm 物理遮挡片、8448 个有效 V=0 和严格正的实际射线距离，不通过删除该片或把无效输出当阴影通过。原 DI / GI / NRD / CS 运行文件与宿主姿态 / 场景生命周期算法保留；共同 native payload 和材质 helper 有明确新增字段及 GPU 回归，不将旧整包 SHA 改成当前通过。
+
+成本增加为每接收像素每估计一次局部 native 查询，曲面位移非零时再加一次路径检查；没有新屏幕纹理、AS 或历史等待。每灯新增按实例容量计的 uint owner buffer，经既有 host fence 退休，hit payload 新增 float3 曲面位移。它是顶点法线曲面的近似，不是真正细分、normal-map 几何、布料或任意 GPU 位移；局部 owner / 深度窗口也不是唯一 raster primitive ID，极近重叠层、硬法线裂缝、极低细分和复杂凹面仍有边界。强度 0 可核原几何参考，特别敏感的角色可按场景调低；当前有界测试不能替代用户模型全视角的最终观察。
 
 ### 8.7 本轮交付审计与保留边界
 
@@ -597,6 +611,8 @@ R2 的 [HoRTGeometryCache](../Runtime/RT/HoRTGeometryCache.cs) 可由宿主注�
 | GI native visibility adapter | 与 GI 相同的 alpha 规则，适配结果只保证 status / distance，不提供公共 inline 的 metadata 身份字段 |
 
 公共 inline 调用 `HoRTTraceScene(originWS, directionWS, tMin, tMax, mask)`；需要 `#pragma require inlineraytracing`。方向被归一化，距离均以世界单位计。status 为 `0=miss`、`1=hit`、`2=metadata错配`、`3=无效射线`、`4=不可用`；失败 payload 清零，不能按 miss 消费。世界 miss 的天空响应由光照消费者负责。
+
+native visibility 的 status=1 另携带 `triangleNormal`（世界空间 flat face normal，2×16-bit oct）和 `smoothOffset`（顶点切平面重建的世界位移）；miss / 失败仍清零。它们只描述命中几何，不内置接收域、终止线强度或光照；RTShadow 自己核 owner / 局部域并决定是否应用。共享 scene 的 `CopyInstances` 只提供本 view 当前登记实例的只读快照，消费者不得跨 scene lifetime / epoch 复用映射，也不接管几何和 AS 寿命。
 
 <a id="primary-surface"></a>
 

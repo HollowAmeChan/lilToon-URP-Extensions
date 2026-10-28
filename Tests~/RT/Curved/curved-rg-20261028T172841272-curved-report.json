@@ -1,0 +1,12 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "valid": 78152,
+    "falseShadows": 32516,
+    "contactBlocked": 8448,
+    "evidence": [
+        "Smooth interpolated mesh normals vary across the two exact planar triangles, like a facet of a smooth limb; no real occluder can explain interior strips",
+        "Perspective and ortho current jittered raster samples keep the original two-sided receiver in the native AS",
+        "Independent parallel blocker at 2mm remains real geometry, even when absent from raster"
+    ]
+}

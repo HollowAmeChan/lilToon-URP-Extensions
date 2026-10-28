@@ -45,6 +45,23 @@ Shader "Hidden/HoRT/VisibilityMaterial"
             {
                 hit.status=1;hit.distance=RayTCurrent();hit.instance=InstanceID();hit.primitive=PrimitiveIndex();
                 hit.barycentrics=attributes.barycentrics;hit.frontFace=HitKind()==HIT_KIND_TRIANGLE_FRONT_FACE;
+                uint3 tri=UnityRayTracingFetchTriangleIndices(PrimitiveIndex());
+                float3 a=UnityRayTracingFetchVertexAttribute3(tri.x,kVertexAttributePosition);
+                float3 b=UnityRayTracingFetchVertexAttribute3(tri.y,kVertexAttributePosition);
+                float3 c=UnityRayTracingFetchVertexAttribute3(tri.z,kVertexAttributePosition);
+                float3 edge1=mul((float3x3)ObjectToWorld3x4(),b-a);
+                float3 edge2=mul((float3x3)ObjectToWorld3x4(),c-a);
+                hit.triangleNormal=HoRTVisibilityPackNormal(normalize(cross(edge1,edge2)));
+                // Reconstruct the smooth surface from vertex tangent planes.
+                // Work relative to vertex a to avoid losing precision in a
+                // large world translation. Concave projections stay clamped.
+                float3 n0=normalize(mul(UnityRayTracingFetchVertexAttribute3(tri.x,kVertexAttributeNormal),(float3x3)WorldToObject3x4()));
+                float3 n1=normalize(mul(UnityRayTracingFetchVertexAttribute3(tri.y,kVertexAttributeNormal),(float3x3)WorldToObject3x4()));
+                float3 n2=normalize(mul(UnityRayTracingFetchVertexAttribute3(tri.z,kVertexAttributeNormal),(float3x3)WorldToObject3x4()));
+                float3 bary=float3(1-attributes.barycentrics.x-attributes.barycentrics.y,attributes.barycentrics);
+                float3 relative=attributes.barycentrics.x*edge1+attributes.barycentrics.y*edge2;
+                hit.smoothOffset=-(bary.x*min(0,dot(relative,n0))*n0+bary.y*min(0,dot(relative-edge1,n1))*n1+bary.z*min(0,dot(relative-edge2,n2))*n2);
+                if(!all(isfinite(hit.smoothOffset)))hit.smoothOffset=0;
             }
             ENDHLSL
         }

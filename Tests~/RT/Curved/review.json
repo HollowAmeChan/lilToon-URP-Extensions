@@ -1,0 +1,91 @@
+{
+  "stage": "Smooth-normal strips and polygon shadow-terminator geometry correction",
+  "referenceCommit": "c4840135",
+  "accepted": {
+    "curved-rg": "run-20261028T174149928.json",
+    "curved-compat": "run-20261028T174149928.json",
+    "self-rg": "run-20261028T174149928.json",
+    "self-compat": "run-20261028T174149928.json",
+    "multi-rg": "run-20261028T174149928.json",
+    "multi-compat": "run-20261028T174149928.json",
+    "native-query-rg": "run-20261028T174149928.json",
+    "native-query-compat": "run-20261028T174149928.json",
+    "export-rg": "run-20261028T174149928.json",
+    "thin-rg": "run-20261028T174149928.json"
+  },
+  "curvedReports": {
+    "curved-rg": {
+      "pass": true,
+      "compatibility": false,
+      "valid": 78152,
+      "falseShadows": 0,
+      "contactBlocked": 8448,
+      "contactOccluded": 8448,
+      "contactVisible": 0,
+      "terminatorSamples": 3936,
+      "geometricBlocked": 3936,
+      "correctedBlocked": 0,
+      "contactMinimum": 0.00017529726028442383,
+      "contactMaximum": 0.00019931793212890625,
+      "evidence": [
+        "Smooth interpolated mesh normals vary across the two exact planar triangles, like a facet of a smooth limb; no real occluder can explain interior strips",
+        "Perspective and ortho current jittered raster samples keep the original two-sided receiver in the native AS",
+        "Independent parallel blocker at 2mm remains real geometry, even when absent from raster",
+        "Sixteen rotating light directions over an actual eight-sided limb compare exact polygon geometry against smooth vertex-normal terminator region"
+      ]
+    },
+    "curved-compat": {
+      "pass": true,
+      "compatibility": true,
+      "valid": 78152,
+      "falseShadows": 0,
+      "contactBlocked": 8448,
+      "contactOccluded": 8448,
+      "contactVisible": 0,
+      "terminatorSamples": 3936,
+      "geometricBlocked": 3936,
+      "correctedBlocked": 0,
+      "contactMinimum": 0.00017529726028442383,
+      "contactMaximum": 0.00019931793212890625,
+      "evidence": [
+        "Smooth interpolated mesh normals vary across the two exact planar triangles, like a facet of a smooth limb; no real occluder can explain interior strips",
+        "Perspective and ortho current jittered raster samples keep the original two-sided receiver in the native AS",
+        "Independent parallel blocker at 2mm remains real geometry, even when absent from raster",
+        "Sixteen rotating light directions over an actual eight-sided limb compare exact polygon geometry against smooth vertex-normal terminator region"
+      ]
+    }
+  },
+  "serializedPlayers": {
+    "compat": "run-compat-20261028T174633050.json",
+    "rg": "run-rg-20261028T174404088.json"
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T172841272.json",
+      "case": "curved-rg",
+      "diagnostics": [
+        "Exception: Smooth-normal self Cast false=32516 / 78152 contact=8448\r"
+      ]
+    },
+    {
+      "run": "run-20261028T173722556.json",
+      "case": "curved-rg",
+      "diagnostics": [
+        "Exception: Smooth-normal self Cast false=0 / 78152 contact=0\r"
+      ]
+    },
+    {
+      "run": "run-20261028T173948005.json",
+      "case": "curved-rg",
+      "diagnostics": [
+        "Exception: Smooth-normal self Cast false=0 / 78152 contact=0 terminator=3936 -> 0 / 3936\r"
+      ]
+    }
+  ],
+  "unchangedDiGiNrdCharacterShadowAndHostPoseFiles": 396,
+  "benefit": "A short native primary segment matches current SB owner to an AS triangle and obtains its actual flat normal. This removes 32516/78152 incorrect smooth-normal self-hits. Separately, vertex tangent-plane origin correction removes 3936/3936 undesired polygon terminator shadows across 16 light orientations on an eight-sided limb. A bridge visibility query limits displacement before nearby geometry: all 8448 independent 2mm blocker samples remain occluded.",
+  "policy": "terminatorCorrection is explicit 0..1, default 1 for NPR; 0 retains original triangle geometry with numeric origin protection. Feature and per-camera Volume control it, product metadata reports actual strength, and history signature tracks it. Core V remains a real light-sample query at the declared approximate geometry, without baking N.L, albedo or ramp into it.",
+  "cost": "One local primary query per receiver pixel per estimate, plus a bridge query when smooth displacement is nontrivial. No new screen texture or AS. Each light owns a 4-byte-per-instance-capacity owner buffer, retained by the existing output/host fence; common native hit payload carries an additional float3 smooth displacement. No NRD native ABI or DI/GI algorithm changes.",
+  "limits": "Tangent-plane displacement approximates vertex-normal smooth geometry; it is not true subdivision, arbitrary displacement or normal-map shadowing. Local depth-window/owner association is not a unique raster primitive ID, so unresolved coplanar/layer ambiguity remains bounded. Sharp split normals, concavities and extreme low tessellation may still need model subdivision or per-scene strength. Real-world user scene remains unobserved by UI automation.",
+  "retainedFailuresExplanation": "Original smooth-normal error retained. Two intermediate contact checks assumed blocker distance was measured from the unchanged raster point; actual V stayed 0 in all 8448 samples, but corrected-origin distances were 0.175-0.199mm. New acceptance explicitly checks unchanged physical blocker placement, valid V=0 and positive actual-ray distance, without hiding either failed run."
+}
