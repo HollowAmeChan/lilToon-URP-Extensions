@@ -56,7 +56,7 @@ namespace lilToon.URP.Extensions.RTDI
             // The host retains the old profile until its recorded GPU uses retire.
             sceneProfileKey=new object();
             var materialShader=visibilityMaterialShader;
-            createSceneProfile=alpha?()=>new HoRTDIVisibilityMaterials(materialShader):null;
+            createSceneProfile=alpha?()=>new HoRTVisibilityMaterials(materialShader,"_HoRTDICutout"):null;
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
         #if UNITY_EDITOR

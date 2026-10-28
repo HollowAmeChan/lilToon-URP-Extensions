@@ -27,6 +27,7 @@ Shader "Hidden/HoRTDI/VisibilityMaterial"
             SamplerState sampler_MainTex;
             float4 _MainTex_ST,_AlphaMask_ST,_MainTex_ScrollRotate,_Color;
             float _Cutoff,_AlphaMaskMode,_AlphaMaskScale,_AlphaMaskValue,_ShiftBackfaceUV,_HoRTDICutout;
+            #include "../../RT/Shaders/HoRTCutoutAlpha.hlsl"
             struct HoRTDIAlphaAttributes { float2 barycentrics; };
             [shader("anyhit")]
             void HoRTDIAlphaHit(inout HoRTDIVisibilityPayload payload : SV_RayPayload, HoRTDIAlphaAttributes attributes : SV_IntersectionAttributes)
@@ -37,21 +38,7 @@ Shader "Hidden/HoRTDI/VisibilityMaterial"
                 float2 uv=UnityRayTracingFetchVertexAttribute2(tri.x,kVertexAttributeTexCoord0)*weights.x
                     +UnityRayTracingFetchVertexAttribute2(tri.y,kVertexAttributeTexCoord0)*weights.y
                     +UnityRayTracingFetchVertexAttribute2(tri.z,kVertexAttributeTexCoord0)*weights.z;
-                if(HitKind()==HIT_KIND_TRIANGLE_BACK_FACE&&_ShiftBackfaceUV>0)uv.x+=1;
-                uv=uv*_MainTex_ST.xy+_MainTex_ST.zw;
-                float si,co;sincos(_MainTex_ScrollRotate.z,si,co);float2 rotated=uv-.5;
-                uv=float2(rotated.x*co-rotated.y*si,rotated.x*si+rotated.y*co)+.5;
-                // Same alpha components as lil_common_frag/frag_alpha, explicit LOD 0 at a ray hit.
-                float alpha=_MainTex.SampleLevel(sampler_MainTex,uv,0).a*_Color.a;
-                if(_AlphaMaskMode>0)
-                {
-                    float mask=saturate(_AlphaMask.SampleLevel(sampler_MainTex,uv*_AlphaMask_ST.xy+_AlphaMask_ST.zw,0).r*_AlphaMaskScale+_AlphaMaskValue);
-                    if(_AlphaMaskMode==1)alpha=mask;
-                    if(_AlphaMaskMode==2)alpha*=mask;
-                    if(_AlphaMaskMode==3)alpha=saturate(alpha+mask);
-                    if(_AlphaMaskMode==4)alpha=saturate(alpha-mask);
-                }
-                if(alpha<_Cutoff)IgnoreHit();
+                if(HoRTEvaluateCutoutAlpha(uv,HitKind()==HIT_KIND_TRIANGLE_BACK_FACE)<_Cutoff)IgnoreHit();
             }
             [shader("closesthit")]
             void HoRTDIOccluded(inout HoRTDIVisibilityPayload payload : SV_RayPayload,HoRTDIAlphaAttributes attributes : SV_IntersectionAttributes)

@@ -66,7 +66,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(excludeSkyShell)foreach(var renderer in renderers)foreach(var material in renderer.sharedMaterials)if(material!=null&&material.name=="天空"&&!excluded.Contains(material))excluded.Add(material);
                 var visibilityShader=AssetDatabase.LoadAssetAtPath<Shader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIVisibilityMaterial.shader");
                 if(visibilityShader==null)throw new Exception("Visibility material shader missing");
-                using var visibility=new HoRTDIVisibilityMaterials(visibilityShader);
+                using var visibility=new HoRTVisibilityMaterials(visibilityShader,"_HoRTDICutout");
                 using var registry = new HoRTScene(visibility.Resolve,HoRTCutoutSupport.Supports);
                 visibility.BeginFrame();var timer = System.Diagnostics.Stopwatch.StartNew(); registry.Synchronize(renderers,0xff,excluded);visibility.EndFrame();timer.Stop();
                 double initialMs = timer.Elapsed.TotalMilliseconds; uint initialBakes = registry.SkinnedBakeCount, revision = registry.Revision;

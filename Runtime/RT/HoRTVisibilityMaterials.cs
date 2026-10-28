@@ -1,18 +1,18 @@
-using lilToon.URP.Extensions.RT;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace lilToon.URP.Extensions.RTDI
+namespace lilToon.URP.Extensions.RT
 {
     // Native material hit groups borrow original textures and Unity's mesh attributes.
-    // Used only for DI's final visibility; the host owns profile lifetime and
+    // Shared native visibility adapter; the host owns profile lifetime and
     // source raster materials are never changed.
-    internal sealed class HoRTDIVisibilityMaterials : IHoRTMaterialProfile
+    internal sealed class HoRTVisibilityMaterials : IHoRTMaterialProfile
     {
         private readonly Shader shader;
+        private readonly string cutoutProperty;
         private readonly Material opaque;
         private readonly Dictionary<Material, Material> adapters = new(References.Instance);
         private readonly HashSet<Material> seen = new(References.Instance);
@@ -30,11 +30,11 @@ namespace lilToon.URP.Extensions.RTDI
             public bool Equals(Material a, Material b) => ReferenceEquals(a, b);
             public int GetHashCode(Material material) => RuntimeHelpers.GetHashCode(material);
         }
-        internal HoRTDIVisibilityMaterials(Shader shader)
+        internal HoRTVisibilityMaterials(Shader shader, string cutoutProperty = "_HoRTCutout")
         {
-            this.shader = shader;
-            opaque = new Material(shader) { name = "Ho RTDI opaque visibility", hideFlags = HideFlags.HideAndDontSave };
-            opaque.SetFloat("_HoRTDICutout", 0);
+            this.shader = shader; this.cutoutProperty = cutoutProperty;
+            opaque = new Material(shader) { name = "Ho RT opaque visibility", hideFlags = HideFlags.HideAndDontSave };
+            opaque.SetFloat(cutoutProperty, 0);
         }
         internal void BeginFrame() { seen.Clear(); Signature = 0; }
 
@@ -47,11 +47,11 @@ namespace lilToon.URP.Extensions.RTDI
             if (!seen.Add(source)) return adapters[source];
             if (!adapters.TryGetValue(source, out var adapter))
             {
-                adapter = new Material(shader) { name = "Ho RTDI visibility: " + source.name, hideFlags = HideFlags.HideAndDontSave };
+                adapter = new Material(shader) { name = "Ho RT visibility: " + source.name, hideFlags = HideFlags.HideAndDontSave };
                 adapters.Add(source, adapter);
             }
             adapter.CopyPropertiesFromMaterial(source); adapter.shaderKeywords = Array.Empty<string>();
-            bool cutout = HoRTCutoutSupport.Supports(source); adapter.SetFloat("_HoRTDICutout", cutout ? 1 : 0);
+            bool cutout = HoRTCutoutSupport.Supports(source); adapter.SetFloat(cutoutProperty, cutout ? 1 : 0);
             if (cutout) unchecked
             {
                 int hash = source.GetInstanceID();

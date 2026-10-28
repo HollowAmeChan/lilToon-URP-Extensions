@@ -1,0 +1,41 @@
+{
+  "stage": "R4 native visibility prerequisite",
+  "accepted": {
+    "native-query-rg": "run-20261028T031641067.json",
+    "native-query-compat": "run-20261028T031641067.json",
+    "di-cutout-rg": "run-20261028T031641067.json",
+    "di-cutout-compat": "run-20261028T031641067.json",
+    "gi-native-cutout": "run-20261028T031641067.json",
+    "scene-rg": "run-20261028T031641067.json"
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T031128300.json",
+      "case": "native-query-rg",
+      "diagnostics": [
+        "Exception: hit 0: closest=0 occlusion=0\r"
+      ]
+    },
+    {
+      "run": "run-20261028T031241350.json",
+      "case": "native-query-rg",
+      "diagnostics": [
+        "Exception: hit 1: closest=0 occlusion=0\r"
+      ]
+    },
+    {
+      "run": "run-20261028T031335067.json",
+      "case": "native-query-rg",
+      "diagnostics": [
+        "Exception: hit 5: closest=0 occlusion=0\r"
+      ]
+    }
+  ],
+  "postValidationFormatting": "Removed exactly one accidental EOF newline from Editor/RTDI/HoRTDISceneValidation.cs; original executed hashes retained and exact byte transformation verified.",
+  "referenceCommit": "696262b4",
+  "unchangedDiGiCoreFiles": 138,
+  "sharedAlphaMath": "identical operations to both previous any-hit implementations",
+  "runtimeScope": "Host-owned native query at BeforeRenderingOpaques, normalized world-distance nearest and occlusion-only contracts, alpha holes, offscreen casters, Cast Off versus surface policy, Shadows Only, material front/back/off and renderer TwoSided, masks, invalid inputs, updates and actual mirrored raster reference. RG and compatibility, 122 checks / 13 requests each.",
+  "benefit": "One bounded alpha implementation and a nearest-blocker query for SIGMA; caster semantics no longer forced onto DI/GI surface views.",
+  "costAndLimits": "Different purpose views can require distinct AS; no GPU time or final shadow quality claim. This is not the RTShadow feature, SIGMA production, NPR receiver integration, or multilight completion."
+}

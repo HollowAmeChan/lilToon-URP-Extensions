@@ -9,6 +9,7 @@ using UnityEngine.Rendering.RenderGraphModule;
 
 namespace lilToon.URP.Extensions.RT
 {
+    internal enum HoRTGeometryPolicy { Surface, ShadowCasters }
     // Explicit, camera-independent registry for opaque mesh world visibility.
     // No lighting, material evaluation, renderer feature or automatic scene scan.
     internal sealed class HoRTScene : IDisposable
@@ -69,7 +70,7 @@ namespace lilToon.URP.Extensions.RT
             internal Material hitMaterial;
             internal uint identity, materialId, triangles, mask;
             internal int submesh, handle;
-            internal bool cutout;
+            internal bool cutout, triangleCulling, flipWinding;
             internal Matrix4x4 matrix;
             internal ulong poseVersion;
         }
@@ -105,7 +106,8 @@ namespace lilToon.URP.Extensions.RT
 
         // Call before graph recording, never between Read and its execution. The list is the
         // world set, not camera culling results. Mesh content edits require MarkGeometryDirty.
-        internal void Synchronize(IReadOnlyList<Renderer> renderers, uint mask = 0xff, IReadOnlyList<Material> excludedMaterials=null)
+        internal void Synchronize(IReadOnlyList<Renderer> renderers, uint mask = 0xff, IReadOnlyList<Material> excludedMaterials=null,
+            HoRTGeometryPolicy policy = HoRTGeometryPolicy.Surface)
         {
             ThrowIfDisposed();
             if (renderers == null) throw new ArgumentNullException(nameof(renderers));
@@ -137,6 +139,7 @@ namespace lilToon.URP.Extensions.RT
             {
                 if (candidate == null || !seenRenderers.Add(candidate.GetInstanceID())) continue;
                 if (!candidate.enabled || !candidate.gameObject.activeInHierarchy || candidate.forceRenderingOff) continue;
+                if (policy == HoRTGeometryPolicy.ShadowCasters && candidate.shadowCastingMode == ShadowCastingMode.Off) continue;
                 var renderer = candidate;
                 var rigid = renderer as MeshRenderer; var skin = renderer as SkinnedMeshRenderer;
                 if (rigid == null && skin == null) { Rejections.Add(candidate.name + ": requires MeshRenderer or SkinnedMeshRenderer."); continue; }
@@ -177,20 +180,28 @@ namespace lilToon.URP.Extensions.RT
                     if (cutout && (renderer.HasPropertyBlock() || !mesh.HasVertexAttribute(VertexAttribute.TexCoord0) || mesh.GetVertexAttributeDimension(VertexAttribute.TexCoord0) < 2))
                     { Rejections.Add(renderer.name + " submesh " + submesh + ": cutout requires UV0 and no material property block."); continue; }
                     var key = (renderer.GetInstanceID(), submesh); seen.Add(key);
+                    // Surface views keep their existing two-sided query contract.
+                    // Shadow views follow raster material culling unless the
+                    // renderer explicitly requests TwoSided. ShadowsOnly stays
+                    // in the caster world even when absent from the camera.
+                    int cull = material != null && material.HasProperty("_Cull") ? Mathf.RoundToInt(material.GetFloat("_Cull")) : (int)CullMode.Back;
+                    bool triangleCulling = policy == HoRTGeometryPolicy.ShadowCasters && renderer.shadowCastingMode != ShadowCastingMode.TwoSided && cull != (int)CullMode.Off;
+                    bool flipWinding = triangleCulling && cull == (int)CullMode.Front;
                     var hitMaterial = secondaryMaterial?.Invoke(material);
                     var matrix = renderer.localToWorldMatrix; uint triangles = (uint)(descriptor.indexCount / 3);
                     if (!ValidTransform(matrix))
                     { seen.Remove(key); Rejections.Add(renderer.name + ": non-finite or singular transform."); continue; }
-                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || !ReferenceEquals(entry.sourceMesh, sourceMesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial) || entry.cutout != cutout))
+                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || !ReferenceEquals(entry.sourceMesh, sourceMesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial) || entry.cutout != cutout || entry.triangleCulling != triangleCulling || entry.flipWinding != flipWinding))
                     { Remove(key); entry = null; changed = structureChanged = true; }
                     if (entry == null)
                     {
                         if (nextIdentity >= 0x1000000) throw new InvalidOperationException("RT instance ID domain exhausted; recreate the scene service.");
                         uint identity = nextIdentity++;
-                        // Opaque two-sided reference geometry; no ShaderPass/material hit group is needed for inline queries.
+                        // Inline surface views need no material hit group;
+                        // native visibility views supply their own alpha adapter.
                         var config = new RayTracingMeshInstanceConfig(mesh, (uint)submesh, hitMaterial)
                         {
-                            mask = mask, enableTriangleCulling = false,
+                            mask = mask, enableTriangleCulling = triangleCulling, frontTriangleCounterClockwise = flipWinding,
                             // Allow explicit geometry refresh instead of reusing a static BLAS after a Mesh edit.
                             rayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometryManualUpdate,
                             subMeshFlags = cutout ? RayTracingSubMeshFlags.Enabled : RayTracingSubMeshFlags.Enabled | RayTracingSubMeshFlags.ClosestHitOnly
@@ -199,7 +210,7 @@ namespace lilToon.URP.Extensions.RT
                         // Native instance handles are opaque signed tokens, not positive array indices.
                         acceleration.UpdateInstanceGeometry(handle);
                         entry = new Entry { renderer = renderer, mesh = mesh, sourceMesh = sourceMesh, material = material, submesh = submesh,
-                            identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial, cutout = cutout, poseVersion = poseVersion };
+                            identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial, cutout = cutout, poseVersion = poseVersion, triangleCulling = triangleCulling, flipWinding = flipWinding };
                         entries.Add(key, entry); identities.Add(identity, entry); asDirty = metadataDirty = true; changed = structureChanged = true;
                     }
                     else
@@ -310,6 +321,7 @@ namespace lilToon.URP.Extensions.RT
             {
                 Build(cmd);
                 cmd.SetRayTracingAccelerationStructure(shader, AccelerationId, scene.acceleration);
+                cmd.SetRayTracingBufferParam(shader, InstancesId, scene.instanceBuffer);
                 cmd.SetRayTracingVectorParam(shader, StateId, new Vector4(1, scene.instanceBuffer.count, scene.entries.Count, 0));
             }
         }

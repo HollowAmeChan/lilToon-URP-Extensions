@@ -1,0 +1,18 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "failure": "System.Exception: hit 1: closest=0 occlusion=0\r\n  at lilToon.URP.Extensions.RT.HoRTVisibilityValidation.Check (System.Boolean success, System.String text) [0x0001a] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RT\\HoRTVisibilityValidation.cs:135 \r\n  at lilToon.URP.Extensions.RT.HoRTVisibilityValidation.Status (UnityEngine.Color[] image, System.Int32 ray, System.Int32 value, System.String label) [0x00000] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RT\\HoRTVisibilityValidation.cs:132 \r\n  at lilToon.URP.Extensions.RT.HoRTVisibilityValidation.Hit (UnityEngine.Color[] image, System.Int32 ray, System.Single distance, UnityEngine.Renderer expected) [0x00000] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RT\\HoRTVisibilityValidation.cs:134 \r\n  at lilToon.URP.Extensions.RT.HoRTVisibilityValidation.Tick () [0x00031] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RT\\HoRTVisibilityValidation.cs:101 ",
+    "requests": 3,
+    "checks": [
+        "Native query shaders loaded",
+        "Cutout support domain accepted",
+        "Host query view acquired: ",
+        "Host query view acquired: ",
+        "Host query view acquired: ",
+        "hit 0: closest=1 occlusion=1",
+        "Fresh GPU output",
+        "Nearest world distance 0: 3",
+        "Resolved nearest identity",
+        "Correct nearest caster"
+    ]
+}

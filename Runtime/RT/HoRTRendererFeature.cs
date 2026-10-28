@@ -29,14 +29,17 @@ namespace lilToon.URP.Extensions.RT
         internal readonly uint mask;
         internal readonly object profileKey;
         internal readonly Func<IHoRTMaterialProfile> createProfile;
+        internal readonly HoRTGeometryPolicy geometryPolicy;
 
         internal HoRTViewRequest(int geometryLayers, IReadOnlyList<Material> excludedMaterials = null,
-            uint mask = 255, object profileKey = null, Func<IHoRTMaterialProfile> createProfile = null)
+            uint mask = 255, object profileKey = null, Func<IHoRTMaterialProfile> createProfile = null,
+            HoRTGeometryPolicy geometryPolicy = HoRTGeometryPolicy.Surface)
         {
             if (mask > 255) throw new ArgumentOutOfRangeException(nameof(mask));
             if (createProfile != null && profileKey == null) throw new ArgumentException("A material profile factory requires a stable profile key", nameof(profileKey));
             this.geometryLayers = geometryLayers; this.mask = mask;
             this.profileKey = profileKey; this.createProfile = createProfile;
+            this.geometryPolicy = geometryPolicy;
             this.excludedMaterials = new Material[excludedMaterials?.Count ?? 0];
             for (int i = 0; i < this.excludedMaterials.Length; i++) this.excludedMaterials[i] = excludedMaterials[i];
         }
@@ -155,7 +158,7 @@ namespace lilToon.URP.Extensions.RT
                     foreach (var item in candidates)
                         if ((pair.Value.geometryLayers & (1 << item.gameObject.layer)) != 0) selected.Add(item);
                     view.profile?.BeginPrepare();
-                    view.scene.Synchronize(selected, pair.Value.mask, pair.Value.excludedMaterials);
+                    view.scene.Synchronize(selected, pair.Value.mask, pair.Value.excludedMaterials, pair.Value.geometryPolicy);
                     view.profile?.EndPrepare();
                 }
                 frozen = true;

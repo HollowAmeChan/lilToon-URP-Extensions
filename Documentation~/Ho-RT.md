@@ -10,7 +10,7 @@
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | A01/A02 已完成代码解耦及有界资源复用；生产绑定为 RELAX | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | 设计已定，生产链尚未实现 | 本文 §4–8 |
+| RTShadow / SIGMA | R4 的公共 native 最近命中 / alpha / caster 策略已验；Feature、SIGMA 和 NPR 生产链尚未实现 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -111,7 +111,7 @@ flowchart TD
 
 Cast Off 的表面仍可能需要参与 GI 或反射。单/双面、Shadows Only、灯/物体 linking、材质排除等必须作为明确策略保存，不能把 shadow caster 集合强制变成所有 RT 效果的世界集合。
 
-现有 inline `HoRTTraceScene` 会跳过 non-opaque；DI/GI native 路径已有各自的 alpha any-hit。公共层应统一支持范围和可见性语义，同时保留 occlusion 与完整 surface evaluation 的成本差异。
+现有 inline `HoRTTraceScene` 会跳过 non-opaque。R4 前置步骤已将 DI / GI native any-hit 的 alpha 运算收敛到 RT 公共 `HoRTCutoutAlpha.hlsl`，原支持域不变；DI 的轻量 material adapter 移到 RT，并保留 GUID。GI 的完整 surface evaluation 仍由 GI 自己持有。新增 native 最近命中与二值遮挡入口区分距离语义，验收见 §8.5。
 
 ### 5.4 帧准备与多相机
 
@@ -327,7 +327,8 @@ Editor/
 | R2 | 已完成有界验收 | host / 请求 epoch / cache 已实现；RG / compatibility 普通夹具各 93 checks / 11 请求，初始、骨骼和源 Mesh 编辑共 Bake=3，两个 view 均更新；各自退休专项 29 checks / 4 请求，profiles 完整释放；9 项组合回归通过 | 保留多 AS view，初版在 CPU 等待前一 fence 后再修改，无帧时间收益声明；缺失完成 fence 的异常 work 保守隔离，完整取消恢复仍未验收 | R3：先 DI，再 GI |
 | R3-DI | 已完成有界迁移验收 | DI 不再私有创建 / 同步 / 释放场景；scene lifetime 变化清对应相机历史，profile 由 host 持有；247 个核心文件及全部 65 个 shader 文件未变，9 项宿主 / Cutout / RELAX / unsupported 回归通过 | 旧全量 core 原码与迁移版均出现同一 4 条 F39 scratch 诊断及 power-proposal 断言，继续拒绝该夹具；不扩称全量 core 或生产双模块共享通过，Player 在组合迁移后验证 | R3-GI |
 | R3-GI | 已完成有界迁移验收 | GI 不再私有创建 / 扫描 / 释放场景；81 核心文件及全部 59 shader 文件未变；9 项回归、生产 DI/GI 共享姿态 / 独立历史 / 双 NRD dispatch 两路径、GI Mono Player 两路径通过 | 4 条退出 GC 警告与原 Backbuffer Player 日志 SHA / 精确数量一致，宿主显式退休域为 0；不是全管线退出清理或旧质量缺口通过 | R4 |
-| R4–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
+| R4 公共查询前置步骤 | 已完成有界验收；R4 未完成 | native 最近 / occlusion 入口、共享 alpha 和 ShadowCasters 用途；两路径各 122 checks / 13 请求，另 4 项原回归通过 | 仍需独立 RTShadow、逐灯产品和 NPR 接收；多用途可保留多 AS，不声称最终质量或性能提升 | R4 单方向灯原始 Cast Feature |
+| R5–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
 
 R0 采用的宿主准备合同：
 
@@ -357,6 +358,14 @@ R3-GI 当前证据见 [GI review](../Tests~/RT/R3/GI/review.json)、[核心未�
 本步收益是生产 GI 场景所有权收敛、实际两模块姿态共享；保留多 AS 与 fence 等待，没有 GPU 毫秒收益承诺。DI 的完整 Player 在 mixed diffuse/specular proposal（temporal=False）失败；同一隔离工程切换 Git `66a2bb80` 的迁移前完整原包后复现相同断言，控制记录与失败日志保留。没有更改 DI 算法或将完整测试改为通过。
 
 R3 Player 收尾的两路径有界 DI 探针先执行原解析光 / specular、蒙皮及非 Read/Write Cutout 检查，再执行双灯实际 RELAX dispatch 与解析能量、显式 host 依赖和退休域 0；通过后退出，不执行已知失败的完整 proposal oracle。探针只在隔离工程的副本插入，原完整探针保持，注入源码与产品指纹均留 SHA。四个最终 Player（DI 有界 / GI × RG / compatibility）构建和执行退出 0，native 字节一致。此步收益为验证序列化、实际 Player 原生 / NRD 加载与 host 接入，成本为两组有界构建；不继续在既有 proposal / GC 问题上滞留。下一步进入 R4，不替代旧 GI filtered 质量、F39、完整 DI proposal 或复杂动态 / 1080 预算资格。
+
+R4 公共查询前置步骤见 [Query review](../Tests~/RT/R4/Query/review.json)，执行 `Tests~/RT/run_validation.ps1 -Stage R4Query`。新增 `HoRTTraceClosestVisibility` 返回真实最近有效 blocker 的世界距离、RT 实例 / primitive、重心和正反面；`HoRTTraceOcclusion` 的快捷路径只公开 status，不把 traversal first-hit 距离暴露给 SIGMA。native `Inputs.BuildAndBind` 同时绑定实例 metadata，状态沿用 0 miss / 1 hit / 2 metadata 错配 / 3 invalid ray / 4 unavailable，失败 payload 清零。方向先归一化；mask 和有限区间显式校验。
+
+`HoRTViewRequest.geometryPolicy` 默认 Surface，保留 DI / GI 原双面、Cast Off 仍在场景中的行为；ShadowCasters 用途排除 Cast Off、保留 Shadows Only，按材质 `_Cull` 的 Off / Front / Back 和 Renderer TwoSided 组织 AS culling。请求 layer / 排除材质与用途分开。新 native hit material 只求可见性，不借用 GI 的完整着色 payload；其 alpha 运算与原 DI / GI 两份实现逐操作核对一致，DI/GI 其余核心文件未变。
+
+GPU 夹具在 `BeforeRenderingOpaques` 使用真实 host view，核最近遮挡物、透明洞后的远 blocker、离屏 caster、变换、用途与裁剪模式切换、mask、invalid、fresh generation；镜像缩放与实际 URP raster 的两个观察侧直接对照。RG / compatibility 各 122 checks / 13 请求，原 DI native Cutout 两路径、GI native alpha / mask / UV / backface、原 Surface 场景回归通过。首次缺失 native metadata 绑定、夹具初始反面前提及镜像预期错误都保留失败记录，未通过改像素门槛掩盖。
+
+本步收益为去掉三路 alpha 判定分叉、提供 SIGMA 必需的正确距离与独立 caster 策略；成本为用途不兼容时额外 AS view。没有提高采样预算或增加 temporal 依赖，没有最终阴影清晰度收益声明。停止扩展公共层，下一步直接做独立 RTShadow 的单方向灯全分辨率 raw / 有效性 / 接收域产品；本步骤通过不代表 R4 或连续 ramp 里程碑完成。
 
 <a id="quality-reference"></a>
 

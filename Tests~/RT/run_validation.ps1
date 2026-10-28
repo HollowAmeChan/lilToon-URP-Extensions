@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1','R2','R3DI','R3GI')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2','R3DI','R3GI','R4Query')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
@@ -73,8 +73,18 @@ if ($Stage -eq 'R3GI') {
         @{name='di-cutout-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutout';marker='[HoRTDIValidation] PASS native cutout:'}
     )
 }
+if ($Stage -eq 'R4Query') {
+    $taskCases = @(
+        @{name='native-query-rg';api='d3d12';entry='lilToon.URP.Extensions.RT.HoRTVisibilityValidation.Run';marker='[HoRTVisibilityValidation] PASS'},
+        @{name='native-query-compat';api='d3d12';entry='lilToon.URP.Extensions.RT.HoRTVisibilityValidation.RunCompatibility';marker='[HoRTVisibilityValidation] PASS'},
+        @{name='di-cutout-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutout';marker='[HoRTDIValidation] PASS native cutout:'},
+        @{name='di-cutout-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutoutCompatibility';marker='[HoRTDIValidation] PASS native cutout:'},
+        @{name='gi-native-cutout';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout';marker='[HoGICutoutHit] PASS'},
+        @{name='scene-rg';api='d3d12';entry='lilToon.URP.Extensions.RT.HoRTSceneValidation.Run';marker='[HoRTSceneValidation] PASS'}
+    )
+}
 if ($Case) { $taskCases = @($taskCases | Where-Object { $_.name -eq $Case }); if ($taskCases.Count -eq 0) { throw 'Unknown validation case' } }
-$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } else { $Stage })
+$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } elseif ($Stage -eq 'R4Query') { 'R4/Query' } else { $Stage })
 New-Item -ItemType Directory -Force -Path $taskResults | Out-Null
 $taskStamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')
 $taskRunPath = Join-Path $taskResults ('run-' + $taskStamp + '.json')
@@ -111,7 +121,7 @@ foreach ($taskJob in $taskCases) {
     }
     $taskChild.Refresh()
     $taskText = if (Test-Path -LiteralPath $taskLog) { [IO.File]::ReadAllText($taskLog) } else { '' }
-    $taskDiagnostics = @([regex]::Matches($taskText, '(?im)^.*(?:Shader error|Shader warning|error CS\d+|d3d12(?: validation)? (?:error|corruption)|Assertion failed|Exception:|\bFAIL\b).*$') | ForEach-Object { $_.Value })
+    $taskDiagnostics = @([regex]::Matches($taskText, '(?im)^.*(?:Shader error|Shader warning|error CS\d+|d3d12(?: validation)? (?:error|corruption)|Dispatching ray generation shader.*failed|Assertion failed|Exception:|\bFAIL\b).*$') | ForEach-Object { $_.Value })
     $taskRecord = [ordered]@{name=$taskJob.name;entry=$taskJob.entry;api=$taskJob.api;colorSpace=if($taskColorSpace -eq 0){'Gamma'}else{'Linear'};actualExit=$taskChild.ExitCode;abort=$taskAbort;marker=$taskText.Contains($taskJob.marker);diagnostics=$taskDiagnostics;logSha256=if(Test-Path -LiteralPath $taskLog){(Get-FileHash -LiteralPath $taskLog).Hash}else{''};seconds=([DateTime]::UtcNow-$taskStarted).TotalSeconds}
     $taskRecord.pass = $taskRecord.actualExit -eq 0 -and -not $taskAbort -and $taskRecord.marker -and $taskDiagnostics.Count -eq 0
     $taskRecord.logFile = [IO.Path]::GetFileName($taskLog)
@@ -119,6 +129,10 @@ foreach ($taskJob in $taskCases) {
     $taskRun.activeProcess = $null
     $taskRun | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath $taskRunPath -Encoding utf8
     Copy-Item -LiteralPath $taskLog -Destination (Join-Path $taskResults ([IO.Path]::GetFileName($taskLog)))
+    if ($taskJob.name.StartsWith('native-query-')) {
+        $taskQueryReport=Join-Path $taskProject 'ho-rt-visibility/report.json'
+        if(Test-Path -LiteralPath $taskQueryReport){Copy-Item -LiteralPath $taskQueryReport -Destination (Join-Path $taskResults ('report-'+$taskJob.name+'-'+$taskStamp+'.json'))}
+    }
     Write-Output ('END ' + $taskJob.name + ' exit=' + $taskRecord.actualExit + ' marker=' + $taskRecord.marker + ' diagnostics=' + $taskDiagnostics.Count + ' pass=' + $taskRecord.pass)
     if (-not $taskRecord.pass) { throw ('Validation rejected: ' + $taskJob.name + '; inspect ' + $taskRunPath) }
 }

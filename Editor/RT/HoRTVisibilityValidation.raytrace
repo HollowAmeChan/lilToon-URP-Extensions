@@ -1,0 +1,17 @@
+#pragma max_recursion_depth 1
+#include "../../Runtime/RT/Shaders/HoRTNativeVisibility.hlsl"
+struct TestRay {float4 originMin,directionMax;uint4 options;};
+StructuredBuffer<TestRay> _TestRays;
+RWTexture2D<float4> _TestOutput;
+float _TestGeneration;
+[shader("raygeneration")]
+void Query()
+{
+    uint x=DispatchRaysIndex().x;
+    TestRay ray=_TestRays[x];
+    HoRTVisibilityHit h=HoRTTraceClosestVisibility(ray.originMin.xyz,ray.directionMax.xyz,ray.originMin.w,ray.directionMax.w,ray.options.x);
+    _TestOutput[uint2(x,0)]=float4(h.status,h.distance,h.instance,h.primitive);
+    _TestOutput[uint2(x,1)]=float4(h.barycentrics,h.frontFace,_TestGeneration);
+    uint status=HoRTTraceOcclusion(ray.originMin.xyz,ray.directionMax.xyz,ray.originMin.w,ray.directionMax.w,ray.options.x);
+    _TestOutput[uint2(x,2)]=float4(status,0,0,0);
+}
