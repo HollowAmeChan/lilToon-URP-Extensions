@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RT;
 // Isolated diagnostic fixture matching Tests~/RTGI/Reference/HoReferenceGIProbe.cs.
 // Synchronous capture is for signal comparison, never a GPU timing benchmark.
 using System;
@@ -50,6 +51,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 if(commonDiffuse)report.protocol="Step002 common diffuse receiver: linear F0=.04 via gamma-tagged Reflectance property, metallic=0, roughness=1; same geometry/light as step001, reference final evaluator also selects diffuse only. Secondary F0 quantization differs (.0392 Ho vs about .03995 reference). 128x128, 256 requests; not performance/motion/Player acceptance.";
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+                renderer.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>()));
                 var gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 feature=Keep(ScriptableObject.CreateInstance<HoRTGIRendererFeature>());

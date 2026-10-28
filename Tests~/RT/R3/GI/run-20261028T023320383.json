@@ -1,0 +1,24 @@
+{
+  "stage": "R3GI",
+  "sourceCommit": "c05b93a08268816bef3da3c6d09b2f18f8bf70a7",
+  "startedUtc": "2026-10-28T02:33:20.8228501Z",
+  "sourcesFile": "sources-20261028T023320383.json",
+  "runnerSha256": "87A94FFB1C2FA5E0EC9036422D823171C61D0C430E23FA9B5B1CB75FA6015818",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "gi-host-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunHost",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "A3C38D4C19890D5D5ADACD17437F16253E9141979E7198BB1F5990CDD1AE7657",
+      "seconds": 10.9410703,
+      "pass": true,
+      "logFile": "ho-rt-r3gi-gi-host-rg-20261028T023320383.log"
+    }
+  ]
+}

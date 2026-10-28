@@ -1,0 +1,8 @@
+{
+  "stage": "R3-GI",
+  "actualExit": 0,
+  "errors": 0,
+  "scope": "Runtime/Editor split compile",
+  "log": ".codex-research/ho-rt-r3gi-compile.log",
+  "sha256": "442F4E72933E5D4D055F4CE5C273D0F4DF15278F8339AF79638B011B357DA638"
+}

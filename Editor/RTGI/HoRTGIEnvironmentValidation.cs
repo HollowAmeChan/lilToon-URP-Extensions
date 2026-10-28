@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RT;
 // Real GPU checks for secondary sky lighting, ownership and frame snapshots.
 using System;
 using System.Collections.Generic;
@@ -40,11 +41,12 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             try
             {
-                if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/RTGIValidation/"))throw new Exception("Dedicated isolated GI project required");
+                if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/RTGIValidation/")&&!Application.dataPath.Replace('\\','/').Contains("/.codex-research/RTValidation/"))throw new Exception("Dedicated isolated GI project required");
                 oldDefault=GraphicsSettings.defaultRenderPipeline;oldQuality=QualitySettings.renderPipeline;oldAsync=ShaderUtil.allowAsyncCompilation;ShaderUtil.allowAsyncCompilation=false;
                 output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-secondary-environment-"+(compatibility?"compat":"rg")));Directory.CreateDirectory(output);
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+                renderer.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>()));
                 var gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 atmosphere=Keep(ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>());atmosphere.Settings.source=HoAtmosphereSource.Constant;atmosphere.Settings.constantColor=new Color(.5f,.25f,.125f,1);

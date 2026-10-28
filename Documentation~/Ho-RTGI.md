@@ -2,13 +2,13 @@
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳diffuse GI输出及可选的场景加法合成。SDK GI reservoir与时间/空间重采样复用固定原文件；应用bridge适配Ho生产端。最终NPR影色/ramp映射或材质内接收未纳入本阶段。
 
-> 状态：**现行功能总文档**，导航更新于 2026-10-28；生产支持域沿用已验证基线。新增公共资源宿主、独立 RTShadow 与 SIGMA 的设计统一见 [Ho-RT](Ho-RT.md)，这些新模块尚未实现。2026-10-24 的[阶段收尾与 UI 整理](Ho-RT.md#baseline)保留为历史记录。
+> 状态：**现行功能总文档**，更新于 2026-10-28。场景所有权已改为公共 Ho-RT host，组合与 Player 的验收状态看 [Ho-RT](Ho-RT.md) §8.5；RTShadow / SIGMA 阴影生产链尚未完成。原质量 / 复杂动态 / AS 增长及整帧预算缺口不因此注销。
 
 次级天空、正常相机加法合成和独立RELAX_DIFFUSE已有实测；Linear D3D12 Mono Player两路径已完成真实自动相机和512²默认屏幕呈现验证，见[屏幕证据](../Tests~/RTGI/Backbuffer/README.md)。完整画质、复杂动态、AS实例增长与稳定1080预算仍未验收；旧研究下一项不再自动启动。历史参考、失败与逐步交接见[RTGI入口](RTGI/README.md)。
 
 ## 使用与输出
 
-Renderer 添加 **Ho-RTGI**，前面启用 GB / SB；需要天空时再启用 Ho-Atmosphere。需要 D3D12 DXR、inline RT、Compute、Mono、同分辨率单采样 GB/SB，以及已更新的 SB 网格法线布局。GI 可以独立启用，不要求先打开 Ho-RTDI；两者同时启用也各自生产独立输出。
+Renderer 显式添加 **Ho-RT** 并排列在消费者之前，**Ho-RTGI** 放在 GB / SB 之后；缺宿主时停止并报告依赖缺失，不隐藏创建私有场景，也不自动修改用户 Renderer 资产；需要天空时再启用 Ho-Atmosphere。需要 D3D12 DXR、inline RT、Compute、Mono、同分辨率单采样 GB/SB，以及已更新的 SB 网格法线布局。GI 可以独立启用，不要求先打开 Ho-RTDI；两者同时启用也各自生产独立输出。
 
 高级设置「不参与求交的材质」可排除合并模型内的天空壳子网格。`excludedRayMaterials`默认空，按Material对象身份匹配，忽略null/重复项；同名不同对象不会一起排除。使用同一材质引用的所有实例都会受影响，光线会穿过它们。该列表仅影响GI世界求交，不改源mesh、sharedMaterials、raster或GB/SB主表面；与DI的列表相互独立，需要分别配置。排除/恢复改变场景revision并清GI/NRD历史，等价列表不重置。
 
@@ -75,7 +75,7 @@ GenerateSecondary 使用参考 BrdfRayTracing 的 diffuse 分支、SDK RNG 与 D
 
 兼容路径由 Ho-Atmosphere 环境 pass 发布借用快照，GI 在执行时读取；每相机开始和生产端销毁时清空快照。RenderGraph pass data 会由池复用，因此每次记录都显式清空缺失天空的 handle/参数/revision，避免沿用旧输入。
 
-每相机保存三份32B SDK GI reservoir、一份48B二次数据、一份20B共享布局的上帧guide，以及RGBA16F输出（8B/像素）。1080p含reservoir block padding约342MiB，另有灯/AS/输入；开启次级天空增加约.208MiB的128² R32F全mip PDF与16384条uint2 RIS，不随输出分辨率增长。禁用时释放PDF并仅保留单元素dummy RIS绑定。DI/GI各自持有场景和AS，目标场景GPU预算尚待验收。
+每相机保存三份32B SDK GI reservoir、一份48B二次数据、一份20B共享布局的上帧guide，以及RGBA16F输出（8B/像素）。1080p含reservoir block padding约342MiB，另有灯/AS/输入；开启次级天空增加约.208MiB的128² R32F全mip PDF与16384条uint2 RIS，不随输出分辨率增长。禁用时释放PDF并仅保留单元素dummy RIS绑定。DI/GI 的 AS view 现在由宿主持有，兼容姿态共享；目标场景 GPU 预算仍待验收。
 
 静态世界按前后相机矩阵生成 SDK 所需的像素 motion / depth delta。几何 Revision、灯、材质属性、纹理 updateCount / sampler / ST、天空 Revision、分辨率或关键采样设置变化清历史；禁用后重启也清历史。已声明的时间动画参数保守禁用时间复用。纹理更新识别依赖 Texture.updateCount，不能据此宣称识别任意外部 GPU 写入或自定义 shader global 变化。
 

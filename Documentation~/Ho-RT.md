@@ -7,9 +7,9 @@
 | 对象 | 当前状态 | 入口 |
 | --- | --- | --- |
 | 栅格化角色 CS | 已有 shadow map / PCF / PCSS，本轮完成勾选与滤波修复，仍有画质限制 | [当前 CS](Ho-CharacterShadow.md) |
-| RTDI / RTGI | DI 的场景请求已迁往 host，R3-DI 验收中；GI 尚未迁入。两路维持各自光照算法、输出与独立历史 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
+| RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 两路径通过。独立输出 / 历史 / NRD 保持，DI Player 仍待单独确认 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | A01/A02 已完成代码解耦及有界资源复用；生产绑定为 RELAX | 本文 §11 的基线与证据 |
-| Ho-RT host | R2 请求、快照 view、共享姿态与 fence 生命周期已有有界验收；DI/GI 尚未迁入 | 本文 §8.5 |
+| Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；GI Player 已确认序列化和插件加载 | 本文 §8.5 |
 | RTShadow / SIGMA | 设计已定，生产链尚未实现 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
@@ -97,9 +97,9 @@ flowchart TD
 
 ## 5. 公共代码、公共资源与查询策略
 
-### 5.1 当前已经有代码公共层，还缺资源宿主
+### 5.1 从代码公共层到资源宿主
 
-DI 和 GI 当前分别创建、同步、释放自己的 `HoRTScene`，分别持有 hit material adapter。见 [DI 创建](D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTDI/HoRTDIRendererFeature.cs:53)、[GI 创建](D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGIRendererFeature.cs:51)。因此这次不能只搬文件或改命名，还要明确谁准备场景、谁持有资源、消费者读哪次渲染的快照。
+抽离前 DI / GI 各自创建、同步和释放 HoRTScene 及 hit adapter。R3 将这些改成消费者 pre-cull 声明请求、host 准备、消费者借用有效 view；创建和释放由 host 负责。仍保留不同 native hit 能力对应的 AS view，光照 Context 和历史继续属于各消费者。资源宿主的验收范围见 §8.5，不能只用搬文件或减少字段数证明资源收益。
 
 ### 5.2 共享粒度
 
@@ -326,7 +326,8 @@ Editor/
 | R1 | 已完成 | RayTracing→RT，2098 个产品文件规范化核对仅有允许的命名 / 引用变化，20 份移动 metadata 与基线字节一致；编译 0 errors；10 项真实 GPU / unsupported 回归通过 | 只统一模块归属，无画质 / 性能收益声明；旧验证源码 / SHA 未改，初次冷导入 stale-transform 失败保留，后续同条件原码与当前码通过但原因未证明 | R2 宿主与共享姿态 |
 | R2 | 已完成有界验收 | host / 请求 epoch / cache 已实现；RG / compatibility 普通夹具各 93 checks / 11 请求，初始、骨骼和源 Mesh 编辑共 Bake=3，两个 view 均更新；各自退休专项 29 checks / 4 请求，profiles 完整释放；9 项组合回归通过 | 保留多 AS view，初版在 CPU 等待前一 fence 后再修改，无帧时间收益声明；缺失完成 fence 的异常 work 保守隔离，完整取消恢复仍未验收 | R3：先 DI，再 GI |
 | R3-DI | 已完成有界迁移验收 | DI 不再私有创建 / 同步 / 释放场景；scene lifetime 变化清对应相机历史，profile 由 host 持有；247 个核心文件及全部 65 个 shader 文件未变，9 项宿主 / Cutout / RELAX / unsupported 回归通过 | 旧全量 core 原码与迁移版均出现同一 4 条 F39 scratch 诊断及 power-proposal 断言，继续拒绝该夹具；不扩称全量 core 或生产双模块共享通过，Player 在组合迁移后验证 | R3-GI |
-| R3-GI、R4–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
+| R3-GI | 已完成有界迁移验收 | GI 不再私有创建 / 扫描 / 释放场景；81 核心文件及全部 59 shader 文件未变；9 项回归、生产 DI/GI 共享姿态 / 独立历史 / 双 NRD dispatch 两路径、GI Mono Player 两路径通过 | 4 条退出 GC 警告与原 Backbuffer Player 日志 SHA / 精确数量一致，宿主显式退休域为 0；不是全管线退出清理或旧质量缺口通过 | 补 DI Player 资格后进入 R4 |
+| R4–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
 
 R0 采用的宿主准备合同：
 
@@ -348,6 +349,12 @@ R2 的实际收益是两个 AS view 共用同一份姿态 Mesh，并对每次相
 R3-DI 见 [review.json](../Tests~/RT/R3/DI/review.json)、[核心未改动审计](../Tests~/RT/R3/DI/migration.json)。宿主合同两路径各 16 项检查覆盖真实 temporal 执行、缺失依赖、重建 lifetime、profile 与 client 停用及解析能量；原 Cutout 与 RELAX 两路径、D3D11 unsupported、宿主及 GI native 回归合计 9 项通过，1939 项产品指纹未漂移。当前 DI 配置必须显式添加 Ho-RT 并放在消费者前，不自动编辑用户 Renderer 资产；独立测试和 Player 构建入口已补该依赖。
 
 本步未更改光照 shader、NRD profile、Context 或输出算法。旧 `Run` 全量 core 被拒绝后，使用 Git `66a2bb80` 完整原包在同一隔离工程复现同一 4 条 scratch 诊断和 power-proposal 断言，控制记录保留；此旧失败不通过放宽门槛解决，也不反复调 AS flags。`Tests~/RT/run_validation.ps1 -Stage R3DI` 默认运行明确有界的 9 项；`-Case di-core-rg` / `di-core-compat` 仍可显式诊断旧全量路径，但不作为通过证据。收益为消除 DI 私有场景所有权，性能收益尚未测量；GI 和真实双模块 / Player 接入留待下一步骤。
+
+R3-GI 当前证据见 [GI review](../Tests~/RT/R3/GI/review.json)、[核心未改动审计](../Tests~/RT/R3/GI/migration.json) 和 [Player review](../Tests~/RT/R3/Player/review.json)。组合夹具两路径各 18 项检查，真实 DI/GI 使用不同 native profile 与 AS view，同一姿态 Mesh 初始只 Bake 一次、骨骼编辑再 Bake 一次；两路 temporal 和各自 NRD 均实际执行，停用一路不破坏另一路，host lifetime 重建拒绝旧历史。环境和 RELAX 两路径、unsupported、native Cutout 与 DI Cutout 回归共同通过，1941 个产品指纹一致。旧 GI 夹具限定的独立工程名称已扩展允许新的空 RTValidation 工程，不改像素门槛；原专名拒绝运行保留。
+
+两个 GI Win64 Mono / D3D12 Player 使用序列化 host、GI 与 RELAX，逐真实 Update 提交相机请求，原动态 / 能量 / 降噪 / 合成及开关检查通过；打包 native DLL 与当前 pinned DLL 字节一致。4 条 GraphicsBuffer GC 退出警告首次严格审查被拒绝后，查到原 Backbuffer Player 记录也有完全相同的 4 条，SHA 已核验。最终只按精确数量和原记录接纳该已知警告，另要求显式宿主清理与退休域 0；未改全管线 OB / 公共 fallback 清理，不将画面通过等同全部资源清理通过。中间的 `Application.quitting` 候选未改变这组警告、没有资格收益，已撤回；最终 host 生产改动仅新增有效 view 的 profile 借用入口，不重做 R2 生命周期。
+
+本步收益是生产 GI 场景所有权收敛、实际两模块姿态共享；保留多 AS 与 fence 等待，没有 GPU 毫秒收益承诺。DI 独立 Player 仍需验证，R3 的有界 Editor / GI Player 通过不替代它，也不替代旧 GI filtered 质量、F39 或复杂动态 / 1080 预算资格。
 
 <a id="quality-reference"></a>
 
@@ -399,7 +406,7 @@ R3-DI 见 [review.json](../Tests~/RT/R3/DI/review.json)、[核心未改动审计
 
 ## 10. 当前已实现的 RT Helper 契约
 
-本节描述底层 helper 契约。`HoRTRendererFeature` 已开始提供统一宿主实现；RTDI / RTGI 尚未完成 R3，仍各自持有场景、材质 adapter、输出与历史。宿主不是全局 AS 单例，不能把测试消费者接通当成生产 DI/GI 已迁移。
+本节描述底层 helper 契约。HoRTRendererFeature 管理场景 view 和材质 adapter，生产 DI / GI 已改为借用；两者仍拥有自己的输出与历史。宿主不是全局 AS 单例，组合与 Player 的具体资格以 §8.5 为准。
 
 <a id="scene-query"></a>
 
@@ -411,7 +418,7 @@ R3-DI 见 [review.json](../Tests~/RT/R3/DI/review.json)、[核心未改动审计
 
 默认只登记 opaque；调用者传入共同的 `HoRTCutoutSupport` 和 native hit material 后，DI / GI 均可登记有界 lilToon Cutout。要求 UV0、无 MPB，排除动画主 UV、dissolve、distance fade、dither、多主色、视差等复杂情况。AS 当前关闭 triangle culling，alpha 与表面求值由 adapter 决定；任意 GPU 顶点位移、布料、Terrain、fur、描边壳不在自动支持域。显式登记的几何不会因 `shadowCastingMode=Off` 自动移除，未来 Shadow 的查询策略须单独定义。支持范围见 [DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md) 和 [GI](Ho-RTGI.md)。
 
-蒙皮通过 `BakeMesh(mesh, true)` 获取当前骨骼 / BlendShape 姿态，补偿 Renderer 缩放后由 AS 应用一次 localToWorld。姿态、源 Mesh 或蒙皮质量变化时更新快照及 BLAS，稳定姿态复用；缺失 / 非有限姿态会移除旧实例。源 Mesh 原地编辑必须调用 `MarkGeometryDirty()` 再同步；仅清 TLAS 后重新加入同一个 Mesh 不能保证旧 BLAS 刷新。CPU Bake 与完整 Mesh 副本有成本，DI / GI 当前分别持有，详见 [场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md)。
+蒙皮通过 `BakeMesh(mesh, true)` 获取当前骨骼 / BlendShape 姿态，补偿 Renderer 缩放后由 AS 应用一次 localToWorld。姿态、源 Mesh 或蒙皮质量变化时更新快照及 BLAS，稳定姿态复用；缺失 / 非有限姿态会移除旧实例。源 Mesh 原地编辑必须调用 `MarkGeometryDirty()` 再同步；仅清 TLAS 后重新加入同一个 Mesh 不能保证旧 BLAS 刷新。CPU Bake 与完整 Mesh 副本仍有成本，兼容 pose 已由 host 共享；[场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md) 中的双副本账本属于历史时点，不能用于推算现状。
 
 R2 的 [HoRTGeometryCache](../Runtime/RT/HoRTGeometryCache.cs) 可由宿主注入 `HoRTScene` 第三个构造参数：宿主按本次 union 准备一次，scene views 只 acquire 对应 pose lease。每个 AS entry 比较单调 PoseVersion，所有相关 submesh 均更新；不用被首个 view 消耗的 changed 标记。未注入时 scene 自建缓存，既有独立查询验证保持可用。共享 Mesh 保持稳定，修改前由宿主确认 GPU fence；AS 移除 / 释放后才释放 pose lease。`SkinnedBakeCount` 在共享模式反映缓存实际累计 Bake，而非每个 view 重复计数。
 

@@ -1,0 +1,27 @@
+{
+  "stage": "R3-Player",
+  "accepted": {
+    "GI": {
+      "run": "run-GI-20261028T024921437.json",
+      "result": "report-GI-20261028T024921437.json",
+      "existingCleanupWarningCount": 4
+    },
+    "GICompatibility": {
+      "run": "run-GICompatibility-20261028T025021151.json",
+      "result": "report-GICompatibility-20261028T025021151.json",
+      "existingCleanupWarningCount": 4
+    }
+  },
+  "currentArtifacts": {
+    "GI": {
+      "exeSha256": "4e33a14c3ec94bf336fcdef8e56429f865a2bf5fef67261aa64713b15bf75d0b",
+      "packedNativeSha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+    },
+    "GICompatibility": {
+      "exeSha256": "4e33a14c3ec94bf336fcdef8e56429f865a2bf5fef67261aa64713b15bf75d0b",
+      "packedNativeSha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+    }
+  },
+  "scope": "Win64 Mono / D3D12, explicit camera request per application Update, serialized Ho-RT/GI/RELAX. Editor verifies the DI+GI pair separately.",
+  "limits": "Four exact historical shutdown GC warnings are retained against original log SHA. Not a claim of complete pipeline shutdown cleanup or normal enabled-camera/platform/1080 qualification."
+}

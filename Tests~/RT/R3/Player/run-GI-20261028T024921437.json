@@ -1,0 +1,31 @@
+{
+  "stage": "R3",
+  "mode": "GI",
+  "sourceCommit": "c05b93a08268816bef3da3c6d09b2f18f8bf70a7",
+  "sourcesFile": "sources-20261028T024921437.json",
+  "runtimeProbeSha256": "19B1695438A0EB1280C4D68ADE0FD780DB64EC40EA953448DC255B9A76A693DC",
+  "activeProcess": null,
+  "scope": "Independent serialized Mono Player GI/NRD via explicit camera requests; mixed DI/GI is checked separately in Editor",
+  "buildExit": 0,
+  "buildLog": "ho-rt-r3-player-build-GI-20261028T024921437.log",
+  "buildLogSha256": "0BF643726F35BD4A264461F9F0BAC9211F0A61D14B939573567049C8CEA7660F",
+  "reviewedExistingWarnings": [
+    "Shader warning in 'Hidden/lilToon/URP/VolumeLight/SolarHD': floating point division by zero at /Unity_Fork/HoUrp17.3.0/ShaderLibrary/Shadows.hlsl(310) (on d3d11)",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+  ],
+  "buildDiagnostics": [],
+  "playerExit": 0,
+  "playerLog": "player-GI-20261028T024921437.log",
+  "playerLogSha256": "B5EF6CE1146AE888E8F4187D626270A2DC639411D0D28F3BDE7C4506E01FF81A",
+  "playerDiagnostics": [],
+  "reviewedExistingCleanupWarnings": [
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer. [4 exact occurrences; host retired=0; historical SHA verified]"
+  ],
+  "cleanupControl": {
+    "sha256": "39DA6A3C61B3F2AF10954E7661A6E6E9D68AD567C1EFED10FF9F6238EC2B3E85",
+    "path": "Tests~/RTGI/Backbuffer/logs/rtgi-step025-player-rg-20261021T191738751.log"
+  },
+  "playerResult": "report-GI-20261028T024921437.json",
+  "pass": true
+}

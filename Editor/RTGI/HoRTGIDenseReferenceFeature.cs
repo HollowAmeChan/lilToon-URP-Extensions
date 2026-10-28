@@ -65,7 +65,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var contexts=(Dictionary<Camera,HoRTGIContext>)typeof(HoRTGIRendererFeature).GetField("contexts",Flags).GetValue(owner.source);
                 if(!contexts.TryGetValue(camera,out var main))throw new Exception("Full camera GI context missing");
                 owner.mainContext=main;
-                var registry=(HoRTScene)typeof(HoRTGIRendererFeature).GetField("scene",Flags).GetValue(owner.source);
+                var registry=owner.source.SceneViewForCamera(camera).Scene;
                 var mainPass=typeof(HoRTGIRendererFeature).GetField("pass",Flags).GetValue(owner.source);
                 var settings=(HoRTGIRendererFeature.PassSettings)mainPass.GetType().GetField("settings",Flags).GetValue(mainPass);
                 int lightCount=(int)mainPass.GetType().GetField("lightCount",Flags).GetValue(mainPass);

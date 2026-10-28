@@ -1,0 +1,54 @@
+{
+  "stage": "R3GI",
+  "sourceCommit": "c05b93a08268816bef3da3c6d09b2f18f8bf70a7",
+  "startedUtc": "2026-10-28T02:34:06.7957794Z",
+  "sourcesFile": "sources-20261028T023406299.json",
+  "runnerSha256": "87A94FFB1C2FA5E0EC9036422D823171C61D0C430E23FA9B5B1CB75FA6015818",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "gi-host-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunHost",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "39E00ED97C40ACEB0997D51BA5093E2417BC7AD2A057FE2A15FAE2BF94B4B6A0",
+      "seconds": 7.8558189,
+      "pass": true,
+      "logFile": "ho-rt-r3gi-gi-host-rg-20261028T023406299.log"
+    },
+    {
+      "name": "gi-host-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunHostCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "AE440BC378B2DD8C118671EEC2142064241EBB0962818921D31FA50BD647FEA5",
+      "seconds": 7.6168975,
+      "pass": true,
+      "logFile": "ho-rt-r3gi-gi-host-compat-20261028T023406299.log"
+    },
+    {
+      "name": "gi-environment-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGIEnvironmentValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Exception: Dedicated isolated GI project required\r"
+      ],
+      "logSha256": "004CF5F907A7D9348B8B491E68F19AB34E41B95E28FF914C04A6807A62E8874D",
+      "seconds": 7.6806646,
+      "pass": false,
+      "logFile": "ho-rt-r3gi-gi-environment-rg-20261028T023406299.log"
+    }
+  ]
+}

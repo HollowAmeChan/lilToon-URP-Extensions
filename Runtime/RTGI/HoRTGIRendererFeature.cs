@@ -21,8 +21,10 @@ namespace lilToon.URP.Extensions.RTGI
         [SerializeField] private Shader secondaryMaterialShader;
         [SerializeField] private Shader compositeShader;
         [SerializeField] private ComputeShader[] nrdShaders;
-        private HoRTScene scene;
-        private HoRTGISecondaryMaterials materials;
+        private object sceneProfileKey;
+        private System.Func<IHoRTMaterialProfile> createSceneProfile;
+        private readonly Dictionary<Camera,HoRTView> sceneViews = new();
+        private readonly Dictionary<Camera,long> sceneLifetimes = new();
         private readonly Dictionary<Camera,HoRTGIContext> contexts = new();
         private readonly List<Camera> dead = new();
         private HoRTGIPass pass;
@@ -34,6 +36,8 @@ namespace lilToon.URP.Extensions.RTGI
         public HoRTGISettings Settings => settings;
         public string Status { get; private set; } = "未生产";
         internal HoRTGIContext LastContext { get; private set; }
+        internal HoRTView SceneViewForCamera(Camera camera) => camera != null && sceneViews.TryGetValue(camera,out var view) ? view : default;
+        internal HoRTGIContext ContextForCamera(Camera camera) => camera != null && contexts.TryGetValue(camera,out var context) ? context : null;
 
         public override void Create()
         {
@@ -47,8 +51,9 @@ namespace lilToon.URP.Extensions.RTGI
             if(nrdShaders==null||nrdShaders.Length!=HoRTGINrdManifest.Identifiers.Length)nrdShaders=new ComputeShader[HoRTGINrdManifest.Identifiers.Length];
             for(int i=0;i<nrdShaders.Length;i++)if(nrdShaders[i]==null)nrdShaders[i]=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(root+"NRD/HoRTGINrd"+i.ToString("D2")+".compute");
             #endif
-            if(secondaryMaterialShader!=null)materials=new HoRTGISecondaryMaterials(secondaryMaterialShader);
-            scene=materials!=null?new HoRTScene(materials.Resolve,HoRTCutoutSupport.Supports):new HoRTScene();
+            sceneProfileKey=new object();
+            var materialShader=secondaryMaterialShader;
+            createSceneProfile=materialShader!=null?()=>new HoRTGISecondaryMaterials(materialShader):null;
             pass=new HoRTGIPass();debugPass=new HoRTGIDebugPass();compositePass=new HoRTGICompositePass();
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
@@ -58,27 +63,45 @@ namespace lilToon.URP.Extensions.RTGI
             Shader.SetGlobalTexture("_HoRTGIRawDiffuseTexture",Texture2D.blackTexture);
             if(!isActive||!settings.enabled)foreach(var item in contexts.Values){item.historyValid=false;if(item.nrd!=null)item.nrd.historyValid=false;}
         }
+        public override void OnCameraPreCull(ScriptableRenderer renderer,in CameraData data)
+        {
+            var camera=data.camera;
+            if(!settings.enabled||data.renderType!=CameraRenderType.Base
+                ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!settings.inSceneView)))return;
+            if(!HoRTScene.IsSupported||!SystemInfo.supportsRayTracing||shader==null||rayShader==null||createSceneProfile==null)return;
+            var request=new HoRTViewRequest(settings.geometryLayers.value,settings.excludedRayMaterials,
+                profileKey:sceneProfileKey,createProfile:createSceneProfile);
+            if(!HoRTRendererFeature.Declare(renderer,camera,this,request,out var reason))Status="Ho-RT："+reason;
+        }
+        private void InvalidateCamera(Camera camera)
+        {
+            if(contexts.TryGetValue(camera,out var context)){context.historyValid=false;if(context.nrd!=null)context.nrd.historyValid=false;}
+            sceneViews.Remove(camera);
+        }
         public override void AddRenderPasses(ScriptableRenderer renderer,ref RenderingData data)
         {
             var camera=data.cameraData.camera;var volume=VolumeManager.instance.stack.GetComponent<HoRTGIVolume>();
             if(!settings.enabled||(volume!=null&&volume.enable.overrideState&&!volume.enable.value)||data.cameraData.renderType!=CameraRenderType.Base
                 ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!settings.inSceneView)))
             {if(contexts.TryGetValue(camera,out var skipped)){skipped.historyValid=false;if(skipped.nrd!=null)skipped.nrd.historyValid=false;}return;}
-            if(!scene.IsAvailable||!SystemInfo.supportsRayTracing||shader==null||rayShader==null||materials==null)
-            {Status="需要 D3D12 DXR / inline RT 与完整 GI Shader";return;}
+            if(!HoRTScene.IsSupported||!SystemInfo.supportsRayTracing||shader==null||rayShader==null||createSceneProfile==null)
+            {InvalidateCamera(camera);Status="需要 D3D12 DXR / inline RT 与完整 GI Shader";return;}
+            if(!HoRTRendererFeature.TryAcquire(renderer,camera,this,out var sceneView,out var reason))
+            {InvalidateCamera(camera);Status="Ho-RT："+reason;return;}
+            var scene=sceneView.Scene;
+            var materials=(HoRTGISecondaryMaterials)sceneView.MaterialProfile;
             var format=GraphicsFormat.R16G16B16A16_SFloat;
             if(!SystemInfo.IsFormatSupported(format,GraphicsFormatUsage.LoadStore))format=GraphicsFormat.R32G32B32A32_SFloat;
             if(!SystemInfo.IsFormatSupported(format,GraphicsFormatUsage.LoadStore)){Status="无 HDR UAV 格式";return;}
             dead.Clear();foreach(var pair in contexts)if(pair.Key==null)dead.Add(pair.Key);
-            foreach(var key in dead){contexts[key].Dispose();contexts.Remove(key);}
-            var geometry=new List<Renderer>();
-            foreach(var item in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
-                if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
-            materials.BeginFrame();scene.Synchronize(geometry,0xff,settings.excludedRayMaterials);materials.EndFrame();
+            foreach(var key in dead){contexts[key].Dispose();contexts.Remove(key);sceneViews.Remove(key);sceneLifetimes.Remove(key);}
+            sceneViews[camera]=sceneView;
             var lights=CollectLights(settings.lightLayers.value,out int excluded,out int signature);
             var captured=new PassSettings(settings);
             unchecked {signature=(signature*397^materials.Signature)*397^captured.signature;}
             if(!contexts.TryGetValue(camera,out var context)){context=new HoRTGIContext();contexts.Add(camera,context);}
+            if(!sceneLifetimes.TryGetValue(camera,out long lifetime)||lifetime!=scene.Lifetime)
+            {context.historyValid=false;if(context.nrd!=null)context.nrd.historyValid=false;sceneLifetimes[camera]=scene.Lifetime;}
             var descriptor=data.cameraData.cameraTargetDescriptor;
             context.Prepare(descriptor.width,descriptor.height,lights.Count,format);LastContext=context;
             context.PrepareEnvironment(captured.useEnvironment&&captured.secondaryEnvironmentSamples>0);
@@ -87,7 +110,7 @@ namespace lilToon.URP.Extensions.RTGI
             context.PrepareVisibility(scene.CutoutCount>0);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTGI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             if(materials.TimeVarying)context.historyValid=false;
-            pass.Setup(context,scene,shader,rayShader,captured,lights.Count>0?lights.ToArray():new HoRTAnalyticLight[1],lights.Count,signature);
+            pass.Setup(context,sceneView,shader,rayShader,captured,lights.Count>0?lights.ToArray():new HoRTAnalyticLight[1],lights.Count,signature);
             bool compositeRequested=volume!=null&&volume.composite.overrideState?volume.composite.value:settings.composite;
             float amount=volume!=null&&volume.intensity.overrideState?volume.intensity.value:settings.intensity;
             amount=float.IsFinite(amount)?Mathf.Max(0,amount):0;
@@ -137,8 +160,8 @@ namespace lilToon.URP.Extensions.RTGI
         private void DisposeResources()
         {
             HoAttributeCompositeConsumerRegistry.Remove(this);
-            foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;
-            materials?.Dispose();materials=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;
+            foreach(var context in contexts.Values)context.Dispose();contexts.Clear();sceneViews.Clear();sceneLifetimes.Clear();createSceneProfile=null;sceneProfileKey=null;
+            debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;
             compositePass?.Dispose();compositePass=null;CoreUtils.Destroy(compositeMaterial);compositeMaterial=null;
         }
         protected override void Dispose(bool disposing)
@@ -169,14 +192,14 @@ namespace lilToon.URP.Extensions.RTGI
         }
         private sealed class HoRTGIPass : ScriptableRenderPass
         {
-            private HoRTGIContext context;private HoRTScene scene;private ComputeShader shader;private RayTracingShader rayShader;
+            private HoRTGIContext context;private HoRTView sceneView;private ComputeShader shader;private RayTracingShader rayShader;
             private PassSettings settings;private HoRTAnalyticLight[] lights;private int lightCount,signature;
             private double renderTime;
             private static readonly string[] Stages={"BuildEnvironmentPdf","PresampleEnvironment","ShadeSecondary","Temporal","Spatial","Final"};
             internal HoRTGIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
-            internal void Setup(HoRTGIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader rayShader,PassSettings settings,HoRTAnalyticLight[] lights,int lightCount,int signature)
+            internal void Setup(HoRTGIContext context,HoRTView sceneView,ComputeShader shader,RayTracingShader rayShader,PassSettings settings,HoRTAnalyticLight[] lights,int lightCount,int signature)
             {
-                this.context=context;this.scene=scene;this.shader=shader;this.rayShader=rayShader;this.settings=settings;this.lights=lights;this.lightCount=lightCount;this.signature=signature;
+                this.context=context;this.sceneView=sceneView;this.shader=shader;this.rayShader=rayShader;this.settings=settings;this.lights=lights;this.lightCount=lightCount;this.signature=signature;
                 renderTime=Time.unscaledTimeAsDouble;
                 #if UNITY_EDITOR
                 if(!Application.isPlaying)renderTime=UnityEditor.EditorApplication.timeSinceStartup;
@@ -193,7 +216,7 @@ namespace lilToon.URP.Extensions.RTGI
                 internal RTHandle compatibilityEnvironment;
             }
             private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data
-            {context=context,scene=scene.ReadCompatibility(),shader=shader,rayShader=rayShader,settings=settings,lights=lights,lightCount=lightCount,signature=signature,revision=scene.Revision,view=view,projection=projection,camera=camera,renderTime=renderTime};
+            {context=context,scene=sceneView.ReadCompatibility(),shader=shader,rayShader=rayShader,settings=settings,lights=lights,lightCount=lightCount,signature=signature,revision=sceneView.Scene.Revision,view=view,projection=projection,camera=camera,renderTime=renderTime};
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
             {
                 var camera=frame.Get<UniversalCameraData>();
@@ -203,7 +226,7 @@ namespace lilToon.URP.Extensions.RTGI
                     data.context=source.context;data.shader=source.shader;data.rayShader=source.rayShader;data.settings=source.settings;data.lights=source.lights;data.lightCount=source.lightCount;
                     data.signature=source.signature;data.revision=source.revision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.renderTime=source.renderTime;
-                    data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
+                    data.scene=sceneView.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
                     foreach(var buffer in new[]{context.reservoirs,context.history,context.secondary,context.lights,context.finalVisibility})builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
                     builder.UseBuffer(graph.ImportBuffer(context.environmentRis),AccessFlags.ReadWrite);
                     if(context.environmentPdf!=null)builder.UseTexture(graph.ImportTexture(context.environmentPdf),AccessFlags.ReadWrite);

@@ -70,6 +70,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var sky=geometry.SelectMany(r=>r.sharedMaterials).Where(m=>m!=null&&m.name=="天空").Distinct().ToArray();if(sky.Length==0)throw new Exception("Known copied sky shell material missing");
                 report.materials=geometry.SelectMany(r=>r.sharedMaterials).Where(m=>m!=null).Distinct().Select(m=>new MaterialRow{name=m.name,shader=m.shader!=null?m.shader.name:"null",queue=m.renderQueue,excluded=sky.Contains(m),supported=HoRTGISecondaryMaterials.IsSupported(m),cutout=HoRTCutoutSupport.Supports(m),main2=m.HasProperty("_UseMain2ndTex")&&m.GetFloat("_UseMain2ndTex")!=0,main3=m.HasProperty("_UseMain3rdTex")&&m.GetFloat("_UseMain3rdTex")!=0}).ToArray();
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+                renderer.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>()));
                 var gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 var atmosphere=Keep(ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>());atmosphere.Settings.source=HoAtmosphereSource.SceneSkybox;
@@ -92,7 +93,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 else if(lineageAudit){report.selectionLineage=await AuditSelectionLineage(gi,lineageTrace,lineage,Render,Read,output,lineageFrames);lineage.Dispose();}
                 if(poolPrecision.Length>0){precision=new HoRTGIPoolPrecisionAudit(context.nrd,poolPrecision);if(!stability)Render();}
                 if(stages&&precision==null)precision=new HoRTGIPoolPrecisionAudit(context.nrd,"production");
-                report.status=gi.Status;var registry=(HoRTScene)typeof(HoRTGIRendererFeature).GetField("scene",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(gi);
+                report.status=gi.Status;var registry=gi.SceneViewForCamera(camera).Scene;
                 report.instances=registry.InstanceCount;report.cutouts=registry.CutoutCount;report.skinnedSnapshots=registry.SkinnedMeshCount;report.rejections=registry.Rejections.ToArray();report.bakes=registry.SkinnedBakeCount;
                 if(gpu)
                 {

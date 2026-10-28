@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTDI;
 #pragma warning disable CS0618
 using System;
@@ -17,7 +18,7 @@ using Object=UnityEngine.Object;
 namespace lilToon.URP.Extensions.Editor.RTGI
 {
     // Isolated integration test; no validation feature appears in Add Renderer Feature.
-    public static class HoRTGIValidation
+    public static partial class HoRTGIValidation
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
@@ -25,6 +26,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTGIRendererFeature feature;
+        private static HoRTRendererFeature rtHost;
         private static HoRTDIRendererFeature direct;
         private static HoGeometryBufferRendererFeature gb;
         private static HoAtmosphereRendererFeature atmosphere;
@@ -47,6 +49,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 previousAsync=ShaderUtil.allowAsyncCompilation;ShaderUtil.allowAsyncCompilation=false;
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+                rtHost=Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>());renderer.rendererFeatures.Add(rtHost);
                 gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 atmosphere=Keep(ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>());atmosphere.Settings.source=HoAtmosphereSource.Constant;
@@ -74,6 +77,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 bounce=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));bounce.name="World-only secondary surface";bounce.layer=1;
                 bounce.transform.position=new Vector3(0,0,-1);bounce.transform.rotation=Quaternion.Euler(0,180,0);bounce.transform.localScale=new Vector3(4000,4000,1);
                 bounceMaterial=Mat("lilToon");PrepareMaterial(bounceMaterial,Color.white);bounce.GetComponent<Renderer>().sharedMaterial=bounceMaterial;bounce.SetActive(false);
+                if(forceHostContract)SetupHostContract();
                 EditorApplication.update+=Tick;
             }
             catch(Exception error){Finish(error);}
@@ -92,6 +96,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     RenderCamera();Require(feature.LastContext==null&&Shader.GetGlobalFloat("_HoRTGIActive")==0,"Unsupported platform allocated/published GI");
                     Debug.Log("[HoRTGIValidation] PASS unsupported platform: "+feature.Status);Finish(null);return;
                 }
+                if(forceHostContract){if(++tick<3){Render();return;}TickHostContract();return;}
                 if(++tick<3){Render();return;}
                 Color sky=atmosphere.Settings.constantColor;
                 var initial=Render();Debug.Log("[HoRTGIValidation] initial sky="+initial);NearRGB(initial,sky,"cosine environment integral",.02f);Near(initial.a,1,"valid receiver");

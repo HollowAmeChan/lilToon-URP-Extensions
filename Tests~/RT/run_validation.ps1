@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1','R2','R3DI')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2','R3DI','R3GI')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
@@ -60,8 +60,21 @@ if ($Stage -eq 'R3DI') {
         $taskCases += @{name=$Case;api='d3d12';entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.'+$(if($Case -eq 'di-core-rg'){'Run'}else{'RunCompatibility'});marker='[HoRTDIValidation] PASS'}
     }
 }
+if ($Stage -eq 'R3GI') {
+    $taskCases = @(
+        @{name='gi-host-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunHost';marker='[HoRTGIHostValidation] PASS'},
+        @{name='gi-host-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunHostCompatibility';marker='[HoRTGIHostValidation] PASS'},
+        @{name='gi-environment-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGIEnvironmentValidation.Run';marker='[HoGIEnvironment] END pass=True'},
+        @{name='gi-environment-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGIEnvironmentValidation.RunCompatibility';marker='[HoGIEnvironment] END pass=True'},
+        @{name='gi-nrd-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.Run';marker='[HoGINrd] END pass=True'},
+        @{name='gi-nrd-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.RunCompatibility';marker='[HoGINrd] END pass=True'},
+        @{name='gi-unsupported';api='d3d11';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGIValidation.RunUnsupported';marker='[HoRTGIValidation] PASS unsupported'},
+        @{name='gi-native-cutout';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout';marker='[HoGICutoutHit] PASS'},
+        @{name='di-cutout-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutout';marker='[HoRTDIValidation] PASS native cutout:'}
+    )
+}
 if ($Case) { $taskCases = @($taskCases | Where-Object { $_.name -eq $Case }); if ($taskCases.Count -eq 0) { throw 'Unknown validation case' } }
-$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } else { $Stage })
+$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } else { $Stage })
 New-Item -ItemType Directory -Force -Path $taskResults | Out-Null
 $taskStamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')
 $taskRunPath = Join-Path $taskResults ('run-' + $taskStamp + '.json')

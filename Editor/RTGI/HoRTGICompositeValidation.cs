@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTDI;
 #pragma warning disable CS0618
 using System;
@@ -46,6 +47,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-composite-"+(compatibility?"compat":"rg")));Directory.CreateDirectory(output);
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);RenderSettings.fog=false;
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+                renderer.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>()));
                 gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 var sky=Keep(ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>());sky.Settings.source=HoAtmosphereSource.Constant;sky.Settings.constantColor=new Color(.4f,.2f,.1f,1);

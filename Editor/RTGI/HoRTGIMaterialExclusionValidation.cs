@@ -27,7 +27,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             mesh.uv=new[]{Vector2.zero,Vector2.right,Vector2.up,Vector2.one,Vector2.zero,Vector2.right,Vector2.up,Vector2.one};mesh.subMeshCount=2;mesh.SetTriangles(new[]{0,2,1,2,3,1},0);mesh.SetTriangles(new[]{4,6,5,6,7,5},1);mesh.RecalculateNormals();mesh.RecalculateTangents();mesh.RecalculateBounds();
             var holder=Keep(new GameObject("Merged GI shell fixture"));holder.layer=1;holder.AddComponent<MeshFilter>().sharedMesh=mesh;var merged=holder.AddComponent<MeshRenderer>();merged.sharedMaterials=new[]{shell,emitter};
             var basis=Render();Save("filter-before");var context=gi.LastContext;
-            var scene=(HoRTScene)typeof(HoRTGIRendererFeature).GetField("scene",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(gi);
+            var scene=gi.SceneViewForCamera(camera).Scene;
             Require(scene.InstanceCount==3&&context.nrd!=null,"GI registers primary and both merged submeshes with real NRD");
             Near(GI(),Color.black,"Unexcluded front shell blocks secondary emitter",.0001f);Near(Read(context.PublishedDiffuse.rt),Color.black,"Filtered shell-blocked GI is black",.0001f);
             uint emitterId=Identity(1),shellId=Identity(0),revision=scene.StructureRevision;

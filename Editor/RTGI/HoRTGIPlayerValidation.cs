@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RT;
 using System;
 using System.IO;
 using System.Linq;
@@ -64,7 +65,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             try
             {
                 string root=Directory.GetParent(Application.dataPath).FullName;
-                if(!root.Replace('\\','/').EndsWith("/.codex-research/RTGIValidation"))throw new Exception("Dedicated GI project required");
+                if(!root.Replace('\\','/').EndsWith("/.codex-research/RTGIValidation")&&!root.Replace('\\','/').EndsWith("/.codex-research/RTValidation"))throw new Exception("Dedicated GI project required");
                 var probeType=Type.GetType((complexMotion?"HoRTGIComplexMotionProbe":backbuffer?"HoRTGIBackbufferProbe":automatic?"HoRTGIAutomaticProbe":"HoRTGIRuntimeProbe")+", Assembly-CSharp");if(probeType==null)throw new Exception("Copy the selected Tests~/RTGI/Dynamic probe into isolated Assets before launching Build");
                 string assets=precisionProbe?("Assets/RTGIPlayerProbe"+suffix+(compatibility?"Compatibility/":"/")):historyProbe?(compatibility?"Assets/RTGIPlayerProbeHistoryFeedbackCompatibility/":"Assets/RTGIPlayerProbeHistoryFeedback/"):baseVertex?"Assets/RTGIPlayerProbeBaseVertex/":"Assets/RTGIPlayerProbe/";Directory.CreateDirectory(Path.Combine(root,assets));AssetDatabase.Refresh();
                 // Own isolated outputs only.
@@ -73,7 +74,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var gb=ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>();gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>();sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 var gi=ScriptableObject.CreateInstance<HoRTGIRendererFeature>();gi.Settings.denoise=true;gi.Settings.composite=true;gi.Settings.intensity=1;gi.Settings.useEnvironment=false;gi.Settings.inSceneView=false;gi.Create();
-                foreach(var feature in new ScriptableRendererFeature[]{gb,sb,gi}){BoundScript(feature);feature.name=feature.GetType().Name;AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(feature);}EditorUtility.SetDirty(renderer);
+                foreach(var feature in new ScriptableRendererFeature[]{ScriptableObject.CreateInstance<HoRTRendererFeature>(),gb,sb,gi}){BoundScript(feature);feature.name=feature.GetType().Name;AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(feature);}EditorUtility.SetDirty(renderer);
                 var serialized=new SerializedObject(gi);
                 foreach(string name in new[]{"shader","rayShader","secondaryMaterialShader","compositeShader"})if(serialized.FindProperty(name).objectReferenceValue==null)throw new Exception("Missing serialized GI shader: "+name);
                 var library=serialized.FindProperty("nrdShaders");if(library.arraySize!=15)throw new Exception("Missing GI NRD library");for(int i=0;i<15;i++)if(library.GetArrayElementAtIndex(i).objectReferenceValue==null)throw new Exception("Missing GI NRD shader "+i);

@@ -55,6 +55,7 @@ namespace lilToon.URP.Extensions.RT
             && domain.owner != null && domain.owner.isActive;
         internal HoRTScene Scene => IsValid ? resources.scene : throw new InvalidOperationException("Stale Ho-RT view");
         internal int MaterialSignature => IsValid ? resources.profile?.Signature ?? 0 : 0;
+        internal IHoRTMaterialProfile MaterialProfile => IsValid ? resources.profile : throw new InvalidOperationException("Stale Ho-RT material profile");
         internal HoRTScene.Inputs Read(RenderGraph graph, IUnsafeRenderGraphBuilder builder)
         { var scene = Scene; domain.capturedInput = true; return scene.Read(graph, builder); }
         internal HoRTScene.Inputs ReadCompatibility()

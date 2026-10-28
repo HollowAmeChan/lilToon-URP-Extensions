@@ -1,0 +1,8 @@
+{
+  "stage": "R3-GI",
+  "baseCommit": "c05b93a0",
+  "unchangedCoreFiles": 81,
+  "unchangedShaderFiles": 59,
+  "ownershipChecks": true,
+  "scope": "Source ownership and unchanged lighting-core check; not a replacement for actual DI output/NRD tests."
+}

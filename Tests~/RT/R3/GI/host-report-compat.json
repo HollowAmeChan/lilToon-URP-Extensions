@@ -1,0 +1,24 @@
+{
+    "pass": true,
+    "bakeCount": 1,
+    "checks": [
+        "Production DI and GI acquire separate host views",
+        "Distinct native material profiles share one pose Mesh",
+        "Production two-feature initial pose Bake occurs once",
+        "Both effects execute their own temporal history",
+        "Both production effects retain independent NRD contexts",
+        "Both NRD paths actually dispatch in the shared-host render",
+        "One bone edit adds one Bake across production DI and GI",
+        "Both effects retain the same updated pose Mesh",
+        "Old GI view epoch is invalid after another render",
+        "GI rejects changed scene visibility history",
+        "DI still produces when GI stops requesting",
+        "GI disposal does not invalidate DI independent history",
+        "Returning GI gets a fresh scene lifetime history",
+        "GI keeps producing after DI stops requesting",
+        "Missing host invalidates GI view and history explicitly",
+        "Missing host never republishes stale GI activation",
+        "GI re-enable begins without the invalid history",
+        "Host recreation resets GI history even when revision numbers repeat"
+    ]
+}

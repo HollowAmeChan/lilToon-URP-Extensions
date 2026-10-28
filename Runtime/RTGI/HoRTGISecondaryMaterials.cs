@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.RTGI
 {
     // GI-only closest-hit materials. Source materials and their raster passes
     // are never modified. Unsupported opaque surfaces remain occluders.
-    internal sealed class HoRTGISecondaryMaterials : IDisposable
+    internal sealed class HoRTGISecondaryMaterials : IHoRTMaterialProfile
     {
         private readonly Shader shader;
         private readonly Dictionary<Material, Material> adapters = new(MaterialReferences.Instance);
@@ -18,6 +18,11 @@ namespace lilToon.URP.Extensions.RTGI
         internal readonly List<string> Rejections = new();
         internal int Signature { get; private set; }
         internal bool TimeVarying { get; private set; }
+        int IHoRTMaterialProfile.Signature => Signature;
+        void IHoRTMaterialProfile.BeginPrepare() => BeginFrame();
+        Material IHoRTMaterialProfile.Resolve(Material source) => Resolve(source);
+        bool IHoRTMaterialProfile.SupportsCutout(Material source) => HoRTCutoutSupport.Supports(source);
+        void IHoRTMaterialProfile.EndPrepare() => EndFrame();
         private sealed class MaterialReferences : IEqualityComparer<Material>
         {
             internal static readonly MaterialReferences Instance = new();
