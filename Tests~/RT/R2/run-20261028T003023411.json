@@ -1,0 +1,24 @@
+{
+  "stage": "R2",
+  "sourceCommit": "ffa4ff286ba0e15eb622ed30b8a4e1feddeba55a",
+  "startedUtc": "2026-10-28T00:30:23.8652703Z",
+  "sourcesFile": "sources-20261028T003023411.json",
+  "runnerSha256": "C21FB5DC6F9CBBCB35ECF85A3DEB56B4EA18016F88CF5A6343B8E9FA53188BDE",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "host-rg",
+      "entry": "lilToon.URP.Extensions.RT.HoRTHostValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "F000745C7AEB7F890B908BDDE69B1E890D475B45EB6DFA9F392A52E5B94007A7",
+      "seconds": 12.983509,
+      "pass": true,
+      "logFile": "ho-rt-r2-host-rg-20261028T003023411.log"
+    }
+  ]
+}

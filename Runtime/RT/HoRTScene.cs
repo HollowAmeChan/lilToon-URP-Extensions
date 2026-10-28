@@ -23,7 +23,11 @@ namespace lilToon.URP.Extensions.RT
         private readonly HashSet<(int renderer, int submesh)> seen = new();
         private readonly HashSet<int> seenRenderers = new();
         private readonly List<(int renderer, int submesh)> removed = new();
-        private readonly Dictionary<int, HoRTSkinnedMesh> skinnedMeshes = new();
+        private readonly Dictionary<int, HoRTGeometryCache.PoseLease> skinnedMeshes = new();
+        private readonly List<HoRTGeometryCache.PoseLease> pendingPoseReleases = new();
+        private readonly HoRTGeometryCache geometry;
+        private readonly bool ownsGeometry;
+        private readonly Action captureInput;
         private readonly HashSet<int> seenSkinned = new();
         private readonly List<int> removedSkinned = new();
         private readonly Func<Material, Material> secondaryMaterial;
@@ -43,7 +47,7 @@ namespace lilToon.URP.Extensions.RT
         internal int InstanceCount => entries.Count;
         internal int CutoutCount { get; private set; }
         internal int SkinnedMeshCount => skinnedMeshes.Count;
-        internal uint SkinnedBakeCount { get; private set; }
+        internal uint SkinnedBakeCount => geometry.BakeCount;
         internal bool IsAvailable => !disposed && acceleration != null;
         internal static bool IsSupported => SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12 && SystemInfo.supportsInlineRayTracing;
 
@@ -67,6 +71,7 @@ namespace lilToon.URP.Extensions.RT
             internal int submesh, handle;
             internal bool cutout;
             internal Matrix4x4 matrix;
+            internal ulong poseVersion;
         }
 
         internal readonly struct Instance
@@ -80,10 +85,14 @@ namespace lilToon.URP.Extensions.RT
             { this.identity = identity; this.materialId = materialId; this.triangleCount = triangleCount; this.renderer = renderer; this.mesh = mesh; this.material = material; this.submesh = submesh; }
         }
 
-        internal HoRTScene(Func<Material, Material> secondaryMaterial = null, Func<Material, bool> supportsCutout = null)
+        internal HoRTScene(Func<Material, Material> secondaryMaterial = null, Func<Material, bool> supportsCutout = null,
+            HoRTGeometryCache geometry = null, Action captureInput = null)
         {
             this.secondaryMaterial = secondaryMaterial;
             this.supportsCutout = supportsCutout;
+            ownsGeometry = geometry == null;
+            this.geometry = geometry ?? new HoRTGeometryCache();
+            this.captureInput = captureInput;
             if (!IsSupported) return;
             acceleration = new RayTracingAccelerationStructure(new RayTracingAccelerationStructure.Settings
             {
@@ -106,6 +115,23 @@ namespace lilToon.URP.Extensions.RT
             if(excludedMaterials!=null&&excludedMaterials.Count>0)
             {excluded=new HashSet<Material>(MaterialReferences.Instance);foreach(var material in excludedMaterials)if(material!=null)excluded.Add(material);}
             if (!IsAvailable) { Rejections.Add("D3D12 inline ray tracing is unavailable."); return; }
+            if (ownsGeometry)
+            {
+                // Preserve this standalone scene's filtering scope. A host-owned
+                // cache instead prepares the union once before all view syncs.
+                var poseSources = new List<Renderer>();
+                foreach (var renderer in renderers)
+                {
+                    var skin = renderer as SkinnedMeshRenderer;
+                    if (skin == null || skin.sharedMesh == null || skin.isPartOfStaticBatch) continue;
+                    var materials = skin.sharedMaterials;
+                    if (materials.Length != skin.sharedMesh.subMeshCount) continue;
+                    foreach (var material in materials)
+                        if ((excluded == null || !excluded.Contains(material)) && (Opaque(material) || (supportsCutout != null && supportsCutout(material))))
+                        { poseSources.Add(skin); break; }
+                }
+                geometry.Prepare(poseSources);
+            }
             bool changed = false, structureChanged = false;
             foreach (Renderer candidate in renderers)
             {
@@ -122,7 +148,7 @@ namespace lilToon.URP.Extensions.RT
                 var sourceMesh = mesh;
                 if (materials.Length != mesh.subMeshCount)
                 { Rejections.Add(renderer.name + ": requires exactly one material per submesh."); continue; }
-                bool poseChanged = false;
+                ulong poseVersion = 0;
                 if (skin != null)
                 {
                     if (!ValidTransform(renderer.localToWorldMatrix))
@@ -132,14 +158,12 @@ namespace lilToon.URP.Extensions.RT
                     if (hasOpaque)
                     {
                         int id = skin.GetInstanceID();
-                        if (!skinnedMeshes.TryGetValue(id, out var snapshot) || !ReferenceEquals(snapshot.renderer, skin))
-                        {
-                            snapshot?.Dispose(); snapshot = new HoRTSkinnedMesh(skin); skinnedMeshes[id] = snapshot;
-                        }
-                        if (!snapshot.Synchronize(out poseChanged))
+                        if (!geometry.TryAcquire(skin, out var snapshot))
                         { Rejections.Add(renderer.name + ": missing or non-finite skin pose."); continue; }
+                        if (skinnedMeshes.TryGetValue(id, out var previous)) pendingPoseReleases.Add(previous);
+                        skinnedMeshes[id] = snapshot;
                         seenSkinned.Add(id); mesh = snapshot.mesh;
-                        if (poseChanged) SkinnedBakeCount++;
+                        poseVersion = snapshot.Version;
                     }
                 }
                 for (int submesh = 0; submesh < mesh.subMeshCount; ++submesh)
@@ -175,12 +199,13 @@ namespace lilToon.URP.Extensions.RT
                         // Native instance handles are opaque signed tokens, not positive array indices.
                         acceleration.UpdateInstanceGeometry(handle);
                         entry = new Entry { renderer = renderer, mesh = mesh, sourceMesh = sourceMesh, material = material, submesh = submesh,
-                            identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial, cutout = cutout };
+                            identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial, cutout = cutout, poseVersion = poseVersion };
                         entries.Add(key, entry); identities.Add(identity, entry); asDirty = metadataDirty = true; changed = structureChanged = true;
                     }
                     else
                     {
-                        if (poseChanged) { acceleration.UpdateInstanceGeometry(entry.handle); asDirty = true; changed = true; }
+                        if (entry.poseVersion != poseVersion)
+                        { acceleration.UpdateInstanceGeometry(entry.handle); entry.poseVersion = poseVersion; asDirty = true; changed = true; }
                         if (entry.matrix != matrix) { acceleration.UpdateInstanceTransform(entry.handle, matrix); entry.matrix = matrix; asDirty = true; changed = true; }
                         if (entry.mask != mask) { acceleration.UpdateInstanceMask(entry.handle, mask); entry.mask = mask; asDirty = true; changed = structureChanged = true; }
                         if (!ReferenceEquals(entry.material, material)) { entry.material = material; entry.materialId = MaterialIdentity(material); metadataDirty = true; changed = structureChanged = true; }
@@ -191,6 +216,9 @@ namespace lilToon.URP.Extensions.RT
             foreach (var key in removed) { Remove(key); changed = structureChanged = true; }
             removedSkinned.Clear(); foreach (var pair in skinnedMeshes) if (!seenSkinned.Contains(pair.Key)) removedSkinned.Add(pair.Key);
             foreach (int id in removedSkinned) { skinnedMeshes[id].Dispose(); skinnedMeshes.Remove(id); }
+            // All AS removals/replacements have completed before old pose leases
+            // may destroy an unowned mesh.
+            foreach (var previous in pendingPoseReleases) previous.Dispose(); pendingPoseReleases.Clear();
             CutoutCount = 0; foreach (var entry in entries.Values) if (entry.cutout) CutoutCount++;
             if (changed) { unchecked { Revision++; } EnsureMetadataCapacity(); }
             if (structureChanged) { unchecked { StructureRevision++; } }
@@ -229,6 +257,8 @@ namespace lilToon.URP.Extensions.RT
             acceleration.ClearInstances(); entries.Clear(); identities.Clear();
             CutoutCount = 0;
             foreach (var snapshot in skinnedMeshes.Values) snapshot.Dispose(); skinnedMeshes.Clear();
+            foreach (var snapshot in pendingPoseReleases) snapshot.Dispose(); pendingPoseReleases.Clear();
+            if (ownsGeometry) geometry.MarkGeometryDirty();
             asDirty = metadataDirty = true; unchecked { Revision++; StructureRevision++; }
         }
 
@@ -254,11 +284,13 @@ namespace lilToon.URP.Extensions.RT
         {
             private readonly HoRTScene scene;
             private readonly uint revision;
-            internal Inputs(HoRTScene scene) { this.scene = scene; revision = scene.Revision; }
+            private readonly ulong geometryVersion;
+            internal Inputs(HoRTScene scene) { this.scene = scene; revision = scene.Revision; geometryVersion = scene.geometry.PrepareVersion; }
             private void Build(CommandBuffer cmd)
             {
                 scene.ThrowIfDisposed();
-                if (!scene.IsAvailable || scene.Revision != revision) throw new InvalidOperationException("RT scene unavailable or changed after graph recording.");
+                if (!scene.IsAvailable || scene.Revision != revision || scene.geometry.PrepareVersion != geometryVersion)
+                    throw new InvalidOperationException("RT scene unavailable or changed after graph recording.");
                 if (scene.metadataDirty)
                 {
                     Array.Clear(scene.instanceData, 0, scene.instanceData.Length);
@@ -287,6 +319,7 @@ namespace lilToon.URP.Extensions.RT
         internal Inputs Read(RenderGraph graph, IUnsafeRenderGraphBuilder builder)
         {
             ThrowIfDisposed(); if (!IsAvailable) throw new NotSupportedException("D3D12 inline ray tracing is unavailable.");
+            captureInput?.Invoke();
             builder.EnableAsyncCompute(false);
             builder.AllowGlobalStateModification(true);
             builder.AllowPassCulling(false);
@@ -296,6 +329,7 @@ namespace lilToon.URP.Extensions.RT
         internal Inputs ReadCompatibility()
         {
             ThrowIfDisposed(); if (!IsAvailable) throw new NotSupportedException("D3D12 inline ray tracing is unavailable.");
+            captureInput?.Invoke();
             return new Inputs(this);
         }
         private void ThrowIfDisposed() { if (disposed) throw new ObjectDisposedException(nameof(HoRTScene)); }
@@ -304,6 +338,8 @@ namespace lilToon.URP.Extensions.RT
             if (disposed) return; disposed = true;
             acceleration?.Dispose(); acceleration = null; instanceBuffer?.Dispose(); instanceBuffer = null;
             foreach (var snapshot in skinnedMeshes.Values) snapshot.Dispose(); skinnedMeshes.Clear();
+            foreach (var snapshot in pendingPoseReleases) snapshot.Dispose(); pendingPoseReleases.Clear();
+            if (ownsGeometry) geometry.Dispose();
             entries.Clear(); identities.Clear(); materialIds.Clear(); instanceData = null;
         }
     }

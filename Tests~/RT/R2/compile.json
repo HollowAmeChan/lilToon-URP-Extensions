@@ -1,0 +1,8 @@
+{
+  "stage": "R2",
+  "actualExit": 0,
+  "errors": 0,
+  "scope": "Unity bundled Roslyn Runtime/Editor split",
+  "log": ".codex-research/ho-rt-r2-compile.log",
+  "sha256": "442F4E72933E5D4D055F4CE5C273D0F4DF15278F8339AF79638B011B357DA638"
+}

@@ -1,0 +1,19 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "unsupported": true,
+    "retirement": false,
+    "api": "Direct3D11",
+    "failure": "",
+    "checks": 4,
+    "renderRequests": 1,
+    "createdProfiles": 0,
+    "disposedProfiles": 0,
+    "bakeCount": 0,
+    "evidence": [
+        "Material profile factories require a stable key",
+        "Unsupported API rejects declarations and acquisition",
+        "Unsupported host allocates no scene view or pose",
+        "Unsupported path does not create hit-material adapters"
+    ]
+}

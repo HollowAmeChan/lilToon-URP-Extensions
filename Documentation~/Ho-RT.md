@@ -1,6 +1,6 @@
 # Ho-RT：公共底座与 RTShadow
 
-> 状态：**现行设计与下一轮工作入口，尚未实现**，2026-10-28。实施路径已按目录迁移、统一资源宿主、现有消费者迁移和独立 RTShadow 重新规划，见 §8。下述新接口名称是设计，不是已经存在的 API。
+> 状态：**现行实现 / 设计总入口**，2026-10-28。目录迁移、R2 公共资源宿主及共享姿态的有界验收已完成；DI/GI 迁移、RTShadow 与 SIGMA 生产链仍未完成，精确进展见 §8.5。实现状态与后续接口建议分开阅读。
 
 ## 0. 先确认实现状态
 
@@ -9,7 +9,8 @@
 | 栅格化角色 CS | 已有 shadow map / PCF / PCSS，本轮完成勾选与滤波修复，仍有画质限制 | [当前 CS](Ho-CharacterShadow.md) |
 | RTDI / RTGI | 维持各自已验证支持域与光照算法；各自拥有 RT 场景与历史 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | A01/A02 已完成代码解耦及有界资源复用；生产绑定为 RELAX | 本文 §11 的基线与证据 |
-| Ho-RT host / RTShadow / SIGMA | 本文确定的新设计，待接入和验证 | 本文 §4–8 |
+| Ho-RT host | R2 请求、快照 view、共享姿态与 fence 生命周期已有有界验收；DI/GI 尚未迁入 | 本文 §8.5 |
+| RTShadow / SIGMA | 设计已定，生产链尚未实现 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -323,7 +324,8 @@ Editor/
 | --- | --- | --- | --- | --- |
 | R0 | 已完成 | 637 项 RT 源码 / 资源基线 SHA 已固定；Runtime / Editor 编译 0 errors；现用 DLL 两 SIGMA 描述实例成功；真实 URP hook 已核对 | 生产源码及插件未改，无画质 / 显存收益声明；排除不必要的 native 重编和自动排序设计 | R1 纯迁移 |
 | R1 | 已完成 | RayTracing→RT，2098 个产品文件规范化核对仅有允许的命名 / 引用变化，20 份移动 metadata 与基线字节一致；编译 0 errors；10 项真实 GPU / unsupported 回归通过 | 只统一模块归属，无画质 / 性能收益声明；旧验证源码 / SHA 未改，初次冷导入 stale-transform 失败保留，后续同条件原码与当前码通过但原因未证明 | R2 宿主与共享姿态 |
-| R2–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
+| R2 | 已完成有界验收 | host / 请求 epoch / cache 已实现；RG / compatibility 普通夹具各 93 checks / 11 请求，初始、骨骼和源 Mesh 编辑共 Bake=3，两个 view 均更新；各自退休专项 29 checks / 4 请求，profiles 完整释放；9 项组合回归通过 | 保留多 AS view，初版在 CPU 等待前一 fence 后再修改，无帧时间收益声明；缺失完成 fence 的异常 work 保守隔离，完整取消恢复仍未验收 | R3：先 DI，再 GI |
+| R3–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
 
 R0 采用的宿主准备合同：
 
@@ -335,6 +337,12 @@ R0 采用的宿主准备合同：
 源码依据与冻结基线见 [baseline.json](../Tests~/RT/R0/baseline.json)，复核入口 [verify_baseline.py](../Tests~/RT/R0/verify_baseline.py)，本次分程序集编译记录 [compile.json](../Tests~/RT/R0/compile.json)。旧 GPU 结果仅用于确定已有验证范围；R0 没有把历史 SHA guard 改成当前通过，也未声称进行了新的 GPU 画质验收。
 
 R1 复核见 [migration.json](../Tests~/RT/R1/migration.json) 与 [review.json](../Tests~/RT/R1/review.json)，入口为 `python Tests~/RT/R1/verify_migration.py`、`python Tests~/RT/R1/verify_results.py`。10 项覆盖场景、主表面、蒙皮的 RG / compatibility，DI 两路径真实 Cutout、GI native Cutout 和 D3D11 unsupported。主表面既有夹具按原 Gamma 域断言 `[Gamma]` 参数；Linear 域运行被拒绝，未改断言。旧 A01 对照工程命名空间编译失败、空工程 ShaderGraph cache EPERM 和冷导入失败均保留；正式空 RT 工程通过后才接纳迁移。当前 runner 与初始化入口集中 `Tests~/RT/`，没有批量重写历史测试脚本。
+
+R2 复核为 [review.json](../Tests~/RT/R2/review.json)，入口 `python Tests~/RT/R2/verify_results.py`；重跑 `Tests~/RT/run_validation.ps1 -Stage R2`。最终 9 项使用同一套 1937 个产品 / 验证资源指纹：宿主 RG / compatibility、两条 dispatch 后退休专项、D3D11 unsupported、原独立蒙皮两路径、DI Cutout 和 GI native Cutout。原始中间通过记录不覆盖，最终源码以 review 指定 run 为准。
+
+R2 的实际收益是两个 AS view 共用同一份姿态 Mesh，并对每次相关编辑只 Bake 一次；不同 native hit 能力的 AS 尚未合并，未宣称显存 / 毫秒收益。初版 `LastPrepareWaitMilliseconds` 明示等待成本：CPU 看到前次尾 fence passed 后才修改 Mesh / material / AS，最长等待 5 秒后拒绝本次准备，不超时强行释放。GPU queue wait 不能代替 CPU 释放资格。资源退休由独立帧末 / Editor update 驱动；scene / AS 先释放，pose lease 随后，再释放 profile / cache。
+
+提交前复核修正了两条接口风险并纳入最终测试：有 material factory 必须提供稳定 profile key；所有 scene Read 都通过宿主登记使用，不能从 `view.Scene` 绕过 GPU pin。源 Mesh 原地编辑必须走 host `MarkGeometryDirty(renderer)`，同时刷新所有 view 与共享 cache。已捕获但尾 fence 缺失的异常 / 取消路径仍可能隔离滞留，不冒称完整故障恢复已支持；后续若实际触发，需用真实完成证据恢复，不能靠超时清 pin。R3 迁移仍保持这个边界。
 
 <a id="quality-reference"></a>
 
@@ -386,7 +394,7 @@ R1 复核见 [migration.json](../Tests~/RT/R1/migration.json) 与 [review.json](
 
 ## 10. 当前已实现的 RT Helper 契约
 
-本节描述当前源码，不把 §4–8 的未来 host 当成已有能力。`HoRTScene` 与 `HoRTPrimarySurfaceInputs` 都是内部 helper；RTDI / RTGI 仍各自持有场景、材质 adapter、输出与历史，没有全局 AS 单例或统一 Ho-RT Renderer Feature。
+本节描述底层 helper 契约。`HoRTRendererFeature` 已开始提供统一宿主实现；RTDI / RTGI 尚未完成 R3，仍各自持有场景、材质 adapter、输出与历史。宿主不是全局 AS 单例，不能把测试消费者接通当成生产 DI/GI 已迁移。
 
 <a id="scene-query"></a>
 
@@ -399,6 +407,8 @@ R1 复核见 [migration.json](../Tests~/RT/R1/migration.json) 与 [review.json](
 默认只登记 opaque；调用者传入共同的 `HoRTCutoutSupport` 和 native hit material 后，DI / GI 均可登记有界 lilToon Cutout。要求 UV0、无 MPB，排除动画主 UV、dissolve、distance fade、dither、多主色、视差等复杂情况。AS 当前关闭 triangle culling，alpha 与表面求值由 adapter 决定；任意 GPU 顶点位移、布料、Terrain、fur、描边壳不在自动支持域。显式登记的几何不会因 `shadowCastingMode=Off` 自动移除，未来 Shadow 的查询策略须单独定义。支持范围见 [DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md) 和 [GI](Ho-RTGI.md)。
 
 蒙皮通过 `BakeMesh(mesh, true)` 获取当前骨骼 / BlendShape 姿态，补偿 Renderer 缩放后由 AS 应用一次 localToWorld。姿态、源 Mesh 或蒙皮质量变化时更新快照及 BLAS，稳定姿态复用；缺失 / 非有限姿态会移除旧实例。源 Mesh 原地编辑必须调用 `MarkGeometryDirty()` 再同步；仅清 TLAS 后重新加入同一个 Mesh 不能保证旧 BLAS 刷新。CPU Bake 与完整 Mesh 副本有成本，DI / GI 当前分别持有，详见 [场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md)。
+
+R2 的 [HoRTGeometryCache](../Runtime/RT/HoRTGeometryCache.cs) 可由宿主注入 `HoRTScene` 第三个构造参数：宿主按本次 union 准备一次，scene views 只 acquire 对应 pose lease。每个 AS entry 比较单调 PoseVersion，所有相关 submesh 均更新；不用被首个 view 消耗的 changed 标记。未注入时 scene 自建缓存，既有独立查询验证保持可用。共享 Mesh 保持稳定，修改前由宿主确认 GPU fence；AS 移除 / 释放后才释放 pose lease。`SkinnedBakeCount` 在共享模式反映缓存实际累计 Bake，而非每个 view 重复计数。
 
 身份契约：
 

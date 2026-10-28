@@ -1,0 +1,45 @@
+{
+  "stage": "R2",
+  "acceptedRun": "run-20261028T003741719.json",
+  "sourceHashesChecked": 1937,
+  "reports": {
+    "rg": {
+      "checks": 93,
+      "renderRequests": 11,
+      "bakeCount": 3,
+      "createdProfiles": 3,
+      "disposedProfiles": 3
+    },
+    "compat": {
+      "checks": 93,
+      "renderRequests": 11,
+      "bakeCount": 3,
+      "createdProfiles": 3,
+      "disposedProfiles": 3
+    },
+    "unsupported": {
+      "checks": 4,
+      "renderRequests": 1,
+      "bakeCount": 0,
+      "createdProfiles": 0,
+      "disposedProfiles": 0
+    },
+    "retirement-rg": {
+      "checks": 29,
+      "renderRequests": 4,
+      "bakeCount": 2,
+      "createdProfiles": 2,
+      "disposedProfiles": 2
+    },
+    "retirement-compat": {
+      "checks": 29,
+      "renderRequests": 4,
+      "bakeCount": 2,
+      "createdProfiles": 2,
+      "disposedProfiles": 2
+    }
+  },
+  "scope": "Host shared pose/view and bounded lifecycle checks, standalone scene consumers unchanged; DI/GI host migration is R3.",
+  "cost": "Different AS views remain. First implementation waits for previous GPU fence before mutating shared Mesh/material/AS; no frame-time improvement claimed.",
+  "knownLimits": "Captured work without an executed completion fence remains quarantined rather than being freed on timeout. Normal tail and explicit retirement paths are separate qualifications."
+}

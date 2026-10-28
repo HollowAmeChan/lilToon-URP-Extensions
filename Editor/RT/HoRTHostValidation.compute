@@ -1,0 +1,17 @@
+#pragma kernel CSMain
+#pragma require inlineraytracing
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders/HoRTSceneQuery.hlsl"
+struct TestRay { float4 originMin, directionMax; uint4 options; };
+StructuredBuffer<TestRay> _TestRays;
+RWTexture2D<float4> _TestOutput;
+float _TestGeneration;
+[numthreads(8, 1, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    TestRay ray = _TestRays[id.x];
+    HoRTSceneHit hit = HoRTTraceScene(ray.originMin.xyz, ray.directionMax.xyz, ray.originMin.w, ray.directionMax.w, ray.options.x);
+    _TestOutput[uint2(id.x, 0)] = float4(hit.distance, hit.instanceId, hit.submesh, hit.materialId);
+    _TestOutput[uint2(id.x, 1)] = float4(hit.barycentrics, hit.primitiveIndex, hit.frontFace);
+    _TestOutput[uint2(id.x, 2)] = float4(hit.positionWS, hit.status);
+    _TestOutput[uint2(id.x, 3)] = float4(_HoRTSceneState.xyz, _TestGeneration);
+}

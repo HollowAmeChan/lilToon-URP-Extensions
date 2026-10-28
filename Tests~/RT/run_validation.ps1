@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
@@ -28,6 +28,19 @@ $taskCases = @(
     @{ name='gi-secondary-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout'; marker='[HoGICutoutHit] PASS' },
     @{ name='scene-unsupported'; api='d3d11'; entry='lilToon.URP.Extensions.RT.HoRTSceneValidation.RunUnsupported'; marker='[HoRTSceneValidation] PASS unsupported capability branch' }
 )
+if ($Stage -eq 'R2') {
+    $taskCases = @(
+        @{ name='host-rg'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.Run'; marker='[HoRTHostValidation] PASS' },
+        @{ name='host-compat'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunCompatibility'; marker='[HoRTHostValidation] PASS' },
+        @{ name='host-retirement-rg'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunRetirement'; marker='[HoRTHostValidation] PASS' },
+        @{ name='host-retirement-compat'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunRetirementCompatibility'; marker='[HoRTHostValidation] PASS' },
+        @{ name='host-unsupported'; api='d3d11'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunUnsupported'; marker='[HoRTHostValidation] PASS' },
+        @{ name='skinned-rg'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTSceneValidation.RunSkinned'; marker='[HoRTSceneValidation] PASS' },
+        @{ name='skinned-compat'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTSceneValidation.RunSkinnedCompatibility'; marker='[HoRTSceneValidation] PASS' },
+        @{ name='di-cutout-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutout'; marker='[HoRTDIValidation] PASS native cutout:' },
+        @{ name='gi-secondary-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout'; marker='[HoGICutoutHit] PASS' }
+    )
+}
 if ($Case) { $taskCases = @($taskCases | Where-Object { $_.name -eq $Case }); if ($taskCases.Count -eq 0) { throw 'Unknown validation case' } }
 $taskResults = Join-Path $PSScriptRoot $Stage
 New-Item -ItemType Directory -Force -Path $taskResults | Out-Null
