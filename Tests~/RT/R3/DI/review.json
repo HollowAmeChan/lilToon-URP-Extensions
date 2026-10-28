@@ -1,0 +1,47 @@
+{
+  "stage": "R3-DI",
+  "acceptedRun": "run-20261028T022658444.json",
+  "cases": 9,
+  "sourceHashesChecked": 1939,
+  "hostChecks": {
+    "rg": [
+      "DI acquires exactly one host-owned view",
+      "DI keeps independent history with host input",
+      "Two-light DI actually uses its temporal history",
+      "Missing/disabled host invalidates DI borrowed view",
+      "Missing host reports explicit state and invalidates history",
+      "Missing host publishes no stale DI activation",
+      "Re-enabling host reuses the valid scene",
+      "Re-enable begins from invalidated DI history",
+      "Host recreation produces a new scene lifetime",
+      "New lifetime rejects same-numbered old scene revision history",
+      "DI recreation does not directly release host-owned resources",
+      "DI material profile identity replacement is owned by host",
+      "Recreated DI starts independent history",
+      "Host retires a client that stops requesting",
+      "DI resumes through the host without a private fallback scene",
+      "Re-enabled client does not consume the removed scene history"
+    ],
+    "compat": [
+      "DI acquires exactly one host-owned view",
+      "DI keeps independent history with host input",
+      "Two-light DI actually uses its temporal history",
+      "Missing/disabled host invalidates DI borrowed view",
+      "Missing host reports explicit state and invalidates history",
+      "Missing host publishes no stale DI activation",
+      "Re-enabling host reuses the valid scene",
+      "Re-enable begins from invalidated DI history",
+      "Host recreation produces a new scene lifetime",
+      "New lifetime rejects same-numbered old scene revision history",
+      "DI recreation does not directly release host-owned resources",
+      "DI material profile identity replacement is owned by host",
+      "Recreated DI starts independent history",
+      "Host retires a client that stops requesting",
+      "DI resumes through the host without a private fallback scene",
+      "Re-enabled client does not consume the removed scene history"
+    ]
+  },
+  "scope": "DI host migration and existing analytic/Cutout/RELAX regressions; GI migration and full RTShadow are still outstanding.",
+  "benefit": "DI no longer owns a private world scan, scene AS or hit-profile lifetime; host owns its scene view.",
+  "limits": "The legacy full core test remains rejected: exact pre-migration control reproduces four AS scratch errors and power-proposal assertion. No full-core pass or frame-time claim. Mixed production DI+GI shared-pose acceptance awaits GI migration. Existing cleanup warnings preserved."
+}

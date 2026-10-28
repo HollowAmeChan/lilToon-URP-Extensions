@@ -1,0 +1,24 @@
+{
+  "stage": "R3DI",
+  "sourceCommit": "66a2bb80cb3e091246379831f3add8b1ee3959c6",
+  "startedUtc": "2026-10-28T02:23:24.5552951Z",
+  "sourcesFile": "sources-20261028T022324020.json",
+  "runnerSha256": "2A6097394BB42AC65A310146618EC8652C17505B977E781067E060C7969DFC19",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "di-host-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunHost",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "1483A18AEF0B073A13A01005CB981F4C52DA1EC660C32FEFFEF2A49931E707C8",
+      "seconds": 11.3886859,
+      "pass": true,
+      "logFile": "ho-rt-r3di-di-host-rg-20261028T022324020.log"
+    }
+  ]
+}

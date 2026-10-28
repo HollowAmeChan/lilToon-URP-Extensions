@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RT;
 using System;
 using System.IO;
 using lilToon.URP.Extensions.GeometryBuffer;
@@ -57,7 +58,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(captureType==null||probeType==null)throw new Exception("Run Prepare and allow script import before Build");
                 var capture=(ScriptableRendererFeature)ScriptableObject.CreateInstance(captureType);
                 var captureSerialized=new SerializedObject(capture);Set(captureSerialized,"captureShader",AssetDatabase.LoadAssetAtPath<Shader>(assets+"HoRTDIPlayerCapture.shader"));captureSerialized.ApplyModifiedPropertiesWithoutUndo();
-                foreach(var feature in new ScriptableRendererFeature[]{sky,gb,sb,di,capture}){feature.name=feature.GetType().Name;AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(feature);}
+                var rtHost=ScriptableObject.CreateInstance<HoRTRendererFeature>();
+                foreach(var feature in new ScriptableRendererFeature[]{rtHost,sky,gb,sb,di,capture}){feature.name=feature.GetType().Name;AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(feature);}
                 EditorUtility.SetDirty(renderer);
                 var serialized=new SerializedObject(di);if(serialized.FindProperty("shader").objectReferenceValue==null||serialized.FindProperty("nrdShaders").arraySize!=15)throw new Exception("DI shader serialization missing");
                 if(serialized.FindProperty("finalVisibilityShader").objectReferenceValue==null||serialized.FindProperty("visibilityMaterialShader").objectReferenceValue==null)throw new Exception("DI alpha visibility shader references missing");

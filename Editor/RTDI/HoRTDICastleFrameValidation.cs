@@ -7,6 +7,7 @@ using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.SurfaceBuffer;
 using lilToon.URP.Extensions.RTDI;
+using lilToon.URP.Extensions.RT;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -49,7 +50,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var atmosphere=ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>();owned.Add(atmosphere);atmosphere.Settings.source=HoAtmosphereSource.SceneSkybox;
                 di=ScriptableObject.CreateInstance<HoRTDIRendererFeature>();owned.Add(di);di.Settings.excludedRayMaterials=skyMaterials;di.Settings.finalSampling=single?HoRTDIFinalSampling.Single:HoRTDIFinalSampling.TripleAnalytic;di.Settings.localSampling=HoRTDILocalSampling.Power;di.Settings.denoise=true;
                 using var surfaceOverride=surfaceRIS?HoRTDISurfaceAuxiliaryValidation.Apply(di):null;
-                renderer.rendererFeatures.Add(atmosphere);renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(di);
+                var rtHost=ScriptableObject.CreateInstance<HoRTRendererFeature>();owned.Add(rtHost);
+                renderer.rendererFeatures.Add(rtHost);renderer.rendererFeatures.Add(atmosphere);renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(di);
                 var pipeline=UniversalRenderPipelineAsset.Create(renderer);owned.Add(pipeline);pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
                 #if URP_COMPATIBILITY_MODE
                 GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode=compatibility;
@@ -88,7 +90,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     report.observedFrames=samples;report.rawTemporalVariance=variances[0]/(points*3);report.filteredTemporalVariance=variances[1]/(points*3);report.rawMean=averages[0]/(points*3);report.filteredMean=averages[1]/(points*3);pixels=image.GetPixels();
                     c.nrd.ValidationTimeSeconds=null;
                 }
-                var scene=(lilToon.URP.Extensions.RT.HoRTScene)di.GetType().GetField("scene",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).GetValue(di);report.acceptedInstances=scene.InstanceCount;report.rejections=scene.Rejections.ToArray();
+                var scene=di.SceneViewForCamera(camera).Scene;report.acceptedInstances=scene.InstanceCount;report.rejections=scene.Rejections.ToArray();
                 foreach(var pixel in pixels)
                 {
                     if(!float.IsFinite(pixel.r)||!float.IsFinite(pixel.g)||!float.IsFinite(pixel.b)||!float.IsFinite(pixel.a)||pixel.r<0||pixel.g<0||pixel.b<0)throw new Exception("Castle output contains invalid radiance");

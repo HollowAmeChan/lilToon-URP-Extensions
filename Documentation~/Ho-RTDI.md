@@ -1,6 +1,6 @@
 # Ho-RTDI：功能、接入与完成度
 
-> 状态：**现行功能总文档**，导航更新于 2026-10-28；生产支持域沿用已验证基线，完整质量/动态/性能限制仍保留。新增公共资源宿主、独立 RTShadow 与 SIGMA 的设计统一见 [Ho-RT](Ho-RT.md)，这些新模块尚未实现。2026-10-24 的[阶段收尾与 UI 整理](Ho-RT.md#baseline)保留为历史记录。静止收敛基线：`f537c26`；其后已新增正常相机合成、独立天空照明强度及可选加法模式，复现与证据见 [Composite](../Tests~/RTDI/Composite/README.md)。[专题与证据目录](RTDI/README.md)保存详细合同、审计和历史实验。
+> 状态：**现行功能总文档**，更新于 2026-10-28。场景所有权正在迁入 Ho-RT 公共宿主，进度与验收范围以 [Ho-RT §8.5](Ho-RT.md) 为准；独立 RTShadow / SIGMA 生产链尚未完成。静止收敛基线 `f537c26` 之后的合成与模式见 [Composite](../Tests~/RTDI/Composite/README.md)，原质量 / 动态 / 性能限制保留。[专题与证据目录](RTDI/README.md)保存详细合同和历史实验。
 
 Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天空、真实世界遮挡、基础 lilToon Cutout，以及可选 NRD RELAX 降噪。**“合成到画面”支持参考 PBR 替换和加法叠加两种模式**，不必打开调试。替换模式以直接光＋SB 自发光替换旧照明；加法模式保留现有外观，只增加可调强度的 RTDI 直接光。两种模式均保留天空与无效面，透明物随后正常绘制。合成默认关闭，旧资产的模式仍为替换，升级不会自动切换外观。
 
@@ -29,7 +29,7 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 ## 2. 启用与查看效果
 
 1. 使用支持 D3D12 inline ray tracing 的环境。已验证 Unity `6000.3.15f1`、Windows x64 Mono、RTX 4060；D3D11 应保持 inactive。使用同分辨率、单采样 GB / SB，且 SB 已包含当前网格法线布局。
-2. Renderer 上在 GB / SB 之后添加并启用 `Ho-RTDI`，再在 **Ho-RTDI Volume → 运行 → 启用** 勾选左侧覆盖并打开。**只有 Feature 开启不会运行 RTDI**；没有参与当前相机的有效 Volume、组件关闭、启用未覆盖或关闭、Volume 权重为零时均停止生产。若需要天空输入，前置启用 [Ho-Atmosphere](Ho-Atmosphere.md)；没有有效 HDR 输入时只运行解析灯。
+2. Renderer 上显式添加并启用 `Ho-RT`，排列在 RT 消费者之前；`Ho-RTDI` 放在 GB / SB 之后。缺少宿主时明确报告缺失并停止生产，不再隐藏创建私有场景。再在 **Ho-RTDI Volume → 运行 → 启用** 勾选左侧覆盖并打开。**只有 Feature 开启不会运行 RTDI**；没有参与当前相机的有效 Volume、组件关闭、启用未覆盖或关闭、Volume 权重为零时均停止生产。若需要天空输入，前置启用 [Ho-Atmosphere](Ho-Atmosphere.md)；没有有效 HDR 输入时只运行解析灯。迁移不会自动修改用户 Renderer 资产，需按此配置宿主。
 3. 在 **Ho-RTDI Volume → 运行** 勾选覆盖并开启 **NRD RELAX 降噪**。该开关默认关闭；Raw 调试始终保留随机样本，不能用 Raw 是否还有噪点判断 NRD 是否收敛。
 4. 在 **Ho-RTDI Volume → 画面合成** 勾选覆盖并开启 **“合成到画面”**，调试模式保持 **Off**。**混合模式 → 加法叠加** 适合快速接入现有场景，叠加强度默认.25；**参考 PBR 替换** 用于完整替换或检查RTDI照明，过渡权重1完全替换、0恢复原画面。两个模式各自保存强度，切换本身不重置DI/NRD历史。
 5. 排查时可临时在 Volume 选择 Diffuse / Specular / Combined 或 RawDiffuse / RawSpecular。调试在最终后处理后显示，All为网格；它与正常画面的合成是两条独立路径。

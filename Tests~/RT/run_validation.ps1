@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1','R2')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2','R3DI')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
@@ -41,8 +41,27 @@ if ($Stage -eq 'R2') {
         @{ name='gi-secondary-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout'; marker='[HoGICutoutHit] PASS' }
     )
 }
+if ($Stage -eq 'R3DI') {
+    $taskCases = @(
+        @{ name='di-cutout-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutout'; marker='[HoRTDIValidation] PASS native cutout:' },
+        @{ name='di-cutout-compat'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutoutCompatibility'; marker='[HoRTDIValidation] PASS native cutout:' },
+        @{ name='di-denoise-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunDenoise'; marker='[HoRTDIValidation] PASS real NRD' },
+        @{ name='di-denoise-compat'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunDenoiseCompatibility'; marker='[HoRTDIValidation] PASS real NRD' },
+        @{ name='di-host-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunHost'; marker='[HoRTDIHostValidation] PASS' },
+        @{ name='di-host-compat'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunHostCompatibility'; marker='[HoRTDIHostValidation] PASS' },
+        @{ name='di-unsupported'; api='d3d11'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunUnsupported'; marker='[HoRTDIValidation] PASS unsupported' },
+        @{ name='host-rg'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.Run'; marker='[HoRTHostValidation] PASS' },
+        @{ name='gi-secondary-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout'; marker='[HoGICutoutHit] PASS' }
+    )
+    # This legacy full fixture grows AS instances and has a rejected baseline
+    # control (F39 plus the existing power-proposal assertion). Preserve it as
+    # an explicit diagnostic case, never relabel it as the bounded acceptance.
+    if ($Case -in @('di-core-rg','di-core-compat')) {
+        $taskCases += @{name=$Case;api='d3d12';entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.'+$(if($Case -eq 'di-core-rg'){'Run'}else{'RunCompatibility'});marker='[HoRTDIValidation] PASS'}
+    }
+}
 if ($Case) { $taskCases = @($taskCases | Where-Object { $_.name -eq $Case }); if ($taskCases.Count -eq 0) { throw 'Unknown validation case' } }
-$taskResults = Join-Path $PSScriptRoot $Stage
+$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } else { $Stage })
 New-Item -ItemType Directory -Force -Path $taskResults | Out-Null
 $taskStamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')
 $taskRunPath = Join-Path $taskResults ('run-' + $taskStamp + '.json')

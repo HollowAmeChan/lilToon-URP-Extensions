@@ -8,8 +8,9 @@ using UnityEngine.Rendering;
 namespace lilToon.URP.Extensions.RTDI
 {
     // Native material hit groups borrow original textures and Unity's mesh attributes.
-    // Used only for DI's final visibility; source raster materials are never changed.
-    internal sealed class HoRTDIVisibilityMaterials : IDisposable
+    // Used only for DI's final visibility; the host owns profile lifetime and
+    // source raster materials are never changed.
+    internal sealed class HoRTDIVisibilityMaterials : IHoRTMaterialProfile
     {
         private readonly Shader shader;
         private readonly Material opaque;
@@ -18,6 +19,11 @@ namespace lilToon.URP.Extensions.RTDI
         private readonly List<Material> removed = new();
         private static readonly string[] Scalars = { "_Cutoff", "_AlphaMaskMode", "_AlphaMaskScale", "_AlphaMaskValue", "_ShiftBackfaceUV" };
         internal int Signature { get; private set; }
+        int IHoRTMaterialProfile.Signature => Signature;
+        void IHoRTMaterialProfile.BeginPrepare() => BeginFrame();
+        Material IHoRTMaterialProfile.Resolve(Material source) => Resolve(source);
+        bool IHoRTMaterialProfile.SupportsCutout(Material source) => HoRTCutoutSupport.Supports(source);
+        void IHoRTMaterialProfile.EndPrepare() => EndFrame();
         private sealed class References : IEqualityComparer<Material>
         {
             internal static readonly References Instance = new();

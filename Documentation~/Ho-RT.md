@@ -7,7 +7,7 @@
 | 对象 | 当前状态 | 入口 |
 | --- | --- | --- |
 | 栅格化角色 CS | 已有 shadow map / PCF / PCSS，本轮完成勾选与滤波修复，仍有画质限制 | [当前 CS](Ho-CharacterShadow.md) |
-| RTDI / RTGI | 维持各自已验证支持域与光照算法；各自拥有 RT 场景与历史 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
+| RTDI / RTGI | DI 的场景请求已迁往 host，R3-DI 验收中；GI 尚未迁入。两路维持各自光照算法、输出与独立历史 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | A01/A02 已完成代码解耦及有界资源复用；生产绑定为 RELAX | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 请求、快照 view、共享姿态与 fence 生命周期已有有界验收；DI/GI 尚未迁入 | 本文 §8.5 |
 | RTShadow / SIGMA | 设计已定，生产链尚未实现 | 本文 §4–8 |
@@ -325,7 +325,8 @@ Editor/
 | R0 | 已完成 | 637 项 RT 源码 / 资源基线 SHA 已固定；Runtime / Editor 编译 0 errors；现用 DLL 两 SIGMA 描述实例成功；真实 URP hook 已核对 | 生产源码及插件未改，无画质 / 显存收益声明；排除不必要的 native 重编和自动排序设计 | R1 纯迁移 |
 | R1 | 已完成 | RayTracing→RT，2098 个产品文件规范化核对仅有允许的命名 / 引用变化，20 份移动 metadata 与基线字节一致；编译 0 errors；10 项真实 GPU / unsupported 回归通过 | 只统一模块归属，无画质 / 性能收益声明；旧验证源码 / SHA 未改，初次冷导入 stale-transform 失败保留，后续同条件原码与当前码通过但原因未证明 | R2 宿主与共享姿态 |
 | R2 | 已完成有界验收 | host / 请求 epoch / cache 已实现；RG / compatibility 普通夹具各 93 checks / 11 请求，初始、骨骼和源 Mesh 编辑共 Bake=3，两个 view 均更新；各自退休专项 29 checks / 4 请求，profiles 完整释放；9 项组合回归通过 | 保留多 AS view，初版在 CPU 等待前一 fence 后再修改，无帧时间收益声明；缺失完成 fence 的异常 work 保守隔离，完整取消恢复仍未验收 | R3：先 DI，再 GI |
-| R3–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
+| R3-DI | 已完成有界迁移验收 | DI 不再私有创建 / 同步 / 释放场景；scene lifetime 变化清对应相机历史，profile 由 host 持有；247 个核心文件及全部 65 个 shader 文件未变，9 项宿主 / Cutout / RELAX / unsupported 回归通过 | 旧全量 core 原码与迁移版均出现同一 4 条 F39 scratch 诊断及 power-proposal 断言，继续拒绝该夹具；不扩称全量 core 或生产双模块共享通过，Player 在组合迁移后验证 | R3-GI |
+| R3-GI、R4–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
 
 R0 采用的宿主准备合同：
 
@@ -343,6 +344,10 @@ R2 复核为 [review.json](../Tests~/RT/R2/review.json)，入口 `python Tests~/
 R2 的实际收益是两个 AS view 共用同一份姿态 Mesh，并对每次相关编辑只 Bake 一次；不同 native hit 能力的 AS 尚未合并，未宣称显存 / 毫秒收益。初版 `LastPrepareWaitMilliseconds` 明示等待成本：CPU 看到前次尾 fence passed 后才修改 Mesh / material / AS，最长等待 5 秒后拒绝本次准备，不超时强行释放。GPU queue wait 不能代替 CPU 释放资格。资源退休由独立帧末 / Editor update 驱动；scene / AS 先释放，pose lease 随后，再释放 profile / cache。
 
 提交前复核修正了两条接口风险并纳入最终测试：有 material factory 必须提供稳定 profile key；所有 scene Read 都通过宿主登记使用，不能从 `view.Scene` 绕过 GPU pin。源 Mesh 原地编辑必须走 host `MarkGeometryDirty(renderer)`，同时刷新所有 view 与共享 cache。已捕获但尾 fence 缺失的异常 / 取消路径仍可能隔离滞留，不冒称完整故障恢复已支持；后续若实际触发，需用真实完成证据恢复，不能靠超时清 pin。R3 迁移仍保持这个边界。
+
+R3-DI 见 [review.json](../Tests~/RT/R3/DI/review.json)、[核心未改动审计](../Tests~/RT/R3/DI/migration.json)。宿主合同两路径各 16 项检查覆盖真实 temporal 执行、缺失依赖、重建 lifetime、profile 与 client 停用及解析能量；原 Cutout 与 RELAX 两路径、D3D11 unsupported、宿主及 GI native 回归合计 9 项通过，1939 项产品指纹未漂移。当前 DI 配置必须显式添加 Ho-RT 并放在消费者前，不自动编辑用户 Renderer 资产；独立测试和 Player 构建入口已补该依赖。
+
+本步未更改光照 shader、NRD profile、Context 或输出算法。旧 `Run` 全量 core 被拒绝后，使用 Git `66a2bb80` 完整原包在同一隔离工程复现同一 4 条 scratch 诊断和 power-proposal 断言，控制记录保留；此旧失败不通过放宽门槛解决，也不反复调 AS flags。`Tests~/RT/run_validation.ps1 -Stage R3DI` 默认运行明确有界的 9 项；`-Case di-core-rg` / `di-core-compat` 仍可显式诊断旧全量路径，但不作为通过证据。收益为消除 DI 私有场景所有权，性能收益尚未测量；GI 和真实双模块 / Player 接入留待下一步骤。
 
 <a id="quality-reference"></a>
 

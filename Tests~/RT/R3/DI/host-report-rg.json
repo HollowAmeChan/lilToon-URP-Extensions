@@ -1,0 +1,22 @@
+{
+    "pass": true,
+    "sceneLifetime": 4,
+    "checks": [
+        "DI acquires exactly one host-owned view",
+        "DI keeps independent history with host input",
+        "Two-light DI actually uses its temporal history",
+        "Missing/disabled host invalidates DI borrowed view",
+        "Missing host reports explicit state and invalidates history",
+        "Missing host publishes no stale DI activation",
+        "Re-enabling host reuses the valid scene",
+        "Re-enable begins from invalidated DI history",
+        "Host recreation produces a new scene lifetime",
+        "New lifetime rejects same-numbered old scene revision history",
+        "DI recreation does not directly release host-owned resources",
+        "DI material profile identity replacement is owned by host",
+        "Recreated DI starts independent history",
+        "Host retires a client that stops requesting",
+        "DI resumes through the host without a private fallback scene",
+        "Re-enabled client does not consume the removed scene history"
+    ]
+}

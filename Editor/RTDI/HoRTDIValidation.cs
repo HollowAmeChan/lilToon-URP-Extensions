@@ -23,6 +23,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
+        private static HoRTRendererFeature rtHost;
         private static HoGeometryBufferRendererFeature gb;
         private static HoRTDIVolume volume;
         private static Light light;
@@ -86,6 +87,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 previousAsync=ShaderUtil.allowAsyncCompilation;ShaderUtil.allowAsyncCompilation=false;
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+                rtHost=Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>());
+                renderer.rendererFeatures.Add(rtHost);
                 gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 feature=Keep(ScriptableObject.CreateInstance<HoRTDIRendererFeature>());feature.Settings.temporal=false;feature.Settings.spatial=false;feature.Settings.initialSamples=1;
@@ -136,6 +139,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 // First request can recreate the pipeline/Volume stack after
                 // our manual update. Let it initialize before requiring DI.
                 if(++tick<3){RenderCamera();return;}
+                if(forceHostContract){TickHostContract();return;}
                 if(forceCutoutGpuTiming){TickCutoutGpuTiming();return;}
                 if(forceMotionProtocol&&motionProtocolRealFrames){TickMotionProtocol();return;}
                 if(temporalJitterAudit){TickTemporalJitter();return;}

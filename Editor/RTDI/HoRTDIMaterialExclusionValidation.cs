@@ -19,7 +19,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             mesh.uv=new[]{Vector2.zero,Vector2.right,Vector2.up,Vector2.one,Vector2.zero,Vector2.right,Vector2.up,Vector2.one};mesh.subMeshCount=2;mesh.SetTriangles(new[]{0,2,1,2,3,1},0);mesh.SetTriangles(new[]{4,6,5,6,7,5},1);mesh.RecalculateNormals();mesh.RecalculateBounds();
             var holder=Keep(new GameObject("Merged exclusion fixture"));holder.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=holder.AddComponent<MeshRenderer>();renderer.sharedMaterials=new[]{sky,wall};
             var left=Point(new Vector3(-1.5f,0,-1),Color.white,4);left.enabled=false;
-            RenderCamera();var registry=(HoRTScene)typeof(lilToon.URP.Extensions.RTDI.HoRTDIRendererFeature).GetField("scene",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(feature);
+            RenderCamera();var registry=feature.SceneViewForCamera(camera).Scene;
             Require(registry.InstanceCount==3,"Merged fixture must register receiver and two distinct submeshes");Near(Read(feature.LastContext.diffuse.rt).r,0,"sky submesh initially blocks right lamp",.002f);
             uint wallId=Identity(1),skyId=Identity(0),revision=registry.StructureRevision;
             feature.Settings.excludedRayMaterials=new Material[]{null,sky,sky};RenderCamera();

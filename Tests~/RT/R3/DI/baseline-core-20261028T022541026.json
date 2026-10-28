@@ -1,0 +1,11 @@
+{
+  "stage": "R3-DI",
+  "baseCommit": "66a2bb80",
+  "activeProcess": null,
+  "actualExit": 1,
+  "powerProposalFailure": true,
+  "asScratchDiagnostics": 4,
+  "logFile": "ho-rt-r3di-baseline-core-20261028T022541026.log",
+  "logSha256": "8BA372D781B204C076AC001DECC3C86AEDB8BC1E8103660EA59CEDB3221AF906",
+  "scope": "Historical full core fixture remains rejected; not a migration acceptance run"
+}
