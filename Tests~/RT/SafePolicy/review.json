@@ -1,9 +1,10 @@
 {
-  "stage": "Contain real-character displacement regression",
+  "stage": "Suspend entire regressed RTShadow producer",
   "accepted": {
-    "safe-policy-rg": "run-20261028T183951077.json",
-    "safe-policy-compat": "run-20261028T183951077.json"
+    "safe-policy-rg": "run-20261028T192753249.json",
+    "safe-policy-compat": "run-20261028T192753249.json"
   },
-  "result": "Saved Feature and Volume nonzero correction cannot activate the regressed path. Exact current raw images equal strength-zero reference in both GPU paths, actual metadata is zero and serialized values are preserved.",
+  "rejectedAttempts": [],
+  "result": "Entire RTShadow production and NPR activation remain disabled even with saved Feature/Volume enabled and correction one. No current or stale product is exposed; beauty is independent of these stored values in both GPU paths. Serialized user values are preserved.",
   "limits": "Containment, not root-cause or full character-quality acceptance. Uncommitted origin experiments are isolated from the package directory used by the user Editor."
 }

@@ -1,0 +1,1117 @@
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.15f1 (c1aa84e375f6) revision 12692100'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12" at "2026-10-28T19:16:38.5681549Z"
+OS: 'Windows 11  (10.0.26200) CoreCountrySpecific' Language: 'zh' Physical Memory: 31908 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-28T19:16:38Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe
+-batchmode
+-force-d3d12
+-projectPath
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation
+-executeMethod
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSafePolicy
+-logFile
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\ho-rt-safepolicy-safe-policy-rg-20261028T191637898.log
+-force-d3d12-debug
+Successfully changed project path to: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation
+D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [8540]  Target information:
+
+Player connection [8540]  * "[IP] 26.182.211.171 [Port] 55505 [Flags] 2 [Guid] 853692073 [EditorId] 853692073 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [8540]  * "[IP] 192.168.1.6 [Port] 55505 [Flags] 2 [Guid] 853692073 [EditorId] 853692073 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [8540] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [8540] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-17840" after 0.2 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.1'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-hhh12"
+[Licensing::IpcConnector] LicenseClient-hhh12 channel disconnected successfully.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15" at "2026-10-28T19:16:39.4383658Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 28508, path: "C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              006be9c779ff496daf7dd7f31ccd36b5
+  Correlation Id:          cc015c8c9d12c5759a514d38e4f2c17a
+  External correlation Id: 6596037082158283167
+  Machine Id:              1CwKlLouk/VY6hjRtF7o1PKDkww=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-hhh12-6000.3.15" (connect: 0.00s, validation: 0.00s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15-notifications" at "2026-10-28T19:16:39.4440692Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: ewogICJzdWJzR3JvdXAiIDogInVuaXR5IGVkaXRvciIsCiAgIm5hbWVzcGFjZSIgOiAidW5pdHlfZWRpdG9yIiwKICAidHlwZSIgOiAiRURJVE9SIiwKICAidGFnIiA6ICJVbml0eVBlcnNvbmFsXXXX
+  Product: Unity Personal Version
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.88s
+[Licensing::Module] Licensing is initialized (took 0.32s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 0.51 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.15f1 (c1aa84e375f6)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation/Assets
+Forcing GfxDevice: Direct3D 12
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 4060 (ID=0x2882)
+    Vendor:          NVIDIA
+    VRAM:            7956 MB
+    App VRAM Budget: 7188 MB
+    Driver:          32.0.16.1742
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56840
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.003661 seconds.
+- Loaded All Assemblies, in  0.322 seconds
+Native extension for WindowsStandalone target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.239 seconds
+Domain Reload Profiling: 554ms
+	BeginReloadAssembly (127ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (13ms)
+	RebuildCommonClasses (26ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (43ms)
+	LoadAllAssembliesAndSetupDomain (111ms)
+		LoadAssemblies (107ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (108ms)
+			TypeCache.Refresh (107ms)
+				TypeCache.ScanAssembly (97ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (239ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (215ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (33ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (46ms)
+			ProcessInitializeOnLoadAttributes (79ms)
+			ProcessInitializeOnLoadMethodAttributes (54ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 28 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.burst@1.8.29 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.burst@6bb9aca3ef38)
+    com.unity.mathematics@1.3.3 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.collections@2.6.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.collections@12999e356c23)
+    com.unity.searcher@4.9.4 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.searcher@d45a78918735)
+    com.unity.nuget.mono-cecil@1.11.6 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.test-framework.performance@3.4.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework.performance@aa81a99c4a75)
+  Built-in packages:
+    com.unity.modules.imgui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.ui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.imageconversion@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.unitywebrequest@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.terrain@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.physics@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.animation@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.particlesystem@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.audio@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.screencapture@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.hierarchycore@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.render-pipelines.core@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.render-pipelines.core@648b47f96bf1)
+    com.unity.shadergraph@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.shadergraph@2da3a5f87f4a)
+    com.unity.ugui@2.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ugui@23e8d17bfaf9)
+    com.unity.test-framework@1.6.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework@aebcb98460c6)
+    com.unity.ext.nunit@2.0.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+  Local packages:
+    com.unity.render-pipelines.universal@file:D:\Unity_Fork\HoUrp17.3.0 (location: D:\Unity_Fork\HoUrp17.3.0)
+    com.unity.render-pipelines.universal-config@file:D:\Unity_Fork\HoUrpConfig17.0.3 (location: D:\Unity_Fork\HoUrpConfig17.0.3)
+    jp.lilxyzw.liltoon@file:D:\Unity_Fork\lilToon\Assets\lilToon (location: D:\Unity_Fork\lilToon\Assets\lilToon)
+    jp.lilxyzw.liltoon.urp.extensions@file:C:\Users\hhh12\.codex\worktrees\rtshadow-origin-isolation\lilToon-URP-Extensions (location: C:\Users\hhh12\.codex\worktrees\rtshadow-origin-isolation\lilToon-URP-Extensions)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.01 seconds
+[Package Manager] Done resolving packages in 2.98 seconds
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Lock file was modified
+[Package Manager] Registered 28 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.burst@1.8.29 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.burst@6bb9aca3ef38)
+    com.unity.mathematics@1.3.3 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.collections@2.6.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.collections@12999e356c23)
+    com.unity.searcher@4.9.4 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.searcher@d45a78918735)
+    com.unity.nuget.mono-cecil@1.11.6 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.test-framework.performance@3.4.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework.performance@aa81a99c4a75)
+  Built-in packages:
+    com.unity.modules.imgui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.ui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.imageconversion@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.unitywebrequest@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.terrain@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.physics@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.animation@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.particlesystem@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.audio@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.screencapture@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.hierarchycore@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.render-pipelines.core@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.render-pipelines.core@648b47f96bf1)
+    com.unity.shadergraph@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.shadergraph@2da3a5f87f4a)
+    com.unity.ugui@2.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ugui@23e8d17bfaf9)
+    com.unity.test-framework@1.6.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework@aebcb98460c6)
+    com.unity.ext.nunit@2.0.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+  Local packages:
+    com.unity.render-pipelines.universal@file:D:\Unity_Fork\HoUrp17.3.0 (location: D:\Unity_Fork\HoUrp17.3.0)
+    com.unity.render-pipelines.universal-config@file:D:\Unity_Fork\HoUrpConfig17.0.3 (location: D:\Unity_Fork\HoUrpConfig17.0.3)
+    jp.lilxyzw.liltoon@file:D:\Unity_Fork\lilToon\Assets\lilToon (location: D:\Unity_Fork\lilToon\Assets\lilToon)
+    jp.lilxyzw.liltoon.urp.extensions@file:D:\Unity_Fork\lilToon-URP-Extensions (location: D:\Unity_Fork\lilToon-URP-Extensions)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.00 seconds
+[ScriptCompilation] Requested script compilation because: Assembly Definition File(s) changed
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+DisplayProgressbar: Compiling Scripts
+ExitCode: 4 Duration: 0s311ms
+Rebuilding DAG because FileSignature timestamp changed: Library/Bee/1900b0aE-inputdata.json
+[486/604    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+*** Tundra requires additional run (0.28 seconds), 1 items updated, 485 evaluated
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\netcorerun\netcorerun.exe "C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\Tools\BuildPipeline\ScriptCompilationBuildProgram.exe" "Library/Bee/1900b0aE.dag.json" "Library/Bee/1900b0aE-inputdata.json" "Library\Bee\buildprogram0.traceevents"
+WorkingDir: D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+ExitCode: 0 Duration: 0s403ms
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --dagfilejson="Library\Bee\1900b0aE.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssemblies
+WorkingDir: D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+ExitCode: 0 Duration: 4s174ms
+Finished compiling graph: 607 nodes, 9497 flattened edges (7793 ToBuild, 86 ToUse), maximum node priority 668
+[333/604    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Runtime.rsp
+[338/604    0s] WriteText Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Editor.rsp
+[482/604    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[588/604    1s] Csc Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Runtime.dll (+2 others)
+D:\Unity_Fork\lilToon-URP-Extensions\Runtime\SurfaceBuffer\HoSurfaceBufferPass.cs(39,37): warning CS0108: 'HoSurfaceBufferPass.colorAttachments' hides inherited member 'ScriptableRenderPass.colorAttachments'. Use the new keyword if hiding was intended.
+[           0s] Csc Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Runtime.dll (+2 others) [CacheWrite 00000000000000000000000000000005]
+[589/604    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/jp.lilxyzw.liltoon.urp.extensions.Runtime.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Runtime.dll, with 138 defines and 243 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[590/604    0s] CopyFiles Library/ScriptAssemblies/jp.lilxyzw.liltoon.urp.extensions.Runtime.pdb
+[591/604    0s] CopyFiles Library/ScriptAssemblies/jp.lilxyzw.liltoon.urp.extensions.Runtime.dll
+[592/604    1s] Csc Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Editor.dll (+2 others)
+[           0s] Csc Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Editor.dll (+2 others) [CacheWrite 00000000000000000000000000000005]
+[593/604    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/jp.lilxyzw.liltoon.urp.extensions.Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/jp.lilxyzw.liltoon.urp.extensions.Editor.dll, with 136 defines and 277 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[594/604    0s] CopyFiles Library/ScriptAssemblies/jp.lilxyzw.liltoon.urp.extensions.Editor.pdb
+[595/604    0s] CopyFiles Library/ScriptAssemblies/jp.lilxyzw.liltoon.urp.extensions.Editor.dll
+[596/604    0s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.dll (+2 others)
+Assets\RTShadowPlayerSource\HoRTShadowPlayerProbe.cs(16,20): warning CS0108: 'HoRTShadowPlayerProbe.camera' hides inherited member 'Component.camera'. Use the new keyword if hiding was intended.
+
+Assets\RTDIPlayerProbe\HoRTDIPlayerProbe.cs(19,18): warning CS0108: 'HoRTDIPlayerProbe.light' hides inherited member 'Component.light'. Use the new keyword if hiding was intended.
+
+Assets\RTDIPlayerProbe\HoRTDIPlayerProbe.cs(174,9): warning CS0162: Unreachable code detected
+[597/604    0s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+[598/604    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll, with 136 defines and 305 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[599/604    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp.dll, with 138 defines and 270 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[600/604    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+[601/604    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.pdb
+[602/604    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+[603/604    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp.dll
+*** Tundra build success (4.14 seconds), 19 items updated, 604 evaluated
+D:\Unity_Fork\lilToon-URP-Extensions\Runtime\SurfaceBuffer\HoSurfaceBufferPass.cs(39,37): warning CS0108: 'HoSurfaceBufferPass.colorAttachments' hides inherited member 'ScriptableRenderPass.colorAttachments'. Use the new keyword if hiding was intended.
+Assets\RTShadowPlayerSource\HoRTShadowPlayerProbe.cs(16,20): warning CS0108: 'HoRTShadowPlayerProbe.camera' hides inherited member 'Component.camera'. Use the new keyword if hiding was intended.
+Assets\RTDIPlayerProbe\HoRTDIPlayerProbe.cs(19,18): warning CS0108: 'HoRTDIPlayerProbe.light' hides inherited member 'Component.light'. Use the new keyword if hiding was intended.
+Assets\RTDIPlayerProbe\HoRTDIPlayerProbe.cs(174,9): warning CS0162: Unreachable code detected
+AssetDatabase: script compilation time: 5.215528s
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.596 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor using Guid(f1ef4aa3159a4920a9565f1fb39e136a) (DefaultImporter) -> (artifact id: '51d38be8a4fd7b1d0738b04643b5bb9a') in 0.016924 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime using Guid(22b2f79bb0b8a4747a88b4cef4e7e8ae) (DefaultImporter) -> (artifact id: '77867ef561f073883729963955721e62') in 0.0010492 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Tests using Guid(db9c6282d6d2c334cb81c6cc05ef5eab) (DefaultImporter) -> (artifact id: '2948fee79cf7fe441fc1d4c50336f1e5') in 0.0008374 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI using Guid(10fce3831535ddc45afca8ba8bc2736c) (DefaultImporter) -> (artifact id: '26a14b87a8a68b163a1d11cb92570957') in 0.0006312 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/SubsurfaceScattering using Guid(405d393055a76d544a4153c2a81d9f57) (DefaultImporter) -> (artifact id: '769cfeae48ee190857bd870a4d7c9fa7') in 0.000606 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess using Guid(b0bd1b854d324ef28164db3f56e088eb) (DefaultImporter) -> (artifact id: '6ee48a6899caacf70dcc27981347a748') in 0.0005884 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/CharacterSpecialization using Guid(c156f5eb3751d9543940c5e6f2ef9884) (DefaultImporter) -> (artifact id: '1a3f692ecf90646673106ed27af4652d') in 0.0006014 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/MaterialGradient using Guid(6211b67c9b5c4b409bfdfae6dbf69f6f) (DefaultImporter) -> (artifact id: '4be3310a7e1d25bc418f252f778527b7') in 0.000949 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT using Guid(b293c8ac3174ba94aa5b6e209d90f670) (DefaultImporter) -> (artifact id: '17932be652232cf7b7e38d8f48cb48ae') in 0.0007511 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug using Guid(039371f924a34be4b0b40f7db26430ed) (DefaultImporter) -> (artifact id: '6aa272a2a265c06a5236a30f61d016b3') in 0.0006672 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/PostProcessing using Guid(03cb91978d4f4818b6c7fbbbf5bb9412) (DefaultImporter) -> (artifact id: 'b25169ab60aa36ac8e5c6709972c0ba9') in 0.0005941 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/PlanarReflection using Guid(53e962a9d9f540c4991d7e9d6d1c913e) (DefaultImporter) -> (artifact id: 'c674b06470556d0bc8c93fe120bcd9c3') in 0.0005825 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/MetadataBuffer using Guid(c3a79f830ed8491aaf32f6d5d259d748) (DefaultImporter) -> (artifact id: '8cb0a27a039d729f690f7413d8955808') in 0.0004905 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess using Guid(4441b696bf354a82a30a5176847d3f14) (DefaultImporter) -> (artifact id: 'f489989dbbad9810328a032a91c477dd') in 0.0005633 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI using Guid(64205ba1f884f41409476648a42bdc8c) (DefaultImporter) -> (artifact id: '2097e4cbfe962859f6e8431effae65b9') in 0.0005418 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData using Guid(b4b63e126b842c44ea530f632b2e1cf2) (DefaultImporter) -> (artifact id: '76fabb0e947adc3f0aa4d70407b4b814') in 0.0005201 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/CharacterShadow using Guid(e475f0915dee48d7825556cc1edb67e2) (DefaultImporter) -> (artifact id: '6eb555d2b536b572b9acb5870937ecb5') in 0.0004783 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/Debug using Guid(a5366130ebc8489097af38fab3f5b5ae) (DefaultImporter) -> (artifact id: 'ba4342a554ffbf0b3a69a2d26864dbc8') in 0.0004734 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/SurfaceBuffer using Guid(a51d4b44acc970a4d8db6e6bd37573d3) (DefaultImporter) -> (artifact id: '59b8818ee8b59e4f9193981f4ec0fd79') in 0.0005393 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer using Guid(06431f42975b43ab8d9a2bc7bdab8cc7) (DefaultImporter) -> (artifact id: '596596c60065dea4b8053f207c691084') in 0.0004869 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT using Guid(b6894da11ea653b4e949bb6ac7e1805b) (DefaultImporter) -> (artifact id: '507555d31f47d69d7652d28320a07598') in 0.0005169 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/OIT using Guid(e65c7c904a7686f40a5406d21240aa05) (DefaultImporter) -> (artifact id: 'e3c103f7420d57b0464157e550a40f58') in 0.0006407 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/AttributeComposite using Guid(c7a4e91b6d3f42a580b2c6d9f1e3a58c) (DefaultImporter) -> (artifact id: 'd84582de6f4a42c3c385955d19140a42') in 0.00057 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SubsurfaceScattering using Guid(883b90f0eb454d9eac078d7a505bc709) (DefaultImporter) -> (artifact id: 'f1ad237f77d6e8e3f9d17cc51f05b34f') in 0.0006198 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterShadow using Guid(d8561e4a41bb4df9a42bfbf16766affa) (DefaultImporter) -> (artifact id: '987c104499eedaebf15a9109ded1a68d') in 0.0005514 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Tests/Runtime using Guid(19f35efd0847c5747ab369783ab93323) (DefaultImporter) -> (artifact id: 'aa6335e4e62619d66171ee244c885915') in 0.0004555 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast using Guid(1989ffb274e84575b31f9644ee91dc0c) (DefaultImporter) -> (artifact id: '11ad712e77221ad554a2cadc90b1aeac') in 0.0005545 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/NRD using Guid(39394a9b06e64500bf99cf8af6821308) (DefaultImporter) -> (artifact id: '4193461afd3b8162d59c692adf2b576c') in 0.0004684 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/GeometryBuffer using Guid(8981d7c3ad2242b088bb6e1757f2b23f) (DefaultImporter) -> (artifact id: '67b311be0b1aa56d896a41ec4d56481f') in 0.0004877 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite using Guid(2a29664b7b2644b4fb24f796b0147a3d) (DefaultImporter) -> (artifact id: '19aa266b7b88f423a1da74e4849afa05') in 0.0004557 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/PlanarReflection using Guid(dac84182d80aee94996044a39da0149c) (DefaultImporter) -> (artifact id: 'db03f772df2dd4f7d349ba4acea0e143') in 0.0006357 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTDI using Guid(1b2178d11a3fc244b9f8a2114bb9fb18) (DefaultImporter) -> (artifact id: '3f5df2a27edf9124efe2bba4d76509d6') in 0.0004741 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons using Guid(9bf89c0620dd42e2bcea7d99fbf502a9) (DefaultImporter) -> (artifact id: '669632a314b2e7f6915d63c0b346ed6f') in 0.0005409 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization using Guid(0c13034da35842b8ad8ed0260c39e84c) (DefaultImporter) -> (artifact id: '0dd84dca2fa8d13dfdbefc28efb6b6c4') in 0.000472 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere using Guid(5ce04ebaf350509439bcb107439d7ba9) (DefaultImporter) -> (artifact id: '05f24b6de7017439c47ffb14398f6e5e') in 0.0004522 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI using Guid(7c66c3cde97a45645a9676b5e0ab88fc) (DefaultImporter) -> (artifact id: '49683c9ca943177c4d5817f4f18c7142') in 0.0004519 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ShadowCast using Guid(8cf1de4823d54679ba3320c67660359f) (DefaultImporter) -> (artifact id: '1b79eff35152559d7c04d8eaaf338dad') in 0.0005291 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/Atmosphere using Guid(fc6e292a8316f8c439f9de086f24ab4e) (DefaultImporter) -> (artifact id: '9af1d2cfc185df431ae511ddf7ca33fe') in 0.0005265 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer using Guid(dd3341fa82f6ea346a2d93416400807a) (DefaultImporter) -> (artifact id: '93d19061b88b0c70042d8c0b1d32dda5') in 0.00052 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/GeometryData using Guid(feb2c407d77bc6a4398d08ebf89ca6a3) (DefaultImporter) -> (artifact id: '7291beadbe66bafbbbe514d00c49ef7d') in 0.0005534 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MetadataBuffer using Guid(4fb4b90111ea4e3ea1f7ff6ea262a0f2) (DefaultImporter) -> (artifact id: '5c5c00c12db14b6b21cb4c508d4f1653') in 0.0004649 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MaterialGradient using Guid(9f604ef1e5a54fc5bc51f1fa2d17077f) (DefaultImporter) -> (artifact id: '29851a2c15effaa4ce7dec5b6ededf15') in 0.0004668 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/LilMatConvert using Guid(9f0c8c09d81349fb8f62e9e0e7d2d3cf) (DefaultImporter) -> (artifact id: '92bfe3e7f360f8d7d512ed55180b1c40') in 0.0004524 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Outline using Guid(5099c0e07016a4e489d06278f10b7ac9) (DefaultImporter) -> (artifact id: 'd323eae576048df9146935746063f9ab') in 0.0004613 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/PostProcessing/ScreenProcess using Guid(6099aa406f894378bd78f3f575289722) (DefaultImporter) -> (artifact id: '11668f58c91b7e19823a36f3dc5c7aec') in 0.0005077 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders using Guid(70dd0f96815c6c049a36ebeba17465b8) (DefaultImporter) -> (artifact id: '19208cccaec926facb737d17ac476f58') in 0.0004505 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders using Guid(b1a50581cc75412dbb5400eb7733fe43) (DefaultImporter) -> (artifact id: '0482f5eae133fc4ba66f7f773df0fc87') in 0.0005275 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/CharacterSpecialization/Effects using Guid(e10d477a4e5449d8af49d89386cf72ce) (DefaultImporter) -> (artifact id: '8e204b23b1239ebce17d2c0cffd87b7c') in 0.0005695 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Textures using Guid(72f22939cbff2824590d75c4cd9a8327) (DefaultImporter) -> (artifact id: '6471b20b6b0014261299ddc14e002f24') in 0.0004385 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/PostProcessing/ImageProcess using Guid(130241ab75a44f6b92f8de14ab445351) (DefaultImporter) -> (artifact id: '19470394ac6b59835194cf37f7195cd6') in 0.0004538 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MaterialGradient/Shaders using Guid(e32c0fd8b17d45c0ba0891d3ad1ace5f) (DefaultImporter) -> (artifact id: 'ef1a26c4964af9a4618d59172e1dd125') in 0.0004312 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders using Guid(047c7e5222e3b154391170e2ac89a5b6) (DefaultImporter) -> (artifact id: 'fede8e3fac130fa01a23b409700b342a') in 0.0005519 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterShadow/Shaders using Guid(345fc122318443c9b57b2a59552ddd42) (DefaultImporter) -> (artifact id: '24e804a40d4572e2decdccb526210fc0') in 0.0005286 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SubsurfaceScattering/Shaders using Guid(a6f60a8da3a04c0bb4dbba5a2e5e1870) (DefaultImporter) -> (artifact id: '5f834a9af98b21a14dee0448ee7785b0') in 0.0004664 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Shaders using Guid(c613821c5ed16864dbf506955e0fa6f9) (DefaultImporter) -> (artifact id: 'b8017b3df6c7a4c2034ae74e84a61e45') in 0.0005172 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders using Guid(47e5f7242f467494bac0e0807b9a49b8) (DefaultImporter) -> (artifact id: '16d869e76c027ded814a6e7cef0a702d') in 0.0004627 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders using Guid(08063f9ec79b7ce24c07715daa259cbe) (DefaultImporter) -> (artifact id: '8129d20c9cd02f875e38c8e600d0b095') in 0.000508 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Tension using Guid(88c0bace1b85a2548aac420f74ca3981) (DefaultImporter) -> (artifact id: '02a234b51872c90792ea37b929e0d0e5') in 0.0004349 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures using Guid(c8c0ae680c27f844a841ca99d4ed19ee) (DefaultImporter) -> (artifact id: '81d43499db8ce5cb98b3535891c96d47') in 0.0004837 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/NRD/Plugins using Guid(f8cb76012155fac489c4903ce359b138) (DefaultImporter) -> (artifact id: 'a59890d7017d275c81e934e15b16d880') in 0.0004464 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders using Guid(79dd071c14424a20b8f2215a827b738f) (DefaultImporter) -> (artifact id: '4bb41a6c0ad89cd92b4929e54dbd3354') in 0.0004705 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Shaders using Guid(a9339041a1e9da54aa5820c4fb8e3c24) (DefaultImporter) -> (artifact id: '259b5c0981cdcc8b0c60b5def8ebf101') in 0.0004342 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Renderer using Guid(5bc865bfea364b9cbf393c81691045b3) (DefaultImporter) -> (artifact id: '8d23ac4fe048009ed1bbbfe50395f3b2') in 0.0004447 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders using Guid(6b81eb626dfc46f6bfb2ec99fb0ead35) (DefaultImporter) -> (artifact id: 'cc8979899c5f0b23613e9bd290941a20') in 0.0004402 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/NRD using Guid(9b62d4d24f800be45bfef1fdb4ec796f) (DefaultImporter) -> (artifact id: 'f532ecae51aac8216f3868f3518a7ef6') in 0.0004433 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders using Guid(8c5e1a5372d64d04b9c1d9b84e3a87f2) (DefaultImporter) -> (artifact id: 'ca3e7832d98a7a87af13b03ee0f8ef34') in 0.0004263 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders using Guid(1d4cc57c38c312d4c91ccefe6b26567a) (DefaultImporter) -> (artifact id: '887a53f6e098ecbbb038dd1a451766cc') in 0.0004366 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders using Guid(3d041093673a463a94b0c0831c97860b) (DefaultImporter) -> (artifact id: 'c0ea7a615725197266e2b1522b317b1a') in 0.0004956 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty using Guid(dd385a9842050fa45a78b599df5dbd70) (DefaultImporter) -> (artifact id: '5e389cd6d278c6dfcd70a7fe4a0e578d') in 0.0004254 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/PostProcessing/ViewControls using Guid(6e22c0ec5cf94af28af1d5f5b23d1a37) (DefaultImporter) -> (artifact id: 'c20082a66b7f11e6246e6ab78398d292') in 0.0004256 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Effects using Guid(0f6f4c9677b84a4d9b1e761c9de78a24) (DefaultImporter) -> (artifact id: '9ca62926c2e1f3696bcdeb46ca96f3a9') in 0.0005519 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Resources using Guid(9f8701786e3cb1d418f239904ec55cc2) (DefaultImporter) -> (artifact id: '7303352432e5c12211bae433b23c440b') in 0.0004797 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders using Guid(9f89aa0572cc4a7daa0d1794108e97de) (DefaultImporter) -> (artifact id: '540fc249bca59fc203200f1f8f6a99c1') in 0.0004295 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders using Guid(cf43fe8f6668e5e408da4a4371b405b4) (DefaultImporter) -> (artifact id: 'c2135c805a52dc5e11e44855712b565f') in 0.0004374 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/PostProcessing/EffectBrowser using Guid(ef86983835304235a39ab2dffaba1635) (DefaultImporter) -> (artifact id: '99c2fc5ce4812d1fdb26ae6379b2f25c') in 0.0004343 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/Debug using Guid(44d0a1af9a4046baa5709d9c69d9813b) (DefaultImporter) -> (artifact id: '5bee33e305ed0a4a68b45f71321cd546') in 0.0004245 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/donut using Guid(6524273c537dfb74ab545828d58bb2e4) (DefaultImporter) -> (artifact id: 'ccc71e0a1ea947d27406ce430c28bcca') in 0.0004233 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/PostProcessing/ScreenProcess/Filters using Guid(65e6303fd95e4426b8b0a0232c28f71e) (DefaultImporter) -> (artifact id: 'd0bdbc513e4c8ebc3be7143d143f54ef') in 0.0004431 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/NRD/Plugins/x86_64 using Guid(b5ccbc7f2b0622c4286682ade08c477d) (DefaultImporter) -> (artifact id: '8d1f1db463fd8b60f2b9cc4a00448383') in 0.0004648 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Renderer/ImageChain using Guid(96473efbfa741fa4c827eba3659de89c) (DefaultImporter) -> (artifact id: '58e140501d2d981b02869b65a6007958') in 0.0004293 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess using Guid(b76f4e7368344ab9ae2b16f9d449bc21) (DefaultImporter) -> (artifact id: '0894f89857d0805c13de5d149d83c2c8') in 0.0004267 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess using Guid(487cbbaecc6f4945a282912421dd9d8a) (DefaultImporter) -> (artifact id: '2122f4d1d196bc272a4abe83a5ee7800') in 0.0004616 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD using Guid(7840ec259366c724082e1a5956cfdbd7) (DefaultImporter) -> (artifact id: 'c0e42fc9261d0d7cc9c1535bb27985d5') in 0.0004345 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI using Guid(b869a8e77bd180844a2b26283137eb53) (DefaultImporter) -> (artifact id: '6a2e787e4718d3c0332cff4d1dc3da2a') in 0.0004396 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SubsurfaceScattering/Shaders/Debug using Guid(79cb74a6fb1f462ebc9f0238d858f304) (DefaultImporter) -> (artifact id: '09c467bd3908f8cef57a60873eec33b7') in 0.0004339 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Renderer/Effects using Guid(b96caaac2809459f8876fccb4f0b2b89) (DefaultImporter) -> (artifact id: 'af8d5c0bd501aca3ddc4d9c240da6341') in 0.000513 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/PostProcessing/ImageProcess/Filters using Guid(f93ff02af003440f81d88bd5b80e3e8b) (DefaultImporter) -> (artifact id: '16ec5bb01cab9110b7cd99b9530b5cd7') in 0.0004525 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD using Guid(da32a15e85e604c49a25f660317da7aa) (DefaultImporter) -> (artifact id: 'fe17709175a661c62a05a08967c7f2a7') in 0.0004496 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Renderer/GradientRamp using Guid(fa0258492ccf4d44e830e1acddc91d4b) (DefaultImporter) -> (artifact id: 'e80339317d24704d9979b0f3d207dbae') in 0.0004261 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Renderer/Halftone using Guid(db028668f0eeeda4fb8bb6adada1fcf4) (DefaultImporter) -> (artifact id: 'dfc28465595f0853dc6603a75d6ce989') in 0.0004636 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/Debug using Guid(4d8f0b2c3a984dd78d0e1b9c2a0f7e56) (DefaultImporter) -> (artifact id: '3ddbb23701bd6d37ba3460b669676061') in 0.0004303 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/Debug using Guid(8d49faaf56f4282bf4636155d01d0fd4) (DefaultImporter) -> (artifact id: '34665f83cd0a5c99e1d45709e6a4b709') in 0.0005252 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/Debug using Guid(ff04ba4f7f9b2404d8b4331c19348748) (DefaultImporter) -> (artifact id: '2508bbaa7ae76e62139e70ef12e539e0') in 0.0005224 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/LightSampling using Guid(22f25f7c2bb630b4b8c795621c03b946) (DefaultImporter) -> (artifact id: '1811fd221854660034bb702c472ad63c') in 0.0004551 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI using Guid(e4bc07f9a5428f74c9c868cc6ef454f5) (DefaultImporter) -> (artifact id: 'f7ab097f05571dbbeabf4eebc9d8a6ad') in 0.0004392 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils using Guid(97ea1c652533820458ee8b80bdf2d256) (DefaultImporter) -> (artifact id: '5b213cbfc3e9943f6c91f8607cd785a5') in 0.0004946 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/GI using Guid(c71df36cd83f0d04ba1f68a9cbe98e40) (DefaultImporter) -> (artifact id: '169a662657e4c1059148c7bf5b9f113e') in 0.0004335 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/ReGIR using Guid(d7d2d822c77d58a4fabfb141f7a26629) (DefaultImporter) -> (artifact id: 'd500972def7d83e32bf3b5b8be92b0e1') in 0.0004306 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/Include using Guid(2abe1c9c862e4c818dc6d735b5de0123) (DefaultImporter) -> (artifact id: 'a2253d1e0b649d10fc81fdaabd355fe5') in 0.00043 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Tests/Editor/ScreenProcess/ScreenProcessRegressionTests.asmdef using Guid(71e8ff2bf58e47259466e28e2d01e77a) (AssemblyDefinitionImporter) -> (artifact id: '728712155bb2d6efe596e6e07dda3306') in 0.0024426 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/jp.lilxyzw.liltoon.urp.extensions.Runtime.asmdef using Guid(d86da1e403f664d45850a7ee2db34380) (AssemblyDefinitionImporter) -> (artifact id: '701e759050d275c54b916de92b8ba0b7') in 0.0017166 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/jp.lilxyzw.liltoon.urp.extensions.Editor.asmdef using Guid(6bb6502d927e450f93a522ec598a7540) (AssemblyDefinitionImporter) -> (artifact id: '36a5f97be5d6b6ea1ea68a672ef3557e') in 0.0015641 seconds
+Refreshing native plugins compatible for Editor in 1.40 ms, found 1 plugins.
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 1.80 ms, found 1 plugins.
+Your project uses Compatibility Mode, which disables the render graph system. Compatibility Mode is deprecated. Migrate your ScriptableRenderPasses to the Render Graph API instead. After you migrate, go to Edit > Project Settings > Player and remove the URP_COMPATIBILITY_MODE define from the Scripting Define Symbols. If you don't remove the define, build time and build size are slightly increased.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:LogWarning (object)
+UnityEngine.Rendering.Universal.WarnUsingNonRenderGraph:EmitConsoleWarning () (at D:/Unity_Fork/HoUrp17.3.0/Runtime/Data/UniversalRenderPipelineAsset.cs:440)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+UnityEditor.EditorAssemblies:ProcessInitializeOnLoadMethodAttributes ()
+
+(Filename: D:/Unity_Fork/HoUrp17.3.0/Runtime/Data/UniversalRenderPipelineAsset.cs Line: 440)
+
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.982 seconds
+Domain Reload Profiling: 2568ms
+	BeginReloadAssembly (265ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (15ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (136ms)
+	RebuildCommonClasses (24ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (28ms)
+	LoadAllAssembliesAndSetupDomain (262ms)
+		LoadAssemblies (267ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (80ms)
+			TypeCache.Refresh (57ms)
+				TypeCache.ScanAssembly (52ms)
+			BuildScriptInfoCaches (17ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (1982ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (1795ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (16ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (106ms)
+			ProcessInitializeOnLoadAttributes (1533ms)
+			ProcessInitializeOnLoadMethodAttributes (121ms)
+			AfterProcessingInitializeOnLoad (15ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (28ms)
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/LICENSE using Guid(898da98f19eae0846b7dd7e8c75c364f) (DefaultImporter) -> (artifact id: '0cc6b0779459b9e1e9d6072c4eef9183') in 0.0045739 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.resources.hlsli using Guid(90039ae27c183d54aacbe1cb13d6e95a) (DefaultImporter) -> (artifact id: '78c1c1b89259213c93d8dd386565bbe9') in 0.0288778 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.resources.hlsli using Guid(c0d98f853321720498ca2e86ffcf8a30) (DefaultImporter) -> (artifact id: 'c73e908a9acb4b6d893965370aba3ba2') in 0.0009868 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_ClassifyTiles.resources.hlsli using Guid(51f7031c38caf5048bd52d6fae9ec774) (DefaultImporter) -> (artifact id: '7c750b34c92b2ac81d96d27b6df39ddc') in 0.0008557 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/Common.hlsli using Guid(0219cf2b1e27345498d4ba5dc7956c89) (DefaultImporter) -> (artifact id: '1db778763073dffba2e6a0147af1d041') in 0.0007673 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/NRDConfig.hlsli using Guid(0374139ab733b60488e01d350e0b9f44) (DefaultImporter) -> (artifact id: '4ec22f225b24e65494631def27239b5d') in 0.0006787 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_AntiFirefly.resources.hlsli using Guid(13b188fa17b93604988c266b89b49f64) (DefaultImporter) -> (artifact id: '296e287d84a712287cc0bc996c6bf647') in 0.0005563 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_PrePass.resources.hlsli using Guid(f329adab8b31dc944a8597f94c1cdcab) (DefaultImporter) -> (artifact id: '2caa3b0263988eed73e0db002367c600') in 0.0005263 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.resources.hlsli using Guid(248ce36bce9f3c543a41f7b7bdabc74b) (DefaultImporter) -> (artifact id: 'cae87929b33060ddf469090c5d930cbd') in 0.0009992 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.resources.hlsli using Guid(84d4ccc746826964e987c81a15761f2d) (DefaultImporter) -> (artifact id: 'eeea231232800c2042c63a255deb2895') in 0.0007036 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/Poisson.hlsli using Guid(c7593a5b4f0a5554384d4a048d4aaeed) (DefaultImporter) -> (artifact id: '085b9e43692ce45b64f2975bfb850ed5') in 0.0007125 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/ml.hlsli using Guid(380eced13631c9748ae76843b96669b1) (DefaultImporter) -> (artifact id: '7dfe5100552105396a82544fe5665d5d') in 0.0006902 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/donut/brdf.hlsli using Guid(a8467678d3c1a0d40943fcb934ce73c2) (DefaultImporter) -> (artifact id: '405c5e76de35ac9d50bd77e575d8cfbb') in 0.0006947 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/Clear.resources.hlsli using Guid(89c353581a80e104e829987012559d5d) (DefaultImporter) -> (artifact id: '8bf7766c9c5ddd248ae5917d334ce23e') in 0.0007105 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.resources.hlsli using Guid(daa5cf1ad26966a4baa4757e771926ef) (DefaultImporter) -> (artifact id: '251e1aba7ce6e5d0ac1420bd605a1bfa') in 0.0006079 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_SplitScreen.resources.hlsli using Guid(fa5d7e35565e6b6439bc42c84726a3a4) (DefaultImporter) -> (artifact id: 'a46069f20e27babdd86fe9ae10081f69') in 0.0008388 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Validation.resources.hlsli using Guid(cba12f06db9fa9c4f8d7e3e1b06f3591) (DefaultImporter) -> (artifact id: '9a1a00f05e080a29a0c5de83f6348b28') in 0.0007288 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_HitDistReconstruction.resources.hlsli using Guid(4c1c6a1806556c74e9eb17588d430b8d) (DefaultImporter) -> (artifact id: '4cfd60484aa65d14a25a6d1d3707cd91') in 0.0006197 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Copy.resources.hlsli using Guid(8c1aedb532a9462468ce3542c6715e4c) (DefaultImporter) -> (artifact id: '4c4dca27e4587cec35119082659f99de') in 0.0006357 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/NRD.hlsli using Guid(1d1e6798df8703e4ea8ac0c3e13bc4e8) (DefaultImporter) -> (artifact id: 'cc33ced71b5cf2519c8ca3b84db348f6') in 0.0006174 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/donut/utils.hlsli using Guid(3e432fcee50e83f40a0f1ea01af3a96d) (DefaultImporter) -> (artifact id: 'be64e4f81028c4484fd993954059337d') in 0.0006569 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Config.hlsli using Guid(9e3d1f6b50792e6469c76f32fff9c9a9) (DefaultImporter) -> (artifact id: 'd271c985dda6c28cf7c45d13d0f8fe11') in 0.0006046 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Common.hlsli using Guid(2f24e072e5b9e964d8c902c4a574f269) (DefaultImporter) -> (artifact id: 'f6655d69ca032a6194bdd92de109c55e') in 0.0005901 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Drop_v1.png using Guid(0015a915da148f149845f4510629fb67) (TextureImporter) -> (artifact id: '6c0a4e60036151ef31796c1687cc426b') in 0.0131895 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_04.png using Guid(20e0daa9016f3d349a921396bd7052f2) (TextureImporter) -> (artifact id: '6e7dde38b541da5789c8f0c16adee928') in 0.003668 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Pixel_v1.png using Guid(20b3c03b9339ff448ac462a74647eb47) (TextureImporter) -> (artifact id: '61337d41848d50fc7e936de82d9ce9cd') in 0.0033608 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Chromakey_v1.png using Guid(30cef2e79f836844db487ee1f34f79c2) (TextureImporter) -> (artifact id: '1267003b709819d77b840d29bb88d761') in 0.0033491 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Contrast_v1.png using Guid(40f951a8480ddc34a84ec778bf1cd9b1) (TextureImporter) -> (artifact id: '080c796ffe2bc7d93f72d46762e0b3e0') in 0.0040578 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CenterColorCorrection.png using Guid(70d64df4218d8044e99bc9320eb49462) (TextureImporter) -> (artifact id: 'bbc6f8069fea2242de1f3b31889b870e') in 0.0038829 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_RGBChannel_B.png using Guid(90e5622a8b7399c49a80f5f3f0e6c4e6) (TextureImporter) -> (artifact id: 'b9835a79102a3fa5681c42a30ecfc850') in 0.0046367 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_03_Disable.png using Guid(905c2560a2f04374d8286fc61e35bf2e) (TextureImporter) -> (artifact id: '288796f673a0c7e7878d93c6193c407a') in 0.0037258 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Layer_v1.png using Guid(903d47a2ea0a3954794b37b6ec3f03b6) (TextureImporter) -> (artifact id: 'fc86b281cebb44a9aab296d130de1c71') in 0.006933 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_line_Information_v2.png using Guid(a027f91f79d1dc34390837e2f2f0fa4d) (TextureImporter) -> (artifact id: '4c5cca3731affbc1365f9f100de04d00') in 0.003441 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/DIstortion_Tex.png using Guid(a05f6475dc319994ca0773ee55f03d1e) (TextureImporter) -> (artifact id: 'b87f68a85dc749ecd7cd16a832c26465') in 0.0101585 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_06.png using Guid(b0880e0f9301d744b8dc63e1513b93b4) (TextureImporter) -> (artifact id: '6676ffc819adc8636e9194cd0199138e') in 0.0036393 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_VideoPlay_v1.png using Guid(c04ec901d8a8d234e849f250cc946ea0) (TextureImporter) -> (artifact id: 'f7e04b128092b7ce076632be2376c60b') in 0.0028627 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Vignette_v1.png using Guid(c04f7f4841749d341a9b429b599ad3b1) (TextureImporter) -> (artifact id: '05db7fc211f16dc75434dbf38e526739') in 0.0041354 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessVHSEdgeNoise.png using Guid(014de9bcc7cd0a148929d7e58755ee44) (TextureImporter) -> (artifact id: '9de0f386c94124577a97aa54401b1ae3') in 0.0148923 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Film_v3.png using Guid(21b3d26f91baa7d4f9410b0df4d15ec7) (TextureImporter) -> (artifact id: 'd5a1902890a1a768fa36a40dc733be9b') in 0.0044709 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_GarbageBox_v1.png using Guid(310ef8c5427c75b41bb7c82b32e60c45) (TextureImporter) -> (artifact id: 'c6abd76be46efb9777328d1208cbcd84') in 0.0039886 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_01.png using Guid(41796a5ec3a9a484aa294bd220705e80) (TextureImporter) -> (artifact id: 'b1b0bd97a6a8d490437ba47ac3b50f04') in 0.0037031 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_AddEffects_v1.png using Guid(412b8d647f9a26e4591858b246afa545) (TextureImporter) -> (artifact id: '3ca4d43cd9b28205f525765e0246522f') in 0.0035245 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Weather_v1.png using Guid(c11ae619cdede504183c859a194a0149) (TextureImporter) -> (artifact id: '4649b251a1e3f4b589d8f944dfe96d27') in 0.0036705 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_OutLine_v1.png using Guid(d1b9915a8292b2341b41f5bb345d27e2) (TextureImporter) -> (artifact id: '2c7ab5fb1e1f91e6517faca15efb5068') in 0.0039323 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_SafeArea_v1.png using Guid(e1fdef86a6a3cd04ab5e234d023cfbef) (TextureImporter) -> (artifact id: 'f30ea833d4cfddf418816868eb8a720c') in 0.0030706 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_04.png using Guid(02ba980d4f8ee0441ad9499f5716bfbe) (TextureImporter) -> (artifact id: '90bc9435d6e903866cd4148d475ea375') in 0.0075854 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/VolumeLight/Resources/HoAtmosphereDustClusters.png using Guid(12cc1c96ba214c28ac0c75bc598cbb97) (TextureImporter) -> (artifact id: 'fb7aeae0c50b1e72bc12e13c67bf4130') in 0.0062272 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_VideoStop_v1.png using Guid(2214c2be6d919d9439e1342db9b46417) (TextureImporter) -> (artifact id: '896f86f7e2f2aa9788437fc8120f79b8') in 0.0031326 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_SelectColor_v1.png using Guid(42b7f51c5e2ad4744897d9a8636d17bd) (TextureImporter) -> (artifact id: 'c5be79982f04b87789aafc13a46603a0') in 0.0038986 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Remove_v1.png using Guid(52618804a973db44e9de7426c1026ed2) (TextureImporter) -> (artifact id: '11f15d45ffc0e9ef1f0f76bd01fcbd7e') in 0.0034033 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_TV_v1.png using Guid(52bee93c8f73e7d4aaf9423e7780c18e) (TextureImporter) -> (artifact id: 'b14219007b1a68be59d71c851eff38e1') in 0.0031514 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Glow_SelectColor_v1.png using Guid(628557123f179c9468c898a914d4d8df) (TextureImporter) -> (artifact id: '767923d17885cf5d41c2069506e2c764') in 0.002884 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Camera_v3.png using Guid(92d76a23ec2c3774a9a403fb88bd4d2d) (TextureImporter) -> (artifact id: '341768624d6bc8b26b9bb5fa16d106d3') in 0.0030331 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_06_Disable.png using Guid(a2b2f47d0b6b2d642a77581415be549f) (TextureImporter) -> (artifact id: '5ef8e18551efce00613c4a75f1e50d7e') in 0.0035515 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_RGBSplit_v1.png using Guid(e2a2b2410ba9a234abe0ade3636cdd92) (TextureImporter) -> (artifact id: 'f392c7a9d5a43b15d6a15df4982e94d7') in 0.0032084 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_08.png using Guid(13bbffccf98dfcd4a85646cf0f480046) (TextureImporter) -> (artifact id: 'cf943594242620f6830273f394b9a720') in 0.0031038 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraFlash_v1.png using Guid(134d085aa3f2ea84c9fd79f671926f04) (TextureImporter) -> (artifact id: '40f6cbf9a2eae5754fb53df0ec792be0') in 0.0033953 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_02_Disable.png using Guid(239ecf834e36e4843afd0231f9ec9410) (TextureImporter) -> (artifact id: '088c3e1e75d43e41a0d03d7c3443fefc') in 0.0031113 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_03.png using Guid(33b072289117f6c428676bf7a01a2c57) (TextureImporter) -> (artifact id: 'bf196307e2ee4ee005a648fab049bba6') in 0.003489 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Film_v4.png using Guid(33da6851790010e419037bf879981066) (TextureImporter) -> (artifact id: 'b50c9800114e2cb7d9ba4bf194acc497') in 0.003516 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_DropShadow_v1.png using Guid(4340f5c3a734be44ab6357b22f07f661) (TextureImporter) -> (artifact id: 'f18452f48f1eb83ab39ccefe582c23d9') in 0.0032878 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchEditButton_LR.png using Guid(539c369ebd461804b990c9c0025b574b) (TextureImporter) -> (artifact id: 'bfec26c66040d690f7cda30ec36542d5') in 0.0035103 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_ColorShift_v1.png using Guid(734fd0aecc633cf4f94364e8f702c78a) (TextureImporter) -> (artifact id: 'e98a3d8d4559319f4fab7ab571814af6') in 0.0035244 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Grain_v1.png using Guid(93d3f48aed4f9954e90dfbbfed4a5c57) (TextureImporter) -> (artifact id: '7187c9386ac7b9a062b59e2083bfb125') in 0.0035056 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_07_Disable.png using Guid(044bee2793a4f614cac0923cd9ed61c7) (TextureImporter) -> (artifact id: '6cf7eb2a6ec755b677dc5e0ce4ef515f') in 0.0032086 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraAnchorPoint_v1.png using Guid(248909dd55b84b34ca999265fbb53965) (TextureImporter) -> (artifact id: '12a5528bcdcc6106337a23a718da4987') in 0.0036925 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/Lut_H_01_22_Film_Kodak_v1.png using Guid(7432d4ca450073346a0580882e10ee2a) (TextureImporter) -> (artifact id: '76d49c0c26bea0f25a4749d541103bd5') in 0.0029693 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_05.png using Guid(840c8060188a8024d8f119f5670adbb1) (TextureImporter) -> (artifact id: '32dca36e530a8bd6c369332024ed381a') in 0.0034178 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Blur_v1.png using Guid(b422dc66dab201e4485371267bdd1087) (TextureImporter) -> (artifact id: '83cb9a2598e8bab603ff5d4366ca4814') in 0.0030318 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessFeatherParticleLarge.png using Guid(b48fa69ab45f44318ad8b46afe34cfc7) (TextureImporter) -> (artifact id: '205e41733d9b8349b8cf2a589826a9cd') in 0.0045711 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Effects_v1.png using Guid(c4085b6e2a8db02448f38fd4236b2948) (TextureImporter) -> (artifact id: '0ee3c71b6644b44380db89f297592436') in 0.0031064 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_RGBChannel_R.png using Guid(e4f83327d5e77e54499ba377461c9815) (TextureImporter) -> (artifact id: 'f22edc743fdd3d828d2236ce5591d769') in 0.0044946 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_VHS_v1.png using Guid(e4fce123e53effd47ab49a8d7f008ed8) (TextureImporter) -> (artifact id: '5174c5a7c3e1e625d1fb934997483d6c') in 0.0031788 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/DIstortion_Tex_Tile.png using Guid(f4c1f3c21e3ec4a479c69cffea26c6cd) (TextureImporter) -> (artifact id: '10391ed97a1c07112bdc2ac4712dab40') in 0.0077947 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Lighting_v1.png using Guid(f4eacb8a7ea3cad42ae07e390b7038c8) (TextureImporter) -> (artifact id: '39821861f662b9fbddcf1fe082ebeff6') in 0.0039024 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitch_Move_03.png using Guid(15d53f843234f2c47ac27dde65f5eba3) (TextureImporter) -> (artifact id: '74e286bd8abe2e893deecf5ca1be294a') in 0.0033882 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LEDPanel_v1.png using Guid(25c46631e68a42f478a4be5daba1db6d) (TextureImporter) -> (artifact id: '19f805959f56a9d4940cd815263be189') in 0.003779 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_01_Disable.png using Guid(25265ea15239d8348b3f09a51e819147) (TextureImporter) -> (artifact id: '2d5618e2edc817fa98c694b7fbe969f4') in 0.0030926 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_FlipVertical_v1.png using Guid(251d042108f842a47ab0382a9c43eb00) (TextureImporter) -> (artifact id: 'cd12db8ee5ab21cf7087c2dabe42d445') in 0.0029084 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Monitor_v1.png using Guid(65c3b5d86517faa42802771691cfbbea) (TextureImporter) -> (artifact id: 'bf9c3dd8c04dc189c6d20acf1b437704') in 0.0030153 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Sun_v1.png using Guid(753b00153fdb0ca498fcea64493de7dc) (TextureImporter) -> (artifact id: '28418d2f5c7aac396938d6d6516fe52c') in 0.0038146 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitch_Move_01.png using Guid(752ce991a90f04f4fbfb7d92beeea513) (TextureImporter) -> (artifact id: '02f494ff83f65cbfb3c97811797c32e0') in 0.0032604 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessCRTScanlinesCircle.png using Guid(9547a31cb10fed042bf9a038ec99befb) (TextureImporter) -> (artifact id: '836a472c867aff9774ccfc2da1d2d194') in 0.002867 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_ColorGrading_v1.png using Guid(952ee6546825dcf4e87c47d860f7b4ee) (TextureImporter) -> (artifact id: '9858733332bbb687fab9ca9989280678') in 0.0068536 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_GameBoy_v1.png using Guid(a566c2cfbf6bd724992e7c54bc7d9ef0) (TextureImporter) -> (artifact id: 'eaeccf1da19ac2e5735bf0d7b67f445c') in 0.0034892 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/Lut_H_11_31_Film_Fuji_v3.png using Guid(c5d1e0809ad8b184885a007d89cd323f) (TextureImporter) -> (artifact id: 'dcbaaf14706aad9035290dcc4ffc718a') in 0.0058673 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_VideoPause_v1.png using Guid(c5739522a1cf55a4fa90c00a760e85ec) (TextureImporter) -> (artifact id: 'bdcd36c2580ffa669ec547e4605fad14') in 0.0043142 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_01.png using Guid(d5e256d0330c69d46b76440cb0779af2) (TextureImporter) -> (artifact id: '80e96ae71b0242857436f107028e7e61') in 0.00353 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_09.png using Guid(267e58d444a2a9949997a25279f5615d) (TextureImporter) -> (artifact id: '32c783d7bba85dd7f3a327db9eb9c7a1') in 0.0033842 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_line_Information_v3.png using Guid(6692e32c1cd65104c933787891c620b0) (TextureImporter) -> (artifact id: 'b8f9fd47652ce2b1c226907078b54e67') in 0.0036898 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_03.png using Guid(86eb18a7ba6911f46a7beb464fa7715d) (TextureImporter) -> (artifact id: '8f7111a2e42b63c06a1543cc5936985f') in 0.0040926 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitch_Move_02.png using Guid(a6186991923b00f418e976fbf430335d) (TextureImporter) -> (artifact id: '40c837c956ff02c8e1a7f1ddd118046d') in 0.0038759 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessDitheringV2.png using Guid(b6b688ea38a54d51b3c65046a91b2e4f) (TextureImporter) -> (artifact id: '07ab6e331fd5168e6c46169b66ae28d3') in 0.0022879 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_04_Disable.png using Guid(e65cd16354d3f56458ef3062e5c150ed) (TextureImporter) -> (artifact id: 'fb8604018a7af9d8e4ab0e8adfb6bc10') in 0.0042133 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Controls_v1.png using Guid(078d806d35dd1e0418dac97723dbd2f9) (TextureImporter) -> (artifact id: 'cc274d05f0839b7c90e3b8ec18940357') in 0.006218 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitch_v1.png using Guid(27ffc84b35cde0646a8d9b796e9c06c7) (TextureImporter) -> (artifact id: 'ac3b02966fb2f5f57c48978362def0e4') in 0.0106579 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_SafeArea_Center.png using Guid(37e09a7235cd4114fa7519aa6a0a5e5a) (TextureImporter) -> (artifact id: '8707bcf8b16d9a5c29d4d73cb70aebc1') in 0.0047156 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Sharpen_v1.png using Guid(57f7f97d5cb290f4e9ae1dfa16fcbb11) (TextureImporter) -> (artifact id: 'e3f8f91bf74e38b8796dafdcb112939c') in 0.0036886 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessFeatherParticleSmall.png using Guid(77ce570fc573479190a9bc876c4fe1d3) (TextureImporter) -> (artifact id: 'd6a4e73898821f8e7372f62154d7cc73') in 0.0036603 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Flare_Ray_v1.png using Guid(872257626cf369848b5c53e78ba391df) (TextureImporter) -> (artifact id: 'b6792984f908ff2f671c399914d72229') in 0.0030306 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_GraphicsOption_v1.png using Guid(87f9f98b7118f7e4fa0aa6c0e3042567) (TextureImporter) -> (artifact id: 'ed5983d7c5edf5a26a26efb8501852dc') in 0.0047395 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Camera_v2.png using Guid(a7a172e1e3a4eab4598368849ceba433) (TextureImporter) -> (artifact id: 'd42281743140120e89eff8394ca00d42') in 0.0032682 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_FPS_v1.png using Guid(a7352c8e6d1543b43a06489ea1a84bd2) (TextureImporter) -> (artifact id: '87d98743abde6eb2cfad15ce8eb8226e') in 0.0035502 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_WhiteBalance_v1.png using Guid(e7e842848ccceb64f805dacf988b96c4) (TextureImporter) -> (artifact id: 'b942a6b7032a41d92a1136919230aabc') in 0.0035645 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_07.png using Guid(e7ebf37079294104f87544f93faa0ec3) (TextureImporter) -> (artifact id: 'baf243f7541b49d7f745c06b7d16f613') in 0.0041187 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Scanline_v1.png using Guid(f7184bbf8d7ef7147847bfb045020e77) (TextureImporter) -> (artifact id: 'b5e0cf5a951b2b92b276fe4692a24dae') in 0.0036749 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_08_Disable.png using Guid(4879d0186b96cd34bb44e4ac741256ce) (TextureImporter) -> (artifact id: '329b126d9aa88516b80dbc0e03b27308') in 0.0036223 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Filter_v1.png using Guid(5863d12c5c8e4294f988ccae2847813b) (TextureImporter) -> (artifact id: 'c87864ba175c79032a915fa50a6d50c4') in 0.0035647 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Crop_v1.png using Guid(58a9c30397fc76540aa9e2413d2ceb92) (TextureImporter) -> (artifact id: 'c7f7663da020978895392efb9e4eeffc') in 0.0043244 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_RimLight_v1.png using Guid(98afd5880827c004ab81a07ff81018fa) (TextureImporter) -> (artifact id: '7fdb52f42d8902d07874086e9119c10c') in 0.0035353 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_RGBChannel_G.png using Guid(a8c9d4e311bc3c445a496b56042fd10d) (TextureImporter) -> (artifact id: 'f6bf2ca01e477d168a3f79106e8734b5') in 0.005371 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/Lut_H_03_23_Film_Kodak_v2.png using Guid(a83e01c459730b5459ee3f175b755606) (TextureImporter) -> (artifact id: 'b67d72d96300e9fafa257831cbdfc1d9') in 0.0028686 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LayerMove_Up_v1.png using Guid(b8661275596626b4ba06cd78c3490616) (TextureImporter) -> (artifact id: '6766a42a408e00ec3ded0156addea4b3') in 0.0042352 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_RuleOfThirds_v1.png using Guid(b80c42cc402cf794c9b43b21940a9b90) (TextureImporter) -> (artifact id: '9cbb46527691312f4bb78455397aff6b') in 0.0038384 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_line_Information_v1.png using Guid(f8ef0a1867bed0d4d816f3dc1788614e) (TextureImporter) -> (artifact id: 'ae8d0c3ea9933b47cdcf380b8c67f36e') in 0.0039717 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchEditButton_v4.png using Guid(09844905d0280744abce4e38b6bb23a6) (TextureImporter) -> (artifact id: '13866f718ff25d2bdca7e83ec4f0f9be') in 0.0044553 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Settings_v1.png using Guid(1925123b2a2f7614fa9389ea07f25df8) (TextureImporter) -> (artifact id: '9950ba0a6da6c42a57b009746db8988a') in 0.0045887 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessGrainNoise.png using Guid(a9ae79ba64554d8488fb96e58bb1d7bc) (TextureImporter) -> (artifact id: '6d3635f6e48d85b98629b82d1743cf72') in 0.0041295 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_05_Disable.png using Guid(c977d3c26b427314babf15478d9bde24) (TextureImporter) -> (artifact id: 'f6cf91b26c2595e8b560d8fe016c65b2') in 0.004781 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_02.png using Guid(c94e55cc0526e154b8c733651aea4c46) (TextureImporter) -> (artifact id: '53bb1da81e77f0e52968a9c2d4cdce62') in 0.0040857 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_IrisBlur_v1.png using Guid(3a7a5ec1f5c7a79438fd282c23364d2a) (TextureImporter) -> (artifact id: 'b7b8c37b97f198a844e131c7118c02a4') in 0.004669 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessCRTScanlinesLine.png using Guid(aa0baa9b9cd5a374ab3da0f61ecc1e0c) (TextureImporter) -> (artifact id: 'd4904cd5b6abacb4117038f9705e1fa3') in 0.0040401 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_NDI.png using Guid(aa8e3a9c6abeadd4aa450c44250cc692) (TextureImporter) -> (artifact id: '5bccf1b5b5f247dfa1dafdde76dd090f') in 0.0042881 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Spout2_v1.png using Guid(ba0c49744593d004e9549a04982194c9) (TextureImporter) -> (artifact id: '0f95151c05e42b6eed7c645a087dfc00') in 0.0043135 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessCRTScanlinesRGB.png using Guid(fa60040a5653eec4a863c05152412167) (TextureImporter) -> (artifact id: 'd0b695f06694ef091cb2ea716ab25538') in 0.004442 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/Icon_Droppe.png using Guid(fa24c24b3e1921d4c9fb013b09e2f42d) (TextureImporter) -> (artifact id: 'fc1e594de0d54601c5f7cc94976af051') in 0.0045545 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Hide_Off_v1.png using Guid(2b64779c2bfac1a4299fe5a3c686130c) (TextureImporter) -> (artifact id: '26406014c4fec467d27f5bb94406a618') in 0.0046986 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Film_v2.png using Guid(6b70d1f551b758f418b95e488062048c) (TextureImporter) -> (artifact id: '4a804de7eb9f21a7d9d04ae5703de443') in 0.0044872 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchEditButton_B.png using Guid(7b4b3a34d36d27a4cb50c3315e833322) (TextureImporter) -> (artifact id: 'bbaf3aec757c31bf2381b34fc1b1e4ef') in 0.0041383 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_File_v1.png using Guid(8befddcfb9312ef47b4beb4f6a52be96) (TextureImporter) -> (artifact id: '81b44ffec4c47217179a91478c92be9f') in 0.0035632 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_07.png using Guid(9b0effe95c8e62848bbabff57f39a48a) (TextureImporter) -> (artifact id: 'dfd75684c3cb0b94bc6db46816229a25') in 0.0045373 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Link_v1.png using Guid(ab206ee875cf27d40833022000e9d9f5) (TextureImporter) -> (artifact id: '23bf5fdb3651d48c79f229400598946d') in 0.0035428 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Transform_v1.png using Guid(abc32054820c4e549bf0aaf83550d82b) (TextureImporter) -> (artifact id: '5f156869eee497970e78088eda85265c') in 0.0036163 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/VolumeLight/Resources/HoVolumeLightBlueNoise.png using Guid(bb6bc697ed664f689e42ee43a5e376ac) (TextureImporter) -> (artifact id: 'bd2d9b6706441970ac8268f11fe7ca53') in 0.0024178 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_07_Disable.png using Guid(ebda782930dfb09499212d7d79aedd26) (TextureImporter) -> (artifact id: '8629981929f30ba26ce348d6785cc2a4') in 0.0042554 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_09_Disable.png using Guid(0c145572ed68ddf4497884eb8b68e1ec) (TextureImporter) -> (artifact id: 'bffc9d2d130416f5330aca5bcf2a0971') in 0.0042968 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_ScreenEffects_v1.png using Guid(0ca739ed338d0dc498b2743af326efe2) (TextureImporter) -> (artifact id: '4f57248ad4f6cc644ae9a52e6793eb4a') in 0.0034817 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraAnchorPoint_v2.png using Guid(2cce116471b3c054293ab772db527f5e) (TextureImporter) -> (artifact id: '371d5d0595a83c368d3b40cc22096dc6') in 0.0034167 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/Lut_G_02_19_Monochrome_Soft.png using Guid(4cdb4a3a04be3954f81ba4e7912a2a54) (TextureImporter) -> (artifact id: '3f044a518ee8fd6caa616fd31fc533a0') in 0.0030178 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_AddEffects_v2.png using Guid(6c884fa9aa2b9034ebb8f0ef68234360) (TextureImporter) -> (artifact id: '5221e703ba4dad9cadcb54c5e85860cc') in 0.003853 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_FlipHorizontal_v1.png using Guid(7c9aaa6fed313b44ca3e1a044be68ad9) (TextureImporter) -> (artifact id: 'cf9347d5f548bbc1642fceea77c43ac3') in 0.0037188 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessDitheringV1.png using Guid(8c822f199c2345bc88f6e51f80db1b05) (TextureImporter) -> (artifact id: '3ba980026b67a8e5071dd0e1092e81dc') in 0.0024496 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchEditButton_A.png using Guid(9cb3997eca74731499c0abd59039dccb) (TextureImporter) -> (artifact id: '302342806287277caa0749f884ca1fae') in 0.003846 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/Lut_H_05_24_Film_Kodak_v3.png using Guid(9c6aeda51076c9e479448f6c24ecc697) (TextureImporter) -> (artifact id: '7b0d85afbd3c2b6d5202cac84552f32d') in 0.0031305 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LayerMove_Down_v1.png using Guid(ac83d622276eb064d90f6eb3997921b5) (TextureImporter) -> (artifact id: '30608107d10b925c6580c47f5cd109f0') in 0.0034205 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/Lut_H_09_30_Film_Fuji_v2.png using Guid(ac45cb4b9b650c045b543093cdc2502e) (TextureImporter) -> (artifact id: '6b13d7efb2d2e9070604ad46a20c4f71') in 0.0060703 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Gradient_v1.png using Guid(cce5ed374df21764a8d4236e31189066) (TextureImporter) -> (artifact id: '2f937805da8cdef8fdcf972c12ea8649') in 0.0041169 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_06_Disable.png using Guid(cc87467e053cbd6499401f03182c22d8) (TextureImporter) -> (artifact id: '22472a5ec4f8eadf9ab71baaea76a97e') in 0.0048672 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_RGBChannel_RGB.png using Guid(dc47deef03e70794cb0f1cb4da2394e2) (TextureImporter) -> (artifact id: 'd74004b42bf7e0c2517c8fdb6ef0467d') in 0.0050587 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_05.png using Guid(1d66a2f314b68ef418c2ed89d989b9ce) (TextureImporter) -> (artifact id: '69f373946b35a881a5f512a023fb52b1') in 0.0035817 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_RGBBlur_v2.png using Guid(2dff8f85b9735f944932a82b99079e2d) (TextureImporter) -> (artifact id: '605a208d4ec3b41cb295c16279303aa2') in 0.0034791 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Particle_v1.png using Guid(3d17eefcddebbb94b987293eec666eaf) (TextureImporter) -> (artifact id: 'e8950c36fb5697a3a6d78b5e89c80def') in 0.0034427 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Camera_Shake_v2.png using Guid(4d1f5e42cfcec924bb57a0521fbb74fc) (TextureImporter) -> (artifact id: '0245f8d91b2e1a34bc7cc1d9f1c42de5') in 0.0036427 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Layer_v2.png using Guid(8de7718e6edb0664c8c71aa0058b0df8) (TextureImporter) -> (artifact id: '92ba1a57416d70c959748d8c9717f84d') in 0.0037684 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Glow_v1.png using Guid(9da76ad81a3be5a4088bde1efd5ad515) (TextureImporter) -> (artifact id: 'e130b826fb0bade6eceeeb386ac34cad') in 0.003843 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LevelsAdjustment_v1.png using Guid(ad4b46bb31b222345a7411327fd8e574) (TextureImporter) -> (artifact id: '064110384afabc8b5cd21698a0910a52') in 0.0038931 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Picture_v1.png using Guid(cd2015b0fef3d674f8efacb8f8ad0aff) (TextureImporter) -> (artifact id: '32d914c2df2bf94f0bc2beefdcf0de25') in 0.0033715 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_FishEye_v1.png using Guid(dd11688623c6cb84d9b6c82d5f896179) (TextureImporter) -> (artifact id: 'a03d23f1036beff7406e9a353c318df9') in 0.0034616 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_02_Disable.png using Guid(dd66f925a05b09849a2aeb93fa678046) (TextureImporter) -> (artifact id: '64463010553b02d78f0533a6151471c6') in 0.0034085 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Distortion_v1.png using Guid(1e8c171af2c7a3e428756cb235f1fece) (TextureImporter) -> (artifact id: '5ec1530a88a77a81a391181eb327937f') in 0.0039578 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Hide_On_v1.png using Guid(3e36a2e322ef72141a54b75827090b2e) (TextureImporter) -> (artifact id: '3db43e2dc04c88800492dea5620778f9') in 0.003135 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LayerAdd_v2.png using Guid(3e78003917455fc468e4daca94886d50) (TextureImporter) -> (artifact id: 'd870f04b1f8ee3c5371fefb5d2ffa2ea') in 0.0034066 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Language_v1.png using Guid(4e4e697e90ec90342a1100009c993323) (TextureImporter) -> (artifact id: '12a71030b6fc7923d164def4ebb9beed') in 0.0065633 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LayerAdd_v1.png using Guid(6e8bcae74b66bbe4388d7b3e3a2a9619) (TextureImporter) -> (artifact id: '8b0dcf8ffa4c6049ffb7d3004a47dec4') in 0.0316235 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Folder_v1.png using Guid(6e9f1de9d906b39488730ff61ddf3abf) (TextureImporter) -> (artifact id: 'ea37091b38fb1b433885fc6fb13e43de') in 0.0038928 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_04_Disable.png using Guid(7e80fa67b5c9a7e4c870ee260098d06b) (TextureImporter) -> (artifact id: '1c6331f2f4152c77b0e158961861d046') in 0.0036918 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_01_Disable.png using Guid(aef62a9b1d47c2440b099407216b4479) (TextureImporter) -> (artifact id: 'b912ce5d8d7301b4f33953c7944233e1') in 0.0049221 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_03_Disable.png using Guid(bebcd78f29aa46e4c9747a2792acf0d4) (TextureImporter) -> (artifact id: 'f85d5409d3ed9cfe430fa4a167bad7cf') in 0.0062583 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessCRTScanlinesRGBMono.png using Guid(dec56346944efd040b7b0d47e0c2a120) (TextureImporter) -> (artifact id: 'b6df92042a988d4429621b2204d68328') in 0.0055258 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Layer_v3.png using Guid(ee120e811d3db074d97ff5a2840a96ba) (TextureImporter) -> (artifact id: 'adcb0d6917d1d5e7728dbcc789eada1a') in 0.0058924 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Textures/ImageProcessDitheringV3.png using Guid(fef46e8920a34d7798a651ec588957d7) (TextureImporter) -> (artifact id: 'bde7f0683ed1baabefc12557b951ccce') in 0.0034761 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_TransparentBackground_v1.png using Guid(fe2febf7e4763e943abbd8ffb6d10c00) (TextureImporter) -> (artifact id: '39a3246d67690fd75355232085838fb0') in 0.0044083 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Folder_v2.png using Guid(3f0f14be004dee542baac91e1df11577) (TextureImporter) -> (artifact id: 'c04c62093f6ddbd38abda6588ce1eb67') in 0.0039919 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_02.png using Guid(4f5e216e86d149747b3ef3fff5033788) (TextureImporter) -> (artifact id: 'e7a36f728a64c4951fc75e548817b930') in 0.0041159 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_LightingButton_06.png using Guid(6fc95da19bcac6849a40d53268f99f3b) (TextureImporter) -> (artifact id: '2aea7c7da64adfc724b994e35ffeabe6') in 0.00454 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/filter_v2.png using Guid(9f4572b60c6bfda4b9bb9fe7c14d44d0) (TextureImporter) -> (artifact id: '851416c09f229733e90a7d39037b6c9e') in 0.003759 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_CameraSwitchButton_05_Disable.png using Guid(bf3a7633015e0e242863c1509d1fb9af) (TextureImporter) -> (artifact id: '455467a2ef122ce1e96e5053d82861ba') in 0.0041644 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Drop_v2_Cursor.png using Guid(df13407e58a4f184a8bd241ac9508d4f) (TextureImporter) -> (artifact id: '7a2d1bffee86fe436826224d685ec101') in 0.0024805 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/ImageProcessIcons/icon_Camera_Follow_v2.png using Guid(ef917328a1583de45a2bee3e75938b46) (TextureImporter) -> (artifact id: '791a3e431a7b18b53799f1f4c09cefcc') in 0.0034135 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders/HoRTSceneQuery.hlsl using Guid(00b460f6d0bb4bd45a7d4e6864986273) (ShaderIncludeImporter) -> (artifact id: 'c31492f194baa3b0749a9fc76fda3154') in 0.0022864 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIDensePrimary.hlsl using Guid(001d776b217d3fc4aab470c84519c9f0) (ShaderIncludeImporter) -> (artifact id: 'ab57de47c18cea5aa9850736b1268567') in 0.0017803 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/ReGIR/ReGIRSampling.hlsl using Guid(509bd3bbe7ad5904abee33794917695b) (ShaderIncludeImporter) -> (artifact id: '5ec0e49057817c0bce2732cbde10a241') in 0.0018021 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_AntiFirefly.cs.hlsl using Guid(706c15e84ccc3f84b908713928c2abd0) (ShaderIncludeImporter) -> (artifact id: '3e44c491fa553db7f52e99c925ee92d4') in 0.0020409 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastSampling.hlsl using Guid(a0c7856d67404df7a235bf37bb3c4930) (ShaderIncludeImporter) -> (artifact id: '69eea7f6304aeb8f480328bd52eaa1ba') in 0.0015505 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTPrimarySurfaceValidation.hlsl using Guid(c07928024ed7f904a99ebd6d54587794) (ShaderIncludeImporter) -> (artifact id: 'd7be15955a50d3cc74f63b7d91e3e32d') in 0.0017611 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIEnvironment.hlsl using Guid(e00fb7fc49fb499d8328b455efcbae4d) (ShaderIncludeImporter) -> (artifact id: '914b62fa8f0de65cd6421b4a3b3a4772') in 0.0015779 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrdHistoryClamping.hlsl using Guid(f067216538eab1b44aeb66c62a728f32) (ShaderIncludeImporter) -> (artifact id: '4daeb93ccf879261cdc47e6c683990da') in 0.001836 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryFix.cs.hlsl using Guid(f0d8d4f68d34e104b8cf56aaf20ab581) (ShaderIncludeImporter) -> (artifact id: 'ed63b222cdd1a0210c448f21d6b38fe8') in 0.0014372 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MaterialGradient/Shaders/HoMaterialGradientSampling.hlsl using Guid(f0ee57f6eb524035a6b7cf3c926ab56d) (ShaderIncludeImporter) -> (artifact id: '4fb45febbfecbd2a6477b4e3368c1e0a') in 0.001493 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/HoRTShadowSampling.hlsl using Guid(51193f7a951249fdb44e581cb1fe3ead) (ShaderIncludeImporter) -> (artifact id: 'a18f91327f509163a590ea8f51de6af0') in 0.001468 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrdBindings.hlsl using Guid(c184d4f2aeaec2e4fb302846d7bad397) (ShaderIncludeImporter) -> (artifact id: '5a8f70102cb7033a47bda90f1563797f') in 0.0015158 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders/HoRTPrimarySurface.hlsl using Guid(128a56d75e17c2b4a86f75dda362b397) (ShaderIncludeImporter) -> (artifact id: '4fe3c57b18c4aec2fe3569a58ccc818e') in 0.0023119 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Shaders/HoGeometryOutline.hlsl using Guid(62358074a17624246a3d4faa58041756) (ShaderIncludeImporter) -> (artifact id: '139c5ed3133ed4f90bccc06b01519a27') in 0.0014722 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessDepthInputs.hlsl using Guid(d2129909daeea8c47869376902adc340) (ShaderIncludeImporter) -> (artifact id: '632febd4bbb41c9afb84f970b6decb06') in 0.0016695 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_TemporalAccumulation.cs.hlsl using Guid(73ccbecfb62403a4382ac01db7887cfd) (ShaderIncludeImporter) -> (artifact id: '8adcb1157cded43deeee51b6824fdb89') in 0.001653 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/Clear.cs.hlsl using Guid(b322515f5d5b5a2428e93357fd477cc8) (ShaderIncludeImporter) -> (artifact id: 'ad675d78ce777d909b6382a35ab4494c') in 0.0017293 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI/PairwiseStreaming.hlsl using Guid(9453086a0c7097e40853730d171c62eb) (ShaderIncludeImporter) -> (artifact id: '87e8a6dfd978d1fe50c59e20011464f2') in 0.0015777 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/Math.hlsl using Guid(c416eebc928d55d469b98f960aa2888e) (ShaderIncludeImporter) -> (artifact id: '48637a2aaf5c8c63116dd6abe0231a1b') in 0.0014738 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl using Guid(d47e0f1cfb645a540b120e1cd9413725) (ShaderIncludeImporter) -> (artifact id: '2d41069523080f90aa9f92e3153ff210') in 0.001539 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Validation.cs.hlsl using Guid(e402575919c0ea34789d2fc26fb0b85b) (ShaderIncludeImporter) -> (artifact id: '2666454647d5e25cb35cd40a6a00b958') in 0.0019591 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Shaders/HoGeometryDataReferenceFrame.hlsl using Guid(75847d6c5da5dda499af04f86f5c772c) (ShaderIncludeImporter) -> (artifact id: 'ba6bb9c688474bc025ba65fbb884445a') in 0.0016897 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/TypePacking.hlsl using Guid(8548e06307a918045930aa9d1c01dc52) (ShaderIncludeImporter) -> (artifact id: '528dd5b1b4acb41e463f1ab65425abea') in 0.0015475 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/Checkerboard.hlsl using Guid(95c9ff2f796a3a743a51ff7c94e37935) (ShaderIncludeImporter) -> (artifact id: '176c6187256d429cc9f0d54a3314354f') in 0.0016053 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoRendererIdentity.hlsl using Guid(d5eca6fabd174dbbbc14ac43d772c8cd) (ShaderIncludeImporter) -> (artifact id: 'b0d94b9fc1b442fc6f51e8c995925825') in 0.0018046 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIPrimaryHistory.hlsl using Guid(f58f0987ac3e409c8a1f42f076c0719a) (ShaderIncludeImporter) -> (artifact id: '401458a4a127aea6d4fceb1897898f64') in 0.002215 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/LightSampling/UniformSampling.hlsl using Guid(0678a295cecd6c84aa0a394427af31e0) (ShaderIncludeImporter) -> (artifact id: '37704d2062ffd213c5d58463ff89fc9c') in 0.0016951 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/ReservoirAddressing.hlsl using Guid(66b4544e13eaa414e843c492bb270ab9) (ShaderIncludeImporter) -> (artifact id: '6a992054248a0cc15c40649cd40a6b91') in 0.0021719 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/HoSurfaceAssociation.hlsl using Guid(76d3ec2dce95d824494481958192eecb) (ShaderIncludeImporter) -> (artifact id: '520feaf1449c404c0ff0642412702a2f') in 0.001998 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerPerPassSeeds.hlsl using Guid(96a8e05a3493d6e40bdd730a5d28a357) (ShaderIncludeImporter) -> (artifact id: '5b49db8c1557ac1bbf71c4889b5a0be6') in 0.0017379 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl using Guid(079b878bc1f4d68488b03560d9022679) (ShaderIncludeImporter) -> (artifact id: '1a98ae549952c722caa1ee5e1d0acf3d') in 0.0018407 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl using Guid(d7b9650c186a40c3ab5d602247c31158) (ShaderIncludeImporter) -> (artifact id: 'db1e9a7c6191a9e3480f7286ae967a22') in 0.0017753 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIConfidence.hlsl using Guid(e79fb511d7cf9344a819c65515806865) (ShaderIncludeImporter) -> (artifact id: 'ddd65063b9564ccd8fbff64dd389402a') in 0.0016637 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl using Guid(08711c413b5e9034a8b84418594de9fa) (ShaderIncludeImporter) -> (artifact id: '8012f8532bcee1840023321ac3ae36df') in 0.0015029 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/HoSurfaceBufferCommon.hlsl using Guid(2857e37e1244d7c4ebd569255f1570d2) (ShaderIncludeImporter) -> (artifact id: 'd0d01ead2d51f67b43b1d4ffc7d17aa5') in 0.0013852 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_HistoryClamping.cs.hlsl using Guid(282939e1d8ada0041bfa7d3ededfd184) (ShaderIncludeImporter) -> (artifact id: '3fc042b0093a39de3888293946d69aea') in 0.002122 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl using Guid(88d7c28b466944769d2b49e109c0f9a0) (ShaderIncludeImporter) -> (artifact id: 'da91b83480ea9c9a2d05c2c77552315a') in 0.001452 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/VolumeLight/Resources/HoVolumeLightReconstruction.hlsl using Guid(98b8748e46e05154c973e088c8e1b8c3) (ShaderIncludeImporter) -> (artifact id: '04bc26054511aa470846a4e201c0a86b') in 0.0016094 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl using Guid(983a58e6d9b50564d8eaf0f5c72dc393) (ShaderIncludeImporter) -> (artifact id: '78dbd929e80a81280e7fe8479fec4bf4') in 0.0014782 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACRawIdentity.hlsl using Guid(a81a265b900f4a6aaa98183f1363c59e) (ShaderIncludeImporter) -> (artifact id: 'e0269e5bd23ee0c9e479c97492873597') in 0.0013912 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders/HoRTNativeVisibility.hlsl using Guid(b894783ac87d4d4cac3de78f59cbf03d) (ShaderIncludeImporter) -> (artifact id: '97a876ea6d16b05ac8abe4ef3da9752c') in 0.0013983 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGINativeSceneQuery.hlsl using Guid(b894eac17eb24fd1becf8dee10be0560) (ShaderIncludeImporter) -> (artifact id: 'd5097abd616bd3abdd2304490d549757') in 0.002095 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIAuxiliary.hlsl using Guid(b84e015f9d254f659fdf8f7027e261e2) (ShaderIncludeImporter) -> (artifact id: '027ca2c923cdd72222d98212c1e9eb11') in 0.001582 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders/HoRTVisibilityPayload.hlsl using Guid(197d8da669c84b2a83b60710914638c7) (ShaderIncludeImporter) -> (artifact id: '8834872d39ce9ec4b2bcc8201019bb05') in 0.0022313 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl using Guid(99f2af7994d447c6b6e56a6d41afdab8) (ShaderIncludeImporter) -> (artifact id: '769ebf37ac68897fc1d9c275c352064c') in 0.0015672 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GTAO/Shaders/HoGTAOCommon.hlsl using Guid(0a7f98f50a1799348b7e92d613bc4a1a) (ShaderIncludeImporter)There are inconsistent line endings in the 'Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GTAO/Shaders/HoGTAOCommon.hlsl' shader include file. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+ -> (artifact id: 'fb808ab2ca93081b2b44d32514210a69') in 0.0018846 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl using Guid(4a5700824b321494cad8aa54387a1b75) (ShaderIncludeImporter) -> (artifact id: 'a4d7071e32ca52c532d03345bef5bc0d') in 0.0015857 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/Color.hlsl using Guid(6a41ca8adf6e8ad4cb8b829e2f01778e) (ShaderIncludeImporter) -> (artifact id: 'f0295d28fb9b6e7d5dad3417ce28ac05') in 0.001614 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/LightSampling/LocalLightSelection.hlsl using Guid(7a402ec38cc0b6f409b745e6de5c5b5e) (ShaderIncludeImporter) -> (artifact id: '58f29047805a064d97c7eb0313247480') in 0.001486 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl using Guid(8ae8ae2d120ba3b4499072a978df2c9e) (ShaderIncludeImporter) -> (artifact id: '071f5071008168cdf6b31eff0a881e60') in 0.0017397 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIVisibilityPayload.hlsl using Guid(ca64953634f14397a66457b62b229ec2) (ShaderIncludeImporter) -> (artifact id: '6f26d9c0c13a587d2ed54222dc71c0da') in 0.0016263 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrdTemporal.hlsl using Guid(ea25bd0c41efb4b42ac54948ef09c4e4) (ShaderIncludeImporter) -> (artifact id: '886fcc48c61197ee82d4b6719597d5a6') in 0.0021716 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGISecondaryData.hlsl using Guid(eae7ddeabf60eb340b6589eba267a227) (ShaderIncludeImporter) -> (artifact id: '05fab79328f2911a6ef494be320ba0fa') in 0.0015272 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGISecondarySurface.hlsl using Guid(4b1f61d6ede786349a275a385d83da13) (ShaderIncludeImporter) -> (artifact id: '15981bfa09e516222eb01087075c21ac') in 0.0015064 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI/SpatialResampling.hlsl using Guid(6b2c5892c6a22954a891e1e5cd7a3321) (ShaderIncludeImporter) -> (artifact id: '7ee01ca82aa58ef199cf0b2f344ecbaf') in 0.0014749 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferPalette.hlsl using Guid(6b9e2f5a1c8d43707e2b5f8a1c4d93e6) (ShaderIncludeImporter)There are inconsistent line endings in the 'Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferPalette.hlsl' shader include file. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+ -> (artifact id: 'bc6904d8b01a3799c54eff4a215a28fb') in 0.0017929 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl using Guid(7b7d7eb4925c42f9a50c7a7bb4487b3f) (ShaderIncludeImporter) -> (artifact id: 'db3fa1e9a668dbfd42c83af526bd13d1') in 0.001782 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl using Guid(9b272ef59cb820d48b6b6966b39bc033) (ShaderIncludeImporter) -> (artifact id: '8d1fc243521e915d7114bac382c70586') in 0.0017105 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl using Guid(bbbc701173c585e42906e6ea5736c1a6) (ShaderIncludeImporter) -> (artifact id: 'cddd4fd9ca5f516ab2111ed9a76c32b0') in 0.0023798 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl using Guid(fb59dd4890c04d569e91fe00771bd1ea) (ShaderIncludeImporter) -> (artifact id: '07eb22403256d0d18419a514416f59cb') in 0.0019746 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Shaders/HoGeometryTension.hlsl using Guid(fb1d10e5b4500084eb2cc17fec5fbe05) (ShaderIncludeImporter) -> (artifact id: 'a33068574b2c0e1de30b3f2a013bb4f7') in 0.0016959 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_HitDistReconstruction.cs.hlsl using Guid(3cdd5dbb1e122b5468ad6613a63c0ecc) (ShaderIncludeImporter) -> (artifact id: '46e49cb3ab7d20c98dd1f629bc1a0b34') in 0.0015922 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Shaders/HoAtmosphereMedium.hlsl using Guid(8c01ddc211a934442b8aee2c33541c4e) (ShaderIncludeImporter) -> (artifact id: '512d77ae227b2fc12f76030a6ac99c79') in 0.00146 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrdMaterialGuide.hlsl using Guid(acc2c92fa0c40034ea9a23a54e7e9d45) (ShaderIncludeImporter) -> (artifact id: '6bb3c2004a22f724ffbe0f97f6261204') in 0.0015651 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/OIT/WeightedOIT.hlsl using Guid(cc8950f344c5c6349a1da8c946ef1a84) (ShaderIncludeImporter) -> (artifact id: 'b6f6aaca44e540b256bcaa8cbd6c830f') in 0.0013974 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI/Reservoir.hlsl using Guid(dc4389fe8d041e84fba582cc6e69c7d0) (ShaderIncludeImporter) -> (artifact id: '92e1788ddcd04cd86017639319bf9a6c') in 0.0015924 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Shaders/HoAtmosphereSampling.hlsl using Guid(1d38632691682d94b82100b919d9f688) (ShaderIncludeImporter) -> (artifact id: '6760088973561837db226273e75d1e5b') in 0.0018376 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl using Guid(4de95d36aff4611409f272361d28b77e) (ShaderIncludeImporter) -> (artifact id: '97af1c1190d426b48a898d0cc2981bb4') in 0.0020138 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI/ReservoirStorage.hlsl using Guid(7d0bbf3e0b330bf438518f5d5ca57a7a) (ShaderIncludeImporter) -> (artifact id: 'daa971bc82d68109773b8c7fc6104bc6') in 0.0016076 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACOutlineInheritance.hlsl using Guid(7d1b46540e325484e866c0d9907003da) (ShaderIncludeImporter) -> (artifact id: '7e59463347ced5a3d9ca156a688ae561') in 0.0015275 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_AtrousSmem.cs.hlsl using Guid(bd1e9440612bb1d4fa93280e02636ece) (ShaderIncludeImporter) -> (artifact id: 'c3d998707f9a84fcd71873239c90f667') in 0.0015676 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl using Guid(cd07a3656cc23a54d8f9075f042a3c42) (ShaderIncludeImporter) -> (artifact id: '9cc665d137e90fe4613323563eba2f6b') in 0.0014773 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_PrePass.cs.hlsl using Guid(dd99510238ec75046bf1aba64932b11f) (ShaderIncludeImporter) -> (artifact id: 'f42920e99ad91d271f82004edebd0f9b') in 0.0013703 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_Copy.cs.hlsl using Guid(fdc32da5b619c2e4fb4688e8edae9202) (ShaderIncludeImporter) -> (artifact id: '8b57780377541de05764df6c700819ba') in 0.0014428 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACSemanticCompose.hlsl using Guid(1e88816a3174bc9438bb4567bd32e7da) (ShaderIncludeImporter) -> (artifact id: '8e1543d2f6f8f74404eefc2f07874690') in 0.001444 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACCorrelatedCompose.hlsl using Guid(7e77937a03708504e9c9f66332694de6) (ShaderIncludeImporter) -> (artifact id: '87883a19a182542a1c2f31d13e6bba1f') in 0.0025982 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_SplitScreen.cs.hlsl using Guid(be5b40b2951280b43bbd7b0aaca40e02) (ShaderIncludeImporter) -> (artifact id: '9e20133139d9292fe867d18bf55a0ff2') in 0.0018998 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterCaptureCommon.hlsl using Guid(cee2e425dc0f4ab880a2d51832dd3aa5) (ShaderIncludeImporter) -> (artifact id: 'ccc08982ffc765df4985281eee04e8b1') in 0.0014936 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl using Guid(ce79527717d6c124d96e9a5f665418cb) (ShaderIncludeImporter) -> (artifact id: 'a1b58f3f88b919f5df463b4782557b68') in 0.0017087 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGIGrid.hlsl using Guid(ce1dbe6dd8c7473ca128ba3fbe518533) (ShaderIncludeImporter) -> (artifact id: '8a1fab5ef10202111604b554ebc7fcd1') in 0.0017427 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/LightSampling/RISBuffer.hlsl using Guid(ee7fc063532c1bf49a0fc47ae20f0381) (ShaderIncludeImporter) -> (artifact id: '19da5d71c5166cb61f47cdcbbb21c2d2') in 0.0016929 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/RELAX_ClassifyTiles.cs.hlsl using Guid(3fb07c7f622e7294292cd86bacfe1885) (ShaderIncludeImporter) -> (artifact id: '2d5091e5eeb8ee39a7db6e74a25f99ec') in 0.0017664 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/VolumeLight/Resources/HoVolumeLightSolarCommon.hlsl using Guid(3f3228ab9feef544da7a882de26ef9ec) (ShaderIncludeImporter) -> (artifact id: '02b76e85ffdb4734ae2fd4d2c75e863f') in 0.0022259 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGINrdSignal.hlsl using Guid(5f935b9970bc416cba6f861567af33ac) (ShaderIncludeImporter) -> (artifact id: 'd82bf581a22b1c94cb0fb52b4a06b4d3') in 0.0020829 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI/TemporalResampling.hlsl using Guid(5fdd0207275ed3c4b90d053a340a990d) (ShaderIncludeImporter) -> (artifact id: '095b559491401d83e817be31a5640fa2') in 0.0017483 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl using Guid(7f8dc3f63b32fb54089bf224d7fb6f4e) (ShaderIncludeImporter) -> (artifact id: '539663f111c36202b48d59c1b5912418') in 0.0014631 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl using Guid(bf68308c77eaa5b49a2d7d9265513fc3) (ShaderIncludeImporter) -> (artifact id: '3e2741ed09ccbec498141df9d1108f88') in 0.0017791 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_fakeshadow.shader using Guid(00795bf598b44dc4e9bd363348e77085) (ShaderImporter)Launched and connected shader compiler UnityShaderCompiler.exe after 0.01 seconds
+ -> (artifact id: 'b1a0e91dd0976f9c38bb02530d6ae6e5') in 0.099402 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/VolumeLight/HoVolumeLightValidation.shader using Guid(30b19fdea25240339a958278b45a3f49) (ShaderImporter) -> (artifact id: 'b8596651164c913dc50a8c9aa6935b63') in 0.0152055 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIDenseReference.raytrace using Guid(40a6069389418284eb02fe541f195c95) (RayTracingShaderImporter)
+Compiling Ray Tracing Shader "HoRTGIDenseReference.raytrace", keywords = <no keywords>
+    finished in 0.01 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: 'cbfcea1bf80cf21ab42c984f7c47534e') in 0.0296599 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/RGBSplit.shader using Guid(50ea962ebd0f4b8b927b8a15fa2d0dbf) (ShaderImporter) -> (artifact id: 'c1852275e7dd8e7953fb5a8cfd4226e2') in 0.0110244 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Tube.shader using Guid(6068e4127a1944a09f07f1f7fce4eb12) (ShaderImporter) -> (artifact id: 'cb465e6a6037991172e8e2c640e2b90e') in 0.0092101 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/HoRTShadowDebug.shader using Guid(60f94230e0066804db53c1aaa5d630e9) (ShaderImporter) -> (artifact id: '0bdd831c801db18d235c580732ebad4b') in 0.0089765 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGIComposite.shader using Guid(60cc26050cc3451097b49e3d8d23e866) (ShaderImporter) -> (artifact id: '400cfbc0eeaa2e05fa63e09ea9d17140') in 0.0110933 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd01.compute using Guid(804790bf0c8d4c15bb8398251d0fcb35) (ComputeShaderImporter) -> (artifact id: '875e53ea3255aca97f9e1154afe852ed') in 0.008723 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Kuwahara.shader using Guid(9031b7b358b14278928a0c47b0b871d1) (ShaderImporter) -> (artifact id: 'af075620a21725acd8cc18cbc49f7423') in 0.0082403 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd03.compute using Guid(a089f743335d4c12995472ba6bfcd101) (ComputeShaderImporter) -> (artifact id: 'a7a29b0a95d8255fd2ae16b550766853') in 0.0049307 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/Atmosphere/HoAtmosphereValidationSky.shader using Guid(c0063c55ce7de4445a27c950023ccf1f) (ShaderImporter) -> (artifact id: '7427e77dfdc5bfb985bf6f58e033537e') in 0.0055956 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/VolumeLight/HoVolumeLightAAReference.shader using Guid(e0749463152a2d64386609897c5a42ed) (ShaderImporter)There are inconsistent line endings in the 'Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/VolumeLight/HoVolumeLightAAReference.shader' script. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+ -> (artifact id: 'a82ab9c2acae6058fc131d673b4e00a2') in 0.0149753 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGIDebug.shader using Guid(0181117a2199f8d49b4a64e23c81fcc0) (ShaderImporter) -> (artifact id: '8279b04a1edefe6e97133edb4643d184') in 0.0076762 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/VolumeLight/Resources/HoVolumeLightDust.shader using Guid(01c2938d9c990f0458c908d4881f5491) (ShaderImporter) -> (artifact id: '898946a54fb058b0e000110100ecba36') in 0.015181 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTShadow/HoRTShadowMultiValidation.compute using Guid(21248e4352a549668f38349457e6a2e9) (ComputeShaderImporter) -> (artifact id: 'e705133cb5703a982f5ef0e43ca951e1') in 0.0027066 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltsmulti_o.shader using Guid(51b2dee0ab07bd84d8147601ff89e511) (ShaderImporter) -> (artifact id: 'adbb945c0c1559750f72b7e260b85018') in 0.0644666 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltspass_opaque.shader using Guid(61b4f98a5d78b4a4a9d89180fac793fc) (ShaderImporter) -> (artifact id: '896f8dd6733e56e76b23749ead2bf0a0') in 0.085129 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_onetrans_o.shader using Guid(7171688840c632447b22ec14e2bdef7e) (ShaderImporter) -> (artifact id: 'a59e8a15d9ce5ee7b90ff279639527a1') in 0.0545679 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGI.compute using Guid(91f2e2b965b77724b891f96d8a691f8f) (ComputeShaderImporter) -> (artifact id: '18628bf3ef815218fb7274d37edf0773') in 0.0130827 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RT/Shaders/HoRTVisibilityMaterial.shader using Guid(910a6266571247ee88c08b2956b88aaf) (ShaderImporter) -> (artifact id: 'c98fe844a94f909faae88ba9017baa1e') in 0.0048457 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/VolumeLight/HoVolumeLightDustPointReference.shader using Guid(c1e5f845d318b72498b990687362680b) (ShaderImporter)There are inconsistent line endings in the 'Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/VolumeLight/HoVolumeLightDustPointReference.shader' script. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+ -> (artifact id: '8716ab2a47dcf073deeaee6c4bb92f16') in 0.0130055 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterSpecializationComposite.shader using Guid(c10a8a78bbde4a3d8c8fdcf3a38412b0) (ShaderImporter)There are inconsistent line endings in the 'Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterSpecializationComposite.shader' script. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+ -> (artifact id: '736f67a80d15362ba0fa0d1918c9b468') in 0.0118519 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugTile.shader using Guid(d140ccfb67854787afc514c87d0a163f) (ShaderImporter) -> (artifact id: '4b39661f51810ebf34ea91fdcd430729') in 0.0132659 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd05.compute using Guid(1211643504df480f810449694a5ea84f) (ComputeShaderImporter) -> (artifact id: '7c09155501394ed0fc5c939bf0a8c62e') in 0.0050513 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDI.compute using Guid(12bc73a30e226944ba662eb5f32f6cb1) (ComputeShaderImporter) -> (artifact id: '4d71e02345567f741ce0e8a4eeb37505') in 0.0144358 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma00.compute using Guid(126d634e2ae14b75a607cb32161e6ea8) (ComputeShaderImporter) -> (artifact id: '59dbfdca5b81539ed5147a8e50a9904c') in 0.0050248 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/VHS.shader using Guid(22f2e16f129b443ba5f9d7787da8c76d) (ShaderImporter) -> (artifact id: '790c4f2afe258d2a4a9f2a423b133c03') in 0.009591 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/LayerBlit.shader using Guid(92d1566c0f834e85a80be86f26af7f8c) (ShaderImporter) -> (artifact id: '8d5c00853936413f988059a7757eb65c') in 0.0095864 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltsmulti.shader using Guid(9294844b15dca184d914a632279b24e1) (ShaderImporter) -> (artifact id: '66d75c943e3b2efd8b4daae23edd09f5') in 0.0449625 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Particle.shader using Guid(92dca90132d64243b8c0e6c140c6c2b4) (ShaderImporter) -> (artifact id: 'fe91b8b8fba1d6b26cbb1f8001abd28c') in 0.0087239 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_onetrans.shader using Guid(b269573b9937b8340b3e9e191a3ba5a8) (ShaderImporter) -> (artifact id: '90c8b60039512395eb7f7aeed8be4d0e') in 0.0526162 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd12.compute using Guid(d280a817cb434ebe96c4715d6f3682df) (ComputeShaderImporter) -> (artifact id: 'e1c79e4fdcb93358aefa753c9f836a99') in 0.0044668 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Glow.shader using Guid(03d1c7382c5e4ed7af2e5686dd3a2b4a) (ShaderImporter) -> (artifact id: '8488b13cc0a58d4e9f32503eed8abbb7') in 0.0100766 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_overlay_one.shader using Guid(33e950d038b8dfd4f824f3985c2abfb7) (ShaderImporter) -> (artifact id: '0fa2e3609db34719bcc61f37a83f94d9') in 0.0202192 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_furonly.shader using Guid(33aad051c4a3a844a8f9330addb86a97) (ShaderImporter) -> (artifact id: 'f57678666673d072668a61a2e4921c5f') in 0.019087 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd06.compute using Guid(63d1c3548bff1694aa3e1740f2348fb4) (ComputeShaderImporter) -> (artifact id: 'a340bdb75b2a2d83c18bccd8718acf66') in 0.0048038 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma06.compute using Guid(c31131195ce3498184eedea0289d3146) (ComputeShaderImporter) -> (artifact id: 'ef8a4457c749f80b47e27d20054da4a4') in 0.0043496 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACVisualSelectionResolve.shader using Guid(d3d6230d4d784b79821cfab398afc8b8) (ShaderImporter) -> (artifact id: '5d103f0423d74223c05934638b857a40') in 0.0092302 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIDebug.shader using Guid(e3251deaaf153f84aa160a88c66da47a) (ShaderImporter) -> (artifact id: '245fcadcff11bfde1847405d8b204da6') in 0.0077763 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd10.compute using Guid(040f12117a524a8dacd03ae2595b6a44) (ComputeShaderImporter) -> (artifact id: '5fa42bb75667b15664ac5bdcc71b87d8') in 0.0038844 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGICutoutReadback.compute using Guid(148252da5b7f4840aedf08885003a004) (ComputeShaderImporter) -> (artifact id: 'd9705f2f4d6aff3577eb630d2517f558') in 0.0023613 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd05.compute using Guid(148b8299508566849a769aa4301e66f4) (ComputeShaderImporter) -> (artifact id: '55827a0b997ae9d68a36ec0911863cad') in 0.0037029 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/SurfaceBuffer/HoSurfaceAssociationValidation.shader using Guid(24a64b445ce6d044cbe6363c019c175f) (ShaderImporter) -> (artifact id: '12818fce11fa844ed1186e772cc742b3') in 0.0094084 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma05.compute using Guid(445bec0eb9834fdcb0cf5f96e3de9a7c) (ComputeShaderImporter) -> (artifact id: '0f27f7cd9053717958d0ac7ac01285ed') in 0.0046184 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/CharacterShadow/HoCharacterShadowProbe.shader using Guid(54ba845ce94044b983768434b56ac2b7) (ShaderImporter) -> (artifact id: 'ce176450e3dbc3ab9671cc6022efb44a') in 0.007761 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_fur_cutout.shader using Guid(544c75f56e9af8048b29a6ace5f52091) (ShaderImporter) -> (artifact id: '6d931355e7c75291f18b360a5aa3344d') in 0.052326 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_fur_two.shader using Guid(54bc8b41278802d4a81b27fe402994e2) (ShaderImporter) -> (artifact id: '1901fe29c6c53c0379ac6da86425315c') in 0.0574069 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd08.compute using Guid(542f5e620043476d858e7796c4084d90) (ComputeShaderImporter) -> (artifact id: 'e51f92ec97ec621d891af896c08202dc') in 0.0044415 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Resources/HoGeometryDataDebug.shader using Guid(741d9366df4dff54b928ef059753f11a) (ShaderImporter) -> (artifact id: '8097228f8e80335a202cafff0e269c13') in 0.0081058 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd00.compute using Guid(8428dca410d54025a7c5787ff8004650) (ComputeShaderImporter) -> (artifact id: '153f563db2deabe7d3420ebe31a6614b') in 0.0034768 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_overlay.shader using Guid(94274b8ef5d3af842b9427384cba3a8f) (ShaderImporter) -> (artifact id: '65a2971ea0eca3d64e39a12872a15ec5') in 0.024627 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd11.compute using Guid(a409185ac6c7f4340aecd748df5a23df) (ComputeShaderImporter) -> (artifact id: '0ceb2e2daddd2130061700b5e42c4c65') in 0.0046214 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/Debug/HoSurfaceBufferDebug.shader using Guid(a43fafa21ef82bdeb920d34a7acad6cf) (ShaderImporter) -> (artifact id: 'c3a33ff4efe102d2741af63203f7252b') in 0.0088912 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/SkyGodRays.shader using Guid(c4037da13db349c894b83ceef29c3f40) (ShaderImporter) -> (artifact id: 'ff16810019dab02fc17b298bc783456a') in 0.0081278 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowDebug.shader using Guid(c44482f0fbc44615aeb5e33ecff12617) (ShaderImporter) -> (artifact id: 'b900ec2fdd8e59f9b8af8d24f680fef2') in 0.0085373 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/BlueNoise.shader using Guid(d4fe7ffdc7874d03ac65650eb1781fc1) (ShaderImporter) -> (artifact id: '332f63bb4d1282020cb51aa0e9032d3f') in 0.0088495 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/GrainCustom.shader using Guid(f4e1b282f32d4e148a7a35f9f0b9cf7d) (ShaderImporter) -> (artifact id: '2b84d053f82260b728d2c6d352159ecf') in 0.0079448 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/PlanarReflection/HoPlanarReflectionComposite.shader using Guid(15c44c5d7a7c4e4a9d910e2f53cf7d1b) (ShaderImporter) -> (artifact id: '9d4863eff52fc71d63aca9110d63e4e4') in 0.009934 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_fur.shader using Guid(55706696b2bdb5d4d8541b89e17085c8) (ShaderImporter) -> (artifact id: 'a3bd394822bb409deb90e56a8c209dd5') in 0.0512697 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Shaders/HoAtmosphereDebug.shader using Guid(557e48e19870ca54880044ca8fcfe4d5) (ShaderImporter) -> (artifact id: 'f8a6798ab001f8df8d5ee76e9ae934b3') in 0.0094147 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Fisheye.shader using Guid(55ce95623a4b46549d00285e41cac652) (ShaderImporter) -> (artifact id: 'b391a2a47e15321b9a6def753bb3c9bf') in 0.0079788 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_cutout.shader using Guid(85d6126cae43b6847aff4b13f4adb8ec) (ShaderImporter) -> (artifact id: '91c5866994ac85827b9b39ac300c27ff') in 0.046651 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTPrimarySurfaceValidation.shader using Guid(8549dc962cacd0a47ad034bc649aae69) (ShaderImporter) -> (artifact id: '5212a9de4a16a4466e6068d24746868e') in 0.0091547 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd02.compute using Guid(858cacef7439499994c9e52eb354d938) (ComputeShaderImporter) -> (artifact id: 'd731edac44e2979d8287cd15abe378fa') in 0.003912 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma07.compute using Guid(9583264a25754acfb375dd6826bff0f7) (ComputeShaderImporter) -> (artifact id: '5b1b92a44b02ec43c8f5e1f6588335c5') in 0.0040531 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/HoSurfaceCorrelatedReduce.shader using Guid(a5193cef5419a4041b796a806e03310f) (ShaderImporter) -> (artifact id: '45c0d2ea40d683b9aef04e50b179ca44') in 0.0097028 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd12.compute using Guid(a5bbfaf17b80468459e71fc8081789d8) (ComputeShaderImporter) -> (artifact id: '95f265d151991bf672b6fe5f8d234459') in 0.0046586 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_trans.shader using Guid(165365ab7100a044ca85fc8c33548a62) (ShaderImporter) -> (artifact id: '4dc2b6ca4b666e1c99d41f5869811700') in 0.0477399 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ColorGradingCustom.shader using Guid(2661a7c1c8e34f679e3f5fb9a7fd98d0) (ShaderImporter) -> (artifact id: '324bd0cd82fce412067ac57db5204d96') in 0.0099955 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltspass_transparent.shader using Guid(2683fad669f20ec49b8e9656954a33a8) (ShaderImporter) -> (artifact id: 'ad974bc487f06047668e8543ec5edc63') in 0.0906435 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ApertureBokeh.shader using Guid(36cc763905e04f8f9e3f67b37cb936e4) (ShaderImporter) -> (artifact id: '69ba5076420c4a77544e18e0e4ffe819') in 0.010437 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTVisibilityValidation.raytrace using Guid(4659156bed0c4000a538a73277200a04) (RayTracingShaderImporter)
+Compiling Ray Tracing Shader "HoRTVisibilityValidation.raytrace", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '7fb726c9a10ef03e1da967b63f42abb2') in 0.0040208 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/DitheringCustom.shader using Guid(46e904179b4c46b6bf7b5535d47227f9) (ShaderImporter) -> (artifact id: 'e50664bd1678dc4096f616b98655612e') in 0.0076209 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.shader using Guid(667add4ac3eb78e429de87b499c18213) (ShaderImporter) -> (artifact id: '03afb094943cb50ad05fbb2e8afb498f') in 0.0148514 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma02.compute using Guid(7621b54b4cf24c41bad613db52f182b7) (ComputeShaderImporter) -> (artifact id: 'bc114c61bcf6d3103a9f2a2b214bce31') in 0.00435 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/GlitchArt.shader using Guid(a6328cf87e274474858bb80beaf76b11) (ShaderImporter) -> (artifact id: '5298bb3ad44552dad13345dec7a4ffcc') in 0.0075222 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/DropShadow.shader using Guid(a6fcd72ef0c3420e8b142530f1ea2ab3) (ShaderImporter) -> (artifact id: '7368593c62f5b833f8ff08ddef245dd0') in 0.0079532 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SubsurfaceScattering/Shaders/Debug/HoSubsurfaceScatteringDebug.shader using Guid(a6ff6e8a904847538450f3adf35f8051) (ShaderImporter) -> (artifact id: 'f53792c9d6abdd42aaf9044af890d6ac') in 0.009018 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ToonMap.shader using Guid(b6de8f59c7d24a1e8b0d459c2f6a31a4) (ShaderImporter) -> (artifact id: '28095a1230f3b9bf2ed89e512335876c') in 0.0076684 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIPairedGather.compute using Guid(c6326905c8524f63866d1760300425dc) (ComputeShaderImporter) -> (artifact id: 'c5c2e0498990ac17087b952cc055c7d3') in 0.0026613 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIGpuProbe.compute using Guid(d6bdc359b00647ffba111abb9a03f070) (ComputeShaderImporter) -> (artifact id: '85a32fde741796dc3a822e9cae2548e3') in 0.0022577 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferFallback.shader using Guid(f6e9303069cb4813bedec2557aa83417) (ShaderImporter) -> (artifact id: '9c32dea1df8f3baeef4c6f87d988f0a8') in 0.0070363 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd07.compute using Guid(2777bec2626752a4ea33c1258246a841) (ComputeShaderImporter) -> (artifact id: 'cf890326317b7e81eb28804676cc280a') in 0.0037659 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/EdgeLight.shader using Guid(37cc804f6fb742438deef6219824f213) (ShaderImporter) -> (artifact id: '42af1e144b1a9787fa5302aae66eae62') in 0.0091206 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTSceneValidation.compute using Guid(47cae3cc9355c86409d357a7eaa924ac) (ComputeShaderImporter) -> (artifact id: '52c1fff8f41a57da7e42ad2a83acd263') in 0.0035938 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd04.compute using Guid(57ea0a7912b79514da0c83278dd823f5) (ComputeShaderImporter) -> (artifact id: '6aeb586e2da338068c735ba8bdce1fd4') in 0.0046178 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/VolumeLight/Resources/HoVolumeLightSolarHD.shader using Guid(7760f275f19569441858a9184457d5da) (ShaderImporter)There are inconsistent line endings in the 'Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/VolumeLight/Resources/HoVolumeLightSolarHD.shader' script. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+ -> (artifact id: '8ce151db1b60dba3bf6a0aed99c66ad9') in 0.0194476 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterFaceHairDiffuse.shader using Guid(7732e9f20c084c75bafcc61a27bc3174) (ShaderImporter) -> (artifact id: '903c22a8df0ba060fb1acc915252f35b') in 0.0083166 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/PlanarReflection/HoPlanarReflectionPrefilter.shader using Guid(c7351ce6f76e44428222c39eadb9c244) (ShaderImporter) -> (artifact id: '657919390520097b54153ab47feaf7d9') in 0.0075899 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Tests/Editor/ScreenProcess/OutlineHandoffSubject.shader using Guid(c7cc3d47f60f46368d797c3400114201) (ShaderImporter) -> (artifact id: 'cb47f11841024590e73002cdf3d25616') in 0.0100047 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltsmulti_ref.shader using Guid(d7af54cdd86902d41b8c240e06b93009) (ShaderImporter) -> (artifact id: '2258d1841a2e7e22ec6623e78cad2fd4') in 0.0425985 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGISelectionCapture.compute using Guid(f7c39072f46e4956a99c05fe12dca789) (ComputeShaderImporter) -> (artifact id: '27814dc7d8fce0721b6cd6be0aea9bad') in 0.0026504 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/SkyTyndall.shader using Guid(f7f326fe097347eca2b5235cf1ef28a6) (ShaderImporter) -> (artifact id: 'd97f9bdd8ac723be0102189c492fed51') in 0.0093961 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_hair.shader using Guid(f75d7994d72c53e4da226b3b9b21d942) (ShaderImporter) -> (artifact id: 'e8f612a2f5e409154abdd4371245695b') in 0.0735594 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/BokehZoomBlur.shader using Guid(18a264a5a62f4d70a0772ba9ecb2f678) (ShaderImporter) -> (artifact id: 'fd94669e666300d20665a30b336e112f') in 0.0073185 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterObjectSemantic.shader using Guid(28500da684dd5a74a9b01459bbc84d88) (ShaderImporter) -> (artifact id: 'b13b88a226da817602e83d732b3fd270') in 0.0087351 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/SurfaceBuffer/HoInvisibleSurfaceValidation.shader using Guid(4877f9df47212524b83c31f14b290c98) (ShaderImporter) -> (artifact id: 'f9a39e76c4f86eda6be11263614ec300') in 0.0071108 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd02.compute using Guid(785f49a097b7c5a4c86a580d2e60d2da) (ComputeShaderImporter) -> (artifact id: '7523cdea38731f35f6716979173006e8') in 0.0034988 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd03.compute using Guid(c8c35f1a2d096d5439f91b23598e4281) (ComputeShaderImporter) -> (artifact id: 'ab72cd0e9883d22ab0838c213b4addf2') in 0.0033748 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Resources/HoGeometryDataTension.compute using Guid(e89967e6a4dd6a343909d3e664ea1f58) (ComputeShaderImporter) -> (artifact id: '86a976697b9ebe493445b8293183e601') in 0.0031133 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_furonly_two.shader using Guid(f8d9dfac6dbfaaf4c9c3aaf4bd8c955f) (ShaderImporter) -> (artifact id: '1287117cb713d7365d690b82b2d2bcaf') in 0.0196969 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd09.compute using Guid(f80d8259a3336f54db80b6b4461d01ae) (ComputeShaderImporter) -> (artifact id: '17000c8b1955b54f33c0a6a8b359c22e') in 0.0045578 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/Atmosphere/HoAtmosphereValidation.shader using Guid(0990f1ab77bef6241b1197c6270da208) (ShaderImporter) -> (artifact id: '415230c397c35c3b119502362e53fadd') in 0.0086055 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/LayerBlit.shader using Guid(09af61524f55407dbe8b23f5740044a5) (ShaderImporter) -> (artifact id: '3d55cfbbff7ea042aaff9010b224dae4') in 0.0073734 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Distortion.shader using Guid(2901c4cc5c1747518c2aacd5db5a4c83) (ShaderImporter) -> (artifact id: 'caaf6a7309ca7a9ae78b7033afba146b') in 0.0065223 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma08.compute using Guid(396d2d628ca44aa89e4ed44bb4b2d7c6) (ComputeShaderImporter) -> (artifact id: '4a6da4f855b9772f96b097245d710ea3') in 0.0036258 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/Debug/HoAttributeCompositeDebug.shader using Guid(59fa301a7be14d74a8392d78f8200a6d) (ShaderImporter) -> (artifact id: '1729a1cf58da62a2c0333bf17493b04f') in 0.0092261 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIReplayContract.compute using Guid(79d60188201645cb95e3c232995d37a9) (ComputeShaderImporter) -> (artifact id: '3dae065f20e930cabb161f1f8968073f') in 0.0042849 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/HoRTShadow.raytrace using Guid(79bd38baf19e4bc59632a8770b196dac) (RayTracingShaderImporter)
+Compiling Ray Tracing Shader "HoRTShadow.raytrace", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: 'efc29881b85ab5c6db223585e99b1787') in 0.0067373 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIGridAudit.compute using Guid(993954cb9cb8422981d7190f8e469834) (ComputeShaderImporter) -> (artifact id: 'be2b4cc17f8bd02a080b5d30a59dbd34') in 0.0055071 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/DepthFog.shader using Guid(a9c0489d284bdcb419ec85d9d3c31650) (ShaderImporter) -> (artifact id: '6bd06d14d85d62efa0a12cabe5aab306') in 0.0090731 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTPrimarySurfaceValidation.compute using Guid(c912c74578335464da7be3e4d7e8cc93) (ComputeShaderImporter) -> (artifact id: 'e743dd2147258c6298d660798de317c6') in 0.0059364 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIDenseReference.compute using Guid(c94299a6ef1d61e4ba0b8de9d5601f9c) (ComputeShaderImporter) -> (artifact id: '95e99ee6bcb9a52734dbc767667b93bf') in 0.0101064 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIComposite.shader using Guid(c9e91ab4a2fb4f74a3ce0e7b775bf937) (ShaderImporter) -> (artifact id: '47b7a490a76ecc99323dead68f24cac3') in 0.0068699 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd09.compute using Guid(d95252b24a8b4c178c0398dd0598e848) (ComputeShaderImporter) -> (artifact id: 'b5a885ed02e57898acaab0085a09c6c8') in 0.0040798 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltspass_baker.shader using Guid(f96a89829ccb1e54b85214550519a8d6) (ShaderImporter) -> (artifact id: '75451ce2e685d2193d4deadfe3971d60') in 0.0129199 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GTAO/Shaders/Debug/HoGTAODebug.shader using Guid(4a26db27c4e84e00b4dd95cf8d0f10e7) (ShaderImporter) -> (artifact id: '7eda79d17b86559ff8fcc0f5e436f103') in 0.008074 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/CRTEffects.shader using Guid(5a0a05c89d7440fda04f4c369c8687db) (ShaderImporter) -> (artifact id: '2c0171eb602d24d275d79faa7d6565b8') in 0.0069393 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_twotrans.shader using Guid(6a77405f7dfdc1447af58854c7f43f39) (ShaderImporter) -> (artifact id: '20f726bedd949a7d04f45fb939615508') in 0.0470604 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader using Guid(7aa4bf09a3eb4f9d9a7eef013ba236ea) (ShaderImporter) -> (artifact id: '8a73a88ea2b2733094a0ec88d0b173e6') in 0.0081723 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Gradient.shader using Guid(7a8e2fdbabcf4a5d9d7e5c0fc87199b8) (ShaderImporter) -> (artifact id: 'ced24b79660fe256769becedbe115afa') in 0.007054 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma01.compute using Guid(aae01a4a60f6499bbc7ca3cb810f81af) (ComputeShaderImporter) -> (artifact id: '2e3e1b99c8786af7e69759344caeadc9') in 0.0046295 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd13.compute using Guid(aa9d4238c6fc0df449ab9f16622faf2c) (ComputeShaderImporter) -> (artifact id: 'a791cf41dfbc49535346b254ffcc038e') in 0.0033818 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/VignetteCustom.shader using Guid(ca2358854df448e6b739d35124ba2646) (ShaderImporter) -> (artifact id: 'ec6654c2c8cef09a3df23c3185a8af1e') in 0.0082247 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIPrecisionCopy.compute using Guid(ea697ea1fbca4c979390eb02fa174aa8) (ComputeShaderImporter) -> (artifact id: 'a8f4a79a25be4ded4eb7cfe52b4bb658') in 0.0023101 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugGridOverlay.shader using Guid(fad0b44dfec35ad459eb627816f78985) (ShaderImporter) -> (artifact id: '1d31bf72a42caddbcabb920f9b701480') in 0.0068103 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Pixelize.shader using Guid(0b7cf206c6f3448b90448a1d5af3e4df) (ShaderImporter) -> (artifact id: '2ae352462a5ed9bc4def86b6a059ce2c') in 0.0063941 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSkyCapture.shader using Guid(1ba62e6358d24d2c938bfbb1206f363b) (ShaderImporter) -> (artifact id: '9236ee168d018a53e1e18da41e181783') in 0.0072987 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/RGBBlurV2.shader using Guid(1bc7d9f4b31a49e58df86f4e01052267) (ShaderImporter) -> (artifact id: '72d10a2524eb29b9b2d59a87baf2379f') in 0.0076613 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/Outline.shader using Guid(2bc7a383d92745b285780c114ef11f3e) (ShaderImporter) -> (artifact id: 'd5f7d454c37d1557168097c3fdc11c37') in 0.009286 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_cutout_oo.shader using Guid(3b3957e6c393b114bab6f835b4ed8f5d) (ShaderImporter) -> (artifact id: 'ba91c93367d857c9cda5b993964048c4') in 0.0194115 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_cutout_o.shader using Guid(3b4aa19949601f046a20ca8bdaee929f) (ShaderImporter) -> (artifact id: '995c1d92a3c108736bf298e73af7225b') in 0.0469179 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd07.compute using Guid(5b93976fbae346a1be42388b63978f3e) (ComputeShaderImporter) -> (artifact id: '7b89fd1db72b41a4f4f4bae019512120') in 0.0045073 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/SpeedLines.shader using Guid(6b8a2913aa38479cb531d9d8e50630e7) (ShaderImporter) -> (artifact id: 'bca23321736caefbf5054854e5bf4dde') in 0.0072321 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MaterialGradient/Shaders/HoMaterialGradientDemo.shader using Guid(9b9a7d19a28f4c239a5edcf13184df12) (ShaderImporter) -> (artifact id: '621626f21d26949cd9776a017b147a07') in 0.006939 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/DownScaleResolution.shader using Guid(9bda6acebd5741f494818e28b3010fea) (ShaderImporter) -> (artifact id: '065d1081cafcecaf06f5b9107b8e04f2') in 0.0068633 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/Debug/HoGeometryBufferDebug.shader using Guid(bb25f2ef8e324e59873a9c9f57b2f944) (ShaderImporter) -> (artifact id: '99f58263a779b9a270a380962ad344af') in 0.008593 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Weather.shader using Guid(bb6569d09a8547e6b6e9d62169f3214b) (ShaderImporter) -> (artifact id: 'db04daf3a648c7f560147d750cbffafc') in 0.0073802 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTShadow/HoRTShadowSigmaValidation.compute using Guid(ebf86630988c47a495e82e01f7e8ba73) (ComputeShaderImporter) -> (artifact id: '291da6b0f0f573437b954f204930273e') in 0.002485 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_oo.shader using Guid(fba17785d6b2c594ab6c0303c834da65) (ShaderImporter) -> (artifact id: 'a3a0b8c416d4d461bf4afff545a32731') in 0.0198088 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_trans_oo.shader using Guid(0c762f24b85918a49812fc5690619178) (ShaderImporter) -> (artifact id: '6b383dada3e235451b258584330424d1') in 0.0204394 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/CinematicBars.shader using Guid(0c5e20b3f67041068b23f3b84d78a3a9) (ShaderImporter) -> (artifact id: 'fda71c76b25ab949953c82dfe889a5c4') in 0.0078559 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/PostLighting.shader using Guid(2c4b40b99bdf4e2ea5a50d992c9cf8a7) (ShaderImporter) -> (artifact id: '348091899ba18720a3dc4973b090eeb6') in 0.0099087 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/VolumeLight/HoVolumeLightAALegacy.shader using Guid(3c73d1e75450434448c81b7bd6e53ff2) (ShaderImporter)There are inconsistent line endings in the 'Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/VolumeLight/HoVolumeLightAALegacy.shader' script. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+ -> (artifact id: 'cd6aafec16b720db283742ab99d18f45') in 0.0128784 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_trans_o.shader using Guid(3c79b10c7e0b2784aaa4c2f8dd17d55e) (ShaderImporter) -> (artifact id: '4b53a86f1ba8ccba7e3990884f7adabb') in 0.0513092 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/LensFlare.shader using Guid(4c0aa22d42d943a5a2d34292b90369d1) (ShaderImporter) -> (artifact id: '2071e9ade0a93ad33c8ce9cd18aaba18') in 0.0078365 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Glass.shader using Guid(4c6c4af8e6cf4f5bbbd5fc710f9a7d0e) (ShaderImporter) -> (artifact id: 'fd91a86e034468b66d3a2c608ae2a13e') in 0.0076182 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Halftone.shader using Guid(5cb3a5ae6f424cd9a6f2e5764383f69e) (ShaderImporter) -> (artifact id: '9574517ac9f56542a10144a7bf180872') in 0.0094321 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute using Guid(5c84b3097825d5b4e99e97891da0bac1) (ComputeShaderImporter) -> (artifact id: '358625058ee30d89e01b0eeedaefdfc4') in 0.004749 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader using Guid(5cc83b78569a4a10a702403e61e132f1) (ShaderImporter) -> (artifact id: 'd55b384feb3381d9a3f3c2c6963228fc') in 0.0164109 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma04.compute using Guid(6cf2f29e95f4456f916eb908bda368c7) (ComputeShaderImporter) -> (artifact id: 'cde595b51ecb321e7d8b767a8bdafac6') in 0.004598 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/CenterColorCorrection.shader using Guid(6c7bb4647838483d979a47ff73e361ee) (ShaderImporter) -> (artifact id: '4de80a0cf8b4fc3562f9964977d1ce10') in 0.0093307 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ChangeFrameRate.shader using Guid(7c92f88c5c7746a9b7c2f7a2ce2d5041) (ShaderImporter) -> (artifact id: '972c98381f9e8e3da2e584ace3dc3de9') in 0.0091734 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd14.compute using Guid(8c9fb560df5f34c4bafacca7649dc6e1) (ComputeShaderImporter) -> (artifact id: 'b302760a63f9da3d7c0a970ed59b5a5c') in 0.0038228 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_twotrans_o.shader using Guid(9cf054060007d784394b8b0bb703e441) (ShaderImporter) -> (artifact id: '4286b5d055280ddc53949e71334e19a6') in 0.055619 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd00.compute using Guid(9cdcccc44e1fef34282a2520b1293b5d) (ComputeShaderImporter) -> (artifact id: 'f0de392e0dda04b721fa9c513dcf4eb0') in 0.0034048 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/NRD/HoRTShadowSigma03.compute using Guid(cc6361152ea0404ebc7a6ae31102096d) (ComputeShaderImporter) -> (artifact id: '1bae8a5c01775a2236a74532a5897807') in 0.0033674 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterCaptureClear.shader using Guid(dcc35e45d4ce47f8b9aa84fc24c65a63) (ShaderImporter) -> (artifact id: '366b2dfdaf19392424c039cb90fdfc8f') in 0.0064524 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_ref.shader using Guid(dce3f3e248acc7b4daeda00daf616b4d) (ShaderImporter) -> (artifact id: 'd3884c8506e921fc498ef83e08d7bbae') in 0.0437358 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/CharacterShadow/HoCharacterShadowFilteringProbe.shader using Guid(dca4ea769a3741c2b7da22cb908a39eb) (ShaderImporter) -> (artifact id: 'e8a8cbe9aa76184052445eb547ae478b') in 0.0074338 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIVisibilityMaterial.shader using Guid(0d5f003c3bf94f6db6aed1f42645e3a2) (ShaderImporter) -> (artifact id: '8b96ce74bf37ab482ed59c87066120da') in 0.0032344 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACVisualIdentityResolve.shader using Guid(1da994692c4752444859679075305556) (ShaderImporter) -> (artifact id: '968257c8345334743c9319561718dc87') in 0.007275 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/AutoWhiteBalance.shader using Guid(3d5b4335da104a05bcb91b1611487ebb) (ShaderImporter) -> (artifact id: '047e98d50a750de4ce2732f604e73c52') in 0.006944 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterSubjectOutline.shader using Guid(5d7f0f69093748b0b77ec214f6ade39e) (ShaderImporter) -> (artifact id: '1e73a16702a8240b0be1e78946993588') in 0.0079231 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/PrismFracture.shader using Guid(6df87c9f6b7949c89e5067a0a2ffbcb5) (ShaderImporter) -> (artifact id: '3d8adcc28c1b0df2cedd1550f11043c3') in 0.0070608 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferFallback.shader using Guid(8d1f4a7c2e5b43096c8e1a4d7b0f32b4) (ShaderImporter) -> (artifact id: '1579449f9e73f9d9bf2d1ec2f8592ab5') in 0.0094814 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/Sharpen.shader using Guid(8d2f0fa38d124d4ab0f9e0d1d5f2c3c4) (ShaderImporter) -> (artifact id: 'b7a49700ac93d62594f94951c860de87') in 0.0073161 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/OIT/WeightedOITComposite.shader using Guid(9d81b31ce1fd6254bba1c0e96068def6) (ShaderImporter) -> (artifact id: 'd977ac78e0bfbeadf9e5b57c995b3de3') in 0.0082594 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltspass_cutout.shader using Guid(ad219df2a46e841488aee6a013e84e36) (ShaderImporter) -> (artifact id: 'b91cfddc9e65cd72d562c1cff6af7ba6') in 0.0790264 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd14.compute using Guid(bdfd7c1ac3e146d6a16fc23da9fff1f6) (ComputeShaderImporter) -> (artifact id: 'cde5d2bec6fa3d577ded13140132438d') in 0.0032235 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Tests/Editor/ScreenProcess/OutlineStencilCopyProbe.shader using Guid(0e817ba7ea9248309f6de598373e2b5f) (ShaderImporter) -> (artifact id: 'f2eecfd14abf1a959239f4c9ce3003fb') in 0.006666 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd01.compute using Guid(0e55b9d98041f854b9f948ec7a711773) (ComputeShaderImporter) -> (artifact id: '2cfa0312577bedb251aca58bf39bb9ab') in 0.0034031 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/FilmBreathGateWeave.shader using Guid(0e0f7eebeb25422b91b25f3d64bdc604) (ShaderImporter) -> (artifact id: 'd4fc83a636d21154075d50c5d26e8261') in 0.0074378 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/ltsmulti_fur.shader using Guid(1e50f1bc4d1b0e34cbf16b82589f6407) (ShaderImporter) -> (artifact id: '5bf1299899fa51760cf10241cd62d90e') in 0.0490911 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/RGBChannelSeparator.shader using Guid(1e72d5ef2cbe4ec092cc953b8adbac1c) (ShaderImporter) -> (artifact id: '1194df0d6ee0e3e46c98ca7f04f6626b') in 0.007627 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferResolve.shader using Guid(1e7c3b8f4a2d49b5c9f2a6d3e8b14c5d) (ShaderImporter) -> (artifact id: '3c71f68b36ad9ae2c7deac9ee0996ff7') in 0.0084016 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIFinalVisibility.raytrace using Guid(2e55cf8751064a849aefc35abb206867) (RayTracingShaderImporter)
+Compiling Ray Tracing Shader "HoRTDIFinalVisibility.raytrace", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: '876d83e13a4032bdd7d9f555f04f3385') in 0.0093338 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGI.raytrace using Guid(3ea6d67e3d22ae6448bc796e8b3213b3) (RayTracingShaderImporter)
+Compiling Ray Tracing Shader "HoRTGI.raytrace", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: 'eff3e22e0e8f9fc9336892f2bc6659b5') in 0.0156344 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/HoRTShadowSigma.compute using Guid(3e8fe584d215447483b2a35299efced5) (ComputeShaderImporter) -> (artifact id: '16fccd1969a4b73c39e1594acd400688') in 0.0065867 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_furonly_cutout.shader using Guid(7ec9f85eb7ee04943adfe19c2ba5901f) (ShaderImporter) -> (artifact id: '820720fdc9752b9639248a1dc704c984') in 0.01727 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferResolve.shader using Guid(7e9a30f62a9748eab736d7787ef4cfe1) (ShaderImporter)There are inconsistent line endings in the 'Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferResolve.shader' script. Some are Mac OS X (UNIX) and some are Windows.
+This might lead to incorrect line numbers in stacktraces and compiler errors. Many text editors can fix this using Convert Line Endings menu commands.
+ -> (artifact id: '8637b01df6d310e69521000fa8dbb133') in 0.0093575 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd11.compute using Guid(8ee0979331fd42159c9ca9595b2b0bef) (ComputeShaderImporter) -> (artifact id: 'e789fb1e03333c7f56b8b08e4f2339fd') in 0.0041022 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/DepthOfField.shader using Guid(9e6c1b7f2511424cbf420b67bb7f1db4) (ShaderImporter) -> (artifact id: '081a56e513482b602d8e724e1e74779e') in 0.0099124 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd06.compute using Guid(ae3796981fa24a18b36be535068e9338) (ComputeShaderImporter) -> (artifact id: '1751156756bd3a8c7f11a44e6c2a807f') in 0.0039808 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/GradientMap.shader using Guid(be49ab3492d7374593971a2eb9594d78) (ShaderImporter) -> (artifact id: '079294310cc9df2547ce20ab171f9775') in 0.0078934 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGISecondaryValidation.raytrace using Guid(de1bc0d027cdf1f4cb6c6e0413d850d1) (RayTracingShaderImporter)
+Compiling Ray Tracing Shader "HoRTGISecondaryValidation.raytrace", keywords = <no keywords>
+    finished in 0.00 seconds. Local cache hits 1, remote cache hits 0, compiled 0 platform variants
+ -> (artifact id: 'd88ec710876499bc9a588bf428544cf8') in 0.0035504 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACSelectionResolve.shader using Guid(ee98109f6d271c04aaf6b78ec4c0bc72) (ShaderImporter) -> (artifact id: '6c9c6f1d01cde7db899aa8e406e354af') in 0.0082147 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/IrisBlur.shader using Guid(2f8df2f62e8640849d9de2d6c04f5c3f) (ShaderImporter) -> (artifact id: '29539810c1f3f8d1bcc0dcf6a74c343f') in 0.0096834 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd04.compute using Guid(3f378c6f31ff45cca24be229860b7874) (ComputeShaderImporter) -> (artifact id: '95c94b7c97ef872ca7a528d6bdcbc8fd') in 0.0046982 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_ref_blur.shader using Guid(3fb94a39b2685ee4d9817dcaf6542d99) (ShaderImporter) -> (artifact id: '5a8b2b38b6c155885e4d5d7e2b9fa649') in 0.0457991 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/LevelAdjustment.shader using Guid(4f6e7a0d0c6b4f56a0c0e6b0a8f4d5b2) (ShaderImporter) -> (artifact id: 'edc7bbcac112dfadc99a1046c68f882e') in 0.0101171 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/Debug/HoObjectBufferDebug.shader using Guid(5f2b8d4a1e7c43906b9e2f5a8c1d47b8) (ShaderImporter) -> (artifact id: '7d07b5b54044d058a683942475f0cbbc') in 0.0115138 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/NRD/HoRTGINrd13.compute using Guid(6fd0e84c5c2c458896cea094b7f151fc) (ComputeShaderImporter) -> (artifact id: '8542b4c7a7c6459ee1955828c7bb56be') in 0.0055372 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTHostValidation.compute using Guid(7f03f68fc2a84160b73d39f448d2c874) (ComputeShaderImporter) -> (artifact id: 'd99fd80c588fcf1a7b1e2904c214de45') in 0.0040578 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd08.compute using Guid(8f289354e50ecab47beaaef4f0573fb9) (ComputeShaderImporter) -> (artifact id: 'b7f140e5a744c6fdc0e2e1e2218ff3ad') in 0.005503 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/SubjectMask.shader using Guid(8f4b4ff1f7e44174a8ea0e4c90612b74) (ShaderImporter) -> (artifact id: '28869088a32a1d606f126552d1748cc4') in 0.0090068 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GTAO/Shaders/HoGTAOMotion.shader using Guid(8f4b6f6a84f74d47b5b8c1a2d5e9f301) (ShaderImporter) -> (artifact id: 'e4116afdea0dec08bae34466b008222b') in 0.011534 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/LogoOverlay.shader using Guid(9f1c1d09ec6f4c24b9a6f0d6b8b73712) (ShaderImporter) -> (artifact id: 'a5c8d9ff64e30460df4a86c10db5de78') in 0.00965 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/Debug/HoDebugPresentationValidation.shader using Guid(cf25da60f4a8ae34e9dab58e8d61bac7) (ShaderImporter) -> (artifact id: '0d408e1786e0ca1db475130afa4e3fc1') in 0.0120171 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts.shader using Guid(df12117ecd77c31469c224178886498e) (ShaderImporter) -> (artifact id: '09c51d1fcc04ac9fe3593819db6905f3') in 0.0526785 seconds
+Start importing Packages/jp.lilxyzw.liltoon/Shader/lts_o.shader using Guid(efa77a80ca0344749b4f19fdd5891cbe) (ShaderImporter) -> (artifact id: '9d6c3f120a2c133ddb6eb67ac98c35d9') in 0.0573451 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MaterialGradient/HoMaterialGradientDemo.mat using Guid(2e96c312a24d44e7aebf1b6c185f0c24) (NativeFormatImporter) -> (artifact id: '1ea53e874f3d80cbb6cc537c8216c67f') in 0.0041543 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Textures/HoAtmosphereSoftFog64.asset using Guid(73bd648d9133f544494f01ce437f9ffe) (NativeFormatImporter) -> (artifact id: 'ce8582d4414bf4f2db95a5b6cc57f610') in 0.0073362 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Textures/HoAtmosphereFineDust64.asset using Guid(65ce1f4fdd5090e4896de24e0f2c7db8) (NativeFormatImporter) -> (artifact id: 'cd8d42c12f83e43111b49186ce2d5a0d') in 0.004808 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Textures/HoAtmospherePatchyFog64.asset using Guid(e8a96d453da96054c80834a905b6423e) (NativeFormatImporter) -> (artifact id: 'a90e33482c387425ccadfe226bc333f7') in 0.0054862 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Atmosphere/Textures/HoAtmosphereWisps64.asset using Guid(bcfdadf4b05630742af1165d63b7e74b) (NativeFormatImporter) -> (artifact id: 'da59ded14e6774d7a7c4bfb7c2f29772') in 0.0048276 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Tests/Editor/ScreenProcess/README.md using Guid(82de3ecb5e579f4479e4a1604a1176df) (TextScriptImporter) -> (artifact id: '3651e28c53bfa9b0b94bf5fd521f80f7') in 0.0040115 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/README.md using Guid(b3514173e1ec2ec47b698faaed70b5cc) (TextScriptImporter) -> (artifact id: '74241b2eebbbe7ca7448e0d317e964f5') in 0.0027065 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/package.json using Guid(85111b9460cc214459b6ef7f93870688) (PackageManifestImporter) -> (artifact id: '1c3ebe4432a7a60d509b27591e6e94b8') in 0.0033578 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/NOTICE.md using Guid(b6bec7b183a5423ea6242342bab5b9e9) (TextScriptImporter) -> (artifact id: '9c59114a1992ca2c164bd5999df297af') in 0.0026051 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/LICENSE.txt using Guid(d63a76317297d9247be9acd3488c0051) (TextScriptImporter) -> (artifact id: '3bb79b7a4abab90e19196103eaf0b540') in 0.002481 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NRD/provenance.json using Guid(f65c8f451bdc9a849be2bd88f6f9f743) (TextScriptImporter) -> (artifact id: 'f12cb4c2f9e2d3ddd42bea655f3f0973') in 0.0020481 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/LICENSE.txt using Guid(07c70ea5ecf84df459ad661ebe6126d7) (TextScriptImporter) -> (artifact id: 'be8e5c0735d4bd5e2f8ae1ab09ce6574') in 0.0024285 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/NOTICE.md using Guid(77ad8329ab83a0f41a4db0e6f48bfc1e) (TextScriptImporter) -> (artifact id: 'f3d9dc27829e9c81b66fe5da53475ca5') in 0.0026394 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/provenance.json using Guid(29ed1c855a3f5c54f9ff05f2f853cf3c) (TextScriptImporter) -> (artifact id: '27557a31cd67f31d5709a58028ecf47f') in 0.0030023 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/CHANGELOG.md using Guid(2c941a20af53f2b4aade9a80329026ab) (TextScriptImporter) -> (artifact id: '141605dcf119671d86b3d87b2d08a104') in 0.0029045 seconds
+Start importing Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/confidence-provenance.json using Guid(5d6432de9705f4d46acd4e6565bb7d04) (TextScriptImporter) -> (artifact id: 'a455dc021f45311b92597335654ee7c6') in 0.0019712 seconds
+Refreshing native plugins compatible for Editor in 1.55 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=307a242e2474a7a4b96cc341b93dbe15): Total: 16.815 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=585 (actual=585, local cache=0, cache server=0)
+		Asset DB Process Time: managed=65 ms, native=6508 ms
+		Asset DB Callback time: managed=163 ms, native=4223 ms
+		Scripting: domain reloads=1, domain reload time=596 ms, compile time=5217 ms, other=41 ms
+		Project Asset Count: scripts=858, non-scripts=2227
+		Asset File Changes: new=1, changed=1063, moved=0, deleted=4
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.004ms
+	InvokePackagesCallback: 3024.815ms
+	ApplyChangesToAssetFolders: 0.874ms
+	Scan: 176.542ms
+	OnSourceAssetsModified: 22.114ms
+	CategorizeAssetsWithTransientArtifact: 15.038ms
+	ProcessAssetsWithTransientArtifactChanges: 31.379ms
+	UnregisterDeletedAssets: 0.002ms
+	CategorizeAssets: 30.767ms
+	ImportOutOfDateAssets: 6131.435ms (-3311.155ms without children)
+		ImportManagerImport: 4133.202ms (104.372ms without children)
+			ImportInProcess: 4018.273ms
+			UpdateCategorizedAssets: 10.557ms
+		CompileScripts: 5216.707ms
+		ReloadNativeAssets: 0.022ms
+		UnloadImportedAssets: 7.278ms
+		ReloadImportedAssets: 82.686ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.290ms
+		InitializingProgressBar: 0.007ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
+		OnDemandSchedulerStart: 2.397ms
+	PostProcessAllAssets: 1344.380ms
+	Hotreload: 2.827ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.003ms
+	UnloadStreamsBegin: 3.045ms
+	PersistCurrentRevisions: 1.584ms
+	UnloadStreamsEnd: 0.002ms
+	GenerateScriptTypeHashes: 1.554ms
+	Untracked: 6030.644ms
+
+Application.AssetDatabase Initial Refresh End
+Scanning for USB devices : 14.644ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-RTInputValidation
+Unloading 72 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3862 unused Assets / (7.8 MB). Loaded Objects now: 4834.
+Memory consumption went from 282.1 MB to 274.3 MB.
+Total: 6.225600 ms (FindLiveObjects: 0.365200 ms CreateObjectMapping: 0.098800 ms MarkObjects: 4.100000 ms  DeleteObjects: 1.660800 ms)
+
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 5 unused Assets / (Unknown). Loaded Objects now: 4834.
+Memory consumption went from 243.1 MB to 243.2 MB.
+Total: 4.262400 ms (FindLiveObjects: 0.216600 ms CreateObjectMapping: 0.043800 ms MarkObjects: 3.984000 ms  DeleteObjects: 0.016900 ms)
+
+[HoRTShadowValidation] START compatibility=False
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation:Run () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowValidation.cs:77)
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation:RunSafePolicy () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowSafePolicyValidation.cs:10)
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowValidation.cs Line: 77)
+
+[Project] Loading completed in 19.729 seconds
+	Project init time: 				19.096 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.509 seconds
+		Asset Database init time: 		0.117 seconds
+		Global illumination init time: 	0.003 seconds
+		Assemblies load time: 			0.585 seconds
+		Unity extensions init time: 	0.004 seconds
+		Asset Database refresh time: 	16.816 seconds
+	Scene opening time: 			0.258 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1793215018272,"processId":17840,"projectLoad":19.7288719,"projectInit":19.0958737,"templateInit":0.0,"packageManagerInit":0.5090071,"assetDatabaseInit":0.1171212,"globalIlluminationInit":0.0028605,"assembliesLoad":0.5854053,"unityExtensionsInit":0.0036819,"assetDatabaseRefresh":16.8155436,"sceneOpening":0.2582736}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1793215018272,"processId":17840,"editorVersion":"6000.3.15f1 (c1aa84e375f6)","branch":"6000.3/staging","buildType":"Release","platform":"Windows"}
+[Licensing::Client] Successfully resolved entitlement details
+[HoRTShadowSafePolicy] PASS entire producer suspended / NPR fallback / no stale products / saved Feature and Volume values preserved
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation:ValidateSafePolicy () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowSafePolicyValidation.cs:27)
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowValidation.cs:94)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowSafePolicyValidation.cs Line: 27)
+
+Curl error 42: Callback aborted
+Request timed out while processing request "https://public-cdn.cloud.unity3d.com/config/production", HTTP error code 0
+.[UnityConnect] Request timed out.
+Start importing ProjectSettings/QualitySettings.asset using Guid(00000000000000009000000000000000) (LibraryAssetImporter) -> (artifact id: 'f959109138f7b7af23da751373416fd9') in 0.0066018 seconds
+Start importing ProjectSettings/GraphicsSettings.asset using Guid(00000000000000006100000000000000) (LibraryAssetImporter) -> (artifact id: '15aa26e62861f6416e9740a55798ea84') in 0.0029153 seconds
+Start importing Assets/UniversalRenderPipelineGlobalSettings.asset using Guid(11f9f9c4c7df86f4e9f4e0864a8f02cd) (NativeFormatImporter) -> (artifact id: 'fca8e40e09376a9bd1af8f530217b7c8') in 0.0023321 seconds
+Refreshing native plugins compatible for Editor in 1.52 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=2728fc53de6f1764b9cac7e257539616): Total: 0.059 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-hhh12-6000.3.15-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-hhh12-6000.3.15 channel disconnected successfully.
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+Leak Detected : Persistent allocates 8 individual allocations. To find out more please enable 'Preferences > Jobs > Leak Detection Level > Enabled With Stack Trace' and reproduce the leak again.
+There are unreleased allocations left in a heap that is released!
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1793215019342,"processId":17840,"allocatedMemory":19519253,"memoryLabels":[{"Default":29313},{"Permanent":15236},{"NewDelete":68409},{"Thread":4238000},{"Manager":826077},{"VertexData":8},{"Geometry":816},{"Texture":296},{"Shader":164853},{"Material":54232},{"GfxDevice":63009},{"GfxThread":192},{"Animation":392},{"Audio":3040},{"FreeType":8},{"FontEngine":736},{"Physics":2090},{"Physics2D":16},{"Serialization":656},{"Input":14984},{"JobScheduler":33024},{"TextLib":216},{"Mono":32},{"MonoCode":64},{"ScriptingNativeRuntime":155060},{"BaseObject":1637440},{"Resource":1336},{"Renderer":3000},{"Transform":4685},{"File":1016},{"WebCam":616},{"Culling":32},{"Terrain":11394},{"Wind":24},{"STL":40},{"String":284304},{"DynamicArray":96209},{"HashMap":3878403},{"Utility":2662998},{"Curl":1828},{"PoolAlloc":2248},{"AI":80},{"TypeTree":11341},{"ScriptManager":512},{"RuntimeInitializeOnLoadManager":64},{"SpriteAtlas":112},{"GI":7792},{"Director":8240},{"CloudService":94608},{"WebRequest":845},{"VR":47994},{"SceneManager":504},{"Video":208},{"LazyScriptCache":32},{"Camera":17},{"Secure":2113},{"SerializationCache":1576},{"APIUpdating":10320},{"Subsystems":336},{"VirtualTexturing":57888},{"StaticSafetyDebugInfo":278528},{"Analytics":384},{"Hierarchy":608},{"CoreStats":13032},{"Identifiers":12960},{"Gui":96},{"EditorUtility":117050},{"VersionControl":4},{"Undo":947},{"AssetDatabase":4549690},{"EditorGi":328},{"UnityConnect":29232},{"Upm":1896},{"AssetCompliance":64},{"DrivenProperties":72},{"LocalIPC":211},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2867},{"Licensing":664},{"AssetReference":32},{"IPCStream":32}]}

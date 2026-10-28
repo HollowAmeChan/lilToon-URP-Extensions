@@ -10,6 +10,9 @@ $taskProject = [IO.Path]::GetFullPath((Join-Path $taskRoot '.codex-research/RTVa
 $taskIsolatedRoot = [IO.Path]::GetFullPath((Join-Path $taskRoot '.codex-research')) + [IO.Path]::DirectorySeparatorChar
 if (-not $taskProject.StartsWith($taskIsolatedRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Independent project required' }
 if (-not (Test-Path -LiteralPath (Join-Path $taskProject 'Packages/manifest.json'))) { throw 'Initialize the independent validation project first' }
+$taskPackageManifest=Get-Content -LiteralPath (Join-Path $taskProject 'Packages/manifest.json') -Raw|ConvertFrom-Json
+$taskPackageReference=$taskPackageManifest.dependencies.'jp.lilxyzw.liltoon.urp.extensions'
+if($taskPackageReference -ne ('file:'+$taskRoot.Replace('\','/')) -and $taskPackageReference -ne ('file:'+$taskRoot)) { throw 'Independent project package dependency does not match the source checkout being validated' }
 $taskLock = Join-Path $taskProject 'Temp/UnityLockfile'
 if (Test-Path -LiteralPath $taskLock) {
     $taskLockProbe = [IO.File]::Open($taskLock, [IO.FileMode]::Open, [IO.FileAccess]::ReadWrite, [IO.FileShare]::None)

@@ -91,9 +91,11 @@ namespace lilToon.URP.Extensions.RTShadow
         private long serial;
         public HoRTShadowSettings Settings => settings;
         public static bool SupportsTerminatorCorrection => false;
+        public static bool ProductionSuspended => true;
         public string Status { get; private set; } = "未生产";
         internal Output LastOutput { get; private set; }
         private readonly List<Output> scheduled = new();
+        private readonly InactivePass inactivePass = new();
         private readonly List<HoRTShadowProduct> rejected = new();
         private Camera currentCamera;
         private readonly List<HoRTScene.Instance> originInstances = new();
@@ -169,6 +171,7 @@ namespace lilToon.URP.Extensions.RTShadow
             // The vertex-tangent displacement has a real-character regression.
             // Saved nonzero Feature/Volume values must not silently reactivate it.
             if (!SupportsTerminatorCorrection) effective.terminatorCorrection = 0;
+            if (ProductionSuspended) { effective.enabled = false; effective.debugMode = HoRTShadowDebugMode.Off; }
             return effective;
         }
         public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData data)
@@ -203,6 +206,7 @@ namespace lilToon.URP.Extensions.RTShadow
         private void AddProductionPasses(ScriptableRenderer renderer, ref RenderingData data, HoRTShadowSettings settings)
         {
             LastOutput = null; scheduled.Clear(); rejected.Clear(); currentCamera=data.cameraData.camera;
+            if (ProductionSuspended) { renderer.EnqueuePass(inactivePass); Status = "RTShadow 生产与材质接收已暂停：真实角色回归，回退原有栅格投影"; return; }
             if (!CameraSupported(data.cameraData, settings)) { Status = "当前相机未请求（检查 Feature 总开关 / Volume 启用 / Scene View）"; return; }
             if (!HoRTScene.IsSupported || !SystemInfo.supportsRayTracing || shader == null || visibilityMaterialShader == null)
             { Status = "需要 D3D12 native RT 与阴影 Shader"; return; }
@@ -271,6 +275,32 @@ namespace lilToon.URP.Extensions.RTShadow
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
             {var resources=frame.GetOrCreate<HoRTShadowRenderGraphResources>();resources.Camera=camera;foreach(var product in products)resources.Add(product);}
             public override void Execute(ScriptableRenderContext context,ref RenderingData data){}
+        }
+        private sealed class InactivePass : ScriptableRenderPass
+        {
+            private sealed class Data { }
+            internal InactivePass() { renderPassEvent = RenderPassEvent.BeforeRenderingOpaques; }
+            public override void RecordRenderGraph(RenderGraph graph, ContextContainer frame)
+            {
+                using (var builder = graph.AddUnsafePass<Data>("Ho-RTShadow suspended: clear GPU receiver", out _))
+                {
+                    builder.AllowGlobalStateModification(true);builder.AllowPassCulling(false);
+                    var black=graph.defaultResources.blackTexture;builder.UseTexture(black);
+                    builder.SetGlobalTextureAfterPass(black,Shader.PropertyToID("_HoRTShadowRawTexture"));
+                    builder.SetGlobalTextureAfterPass(black,Shader.PropertyToID("_HoRTShadowVisibilityTexture"));
+                    builder.SetGlobalTextureAfterPass(black,Shader.PropertyToID("_HoRTShadowDepthTexture"));
+                    builder.SetRenderFunc(static (Data data, UnsafeGraphContext context) => context.cmd.SetGlobalFloat(Shader.PropertyToID("_HoRTShadowActive"),0));
+                }
+            }
+            public override void Execute(ScriptableRenderContext context, ref RenderingData data)
+            {
+                var cmd=CommandBufferPool.Get("Ho-RTShadow suspended: clear GPU receiver");
+                cmd.SetGlobalFloat("_HoRTShadowActive",0);
+                cmd.SetGlobalTexture("_HoRTShadowRawTexture",Texture2D.blackTexture);
+                cmd.SetGlobalTexture("_HoRTShadowVisibilityTexture",Texture2D.blackTexture);
+                cmd.SetGlobalTexture("_HoRTShadowDepthTexture",Texture2D.blackTexture);
+                context.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
+            }
         }
         private void ReleaseOutputs() { foreach (var output in outputs.Values) output.ReleaseAfterUse(); outputs.Clear(); scheduled.Clear(); rejected.Clear(); LastOutput = null; HoAttributeCompositeConsumerRegistry.Remove(this); }
         protected override void Dispose(bool disposing)

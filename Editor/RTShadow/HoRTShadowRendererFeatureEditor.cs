@@ -20,6 +20,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
         {
             serializedObject.Update(); settings = serializedObject.FindProperty("settings");
             EditorGUILayout.HelpBox("需要 Ho-RT、同分辨率单采样 GB / SB 与 D3D12。接收角色在 Ho-RTShadow Receiver 中声明；本处设默认值，Ho-RTShadow Volume 可逐相机覆盖质量及调试。", MessageType.Info);
+            if (HoRTShadowRendererFeature.ProductionSuspended) EditorGUILayout.HelpBox("RTShadow 因真实角色回归临时暂停生产和材质接收，配置保留；当前回退原有栅格投影。", MessageType.Error);
             if (targets.Length == 1)
             {
                 var path = AssetDatabase.GetAssetPath(target);

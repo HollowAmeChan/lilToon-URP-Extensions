@@ -134,7 +134,7 @@ strength 归零，`_UsePlanarReflection` 只能在总开关打开时生效；`ro
 | 7 | Ho-GeometryBuffer | `BeforeRenderingOpaques` | 为 SB 关联检查、RT 主表面和 AC 等生产几何输入 |
 | 8 | Ho-ObjectBuffer | `BeforeRenderingOpaques` | 身份与覆盖先于 SB Scalar V1 关联和 AC；并不因此使普通 SB 数值面依赖 OB 纹理 |
 | 9 | Ho-SurfaceBuffer | `BeforeRenderingOpaques` | 为 RTShadow / RTDI / RTGI 和 AC 提供表面、深度与 owner；RT 当前要求与 GB 同分辨率、单采样 |
-| 10 | Ho-RTShadow | 固定 `BeforeRenderingOpaques` | **同事件时必须在 GB / SB 下方**；逐灯 V、主光 Cast alias 在 opaque / cutout Forward 的 NPR ramp 前可用 |
+| 10 | Ho-RTShadow | 固定 `BeforeRenderingOpaques`；当前因角色回归暂时暂停 | 保留设计排序：**同事件时必须在 GB / SB 下方**。当前只清 GPU 接收绑定，停止生产 / 材质接收 / 调试替换，恢复进展见 Ho-RT §8.8 |
 | 11 | Ho-AttributeComposite | `BeforeRenderingOpaques` | GB / OB / SB 后，GTAO、Forward 与后续语义消费者前 |
 | 12 | Ho-GTAO | 固定 pre-opaque `BeforeRenderingOpaques` | AC 后，Forward 接收 AO 前 |
 | 13 | Ho-SSGI | 生产默认 `AfterRenderingOpaques`；合成默认 `BeforeRenderingPostProcessing` | 生产要 opaque color 和已就绪 AC；不要把“生产在 SSS 前”误写成“最终合成也一定在 SSS 前” |
@@ -264,7 +264,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 17 | Ho-Atmosphere | ✅ 天空 HDR 与太阳参数的公共生产者 |
 | 18 | Ho-VolumeLight | ✅ 独立体积太阳光与 dust，借已有天空 / 深度 |
 | 19 | Ho-RT | ✅ 公共 RT 资源宿主、请求 epoch、共享姿态及 fence 寿命 |
-| 20 | Ho-RTShadow | ✅ 逐灯几何可见度、SIGMA 连续 V 与 NPR 主光接收；有界支持域见 Ho-RT |
+| 20 | Ho-RTShadow | 因真实角色回归临时暂停，保留逐灯 / SIGMA 基础代码；旧有界测试不代表当前角色画质通过，见 Ho-RT §8.8 |
 | 21 | Ho-RTDI | ✅ 独立直接光输出及参考 PBR 替换 / 加法合成；自身历史 |
 | 22 | Ho-RTGI | ✅ 独立一跳间接光输出及加法合成；自身历史 |
 

@@ -1,0 +1,30 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "rawOnly": true,
+    "sigma": false,
+    "failure": "",
+    "requests": 5,
+    "fractionalPixels": 0,
+    "distinctLevels": 0,
+    "toonShadow": 0.0,
+    "toonReceiveOff": 0.0,
+    "toonLit": 0.0,
+    "rawMse": 0.0,
+    "filteredMse": 0.0,
+    "checks": [
+        "Stable distinct receiver identities",
+        "Known character regression is unavailable in production",
+        "Entire regressed producer is suspended, including zero-correction path",
+        "Saved nonzero Feature correction cannot reactivate regressed displacement",
+        "Saved nonzero Volume correction also remains safely inactive",
+        "User Feature and Volume values preserved without asset mutation",
+        "Runtime diagnostics report actual correction zero",
+        "Suspended producer exposes no current product or stale output",
+        "NPR activation is zero so material uses ordinary fallback",
+        "Actual production disabled without changing saved master switch",
+        "Suspension also prevents saved debug mode replacing the camera image",
+        "Positive GPU control observes injected activation when clearing pass is absent",
+        "Explicit stale GPU activation before suspended pass is cleared before downstream shaders"
+    ]
+}

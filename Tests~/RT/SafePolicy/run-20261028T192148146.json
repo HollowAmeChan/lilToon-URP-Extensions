@@ -1,0 +1,38 @@
+{
+  "stage": "SafePolicy",
+  "sourceCommit": "17dae63d8b95efa96a30f28b8919b8df1b9cb3e8",
+  "startedUtc": "2026-10-28T19:21:48.7169554Z",
+  "sourcesFile": "sources-20261028T192148146.json",
+  "runnerSha256": "EDB9AD9C841035305B57972987E0A5666552A2AE13C13B6716061E57310E89F9",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "safe-policy-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSafePolicy",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "29D90EF30B0B7128D54FF61CE02E6AD44A59E67470A73821B7EC749AE1FB9C21",
+      "seconds": 14.3511892,
+      "pass": true,
+      "logFile": "ho-rt-safepolicy-safe-policy-rg-20261028T192148146.log"
+    },
+    {
+      "name": "safe-policy-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSafePolicyCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "CFE3B624AE780A08279AAC567B98E6D4802A61E9527FCA57B2168680CC00A29B",
+      "seconds": 8.4623774,
+      "pass": true,
+      "logFile": "ho-rt-safepolicy-safe-policy-compat-20261028T192148146.log"
+    }
+  ]
+}
