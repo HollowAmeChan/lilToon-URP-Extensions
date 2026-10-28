@@ -1,0 +1,10 @@
+{
+  "scope": "Independent hidden ShaderData layout diagnosis only",
+  "entry": "RunRenderingAfterBootstrap",
+  "sourceCommit": "2dbe40d5f4fd9c6cdd48e84ce5a3996928e30a0a",
+  "sourceSha256": "9C7822040331D644170FA38D55958D3E5FF5A3A00CBA440C9DCBFD4520CD3C7C",
+  "activeProcess": null,
+  "exit": 1,
+  "logSha256": "052492D98D9BA0FCF50270B3524100E6050FAC0D4CB075C0384553044F0282F6",
+  "output": "layout-20261028T044513531"
+}

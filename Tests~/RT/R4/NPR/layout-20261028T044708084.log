@@ -1,0 +1,467 @@
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.15f1 (c1aa84e375f6) revision 12692100'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12" at "2026-10-28T04:47:08.7843965Z"
+OS: 'Windows 11  (10.0.26200) CoreCountrySpecific' Language: 'zh' Physical Memory: 31908 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-28T04:47:08Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe
+-batchmode
+-force-d3d12
+-projectPath
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation
+-executeMethod
+HoRTNprLayoutAudit.RunIntegerRendering
+-logFile
+D:\Unity_Fork\lilToon-URP-Extensions\Tests~\RT\R4\NPR\layout-20261028T044708084.log
+Successfully changed project path to: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation
+D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [28252]  Target information:
+
+Player connection [28252]  * "[IP] 26.182.211.171 [Port] 55505 [Flags] 2 [Guid] 350639214 [EditorId] 350639214 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [28252]  * "[IP] 192.168.1.6 [Port] 55505 [Flags] 2 [Guid] 350639214 [EditorId] 350639214 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [28252] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [28252] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-34832" after 0.2 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.1'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-hhh12"
+[Licensing::IpcConnector] LicenseClient-hhh12 channel disconnected successfully.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15" at "2026-10-28T04:47:09.6185157Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 26116, path: "C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              9aa0d578ffa34c9e86059b6d38d6ecaa
+  Correlation Id:          9504992b5f938d49e37afb2f42c319a6
+  External correlation Id: 8354435692148200096
+  Machine Id:              1CwKlLouk/VY6hjRtF7o1PKDkww=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-hhh12-6000.3.15" (connect: 0.00s, validation: 0.00s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15-notifications" at "2026-10-28T04:47:09.6229644Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: ewogICJzdWJzR3JvdXAiIDogInVuaXR5IGVkaXRvciIsCiAgIm5hbWVzcGFjZSIgOiAidW5pdHlfZWRpdG9yIiwKICAidHlwZSIgOiAiRURJVE9SIiwKICAidGFnIiA6ICJVbml0eVBlcnNvbmFsXXXX
+  Product: Unity Personal Version
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.84s
+[Licensing::Module] Licensing is initialized (took 0.56s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 0.58 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.15f1 (c1aa84e375f6)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation/Assets
+Forcing GfxDevice: Direct3D 12
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+d3d12: failed to query info queue interface (0x80004002).
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 4060 (ID=0x2882)
+    Vendor:          NVIDIA
+    VRAM:            7956 MB
+    App VRAM Budget: 7188 MB
+    Driver:          32.0.16.1742
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56832
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.005022 seconds.
+- Loaded All Assemblies, in  0.405 seconds
+Native extension for WindowsStandalone target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.271 seconds
+Domain Reload Profiling: 665ms
+	BeginReloadAssembly (171ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (25ms)
+	RebuildCommonClasses (30ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (55ms)
+	LoadAllAssembliesAndSetupDomain (129ms)
+		LoadAssemblies (133ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (126ms)
+			TypeCache.Refresh (125ms)
+				TypeCache.ScanAssembly (115ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (271ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (243ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (38ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (50ms)
+			ProcessInitializeOnLoadAttributes (87ms)
+			ProcessInitializeOnLoadMethodAttributes (66ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 28 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.burst@1.8.29 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.burst@6bb9aca3ef38)
+    com.unity.mathematics@1.3.3 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.collections@2.6.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.collections@12999e356c23)
+    com.unity.searcher@4.9.4 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.searcher@d45a78918735)
+    com.unity.nuget.mono-cecil@1.11.6 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.test-framework.performance@3.4.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework.performance@aa81a99c4a75)
+  Built-in packages:
+    com.unity.modules.imgui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.ui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.imageconversion@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.unitywebrequest@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.terrain@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.physics@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.animation@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.particlesystem@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.audio@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.screencapture@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.hierarchycore@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.render-pipelines.core@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.render-pipelines.core@648b47f96bf1)
+    com.unity.shadergraph@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.shadergraph@2da3a5f87f4a)
+    com.unity.ugui@2.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ugui@23e8d17bfaf9)
+    com.unity.test-framework@1.6.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework@aebcb98460c6)
+    com.unity.ext.nunit@2.0.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+  Local packages:
+    com.unity.render-pipelines.universal@file:D:\Unity_Fork\HoUrp17.3.0 (location: D:\Unity_Fork\HoUrp17.3.0)
+    com.unity.render-pipelines.universal-config@file:D:\Unity_Fork\HoUrpConfig17.0.3 (location: D:\Unity_Fork\HoUrpConfig17.0.3)
+    jp.lilxyzw.liltoon@file:D:\Unity_Fork\lilToon\Assets\lilToon (location: D:\Unity_Fork\lilToon\Assets\lilToon)
+    jp.lilxyzw.liltoon.urp.extensions@file:D:\Unity_Fork\lilToon-URP-Extensions (location: D:\Unity_Fork\lilToon-URP-Extensions)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.02 seconds
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 1s549ms
+[485/604    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+[600/604    0s] Csc Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll (+2 others)
+[601/604    0s] ILPostProcess Library/Bee/artifacts/1900b0aE.dag/post-processed/Assembly-CSharp-Editor.dll (+pdb)
+Processing assembly Library/Bee/artifacts/1900b0aE.dag/Assembly-CSharp-Editor.dll, with 136 defines and 305 references
+
+processors: Unity.Jobs.CodeGen.JobsILPostProcessor, zzzUnity.Burst.CodeGen.BurstILPostProcessor
+
+running Unity.Jobs.CodeGen.JobsILPostProcessor
+
+running zzzUnity.Burst.CodeGen.BurstILPostProcessor
+[602/604    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.pdb
+[603/604    0s] CopyFiles Library/ScriptAssemblies/Assembly-CSharp-Editor.dll
+*** Tundra build success (1.52 seconds), 5 items updated, 604 evaluated
+AssetDatabase: script compilation time: 1.940491s
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.777 seconds
+Refreshing native plugins compatible for Editor in 1.65 ms, found 1 plugins.
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 2.36 ms, found 1 plugins.
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  1.787 seconds
+Domain Reload Profiling: 2547ms
+	BeginReloadAssembly (373ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (75ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (148ms)
+	RebuildCommonClasses (28ms)
+	RebuildNativeTypeToScriptingClass (9ms)
+	initialDomainReloadingComplete (38ms)
+	LoadAllAssembliesAndSetupDomain (312ms)
+		LoadAssemblies (340ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (85ms)
+			TypeCache.Refresh (61ms)
+				TypeCache.ScanAssembly (56ms)
+			BuildScriptInfoCaches (17ms)
+			ResolveRequiredComponents (5ms)
+	FinalizeReload (1788ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (1663ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (18ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (116ms)
+			ProcessInitializeOnLoadAttributes (1460ms)
+			ProcessInitializeOnLoadMethodAttributes (50ms)
+			AfterProcessingInitializeOnLoad (17ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (32ms)
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/0_Lit Basic.shadergraph using Guid(a2407126e3372f64cacb75ed466a5621) (ScriptedImporter)Launched and connected shader compiler UnityShaderCompiler.exe after 0.01 seconds
+ -> (artifact id: '9df154b37bc521dae12a20d560b89732') in 0.2869671 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/Unlit Simple.shadergraph using Guid(2476a2d151e824143af40dce1fc93a12) (ScriptedImporter) -> (artifact id: '8ac279e1dc9b25dbb372a677945e4679') in 0.0596552 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/2_Particle Lit.shadergraph using Guid(a680d9a9f8b66514abbfd3ae1c8f77f7) (ScriptedImporter) -> (artifact id: 'f6b210745175925a4dbf46cc5e3f1187') in 0.130083 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/1_Decal Material Volume.shadergraph using Guid(1716ff8c1e51af14280cc97fbcba3b11) (ScriptedImporter) -> (artifact id: '1b072d62225c60a647fad723111325d3') in 0.1456314 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/0_Decal Simple.shadergraph using Guid(39144937a5efe954dac51acbbe54157e) (ScriptedImporter) -> (artifact id: '32e93db47df5d349b8bf42fc87e8ec1b') in 0.1267289 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/UGUI Canvas Basic.shadergraph using Guid(5a4a765e921b8554eb959f7cf697b3be) (ScriptedImporter) -> (artifact id: '8dc162fe898b51b62c56d66865580caa') in 0.1148394 seconds
+Start importing Packages/com.unity.render-pipelines.universal/Editor/ShaderGraph/GraphTemplates/Terrain Standard 4 Layers URP.shadergraph using Guid(bc3def193b270c649b041063a70a1a1f) (ScriptedImporter)Shader 'Hidden/Terrain/Terrain Standard 4 Layers URP': dependency 'AddPassShader' shader 'Hidden/Hidden/Terrain/Terrain Standard 4 Layers URP_AddPass' not found
+Shader 'Hidden/Terrain/Terrain Standard 4 Layers URP': dependency 'BaseMapGenShader' shader 'Hidden/Hidden/Terrain/Terrain Standard 4 Layers URP_BaseMapGen' not found
+WARNING: Shader Unsupported: 'Hidden/Universal Render Pipeline/Terrain/Lit (Base Pass)' - All subshaders removed
+WARNING: Shader Did you use #pragma only_renderers and omit this platform?
+WARNING: Shader If subshaders removal was intentional, you may have forgotten turning Fallback off?
+WARNING: Shader Unsupported: 'Hidden/Universal Render Pipeline/Terrain/Lit (Base Pass)' - All subshaders removed
+WARNING: Shader Did you use #pragma only_renderers and omit this platform?
+WARNING: Shader If subshaders removal was intentional, you may have forgotten turning Fallback off?
+Shader 'Hidden/Terrain/Terrain Standard 4 Layers URP': dependency 'AddPassShader' shader 'Hidden/Hidden/Terrain/Terrain Standard 4 Layers URP_AddPass' not found
+Shader 'Hidden/Terrain/Terrain Standard 4 Layers URP': dependency 'BaseMapGenShader' shader 'Hidden/Hidden/Terrain/Terrain Standard 4 Layers URP_BaseMapGen' not found
+ -> (artifact id: 'd204f67e611dce573715ebfa4641fe6a') in 0.1880385 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/UGUI Canvas Meter.shadergraph using Guid(9d4e8ca8c5046914c87ca6ccef140dac) (ScriptedImporter) -> (artifact id: 'b1d272442cf6c34ac686711e362cb87f') in 0.0323931 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/1_Lit Full.shadergraph using Guid(aee84ce0dab81b049bb88017d78a63cd) (ScriptedImporter) -> (artifact id: '4647c85e4df294d830d7aef50b3ac2a1') in 0.1102523 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/Terrain Simple.shadergraph using Guid(def488a52add6574d9f295a507032cb8) (ScriptedImporter)Shader 'Hidden/Terrain/Terrain Simple': dependency 'AddPassShader' shader 'Hidden/Hidden/Terrain/Terrain Simple_AddPass' not found
+Shader 'Hidden/Terrain/Terrain Simple': dependency 'BaseMapGenShader' shader 'Hidden/Hidden/Terrain/Terrain Simple_BaseMapGen' not found
+Shader 'Hidden/Terrain/Terrain Simple': dependency 'AddPassShader' shader 'Hidden/Hidden/Terrain/Terrain Simple_AddPass' not found
+Shader 'Hidden/Terrain/Terrain Simple': dependency 'BaseMapGenShader' shader 'Hidden/Hidden/Terrain/Terrain Simple_BaseMapGen' not found
+ -> (artifact id: 'd99f91bc959eb65e71a787a6b5acb09e') in 0.1239029 seconds
+Start importing Packages/com.unity.shadergraph/GraphTemplates/Cross Pipeline/0_Particle Unlit.shadergraph using Guid(af66091e0eca0c04a9c3584ae867418a) (ScriptedImporter) -> (artifact id: '15b12e5bcdd2065ca6f17888d8a0de95') in 0.0472222 seconds
+WARNING: Shader Unsupported: 'Hidden/Universal Render Pipeline/Terrain/Lit (Base Pass)' - All subshaders removed
+WARNING: Shader Did you use #pragma only_renderers and omit this platform?
+WARNING: Shader If subshaders removal was intentional, you may have forgotten turning Fallback off?
+WARNING: Shader Unsupported: 'Hidden/Universal Render Pipeline/Terrain/Lit (Base Pass)' - All subshaders removed
+WARNING: Shader Did you use #pragma only_renderers and omit this platform?
+WARNING: Shader If subshaders removal was intentional, you may have forgotten turning Fallback off?
+Refreshing native plugins compatible for Editor in 1.59 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=d544116c6f7fe964bbf02e9f377071b0): Total: 6.980 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=11 (actual=11, local cache=0, cache server=0)
+		Asset DB Process Time: managed=2 ms, native=3825 ms
+		Asset DB Callback time: managed=133 ms, native=255 ms
+		Scripting: domain reloads=1, domain reload time=777 ms, compile time=1942 ms, other=43 ms
+		Project Asset Count: scripts=845, non-scripts=2168
+		Asset File Changes: new=0, changed=1, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.001ms
+	InvokePackagesCallback: 25.305ms
+	ApplyChangesToAssetFolders: 1.442ms
+	Scan: 264.186ms
+	OnSourceAssetsModified: 0.718ms
+	CategorizeAssetsWithTransientArtifact: 14.651ms
+	ProcessAssetsWithTransientArtifactChanges: 31.996ms
+	CategorizeAssets: 39.062ms
+	ImportOutOfDateAssets: 3264.785ms (-147.112ms without children)
+		ImportManagerImport: 1468.926ms (96.483ms without children)
+			ImportInProcess: 1370.963ms
+			UpdateCategorizedAssets: 1.480ms
+		CompileScripts: 1942.208ms
+		ReloadNativeAssets: 0.001ms
+		UnloadImportedAssets: 0.221ms
+		ReloadImportedAssets: 0.003ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.225ms
+		InitializingProgressBar: 0.006ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
+		OnDemandSchedulerStart: 0.307ms
+	PostProcessAllAssets: 366.253ms
+	Hotreload: 2.848ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.002ms
+	UnloadStreamsBegin: 3.667ms
+	PersistCurrentRevisions: 0.177ms
+	UnloadStreamsEnd: 0.001ms
+	GenerateScriptTypeHashes: 4.897ms
+	Untracked: 2964.563ms
+
+Application.AssetDatabase Initial Refresh End
+Scanning for USB devices : 15.112ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-RTInputValidation
+Unloading 196 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3874 unused Assets / (15.9 MB). Loaded Objects now: 4795.
+Memory consumption went from 290.3 MB to 274.4 MB.
+Total: 8.803100 ms (FindLiveObjects: 0.282000 ms CreateObjectMapping: 0.080900 ms MarkObjects: 5.174200 ms  DeleteObjects: 3.265500 ms)
+
+Unloading 5 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 5 unused Assets / (13.6 KB). Loaded Objects now: 4795.
+Memory consumption went from 239.1 MB to 239.1 MB.
+Total: 5.751200 ms (FindLiveObjects: 0.130300 ms CreateObjectMapping: 0.042100 ms MarkObjects: 5.563900 ms  DeleteObjects: 0.014300 ms)
+
+[HoRTShadowValidation] START compatibility=False
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation:Run () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowValidation.cs:71)
+HoRTNprLayoutAudit:RunIntegerRendering () (at Assets/Editor/HoRTNprLayoutAudit.cs:16)
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowValidation.cs Line: 71)
+
+Material 'lilToon' with Shader 'lilToon' doesn't have an int property '_UseShadow'
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.Material:GetIntImpl (int)
+UnityEngine.Material:GetInteger (string)
+HoRTNprLayoutAudit:RunIntegerRendering () (at Assets/Editor/HoRTNprLayoutAudit.cs:19)
+
+[Assets/Editor/HoRTNprLayoutAudit.cs line 19]
+
+[HoRTNprLayoutAudit] UseShadow property type=Float float=1 integer=0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+HoRTNprLayoutAudit:RunIntegerRendering () (at Assets/Editor/HoRTNprLayoutAudit.cs:19)
+
+(Filename: Assets/Editor/HoRTNprLayoutAudit.cs Line: 19)
+
+Property _UseShadow already exists in the property sheet with a different type: 0
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.Material:SetIntImpl (int,int)
+UnityEngine.Material:SetInteger (string,int)
+HoRTNprLayoutAudit:RunIntegerRendering () (at Assets/Editor/HoRTNprLayoutAudit.cs:20)
+
+[Assets/Editor/HoRTNprLayoutAudit.cs line 20]
+
+[HoRTNprLayoutAudit] SetInteger UseShadow=1
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+HoRTNprLayoutAudit:RunIntegerRendering () (at Assets/Editor/HoRTNprLayoutAudit.cs:21)
+
+(Filename: Assets/Editor/HoRTNprLayoutAudit.cs Line: 21)
+
+[Project] Loading completed in 10.204 seconds
+	Project init time: 				9.466 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.765 seconds
+		Asset Database init time: 		0.124 seconds
+		Global illumination init time: 	0.003 seconds
+		Assemblies load time: 			0.712 seconds
+		Unity extensions init time: 	0.004 seconds
+		Asset Database refresh time: 	6.980 seconds
+	Scene opening time: 			0.201 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1793162838502,"processId":34832,"projectLoad":10.2036011,"projectInit":9.4656572,"templateInit":0.0,"packageManagerInit":0.7647051,"assetDatabaseInit":0.123643,"globalIlluminationInit":0.0030467,"assembliesLoad":0.7118913,"unityExtensionsInit":0.003598,"assetDatabaseRefresh":6.9797564,"sceneOpening":0.2006335}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1793162838502,"processId":34832,"editorVersion":"6000.3.15f1 (c1aa84e375f6)","branch":"6000.3/staging","buildType":"Release","platform":"Windows"}
+[Licensing::Client] Successfully resolved entitlement details
+Refreshing native plugins compatible for Editor in 1.78 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=6d910cd0c785ef047954a8bf77abd9c2): Total: 0.115 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Start Indexing on Editor startup
+[Indexing] Starting Initial Indexing for Assets
+[UnityConnectServicesConfig] config is NOT valid, switching to default
+Created GICache directory at C:/Users/hhh12/AppData/LocalLow/Unity/Caches/GiCache. Took: 0.042s, timestamps: [10.206 - 10.248]
+Exception: Actual lilToon ramp responds to RT Cast and respects material receive switch: 0.001041412 / 0.001041412 / 0.001041412
+  at lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Check (System.Boolean condition, System.String text) [0x0001a] in D:\Unity_Fork\lilToon-URP-Extensions\Editor\RTShadow\HoRTShadowValidation.cs:135 
+  at lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Tick () [0x00203] in D:\Unity_Fork\lilToon-URP-Extensions\Editor\RTShadow\HoRTShadowValidation.cs:99 
+UnityEngine.DebugLogHandler:Internal_LogException_Injected(Exception, IntPtr)
+UnityEngine.DebugLogHandler:Internal_LogException(Exception, Object)
+UnityEngine.DebugLogHandler:LogException(Exception, Object)
+UnityEngine.Logger:LogException(Exception, Object)
+UnityEngine.Debug:LogException(Exception)
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation:Finish(Exception) (at D:\Unity_Fork\lilToon-URP-Extensions\Editor\RTShadow\HoRTShadowValidation.cs:145)
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation:Tick() (at D:\Unity_Fork\lilToon-URP-Extensions\Editor\RTShadow\HoRTShadowValidation.cs:125)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTShadow/HoRTShadowValidation.cs Line: 145)
+
+Curl error 42: Callback aborted
+Request timed out while processing request "https://public-cdn.cloud.unity3d.com/config/production", HTTP error code 0
+.[UnityConnect] Request timed out.
+An error occurred while processing request "https://public-cdn.cloud.unity3d.com/config/production", HTTP error code 299
+.[UnityConnect] An error occurred.
+Start importing ProjectSettings/QualitySettings.asset using Guid(00000000000000009000000000000000) (LibraryAssetImporter) -> (artifact id: '95cc138d30dad67f59946ee174f03f4a') in 0.0093455 seconds
+Start importing ProjectSettings/GraphicsSettings.asset using Guid(00000000000000006100000000000000) (LibraryAssetImporter) -> (artifact id: '94b9c7ca2f7beb65893c520ed1fea821') in 0.0023632 seconds
+Start importing Assets/UniversalRenderPipelineGlobalSettings.asset using Guid(11f9f9c4c7df86f4e9f4e0864a8f02cd) (NativeFormatImporter) -> (artifact id: 'fca8e40e09376a9bd1af8f530217b7c8') in 0.0028382 seconds
+Refreshing native plugins compatible for Editor in 1.61 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=aedeb1256baba184dab1417b2ebcdd33): Total: 0.077 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-hhh12-6000.3.15-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-hhh12-6000.3.15 channel disconnected successfully.
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+Leak Detected : Persistent allocates 8 individual allocations. To find out more please enable 'Preferences > Jobs > Leak Detection Level > Enabled With Stack Trace' and reproduce the leak again.
+There are unreleased allocations left in a heap that is released!
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1793162840018,"processId":34832,"allocatedMemory":19029120,"memoryLabels":[{"Default":29313},{"Permanent":15236},{"NewDelete":68609},{"Thread":4238000},{"Manager":826045},{"VertexData":8},{"Geometry":816},{"Texture":296},{"Shader":116245},{"Material":24},{"GfxDevice":63009},{"GfxThread":192},{"Animation":392},{"Audio":3040},{"FreeType":8},{"FontEngine":736},{"Physics":2090},{"Physics2D":16},{"Serialization":656},{"Input":14984},{"JobScheduler":33024},{"TextLib":216},{"Mono":32},{"MonoCode":64},{"ScriptingNativeRuntime":155060},{"BaseObject":1620208},{"Resource":1336},{"Renderer":3000},{"Transform":4685},{"File":1016},{"WebCam":616},{"Culling":32},{"Terrain":11394},{"Wind":24},{"STL":40},{"String":16767},{"DynamicArray":96127},{"HashMap":3863599},{"Utility":2662998},{"Curl":1828},{"PoolAlloc":2248},{"AI":80},{"TypeTree":11341},{"ScriptManager":512},{"RuntimeInitializeOnLoadManager":64},{"SpriteAtlas":112},{"GI":7792},{"Director":8240},{"CloudService":9648},{"WebRequest":845},{"VR":47994},{"SceneManager":504},{"Video":208},{"LazyScriptCache":32},{"Camera":17},{"Secure":2113},{"SerializationCache":1576},{"APIUpdating":10320},{"Subsystems":336},{"VirtualTexturing":57888},{"StaticSafetyDebugInfo":278528},{"Analytics":384},{"Hierarchy":608},{"CoreStats":13032},{"Identifiers":12960},{"Gui":96},{"EditorUtility":108888},{"VersionControl":4},{"Undo":947},{"AssetDatabase":4554982},{"EditorGi":328},{"UnityConnect":29232},{"Upm":1896},{"AssetCompliance":64},{"DrivenProperties":72},{"LocalIPC":211},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2867},{"Licensing":664},{"AssetReference":32},{"IPCStream":32}]}

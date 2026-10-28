@@ -1,0 +1,106 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
+using UnityEditor;
+using UnityEditor.Rendering;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+public static class HoRTNprLayoutAudit
+{
+    public static void RunReimportRendering()
+    {
+        try
+        {
+            if(!Application.isBatchMode||!Application.dataPath.Replace('\\','/').Contains("/.codex-research/"))throw new Exception("Independent batch project required");
+            var renderer=ScriptableObject.CreateInstance<UniversalRendererData>();var pipeline=UniversalRenderPipelineAsset.Create(renderer);
+            GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
+            var camera=new GameObject("NPR reimport bootstrap").AddComponent<Camera>();camera.enabled=false;var target=new RenderTexture(16,16,0);target.Create();
+            RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});
+            UnityEngine.Object.DestroyImmediate(camera.gameObject);UnityEngine.Object.DestroyImmediate(target);
+            var shader=Shader.Find("lilToon");string path=AssetDatabase.GetAssetPath(shader);
+            Debug.Log("[HoRTNprLayoutAudit] reimport under active subshader="+ShaderUtil.GetShaderData(shader).ActiveSubshaderIndex+" path="+path);
+            AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
+            lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Run();
+        }
+        catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
+    }
+    public static void RunIntegerRendering()
+    {
+        try
+        {
+            lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.Run();
+            var field=typeof(lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation).GetField("toon",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic);
+            var material=(Material)field.GetValue(null);
+            Debug.Log("[HoRTNprLayoutAudit] UseShadow property type="+material.shader.GetPropertyType(material.shader.FindPropertyIndex("_UseShadow"))+" float="+material.GetFloat("_UseShadow")+" integer="+material.GetInteger("_UseShadow"));
+            material.SetInteger("_UseShadow",1);
+            Debug.Log("[HoRTNprLayoutAudit] SetInteger UseShadow="+material.GetInteger("_UseShadow"));
+        }
+        catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
+    }
+    public static void RunRenderingAfterBootstrap()
+    {
+        try
+        {
+            if(!Application.isBatchMode||!Application.dataPath.Replace('\\','/').Contains("/.codex-research/"))throw new Exception("Independent batch project required");
+            var shader=Shader.Find("lilToon");Debug.Log("[HoRTNprLayoutAudit] before pipeline active subshader="+ShaderUtil.GetShaderData(shader).ActiveSubshaderIndex);
+            var renderer=ScriptableObject.CreateInstance<UniversalRendererData>();var pipeline=UniversalRenderPipelineAsset.Create(renderer);
+            GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
+            var camera=new GameObject("NPR bootstrap").AddComponent<Camera>();camera.enabled=false;var texture=new RenderTexture(16,16,0);texture.Create();
+            RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=texture});
+            Debug.Log("[HoRTNprLayoutAudit] after pipeline active subshader="+ShaderUtil.GetShaderData(shader).ActiveSubshaderIndex);
+            UnityEngine.Object.DestroyImmediate(camera.gameObject);UnityEngine.Object.DestroyImmediate(texture);
+            lilToon.URP.Extensions.Editor.CharacterShadow.HoCharacterShadowValidation.ValidateRendering();
+            Debug.Log("[HoRTNprLayoutAudit] BOOTSTRAP RENDER PASS");EditorApplication.Exit(0);
+        }
+        catch(Exception error){Debug.LogException(error);EditorApplication.Exit(1);}
+    }
+    [Serializable] private sealed class Field {public string name,type;public int index,rows,columns,arraySize;}
+    [Serializable] private sealed class Buffer {public string name;public int size;public List<Field> fields=new();}
+    [Serializable] private sealed class Variant {public string shader,pass,stage,keywords,preprocessedFile,materialBufferFile;public bool compile,preprocess;public List<Buffer> buffers=new();public List<string> messages=new();}
+    [Serializable] private sealed class Report {public string scope="Actual Unity ShaderData compile/reflection; diagnosis only, not a rendering pass";public List<Variant> variants=new();public string error;}
+    public static void Run()
+    {
+        var report=new Report();string folder=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-rt-npr-layout"));Directory.CreateDirectory(folder);
+        try
+        {
+            if(!Application.isBatchMode||!Application.dataPath.Replace('\\','/').Contains("/.codex-research/"))throw new Exception("Independent batch project required");
+            ShaderUtil.allowAsyncCompilation=false;
+            foreach(string name in new[]{"lilToon","Hidden/lilToonCutout"})
+            {
+                var shader=Shader.Find(name);if(shader==null)throw new Exception("Shader missing "+name);
+                var data=ShaderUtil.GetShaderData(shader);var sub=data.GetSubshader(0);
+                for(int index=0;index<sub.PassCount;index++)
+                {
+                    var pass=sub.GetPass(index);
+                    string passName=pass.Name.ToUpperInvariant();Debug.Log("[HoRTNprLayoutAudit] inventory "+name+" sub=0 pass="+pass.Name);
+                    if(passName!="FORWARD"&&passName!="HO_SURFACE_BUFFER"&&passName!="SHADOW_CASTER"&&passName!="HO_GEOMETRY_BUFFER")continue;
+                    foreach(string[] keywords in passName=="FORWARD"?new[]{Array.Empty<string>(),new[]{"_MAIN_LIGHT_SHADOWS"}}:new[]{Array.Empty<string>()})
+                    foreach(var stage in new[]{ShaderType.Vertex,ShaderType.Fragment})
+                    {
+                        var row=new Variant{shader=name,pass=pass.Name,stage=stage.ToString(),keywords=string.Join(" ",keywords)};report.variants.Add(row);
+                        var compiled=pass.CompileVariant(stage,keywords,ShaderCompilerPlatform.D3D,BuildTarget.StandaloneWindows64,false);row.compile=compiled.Success;
+                        foreach(var message in compiled.Messages)row.messages.Add(message.severity+": "+message.message);
+                        foreach(var buffer in compiled.ConstantBuffers)
+                        {
+                            var info=new Buffer{name=buffer.Name,size=buffer.Size};row.buffers.Add(info);
+                            foreach(var field in buffer.Fields)info.fields.Add(new Field{name=field.Name,type=field.DataType.ToString(),index=field.Index,rows=field.Rows,columns=field.Columns,arraySize=field.ArraySize});
+                        }
+                        var preprocessed=pass.PreprocessVariant(stage,keywords,ShaderCompilerPlatform.D3D,BuildTarget.StandaloneWindows64,false);row.preprocess=preprocessed.Success;
+                        foreach(var message in preprocessed.Messages)row.messages.Add(message.severity+": "+message.message);
+                        string prefix=Regex.Replace(name+"-"+pass.Name+"-"+stage+"-"+row.keywords,"[^a-zA-Z0-9_-]","_");
+                        row.preprocessedFile=prefix+".hlsl";File.WriteAllText(Path.Combine(folder,row.preprocessedFile),preprocessed.PreprocessedCode??"");
+                        var match=Regex.Match(preprocessed.PreprocessedCode??"",@"cbuffer\s+UnityPerMaterial\b[^\{]*\{(.*?)\}",RegexOptions.Singleline);
+                        row.materialBufferFile=prefix+"-material.txt";File.WriteAllText(Path.Combine(folder,row.materialBufferFile),match.Success?match.Value:"NO UNITYPERMATERIAL BUFFER MATCH");
+                        Debug.Log("[HoRTNprLayoutAudit] "+name+" / "+pass.Name+" / "+stage+" / "+row.keywords+" compile="+row.compile+" pre="+row.preprocess);
+                        File.WriteAllText(Path.Combine(folder,"report.json"),JsonUtility.ToJson(report,true));
+                    }
+                }
+            }
+            if(report.variants.Count<20)throw new Exception("Expected 20 selected URP stage variants, got "+report.variants.Count);
+            Debug.Log("[HoRTNprLayoutAudit] END variants="+report.variants.Count);EditorApplication.Exit(0);
+        }
+        catch(Exception error){report.error=error.ToString();File.WriteAllText(Path.Combine(folder,"report.json"),JsonUtility.ToJson(report,true));Debug.LogException(error);EditorApplication.Exit(1);}
+    }
+}

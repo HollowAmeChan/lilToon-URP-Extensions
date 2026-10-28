@@ -1,0 +1,77 @@
+{
+  "scope": "NPR diagnosis only; actual material gate is not achieved",
+  "layoutAudits": [
+    {
+      "run": "run-20261028T044125442.json",
+      "accepted": false,
+      "reason": "Zero variants; initial helper emitted no report. No URP layout coverage."
+    },
+    {
+      "run": "run-20261028T044227913.json",
+      "accepted": true,
+      "variants": 20,
+      "materialBufferSize": 2800,
+      "consistentUsedFields": 323,
+      "keyFields": {
+        "_Color": [
+          32,
+          "Float",
+          1,
+          4,
+          0
+        ],
+        "_UseShadow": [
+          2412,
+          "Int",
+          1,
+          1,
+          0
+        ],
+        "_AsUnlit": [
+          1552,
+          "Float",
+          1,
+          1,
+          0
+        ],
+        "_LightMinLimit": [
+          1576,
+          "Float",
+          1,
+          1,
+          0
+        ],
+        "_ShadowReceive": [
+          1772,
+          "Float",
+          1,
+          1,
+          0
+        ]
+      }
+    }
+  ],
+  "renderControls": [
+    {
+      "run": "run-20261028T044513531.json",
+      "entry": "RunRenderingAfterBootstrap",
+      "exit": 1,
+      "conclusion": "No NPR reception pass; bootstrap changed failure stage, Integer and reimport retained same response assertion."
+    },
+    {
+      "run": "run-20261028T044708084.json",
+      "entry": "RunIntegerRendering",
+      "exit": 1,
+      "conclusion": "No NPR reception pass; bootstrap changed failure stage, Integer and reimport retained same response assertion."
+    },
+    {
+      "run": "run-20261028T044844040.json",
+      "entry": "RunReimportRendering",
+      "exit": 1,
+      "conclusion": "No NPR reception pass; bootstrap changed failure stage, Integer and reimport retained same response assertion."
+    }
+  ],
+  "eliminated": "The 20 selected URP stage variants agree on every reflected material field index/type and 2800-byte buffer size. Integer setter and active-URP reimport do not resolve reception. No production shader/constant-layout change is justified by this evidence.",
+  "limits": "Reflection proves compiled layouts, not GPU-bound bytes or actual forward keyword/state. Initial zero-variant run is rejected. Older wrapper copies of the prior layout report are stale shared artifacts, not fresh control evidence; use accepted audit only.",
+  "next": "Inspect actual forward draw constants/state and isolate the inactive/active Cast consumer. Preserve existing failed reception oracle and independent RTShadow/SIGMA results."
+}

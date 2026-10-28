@@ -1,0 +1,509 @@
+cbuffer UnityPerMaterial {
+#line 10 "D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_input_base.hlsl"
+	float4 _LightDirectionOverride;
+	float4 _BackfaceColor;
+#line 16
+	float4 _Color;
+	float4 _MainTex_ST;
+
+	float4 _MainTex_ScrollRotate;
+#line 22
+	float4 _MainTexHSVG;
+#line 27
+	float4 _Color2nd;
+	float4 _Main2ndTex_ST;
+	float4 _Main2ndTex_ScrollRotate;
+	float4 _Main2ndDistanceFade;
+
+	float4 _Main2ndTexDecalAnimation;
+	float4 _Main2ndTexDecalSubParam;
+#line 36
+	float4 _Main2ndDissolveMask_ST;
+	float4 _Main2ndDissolveColor;
+	float4 _Main2ndDissolveParams;
+	float4 _Main2ndDissolvePos;
+
+	float4 _Main2ndDissolveNoiseMask_ST;
+	float4 _Main2ndDissolveNoiseMask_ScrollRotate;
+#line 49
+	float4 _Color3rd;
+	float4 _Main3rdTex_ST;
+	float4 _Main3rdTex_ScrollRotate;
+	float4 _Main3rdDistanceFade;
+
+	float4 _Main3rdTexDecalAnimation;
+	float4 _Main3rdTexDecalSubParam;
+#line 58
+	float4 _Main3rdDissolveMask_ST;
+	float4 _Main3rdDissolveColor;
+	float4 _Main3rdDissolveParams;
+	float4 _Main3rdDissolvePos;
+
+	float4 _Main3rdDissolveNoiseMask_ST;
+	float4 _Main3rdDissolveNoiseMask_ScrollRotate;
+#line 71
+	float4 _ShadowColor;
+	float4 _Shadow2ndColor;
+
+	float4 _Shadow3rdColor;
+
+	float4 _ShadowBorderColor;
+#line 81
+	float4 _RimShadeColor;
+#line 86
+	float4 _BacklightColor;
+	float4 _BacklightColorTex_ST;
+#line 92
+	float4 _SSSColor;
+#line 96
+	float4 _PlanarReflectionTint;
+#line 100
+	float4 _EmissionColor;
+	float4 _EmissionBlink;
+	float4 _EmissionMap_ST;
+
+	float4 _EmissionMap_ScrollRotate;
+
+	float4 _EmissionBlendMask_ST;
+
+	float4 _EmissionBlendMask_ScrollRotate;
+#line 114
+	float4 _Emission2ndColor;
+	float4 _Emission2ndBlink;
+	float4 _Emission2ndMap_ST;
+
+	float4 _Emission2ndMap_ScrollRotate;
+
+	float4 _Emission2ndBlendMask_ST;
+
+	float4 _Emission2ndBlendMask_ScrollRotate;
+#line 128
+	float4 _BumpMap_ST;
+#line 133
+	float4 _Bump2ndMap_ST;
+	float4 _Bump2ndScaleMask_ST;
+#line 139
+	float4 _AnisotropyTangentMap_ST;
+	float4 _AnisotropyScaleMask_ST;
+	float4 _AnisotropyShiftNoiseMask_ST;
+#line 146
+	float4 _ReflectionColor;
+	float4 _MetallicGlossMap_ST;
+	float4 _ReflectionColorTex_ST;
+#line 151
+	float4 _SmoothnessTex_ST;
+#line 154
+	float4 _ReflectionCubeColor;
+	float4 _ReflectionCubeTex_HDR;
+#line 160
+	float4 _MatCapColor;
+	float4 _MatCapTex_ST;
+	float4 _MatCapBlendMask_ST;
+	float4 _MatCapBlendUV1;
+
+	float4 _MatCapBumpMap_ST;
+#line 171
+	float4 _MatCap2ndColor;
+	float4 _MatCap2ndTex_ST;
+	float4 _MatCap2ndBlendMask_ST;
+	float4 _MatCap2ndBlendUV1;
+
+	float4 _MatCap2ndBumpMap_ST;
+#line 182
+	float4 _RimColor;
+	float4 _RimColorTex_ST;
+
+	float4 _RimIndirColor;
+#line 191
+	float4 _GlitterColor;
+	float4 _GlitterColorTex_ST;
+	float4 _GlitterParams1;
+	float4 _GlitterParams2;
+
+	float4 _GlitterShapeTex_ST;
+	float4 _GlitterAtras;
+#line 203
+	float4 _DistanceFade;
+	float4 _DistanceFadeColor;
+	float4 _DistanceFadeRimColor;
+#line 210
+	float4 _DitherTex_TexelSize;
+#line 215
+	float4 _DissolveMask_ST;
+	float4 _DissolveColor;
+	float4 _DissolveParams;
+	float4 _DissolvePos;
+
+	float4 _DissolveNoiseMask_ST;
+	float4 _DissolveNoiseMask_ScrollRotate;
+#line 227
+	float4 _OutlineColor;
+	float4 _OutlineLitColor;
+	float4 _OutlineTex_ST;
+
+	float4 _OutlineTex_ScrollRotate;
+#line 235
+	float4 _OutlineTexHSVG;
+#line 266
+	float _AsUnlit;
+	float _Cutoff;
+#line 271
+	float _SubpassCutoff;
+	float _FlipNormal;
+	float _ShiftBackfaceUV;
+	float _VertexLightStrength;
+	float _LightMinLimit;
+	float _LightMaxLimit;
+	float _MonochromeLighting;
+	float _MultiLightIntensity;
+	float _MultiLightCastShadowStrength;
+#line 284
+	float _AOStrength;
+	float _AOLevel;
+	float _AOContrast;
+	float _AODarkStrength;
+	float4 _AOColor;
+	float _AAStrength;
+	float _EnvRimBorder;
+	float _EnvRimBlur;
+
+	float _MainGradationStrength;
+#line 296
+	float _Main2ndTexAngle;
+	float _Main2ndEnableLighting;
+
+	float _Main2ndDissolveNoiseStrength;
+#line 303
+	float _Main3rdTexAngle;
+	float _Main3rdEnableLighting;
+
+	float _Main3rdDissolveNoiseStrength;
+#line 310
+	float4 _AlphaMask_ST;
+	float _AlphaMaskScale;
+	float _AlphaMaskValue;
+#line 315
+	float _BackfaceForceShadow;
+	float _ShadowStrength;
+	float _ShadowNormalStrength;
+	float _ShadowBorder;
+	float _ShadowBlur;
+	float _ShadowStrengthMaskLOD;
+	float _ShadowBorderMaskLOD;
+	float _ShadowBlurMaskLOD;
+	float _Shadow2ndNormalStrength;
+	float _Shadow2ndBorder;
+	float _Shadow2ndBlur;
+
+	float _Shadow3rdNormalStrength;
+	float _Shadow3rdBorder;
+	float _Shadow3rdBlur;
+
+	float _ShadowMainStrength;
+	float _ShadowEnvStrength;
+	float _ShadowBorderRange;
+
+	float _ShadowReceive;
+	float _Shadow2ndReceive;
+	float _Shadow3rdReceive;
+
+	float _ShadowFlatBlur;
+	float _ShadowFlatBorder;
+#line 343
+	float _RimShadeNormalStrength;
+	float _RimShadeBorder;
+	float _RimShadeBlur;
+	float _RimShadeFresnelPower;
+#line 349
+	float _BacklightNormalStrength;
+	float _BacklightBorder;
+	float _BacklightBlur;
+	float _BacklightDirectivity;
+	float _BacklightViewStrength;
+	float _BacklightBackfaceMask;
+	float _BacklightMainStrength;
+#line 358
+	float _SSSStrength;
+	float _SSSPower;
+	float _SSSBorder;
+	float _SSSBlur;
+	float _SSSMainStrength;
+	float _SSSNormalStrength;
+	float _SSSViewStrength;
+
+	float _PlanarReflectionStrength;
+	float _PlanarReflectionMinSmoothness;
+	float _PlanarReflectionEdgeFade;
+	float _PlanarReflectionFadeStart;
+	float _PlanarReflectionFadeEnd;
+
+	float _BumpScale;
+#line 375
+	float _Bump2ndScale;
+#line 378
+	float _AnisotropyScale;
+	float _AnisotropyTangentWidth;
+	float _AnisotropyBitangentWidth;
+	float _AnisotropyShift;
+	float _AnisotropyShiftNoiseScale;
+	float _AnisotropySpecularStrength;
+	float _Anisotropy2ndTangentWidth;
+	float _Anisotropy2ndBitangentWidth;
+	float _Anisotropy2ndShift;
+	float _Anisotropy2ndShiftNoiseScale;
+	float _Anisotropy2ndSpecularStrength;
+#line 391
+	float _Reflectance;
+	float _SpecularNormalStrength;
+	float _SpecularBorder;
+	float _SpecularBlur;
+	float _ReflectionNormalStrength;
+	float _ReflectionCubeEnableLighting;
+#line 399
+	float _Smoothness;
+#line 402
+	float _Metallic;
+	float _GSAAStrength;
+#line 406
+	float _MatCapBlend;
+	float _MatCapEnableLighting;
+	float _MatCapShadowMask;
+	float _MatCapVRParallaxStrength;
+	float _MatCapBackfaceMask;
+	float _MatCapLod;
+	float _MatCapNormalStrength;
+	float _MatCapMainStrength;
+
+	float _MatCapBumpScale;
+#line 419
+	float _MatCap2ndBlend;
+	float _MatCap2ndEnableLighting;
+	float _MatCap2ndShadowMask;
+	float _MatCap2ndVRParallaxStrength;
+	float _MatCap2ndBackfaceMask;
+	float _MatCap2ndLod;
+	float _MatCap2ndNormalStrength;
+	float _MatCap2ndMainStrength;
+
+	float _MatCap2ndBumpScale;
+#line 432
+	float _RimNormalStrength;
+	float _RimBorder;
+	float _RimBlur;
+	float _RimFresnelPower;
+	float _RimEnableLighting;
+	float _RimShadowMask;
+	float _RimVRParallaxStrength;
+	float _RimBackfaceMask;
+	float _RimMainStrength;
+
+	float _RimDirStrength;
+	float _RimDirRange;
+	float _RimIndirRange;
+	float _RimIndirBorder;
+	float _RimIndirBlur;
+#line 450
+	float _GlitterMainStrength;
+	float _GlitterPostContrast;
+	float _GlitterSensitivity;
+	float _GlitterNormalStrength;
+	float _GlitterEnableLighting;
+	float _GlitterShadowMask;
+	float _GlitterVRParallaxStrength;
+	float _GlitterBackfaceMask;
+	float _GlitterScaleRandomize;
+#line 461
+	float _DistanceFadeRimFresnelPower;
+#line 464
+	float _EmissionBlend;
+	float _EmissionParallaxDepth;
+	float _EmissionFluorescence;
+	float _EmissionMainStrength;
+
+	float _EmissionGradSpeed;
+#line 473
+	float _Emission2ndBlend;
+	float _Emission2ndParallaxDepth;
+	float _Emission2ndFluorescence;
+	float _Emission2ndMainStrength;
+
+	float _Emission2ndGradSpeed;
+#line 482
+	float _Parallax;
+	float _ParallaxOffset;
+#line 486
+	float _DitherMaxValue;
+#line 489
+	float _DissolveNoiseStrength;
+
+	float _lilShadowCasterBias;
+	float _lilOITEnabled;
+#line 495
+	float _OutlineLitScale;
+	float _OutlineLitOffset;
+	float _OutlineWidth;
+	float _OutlineEnableLighting;
+	float _OutlineShadowStrength;
+	float _OutlineVectorScale;
+	float _OutlineFixWidth;
+	float _OutlineZBias;
+#line 559
+	uint _Cull;
+
+	uint _OutlineCull;
+#line 567
+	uint _Main2ndTexBlendMode;
+	uint _Main2ndTexAlphaMode;
+	uint _Main2ndTex_UVMode;
+	uint _Main2ndTex_Cull;
+#line 573
+	uint _Main3rdTexBlendMode;
+	uint _Main3rdTexAlphaMode;
+	uint _Main3rdTex_UVMode;
+	uint _Main3rdTex_Cull;
+#line 579
+	uint _AlphaMaskMode;
+#line 582
+	uint _ShadowColorType;
+	uint _ShadowMaskType;
+#line 586
+	uint _Bump2ndMap_UVMode;
+#line 589
+	uint _ReflectionBlendMode;
+#line 592
+	uint _MatCapBlendMode;
+#line 595
+	uint _MatCap2ndBlendMode;
+#line 598
+	uint _RimBlendMode;
+#line 601
+	uint _GlitterUVMode;
+#line 604
+	uint _EmissionMap_UVMode;
+	uint _EmissionBlendMode;
+#line 608
+	uint _Emission2ndMap_UVMode;
+	uint _Emission2ndBlendMode;
+#line 612
+	uint _DistanceFadeMode;
+#line 615
+	uint _UseDither;
+#line 618
+	uint _OutlineVertexR2Width;
+	uint _OutlineVectorUVMode;
+#line 627
+	uint _Invisible;
+
+	uint _UseMain2ndTex;
+	uint _Main2ndTexIsMSDF;
+
+	uint _Main2ndTexIsDecal;
+	uint _Main2ndTexIsLeftOnly;
+	uint _Main2ndTexIsRightOnly;
+	uint _Main2ndTexShouldCopy;
+	uint _Main2ndTexShouldFlipMirror;
+	uint _Main2ndTexShouldFlipCopy;
+#line 641
+	uint _UseMain3rdTex;
+	uint _Main3rdTexIsMSDF;
+
+	uint _Main3rdTexIsDecal;
+	uint _Main3rdTexIsLeftOnly;
+	uint _Main3rdTexIsRightOnly;
+	uint _Main3rdTexShouldCopy;
+	uint _Main3rdTexShouldFlipMirror;
+	uint _Main3rdTexShouldFlipCopy;
+#line 653
+	uint _UseShadow;
+#line 656
+	uint _UseRimShade;
+#line 659
+	uint _UseBacklight;
+	uint _BacklightReceiveShadow;
+#line 663
+	uint _UseSSS;
+	uint _SSSReceiveShadow;
+	uint _SSSThicknessInvert;
+#line 668
+	uint _UseRealtimeAO;
+
+	uint _UsePlanarReflection;
+	uint _PlanarReflectionFlipY;
+
+	uint _UseBumpMap;
+#line 676
+	uint _UseBump2ndMap;
+#line 679
+	uint _UseAnisotropy;
+	uint _Anisotropy2Reflection;
+	uint _Anisotropy2MatCap;
+	uint _Anisotropy2MatCap2nd;
+#line 685
+	uint _UseReflection;
+	uint _ApplySpecular;
+	uint _ApplySpecularFA;
+	uint _ApplyReflection;
+	uint _SpecularToon;
+	uint _ReflectionApplyTransparency;
+#line 693
+	uint _ReflectionCubeOverride;
+#line 696
+	uint _UseMatCap;
+	uint _MatCapApplyTransparency;
+	uint _MatCapPerspective;
+	uint _MatCapZRotCancel;
+
+	uint _MatCapCustomNormal;
+#line 705
+	uint _UseMatCap2nd;
+	uint _MatCap2ndApplyTransparency;
+	uint _MatCap2ndPerspective;
+	uint _MatCap2ndZRotCancel;
+
+	uint _MatCap2ndCustomNormal;
+#line 714
+	uint _UseRim;
+	uint _RimApplyTransparency;
+#line 718
+	uint _UseGlitter;
+	uint _GlitterColorTex_UVMode;
+	uint _GlitterApplyTransparency;
+
+	uint _GlitterApplyShape;
+	uint _GlitterAngleRandomize;
+#line 727
+	uint _UseEmission;
+
+	uint _EmissionUseGrad;
+#line 733
+	uint _UseEmission2nd;
+
+	uint _Emission2ndUseGrad;
+#line 739
+	uint _UseParallax;
+
+	uint _UsePOM;
+#line 745
+	uint _OutlineLitApplyTex;
+	uint _OutlineLitShadowReceive;
+	uint _OutlineDeleteMesh;
+	uint _OutlineDisableInVR;
+#line 764
+	float _HoCharacterCaptureOpacity;
+	float _HoSurfaceThickness;
+	float _HoSurfaceCurvature;
+	float _HoSurfaceTransmittanceHint;
+	float _HoSurfaceMaterialClassId;
+	float _HoSemanticWeight;
+	float _HoSemanticMaskOn;
+	float _HoSSSProfileId;
+	float _HoSSSThicknessScale;
+	float _HoSSSTransmissionStrength;
+	float _HoSSSTransmissionRadius;
+#line 706 "D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_input.hlsl"
+	float _HoTesionEnabled, _HoTesionStrength, _HoTesionStretchStrength, _HoTesionCompressionStrength;
+	float _HoTesionStretchNormalScale, _HoTesionCompressionNormalScale;
+	float4 _HoTesionStretchRange, _HoTesionCompressionRange, _HoTesionMaps;
+	float4 _HoTesionStretchColor, _HoTesionCompressionColor;
+	float4 _HoTesionStretchBaseColor_ST, _HoTesionCompressionBaseColor_ST;
+}

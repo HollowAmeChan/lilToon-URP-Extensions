@@ -400,6 +400,10 @@ R5 真实 Cast 的有界接入见 [Production review](../Tests~/RT/R5/Production
 
 此步增加 40 B/像素 SIGMA 外部纹理（normal、motion、viewZ、penumbra、encoded、RGBA32F visibility），另有原 16 B/像素 raw、8 KiB receiver 位表与 SDK 池 / 常量；资源成本与请求视图数增长，没有毫秒或节省声明。收益是从独立合成降噪推进到真实 RT 场景的一次请求即可生产连续 V；64² 简单夹具不能代替复杂角色、薄发片、coplanar owner 限域、最终空间 AA、真实窄 / 多层 ramp、动态或 Player 验收。NPR 主光 hook 仍未启用，下一步回到该明确失败点，用 ShaderData 的实际常量布局 / 编译信息定位，避免继续盲调材质。R4、R5 最终质量与 R6 均未关闭。
 
+NPR 失败点的编译审计见 [NPR review](../Tests~/RT/R4/NPR/review.json)，诊断入口 [run_layout.ps1](../Tests~/RT/R4/NPR/run_layout.ps1)。显式选择 URP subshader 0，原 lilToon / Cutout 的 Forward（含主光 shadow keyword 两种）、SB、GB、ShadowCaster 共 20 个 vertex / fragment 阶段均编译和预处理成功；反射到的 323 个已使用材质字段，其 index / type / 形状在各阶段一致，UnityPerMaterial 均为 2800 字节，_Color=32、_AsUnlit=1552、_LightMinLimit=1576、_ShadowReceive=1772、_UseShadow=2412。因此没有证据支持修改材质常量布局。初次误选运行前的 builtin active subshader 得到 0 个变体，明确不作为通过。
+
+三个有界渲染对照仍未通过 NPR 接收：预先启动 URP 后原 CS 验证改在 atlas debug 阶段失败；强制 Integer setter 和在已激活的 URP 下重导入 lilToon，均保留原 shadow / receive-off / lit 不响应断言。旧 `Int` ShaderLab 属性的 Unity 属性类型实际为 Float，不能凭源码标签假设必须改 setter。这些诊断没有修改生产 shader，也没有把对照失败扩大解释为确定的历史缺陷。完整日志、编译反射、预处理常量段和无损压缩的源码输出都保留；旧 wrapper 复制的上一轮 layout 报告明确标为共享旧副本，只接纳真正执行的 20 变体审计。收益是排除布局 / setter / 简单导入状态猜测，成本为一次受限编译审计和三个短对照；下一步检查实际前向 draw 的绑定字节 / keyword / 输出过程，继续保留原 gate，不再盲改布局。
+
 <a id="quality-reference"></a>
 
 ## 9. 合并后的质量研究结论

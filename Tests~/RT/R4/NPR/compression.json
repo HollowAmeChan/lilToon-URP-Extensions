@@ -1,0 +1,422 @@
+[
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-FORWARD-Fragment-.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-FORWARD-Fragment-.hlsl.gz",
+    "sha256": "3a50bcc64b324d892830d5d42072058e6db34fa40c398035cf64d32cace8b5e1",
+    "compressedSha256": "85232f1223413a5e65ff01f05f6bdd1d9178e12abe719ca8114d42b3f88d8ab7",
+    "bytes": 419617
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "687863f7c903c19bb27a3271cd7b6d38cb69bc033285719a66492e9e4acf0aac",
+    "compressedSha256": "c57408262c94b3e649a1a423d9e9d4327aceeb824a39a9ed41b7c029444012fa",
+    "bytes": 420431
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-FORWARD-Vertex-.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-FORWARD-Vertex-.hlsl.gz",
+    "sha256": "76f0e155594a84f3b00af1a103562df40b30969ffd4d28c0b33e64ccc5d8512f",
+    "compressedSha256": "61447c8746a2e213d315e3e0e62e43de4ed26c80c0e8a3f64ad038c70dd05cbe",
+    "bytes": 420382
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "d6b748e9d0146053bf9f722d307b5f58944d75d8264c85e073c1a5611c67dd89",
+    "compressedSha256": "d83651bce24605f42e11b8939cfbd6999bfa45023c14d50edc7026ccf1df4184",
+    "bytes": 421196
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "ababb80adab9383a5bc9e9721c4aea1946807432cc4c4dd0b06336af6d592c3b",
+    "compressedSha256": "729976cbf81ecc4ba9e02d41822da2561e874180b9a87893d9518a721eb77731",
+    "bytes": 405307
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "39629f7071ba65bcc33dd0546949ff0d843cf5b1536cead9ff9bbe888f320615",
+    "compressedSha256": "d3a46cbe8faf62fee28d5046d7f11d1a0f86185e7c04ec72b7a56a665c41796d",
+    "bytes": 405280
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "61c43233213d9675ef5c2624f9a12bfe3c51a2cf8c0899980b9a43a97995079d",
+    "compressedSha256": "02c0626c0328fbab19ea0fb08d1b1183edc8dcfe9699ec2566c70f1cda49a05f",
+    "bytes": 410452
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "b9dd80990b28ce90bc8279b7584dbdb2aa4889afe74d4cf531acb0692f84b59e",
+    "compressedSha256": "09c26376078f3594ea7644c7df0a38660515518116703d9b2735089e38f77f85",
+    "bytes": 410425
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-SHADOW_CASTER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-SHADOW_CASTER-Fragment-.hlsl.gz",
+    "sha256": "afd8be5cbac01a0c1b390fc6a6052c6f1c223f6004bade59655ef5838b6d0b27",
+    "compressedSha256": "5fc1a24f1cda4bf7e10de9e8f631f368cbedcdccc1e0e77af9e7b13748f2f414",
+    "bytes": 402226
+  },
+  {
+    "original": "layout-20261028T044227913/Hidden_lilToonCutout-SHADOW_CASTER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044227913/Hidden_lilToonCutout-SHADOW_CASTER-Vertex-.hlsl.gz",
+    "sha256": "c4d2a3381c93e3b9ddaabde807036ffcbe94015269711af1492eaca9b6e8af27",
+    "compressedSha256": "cb010c096bee3da53f51a8ce6b23685d0b449dcca91be177cf3c73768cd0f0da",
+    "bytes": 402254
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-FORWARD-Fragment-.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-FORWARD-Fragment-.hlsl.gz",
+    "sha256": "96694e07ae0cacb520b9f9942d287b59b385d6c022b74c3717b28f6de90524e9",
+    "compressedSha256": "69e929fedfa67b83bbc77e591bdaa6faa01231166b7b2109f6945d92c6cce952",
+    "bytes": 417342
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "43b09618129e3f63aab0820c3f9fe7b83c6475a46d641ff895b729e8b5b5a571",
+    "compressedSha256": "ead76754644953eb7e285561d288488e3e46d8ca7e0468a9c05684d432d1a6db",
+    "bytes": 418156
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-FORWARD-Vertex-.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-FORWARD-Vertex-.hlsl.gz",
+    "sha256": "435a5f1d9a1a2a3a9e2da36f70ef82ba229d583882375e7afa0287cd7b8d097f",
+    "compressedSha256": "8c992521719f24b63356bafca591a012e9665f27a2a96ba355623949e13bf196",
+    "bytes": 418107
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "c48abe1f5268fe4fa043bb7f7c94c8e37442d47b3d19bdc016627aabde7c06c2",
+    "compressedSha256": "f7f393f89f11c0b18b7dce47f2a7788df77d3c3dafa9a6b445a44bb38d986e76",
+    "bytes": 418921
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-HO_GEOMETRY_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-HO_GEOMETRY_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "9db42c4f24306d6f628f14f17ac4b8b93e0eacbc88548fa6ceeb93a3674ccc4a",
+    "compressedSha256": "4ecca3c810c22da3d546b562040df70380926e23bf8459e83405ff28bb68313d",
+    "bytes": 403121
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-HO_GEOMETRY_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-HO_GEOMETRY_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "5f017ac0c7f5fc39b87ceee141949dbb94504c270b29d5135a78a16dc5383a01",
+    "compressedSha256": "4daa898d18e29068c7a1527cfd96c3df5166f3ed88a2123763927fb05282d796",
+    "bytes": 403094
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-HO_SURFACE_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-HO_SURFACE_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "5b8b9d87593b0b0bdb6bf0efbd36616d8780413970ab4ace3df6eb2263f88d17",
+    "compressedSha256": "d6ec0959377eb48752fb5fe59d70d35194b9b1e33dde503a3b0111158b61a132",
+    "bytes": 408245
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-HO_SURFACE_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-HO_SURFACE_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "bd342d39dac546c0fc22314d0ed02c65816789abb8e698fc31ef71a6eff80990",
+    "compressedSha256": "cf3a67a83abfcb4a245aa56f28116ea46f96e229e65c9b22cd83c7eed6bc9aae",
+    "bytes": 408218
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-SHADOW_CASTER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-SHADOW_CASTER-Fragment-.hlsl.gz",
+    "sha256": "d9c2a5742de747d7bea79208e50e0ae9b41ac80ae6dc6c619b2c1a61f7e3d4f2",
+    "compressedSha256": "902e7a047dc9ae2f13d280eb4d7af8840ee1f28a75cd724477c04daf190c8cb4",
+    "bytes": 398193
+  },
+  {
+    "original": "layout-20261028T044227913/lilToon-SHADOW_CASTER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044227913/lilToon-SHADOW_CASTER-Vertex-.hlsl.gz",
+    "sha256": "638bfbd687b03dae121e5048e879d5b8a52e69d56ab5d3557a809f6296471375",
+    "compressedSha256": "4241439eb448ec1fb28b267c196c25daa0d3dbe3d4ac2261cde85748ad2668a8",
+    "bytes": 398227
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-FORWARD-Fragment-.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-FORWARD-Fragment-.hlsl.gz",
+    "sha256": "3a50bcc64b324d892830d5d42072058e6db34fa40c398035cf64d32cace8b5e1",
+    "compressedSha256": "85232f1223413a5e65ff01f05f6bdd1d9178e12abe719ca8114d42b3f88d8ab7",
+    "bytes": 419617
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "687863f7c903c19bb27a3271cd7b6d38cb69bc033285719a66492e9e4acf0aac",
+    "compressedSha256": "c57408262c94b3e649a1a423d9e9d4327aceeb824a39a9ed41b7c029444012fa",
+    "bytes": 420431
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-FORWARD-Vertex-.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-FORWARD-Vertex-.hlsl.gz",
+    "sha256": "76f0e155594a84f3b00af1a103562df40b30969ffd4d28c0b33e64ccc5d8512f",
+    "compressedSha256": "61447c8746a2e213d315e3e0e62e43de4ed26c80c0e8a3f64ad038c70dd05cbe",
+    "bytes": 420382
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "d6b748e9d0146053bf9f722d307b5f58944d75d8264c85e073c1a5611c67dd89",
+    "compressedSha256": "d83651bce24605f42e11b8939cfbd6999bfa45023c14d50edc7026ccf1df4184",
+    "bytes": 421196
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "ababb80adab9383a5bc9e9721c4aea1946807432cc4c4dd0b06336af6d592c3b",
+    "compressedSha256": "729976cbf81ecc4ba9e02d41822da2561e874180b9a87893d9518a721eb77731",
+    "bytes": 405307
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "39629f7071ba65bcc33dd0546949ff0d843cf5b1536cead9ff9bbe888f320615",
+    "compressedSha256": "d3a46cbe8faf62fee28d5046d7f11d1a0f86185e7c04ec72b7a56a665c41796d",
+    "bytes": 405280
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "61c43233213d9675ef5c2624f9a12bfe3c51a2cf8c0899980b9a43a97995079d",
+    "compressedSha256": "02c0626c0328fbab19ea0fb08d1b1183edc8dcfe9699ec2566c70f1cda49a05f",
+    "bytes": 410452
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "b9dd80990b28ce90bc8279b7584dbdb2aa4889afe74d4cf531acb0692f84b59e",
+    "compressedSha256": "09c26376078f3594ea7644c7df0a38660515518116703d9b2735089e38f77f85",
+    "bytes": 410425
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-SHADOW_CASTER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-SHADOW_CASTER-Fragment-.hlsl.gz",
+    "sha256": "afd8be5cbac01a0c1b390fc6a6052c6f1c223f6004bade59655ef5838b6d0b27",
+    "compressedSha256": "5fc1a24f1cda4bf7e10de9e8f631f368cbedcdccc1e0e77af9e7b13748f2f414",
+    "bytes": 402226
+  },
+  {
+    "original": "layout-20261028T044513531/Hidden_lilToonCutout-SHADOW_CASTER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044513531/Hidden_lilToonCutout-SHADOW_CASTER-Vertex-.hlsl.gz",
+    "sha256": "c4d2a3381c93e3b9ddaabde807036ffcbe94015269711af1492eaca9b6e8af27",
+    "compressedSha256": "cb010c096bee3da53f51a8ce6b23685d0b449dcca91be177cf3c73768cd0f0da",
+    "bytes": 402254
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-FORWARD-Fragment-.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-FORWARD-Fragment-.hlsl.gz",
+    "sha256": "96694e07ae0cacb520b9f9942d287b59b385d6c022b74c3717b28f6de90524e9",
+    "compressedSha256": "69e929fedfa67b83bbc77e591bdaa6faa01231166b7b2109f6945d92c6cce952",
+    "bytes": 417342
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "43b09618129e3f63aab0820c3f9fe7b83c6475a46d641ff895b729e8b5b5a571",
+    "compressedSha256": "ead76754644953eb7e285561d288488e3e46d8ca7e0468a9c05684d432d1a6db",
+    "bytes": 418156
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-FORWARD-Vertex-.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-FORWARD-Vertex-.hlsl.gz",
+    "sha256": "435a5f1d9a1a2a3a9e2da36f70ef82ba229d583882375e7afa0287cd7b8d097f",
+    "compressedSha256": "8c992521719f24b63356bafca591a012e9665f27a2a96ba355623949e13bf196",
+    "bytes": 418107
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "c48abe1f5268fe4fa043bb7f7c94c8e37442d47b3d19bdc016627aabde7c06c2",
+    "compressedSha256": "f7f393f89f11c0b18b7dce47f2a7788df77d3c3dafa9a6b445a44bb38d986e76",
+    "bytes": 418921
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-HO_GEOMETRY_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-HO_GEOMETRY_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "9db42c4f24306d6f628f14f17ac4b8b93e0eacbc88548fa6ceeb93a3674ccc4a",
+    "compressedSha256": "4ecca3c810c22da3d546b562040df70380926e23bf8459e83405ff28bb68313d",
+    "bytes": 403121
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-HO_GEOMETRY_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-HO_GEOMETRY_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "5f017ac0c7f5fc39b87ceee141949dbb94504c270b29d5135a78a16dc5383a01",
+    "compressedSha256": "4daa898d18e29068c7a1527cfd96c3df5166f3ed88a2123763927fb05282d796",
+    "bytes": 403094
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-HO_SURFACE_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-HO_SURFACE_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "5b8b9d87593b0b0bdb6bf0efbd36616d8780413970ab4ace3df6eb2263f88d17",
+    "compressedSha256": "d6ec0959377eb48752fb5fe59d70d35194b9b1e33dde503a3b0111158b61a132",
+    "bytes": 408245
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-HO_SURFACE_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-HO_SURFACE_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "bd342d39dac546c0fc22314d0ed02c65816789abb8e698fc31ef71a6eff80990",
+    "compressedSha256": "cf3a67a83abfcb4a245aa56f28116ea46f96e229e65c9b22cd83c7eed6bc9aae",
+    "bytes": 408218
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-SHADOW_CASTER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-SHADOW_CASTER-Fragment-.hlsl.gz",
+    "sha256": "d9c2a5742de747d7bea79208e50e0ae9b41ac80ae6dc6c619b2c1a61f7e3d4f2",
+    "compressedSha256": "902e7a047dc9ae2f13d280eb4d7af8840ee1f28a75cd724477c04daf190c8cb4",
+    "bytes": 398193
+  },
+  {
+    "original": "layout-20261028T044513531/lilToon-SHADOW_CASTER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044513531/lilToon-SHADOW_CASTER-Vertex-.hlsl.gz",
+    "sha256": "638bfbd687b03dae121e5048e879d5b8a52e69d56ab5d3557a809f6296471375",
+    "compressedSha256": "4241439eb448ec1fb28b267c196c25daa0d3dbe3d4ac2261cde85748ad2668a8",
+    "bytes": 398227
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-FORWARD-Fragment-.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-FORWARD-Fragment-.hlsl.gz",
+    "sha256": "3a50bcc64b324d892830d5d42072058e6db34fa40c398035cf64d32cace8b5e1",
+    "compressedSha256": "85232f1223413a5e65ff01f05f6bdd1d9178e12abe719ca8114d42b3f88d8ab7",
+    "bytes": 419617
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "687863f7c903c19bb27a3271cd7b6d38cb69bc033285719a66492e9e4acf0aac",
+    "compressedSha256": "c57408262c94b3e649a1a423d9e9d4327aceeb824a39a9ed41b7c029444012fa",
+    "bytes": 420431
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-FORWARD-Vertex-.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-FORWARD-Vertex-.hlsl.gz",
+    "sha256": "76f0e155594a84f3b00af1a103562df40b30969ffd4d28c0b33e64ccc5d8512f",
+    "compressedSha256": "61447c8746a2e213d315e3e0e62e43de4ed26c80c0e8a3f64ad038c70dd05cbe",
+    "bytes": 420382
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "d6b748e9d0146053bf9f722d307b5f58944d75d8264c85e073c1a5611c67dd89",
+    "compressedSha256": "d83651bce24605f42e11b8939cfbd6999bfa45023c14d50edc7026ccf1df4184",
+    "bytes": 421196
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "ababb80adab9383a5bc9e9721c4aea1946807432cc4c4dd0b06336af6d592c3b",
+    "compressedSha256": "729976cbf81ecc4ba9e02d41822da2561e874180b9a87893d9518a721eb77731",
+    "bytes": 405307
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-HO_GEOMETRY_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "39629f7071ba65bcc33dd0546949ff0d843cf5b1536cead9ff9bbe888f320615",
+    "compressedSha256": "d3a46cbe8faf62fee28d5046d7f11d1a0f86185e7c04ec72b7a56a665c41796d",
+    "bytes": 405280
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "61c43233213d9675ef5c2624f9a12bfe3c51a2cf8c0899980b9a43a97995079d",
+    "compressedSha256": "02c0626c0328fbab19ea0fb08d1b1183edc8dcfe9699ec2566c70f1cda49a05f",
+    "bytes": 410452
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-HO_SURFACE_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "b9dd80990b28ce90bc8279b7584dbdb2aa4889afe74d4cf531acb0692f84b59e",
+    "compressedSha256": "09c26376078f3594ea7644c7df0a38660515518116703d9b2735089e38f77f85",
+    "bytes": 410425
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-SHADOW_CASTER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-SHADOW_CASTER-Fragment-.hlsl.gz",
+    "sha256": "afd8be5cbac01a0c1b390fc6a6052c6f1c223f6004bade59655ef5838b6d0b27",
+    "compressedSha256": "5fc1a24f1cda4bf7e10de9e8f631f368cbedcdccc1e0e77af9e7b13748f2f414",
+    "bytes": 402226
+  },
+  {
+    "original": "layout-20261028T044708084/Hidden_lilToonCutout-SHADOW_CASTER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044708084/Hidden_lilToonCutout-SHADOW_CASTER-Vertex-.hlsl.gz",
+    "sha256": "c4d2a3381c93e3b9ddaabde807036ffcbe94015269711af1492eaca9b6e8af27",
+    "compressedSha256": "cb010c096bee3da53f51a8ce6b23685d0b449dcca91be177cf3c73768cd0f0da",
+    "bytes": 402254
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-FORWARD-Fragment-.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-FORWARD-Fragment-.hlsl.gz",
+    "sha256": "96694e07ae0cacb520b9f9942d287b59b385d6c022b74c3717b28f6de90524e9",
+    "compressedSha256": "69e929fedfa67b83bbc77e591bdaa6faa01231166b7b2109f6945d92c6cce952",
+    "bytes": 417342
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-FORWARD-Fragment-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "43b09618129e3f63aab0820c3f9fe7b83c6475a46d641ff895b729e8b5b5a571",
+    "compressedSha256": "ead76754644953eb7e285561d288488e3e46d8ca7e0468a9c05684d432d1a6db",
+    "bytes": 418156
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-FORWARD-Vertex-.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-FORWARD-Vertex-.hlsl.gz",
+    "sha256": "435a5f1d9a1a2a3a9e2da36f70ef82ba229d583882375e7afa0287cd7b8d097f",
+    "compressedSha256": "8c992521719f24b63356bafca591a012e9665f27a2a96ba355623949e13bf196",
+    "bytes": 418107
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-FORWARD-Vertex-_MAIN_LIGHT_SHADOWS.hlsl.gz",
+    "sha256": "c48abe1f5268fe4fa043bb7f7c94c8e37442d47b3d19bdc016627aabde7c06c2",
+    "compressedSha256": "f7f393f89f11c0b18b7dce47f2a7788df77d3c3dafa9a6b445a44bb38d986e76",
+    "bytes": 418921
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-HO_GEOMETRY_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-HO_GEOMETRY_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "9db42c4f24306d6f628f14f17ac4b8b93e0eacbc88548fa6ceeb93a3674ccc4a",
+    "compressedSha256": "4ecca3c810c22da3d546b562040df70380926e23bf8459e83405ff28bb68313d",
+    "bytes": 403121
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-HO_GEOMETRY_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-HO_GEOMETRY_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "5f017ac0c7f5fc39b87ceee141949dbb94504c270b29d5135a78a16dc5383a01",
+    "compressedSha256": "4daa898d18e29068c7a1527cfd96c3df5166f3ed88a2123763927fb05282d796",
+    "bytes": 403094
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-HO_SURFACE_BUFFER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-HO_SURFACE_BUFFER-Fragment-.hlsl.gz",
+    "sha256": "5b8b9d87593b0b0bdb6bf0efbd36616d8780413970ab4ace3df6eb2263f88d17",
+    "compressedSha256": "d6ec0959377eb48752fb5fe59d70d35194b9b1e33dde503a3b0111158b61a132",
+    "bytes": 408245
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-HO_SURFACE_BUFFER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-HO_SURFACE_BUFFER-Vertex-.hlsl.gz",
+    "sha256": "bd342d39dac546c0fc22314d0ed02c65816789abb8e698fc31ef71a6eff80990",
+    "compressedSha256": "cf3a67a83abfcb4a245aa56f28116ea46f96e229e65c9b22cd83c7eed6bc9aae",
+    "bytes": 408218
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-SHADOW_CASTER-Fragment-.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-SHADOW_CASTER-Fragment-.hlsl.gz",
+    "sha256": "d9c2a5742de747d7bea79208e50e0ae9b41ac80ae6dc6c619b2c1a61f7e3d4f2",
+    "compressedSha256": "902e7a047dc9ae2f13d280eb4d7af8840ee1f28a75cd724477c04daf190c8cb4",
+    "bytes": 398193
+  },
+  {
+    "original": "layout-20261028T044708084/lilToon-SHADOW_CASTER-Vertex-.hlsl",
+    "compressed": "layout-20261028T044708084/lilToon-SHADOW_CASTER-Vertex-.hlsl.gz",
+    "sha256": "638bfbd687b03dae121e5048e879d5b8a52e69d56ab5d3557a809f6296471375",
+    "compressedSha256": "4241439eb448ec1fb28b267c196c25daa0d3dbe3d4ac2261cde85748ad2668a8",
+    "bytes": 398227
+  }
+]
