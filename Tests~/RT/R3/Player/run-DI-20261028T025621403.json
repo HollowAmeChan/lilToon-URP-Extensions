@@ -1,0 +1,33 @@
+{
+  "stage": "R3",
+  "mode": "DI",
+  "sourceCommit": "6fbc934bbc51a63321e37b06f81b5e67080ef415",
+  "sourcesFile": "sources-20261028T025621403.json",
+  "runtimeProbeSha256": "AA2FC8655588316DBB05CE3426FB6E8D6F54761A90E8B6FB7068DB3F4A8A4259",
+  "activeProcess": null,
+  "scope": "Independent serialized Mono Player GI/NRD via camera probes; mixed DI/GI is checked separately in Editor",
+  "buildExit": 0,
+  "buildLog": "ho-rt-r3-player-build-DI-20261028T025621403.log",
+  "buildLogSha256": "09730B43CE58890697947CA0AB3AC1121C264083F9B47D7ABEF287E1C66E1C8D",
+  "reviewedExistingWarnings": [
+    "Shader warning in 'Hidden/lilToon/URP/VolumeLight/SolarHD': floating point division by zero at /Unity_Fork/HoUrp17.3.0/ShaderLibrary/Shadows.hlsl(310) (on d3d11)",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+  ],
+  "buildDiagnostics": [],
+  "playerExit": 1,
+  "playerLog": "player-DI-20261028T025621403.log",
+  "playerLogSha256": "C1B05C0A842F93699007FF61E3F565731059878135BB970C34CF1F9095BD526C",
+  "playerDiagnostics": [
+    "Exception: Player mixed diffuse/specular proposal energy mismatch; temporal=False\r",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.\r",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.\r",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.\r",
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.\r"
+  ],
+  "reviewedExistingCleanupWarnings": [],
+  "playerResult": "report-DI-20261028T025621403.json",
+  "pass": false
+}

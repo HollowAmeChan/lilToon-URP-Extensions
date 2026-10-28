@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('GI','GICompatibility')][string]$Mode='GI',
+    [ValidateSet('GI','GICompatibility','DI','DICompatibility','DISmoke','DISmokeCompatibility')][string]$Mode='GI',
     [string]$Unity='C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe'
 )
 $ErrorActionPreference='Stop'
@@ -7,11 +7,27 @@ $taskRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
 $taskProject=Join-Path $taskRoot '.codex-research/RTValidation'
 $taskLock=Join-Path $taskProject 'Temp/UnityLockfile'
 if(Test-Path -LiteralPath $taskLock){$taskCheck=[IO.File]::Open($taskLock,[IO.FileMode]::Open,[IO.FileAccess]::ReadWrite,[IO.FileShare]::None);$taskCheck.Dispose();Remove-Item -LiteralPath $taskLock}
-$taskAssets=Join-Path $taskProject 'Assets/RTGIPlayerProbe'
+$taskIsDI=$Mode.StartsWith('DI')
+$taskAssets=Join-Path $taskProject $(if($taskIsDI){'Assets/RTDIPlayerProbe'}else{'Assets/RTGIPlayerProbe'})
 New-Item -ItemType Directory -Path $taskAssets -Force|Out-Null
-$taskProbe=[IO.File]::ReadAllText((Join-Path $taskRoot 'Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs'))
+if($taskIsDI){
+    foreach($taskFile in @('HoRTDIPlayerCaptureFeature.cs','HoRTDIPlayerProbe.cs','HoRTDIPlayerCapture.shader','HoRTDIPlayerGpuTiming.cs','HoRTDIPlayerConvergence.cs','HoRTDIPlayerComposite.cs')){
+        Copy-Item -LiteralPath (Join-Path $taskRoot ('Tests~/Player/RTDI/'+$taskFile)) -Destination (Join-Path $taskAssets $taskFile)
+    }
+    $taskStatistics=[IO.File]::ReadAllText((Join-Path $taskRoot 'Editor/RTDI/HoRTDIConvergenceStatistics.cs')).Replace('HoRTDIConvergenceStatistics','HoRTDIPlayerConvergenceStatistics')
+    [IO.File]::WriteAllText((Join-Path $taskAssets 'HoRTDIPlayerConvergenceStatistics.cs'),$taskStatistics,(New-Object Text.UTF8Encoding($false)))
+}
+$taskProbeSource=if($taskIsDI){'Tests~/Player/RTDI/HoRTDIPlayerProbe.cs'}else{'Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs'}
+$taskProbeName=if($taskIsDI){'HoRTDIPlayerProbe.cs'}else{'HoRTGIRuntimeProbe.cs'}
+$taskProbe=[IO.File]::ReadAllText((Join-Path $taskRoot $taskProbeSource))
+if($taskIsDI){$taskProbe='using System.Reflection;'+[Environment]::NewLine+$taskProbe}
+if($Mode.Contains('Smoke')){
+    $taskSmoke=[IO.File]::ReadAllText((Join-Path $PSScriptRoot 'R3/Player/DIHostSmoke.cs.txt'))
+    $taskProbe=$taskProbe.Replace('        ValidateCutoutVisibility();','        ValidateCutoutVisibility();'+[Environment]::NewLine+$taskSmoke)
+}
 $taskProbe='using lilToon.URP.Extensions.RT;'+[Environment]::NewLine+$taskProbe
-$taskProbe=$taskProbe.Replace('Application.Quit(report.pass?0:1);',@'
+$taskQuitExpression=if($taskIsDI){'result.pass'}else{'report.pass'}
+$taskQuitAudit=@'
 foreach(var host in Resources.FindObjectsOfTypeAll<HoRTRendererFeature>())
 {
     var flags=BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic;
@@ -20,22 +36,23 @@ foreach(var host in Resources.FindObjectsOfTypeAll<HoRTRendererFeature>())
 }
 typeof(HoRTRendererFeature).GetMethod("CollectRetired",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,null);
 Debug.Log("[HoRTPlayerLifetime] retired="+typeof(HoRTRendererFeature).GetProperty("RetiredDomainCount",BindingFlags.Static|BindingFlags.NonPublic).GetValue(null));
-Application.Quit(report.pass?0:1);
-'@)
-[IO.File]::WriteAllText((Join-Path $taskAssets 'HoRTGIRuntimeProbe.cs'),$taskProbe,(New-Object Text.UTF8Encoding($false)))
+Application.Quit(RESULT_PASS?0:1);
+'@
+$taskProbe=$taskProbe.Replace(('Application.Quit('+$taskQuitExpression+'?0:1);'),$taskQuitAudit.Replace('RESULT_PASS',$taskQuitExpression))
+[IO.File]::WriteAllText((Join-Path $taskAssets $taskProbeName),$taskProbe,(New-Object Text.UTF8Encoding($false)))
 $taskResults=Join-Path $PSScriptRoot 'R3/Player';New-Item -ItemType Directory -Path $taskResults -Force|Out-Null
 $taskStamp=[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')
 $taskReportPath=Join-Path $taskResults ('run-'+$Mode+'-'+$taskStamp+'.json')
 $taskBuildLog=Join-Path $taskRoot ('.codex-research/ho-rt-r3-player-build-'+$Mode+'-'+$taskStamp+'.log')
 $taskSources=@(Get-ChildItem -LiteralPath (Join-Path $taskRoot 'Runtime'),(Join-Path $taskRoot 'Editor') -Recurse -File|Where-Object{$_.Extension -in '.cs','.hlsl','.hlsli','.h','.compute','.shader','.raytrace','.dll','.asmdef','.meta'}|ForEach-Object{@{path=$_.FullName.Substring($taskRoot.Length+1).Replace('\','/');sha256=(Get-FileHash -LiteralPath $_.FullName).Hash}})
 $taskSourcesFile=Join-Path $taskResults ('sources-'+$taskStamp+'.json');$taskSources|ConvertTo-Json -Depth 4|Set-Content -LiteralPath $taskSourcesFile -Encoding utf8
-$taskReport=[ordered]@{stage='R3';mode=$Mode;sourceCommit=(git -C $taskRoot rev-parse HEAD);sourcesFile=[IO.Path]::GetFileName($taskSourcesFile);runtimeProbeSha256=(Get-FileHash -LiteralPath (Join-Path $taskAssets 'HoRTGIRuntimeProbe.cs')).Hash;activeProcess=$null;scope='Independent serialized Mono Player GI/NRD via explicit camera requests; mixed DI/GI is checked separately in Editor'}
+$taskReport=[ordered]@{stage='R3';mode=$Mode;sourceCommit=(git -C $taskRoot rev-parse HEAD);sourcesFile=[IO.Path]::GetFileName($taskSourcesFile);runtimeProbeSha256=(Get-FileHash -LiteralPath (Join-Path $taskAssets $taskProbeName)).Hash;activeProcess=$null;scope='Independent serialized Mono Player effect/NRD via camera probes. DISmoke isolates host/native/RELAX after the full proposal oracle failed both current and pre-migration control; mixed DI/GI is checked separately in Editor'}
 function Wait-TaskProcess($taskChild,$taskLimit){
     $taskStarted=[DateTime]::UtcNow
     while(-not $taskChild.WaitForExit(1000)){if(([DateTime]::UtcNow-$taskStarted).TotalSeconds -gt $taskLimit){$taskChild.Kill();$taskChild.WaitForExit();throw 'Owned validation process exceeded its bounded time'}}
     $taskChild.Refresh()
 }
-$taskBuildEntry='lilToon.URP.Extensions.Editor.RTGI.HoRTGIPlayerValidation.'+$(if($Mode -eq 'GI'){'Build'}else{'BuildCompatibility'})
+$taskBuildEntry=$(if($taskIsDI){'lilToon.URP.Extensions.Editor.RTDI.HoRTDIPlayerValidation.'}else{'lilToon.URP.Extensions.Editor.RTGI.HoRTGIPlayerValidation.'})+$(if($Mode.EndsWith('Compatibility')){'BuildCompatibility'}else{'Build'})
 $taskBuild=Start-Process -FilePath $Unity -WindowStyle Hidden -PassThru -ArgumentList @('-batchmode','-force-d3d12','-force-d3d12-debug','-projectPath',('"'+$taskProject+'"'),'-executeMethod',$taskBuildEntry,'-logFile',('"'+$taskBuildLog+'"'))
 $taskReport.activeProcess=@{id=$taskBuild.Id;phase='build';log=$taskBuildLog};$taskReport|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $taskReportPath
 Write-Output ('START '+$Mode+' Player build PID='+$taskBuild.Id)
@@ -49,12 +66,15 @@ $taskReport.reviewedExistingWarnings=@($taskDiagnosticLines|Where-Object{$_ -in 
 $taskReport.buildDiagnostics=@($taskDiagnosticLines|Where-Object{$_ -notin $taskKnown})
 Copy-Item -LiteralPath $taskBuildLog -Destination (Join-Path $taskResults $taskReport.buildLog)
 $taskReport|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $taskReportPath
-if($taskBuild.ExitCode -ne 0 -or -not $taskText.Contains('[HoGIPlayerBuild] PASS') -or $taskReport.buildDiagnostics.Count -ne 0){throw 'Player build rejected; inspect exact diagnostics'}
-$taskFolder=if($Mode -eq 'GI'){'PlayerGIDynamic'}else{'PlayerGIDynamicCompatibility'}
-$taskExe=Join-Path $taskProject ($taskFolder+'/HoRTGIProbe.exe')
+if($taskBuild.ExitCode -ne 0 -or -not $taskText.Contains($(if($taskIsDI){'[HoRTDIPlayerValidation] BUILD PASS'}else{'[HoGIPlayerBuild] PASS'})) -or $taskReport.buildDiagnostics.Count -ne 0){throw 'Player build rejected; inspect exact diagnostics'}
+$taskFolder=if($taskIsDI){if($Mode.EndsWith('Compatibility')){'PlayerBuildCompatibility'}else{'PlayerBuild'}}else{if($Mode.EndsWith('Compatibility')){'PlayerGIDynamicCompatibility'}else{'PlayerGIDynamic'}}
+$taskExeName=if($taskIsDI){'HoRTDIProbe'}else{'HoRTGIProbe'}
+$taskExe=Join-Path $taskProject ($taskFolder+'/'+$taskExeName+'.exe')
 $taskOutput=Join-Path $taskResults ('report-'+$Mode+'-'+$taskStamp+'.json')
 $taskPlayerLog=Join-Path $taskResults ('player-'+$Mode+'-'+$taskStamp+'.log')
-$taskPlayer=Start-Process -FilePath $taskExe -WindowStyle Hidden -PassThru -ArgumentList @('-batchmode','-force-d3d12','-force-d3d12-debug','-logFile',('"'+$taskPlayerLog+'"'),'--result',('"'+$taskOutput+'"'))
+$taskPlayerArgs=@('-batchmode','-force-d3d12','-force-d3d12-debug','-logFile',('"'+$taskPlayerLog+'"'),'--result',('"'+$taskOutput+'"'))
+if($Mode.EndsWith('Compatibility')){$taskPlayerArgs+='--compat'}
+$taskPlayer=Start-Process -FilePath $taskExe -WindowStyle Hidden -PassThru -ArgumentList $taskPlayerArgs
 $taskReport.activeProcess=@{id=$taskPlayer.Id;phase='player';log=$taskPlayerLog};$taskReport|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $taskReportPath
 Write-Output ('START '+$Mode+' Player PID='+$taskPlayer.Id)
 Wait-TaskProcess $taskPlayer 120

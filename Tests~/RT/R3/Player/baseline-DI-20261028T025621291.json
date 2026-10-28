@@ -1,0 +1,14 @@
+{
+  "stage": "R3",
+  "referenceCommit": "66a2bb80",
+  "referencePackage": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\R3DIPlayerBaselinePackage",
+  "scope": "Pre-DI-host-migration full Player control, never a current-source pass",
+  "startedUtc": "2026-10-28T02:56:21.2940145Z",
+  "runnerError": "Player qualification rejected",
+  "manifestSha256": "D611CAEB4D24112EA7CEC982BF8AB8DBC3130E1C1FD6011AB043D94519CB6786",
+  "controlRun": "run-DI-20261028T025621403.json",
+  "actualBuildExit": 0,
+  "actualPlayerExit": 1,
+  "sameMixedProposalFailure": true,
+  "playerLogSha256": "C1B05C0A842F93699007FF61E3F565731059878135BB970C34CF1F9095BD526C"
+}

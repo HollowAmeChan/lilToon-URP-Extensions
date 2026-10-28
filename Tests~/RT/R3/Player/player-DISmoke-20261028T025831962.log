@@ -1,0 +1,47 @@
+Mono path[0] = 'D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation/PlayerBuild/HoRTDIProbe_Data/Managed'
+Mono config path = 'D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation/PlayerBuild/MonoBleedingEdge/etc'
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+Initialize engine version: 6000.3.15f1 (c1aa84e375f6)
+[Subsystems] Discovering subsystems at path D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation/PlayerBuild/HoRTDIProbe_Data/UnitySubsystems
+Forcing GfxDevice: Direct3D 12
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+d3d12: could not get the debug interface (0x887a002d).
+Couldn't activate D3D12 debug layer! Make sure to add "Graphics Tools" in Windows Settings ("System" -> "Optional features")
+d3d12: failed to query info queue interface (0x80004002).
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 4060 (ID=0x2882)
+    Vendor:          NVIDIA
+    VRAM:            7956 MB
+    App VRAM Budget: 7188 MB
+    Driver:          32.0.16.1742
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.103 seconds
+- Finished resetting the current domain, in  0.002 seconds
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+UnloadTime: 0.379700 ms
+RenderGraph is now enabled.
+GeometryBuffer fallback output is unavailable because shader 'Hidden/lilToon/URP/GeometryBuffer/Fallback' could not be found.
+GeometryBuffer MSAA resolve is unavailable because shader 'Hidden/lilToon/URP/GeometryBuffer/Resolve' could not be found.
+[HoRTDIPlayerProbe] SKIN shadow=0.000000 unblocked=0.222046
+[HoRTDIPlayerProbe] CUTOUT shadow=0.000000 open=0.222046 non-readable source mesh/textures
+[HoRTDIHostPlayer] PASS analytic/specular, skinned/cutout visibility, actual RELAX and explicit host dependency
+[HoRTDIPlayerProbe] PASS {"pass":true,"api":"Direct3D12","mode":"RenderGraph","error":"","rawMse":0.0,"filteredMse":0.0,"red":0.0,"blue":0.0,"boundaryAlbedoMax":0.0,"boundaryMetalRelative":0.0,"boundarySpecLeak":0.0,"pointDepthMax":0.0,"pointShadowMax":0.0,"coloredSpecRelative":0.0,"coloredSpecLeak":0.0,"noisyMetalMean":0.0,"noisyMetalReference":0.0,"noisyCameraMean":0.0,"noisyCameraTint":0.0,"hdrRelative":0.0,"hdrRawRelative":0.0,"initialVisibilityShadowRatio":0.0,"mixedSpecularRatio":0.0,"mixedDiffuseRatio":0.0,"temporalMixedSpecularRatio":0.0,"temporalMixedDiffuseRatio":0.0,"curvedRawL1":0.0,"curvedFilteredL1":0.0,"environmentRawRatio":0.0,"environmentFilteredRatio":0.0,"environmentShadow":0.0,"environmentSpecularRawRatio":0.0,"environmentSpecularFilteredRatio":0.0,"temporalMixedMaxHistory":0}
+[HoRTPlayerLifetime] before domains=1 views=1
+[HoRTPlayerLifetime] retired=0
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.
+GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.
+GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.
+GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer.

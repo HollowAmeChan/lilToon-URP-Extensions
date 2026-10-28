@@ -1,0 +1,22 @@
+        // R3's bounded resource/native/RELAX qualification. The complete
+        // proposal oracle remains a separate, explicitly rejected control.
+        surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Metallic",0);
+        feature.Settings.denoise=true;feature.Settings.temporal=true;feature.Settings.spatial=false;
+        light.color=Color.red;blue.enabled=true;blue.color=Color.blue;
+        for(int frame=0;frame<48;frame++)Render();
+        Require(feature.Status.Contains("RELAX")&&!feature.Status.Contains("unavailable"),"Host Player RELAX must be available");
+        var context=feature.GetType().GetProperty("LastContext",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(feature);
+        var nrd=context.GetType().GetField("nrd",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(context);
+        Require(nrd!=null,"Host Player owns independent DI NRD state");
+        var dispatch=(int)nrd.GetType().BaseType.GetProperty("LastDispatchCount",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(nrd);
+        Require(dispatch>0,"Host Player actually dispatches RELAX for two lights");
+        double red=0,blueEnergy=0;
+        for(int frame=0;frame<16;frame++){Render();var value=Read(capture.Diffuse);red+=value.r;blueEnergy+=value.b;}
+        Near((float)(red/16),Expected(light,32,32),"Host Player filtered red analytic energy",.05f);
+        Near((float)(blueEnergy/16),Expected(blue,32,32),"Host Player filtered blue analytic energy",.05f);
+        var hosts=Resources.FindObjectsOfTypeAll<HoRTRendererFeature>();
+        Require(hosts.Length==1,"Host Player has one serialized RT host");
+        hosts[0].SetActive(false);Render();Require(Shader.GetGlobalFloat("_HoRTDIActive")==0,"Host Player missing dependency clears DI activation");
+        hosts[0].SetActive(true);Render();Require(Shader.GetGlobalFloat("_HoRTDIActive")>.5f,"Host Player re-enable resumes DI through its scene view");
+        Debug.Log("[HoRTDIHostPlayer] PASS analytic/specular, skinned/cutout visibility, actual RELAX and explicit host dependency");
+        return;

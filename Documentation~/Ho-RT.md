@@ -1,15 +1,15 @@
 # Ho-RT：公共底座与 RTShadow
 
-> 状态：**现行实现 / 设计总入口**，2026-10-28。目录迁移、R2 公共资源宿主及共享姿态的有界验收已完成；DI/GI 迁移、RTShadow 与 SIGMA 生产链仍未完成，精确进展见 §8.5。实现状态与后续接口建议分开阅读。
+> 状态：**现行实现 / 设计总入口**，2026-10-28。目录迁移、R2 公共资源宿主及共享姿态的有界验收已完成；DI/GI 有界迁移及 Player 资格已完成；RTShadow 与 SIGMA 生产链仍未完成，精确进展见 §8.5。实现状态与后续接口建议分开阅读。
 
 ## 0. 先确认实现状态
 
 | 对象 | 当前状态 | 入口 |
 | --- | --- | --- |
 | 栅格化角色 CS | 已有 shadow map / PCF / PCSS，本轮完成勾选与滤波修复，仍有画质限制 | [当前 CS](Ho-CharacterShadow.md) |
-| RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 两路径通过。独立输出 / 历史 / NRD 保持，DI Player 仍待单独确认 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
+| RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | A01/A02 已完成代码解耦及有界资源复用；生产绑定为 RELAX | 本文 §11 的基线与证据 |
-| Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；GI Player 已确认序列化和插件加载 | 本文 §8.5 |
+| Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
 | RTShadow / SIGMA | 设计已定，生产链尚未实现 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
@@ -326,7 +326,7 @@ Editor/
 | R1 | 已完成 | RayTracing→RT，2098 个产品文件规范化核对仅有允许的命名 / 引用变化，20 份移动 metadata 与基线字节一致；编译 0 errors；10 项真实 GPU / unsupported 回归通过 | 只统一模块归属，无画质 / 性能收益声明；旧验证源码 / SHA 未改，初次冷导入 stale-transform 失败保留，后续同条件原码与当前码通过但原因未证明 | R2 宿主与共享姿态 |
 | R2 | 已完成有界验收 | host / 请求 epoch / cache 已实现；RG / compatibility 普通夹具各 93 checks / 11 请求，初始、骨骼和源 Mesh 编辑共 Bake=3，两个 view 均更新；各自退休专项 29 checks / 4 请求，profiles 完整释放；9 项组合回归通过 | 保留多 AS view，初版在 CPU 等待前一 fence 后再修改，无帧时间收益声明；缺失完成 fence 的异常 work 保守隔离，完整取消恢复仍未验收 | R3：先 DI，再 GI |
 | R3-DI | 已完成有界迁移验收 | DI 不再私有创建 / 同步 / 释放场景；scene lifetime 变化清对应相机历史，profile 由 host 持有；247 个核心文件及全部 65 个 shader 文件未变，9 项宿主 / Cutout / RELAX / unsupported 回归通过 | 旧全量 core 原码与迁移版均出现同一 4 条 F39 scratch 诊断及 power-proposal 断言，继续拒绝该夹具；不扩称全量 core 或生产双模块共享通过，Player 在组合迁移后验证 | R3-GI |
-| R3-GI | 已完成有界迁移验收 | GI 不再私有创建 / 扫描 / 释放场景；81 核心文件及全部 59 shader 文件未变；9 项回归、生产 DI/GI 共享姿态 / 独立历史 / 双 NRD dispatch 两路径、GI Mono Player 两路径通过 | 4 条退出 GC 警告与原 Backbuffer Player 日志 SHA / 精确数量一致，宿主显式退休域为 0；不是全管线退出清理或旧质量缺口通过 | 补 DI Player 资格后进入 R4 |
+| R3-GI | 已完成有界迁移验收 | GI 不再私有创建 / 扫描 / 释放场景；81 核心文件及全部 59 shader 文件未变；9 项回归、生产 DI/GI 共享姿态 / 独立历史 / 双 NRD dispatch 两路径、GI Mono Player 两路径通过 | 4 条退出 GC 警告与原 Backbuffer Player 日志 SHA / 精确数量一致，宿主显式退休域为 0；不是全管线退出清理或旧质量缺口通过 | R4 |
 | R4–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
 
 R0 采用的宿主准备合同：
@@ -354,7 +354,9 @@ R3-GI 当前证据见 [GI review](../Tests~/RT/R3/GI/review.json)、[核心未�
 
 两个 GI Win64 Mono / D3D12 Player 使用序列化 host、GI 与 RELAX，逐真实 Update 提交相机请求，原动态 / 能量 / 降噪 / 合成及开关检查通过；打包 native DLL 与当前 pinned DLL 字节一致。4 条 GraphicsBuffer GC 退出警告首次严格审查被拒绝后，查到原 Backbuffer Player 记录也有完全相同的 4 条，SHA 已核验。最终只按精确数量和原记录接纳该已知警告，另要求显式宿主清理与退休域 0；未改全管线 OB / 公共 fallback 清理，不将画面通过等同全部资源清理通过。中间的 `Application.quitting` 候选未改变这组警告、没有资格收益，已撤回；最终 host 生产改动仅新增有效 view 的 profile 借用入口，不重做 R2 生命周期。
 
-本步收益是生产 GI 场景所有权收敛、实际两模块姿态共享；保留多 AS 与 fence 等待，没有 GPU 毫秒收益承诺。DI 独立 Player 仍需验证，R3 的有界 Editor / GI Player 通过不替代它，也不替代旧 GI filtered 质量、F39 或复杂动态 / 1080 预算资格。
+本步收益是生产 GI 场景所有权收敛、实际两模块姿态共享；保留多 AS 与 fence 等待，没有 GPU 毫秒收益承诺。DI 的完整 Player 在 mixed diffuse/specular proposal（temporal=False）失败；同一隔离工程切换 Git `66a2bb80` 的迁移前完整原包后复现相同断言，控制记录与失败日志保留。没有更改 DI 算法或将完整测试改为通过。
+
+R3 Player 收尾的两路径有界 DI 探针先执行原解析光 / specular、蒙皮及非 Read/Write Cutout 检查，再执行双灯实际 RELAX dispatch 与解析能量、显式 host 依赖和退休域 0；通过后退出，不执行已知失败的完整 proposal oracle。探针只在隔离工程的副本插入，原完整探针保持，注入源码与产品指纹均留 SHA。四个最终 Player（DI 有界 / GI × RG / compatibility）构建和执行退出 0，native 字节一致。此步收益为验证序列化、实际 Player 原生 / NRD 加载与 host 接入，成本为两组有界构建；不继续在既有 proposal / GC 问题上滞留。下一步进入 R4，不替代旧 GI filtered 质量、F39、完整 DI proposal 或复杂动态 / 1080 预算资格。
 
 <a id="quality-reference"></a>
 

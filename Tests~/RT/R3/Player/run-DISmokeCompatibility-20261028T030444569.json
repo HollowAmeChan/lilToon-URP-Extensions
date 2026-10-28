@@ -1,0 +1,33 @@
+{
+  "stage": "R3",
+  "mode": "DISmokeCompatibility",
+  "sourceCommit": "6fbc934bbc51a63321e37b06f81b5e67080ef415",
+  "sourcesFile": "sources-20261028T030444569.json",
+  "runtimeProbeSha256": "0259322F4E5014768D5AB05478A85EB23FB6201E1C0AD8BD238FD7D01A207490",
+  "activeProcess": null,
+  "scope": "Independent serialized Mono Player effect/NRD via camera probes. DISmoke isolates host/native/RELAX after the full proposal oracle failed both current and pre-migration control; mixed DI/GI is checked separately in Editor",
+  "buildExit": 0,
+  "buildLog": "ho-rt-r3-player-build-DISmokeCompatibility-20261028T030444569.log",
+  "buildLogSha256": "1DD49845C4F8A1CF56671E4A36093D8DA90AD8BDCC3DAC8C48C106A51CE05ECA",
+  "reviewedExistingWarnings": [
+    "Shader warning in 'Hidden/lilToon/URP/VolumeLight/SolarHD': floating point division by zero at /Unity_Fork/HoUrp17.3.0/ShaderLibrary/Shadows.hlsl(310) (on d3d11)",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+  ],
+  "buildDiagnostics": [],
+  "playerExit": 0,
+  "playerLog": "player-DISmokeCompatibility-20261028T030444569.log",
+  "playerLogSha256": "98448FE340A8CD74108D7368161784745092B181EDC14A5B6A523B163D9778B5",
+  "playerDiagnostics": [],
+  "reviewedExistingCleanupWarnings": [
+    "GarbageCollector disposing of GraphicsBuffer. Please use GraphicsBuffer.Release() or .Dispose() to manually release the buffer. [4 exact occurrences; host retired=0; historical SHA verified]"
+  ],
+  "cleanupControl": {
+    "sha256": "39DA6A3C61B3F2AF10954E7661A6E6E9D68AD567C1EFED10FF9F6238EC2B3E85",
+    "path": "Tests~/RTGI/Backbuffer/logs/rtgi-step025-player-rg-20261021T191738751.log"
+  },
+  "playerResult": "report-DISmokeCompatibility-20261028T030444569.json",
+  "pass": true
+}
