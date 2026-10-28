@@ -1,0 +1,7 @@
+{
+  "name": "HoMmdStages.Runtime",
+  "rootNamespace": "Hollow.HoMmdStages",
+  "references": ["Unity.RenderPipelines.Universal.Runtime"],
+  "autoReferenced": true,
+  "noEngineReferences": false
+}

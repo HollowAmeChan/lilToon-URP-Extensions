@@ -1,5 +1,7 @@
 # Local Codex research, upstream clones, and validation projects.
 .codex-research/
+/Temp~/
+/Temp~.meta
 
 # Unity generated project data.
 [Ll]ibrary/
