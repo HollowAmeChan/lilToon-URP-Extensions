@@ -1,0 +1,27 @@
+{
+  "stage": "R6 serialized multi-light Player",
+  "mode": "rg",
+  "sourceCommit": "48fdc94f029cc0ccb1ff80216ed4adac81eef830",
+  "sourcesFile": "sources-20261028T153235424.json",
+  "probeSha256": "439BD837B3E713B3D770CDCC8307D39FC0ABD02CE5F38CB775C3330ECF7B13FB",
+  "buildSourceSha256": "A706E77C94A1224763913D589E2A8865AAB05E17371C0209C7BBEB39112FF4CC",
+  "activeProcess": null,
+  "buildExit": 1,
+  "buildLog": "build-rg-20261028T153235424.log",
+  "buildLogSha256": "C1267AB61E1DAAD2CC586D6399D6B091086AD6889637E5C56A4F780BB10B0632",
+  "reviewedExistingBuildWarnings": [],
+  "buildDiagnostics": [
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(77,52): error CS0170: Use of possibly unassigned field 'LightId'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(78,80): error CS0170: Use of possibly unassigned field 'Reconstruction'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(79,88): error CS0170: Use of possibly unassigned field 'Visibility'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(81,70): error CS0170: Use of possibly unassigned field 'Visibility'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(77,52): error CS0170: Use of possibly unassigned field 'LightId'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(78,80): error CS0170: Use of possibly unassigned field 'Reconstruction'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(79,88): error CS0170: Use of possibly unassigned field 'Visibility'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(81,70): error CS0170: Use of possibly unassigned field 'Visibility'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(77,52): error CS0170: Use of possibly unassigned field 'LightId'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(78,80): error CS0170: Use of possibly unassigned field 'Reconstruction'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(79,88): error CS0170: Use of possibly unassigned field 'Visibility'",
+    "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(81,70): error CS0170: Use of possibly unassigned field 'Visibility'"
+  ]
+}

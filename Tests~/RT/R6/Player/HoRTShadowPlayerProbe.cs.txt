@@ -1,0 +1,127 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using lilToon.URP.Extensions.ObjectBuffer;
+using lilToon.URP.Extensions.RT;
+using lilToon.URP.Extensions.RTShadow;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+public sealed class HoRTShadowPlayerProbe:MonoBehaviour
+{
+    public HoRTShadowRendererFeature shadow;public HoRTRendererFeature host;public Material surfaceMaterial,cutoutMaterial;
+    private Light point,spot,fill;private long pointId,fillId;
+    private Camera camera;private RenderTexture target;private HoRTShadowReceiver receiver;private Transform bone;private int step;
+    private readonly List<UnityEngine.Object> owned=new();private readonly List<string> checks=new();
+    private Color[] previous,reference;private string resultPath;
+    private const BindingFlags Flags=BindingFlags.Instance|BindingFlags.Public|BindingFlags.NonPublic;
+    [Serializable]private sealed class Report{public bool pass,compatibility;public string api,error;public int updates;public float mse;public string[] checks;}
+    private readonly Report report=new();
+    private void Start()
+    {
+        try
+        {
+            var args=Environment.GetCommandLineArgs();for(int i=0;i<args.Length-1;i++)if(args[i]=="--result")resultPath=args[i+1];
+            report.compatibility=Array.IndexOf(args,"--compat")>=0;report.api=SystemInfo.graphicsDeviceType.ToString();
+            Require(SystemInfo.graphicsDeviceType==GraphicsDeviceType.Direct3D12&&SystemInfo.supportsRayTracing,"Native D3D12 Player supported");
+            Require(shadow!=null&&host!=null,"Serialized host and shadow feature references present");
+            camera=new GameObject("Player Cast camera").AddComponent<Camera>();camera.enabled=false;camera.orthographic=true;camera.orthographicSize=2;camera.aspect=1;
+            camera.transform.position=Vector3.back*3;camera.nearClipPlane=.1f;camera.farClipPlane=30;camera.cullingMask=1;camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.black;
+            camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;target=Keep(new RenderTexture(64,64,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();
+            var light=new GameObject("Player Cast main light").AddComponent<Light>();light.type=LightType.Directional;light.intensity=1;light.shadows=LightShadows.Soft;light.transform.rotation=Quaternion.LookRotation(-new Vector3(2.5f,0,-4).normalized);RenderSettings.sun=light;
+            var body=Quad("Player receiver",Vector3.zero,new Vector3(3,3,1),surfaceMaterial);body.shadowCastingMode=ShadowCastingMode.Off;
+            var group=body.gameObject.AddComponent<HoObjectBufferGroup>();group.parts=new List<HoObjectBufferPartEntry>{new(){name="body",renderers=new UnityEngine.Object[]{body}}};group.Apply();receiver=body.gameObject.AddComponent<HoRTShadowReceiver>();receiver.objectGroup=group;
+            var caster=Quad("Player skinned cutout blocker",new Vector3(2.5f,0,-4),new Vector3(1.2f,3,1),cutoutMaterial);var material=caster.sharedMaterial;var go=caster.gameObject;
+            var mesh=Keep(Instantiate(go.GetComponent<MeshFilter>().sharedMesh));UnityEngine.Object.DestroyImmediate(caster);UnityEngine.Object.DestroyImmediate(go.GetComponent<MeshFilter>());
+            bone=new GameObject("Player cutout bone").transform;bone.SetParent(go.transform,false);mesh.bindposes=new[]{Matrix4x4.identity};var weights=new BoneWeight[mesh.vertexCount];for(int i=0;i<weights.Length;i++)weights[i]=new BoneWeight{boneIndex0=0,weight0=1};mesh.boneWeights=weights;
+            var skin=go.AddComponent<SkinnedMeshRenderer>();skin.sharedMesh=mesh;skin.sharedMaterial=material;skin.bones=new[]{bone};skin.rootBone=bone;skin.localBounds=mesh.bounds;skin.shadowCastingMode=ShadowCastingMode.ShadowsOnly;skin.updateWhenOffscreen=false;
+            light.gameObject.AddComponent<HoRTShadowLight>().angularDiameter=8;
+            point=new GameObject("Player requested point").AddComponent<Light>();point.type=LightType.Point;point.transform.position=new Vector3(5,0,-8);point.range=30;point.intensity=0;point.gameObject.AddComponent<HoRTShadowLight>();
+            spot=new GameObject("Player requested spot").AddComponent<Light>();spot.type=LightType.Spot;spot.transform.position=point.transform.position;spot.transform.rotation=Quaternion.LookRotation(-spot.transform.position);spot.spotAngle=30;spot.range=30;spot.intensity=0;spot.gameObject.AddComponent<HoRTShadowLight>();
+            fill=new GameObject("Player requested fill").AddComponent<Light>();fill.type=LightType.Directional;fill.transform.rotation=Quaternion.LookRotation(-new Vector3(-2.5f,0,-4).normalized);fill.intensity=0;fill.gameObject.AddComponent<HoRTShadowLight>().angularDiameter=2;
+            pointId=HoRTLightIdentity.Get(point);fillId=HoRTLightIdentity.Get(fill);
+            shadow.Settings.lightSelection=HoRTShadowLightSelection.Declared;
+            shadow.Settings.geometryLayers=1;shadow.Settings.angularDiameter=8;shadow.Settings.samplesPerPixel=1024;shadow.Settings.singleFrameEstimates=16;shadow.Settings.reconstruction=HoRTShadowReconstruction.Raw;
+        }
+        catch(Exception error){Finish(error);}
+    }
+    private Renderer Quad(string name,Vector3 position,Vector3 scale,Material material)
+    {var go=GameObject.CreatePrimitive(PrimitiveType.Quad);go.name=name;go.transform.position=position;go.transform.localScale=scale;var renderer=go.GetComponent<Renderer>();renderer.sharedMaterial=material;return renderer;}
+    private void Update()
+    {
+        if(camera==null)return;
+        try
+        {
+            report.updates++;step++;
+            if(step==4)shadow.Settings.reconstruction=HoRTShadowReconstruction.SigmaSingleFrame;
+            if(step==6)cutoutMaterial.SetColor("_Color",new Color(1,1,1,0));
+            if(step==7){cutoutMaterial.SetColor("_Color",Color.white);shadow.Settings.reconstruction=HoRTShadowReconstruction.SigmaPreview;}
+            if(step==13)bone.localPosition=Vector3.right*.011f;
+            if(step==14){shadow.Settings.reconstruction=HoRTShadowReconstruction.Raw;shadow.Settings.samplesPerPixel=1024;}
+            if(step==15)shadow.Settings.reconstruction=HoRTShadowReconstruction.SigmaSingleFrame;
+            if(step==10)point.range=1;if(step==11)point.range=30;
+            if(step==12)spot.transform.rotation=Quaternion.LookRotation(Vector3.right);if(step==13)spot.transform.rotation=Quaternion.LookRotation(-spot.transform.position);
+            if(step==16)host.SetActive(false);if(step==17)host.SetActive(true);
+            if(step==18)receiver.receiveWholeGroup=false;if(step==19)receiver.receiveWholeGroup=true;
+            if(step==20){target=Keep(new RenderTexture(96,96,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();}
+            if(step==21)shadow.Create();
+            RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});
+            if(step<3)return;
+            if(step==16||step==18){Require(Shader.GetGlobalFloat("_HoRTShadowActive")==0,"Unavailable/unrequested output clears activation");return;}
+            var output=shadow.GetType().GetProperty("LastOutput",Flags).GetValue(shadow);Require(output!=null,"Player output scheduled: "+shadow.Status);
+            var rawHandle=(RTHandle)output.GetType().GetField("raw",Flags).GetValue(output);var visibility=(RTHandle)output.GetType().GetProperty("Visibility",Flags).GetValue(output);
+            var raw=Read(rawHandle.rt);var values=Read(visibility.rt);int centre=values.Length/2+target.width/2;
+            if(step==3){reference=values;Require(raw[centre].b==1,"Primary identity and native Cast valid in Player");Require(Read(target)[centre].r<.1f,"Actual serialized lilToon ramp receives the shadow");}
+            bool pointValid=shadow.TryGetCompatibilityProduct(camera,point,out var pointProduct),spotValid=shadow.TryGetCompatibilityProduct(camera,spot,out var spotProduct),fillValid=shadow.TryGetCompatibilityProduct(camera,fill,out var fillProduct);
+            Require(pointValid&&spotValid&&fillValid,"Player can borrow each current per-light product after producer commands");
+            Require(pointProduct.LightId==pointId&&fillProduct.LightId==fillId,"Player per-light lifetime identities stay independent of slots");
+            Require(pointProduct.Reconstruction==HoRTShadowReconstruction.Raw&&spotProduct.Reconstruction==HoRTShadowReconstruction.Raw,"Delta local product metadata explicitly reports raw reconstruction");
+            var pointPixel=Read(pointProduct.Visibility.rt)[centre];var spotPixel=Read(spotProduct.Visibility.rt)[centre];
+            Require(pointPixel.b==(step==10?3:1),"Player point range domain is explicit");Require(spotPixel.b==(step==12?3:1),"Player spot cone domain is explicit");
+            if(step==3)Require(pointPixel.r==0&&spotPixel.r==0&&Read(fillProduct.Visibility.rt)[centre].r==1,"Packed multi-light products have distinct actual visibility");
+            if(step==6)Require(pointPixel.r==1&&spotPixel.r==1,"Packed local ray visibility follows current alpha update");
+            var sigma=output.GetType().GetField("sigma",Flags).GetValue(output);
+            if(step==4)
+            {
+                Require(sigma!=null&&(int)sigma.GetType().GetProperty("DispatchCount",Flags).GetValue(sigma)>0,"Packed native SIGMA actually dispatches");
+                Require(CountFractional(values)>20,"Packed SIGMA decoder publishes continuous floating visibility");previous=values;
+                var nrd=sigma.GetType().GetField("nrd",Flags).GetValue(sigma);var applied=nrd.GetType().GetProperty("AppliedSigmaSettings",Flags).GetValue(nrd);
+                Require((uint)applied.GetType().GetField("maxStabilizedFrameNum",Flags).GetValue(applied)==0,"Player export disables temporal stabilization");
+            }
+            if(step==5)Require(Equal(previous,values),"Player no-history request repeats exactly on later Update");
+            if(step==6){Require(values[centre].r>.99f,"Skinned Cutout alpha change opens Player shadow immediately");Require(Read(target)[centre].r>.9f,"Actual NPR beauty responds to opened Cutout");}
+            if(step==12)Require(!(bool)sigma.GetType().GetProperty("LastReset",Flags).GetValue(sigma)&&(int)sigma.GetType().GetProperty("LastFrame",Flags).GetValue(sigma)>=5,"Static Player preview retains independent history");
+            if(step==13)Require((bool)sigma.GetType().GetProperty("LastReset",Flags).GetValue(sigma),"Player skinned bone motion rejects old history");
+            if(step==14)reference=values;
+            if(step==15)
+            {double sum=0;int count=0;for(int i=0;i<values.Length;i++)if(reference[i].b==1){sum+=Math.Pow(values[i].r-reference[i].r,2);count++;}report.mse=(float)(sum/count);Require(report.mse<.02f,"Player current-pose same-frame result matches high-budget raw reference: "+report.mse);}
+            if(step==20)Require(visibility.rt.width==96&&rawHandle.rt.width==96,"Player resize keeps full-resolution output");
+            if(step==21){Require(values[centre].b==1,"Player feature recreation resumes valid production");Finish(null);}
+        }
+        catch(Exception error){Finish(error);}
+    }
+    private static int CountFractional(Color[] values){int count=0;foreach(var p in values)if(p.b==1&&p.r>0&&p.r<1)count++;return count;}
+    private static bool Equal(Color[] a,Color[] b){if(a.Length!=b.Length)return false;for(int i=0;i<a.Length;i++)if(a[i]!=b[i])return false;return true;}
+    private static Color[] Read(RenderTexture source)
+    {var old=RenderTexture.active;var image=new Texture2D(source.width,source.height,TextureFormat.RGBAFloat,false,true);try{RenderTexture.active=source;image.ReadPixels(new Rect(0,0,source.width,source.height),0,0);image.Apply();return image.GetPixels();}finally{RenderTexture.active=old;UnityEngine.Object.Destroy(image);}}
+    private T Keep<T>(T value)where T:UnityEngine.Object{owned.Add(value);return value;}
+    private void Require(bool condition,string message){if(!condition)throw new Exception(message);checks.Add(message);}
+    private void Finish(Exception error)
+    {
+        enabled=false;report.pass=error==null;report.error=error?.ToString();report.checks=checks.ToArray();
+        shadow?.Dispose();host?.Dispose();typeof(HoRTRendererFeature).GetMethod("CollectRetired",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,null);
+        Debug.Log("[HoRTShadowMultiPlayer] retiredDomains="+typeof(HoRTRendererFeature).GetProperty("RetiredDomainCount",BindingFlags.Static|BindingFlags.NonPublic).GetValue(null)+" retiredResources="+typeof(HoRTRendererFeature).GetProperty("RetiredResourceCount",BindingFlags.Static|BindingFlags.NonPublic).GetValue(null));
+        // The independent probe created an OB group but has no OB feature to
+        // own application teardown. Stop its declarations, then release only
+        // that registry's known static buffers after the readback completed.
+        if(receiver!=null){receiver.enabled=false;if(receiver.objectGroup!=null)receiver.objectGroup.enabled=false;}
+        HoObjectBufferRegistry.Release();int released=0;
+        foreach(var field in typeof(HoObjectBufferRegistry).GetFields(BindingFlags.Static|BindingFlags.NonPublic))
+        {if(field.FieldType!=typeof(GraphicsBuffer))continue;var buffer=(GraphicsBuffer)field.GetValue(null);if(buffer!=null){buffer.Dispose();field.SetValue(null,null);released++;}}
+        Debug.Log("[HoRTShadowMultiPlayer] private OB teardown released="+released+"; no more rendering after this point");
+        foreach(var item in owned){if(item is RenderTexture texture)texture.Release();UnityEngine.Object.Destroy(item);}owned.Clear();
+        if(!string.IsNullOrEmpty(resultPath)){Directory.CreateDirectory(Path.GetDirectoryName(resultPath));File.WriteAllText(resultPath,JsonUtility.ToJson(report,true));}
+        if(error!=null)Debug.LogException(error);Debug.Log("[HoRTShadowMultiPlayer] END pass="+report.pass+" updates="+report.updates+" MSE="+report.mse);Application.Quit(report.pass?0:1);
+    }
+}

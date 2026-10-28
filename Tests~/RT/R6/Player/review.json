@@ -1,0 +1,42 @@
+{
+  "stage": "R6 bounded serialized multi-light Win64 Mono Players",
+  "accepted": {
+    "compat": {
+      "run": "run-compat-20261028T153452444.json",
+      "updates": 21,
+      "checks": 121,
+      "currentPoseMse": 0.0008049864554777741,
+      "packedNativeSha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+    },
+    "rg": {
+      "run": "run-rg-20261028T153347466.json",
+      "updates": 21,
+      "checks": 121,
+      "currentPoseMse": 0.0008049864554777741,
+      "packedNativeSha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+    }
+  },
+  "rejectedEvidence": [
+    {
+      "run": "run-rg-20261028T153235424.json",
+      "buildDiagnostics": [
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(77,52): error CS0170: Use of possibly unassigned field 'LightId'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(78,80): error CS0170: Use of possibly unassigned field 'Reconstruction'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(79,88): error CS0170: Use of possibly unassigned field 'Visibility'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(81,70): error CS0170: Use of possibly unassigned field 'Visibility'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(77,52): error CS0170: Use of possibly unassigned field 'LightId'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(78,80): error CS0170: Use of possibly unassigned field 'Reconstruction'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(79,88): error CS0170: Use of possibly unassigned field 'Visibility'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(81,70): error CS0170: Use of possibly unassigned field 'Visibility'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(77,52): error CS0170: Use of possibly unassigned field 'LightId'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(78,80): error CS0170: Use of possibly unassigned field 'Reconstruction'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(79,88): error CS0170: Use of possibly unassigned field 'Visibility'",
+        "Assets\\RTShadowPlayerSource\\HoRTShadowPlayerProbe.cs(81,70): error CS0170: Use of possibly unassigned field 'Visibility'"
+      ],
+      "playerDiagnostics": []
+    }
+  ],
+  "benefit": "Four actual current light products are read in each packed Player. Stable LightId and actual reconstruction metadata, finite local domains, independent directional reconstruction, original NPR main alias, skinned alpha/bone updates, no-history export and actual retirement execute together. Both paths have 21 actual Update calls / 121 checks, same current-pose V MSE and no GC allowance.",
+  "limits": "64/96-square explicit requests, Mono Win64/D3D12. Missing GB fallback/resolve warning remains bounded to unused fallback writers and disabled MSAA. Directional finite angle and delta point/spot only. Not automatic-camera/backbuffer/XR/IL2CPP or arbitrary production characters. Spatial final-color AA still needs its own acceptance.",
+  "next": "Complete final image sampling/AA qualification and requirement-by-requirement R0-R6 audit. Keep full goal active until the audit proves completion."
+}

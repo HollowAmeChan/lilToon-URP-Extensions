@@ -10,7 +10,7 @@
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | 生产 DI/GI 保留 RELAX；新增 typed SIGMA ABI、格式与 9 个官方 pipeline，独立夹具及真实 Cast 的有界 GPU 接入已验，默认仍为 Raw | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | 独立 Feature 已有主光 / 声明集合 / 全部支持灯的逐灯产品；方向光有限角度和 delta 点聚光有界 Editor 验收，SIGMA / 实际三层 NPR / 单帧与薄蒙皮及单灯 Player 已验；多灯 Player、最终图像采样与总审计待验 | 本文 §4–8 |
+| RTShadow / SIGMA | 独立 Feature 已有主光 / 声明集合 / 全部支持灯的逐灯产品；方向光有限角度和 delta 点聚光有界 Editor / 多灯 Player 验收，SIGMA / 实际三层 NPR / 单帧与薄蒙皮已验；Volume / Inspector / 调试、最终图像采样与总审计继续推进 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -335,7 +335,7 @@ Editor/
 | R5 同帧无历史估计 | 已完成有界验收 | 1–64 次独立 SIGMA 后线性平均，16 次改善真实 V / 窄 ramp MSE；六项回归通过 | 成本随次数增长，滤波偏差仍在，简单平面不是角色最终画质 | 薄蒙皮 cutout / 微动 / Player |
 | R5 薄蒙皮 / 微动 | 已完成有界验收 | 十二张实际 rigged cutout 窄卡片及骨骼 / BlendShape 微动；同预算原始比例约束显著降低误差，四项回归通过 | 256 次成本高、约 88% 暗侧保留，未等于任意角色 / AA / Player | serialized Player，随后 R6 |
 | R5 serialized Player | 已完成有界资格 | RG / compatibility 两个 Win64 Mono Player 各 21 Update / 34 checks，实际 SIGMA / NPR / 蒙皮，退出警告清零；原 CS 滤波与八片元变体通过 | 不代替 enabled-camera / backbuffer / XR / IL2CPP / 任意角色，冷构建成本高 | R6 |
-| R6 逐灯集合 | 已完成有界 Editor 验收 | Main / Declared / AllSupported、稳定 LightId、方向光 / delta 点聚光、逐灯接收域、当前 graph / compatibility 产品；六项 GPU 回归通过 | 不含未验证局部面积形状、cookie 或受限 caster linking；多灯 Player 与最终空间采样 / 总审计待验 | 多灯 Player，最终图像采样与完整目标审计 |
+| R6 逐灯集合 | 已完成有界 Editor / Player 验收 | Main / Declared / AllSupported、稳定 LightId、方向光 / delta 点聚光、逐灯接收域、当前 graph / compatibility 产品；六项 GPU 回归和两路径多灯 Player 各 121 checks 通过 | 不含未验证局部面积形状、cookie 或受限 caster linking；最终空间采样 / 总审计待验 | 补齐 Volume / Inspector / 调试，再完成最终图像采样与完整目标审计 |
 
 R0 采用的宿主准备合同：
 
@@ -442,7 +442,9 @@ R5 serialized Win64 Mono Player 有界资格见 [Player review](../Tests~/RT/R5/
 
 本步收益是把 Editor 内 RTShadow / SIGMA / NPR 链路推进到实际序列化与打包执行，清理诊断也完成；成本是冷材质编译曾持续数分钟，明确不是运行时帧耗时。范围限定 Mono Win64 / D3D12、64/96²显式请求，不等于 enabled-camera/backbuffer / XR / IL2CPP 或任意生产角色的完整资格。单灯已有原始、重建、原 ramp、同帧导出及薄蒙皮微动的有界闭环，下一步 R6 逐灯请求 / 稳定身份 / 点聚灯和多输出，完整目标仍活跃。
 
-R6 逐灯产品有界 Editor 验收见 [R6 review](../Tests~/RT/R6/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R6`。Feature 灯范围为 Main（默认，仅 URP 主方向灯）、Declared（场景 Light 上启用 `Ho-RTShadow Light`）或 AllSupported（请求层内启用且 active 的全部灯，包含相机外可能照到 receiver 的灯）；声明组件可逐方向灯设角直径。receiver 保持 OB 整组 / 指定部件，可选接收全部请求灯或显式 Light 集合。只请求主光时只创建一个产品，省去全灯贴图与追踪；没有自动在用户场景或 Renderer 资产添加声明。
+R6 逐灯产品有界 Editor 验收见 [R6 review](../Tests~/RT/R6/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R6`。多灯 serialized Win64 Mono Player 证据见 [R6 Player review](../Tests~/RT/R6/Player/review.json)，入口 `Tests~/RT/R6/Player/run_player.ps1`（另加 `-Compatibility`）。两路径各 21 个实际 Update / 121 checks，主光、补方向灯、delta 点 / 聚光四个产品实际执行，公共借用接口的 LightId / 重建类型、接收域、范围 / 锥体、独立历史及无历史重复通过；与单灯相同当前姿态 MSE=0.0008049865。打包 native 字节一致，退出退休域 / 资源为 0，无 GC 警告额度。第一轮探针短路 out 变量的 C# 编译失败完整保留。收益为逐灯接口从 Editor 推进到实际序列化打包，成本仍是按请求灯数分配与追踪，不能代替最终空间 AA、任意角色或完整平台验收。新增用户要求将 Volume / Feature UI 与调试补齐，证据仍只集中 Tests~/RT/，不另开计划文档。
+
+Feature 灯范围为 Main（默认，仅 URP 主方向灯）、Declared（场景 Light 上启用 `Ho-RTShadow Light`）或 AllSupported（请求层内启用且 active 的全部灯，包含相机外可能照到 receiver 的灯）；声明组件可逐方向灯设角直径。receiver 保持 OB 整组 / 指定部件，可选接收全部请求灯或显式 Light 集合。只请求主光时只创建一个产品，省去全灯贴图与追踪；没有自动在用户场景或 Renderer 资产添加声明。
 
 `HoRTLightIdentity.Get(Light)` 是该运行期 Light 对象寿命的单调 long ID，不取决于可见灯 / reservoir / 临时 slot；停用重启保留，同对象类型改变保留，销毁重建分配新值，Unity InstanceID 重用也不继承旧历史。它不是跨程序存档 ID。每个 `(ScriptableRenderer, Camera, Light)` 独立拥有 raw / receiver 资源和必要 SIGMA 实例；兼容 caster 集合仍借同一个 host view / AS，不为每灯重复烘姿态。未再请求 / unsupported / 无 receiver 的旧资源通过 host fence 退休。不同方向灯历史独立，改一盏角度不会重置另一盏。
 
