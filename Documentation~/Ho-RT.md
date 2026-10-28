@@ -8,9 +8,9 @@
 | --- | --- | --- |
 | 栅格化角色 CS | 已有 shadow map / PCF / PCSS，本轮完成勾选与滤波修复，仍有画质限制 | [当前 CS](Ho-CharacterShadow.md) |
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
-| 公共 NRD | A01/A02 已完成代码解耦及有界资源复用；生产绑定为 RELAX | 本文 §11 的基线与证据 |
+| 公共 NRD | 生产 DI/GI 保留 RELAX；新增 typed SIGMA ABI、格式与 9 个官方 pipeline，独立 GPU 夹具已验，尚未连接真实 Cast | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | 独立 Feature 的单主方向灯 raw / OB 接收身份 / 有限光源同帧采样已验；NPR gate 被拒绝，SIGMA 尚未接入 | 本文 §4–8 |
+| RTShadow / SIGMA | 独立 Feature 的单主方向灯 raw / OB 接收身份 / 有限光源同帧采样已验；NPR gate 被拒绝；SIGMA 独立 GPU 夹具已验，尚未连接真实 Cast | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -193,7 +193,7 @@ RT 灯样本的真实遮挡与 blocker 距离
 
 逐灯保留 raw 与 denoised 的身份及状态。使用历史时按相机、灯身份及场景有效性隔离；多灯流式无历史处理与持久保存所有逐灯结果是不同资源方案。
 
-当前仓库的公共执行器与 native 调度 ABI 可以作为基础；生产代码目前只有 RELAX 设置绑定及 DI/GI 的 RELAX manifest。R0 已对现用 DLL 实测：NRD 4.17.3、normal encoding 2 / roughness 1，明确支持 `SIGMA_SHADOW`（16）及 `SIGMA_SHADOW_TRANSLUCENCY`（17），两种实例均创建成功，各有 9 pipelines、1 permanent、8 transient。无需为 SIGMA 重编当前 native 插件。接入仍需补匹配版本参数 ABI、Unity shader wrappers、外部输入输出绑定及 GPU 验收；descriptor 成功不等于生产降噪链路已完成。证据见 [R0 inventory](../Tests~/RT/R0/sigma-inventory.json)，可执行 [CPU probe](../Tests~/RT/R0/probe_sigma.py)。
+当前仓库的公共执行器与 native 调度 ABI 可以作为基础；生产 DI/GI 仍使用原 RELAX 设置绑定及 manifest；R5 独立前置步骤已补 typed SigmaSettings、9 个官方 shader wrappers 与 manifest，GPU 证据见 §8.5，尚未接入真实 Cast。R0 已对现用 DLL 实测：NRD 4.17.3、normal encoding 2 / roughness 1，明确支持 `SIGMA_SHADOW`（16）及 `SIGMA_SHADOW_TRANSLUCENCY`（17），两种实例均创建成功，各有 9 pipelines、1 permanent、8 transient。无需为 SIGMA 重编当前 native 插件。接入仍需补匹配版本参数 ABI、Unity shader wrappers、外部输入输出绑定及 GPU 验收；descriptor 成功不等于生产降噪链路已完成。证据见 [R0 inventory](../Tests~/RT/R0/sigma-inventory.json)，可执行 [CPU probe](../Tests~/RT/R0/probe_sigma.py)。
 
 ### 6.4 派生输出按需求提供
 
@@ -329,7 +329,8 @@ Editor/
 | R3-GI | 已完成有界迁移验收 | GI 不再私有创建 / 扫描 / 释放场景；81 核心文件及全部 59 shader 文件未变；9 项回归、生产 DI/GI 共享姿态 / 独立历史 / 双 NRD dispatch 两路径、GI Mono Player 两路径通过 | 4 条退出 GC 警告与原 Backbuffer Player 日志 SHA / 精确数量一致，宿主显式退休域为 0；不是全管线退出清理或旧质量缺口通过 | R4 |
 | R4 公共查询前置步骤 | 已完成有界验收 | native 最近 / occlusion 入口、共享 alpha 和 ShadowCasters 用途；两路径各 122 checks / 13 请求，另 4 项原回归通过 | 多用途可保留多 AS，不声称最终质量或性能提升 | R4 raw |
 | R4 raw Cast | 已完成有界验收；R4 未完成 | 独立 Ho-RTShadow、主方向灯全分辨率 32F raw / status / owner / 最近 blocker；OB 部件接收、同帧有限角度采样及消费资源 fence 释放；8 项组合回归通过 | 真实 lilToon NPR 接收 gate 失败，撤回主光替换；SIGMA 未实现；不能宣称阴影最终画质完成 | 独立 SIGMA 夹具与生产信号，同时保留 R4 NPR 待完成项 |
-| R5–R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 依次推进 |
+| R5 独立 SIGMA | 已完成有界夹具；R5 未完成 | 20-byte 独立 ABI、9 个原版 pipeline、官方编解码；连续灰阶 / MSE / 无历史重复 / 实际时域 pass 开关及原 RELAX 两路径通过 | 128×64 静态合成信号，不代表角色、NPR、动态、Player 或多灯画质 | 接真实 Cast 单样本、guides、按相机 / 灯状态与 reset |
+| R6 | 待实施 | 不提前宣称 | 每步按本节条件复核 | 单灯闭环后扩展 |
 
 R0 采用的宿主准备合同：
 
@@ -379,6 +380,14 @@ RG / compatibility raw 夹具各 52 checks / 19 请求，包含离屏 ShadowsOnl
 资源成本为每 renderer / camera 16 B/像素 raw 和 8 KiB 接收位表，另有 shadow 用途 AS。输出按相机和 renderer 隔离；旧输出在 resize / Create / Dispose 时经 host 的实际完成 fence 延迟释放，包含宿主独立退休 pump。公共输入补齐所有 native raygeneration 已声明纹理槽的 fallback，缺少 SB 时安全返回 invalid。没有性能提升或整帧显存预算声明。
 
 **NPR 接收仍未通过，不能关闭 R4。** 真实 lilToon 的 shadow / receive-off / lit 测量均停在 0.001041412，已有 raster-only `ValidateRendering` 在当前隔离环境也失败为 0/0；这只是当前对照，未证明迁移前就存在此问题。隔离诊断曾读到异常材质参数，原因尚不明确，不以猜测修生产材质或常量布局。错误日志、断言和异常进程退出均保留；诊断 Shader 仅写入独立工程且已清除。主光替换 hook 已撤回，原 CharacterShadow 采样算法保持；新增 `HoRTShadowSampling.hlsl` 是尚待接入验收的候选消费者。完整 `-Case shadow-rg` / `shadow-compat` 与 `raster-fallback` 仍是诊断 gate，不属于上述 raw 通过。此点反复调材质已无充分收益，因此停止局部试错，先做能独立验证的 SIGMA 前后端、再回到真实 NPR 接收；R4 / R5 / R6 与最终质量均保持未完成。
+
+R5 独立 SIGMA 前置步骤见 [R5 review](../Tests~/RT/R5/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage R5Sigma`，匹配源与生成契约见 [generation](../Tests~/RT/R5/generation.json) / [generator](../Tests~/RT/R5/generate_sigma.py)。从相同 NRD 4.17.3 SDK 增补 14 个原版 SIGMA 文件，逐文件保留 SHA；现有 NRD.hlsli / Config / Common / 两份 ABI 头与来源逐字节匹配，DLL 不变。9 个 wrapper 的 pipeline identifiers 与资源顺序由实际 native descriptor 和带条件的官方 resource headers 生成，未改 SIGMA 算法；公共绑定保留旧 constant-buffer 名以不动 RELAX。
+
+公共执行器增加独立 20 字节 SigmaSettings（方向、planeDistanceSensitivity、maxStabilizedFrameNum）提交，R32_UINT 与 RG8_UNORM 池格式；错误设置族在进入 native ABI 前拒绝，不能把 RELAX struct 地址交给 SIGMA 或反向使用。原 RELAX dispatch / 常量上传 / 资源绑定执行主体逐字节不变，原 DI/GI 文件保持，新增设置与历史均不混用。SIGMA 实例仍独立拥有 1 permanent / 8 transient 和自己的常量缓冲，不宣称与 DI/GI 共用历史或减少显存。
+
+128×64 静态平面夹具由 compute 生成独立随机二值遮挡、实际 blocker 距离 / miss sentinel 和官方 PackPenumbra、法线、深度与零 motion，再执行真实 native 调度和 Unity SIGMA shaders。完全 lit / occluded 正确，后端严格使用官方平方解码，误差 0；测试半影得到 746 个不同解码灰阶，MSE 从 0.0391710 降到 0.00156130。`maxStabilizedFrameNum=0` 时实际 dispatch list 不含 temporal stabilization，固定 frame/seed/reset 重复输出逐分量一致；预览设为 5 时实际含该 pipeline。首次 URP 分配池未初始化和 probe 函数缺参失败均保留，没有改验收阈值。最后独立 SIGMA 加 DI/GI 各自两路径 RELAX 共 5 项通过，分程序集编译 0 错误。
+
+本步收益是把“native 声称支持 SIGMA”推进到真实 GPU 连续可见度重建，同时证明 RELAX 回归仍通过；成本是 SIGMA 独立资源和新增 SDK wrapper，没有性能收益声明。该合成夹具只证明 ABI、编解码、调度与有界降噪效果，不证明真实角色 / 多层 ramp / 运动重投影 / 无历史导出画质 / Player。下一步将真实 RTShadow 的单个光源样本最近 blocker 与 guides 接上官方前端；高 spp raw 参考与 SIGMA 的统计输入保持区分。R4 的实际 NPR 接收 gate、R5 生产链及 R6 均未完成。
 
 <a id="quality-reference"></a>
 

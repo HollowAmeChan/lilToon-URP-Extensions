@@ -14,6 +14,7 @@ namespace lilToon.URP.Extensions.NRD
     {
         protected IntPtr instance;
         protected readonly HoNrdNative.InstanceDesc description;
+        private readonly uint denoiserType;
         protected readonly ComputeShader[] shaders;
         protected readonly int[][] bindings;
         protected readonly int[] kernels;
@@ -32,6 +33,7 @@ namespace lilToon.URP.Extensions.NRD
         protected readonly HoNrdTiming timing=new();
         protected double currentSampleTime;
         internal HoNrdNative.RelaxSettings AppliedSettings {get;private set;}
+        internal HoNrdNative.SigmaSettings AppliedSigmaSettings {get;private set;}
         internal int LastDispatchCount {get;private set;}
         #if UNITY_EDITOR
         internal bool SceneViewPreview;
@@ -55,6 +57,7 @@ namespace lilToon.URP.Extensions.NRD
         {
             var expected=pipelineIdentifiers??throw new ArgumentNullException(nameof(pipelineIdentifiers));
             this.pipelineResources=pipelineResources??throw new ArgumentNullException(nameof(pipelineResources));
+            this.denoiserType=denoiserType;
             this.highPrecisionColorPool=highPrecisionColorPool;
             instance=HoNrdNative.Create(denoiserType);description=HoNrdNative.Read<HoNrdNative.InstanceDesc>(HoNrdNative.GetInstanceDesc(instance));
             try
@@ -103,9 +106,9 @@ namespace lilToon.URP.Extensions.NRD
         }
         private static GraphicsFormat Format(uint format)=>format switch
         {
-            0=>GraphicsFormat.R8_UNorm,8=>GraphicsFormat.R8G8B8A8_UNorm,17=>GraphicsFormat.R16_SFloat,
-            27=>GraphicsFormat.R16G16B16A16_SFloat,30=>GraphicsFormat.R32_SFloat,
-            _=>throw new NotSupportedException("Unmapped pinned RELAX pool format "+format)
+            0=>GraphicsFormat.R8_UNorm,4=>GraphicsFormat.R8G8_UNorm,8=>GraphicsFormat.R8G8B8A8_UNorm,17=>GraphicsFormat.R16_SFloat,
+            27=>GraphicsFormat.R16G16B16A16_SFloat,28=>GraphicsFormat.R32_UInt,30=>GraphicsFormat.R32_SFloat,
+            _=>throw new NotSupportedException("Unmapped pinned NRD pool format "+format)
         };
         internal void Declare(RenderGraph graph,IUnsafeRenderGraphBuilder builder)
         {
@@ -114,14 +117,29 @@ namespace lilToon.URP.Extensions.NRD
             foreach(var buffer in constants)builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
         }
         protected void ApplySettings(HoNrdNative.RelaxSettings desired)
-        {HoNrdNative.Check(HoNrdNative.SetDenoiserSettings(instance,0,ref desired),"SetDenoiserSettings");AppliedSettings=desired;}
+        {RequireRelax();HoNrdNative.Check(HoNrdNative.SetDenoiserSettings(instance,0,ref desired),"SetDenoiserSettings");AppliedSettings=desired;}
+        private void RequireRelax()
+        {if(denoiserType<10||denoiserType>15)throw new InvalidOperationException("RELAX settings require a RELAX denoiser");}
         internal void Record(CommandBuffer cmd,HoNrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external,HoNrdNative.RelaxSettings desired,bool applySettings=true)
         {
+            RequireRelax();
             HoNrdNative.Check(HoNrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
             #if UNITY_EDITOR
             if(ValidationSettings!=null){desired=ValidationSettings(desired);applySettings=true;}
             #endif
             if(applySettings)ApplySettings(desired);
+            RecordDispatches(cmd,settings,external);
+        }
+        internal void Record(CommandBuffer cmd,HoNrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external,HoNrdNative.SigmaSettings desired)
+        {
+            if(denoiserType!=16&&denoiserType!=17)throw new InvalidOperationException("SIGMA settings require a SIGMA denoiser");
+            if(Marshal.SizeOf<HoNrdNative.SigmaSettings>()!=20)throw new InvalidOperationException("Pinned SIGMA settings ABI mismatch");
+            HoNrdNative.Check(HoNrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
+            HoNrdNative.Check(HoNrdNative.SetSigmaSettings(instance,0,ref desired),"SetDenoiserSettings(SIGMA)");AppliedSigmaSettings=desired;
+            RecordDispatches(cmd,settings,external);
+        }
+        private void RecordDispatches(CommandBuffer cmd,HoNrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
+        {
             HoNrdNative.Check(HoNrdNative.GetComputeDispatches(instance,identifiers,1,out var pointer,out uint count),"GetComputeDispatches");
             if(count*constantStride>ConstantBytes)throw new InvalidOperationException("NRD dispatch constants exceed per-frame storage");
             LastDispatchCount=0;if(count==0)return;

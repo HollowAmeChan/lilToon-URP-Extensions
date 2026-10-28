@@ -1,0 +1,22 @@
+{
+    "pass": false,
+    "error": "System.NullReferenceException: Object reference not set to an instance of an object\r\n  at UnityEngine.Rendering.Universal.RenderingUtils.ReAllocateIfNeeded (UnityEngine.Rendering.RTHandle& handle, UnityEngine.RenderTextureDescriptor& descriptor, UnityEngine.FilterMode filterMode, UnityEngine.TextureWrapMode wrapMode, System.Boolean isShadowMap, System.Int32 anisoLevel, System.Single mipMapBias, System.String name) [0x0008a] in D:\\Unity_Fork\\HoUrp17.3.0\\Runtime\\RenderingUtils.cs:723 \r\n  at lilToon.URP.Extensions.NRD.HoNrdContext.AllocatePool (UnityEngine.Rendering.RTHandle[] pool, System.IntPtr descriptors, System.String name) [0x000c3] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Runtime\\NRD\\HoNrdContext.cs:102 \r\n  at lilToon.URP.Extensions.NRD.HoNrdContext.Prepare (System.Int32 width, System.Int32 height) [0x0000e] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Runtime\\NRD\\HoNrdContext.cs:87 \r\n  at lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowSigmaValidation.Run () [0x000ff] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSigmaValidation.cs:35 ",
+    "dispatches": 0,
+    "levels": 0,
+    "rawMse": 0.0,
+    "filteredMse": 0.0,
+    "decodeError": 0.0,
+    "checks": [
+        "SigmaSettings exact pinned ABI is 20 bytes",
+        "SIGMA pipeline 0",
+        "SIGMA pipeline 1",
+        "SIGMA pipeline 2",
+        "SIGMA pipeline 3",
+        "SIGMA pipeline 4",
+        "SIGMA pipeline 5",
+        "SIGMA pipeline 6",
+        "SIGMA pipeline 7",
+        "SIGMA pipeline 8",
+        "Official frontend/backend probe present"
+    ]
+}

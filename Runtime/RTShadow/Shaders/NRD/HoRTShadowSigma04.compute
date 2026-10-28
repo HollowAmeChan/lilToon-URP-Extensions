@@ -1,0 +1,10 @@
+// Original pinned NRD SIGMA; Unity bindings only. Existing NRD license applies.
+#pragma kernel main
+#pragma use_dxc
+#pragma target 6.0
+#define NRD_INTERNAL 1
+#define NRD_COMPILER_DXC 1
+#define TRANSLUCENCY 0
+#define FIRST_PASS 0
+#include "../../../NRD/Shaders/HoNrdBindings.hlsl"
+#include "../../../RTDI/ThirdParty/NRD/SIGMA_Blur.cs.hlsl"

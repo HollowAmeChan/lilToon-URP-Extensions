@@ -1,0 +1,896 @@
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+[Licensing::Module] Trying to connect to existing licensing client channel...
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12" at "2026-10-28T04:23:08.3615031Z"
+Built from '6000.3/staging' branch; Version is '6000.3.15f1 (c1aa84e375f6) revision 12692100'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 11  (10.0.26200) CoreCountrySpecific' Language: 'zh' Physical Memory: 31908 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-28T04:23:08Z
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.1'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-hhh12"
+[Licensing::IpcConnector] LicenseClient-hhh12 channel disconnected successfully.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15" at "2026-10-28T04:23:09.4677725Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 26116, path: "C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              6e8afb5d1b8c4347a1bbb5649e8350c4
+  Correlation Id:          9504992b5f938d49e37afb2f42c319a6
+  External correlation Id: 2310002210494502068
+  Machine Id:              1CwKlLouk/VY6hjRtF7o1PKDkww=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-hhh12-6000.3.15" (connect: 0.00s, validation: 0.00s, handshake: 0.01s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15-notifications" at "2026-10-28T04:23:09.4749881Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: ewogICJzdWJzR3JvdXAiIDogInVuaXR5IGVkaXRvciIsCiAgIm5hbWVzcGFjZSIgOiAidW5pdHlfZWRpdG9yIiwKICAidHlwZSIgOiAiRURJVE9SIiwKICAidGFnIiA6ICJVbml0eVBlcnNvbmFsXXXX
+  Product: Unity Personal Version
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 1.12s
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe
+-batchmode
+-force-d3d12
+-projectPath
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation
+-executeMethod
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.RunCompatibility
+-logFile
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\ho-rt-r5sigma-gi-relax-compat-20261028T042222370.log
+-force-d3d12-debug
+Successfully changed project path to: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation
+D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [51872]  Target information:
+
+Player connection [51872]  * "[IP] 26.182.211.171 [Port] 55505 [Flags] 2 [Guid] 391238859 [EditorId] 391238859 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [51872]  * "[IP] 192.168.1.6 [Port] 55505 [Flags] 2 [Guid] 391238859 [EditorId] 391238859 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [51872] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [51872] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-41388" after 0.2 seconds.
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 0.73 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.15f1 (c1aa84e375f6)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation/Assets
+Forcing GfxDevice: Direct3D 12
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 4060 (ID=0x2882)
+    Vendor:          NVIDIA
+    VRAM:            7956 MB
+    App VRAM Budget: 7188 MB
+    Driver:          32.0.16.1742
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56388
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.005291 seconds.
+- Loaded All Assemblies, in  0.412 seconds
+Native extension for WindowsStandalone target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.274 seconds
+Domain Reload Profiling: 673ms
+	BeginReloadAssembly (151ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (12ms)
+	RebuildCommonClasses (30ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (60ms)
+	LoadAllAssembliesAndSetupDomain (150ms)
+		LoadAssemblies (129ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (146ms)
+			TypeCache.Refresh (143ms)
+				TypeCache.ScanAssembly (131ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (1ms)
+	FinalizeReload (274ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (247ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (42ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (52ms)
+			ProcessInitializeOnLoadAttributes (83ms)
+			ProcessInitializeOnLoadMethodAttributes (67ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+[Licensing::Client] Successfully resolved entitlement details
+[Package Manager] Registered 28 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.burst@1.8.29 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.burst@6bb9aca3ef38)
+    com.unity.mathematics@1.3.3 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.mathematics@19a9377c4ffa)
+    com.unity.collections@2.6.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.collections@12999e356c23)
+    com.unity.searcher@4.9.4 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.searcher@d45a78918735)
+    com.unity.nuget.mono-cecil@1.11.6 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.nuget.mono-cecil@ecb9724e46ff)
+    com.unity.test-framework.performance@3.4.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework.performance@aa81a99c4a75)
+  Built-in packages:
+    com.unity.modules.imgui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.ui@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.imageconversion@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.unitywebrequest@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.terrain@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.physics@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.animation@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.particlesystem@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.audio@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.screencapture@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.hierarchycore@1.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.render-pipelines.core@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.render-pipelines.core@648b47f96bf1)
+    com.unity.shadergraph@17.3.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.shadergraph@2da3a5f87f4a)
+    com.unity.ugui@2.0.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ugui@23e8d17bfaf9)
+    com.unity.test-framework@1.6.0 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.test-framework@aebcb98460c6)
+    com.unity.ext.nunit@2.0.5 (location: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidation\Library\PackageCache\com.unity.ext.nunit@d8c07649098d)
+  Local packages:
+    com.unity.render-pipelines.universal@file:D:\Unity_Fork\HoUrp17.3.0 (location: D:\Unity_Fork\HoUrp17.3.0)
+    com.unity.render-pipelines.universal-config@file:D:\Unity_Fork\HoUrpConfig17.0.3 (location: D:\Unity_Fork\HoUrpConfig17.0.3)
+    jp.lilxyzw.liltoon@file:D:\Unity_Fork\lilToon\Assets\lilToon (location: D:\Unity_Fork\lilToon\Assets\lilToon)
+    jp.lilxyzw.liltoon.urp.extensions@file:D:\Unity_Fork\lilToon-URP-Extensions (location: D:\Unity_Fork\lilToon-URP-Extensions)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.02 seconds
+Starting: C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aE.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidation
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 0s392ms
+[479/594    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+*** Tundra build success (0.36 seconds), 1 items updated, 594 evaluated
+AssetDatabase: script compilation time: 0.809565s
+Begin MonoManager ReloadAssembly
+- Loaded All Assemblies, in  0.745 seconds
+Refreshing native plugins compatible for Editor in 1.99 ms, found 1 plugins.
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 2.21 ms, found 1 plugins.
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  2.064 seconds
+Domain Reload Profiling: 2796ms
+	BeginReloadAssembly (368ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (80ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (147ms)
+	RebuildCommonClasses (29ms)
+	RebuildNativeTypeToScriptingClass (8ms)
+	initialDomainReloadingComplete (33ms)
+	LoadAllAssembliesAndSetupDomain (294ms)
+		LoadAssemblies (305ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (94ms)
+			TypeCache.Refresh (67ms)
+				TypeCache.ScanAssembly (62ms)
+			BuildScriptInfoCaches (18ms)
+			ResolveRequiredComponents (6ms)
+	FinalizeReload (2064ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (1898ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (19ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (122ms)
+			ProcessInitializeOnLoadAttributes (1590ms)
+			ProcessInitializeOnLoadMethodAttributes (146ms)
+			AfterProcessingInitializeOnLoad (19ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (24ms)
+Asset Pipeline Refresh (id=11ace11f98c62234b8789f4082883014): Total: 4.351 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=2682 ms
+		Asset DB Callback time: managed=49 ms, native=18 ms
+		Scripting: domain reloads=1, domain reload time=745 ms, compile time=811 ms, other=44 ms
+		Project Asset Count: scripts=844, non-scripts=2167
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.002ms
+	InvokePackagesCallback: 25.701ms
+	ApplyChangesToAssetFolders: 1.535ms
+	Scan: 280.931ms
+	OnSourceAssetsModified: 0.004ms
+	CategorizeAssetsWithTransientArtifact: 16.199ms
+	ProcessAssetsWithTransientArtifactChanges: 35.225ms
+	CategorizeAssets: 43.141ms
+	ImportOutOfDateAssets: 2074.175ms (1261.620ms without children)
+		CompileScripts: 810.854ms
+		ReloadNativeAssets: 0.037ms
+		UnloadImportedAssets: 0.977ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.324ms
+		InitializingProgressBar: 0.001ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.001ms
+		OnDemandSchedulerStart: 0.361ms
+	PostProcessAllAssets: 49.615ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.002ms
+	UnloadStreamsBegin: 3.725ms
+	PersistCurrentRevisions: 0.064ms
+	UnloadStreamsEnd: 0.001ms
+	GenerateScriptTypeHashes: 2.012ms
+	Untracked: 1820.745ms
+
+Application.AssetDatabase Initial Refresh End
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.01 seconds
+Scanning for USB devices : 17.343ms
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-RTInputValidation
+Unloading 62 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 3827 unused Assets / (6.8 MB). Loaded Objects now: 4812.
+Memory consumption went from 273.0 MB to 266.2 MB.
+Total: 7.716800 ms (FindLiveObjects: 0.394100 ms CreateObjectMapping: 0.123300 ms MarkObjects: 4.760900 ms  DeleteObjects: 2.436100 ms)
+
+Unloading 6 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 5 unused Assets / (15.8 KB). Loaded Objects now: 4814.
+Memory consumption went from 243.4 MB to 243.4 MB.
+Total: 5.734900 ms (FindLiveObjects: 0.245200 ms CreateObjectMapping: 0.053100 ms MarkObjects: 5.411000 ms  DeleteObjects: 0.024400 ms)
+
+[Project] Loading completed in 8.634 seconds
+	Project init time: 				6.746 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.233 seconds
+		Asset Database init time: 		0.171 seconds
+		Global illumination init time: 	0.003 seconds
+		Assemblies load time: 			0.721 seconds
+		Unity extensions init time: 	0.021 seconds
+		Asset Database refresh time: 	4.351 seconds
+	Scene opening time: 			0.393 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1793161396945,"processId":41388,"projectLoad":8.6335616,"projectInit":6.7464962,"templateInit":0.0,"packageManagerInit":0.2329365,"assetDatabaseInit":0.170544,"globalIlluminationInit":0.0029085,"assembliesLoad":0.7206051,"unityExtensionsInit":0.0212912,"assetDatabaseRefresh":4.3511988,"sceneOpening":0.3929191}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1793161396945,"processId":41388,"editorVersion":"6000.3.15f1 (c1aa84e375f6)","branch":"6000.3/staging","buildType":"Release","platform":"Windows"}
+[Licensing::Client] Successfully resolved entitlement details
+Start Indexing on Editor startup
+[Indexing] Starting Initial Indexing for Assets
+[UnityConnectServicesConfig] config is NOT valid, switching to default
+Created GICache directory at C:/Users/hhh12/AppData/LocalLow/Unity/Caches/GiCache. Took: 0.068s, timestamps: [8.637 - 8.704]
+[HoGINrd] CHECK Opt-in default allocates no GI denoiser
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:129)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Original RELAX_DIFFUSE instance created: RELAX diffuse
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:130)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Filtered publication retains separate raw texture
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:132)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK First dispatch resets independent GI history
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:133)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Stationary diffuse mean within 8% of same-frame raw actual=RGBA(0.369, 0.185, 0.091, 1.000) expected=RGBA(0.360, 0.180, 0.089, 1.000)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Near (UnityEngine.Color,UnityEngine.Color,string,single,single) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:104)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:135)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Measured per-pixel temporal variance reduced at least 85%: raw=0.114109568385824 filtered=2.72544880886016E-06
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:136)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Real primary viewZ and finite bounce hit distance are supplied
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:139)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Demodulated input is produced before primary albedo actual=RGBA(0.353, 0.177, 0.087, 122.458) expected=RGBA(0.353, 0.177, 0.087, 1.000)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Near (UnityEngine.Color,UnityEngine.Color,string,single,single) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:104)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:140)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Stable frames retain denoiser history
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:141)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Static-world camera motion uses NRD matrix reprojection
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:142)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Camera move keeps stationary wall energy actual=RGBA(0.367, 0.184, 0.090, 1.000) expected=RGBA(0.369, 0.185, 0.091, 1.000)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Near (UnityEngine.Color,UnityEngine.Color,string,single,single) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:104)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:142)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Sky change resets independent GI history immediately
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:143)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Old bright history removed on first dark frame actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Near (UnityEngine.Color,UnityEngine.Color,string,single,single) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:104)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:143)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Restored sky resets history
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:144)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Zero primary albedo channel stays zero after remodulation actual=RGBA(0.000, 0.040, 0.091, 1.000) expected=RGBA(0.000, 0.039, 0.089, 1.000)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Near (UnityEngine.Color,UnityEngine.Color,string,single,single) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:104)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:146)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Zero albedo never destroys incoming red signal by division
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:146)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK HDR 1000 sky retains mean and finite moments actual=RGBA(737.346, 369.150, 181.580, 1.000) expected=RGBA(725.783, 363.355, 178.733, 1.000)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Near (UnityEngine.Color,UnityEngine.Color,string,single,single) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:104)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:148)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Normal camera composites filtered GI actual=RGBA(0.573, 0.395, 0.304, 1.000) expected=RGBA(0.573, 0.395, 0.304, 2.000)
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Near (UnityEngine.Color,UnityEngine.Color,string,single,single) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:104)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:153)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Invalid/background pixels stay unlit after resolve
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:155)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Disable releases independent NRD and restores raw publication
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:156)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Volume enables fresh independent NRD without modifying shared defaults
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:157)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Volume disables independent NRD
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:158)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Actual second camera owns independent native instance and textures
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:161)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Original camera retains its own denoiser
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:161)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Resolution change reallocates all GI guides and resets history
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:162)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGI
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd00
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd01
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd02
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd03
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd04
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd05
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd06
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd07
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd08
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd09
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd10
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd11
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd12
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd13
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] CHECK Compute has no diagnostics: HoRTGINrd14
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Require (bool,string) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:102)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:163)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 102)
+
+[HoGINrd] END pass=True
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Finish (System.Exception) (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:174)
+lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation:Tick () (at D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs:165)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: D:/Unity_Fork/lilToon-URP-Extensions/Editor/RTGI/HoRTGINrdValidation.cs Line: 174)
+
+Start importing ProjectSettings/QualitySettings.asset using Guid(00000000000000009000000000000000) (LibraryAssetImporter) -> (artifact id: '85a22fb146bf81de30a22e2c6708bed5') in 0.0201253 seconds
+Start importing ProjectSettings/GraphicsSettings.asset using Guid(00000000000000006100000000000000) (LibraryAssetImporter) -> (artifact id: '24db29c82481423f28adb0d4709d3c4b') in 0.0152465 seconds
+Start importing Assets/UniversalRenderPipelineGlobalSettings.asset using Guid(11f9f9c4c7df86f4e9f4e0864a8f02cd) (NativeFormatImporter) -> (artifact id: '2764dc472cd080ea1352f7e3b2715fb4') in 0.0033266 seconds
+Refreshing native plugins compatible for Editor in 1.89 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=1339ab47a4926d842bc836b6bd03f1b9): Total: 0.153 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+[Licensing::IpcConnector] LicenseClient-hhh12-6000.3.15-notifications channel disconnected successfully.
+[Licensing::IpcConnector] LicenseClient-hhh12-6000.3.15 channel disconnected successfully.
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+Leak Detected : Persistent allocates 4 individual allocations. To find out more please enable 'Preferences > Jobs > Leak Detection Level > Enabled With Stack Trace' and reproduce the leak again.
+There are unreleased allocations left in a heap that is released!
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+##utp:{"type":"MemoryLeaks","version":2,"phase":"Immediate","time":1793161400111,"processId":41388,"allocatedMemory":18246177,"memoryLabels":[{"Default":29313},{"Permanent":15236},{"NewDelete":68459},{"Thread":4238000},{"Manager":39165},{"VertexData":8},{"Geometry":816},{"Texture":296},{"Shader":116757},{"Material":24},{"GfxDevice":60521},{"GfxThread":96},{"Animation":392},{"Audio":3040},{"FreeType":8},{"FontEngine":736},{"Physics":2090},{"Physics2D":16},{"Serialization":656},{"Input":14984},{"JobScheduler":33024},{"TextLib":216},{"Mono":32},{"MonoCode":64},{"ScriptingNativeRuntime":155060},{"BaseObject":1620208},{"Resource":1336},{"Renderer":3000},{"Transform":4685},{"File":1016},{"WebCam":616},{"Culling":32},{"Terrain":11394},{"Wind":24},{"STL":40},{"String":20608},{"DynamicArray":95999},{"HashMap":3876984},{"Utility":2662998},{"Curl":4510},{"PoolAlloc":2152},{"AI":80},{"TypeTree":5341},{"ScriptManager":512},{"RuntimeInitializeOnLoadManager":64},{"SpriteAtlas":112},{"GI":7792},{"Director":8240},{"CloudService":8064},{"WebRequest":845},{"VR":47994},{"SceneManager":504},{"Video":208},{"LazyScriptCache":32},{"Camera":17},{"Secure":2113},{"SerializationCache":1576},{"APIUpdating":10320},{"Subsystems":336},{"VirtualTexturing":57888},{"StaticSafetyDebugInfo":278528},{"Analytics":752},{"Hierarchy":608},{"CoreStats":13032},{"Identifiers":12960},{"Gui":96},{"EditorUtility":108093},{"VersionControl":4},{"Undo":947},{"AssetDatabase":4549134},{"EditorGi":328},{"UnityConnect":29232},{"Upm":1896},{"AssetCompliance":64},{"DrivenProperties":72},{"LocalIPC":280},{"ProfilerEditor":9746},{"CoreBusinessMetrics":2908},{"Licensing":888},{"AssetReference":32},{"IPCStream":32}]}

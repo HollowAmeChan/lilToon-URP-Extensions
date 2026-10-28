@@ -72,12 +72,19 @@ namespace lilToon.URP.Extensions.NRD
             internal byte checkerboard,reconstruction;
             internal float minDiffMaterial,minSpecMaterial;internal byte antiFirefly,roughEdge;
         }
+        [StructLayout(LayoutKind.Sequential)] internal struct SigmaSettings
+        {
+            internal Vector3 lightDirection;
+            internal float planeDistanceSensitivity;
+            internal uint maxStabilizedFrameNum;
+        }
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] private static extern IntPtr GetLibraryDesc();
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] private static extern uint CreateInstance(ref CreationDesc desc,out IntPtr instance);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern void DestroyInstance(IntPtr instance);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern IntPtr GetInstanceDesc(IntPtr instance);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern uint SetCommonSettings(IntPtr instance,ref CommonSettings settings);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern uint SetDenoiserSettings(IntPtr instance,uint identifier,ref RelaxSettings settings);
+        [DllImport(Library,EntryPoint="SetDenoiserSettings",CallingConvention=CallingConvention.StdCall)] internal static extern uint SetSigmaSettings(IntPtr instance,uint identifier,ref SigmaSettings settings);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern uint GetComputeDispatches(IntPtr instance,[In]uint[] identifiers,uint count,out IntPtr dispatches,out uint dispatchCount);
         // This reference fork's exported string helper retains an older enum
         // order. Bind by the pinned header's authoritative numeric enum order.
@@ -98,7 +105,8 @@ namespace lilToon.URP.Extensions.NRD
                 var creation=new CreationDesc{denoisers=method,count=1};Check(CreateInstance(ref creation,out var instance),"CreateInstance");
                 try
                 {
-                    if(Marshal.SizeOf<RelaxSettings>()!=148)throw new InvalidOperationException("NRD RELAX settings ABI size mismatch");
+                    if(denoiserType>=10&&denoiserType<=15&&Marshal.SizeOf<RelaxSettings>()!=148)throw new InvalidOperationException("NRD RELAX settings ABI size mismatch");
+                    if((denoiserType==16||denoiserType==17)&&Marshal.SizeOf<SigmaSettings>()!=20)throw new InvalidOperationException("NRD SIGMA settings ABI size mismatch");
                     return instance;
                 }
                 catch{DestroyInstance(instance);throw;}

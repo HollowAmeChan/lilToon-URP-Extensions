@@ -1,0 +1,80 @@
+{
+  "stage": "R5Sigma",
+  "sourceCommit": "93312fda6989725663760949b2c29ea87b6d1a94",
+  "startedUtc": "2026-10-28T04:23:54.0776131Z",
+  "sourcesFile": "sources-20261028T042353558.json",
+  "runnerSha256": "1B3FE8644A088D5296898AA6CE491EA9B1E311090B6AD96746EAE471048CC5B9",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "sigma-independent",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowSigmaValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "1817B669FAF1DF740F45E859A47163DF9E31D0C6AAE77FE08574916928ABABB8",
+      "seconds": 12.7783817,
+      "pass": true,
+      "logFile": "ho-rt-r5sigma-sigma-independent-20261028T042353558.log"
+    },
+    {
+      "name": "di-relax-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunDenoise",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "FE1FB45D2C10BA9FA27E304F5C31D8EFF52D0917DF92AC759E22A0850AF51A34",
+      "seconds": 9.9943777,
+      "pass": true,
+      "logFile": "ho-rt-r5sigma-di-relax-rg-20261028T042353558.log"
+    },
+    {
+      "name": "di-relax-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunDenoiseCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "7AEDA1823C449348AAC38469BC4C1BD6D2C5FD4176875C4322F960B47BCC36B8",
+      "seconds": 9.8175059,
+      "pass": true,
+      "logFile": "ho-rt-r5sigma-di-relax-compat-20261028T042353558.log"
+    },
+    {
+      "name": "gi-relax-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "C144261F3624739E79350E5A92B327AF3DAB9C4D769AA7B2C45610B992787445",
+      "seconds": 10.7516696,
+      "pass": true,
+      "logFile": "ho-rt-r5sigma-gi-relax-rg-20261028T042353558.log"
+    },
+    {
+      "name": "gi-relax-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.RunCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "A08ACEB897DC073BD78EDBE9A8F6C7FECD472B0B559CD76754819819BA206350",
+      "seconds": 10.6476735,
+      "pass": true,
+      "logFile": "ho-rt-r5sigma-gi-relax-compat-20261028T042353558.log"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+#pragma kernel Fill
+#pragma kernel Decode
+#pragma use_dxc
+#pragma target 6.0
+#define NRD_NORMAL_ENCODING 2
+#define NRD_ROUGHNESS_ENCODING 1
+#include "../../Runtime/RTDI/ThirdParty/NRD/NRD.hlsli"
+RWTexture2D<float4> _Normal,_Motion,_Reference;
+RWTexture2D<float> _ViewZ,_Penumbra;
+Texture2D<float> _Encoded;
+RWTexture2D<float4> _Decoded;
+uint _Mode,_Frame;
+uint Hash(uint x){x^=x>>16;x*=0x7feb352du;x^=x>>15;x*=0x846ca68bu;x^=x>>16;return x;}
+[numthreads(8,8,1)]
+void Fill(uint2 p:SV_DispatchThreadID)
+{
+    if(p.x>=128||p.y>=64)return;
+    float probability=saturate((p.x+.5-64)/12+.5);
+    if(_Mode==1)probability=1;if(_Mode==2)probability=0;
+    float u=(Hash(p.x+p.y*128+_Frame*0x9e3779b9u)&0xffffffu)/16777216.0;
+    float distance=u<probability?NRD_FP16_MAX:4;
+    _Normal[p]=NRD_FrontEnd_PackNormalAndRoughness(float3(0,0,-1),.5,0);
+    _Motion[p]=0;_ViewZ[p]=5;
+    _Penumbra[p]=SIGMA_FrontEnd_PackPenumbra(distance,.1);
+    _Reference[p]=float4(probability,distance>=NRD_FP16_MAX,0,1);
+}
+[numthreads(8,8,1)]
+void Decode(uint2 p:SV_DispatchThreadID)
+{
+    if(p.x>=128||p.y>=64)return;
+    float encoded=_Encoded[p];
+    _Decoded[p]=float4(SIGMA_BackEnd_UnpackShadow(encoded),encoded,encoded*encoded,1);
+}

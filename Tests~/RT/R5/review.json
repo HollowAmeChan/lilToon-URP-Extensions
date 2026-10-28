@@ -1,0 +1,41 @@
+{
+  "stage": "R5 independent SIGMA prerequisite; production and NPR still incomplete",
+  "accepted": {
+    "sigma-independent": "run-20261028T042353558.json",
+    "di-relax-rg": "run-20261028T042353558.json",
+    "di-relax-compat": "run-20261028T042353558.json",
+    "gi-relax-rg": "run-20261028T042353558.json",
+    "gi-relax-compat": "run-20261028T042353558.json"
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T041855713.json",
+      "case": "sigma-independent",
+      "diagnostics": [
+        "NullReferenceException: Object reference not set to an instance of an object\r"
+      ]
+    },
+    {
+      "run": "run-20261028T042055587.json",
+      "case": "sigma-independent",
+      "diagnostics": [
+        "Shader error in 'HoRTShadowSigmaValidation': no matching function for call to 'NRD_FrontEnd_PackNormalAndRoughness' at kernel Fill at Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTShadow/HoRTShadowSigmaValidation.compute(22) (on d3d11)\r",
+        "Shader error in 'HoRTShadowSigmaValidation': no matching function for call to 'NRD_FrontEnd_PackNormalAndRoughness' at kernel Decode at Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTShadow/HoRTShadowSigmaValidation.compute(22) (on d3d11)\r",
+        "Shader error in 'HoRTShadowSigmaValidation': no matching function for call to 'NRD_FrontEnd_PackNormalAndRoughness' at kernel Fill at Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTShadow/HoRTShadowSigmaValidation.compute(22) (on d3d11)\r",
+        "Exception: Official miss sentinel reconstructs fully lit\r"
+      ]
+    }
+  ],
+  "metrics": {
+    "dispatches": 14,
+    "levels": 746,
+    "rawMse": 0.0391710065305233,
+    "filteredMse": 0.0015613019932061434,
+    "decodeError": 0.0
+  },
+  "unchangedDiGiFiles": 330,
+  "sourceAudit": "Native DLL and existing pinned SDK/RELAX sources unchanged; 14 original SIGMA source files imported with exact hashes. Nine identifiers/resources generated from actual instance descriptors and original conditional resource headers. Shared GPU dispatch execution body unchanged.",
+  "benefit": "Real SIGMA passes produce officially decoded continuous visibility; exact 20-byte settings, R32_UINT/RG8_UNORM pool support and rejection of wrong settings family before native ABI. Actual stabilization pipeline exists only in requested preview frames; fixed-seed reset with maxStabilizedFrameNum=0 repeats exactly.",
+  "costAndLimits": "Independent 128x64 static-plane synthetic stochastic frontend only. It proves integration/encoding/dispatch behavior and a narrow MSE improvement, not character quality, NPR ramps, moving-surface reprojection, feature integration, unsupported APIs, Player or multilight outputs. Existing RELAX two-mode DI/GI regression passes; no frame-time claim.",
+  "next": "Connect real RTShadow single-sample nearest blocker, primary guides and official SIGMA frontend/decoder, with per-camera/light state and reset rules. R4 actual NPR reception failure remains open."
+}

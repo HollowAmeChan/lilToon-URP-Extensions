@@ -1,0 +1,23 @@
+{
+    "pass": false,
+    "error": "System.Exception: Official miss sentinel reconstructs fully lit\r\n  at lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowSigmaValidation.Check (System.Boolean condition, System.String text) [0x00027] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSigmaValidation.cs:101 \r\n  at lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowSigmaValidation.Validate () [0x00009] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSigmaValidation.cs:82 ",
+    "dispatches": 14,
+    "levels": 0,
+    "rawMse": 0.0,
+    "filteredMse": 0.0,
+    "decodeError": 0.0,
+    "checks": [
+        "SigmaSettings exact pinned ABI is 20 bytes",
+        "SIGMA pipeline 0",
+        "SIGMA pipeline 1",
+        "SIGMA pipeline 2",
+        "SIGMA pipeline 3",
+        "SIGMA pipeline 4",
+        "SIGMA pipeline 5",
+        "SIGMA pipeline 6",
+        "SIGMA pipeline 7",
+        "SIGMA pipeline 8",
+        "Official frontend/backend probe present",
+        "Actual native SIGMA dispatch list executed"
+    ]
+}

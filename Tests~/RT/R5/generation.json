@@ -1,0 +1,172 @@
+{
+  "version": [
+    4,
+    17,
+    3
+  ],
+  "generatorSha256": "6993c03bc1964d7cca3866498222f8f546be85ad38fec0bfee15b4232b8cebff",
+  "nativeDllSha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb",
+  "matchingSdkSources": {
+    "NRD.hlsli": {
+      "pinned": "30abbdfdcdefbe4e1178cc972e923268c945d91954568284612f5ca01f0c31ad",
+      "source": "30abbdfdcdefbe4e1178cc972e923268c945d91954568284612f5ca01f0c31ad"
+    },
+    "NRDConfig.hlsli": {
+      "pinned": "de5ac2561205454d4ddab00af062d13928f8d5d8c52f5f6371a8ea4b7b98e939",
+      "source": "de5ac2561205454d4ddab00af062d13928f8d5d8c52f5f6371a8ea4b7b98e939"
+    },
+    "Common.hlsli": {
+      "pinned": "e4f7dd4e9767dfdd2d377e6059c875bf3455e30a2593b97f862c8c802f56c95c",
+      "source": "e4f7dd4e9767dfdd2d377e6059c875bf3455e30a2593b97f862c8c802f56c95c"
+    },
+    "Include/NRDSettings.h": {
+      "pinned": "3a1c30d3958c3fc867f0554ed4dbad84e4278a7d890019abc4ee631b1d487b51",
+      "source": "3a1c30d3958c3fc867f0554ed4dbad84e4278a7d890019abc4ee631b1d487b51"
+    },
+    "Include/NRDDescs.h": {
+      "pinned": "f3594a82241cb0a9c03479906dbed2d81421c6a19ce64ba204ed1d2cd285badd",
+      "source": "f3594a82241cb0a9c03479906dbed2d81421c6a19ce64ba204ed1d2cd285badd"
+    }
+  },
+  "imported": [
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_Blur.cs.hlsl",
+      "sourceSha256": "2f8564cf27dccee68492c42f73cc19301cd583d0092b7f56e295190c99d46f03",
+      "sha256": "2f8564cf27dccee68492c42f73cc19301cd583d0092b7f56e295190c99d46f03"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_Blur.resources.hlsli",
+      "sourceSha256": "685835364c8215d33132d4ecf0bc67f5eebb92611880c42eabb52619166acd2d",
+      "sha256": "685835364c8215d33132d4ecf0bc67f5eebb92611880c42eabb52619166acd2d"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_ClassifyTiles.cs.hlsl",
+      "sourceSha256": "a91210fd42328220d507eb22a76ccd788b4b4c943051fcebc645c48a675d2a9f",
+      "sha256": "a91210fd42328220d507eb22a76ccd788b4b4c943051fcebc645c48a675d2a9f"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_ClassifyTiles.resources.hlsli",
+      "sourceSha256": "d72c053740e07aa4b4e049e12174edbb303e4b5ac61c4d194fb4acdaa5702323",
+      "sha256": "d72c053740e07aa4b4e049e12174edbb303e4b5ac61c4d194fb4acdaa5702323"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_Common.hlsli",
+      "sourceSha256": "5f58289fae2c1b1e98c103108fc89007d37e297e064b31fe4cb51c58593200da",
+      "sha256": "5f58289fae2c1b1e98c103108fc89007d37e297e064b31fe4cb51c58593200da"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_Config.hlsli",
+      "sourceSha256": "d056bf50ff76736c44a5099c1fd8415e9ee88c1cdf0513374cbc3e20dc06ca77",
+      "sha256": "d056bf50ff76736c44a5099c1fd8415e9ee88c1cdf0513374cbc3e20dc06ca77"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_Copy.cs.hlsl",
+      "sourceSha256": "5863aa33ff6bc5dec8110046ef16f79a29e39a86c9c4f1488b6308f27d799d60",
+      "sha256": "5863aa33ff6bc5dec8110046ef16f79a29e39a86c9c4f1488b6308f27d799d60"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_Copy.resources.hlsli",
+      "sourceSha256": "25484cc140f9524ef46b17545caf40ed10279436dac73257b07e6b34bc662d5c",
+      "sha256": "25484cc140f9524ef46b17545caf40ed10279436dac73257b07e6b34bc662d5c"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_SmoothTiles.cs.hlsl",
+      "sourceSha256": "b01ff29c3b1712ff1c6377d824f98a888a83fc628313cb3896de76177ed76d21",
+      "sha256": "b01ff29c3b1712ff1c6377d824f98a888a83fc628313cb3896de76177ed76d21"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_SmoothTiles.resources.hlsli",
+      "sourceSha256": "d655cedf9507d9cb4d9b4208ceded8ac4807dd2a84819b20d2fe8de5b5451731",
+      "sha256": "d655cedf9507d9cb4d9b4208ceded8ac4807dd2a84819b20d2fe8de5b5451731"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_SplitScreen.cs.hlsl",
+      "sourceSha256": "452fc64c3a3514775d8da8874eadf02ee62eb0f3f3b7f3ab685eccc727a68e38",
+      "sha256": "452fc64c3a3514775d8da8874eadf02ee62eb0f3f3b7f3ab685eccc727a68e38"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_SplitScreen.resources.hlsli",
+      "sourceSha256": "d79c686e529948d9e3131847a443263acad2a1e9404dfbf8e41182d152e81607",
+      "sha256": "d79c686e529948d9e3131847a443263acad2a1e9404dfbf8e41182d152e81607"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_TemporalStabilization.cs.hlsl",
+      "sourceSha256": "1dca757b0c322f209da148a974130ed10ce95490e000cbe3435590453f95676a",
+      "sha256": "1dca757b0c322f209da148a974130ed10ce95490e000cbe3435590453f95676a"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/NRD/SIGMA_TemporalStabilization.resources.hlsli",
+      "sourceSha256": "1fdee7d90ffb31b7fdc3e8ebd0a234ec5f401957b229e4da9aba672c7ec751f8",
+      "sha256": "1fdee7d90ffb31b7fdc3e8ebd0a234ec5f401957b229e4da9aba672c7ec751f8"
+    }
+  ],
+  "identifiers": [
+    "SIGMA_ClassifyTiles.cs.hlsl|TRANSLUCENCY=0",
+    "SIGMA_SmoothTiles.cs.hlsl",
+    "SIGMA_Copy.cs.hlsl",
+    "SIGMA_Blur.cs.hlsl|TRANSLUCENCY=0|FIRST_PASS=1",
+    "SIGMA_Blur.cs.hlsl|TRANSLUCENCY=0|FIRST_PASS=0",
+    "SIGMA_TemporalStabilization.cs.hlsl|TRANSLUCENCY=0",
+    "SIGMA_SplitScreen.cs.hlsl|TRANSLUCENCY=0",
+    "Clear.cs.hlsl|FLOAT=1",
+    "Clear.cs.hlsl|FLOAT=0"
+  ],
+  "resources": [
+    [
+      "gIn_ViewZ",
+      "gIn_Penumbra",
+      "gOut_Tiles"
+    ],
+    [
+      "gIn_Tiles",
+      "gOut_Tiles"
+    ],
+    [
+      "gIn_Tiles",
+      "gIn_History",
+      "gIn_HistoryLength",
+      "gOut_History",
+      "gOut_HistoryLength"
+    ],
+    [
+      "gIn_ViewZ",
+      "gIn_Normal_Roughness",
+      "gIn_Penumbra",
+      "gIn_Tiles",
+      "gOut_Penumbra",
+      "gOut_Shadow_Translucency"
+    ],
+    [
+      "gIn_ViewZ",
+      "gIn_Normal_Roughness",
+      "gIn_Penumbra",
+      "gIn_Tiles",
+      "gIn_Shadow_Translucency",
+      "gOut_Penumbra",
+      "gOut_Shadow_Translucency"
+    ],
+    [
+      "gIn_ViewZ",
+      "gIn_Mv",
+      "gIn_Penumbra",
+      "gIn_Shadow_Translucency",
+      "gIn_History",
+      "gIn_HistoryLength",
+      "gIn_Tiles",
+      "gOut_Shadow_Translucency",
+      "gOut_HistoryLength"
+    ],
+    [
+      "gIn_ViewZ",
+      "gIn_Penumbra",
+      "gOut_Shadow_Translucency"
+    ],
+    [
+      "gOut"
+    ],
+    [
+      "gOut"
+    ]
+  ],
+  "scope": "Source import and descriptor binding generation only; not GPU or image-quality acceptance."
+}
