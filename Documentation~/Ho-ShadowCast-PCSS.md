@@ -45,6 +45,6 @@
 本页仅说明已实现的栅格化 `Ho-ShadowCast`。上面的组级参数、不做清单和 atlas 采样规则，不约束其他阴影模块。
 
 - 当前主光角色局部高精度 shadow map、接收勾选、方向光角直径和连续滤波：[Ho-CharacterShadow](Ho-CharacterShadow.md)。
-- 新的公共 Ho-RT host、独立 RTShadow、逐灯连续可见度与 NRD SIGMA：[Ho-RT](Ho-RT.md)，尚未实现。
+- 公共 Ho-RT host、独立逐灯 RTShadow、NRD SIGMA 与 NPR 接收已完成有界实现；配置、调试和验收范围见 [Ho-RT](Ho-RT.md)。
 
 CS 的旧实现说明已合并至其现行文档，本页不再复制另一套 CS 参数或阶段调参建议。

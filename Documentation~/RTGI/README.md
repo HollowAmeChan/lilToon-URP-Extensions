@@ -1,6 +1,6 @@
 # Ho-RTGI 使用、交接与研究记录
 
-> 状态：**现行专题导航**，更新于 2026-10-28。当前使用、支持域与未完成项见 [Ho-RTGI](../Ho-RTGI.md)；新增公共底座、RTShadow 与 SIGMA 的未实现设计见 [Ho-RT](../Ho-RT.md)。2026-10-24 的[阶段收尾](../Ho-RT.md#baseline)保留为历史基线，原 047 / PlanarReference 不按旧“下一项”自动恢复。
+> 状态：**现行专题导航**，更新于 2026-10-29。当前使用、支持域与未完成项见 [Ho-RTGI](../Ho-RTGI.md)；已实现公共宿主、独立 RTShadow / SIGMA、配置与有界验收见 [Ho-RT](../Ho-RT.md)。2026-10-24 的[阶段收尾](../Ho-RT.md#baseline)保留为历史基线，原 047 / PlanarReference 不按旧“下一项”自动恢复。
 
 本目录保留沿本机 UnityPathTracing 参考实现一跳漫反射 GI 的过程与证据；继续执行每步 review、过滤提交、收益/失败记录与压缩交接要求。下面的分步状态与“下一项”按当时记录保留，不是当前自动任务队列。
 

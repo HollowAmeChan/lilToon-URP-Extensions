@@ -7,7 +7,7 @@
 > 事实基线：正式场景 = `D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂\New Scene.unity`（**写作时的文件名**；2026 文档整理时该目录里只剩 `HIRO.unity`，实机以工程为准），
 > 渲染器 = `Assets\Settings\PC_Renderer.asset`。
 
-> 2026-10-28 导航补充：当前已实现的角色局部栅格投影见 [Ho-CharacterShadow](Ho-CharacterShadow.md)。新的 [Ho-RT 公共底座与 RTShadow](Ho-RT.md) 是现行设计入口，统一 host、RTShadow 与 SIGMA 接入尚未实现，不计入本文已落地拓扑；RTDI / RTGI 的现有支持域仍分别以模块总文档为准。
+> 2026-10-29 导航补充：角色局部栅格投影见 [Ho-CharacterShadow](Ho-CharacterShadow.md)。[Ho-RT 公共底座与 RTShadow](Ho-RT.md) 已实现公共资源宿主、DI/GI 借用、独立逐灯可见度、SIGMA 与 NPR 主光接收；Ho-RT 放在消费者前，GB / SB 先于 RTShadow，输出经材质 ramp 再到最终颜色。逐灯产品、Volume / 调试和有界 GPU / Player 资格只在该入口维护，本文不复制新参数表；RTDI / RTGI 的原质量与运动支持域仍以模块总文档为准。
 
 ## 0. 摘要
 

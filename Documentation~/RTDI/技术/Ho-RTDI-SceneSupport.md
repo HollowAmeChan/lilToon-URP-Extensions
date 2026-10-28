@@ -42,7 +42,7 @@ python Tests~/RTDI/snapshot_scene.py --source D:/Unity_Project/BREAK_URP --scene
 | executeMethod | 验收 |
 | --- | --- |
 | `lilToon.URP.Extensions.Editor.RTDI.HoRTDISceneValidation.AuditBloodMoonCastle` | 实际复制场景登记与静止成本，输出项目根目录 `rtdi-blood-moon-castle-audit.json` |
-| `lilToon.URP.Extensions.RayTracing.HoRTSceneValidation.RunSkinned` / `RunSkinnedCompatibility` | 硬件求交与姿态生命周期 |
+| `lilToon.URP.Extensions.RT.HoRTSceneValidation.RunSkinned` / `RunSkinnedCompatibility` | 硬件求交与姿态生命周期；公共模块已由 RayTracing 迁到 RT |
 | `lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunSkinnedBlocker` / `RunSkinnedBlockerCompatibility` | DI 与骨骼遮挡更新 |
 
 Player 继续使用 `HoRTDIPlayerValidation.Prepare/Build/BuildCompatibility` 与已有实际 EXE 运行流程，fixture 的遮挡物改为蒙皮网格并增加移走/归位 gate。本轮日志前缀 `rtdi-skin26-*`；测量、复制资源和工程留在 `.codex-research/RTInputValidation`，没有新增 Renderer Feature。

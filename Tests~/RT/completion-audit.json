@@ -1,0 +1,124 @@
+{
+  "objective": "R0-R6 Ho-RT ownership, DI/GI migration, independent per-light RTShadow, real SIGMA continuous V and original NPR ramp; requested Volume/Feature UI and diagnostics; deterministic final spatial coverage.",
+  "result": "Delivered within the explicit supported and tested domains; no required implementation step from this bounded R0-R6 objective remains.",
+  "evidence": {
+    "R0": [
+      {
+        "path": "R0/baseline.json",
+        "sha256": "da8c44668c3fa9f9e9b6529b21e52ce9d4a55346324616168f4333d1d217708d"
+      },
+      {
+        "path": "R0/sigma-inventory.json",
+        "sha256": "4838ec0521ed4b6100883d602e70a68afcea3f63c3cc6602ab5ef09606f98cb3"
+      }
+    ],
+    "R1": [
+      {
+        "path": "R1/migration.json",
+        "sha256": "95fccd367c5f365725388a6b5bacfcf0d0456454b07bbb92a9b581933911f133"
+      },
+      {
+        "path": "R1/review.json",
+        "sha256": "20eb8b782acaddc9de92b06b20c99d9c5f2d0ecdf144fe1a3169aaa0fffd2b55"
+      }
+    ],
+    "R2": [
+      {
+        "path": "R2/review.json",
+        "sha256": "cc08f33f044449e37e693ec8a69d1cd5b049a4c9f4e1b10568b3946b1a2d462e"
+      }
+    ],
+    "R3": [
+      {
+        "path": "R3/DI/migration.json",
+        "sha256": "49e7f73752516ce26f0327cf0b4bdca72fae4095a6d9064fde7e1cf211ba8814"
+      },
+      {
+        "path": "R3/DI/review.json",
+        "sha256": "57fd732b37e03f1a32163724dcea30a288f8e89b07183e55427e659c6d2be377"
+      },
+      {
+        "path": "R3/GI/migration.json",
+        "sha256": "3f15b946b7fa7b6dda599877dcfcca83872ecc52cd3da9a8fb2a65eb2a027294"
+      },
+      {
+        "path": "R3/GI/review.json",
+        "sha256": "5d4aae1c064f7bc61be9a618511807e3a7b81c6bc6669780b31d2477333b4f2f"
+      },
+      {
+        "path": "R3/Player/review.json",
+        "sha256": "aace51b7906382be0f11dcdcbb8ee0cf1daac5b51a78a81134b39a1172723750"
+      }
+    ],
+    "R4": [
+      {
+        "path": "R4/Query/review.json",
+        "sha256": "5e05d506b337231a2d31a0d4161342262a99052839b806dfaa4029b7b54fa7f9"
+      },
+      {
+        "path": "R4/review.json",
+        "sha256": "427147ccfced187c75fb5d42a8c9c09dd7a290091c0c4784785bc88fb9bf37cf"
+      }
+    ],
+    "R5": [
+      {
+        "path": "R5/review.json",
+        "sha256": "f3b3e692f9efe5da845093af19781977517cf6cfcbd7fc7ff19f89936a6c763e"
+      },
+      {
+        "path": "R5/Production/review.json",
+        "sha256": "28a0dd3aadf287de3282c8cde045d0ce1099b702102eb779b030dcd2d9ba5b9f"
+      },
+      {
+        "path": "R5/NPR/review.json",
+        "sha256": "7a0dbe673dfab1c6397447401010fa603b4f2fbe2be332b3fb1c99cdbb0fb144"
+      },
+      {
+        "path": "R5/Export/review.json",
+        "sha256": "943c480421e47c41642fb5857dae486521293bab0f15e19be446ea88ed2ba6f0"
+      },
+      {
+        "path": "R5/Thin/review.json",
+        "sha256": "4b575534d067100a4323f6928f4c2eb2681b8d7ec0f4ddcb3ff94de226e66b80"
+      },
+      {
+        "path": "R5/Player/review.json",
+        "sha256": "42de01a77bca47ca3fd1a094424ca049db64bd735c8995c0c147825c35d3f4a5"
+      }
+    ],
+    "R6": [
+      {
+        "path": "R6/review.json",
+        "sha256": "ebc63aa984aa6fae3e41e46b8580c85395b6ba6be82299c214b9f0b6cf54718a"
+      },
+      {
+        "path": "R6/Player/review.json",
+        "sha256": "0b1025a9f0dadc10d75d9d3e60542707c72b81d36c21a23f8a4467a56800e41c"
+      }
+    ],
+    "Controls": [
+      {
+        "path": "Controls/review.json",
+        "sha256": "9b55d043425eb733e71eada77ddce02d5f071c5613638da46fbb536d0df05a97"
+      }
+    ],
+    "Spatial": [
+      {
+        "path": "Spatial/review.json",
+        "sha256": "d27a77a1e19fc0647e3d065266aa29af3ed13160943bd2da79af463f7ae89418"
+      }
+    ]
+  },
+  "qualification": "Historical results retain their original source snapshots. Current Runtime/inspectors match Controls serialized Player production; current shader includes match those packed tests. New final spatial tests run on current source in both paths. No old SHA or failure is rewritten.",
+  "currentDocumentationLinksChecked": 289,
+  "preservedLimits": [
+    "Win64 Mono D3D12 native RT, single-sample aligned GB/SB, supported opaque/basic Cutout and static/frozen-pose geometry domains. No full XR, IL2CPP, MSAA, hardware dynamic-resolution or arbitrary displaced/animated material claim.",
+    "Directional finite angle supports SIGMA; point and spot are delta Cast with explicit range/cone/budget validity. Finite local/rect/disc/tube, cookie, baked-only and restricted caster linking remain explicitly unsupported shapes/policies, not incomplete silent approximations.",
+    "Preview uses conservative reset for changed geometry/camera; full object-motion reprojection is not implemented. Same-frame export does not wait for preview convergence.",
+    "SIGMA thin-card retention around 88% is bounded evidence, not perfect recovery. Raw high-spp reference remains available; final-color supersampling improves coverage without promising mathematically alias-free output.",
+    "Preserve original DI full proposal/energy failures and native AS-growth scratch F39 controls, other DI/GI quality debts, default-AO/fallback diagnosis and rejected candidates; none was relabeled as passed.",
+    "No universal all-light grey mask or automatic extra-light NPR BRDF synthesis; explicit per-light products serve consumers, optional weighted derived products remain separately defined future scope.",
+    "No complete-frame GPU milliseconds/1080-budget claim. Resource counts and bounded CPU waits do not prove a performance gain. GUI pixels were not inspected through desktop automation."
+  ],
+  "documentation": "Architecture, current controls, use and stage conclusions remain in Documentation~/Ho-RT.md. Existing module/index pages only correct status, ownership and navigation. Evidence and machine audits stay under Tests~/RT/."
+}

@@ -2,7 +2,7 @@
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳diffuse GI输出及可选的场景加法合成。SDK GI reservoir与时间/空间重采样复用固定原文件；应用bridge适配Ho生产端。最终NPR影色/ramp映射或材质内接收未纳入本阶段。
 
-> 状态：**现行功能总文档**，更新于 2026-10-28。场景所有权已改为公共 Ho-RT host，组合与 Player 的验收状态看 [Ho-RT](Ho-RT.md) §8.5；RTShadow / SIGMA 阴影生产链尚未完成。原质量 / 复杂动态 / AS 增长及整帧预算缺口不因此注销。
+> 状态：**现行功能总文档**，更新于 2026-10-29。场景所有权已改为公共 Ho-RT host，组合与 Player、独立 RTShadow / SIGMA 阴影链的有界验收看 [Ho-RT](Ho-RT.md) §8.5。GI 保持自己的光照算法与历史，原质量 / 复杂动态 / AS 增长及整帧预算缺口不因此注销。
 
 次级天空、正常相机加法合成和独立RELAX_DIFFUSE已有实测；Linear D3D12 Mono Player两路径已完成真实自动相机和512²默认屏幕呈现验证，见[屏幕证据](../Tests~/RTGI/Backbuffer/README.md)。完整画质、复杂动态、AS实例增长与稳定1080预算仍未验收；旧研究下一项不再自动启动。历史参考、失败与逐步交接见[RTGI入口](RTGI/README.md)。
 
@@ -46,7 +46,7 @@ RELAX参数采用固定头文件的原版默认值，累计预算按观测到的
 
 `HoRTScene` 可选择绑定 GI 专用 hit material；原来的 DI inline query 默认路径不变。命中属性读取沿参考工程 `SurfaceRayTracingCommon.hlsl` 的 Unity vertex-fetch 路径，使用实际 primitive、重心坐标与对象变换，不依赖相机可见性或屏幕颜色。读取 UV0～3，并返回世界位置所需的 hit distance、三角形几何法线、插值/normal-map 着色法线、主色、perceptual roughness、metallic、reflectance 和独立 HDR emission。
 
-`HoRTGISecondaryMaterials` 拥有私有材质适配副本，复制原材质属性；不修改源材质、Forward、CS 或 ShadowCast。调用顺序为 BeginFrame → scene.Synchronize（内部 Resolve）→ EndFrame → Build/Dispatch。销毁时先销毁 scene，再销毁适配材质。
+GI 提供 `HoRTGISecondaryMaterials` 适配策略，由 Ho-RT host 拥有副本及相应 scene view；复制原材质属性，不修改源材质、Forward、CS 或 ShadowCast。消费者 pre-cull 声明用途和筛选，host 按请求准备 / 同步，GI 借当前有效 view 记录 Build / Dispatch；scene / adapter / 共享姿态按 host fence 退休，GI 不再私有创建和释放场景。GI 的光照输出、重采样与 NRD 历史仍由 GI 自己持有。
 
 Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndComponent`，求和 RGB × 各组权重。保留两组的启用、颜色、贴图/alpha、UV 选择、ST/动画、mask、渐变、blink 与 main-strength；与 SB 相同，fluorescence 使用中性 lighting gate。不会把主色、matcap、rim、旧 Forward 明亮部分当作发光来源。
 

@@ -1,0 +1,38 @@
+{
+  "stage": "Spatial",
+  "sourceCommit": "c4b7d4ed2ae23591cfa10e67a97ac63834e39461",
+  "startedUtc": "2026-10-28T16:35:55.6211796Z",
+  "sourcesFile": "sources-20261028T163555079.json",
+  "runnerSha256": "D2D958E18832D30DB5AD27E5F6DB6178ADC7F9763D7B3CE31456F4648FCCC99F",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "spatial-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSpatial",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "4A7CD7E36DE6D58AA7830CE33495F3EFF14914B13437201494BA2148B4E99AEA",
+      "seconds": 11.0666821,
+      "pass": true,
+      "logFile": "ho-rt-spatial-spatial-rg-20261028T163555079.log"
+    },
+    {
+      "name": "spatial-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSpatialCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "901DFD7703F8E0E6D82331CAF14B72B67AC6D039AAE289F7469FE170D42033D7",
+      "seconds": 8.975624,
+      "pass": true,
+      "logFile": "ho-rt-spatial-spatial-compat-20261028T163555079.log"
+    }
+  ]
+}

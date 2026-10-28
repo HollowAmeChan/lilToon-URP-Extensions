@@ -1,6 +1,6 @@
 # Ho-RT：公共底座与 RTShadow
 
-> 状态：**现行实现 / 设计总入口**，2026-10-29。目录迁移、公共资源宿主与 DI/GI 接入已完成有界验收；独立 RTShadow、真实 SIGMA、NPR 三层接收、同帧薄蒙皮质量、逐灯集合及其 serialized Player 均已有有界验收，Volume / Inspector / 调试已补齐。最终颜色空间采样与完整目标审计仍在推进，精确证据和限制见 §8.5。以下阶段过程保留当时结论，不作为当前待办重复执行。
+> 状态：**现行实现 / 设计总入口**，2026-10-29。本轮 R0–R6 已完成有界交付：公共资源宿主与 DI/GI 接入、独立逐灯 RTShadow、真实 SIGMA 连续 V 与 NPR 三层接收、同帧薄蒙皮质量、serialized Player、Volume / Inspector / 调试及最终颜色空间采样。当前验收结论与支持边界见 §8.7，阶段证据见 §8.5；以下过程保留当时结论，不作为当前待办重复执行。
 
 ## 0. 先确认实现状态
 
@@ -10,7 +10,7 @@
 | RTDI / RTGI | 两路均消费 host view；DI / GI 的有界迁移与生产组合已验收，GI Mono Player 及 DI 有界 Player 两路径通过。独立输出 / 历史 / NRD 保持；完整 DI proposal 旧失败保留 | [DI](Ho-RTDI.md)、[GI](Ho-RTGI.md) |
 | 公共 NRD | 生产 DI/GI 保留 RELAX；新增 typed SIGMA ABI、格式与 9 个官方 pipeline，独立夹具及真实 Cast 的有界 GPU 接入已验，默认仍为 Raw | 本文 §11 的基线与证据 |
 | Ho-RT host | R2 已有有界验收，生产 DI/GI 已接入并验证共享姿态与独立算法；DI/GI Player 已确认序列化和插件加载 | 本文 §8.5 |
-| RTShadow / SIGMA | 独立 Feature 已有主光 / 声明集合 / 全部支持灯的逐灯产品；方向光有限角度和 delta 点聚光有界 Editor / 多灯 Player 验收，SIGMA / 实际三层 NPR / 单帧与薄蒙皮已验；Volume / Inspector / 六种调试已补齐，最终图像采样与总审计继续推进 | 本文 §4–8 |
+| RTShadow / SIGMA | 独立 Feature 提供主光 / 声明集合 / 全部支持灯的逐灯产品；方向光有限角度和 delta 点聚光、SIGMA / 实际三层 NPR / 单帧薄蒙皮、Volume / 六种调试及 Player 均有有界验收，最终颜色空间采样与整体审计已通过 | 本文 §4–8 |
 
 当前底层 helper 的实现契约见本文 §10。旧阶段的冻结 / 停止条件只约束当时任务，不自动阻止本轮经用户提出的公共底座工作；历史质量、F39、复杂动态和性能缺口也不会因此变成已解决。
 
@@ -318,7 +318,7 @@ Editor/
 
 ### 8.5 目标模式进展与每步评价
 
-用户已授权按本路径持续实施；每步独立过滤提交。设计和阶段评价只更新本页，当前任务证据统一置于 `Tests~/RT/`。不操作用户桌面，不改用户工程资产。只在有实现与验证证据时推进阶段状态，不将已派发任务当完成。
+用户已授权按本路径持续实施；各步骤独立过滤提交。设计和阶段评价只更新本页，任务证据统一置于 `Tests~/RT/`。未操作用户桌面或修改用户工程资产。下表及后续阶段段落按当时的交付时点记录；“后续”是当时安排，当前完成结论统一看 §8.7，不重复恢复已交付任务。
 
 | 阶段 | 状态 | 正确性 / 收益 | 成本与偏航检查 | 后续 |
 | --- | --- | --- | --- | --- |
@@ -337,6 +337,7 @@ Editor/
 | R5 serialized Player | 已完成有界资格 | RG / compatibility 两个 Win64 Mono Player 各 21 Update / 34 checks，实际 SIGMA / NPR / 蒙皮，退出警告清零；原 CS 滤波与八片元变体通过 | 不代替 enabled-camera / backbuffer / XR / IL2CPP / 任意角色，冷构建成本高 | R6 |
 | R6 逐灯集合 | 已完成有界 Editor / Player 验收 | Main / Declared / AllSupported、稳定 LightId、方向光 / delta 点聚光、逐灯接收域、当前 graph / compatibility 产品；六项 GPU 回归和两路径多灯 Player 各 121 checks 通过 | 不含未验证局部面积形状、cookie 或受限 caster linking；最终空间采样 / 总审计待验 | 最终图像采样与完整目标审计 |
 | Volume / UI / 调试 | 已完成有界 GPU / Player 验收 | 相机覆盖与默认值隔离；Host / Shadow / Light / Volume 检查器；六种逐灯调试及 All 平铺，两路径各 51 checks / 26 请求、原多灯回归、两 Player 各 132 checks 通过 | 未操作桌面检查 GUI 排版；调试不提升采样精度，Raw 差值不是质量真值 | 最终颜色空间采样，随后审计原目标 |
+| 最终空间采样 / 总审计 | 已完成有界验收 | 原 URP Render Scale 实际放大主表面 / Cast / ramp，再缩最终颜色；三硬影姿态和有限角 SIGMA 两路径逐字节一致；现行 Runtime / UI 与 Player 生产提交相同，R0–R6 证据与当前导航已审计 | 2×边长增加约 4×像素工作及屏幕资源；有限参考与受测夹具，不等于任意角色 / 平台 / 完美无锯齿 | 本轮交付收尾，原支持域外扩展另定 |
 
 R0 采用的宿主准备合同：
 
@@ -465,6 +466,12 @@ Volume / UI / 调试步骤证据见 [Controls review](../Tests~/RT/Controls/revi
 
 本步收益是参数覆盖可见、逐灯结果与失效原因可诊断，降低后续把接收域 / 原始采样 / 重建混为一种锯齿的风险；不是画质提升。启用调试时增加一张全分辨率颜色附件和一次最终呈现，单视图一次绘制、All 六视图加标签；未启用不提交诊断绘制。配置快照 / Inspector 数据增加少量 CPU 工作，没有 GPU 毫秒收益声明。未操纵桌面或用户 Renderer / Volume 资产，未宣称手动验证 Inspector 排版；实测范围为独立工程 Mono Win64 / D3D12 显式请求。下一步转到最终颜色的空间积分，不继续堆叠调试入口。
 
+最终颜色空间采样见 [Spatial review](../Tests~/RT/Spatial/review.json)，入口 `Tests~/RT/run_validation.ps1 -Stage Spatial`，复核 `python Tests~/RT/Spatial/verify_results.py`。没有新增生产 Feature 或修改既有 Runtime；利用原 URP Render Scale，把实际 GB / SB、原生 Cast 和非线性 NPR ramp 从 64² 提升到 128²，然后输出 64²最终颜色。独立 512²原始渲染按 8×8 box resolve 作有限参考；三个斜硬影当前姿态（含 +0.011 / -0.023 米微移）的最终 RGB MSE 分别为 0.002457721→0.000594291、0.002536024→0.000663078、0.002582520→0.000604059，降低约 74%–77%。8°有限光源、SIGMA 无历史 16 次、原 blur=0.01 窄 ramp 的 MSE 为 0.003180936→0.000655338，降低约 79%；这项检查实际执行完整的软影重建再做颜色缩小，没有把 V 先模糊后冒充非线性材质积分。
+
+两条路径各 18 请求，15 项专门的采样 / 预算 / 帧检查及逐状态完全重复检查通过；十二份最终浮点图跨路径逐字节一致。全部请求在同一应用 frame 内完成，SIGMA 仍为 16 次且 stabilization=0。首轮新 partial 误重定义旧 helper 的 CS0111 编译失败保留，改为独立 beauty helper 后通过；未更改原断言门槛。Runtime 全部文件和四个自定义检查器共 1318 项与 Controls Player 所用提交 `c4b7d4ed` 保持一致，分程序集编译 0 错误，因此没有为此重跑或改写旧 Player SHA。
+
+本步收益是把光源方向积分与最终像素覆盖分开闭环，确认原管线已有可用的同帧空间采样路径；成本为 2×边长约 4×着色像素、追踪工作及逐灯屏幕资源，单像素灯样本 / SIGMA 估计预算保持独立，不包含 GPU 整帧计时承诺。8×参考仍是有限采样，64²夹具和固定 shader 不代表任意动画、camera stack、XR / MSAA 或透明导出工具已验收；这些明确属于现行支持域外，不能把本轮验收扩成全场景绝对无锯齿。没有改动隔壁 QuickCapture 的时域预热流程。
+
 ### 8.6 当前配置与调试入口
 
 Renderer 的顺序为 Ho-RT、GB / SB、Ho-RTShadow；接收角色根节点添加 `Ho-RTShadow Receiver` 并指定 OB 组，整组 / 部件和逐灯接收在这里选择。声明灯在 Unity Light 上添加 `Ho-RTShadow Light`，逐方向灯角直径优先于 Feature 和 Volume 的默认值。Ho-RT 只显示资源宿主状态，没有独立质量 Volume；质量属于消费者。
@@ -484,6 +491,16 @@ Feature 检查器分为生产、灯与接收域、重建质量、调试、高级
 | 全部视图 | 六种视图平铺并标注，在最终 AA / blit 后呈现 |
 
 整个所选槽无当前产品时为紫色，不沿用旧相机纹理或当成无遮挡；生产关闭 / 缺 host 时仍可通过调试观察这一状态。屏幕上有效的 `V=0` 才表示完全遮挡。多个 Feature 同时请求调试时沿用公共 HoDebugRenderPass 的确定性选择规则，当前只会最终呈现其中一个。
+
+高精度出图的两个预算分别设置：灯的有限角度决定物理半影，Raw 样本数或 SIGMA 无历史估计数决定该表面点的光源积分；**URP Asset 的 Render Scale** 决定主表面和最终颜色的空间采样。Render Scale=2 是已验收的 2×边长路线，GB / SB 维持 Full / 同分辨率单采样，RTShadow 自动匹配内部域。不要只放大阴影纹理或先缩 V 再执行 ramp。需要无历史软影可使用 SIGMA 无历史并提高估计数；需要对照滤波偏差则使用 Raw 高样本参考。零角度硬影只需单方向查询，高 Raw spp 不会增加其半影。默认值不是自动最高质量预设；薄影当前约 88%暗侧保留的限制依然成立。
+
+### 8.7 本轮交付审计与保留边界
+
+[完整机器审计](../Tests~/RT/completion-audit.json) 的复核入口为 `python Tests~/RT/verify_completion.py`。R0–R6、补充 UI 和最终空间采样均已有对应实现 / 源指纹 / 有界验证；当前 Runtime / 检查器与实际序列化 Player 的生产提交连续，原 native DLL 与 R0 字节一致，20 份迁移 metadata 保持原字节，生产源码无旧模块命名空间或平行 RayTracing 目录。RTDI / RTGI 的场景所有权已收敛到 host，仍保留效果算法、adapter 能力、独立历史和 NRD；当前没有本轮必做实现步骤待完成。
+
+审计同时核查现行主文档和导航的本地链接，修正仍宣称“host / RTShadow / SIGMA 未实现”的索引及旧 GI 私有 scene 生命周期说明；只保留一个 Ho-RT 架构 / 使用 / 阶段结论入口，没有再开计划或交接文档。历史交接正文、旧失败、来源 SHA 和当时的“下一项”保留为证据，不重新标成当前任务。
+
+完成范围是当前已明确支持的 D3D12 / Win64 Mono、对齐单采样主表面、opaque / 有界 Cutout、受支持蒙皮快照、方向光有限角度和 delta 点聚光。局部面积形状、cookie / 受限 caster linking、全物体 motion 重投影、XR / IL2CPP / MSAA / 硬件动态分辨率、任意材质形变或完整高清帧时预算仍不作支持声明。旧 DI 完整 proposal / 能量失败和 native AS 增长 F39 对照未注销；本轮的有限夹具与独立阴影交付不替代这些旧问题修复。可选的加权灯组派生信号与附加灯 NPR BRDF 合成也未混入核心 V。后续扩展应由明确的新需求确定，不能把上述限制和旧历史变成无界自动实验。
 
 <a id="quality-reference"></a>
 

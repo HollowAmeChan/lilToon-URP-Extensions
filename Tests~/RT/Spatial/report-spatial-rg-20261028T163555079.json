@@ -1,0 +1,54 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "outputSize": 64,
+    "referenceScale": 8,
+    "renderScale": 2,
+    "poses": [
+        {
+            "name": "rest",
+            "singleMse": 0.0024577213916927578,
+            "supersampledMse": 0.0005942910793237388,
+            "singleLevels": 5,
+            "supersampledLevels": 10
+        },
+        {
+            "name": "micro1",
+            "singleMse": 0.002536024199798703,
+            "supersampledMse": 0.0006630777497775853,
+            "singleLevels": 5,
+            "supersampledLevels": 10
+        },
+        {
+            "name": "micro2",
+            "singleMse": 0.002582520479336381,
+            "supersampledMse": 0.0006040591397322714,
+            "singleLevels": 5,
+            "supersampledLevels": 10
+        },
+        {
+            "name": "sigma-soft",
+            "singleMse": 0.0031809359788894655,
+            "supersampledMse": 0.0006553379935212433,
+            "singleLevels": 170,
+            "supersampledLevels": 157
+        }
+    ],
+    "checks": [
+        "Native sample domain is full 64x64",
+        "URP scales actual primary and Cast domain to 128x128 before final 64x64 color",
+        "Final-color coverage MSE improves for rest: 0.002457721 -> 0.0005942911",
+        "Subpixel final-color coverage retains more than binary ramp levels for rest",
+        "Native sample domain is full 64x64",
+        "URP scales actual primary and Cast domain to 128x128 before final 64x64 color",
+        "Final-color coverage MSE improves for micro1: 0.002536024 -> 0.0006630777",
+        "Subpixel final-color coverage retains more than binary ramp levels for micro1",
+        "Native sample domain is full 64x64",
+        "URP scales actual primary and Cast domain to 128x128 before final 64x64 color",
+        "Final-color coverage MSE improves for micro2: 0.00258252 -> 0.0006040591",
+        "Subpixel final-color coverage retains more than binary ramp levels for micro2",
+        "Finite-angle SIGMA and narrow ramp benefit from actual final spatial coverage: 0.003180936 -> 0.000655338",
+        "Spatial SIGMA keeps explicit same-frame estimate budget and zero temporal stabilization",
+        "All current-pose spatial exports complete without advancing the application frame"
+    ]
+}

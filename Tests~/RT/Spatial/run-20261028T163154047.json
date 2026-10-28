@@ -1,0 +1,28 @@
+{
+  "stage": "Spatial",
+  "sourceCommit": "c4b7d4ed2ae23591cfa10e67a97ac63834e39461",
+  "startedUtc": "2026-10-28T16:31:54.5642850Z",
+  "sourcesFile": "sources-20261028T163154047.json",
+  "runnerSha256": "D2D958E18832D30DB5AD27E5F6DB6178ADC7F9763D7B3CE31456F4648FCCC99F",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "spatial-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSpatial",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSpatialValidation.cs(66,32): error CS0111: Type 'HoRTShadowValidation' already defines a member called 'ReadAfterRender' with the same parameter types\r",
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSpatialValidation.cs(66,32): error CS0111: Type 'HoRTShadowValidation' already defines a member called 'ReadAfterRender' with the same parameter types\r",
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSpatialValidation.cs(66,32): error CS0111: Type 'HoRTShadowValidation' already defines a member called 'ReadAfterRender' with the same parameter types\r"
+      ],
+      "logSha256": "53D8E9234D90B22410C0E78DD4AABA8FC5680FF2D236D7432F2C077079B4AB13",
+      "seconds": 5.0455239,
+      "pass": false,
+      "logFile": "ho-rt-spatial-spatial-rg-20261028T163154047.log"
+    }
+  ]
+}

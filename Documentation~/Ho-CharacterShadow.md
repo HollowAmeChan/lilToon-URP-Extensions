@@ -1,6 +1,6 @@
 # Ho-CharacterShadow：当前栅格化角色投影
 
-> 状态：**现行实现与使用入口**，2026-10-28。CS 仍使用角色局部 shadow map、PCF / PCSS；本轮修复已提交为 `541d06f2`，不代表所有角色近景画质已验收。Ho-RT host、RTShadow 与 SIGMA 是[下一轮设计](Ho-RT.md)，尚未替换当前实现。
+> 状态：**现行实现与使用入口**，2026-10-29。CS 使用角色局部 shadow map、PCF / PCSS；修复基线 `541d06f2` 不代表所有角色近景画质已验收。独立 [Ho-RT / RTShadow / SIGMA](Ho-RT.md) 已实现并有有界 GPU / Player 验收，需单独配置，不自动替换本模块。
 
 ## 功能与接入
 
@@ -92,6 +92,6 @@ CS 固定在 `BeforeRenderingShadows` 工作，用自己的隐藏方向光及光
 - 实际角色对照仍有条纹和局部面状结构。宽稀疏核、normal bias 的掠射面耦合、投影保护区与宽核边界仍需分别诊断。
 - Cast 在 toon ramp 前接收。某层 Blur 为 0 时可以重新形成硬边；原始 V 平滑不保证最终 ramp 已抗锯齿。诊断应使用材质克隆，不能擅自改用户的美术层。
 - 局部平面保护不是通用几何可见性；极近、近共面遮挡仍有歧义。
-- 当前仅处理主方向光的局部投影。多灯 RTShadow、SIGMA 及公共 Ho-RT host 尚未实现。
+- 本模块仅处理主方向光的局部栅格投影。公共 Ho-RT host、多灯 RTShadow 与 SIGMA 属于独立模块，其使用和支持域见 [Ho-RT](Ho-RT.md)。
 
 下一轮设计统一从 [Ho-RT](Ho-RT.md) 开始。历史 Plan 的“下一项”、降低分辨率增大软边、旧半径截断和旧“半影放大”参数，不作为现行建议。

@@ -1,0 +1,70 @@
+{
+  "stage": "Final-color spatial sampling via existing URP Render Scale",
+  "accepted": {
+    "spatial-rg": "run-20261028T163555079.json",
+    "spatial-compat": "run-20261028T163555079.json"
+  },
+  "metrics": {
+    "spatial-rg": {
+      "rest": {
+        "singleMse": 0.0024577214163628014,
+        "supersampledMse": 0.0005942910518494197,
+        "reduction": 0.7581942982256651
+      },
+      "micro1": {
+        "singleMse": 0.002536024303907425,
+        "supersampledMse": 0.000663077727011796,
+        "reduction": 0.7385365250679392
+      },
+      "micro2": {
+        "singleMse": 0.0025825204581337857,
+        "supersampledMse": 0.0006040591559705414,
+        "reduction": 0.7660970490793113
+      },
+      "sigma-soft": {
+        "singleMse": 0.0031809360259662856,
+        "supersampledMse": 0.0006553379892466925,
+        "reduction": 0.7939795129807372
+      }
+    },
+    "spatial-compat": {
+      "rest": {
+        "singleMse": 0.0024577214163628014,
+        "supersampledMse": 0.0005942910518494197,
+        "reduction": 0.7581942982256651
+      },
+      "micro1": {
+        "singleMse": 0.002536024303907425,
+        "supersampledMse": 0.000663077727011796,
+        "reduction": 0.7385365250679392
+      },
+      "micro2": {
+        "singleMse": 0.0025825204581337857,
+        "supersampledMse": 0.0006040591559705414,
+        "reduction": 0.7660970490793113
+      },
+      "sigma-soft": {
+        "singleMse": 0.0031809360259662856,
+        "supersampledMse": 0.0006553379892466925,
+        "reduction": 0.7939795129807372
+      }
+    }
+  },
+  "retainedFailures": [
+    {
+      "run": "run-20261028T163154047.json",
+      "case": "spatial-rg",
+      "diagnostics": [
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSpatialValidation.cs(66,32): error CS0111: Type 'HoRTShadowValidation' already defines a member called 'ReadAfterRender' with the same parameter types\r",
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSpatialValidation.cs(66,32): error CS0111: Type 'HoRTShadowValidation' already defines a member called 'ReadAfterRender' with the same parameter types\r",
+        "D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTShadow\\HoRTShadowSpatialValidation.cs(66,32): error CS0111: Type 'HoRTShadowValidation' already defines a member called 'ReadAfterRender' with the same parameter types\r"
+      ]
+    }
+  ],
+  "productionReference": "c4b7d4ed",
+  "unchangedRuntimeAndInspectorFiles": 1318,
+  "benefit": "Actual 128-square primary/RT Cast/nonlinear ramp followed by 64-square final color improves against independent 512-square render/box-resolve reference. Three hard-cast poses and a finite-angle 16-estimate SIGMA case, fixed-frame repeat and exact cross-path floating outputs pass.",
+  "cost": "2x per axis gives 4x shaded pixels, trace workload and per-light screen resources; estimate count remains 16 in the SIGMA case, no hidden history warmup. No complete-frame GPU milliseconds claim.",
+  "limits": "64-square deterministic bounded scenes with single-sample GB/SB and linear HDR target. The 8x box-resolve reference remains finite sampling. No arbitrary animated shader, XR/MSAA/dynamic-resolution/camera-stack/capture-tool qualification or perfect alias-free guarantee.",
+  "scope": "Reuse production URP Render Scale; no extra RT Feature, post-ramp visibility blur or unrelated capture-tool rewrite."
+}
