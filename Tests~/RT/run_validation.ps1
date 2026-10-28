@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4','R5Sigma')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4','R5Sigma','R5Cast')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
@@ -109,8 +109,17 @@ if($Stage -eq 'R5Sigma') {
         @{name='gi-relax-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.RunCompatibility';marker='[HoGINrd] END pass=True'}
     )
 }
+if($Stage -eq 'R5Cast') {
+    $taskCases=@(
+        @{name='shadow-sigma-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSigma';marker='[HoRTShadowProductionSigma] PASS'},
+        @{name='shadow-sigma-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSigmaCompatibility';marker='[HoRTShadowProductionSigma] PASS'},
+        @{name='shadow-raw-rg';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRaw';marker='[HoRTShadowValidation] PASS scope=raw-only; NPR acceptance pending'},
+        @{name='shadow-raw-compat';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRawCompatibility';marker='[HoRTShadowValidation] PASS scope=raw-only; NPR acceptance pending'},
+        @{name='sigma-independent';api='d3d12';entry='lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowSigmaValidation.Run';marker='[HoRTShadowSigmaValidation] PASS'}
+    )
+}
 if ($Case) { $taskCases = @($taskCases | Where-Object { $_.name -eq $Case }); if ($taskCases.Count -eq 0) { throw 'Unknown validation case' } }
-$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } elseif ($Stage -eq 'R4Query') { 'R4/Query' } elseif($Stage -eq 'R5Sigma') {'R5'} else { $Stage })
+$taskResults = Join-Path $PSScriptRoot $(if ($Stage -eq 'R3DI') { 'R3/DI' } elseif ($Stage -eq 'R3GI') { 'R3/GI' } elseif ($Stage -eq 'R4Query') { 'R4/Query' } elseif($Stage -eq 'R5Sigma') {'R5'} elseif($Stage -eq 'R5Cast') {'R5/Production'} else { $Stage })
 New-Item -ItemType Directory -Force -Path $taskResults | Out-Null
 $taskStamp = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfff')
 $taskRunPath = Join-Path $taskResults ('run-' + $taskStamp + '.json')
@@ -162,6 +171,14 @@ foreach ($taskJob in $taskCases) {
     if ($taskJob.name.StartsWith('shadow-')) {
         $taskShadowReport=Join-Path $taskProject 'ho-rt-shadow/report.json'
         if(Test-Path -LiteralPath $taskShadowReport){Copy-Item -LiteralPath $taskShadowReport -Destination (Join-Path $taskResults ('report-'+$taskJob.name+'-'+$taskStamp+'.json'))}
+        if($taskJob.name.StartsWith('shadow-sigma-')) {
+            foreach($taskSignal in @('reference','raw','sigma')) {foreach($taskExtension in @('png','rgba32')) {
+                $taskImage=Join-Path $taskProject ('ho-rt-shadow/'+$taskSignal+'.'+$taskExtension)
+                if((Test-Path -LiteralPath $taskImage) -and (Get-Item -LiteralPath $taskImage).LastWriteTimeUtc -ge $taskStarted) {
+                    Copy-Item -LiteralPath $taskImage -Destination (Join-Path $taskResults ($taskJob.name+'-'+$taskStamp+'-'+$taskSignal+'.'+$taskExtension))
+                }
+            }}
+        }
     }
     if($taskJob.name -eq 'sigma-independent') {
         $taskSigmaReport=Join-Path $taskProject 'ho-rt-sigma/report.json'

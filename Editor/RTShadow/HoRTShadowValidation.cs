@@ -16,10 +16,10 @@ using UnityEngine.Rendering.Universal;
 using Object=UnityEngine.Object;
 namespace lilToon.URP.Extensions.Editor.RTShadow
 {
-    public static class HoRTShadowValidation
+    public static partial class HoRTShadowValidation
     {
         [Serializable] private sealed class Report
-        {public bool pass,compatibility,rawOnly;public string failure;public int requests,fractionalPixels,distinctLevels;public float toonShadow,toonReceiveOff,toonLit;public List<string> checks=new();}
+        {public bool pass,compatibility,rawOnly,sigma;public string failure;public int requests,fractionalPixels,distinctLevels;public float toonShadow,toonReceiveOff,toonLit,rawMse,filteredMse;public List<string> checks=new();}
         private static readonly List<Object> objects=new();
         private static Report report; private static bool compatibility,previousAsync,rawOnly; private static int tick;
         private static RenderPipelineAsset previousDefault,previousQuality;
@@ -42,7 +42,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                 if(!Application.isBatchMode||!Application.dataPath.Replace('\\','/').Contains("/.codex-research/"))throw new Exception("Independent batch project required");
                 if(!HoRTScene.IsSupported||!SystemInfo.supportsRayTracing)throw new Exception("D3D12 native RT required");
                 previousDefault=GraphicsSettings.defaultRenderPipeline;previousQuality=QualitySettings.renderPipeline;previousAsync=ShaderUtil.allowAsyncCompilation;ShaderUtil.allowAsyncCompilation=false;
-                report=new Report{compatibility=compatibility,rawOnly=rawOnly};EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
+                report=new Report{compatibility=compatibility,rawOnly=rawOnly,sigma=sigmaAudit};EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
                 host=Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>());gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());
                 sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
@@ -86,6 +86,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
             try
             {
                 if(++tick<3){Render();return;}
+                if(sigmaAudit){ValidateProductionSigma();Finish(null);return;}
                 var image=Render();Valid(image,32,32,0,bodyId,"Opaque offscreen shadow");Near(image[32*64+32].g,(-4)/Direction.z,"Nearest blocker distance",.005f);
                 Valid(image,16,32,1,bodyId,"Unblocked receiver");Valid(image,48,32,1,detailId,"Second receiver identity");
                 Check(shadow.LastOutput.light==light,"Output keeps exact main light identity");Check(shadow.LastOutput.raw.rt.width==64&&shadow.LastOutput.raw.rt.height==64,"Full-resolution 32F output");

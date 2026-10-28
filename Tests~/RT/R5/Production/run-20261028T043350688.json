@@ -1,0 +1,24 @@
+{
+  "stage": "R5Cast",
+  "sourceCommit": "a6731f128fe1b0593362401fa2736bedec4e9e6b",
+  "startedUtc": "2026-10-28T04:33:51.3018852Z",
+  "sourcesFile": "sources-20261028T043350688.json",
+  "runnerSha256": "A6F961698468BEB0185CCD88448400451584E56AB7765E34771B2CA64A2316F5",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "shadow-sigma-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSigma",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "EDF8E5AED62774D2395A11DDFB1DEED728E8A7E2B1972E9F949D3F68F37E9362",
+      "seconds": 17.3620747,
+      "pass": true,
+      "logFile": "ho-rt-r5cast-shadow-sigma-rg-20261028T043350688.log"
+    }
+  ]
+}

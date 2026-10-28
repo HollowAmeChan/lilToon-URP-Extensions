@@ -1,0 +1,40 @@
+#pragma kernel Prepare
+#pragma kernel Decode
+#pragma use_dxc
+#pragma target 6.0
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "../../RT/Shaders/HoRTPrimarySurface.hlsl"
+#include "../../RTDI/ThirdParty/NRD/NRD.hlsli"
+Texture2D<float4> _HoRTShadowRaw;
+RWTexture2D<float4> _HoRTShadowNormal,_HoRTShadowMotion;
+RWTexture2D<float> _HoRTShadowViewZ,_HoRTShadowPenumbra;
+Texture2D<float> _HoRTShadowSigmaEncoded,_HoRTShadowSigmaViewZ;
+RWTexture2D<float4> _HoRTShadowSigmaVisibility;
+float4 _HoRTShadowSigmaSize,_HoRTShadowSigmaLight;
+[numthreads(8,8,1)]
+void Prepare(uint2 pixel:SV_DispatchThreadID)
+{
+    if(any(pixel>=(uint2)_HoRTShadowSigmaSize.xy))return;
+    _HoRTShadowMotion[pixel]=0;
+    _HoRTShadowViewZ[pixel]=1e7;
+    _HoRTShadowPenumbra[pixel]=0;
+    _HoRTShadowNormal[pixel]=NRD_FrontEnd_PackNormalAndRoughness(float3(0,0,-1),.5,0);
+    float4 raw=_HoRTShadowRaw[pixel];
+    HoRTPrimarySurface surface;
+    if(raw.z!=1||!HoRTTryLoadPrimarySurface(pixel,surface)||surface.ownerAvailable==0||surface.owner!=(uint)raw.w)return;
+    // SIGMA's domain is front-lit mesh geometry. NPR's half-Lambert or
+    // modified-normal domain can be wider and keeps its actual raw visibility.
+    if(dot(surface.geometricNormalWS,_HoRTShadowSigmaLight.xyz)<=0)return;
+    _HoRTShadowViewZ[pixel]=surface.eyeDepth;
+    _HoRTShadowNormal[pixel]=NRD_FrontEnd_PackNormalAndRoughness(surface.geometricNormalWS,.5,0);
+    _HoRTShadowPenumbra[pixel]=SIGMA_FrontEnd_PackPenumbra(raw.y,_HoRTShadowSigmaLight.w);
+}
+[numthreads(8,8,1)]
+void Decode(uint2 pixel:SV_DispatchThreadID)
+{
+    if(any(pixel>=(uint2)_HoRTShadowSigmaSize.xy))return;
+    float4 raw=_HoRTShadowRaw[pixel];
+    if(raw.z==1&&_HoRTShadowSigmaViewZ[pixel]<500000)
+        raw.x=saturate(SIGMA_BackEnd_UnpackShadow(_HoRTShadowSigmaEncoded[pixel]));
+    _HoRTShadowSigmaVisibility[pixel]=raw;
+}

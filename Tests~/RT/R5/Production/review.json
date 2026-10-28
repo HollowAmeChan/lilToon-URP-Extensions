@@ -1,0 +1,71 @@
+{
+  "stage": "R5 bounded real Cast integration; full goal incomplete",
+  "accepted": {
+    "shadow-sigma-rg": "run-20261028T043612003.json",
+    "shadow-sigma-compat": "run-20261028T043612003.json",
+    "shadow-raw-rg": "run-20261028T043612003.json",
+    "shadow-raw-compat": "run-20261028T043612003.json",
+    "sigma-independent": "run-20261028T043612003.json"
+  },
+  "metrics": {
+    "shadow-sigma-rg": {
+      "requests": 34,
+      "checks": 59,
+      "referenceSamples": 4096,
+      "rawMse": 0.08489079384461921,
+      "filteredMse": 0.0034259678849099065,
+      "levels": 1076,
+      "receiverPixels": 2176
+    },
+    "shadow-sigma-compat": {
+      "requests": 34,
+      "checks": 59,
+      "referenceSamples": 4096,
+      "rawMse": 0.08489079384461921,
+      "filteredMse": 0.0034259678849099065,
+      "levels": 1076,
+      "receiverPixels": 2176
+    }
+  },
+  "signals": {
+    "shadow-sigma-rg": {
+      "reference": {
+        "float": "shadow-sigma-rg-20261028T043612003-reference.rgba32",
+        "sha256": "75a9e351d03f6c215395096dbb447ea69a6201fd261998cba14dc14321d8f3be",
+        "preview": "shadow-sigma-rg-20261028T043612003-reference.png"
+      },
+      "raw": {
+        "float": "shadow-sigma-rg-20261028T043612003-raw.rgba32",
+        "sha256": "a459089e967e3a42583a798a26e41a19319a0f115d285096d79aa7c58e8b8ed8",
+        "preview": "shadow-sigma-rg-20261028T043612003-raw.png"
+      },
+      "sigma": {
+        "float": "shadow-sigma-rg-20261028T043612003-sigma.rgba32",
+        "sha256": "7a609fcd05a45f8e53ebe78cb0a8921d52da5cf7b63c5c9aa23d5b8db00f8614",
+        "preview": "shadow-sigma-rg-20261028T043612003-sigma.png"
+      }
+    },
+    "shadow-sigma-compat": {
+      "reference": {
+        "float": "shadow-sigma-compat-20261028T043612003-reference.rgba32",
+        "sha256": "75a9e351d03f6c215395096dbb447ea69a6201fd261998cba14dc14321d8f3be",
+        "preview": "shadow-sigma-compat-20261028T043612003-reference.png"
+      },
+      "raw": {
+        "float": "shadow-sigma-compat-20261028T043612003-raw.rgba32",
+        "sha256": "a459089e967e3a42583a798a26e41a19319a0f115d285096d79aa7c58e8b8ed8",
+        "preview": "shadow-sigma-compat-20261028T043612003-raw.png"
+      },
+      "sigma": {
+        "float": "shadow-sigma-compat-20261028T043612003-sigma.rgba32",
+        "sha256": "7a609fcd05a45f8e53ebe78cb0a8921d52da5cf7b63c5c9aa23d5b8db00f8614",
+        "preview": "shadow-sigma-compat-20261028T043612003-sigma.png"
+      }
+    }
+  },
+  "referenceCommit": "a6731f12",
+  "unchangedDiGiNrdCharacterShadowFiles": 392,
+  "benefit": "Real single-sample closest blocker goes through official SIGMA frontend, primary guides and square decoder. Published full-resolution float visibility preserves raw status/owner/distance. Static preview has independent per-view/light history; export is reset and reproducible without stabilization waits.",
+  "costAndLimits": "64x64 two-part static geometry with controlled changes. Added SIGMA external textures are 40 B/pixel plus the existing 16 B/pixel raw, SDK pools and constants. Camera/scene/material changes reset instead of claiming object-motion reprojection. NPR back-lit domain explicitly uses its raw visibility. Not character hair/rig, coplanar owner-edge, final ramp, Player or multilight quality acceptance.",
+  "next": "Resolve actual NPR main Cast reception with authoritative shader layout/parameter evidence, then qualify ramp quality and extend requested light outputs. R4 material gate and R6 remain open."
+}

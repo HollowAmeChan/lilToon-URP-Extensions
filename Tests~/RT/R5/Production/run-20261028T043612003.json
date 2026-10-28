@@ -1,0 +1,80 @@
+{
+  "stage": "R5Cast",
+  "sourceCommit": "a6731f128fe1b0593362401fa2736bedec4e9e6b",
+  "startedUtc": "2026-10-28T04:36:12.5345118Z",
+  "sourcesFile": "sources-20261028T043612003.json",
+  "runnerSha256": "A6F961698468BEB0185CCD88448400451584E56AB7765E34771B2CA64A2316F5",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "shadow-sigma-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSigma",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "162FEFA618C856132B332C48141025E6BED34B8E08BE697BFB45AA46CF1B7865",
+      "seconds": 12.2488438,
+      "pass": true,
+      "logFile": "ho-rt-r5cast-shadow-sigma-rg-20261028T043612003.log"
+    },
+    {
+      "name": "shadow-sigma-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunSigmaCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "DD66F56DA3728D212E679026E9489C2C0ECBC2AE714CA3D3E2409B8F5417DED9",
+      "seconds": 8.7865816,
+      "pass": true,
+      "logFile": "ho-rt-r5cast-shadow-sigma-compat-20261028T043612003.log"
+    },
+    {
+      "name": "shadow-raw-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRaw",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "33D881EEE70FF3BC2397EC21095A7A5B67171165C5D427EB28AAB8118CCCAA25",
+      "seconds": 8.3982328,
+      "pass": true,
+      "logFile": "ho-rt-r5cast-shadow-raw-rg-20261028T043612003.log"
+    },
+    {
+      "name": "shadow-raw-compat",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunRawCompatibility",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "B00114B94A256112B0B779AFBEA290643170E26341ECFCFEEE2BC60AF28AF057",
+      "seconds": 8.9627787,
+      "pass": true,
+      "logFile": "ho-rt-r5cast-shadow-raw-compat-20261028T043612003.log"
+    },
+    {
+      "name": "sigma-independent",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowSigmaValidation.Run",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 0,
+      "abort": null,
+      "marker": true,
+      "diagnostics": [],
+      "logSha256": "662513533931E715B954DA3122C14F758DAAD66BB9E66F5316BE35E804C958A2",
+      "seconds": 8.5228138,
+      "pass": true,
+      "logFile": "ho-rt-r5cast-sigma-independent-20261028T043612003.log"
+    }
+  ]
+}
