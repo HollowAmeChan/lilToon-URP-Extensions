@@ -91,11 +91,11 @@ public static class HoMmdStageBuilder
     public static void BeginRender(HoMmdStageWork.Request request,Action<string> done,Action<Exception> failed)
     {
         Recipe r=ReadRecipe(request.stage);
-        string path=Root+r.name+"/Renders/"+r.name+(request.view==0?"_主视角":"_副视角")+".png";
+        string path=Root+r.name+"/Renders/"+r.name+(request.view==0?"_主视角":request.view==1?"_左侧视角":"_右侧视角")+".png";
         if(Environment.GetCommandLineArgs().Contains("-hoDiagnostic"))
             path=Path.Combine(HoMmdStageWork.Work,r.name+"-diagnostic.png");
         int outputIndex=Array.IndexOf(Environment.GetCommandLineArgs(),"-hoOutputSuffix");
-        if(outputIndex>=0)path=Path.Combine(HoMmdStageWork.Work,r.name+"-"+Environment.GetCommandLineArgs()[outputIndex+1]+".png");
+        if(outputIndex>=0)path=Path.Combine(HoMmdStageWork.Work,r.name+"-"+Environment.GetCommandLineArgs()[outputIndex+1]+(request.view==0?"":"-view"+request.view)+".png");
         int widthIndex=Array.IndexOf(Environment.GetCommandLineArgs(),"-hoWidth");
         if(widthIndex>=0){request.width=int.Parse(Environment.GetCommandLineArgs()[widthIndex+1]);request.height=request.width*9/16;}
         HoMmdStageCapture.Begin(Root+r.name+"/"+r.name+".unity",path,request.width,request.height,done,failed,
@@ -111,7 +111,13 @@ public static class HoMmdStageBuilder
                     var renderer=Asset<UniversalRendererData>(Root+r.name+"/Rendering/Ho Renderer.asset");
                     foreach(var feature in renderer.rendererFeatures.OfType<HoVolumeLightRendererFeature>())feature.SetActive(false);
                 }
-                if(request.view==1){camera.transform.position=r.camera+new Vector3(3,1,2);camera.transform.LookAt(r.target);}
+                if(request.view>0)
+                {
+                    string name=request.view==1?"左侧观察相机":"右侧观察相机";
+                    var review=camera.transform.root.GetComponentsInChildren<Camera>().FirstOrDefault(x=>x.name==name);
+                    if(review==null)throw new InvalidOperationException("Missing authored review camera: "+name);
+                    camera.transform.SetPositionAndRotation(review.transform.position,review.transform.rotation);camera.fieldOfView=review.fieldOfView;
+                }
                 HoMmdStageAdvanced.ConfigureCapture(camera);
             },32);
     }

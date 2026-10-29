@@ -164,6 +164,7 @@ public static class HoMmdStageCapture
                         RenderPipeline.SubmitRenderRequest(camera, warmup);
                         HoMmdStageLighting.RecordRenderState(camera,scenePath,frames+1);
                         HoMmdStageAdvanced.Record(camera,frames+1);
+                        HoMmdStageDetail.Record(camera,frames+1);
                         var stack=VolumeManager.instance.stack;
                         var bloom=stack.GetComponent<Bloom>();
                         var adjustments=stack.GetComponent<ColorAdjustments>();

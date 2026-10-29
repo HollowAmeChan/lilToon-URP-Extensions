@@ -19,7 +19,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 public static class HoMmdStageAudit
 {
     [Serializable]sealed class Audit
-    {public string stage,scene,pipeline,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation;}
+    {public string stage,scene,pipeline,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting;}
     [Serializable]sealed class Report{public string date;public Audit[] stages;public string[] errors;}
     public static void RunBatch()
     {
@@ -75,6 +75,8 @@ public static class HoMmdStageAudit
                     regions=roots.SelectMany(x=>x.GetComponentsInChildren<HoAtmosphereRegion>()).Count(),
                     modelRenderers=modelRenderers.Length,modelShadowCasters=modelRenderers.Count(x=>x.shadowCastingMode!=ShadowCastingMode.Off&&x.receiveShadows),skySphere=skySphere,depthOfField=dof,
                     cinematicBars=bars!=null,centeredLogo=centeredLogo,logoContrast=contrast,
+                    reviewCameras=roots.SelectMany(x=>x.GetComponentsInChildren<Camera>()).Count(),
+                    centerPostLighting=screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.PostLighting)||image.layers.value.Any(x=>x.enabled&&x.effect==ImageProcessEffect.CenterColorCorrection),
                     lowFillPoints=lowPoints,exteriorLights=exterior.Length,exteriorLayerIsolation=layerIsolation,
                     giMode=rtgi!=null?"RTGI":"Off",advancedImageLayers=image.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),
                     ssgiFeatures=ssgiFeatures,ssgiVolumes=ssgiVolumes,
@@ -94,9 +96,11 @@ public static class HoMmdStageAudit
                     errors.Add(recipe.name+": low point fill / shadow capacity audit failed");
                 if(audit.aoArtMaterials!=audit.aoEligibleMaterials||audit.plrSurfaces<1)
                     errors.Add(recipe.name+": AO art / all-floor PLR audit failed");
+                if(File.Exists(folder+"/Rendering/细节灯光.json")&&(audit.reviewCameras!=3||audit.centerPostLighting))
+                    errors.Add(recipe.name+": three cameras / world-space lighting audit failed");
                 if(advanced)
                 {
-                    if(rtgi==null||ssgiFeatures!=0||ssgiVolumes!=0||audit.advancedImageLayers<2||audit.advancedScreenLayers<1||
+                    if(rtgi==null||ssgiFeatures!=0||ssgiVolumes!=0||audit.advancedImageLayers<2||
                         (reflectionResolution>0&&reflectionResolution!=1024))errors.Add(recipe.name+": advanced feature / look audit failed");
                     if(rtgi!=null)
                     {
