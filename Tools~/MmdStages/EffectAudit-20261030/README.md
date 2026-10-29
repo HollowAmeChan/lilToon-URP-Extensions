@@ -1,6 +1,6 @@
 # Ho PMX effect manifest audit
 
-This is a repeatable, pure C# source audit for PMX packages. It does not launch Unity, import assets, execute MME FX, or modify source files. Each model entry contains the PMX SHA-256, parser counts/warnings, original relative texture references, toon/sphere slots, PMX shininess and material flags, a conservative alpha section, and per-material name/emission information from the optional Ray `Material_MME.emd` mapping. Unknown Ray FX macro keys are retained under `materials[].mme.unknownFields`.
+This is a repeatable, pure C# source audit for PMX packages. It does not launch Unity, import assets, execute MME FX, or modify source files. Each model entry contains the PMX SHA-256, parser counts/warnings, original relative texture references, toon/sphere slots, PMX shininess plus the Ray `ShininessToSmoothness` conversion hint, material flags, a conservative alpha section, and per-material name/emission information from the optional Ray `Material_MME.emd` mapping. Unknown Ray FX macro keys are retained under `materials[].mme.unknownFields`.
 
 Run from the extension repository:
 

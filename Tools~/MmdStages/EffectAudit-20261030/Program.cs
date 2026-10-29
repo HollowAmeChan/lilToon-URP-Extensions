@@ -115,6 +115,7 @@ internal static class Program
                 memo = material.Comment,
                 indexCount = material.IndexCount,
                 shininess = material.Shininess,
+                smoothnessFromShininess = HoPmxRayMaterial.ShininessToSmoothness(material.Shininess),
                 sourceFlags = new
                 {
                     value = material.Flags,
