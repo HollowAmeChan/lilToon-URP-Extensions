@@ -30,8 +30,9 @@ public static class HoMmdFeatureRepair
         {
             feature=ScriptableObject.CreateInstance<T>();feature.name=name;AssetDatabase.AddObjectToAsset(feature,renderer);
             renderer.rendererFeatures.Add(feature);feature.Create();
+            feature.SetActive(true);
         }
-        feature.SetActive(true);EditorUtility.SetDirty(feature);return feature;
+        EditorUtility.SetDirty(feature);return feature;
     }
     public static void Run()
     {
@@ -54,10 +55,10 @@ public static class HoMmdFeatureRepair
         Ensure<HoAttributeCompositeRendererFeature>(renderer,"Ho-AttributeComposite");
         var plr=Ensure<HoPlanarReflectionRendererFeature>(renderer,"Ho-PlanarReflection");
         plr.FeatureSettings.renderGameView=true;plr.FeatureSettings.renderSceneView=true;plr.FeatureSettings.maxSurfacesPerCamera=8;
-        var desired=new Type[]{typeof(HoRTRendererFeature),typeof(HoGeometryDataRendererFeature),typeof(HoGeometryBufferRendererFeature),typeof(HoObjectBufferRendererFeature),typeof(HoSurfaceBufferRendererFeature),typeof(HoAttributeCompositeRendererFeature),typeof(HoShadowCastRendererFeature),typeof(HoAtmosphereRendererFeature),typeof(HoGTAORendererFeature),typeof(HoVolumeLightRendererFeature),typeof(WeightedOITRendererFeature),typeof(ScreenProcessRendererFeature),typeof(ImageProcessRendererFeature),typeof(HoPlanarReflectionRendererFeature),typeof(HoRTGIRendererFeature)};
+        var desired=new Type[]{typeof(HoGeometryDataRendererFeature),typeof(HoRTRendererFeature),typeof(lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowRendererFeature),typeof(HoShadowCastRendererFeature),typeof(HoAtmosphereRendererFeature),typeof(HoPlanarReflectionRendererFeature),typeof(HoGeometryBufferRendererFeature),typeof(HoObjectBufferRendererFeature),typeof(HoSurfaceBufferRendererFeature),typeof(lilToon.URP.Extensions.RTShadow.HoRTShadowRendererFeature),typeof(HoAttributeCompositeRendererFeature),typeof(HoGTAORendererFeature),typeof(lilToon.URP.Extensions.SSGI.HoSSGIRendererFeature),typeof(lilToon.URP.Extensions.RTDI.HoRTDIRendererFeature),typeof(HoRTGIRendererFeature),typeof(lilToon.URP.Extensions.SubsurfaceScattering.HoSubsurfaceScatteringRendererFeature),typeof(HoVolumeLightRendererFeature),typeof(WeightedOITRendererFeature),typeof(lilToon.URP.Extensions.CharacterSpecialization.HoCharacterSpecializationRendererFeature),typeof(ScreenProcessRendererFeature),typeof(ImageProcessRendererFeature)};
         var ordered=new List<ScriptableRendererFeature>();
         foreach(var type in desired){var f=renderer.rendererFeatures.FirstOrDefault(x=>x!=null&&x.GetType()==type);if(f!=null&&!ordered.Contains(f))ordered.Add(f);}
-        foreach(var f in renderer.rendererFeatures)if(f!=null&&!ordered.Contains(f)&&f.isActive)ordered.Add(f);
+        foreach(var f in renderer.rendererFeatures)if(f!=null&&!ordered.Contains(f))ordered.Add(f);
         renderer.rendererFeatures.Clear();renderer.rendererFeatures.AddRange(ordered);
         var scene=UnityEditor.SceneManagement.EditorSceneManager.OpenScene(folder+"/"+name+".unity",UnityEditor.SceneManagement.OpenSceneMode.Single);
         var sky=scene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<MeshRenderer>(true)).FirstOrDefault(x=>x.name=="天空球")?.sharedMaterial;
@@ -65,6 +66,7 @@ public static class HoMmdFeatureRepair
         {
             var so=new SerializedObject(surface);var prop=so.FindProperty("reflectSceneView");if(prop!=null)prop.boolValue=true;so.ApplyModifiedPropertiesWithoutUndo();EditorUtility.SetDirty(surface);
         }
+        HoMmdPlrRepair.Repair(scene);
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
         UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene,true);
         EnsurePlanarVolume(folder,sky);

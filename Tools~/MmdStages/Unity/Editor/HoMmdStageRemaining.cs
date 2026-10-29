@@ -168,6 +168,7 @@ public static class HoMmdStageRemaining
         {var otherMat=other.GetComponent<MeshRenderer>()?.sharedMaterial;F(otherMat,"_UsePlanarReflection",0);Object.DestroyImmediate(other);}
         if(name!="月昔梅"||recipe.models.Length>1)Dapple(root,folder,env.sun,recipe.target,day?12:18);
         AddPost(root,spec,name);
+        HoMmdPlrRepair.Repair(scene);
         env.ApplyNow();EditorUtility.SetDirty(renderer);EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
         Debug.Log("MMD_REMAINING_ART "+name);
     }

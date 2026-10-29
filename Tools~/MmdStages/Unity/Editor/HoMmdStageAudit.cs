@@ -19,7 +19,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 public static class HoMmdStageAudit
 {
     [Serializable]sealed class Audit
-    {public string stage,scene,pipeline,renderer,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiFeatureAssets,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting,hasObjectBuffer,hasAttributeComposite,plrAfterAttributeComposite,plrSourceBeforeGeometryBuffer,plrSceneView,sharedRenderAssets,canonicalFeatureOrder,disabledFeaturesPresent;}
+    {public string stage,scene,pipeline,renderer,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiFeatureAssets,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting,hasObjectBuffer,hasAttributeComposite,plrHasAttributeComposite,plrSourceBeforeGeometryBuffer,plrReceiversHaveIdentity,plrSceneView,sharedRenderAssets,canonicalFeatureOrder,disabledFeaturesPresent;}
     [Serializable]sealed class Report{public string date;public Audit[] stages;public string[] errors;}
     public static void RunBatch()
     {
@@ -92,8 +92,9 @@ public static class HoMmdStageAudit
                     reviewCameras=roots.SelectMany(x=>x.GetComponentsInChildren<Camera>()).Count(),
                     centerPostLighting=screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.PostLighting)||image.layers.value.Any(x=>x.enabled&&x.effect==ImageProcessEffect.CenterColorCorrection),
                     hasObjectBuffer=objectBuffer!=null,hasAttributeComposite=attribute!=null,
-                    plrAfterAttributeComposite=plrFeature!=null&&attribute!=null,
+                    plrHasAttributeComposite=plrFeature!=null&&attribute!=null,
                     plrSourceBeforeGeometryBuffer=plrFeature!=null&&renderer.rendererFeatures.IndexOf(plrFeature)<renderer.rendererFeatures.IndexOf(renderer.rendererFeatures.OfType<lilToon.URP.Extensions.GeometryBuffer.HoGeometryBufferRendererFeature>().FirstOrDefault()),
+                    plrReceiversHaveIdentity=HoMmdPlrRepair.HaveIdentities(scene),
                     plrSceneView=plrSurfaces.Any(x=>new SerializedObject(x).FindProperty("reflectSceneView")?.boolValue==true),
                     lowFillPoints=lowPoints,exteriorLights=exterior.Length,exteriorLayerIsolation=layerIsolation,
                     giMode=rtgi!=null?"RTGI":"Off",advancedImageLayers=image.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),
@@ -116,7 +117,7 @@ public static class HoMmdStageAudit
                     errors.Add(recipe.name+": AO art / all-floor PLR audit failed");
                 if(File.Exists(folder+"/Rendering/细节灯光.json")&&(audit.reviewCameras!=3||audit.centerPostLighting))
                     errors.Add(recipe.name+": three cameras / world-space lighting audit failed");
-                if(!audit.hasObjectBuffer||!audit.hasAttributeComposite||!audit.plrSourceBeforeGeometryBuffer||!audit.plrSceneView)
+                if(!audit.hasObjectBuffer||!audit.hasAttributeComposite||!audit.plrSourceBeforeGeometryBuffer||!audit.plrSceneView||!audit.plrReceiversHaveIdentity)
                     errors.Add(recipe.name+": OB/SB/AC/PLR dependency or SceneView reflection audit failed");
                 if(!audit.canonicalFeatureOrder||!audit.disabledFeaturesPresent)
                     errors.Add(recipe.name+": Renderer feature order / disabled feature retention audit failed");

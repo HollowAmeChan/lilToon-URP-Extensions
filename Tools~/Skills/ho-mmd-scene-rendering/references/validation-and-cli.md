@@ -6,11 +6,13 @@ Use Unity 6000.3.15f1 with D3D12 for ray scenes. Do not launch two Editors for B
 
 ## Renderer feature dependency and Scene View preview
 
-For every stage-owned renderer, keep the producer/consumer order explicit:
+For the fixed PC renderer, follow the pipeline overview's list order:
 
-`HoGeometryDataRendererFeature → HoGeometryBufferRendererFeature → HoObjectBufferRendererFeature → HoSurfaceBufferRendererFeature → HoAttributeCompositeRendererFeature → HoPlanarReflectionRendererFeature`.
+`GeometryData → Ho-RT → CharacterShadow → ShadowCast → Atmosphere → PLR → GeometryBuffer → ObjectBuffer → SurfaceBuffer → RTShadow → AC → GTAO → …`.
 
-Attribute Composite (AC) is a required producer for PLR coverage and material attributes. A PLR feature can exist and still render incorrectly when AC is missing or placed after it. The repair entry is `HoMmdFeatureRepair.Run`; it adds missing OB/AC/PLR features, restores this order, enables the PLR game and Scene View feature flags, and writes `reflectSceneView: 1` on every stage surface. Run it after any authoring pass that recreates a floor or renderer asset, then rerun `HoMmdStageAudit.RunBatch`.
+Feature list order differs from execution order: PLR's source is generated in the early camera callback; debug/composite executes after GB/OB/SB/AC. Opaque ForwardLit needs its per-renderer source and material settings. Material debug/composite additionally requires AC and a nonzero OB identity on each receiver (`tags=None` for scenery). `HoMmdPlrRepair.RunBatch` fills missing receiver identities without editing renderer assets, profiles, lights or materials. Use `HoMmdSharedRenderAssets` for the canonical renderer structure; the older `HoMmdFeatureRepair` ordering is superseded.
+
+Use `HoMmdPlrValidation.Run -hoStage 孔雀月令 -plrMode on`, then `off` and `debug`, with graphics enabled and without `-quit`. Outputs go under `Library/HoMmdStages/PLR-validation/<stage>/`. Compare the same camera and original material parameters. Inspect source mip 0 and mips 1–3, not just runtime `Ready`. Debug also runs a constant-HDR GPU test through the shipping prefilter: mip 1+ must preserve `(2,.5,.25)` within .025 per channel. `RunReview -hoStages 孔雀月令,花吐电気` refreshes three authored views without rerunning light authoring.
 
 Capture with StandardRequest across warmup frames (32 in this project), then read back the HDR render target asynchronously and encode PNG once. For each stage capture:
 
@@ -24,14 +26,14 @@ Store `<stage>_主视角.png`, `<stage>_左侧视角.png`, `<stage>_右侧视角
 
 `HoMmdStageAudit.RunBatch` must report `errors=[]` for all authored scenes (27 in the current H2CU set). Check:
 
-- stage-owned Pipeline, Renderer and Volume/profile dependencies
+- fixed PC Pipeline/Renderer references, plus stage-owned Volume/profile dependencies
 - all model renderers have ShadowCaster and receive shadows
 - Ho lilToon/sky shaders only, with no missing shaders
 - one atmosphere region, camera post processing and sky sphere
 - DoF, cinematic bars, centered Hollow Logo and opposite border/logo colors
 - AO art coverage equals eligible material count
 - at least one 1024 PLR surface per scene
-- active Object Buffer and Attribute Composite features, with the PLR source before GeometryBuffer and its opaque consumption after AC
+- active Object Buffer and Attribute Composite features, with the PLR source before GeometryBuffer and receiver identities present for debug/composite
 - PLR Scene View preview enabled both on the feature and on every surface
 - RTGI active, Ho RT host before RTGI, sky excluded
 - active SSGI feature and SSGI volume counts are zero; an inactive SSGI RendererFeature placeholder may remain for inspector discoverability

@@ -1,5 +1,7 @@
 # H2Cu 场景本地资源准备
 
+PLR 像素回归与当前 CLI 入口见 [PlrRegression-20261030.md](PlrRegression-20261030.md)。场景现已共用固定 PC Renderer/Pipeline；下文早期十九场景的独立 Renderer 描述已由共享方案取代，Volume/材质/模型仍按场景独立。
+
 `prepare-stage-sources.py` 将本机已整理的十九个 H2Cu 场景及月昔梅补回包复制到 BREAK_URP 的各场景 `Source/`。保留 PMX 相对路径和作者说明，不移动源素材，不复制压缩包、Blender 中间文件或其他工程的 `.meta`。
 
 ~~~powershell

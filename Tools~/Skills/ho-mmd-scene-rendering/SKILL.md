@@ -16,9 +16,10 @@ The workflow is iterative. Read only the references needed for the current phase
 - Use RTGI + RELAX when ray GI is enabled. SSGI is prohibited at runtime; the fixed shared Renderer may retain an inactive SSGI feature placeholder for inspector/debug discoverability, but no SSGI Volume or active SSGI pass is allowed.
 - Prefer world-space lights, real shadow casting, local Point/Spot HD volume lights and material emission over screen-center PostLighting or CenterColorCorrection. Screen effects may grade the image, but they must not carry the subject illumination.
 - Give every stage its own scene, Volume/profile, materials, rendering assets and evidence. The H2CU family uses the fixed project `PC_RPAsset/PC_Renderer`; do not create per-stage RendererData copies. Do not share stage model/material/Volume assets.
-- Treat Attribute Composite as a hard prerequisite for PLR's opaque material consumption, while keeping the PLR source callback early: `GeometryData → Ho-RT → CharacterShadow → ShadowCast → Atmosphere → PLR source → GeometryBuffer → ObjectBuffer → SurfaceBuffer → RTShadow → AttributeComposite → GTAO`. Every PLR surface must keep Scene View preview enabled for authoring.
+- Keep the documented feature order: `GeometryData → Ho-RT → CharacterShadow → ShadowCast → Atmosphere → PLR source → GeometryBuffer → ObjectBuffer → SurfaceBuffer → RTShadow → AttributeComposite → GTAO`. Opaque ForwardLit consumes the per-renderer source directly; PLR material debug and special fullscreen composite additionally need OB identities plus GB/SB/AC. Enable Scene View preview on each surface.
 - Review at least the main camera plus left and right observation cameras. A stage is not ready from one flattering still.
 - Finish with a Unity-native audit and actual GPU captures. Evidence must include image dimensions, RTGI state, local-volume state, no-SSGI state, material/caster coverage, PLR, source hashes and unchanged unrelated stages.
+- PLR `Ready=true` is an allocation/submission check. Verify non-black roughness mips and a same-camera reflection on/off pixel difference before claiming reflection works.
 
 ## Choose the phase
 

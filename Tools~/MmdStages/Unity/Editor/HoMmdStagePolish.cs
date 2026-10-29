@@ -204,6 +204,7 @@ public static class HoMmdStagePolish
                 EditorUtility.SetDirty(mat);EditorUtility.SetDirty(feature);EditorUtility.SetDirty(renderer);
             }
         }
+        HoMmdPlrRepair.Repair(scene);
         EditorUtility.SetDirty(profile);EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
         Debug.Log("MMD_STAGE_POLISHED "+name);
     }

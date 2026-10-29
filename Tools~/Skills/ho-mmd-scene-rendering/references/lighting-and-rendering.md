@@ -27,7 +27,7 @@ Identify real floors and water by material name and geometry, not just the lowes
 
 The MMD scene family uses the fixed project-wide `Assets/Settings/PC_RPAsset.asset` + `Assets/Settings/PC_Renderer.asset`; do not create another RendererData/RenderPipelineAsset copy. Scene-owned Volume profiles, materials, lights and `HoPlanarReflectionSurface` components carry the art direction. ScreenProcess, ImageProcess, CharacterSpecialization and RTGI are designed to read scene Volume state; PLR now has `HoPlanarReflectionVolume` for enable/view/debug/composite controls. The renderer asset remains the place where the feature exists and its producer order is fixed.
 
-There is a concrete reason to avoid multiple simultaneously loaded PLR Renderer assets: PLR registers a static callback. Its resolver must select the feature instance belonging to the camera's actual `ScriptableRenderer`; otherwise a PC Renderer or another stage copy can win the global list and make a valid surface appear inert. The runtime resolver now matches the active renderer before falling back.
+PLR registers a static callback. Its resolver must select the feature instance belonging to the camera's actual `ScriptableRenderer`; the protected `rendererFeatures` member is a property, not a field. Never fall back to another renderer's feature when this lookup fails. The fixed PC renderer remains the shared project boundary.
 
 ## Known scene choices
 
