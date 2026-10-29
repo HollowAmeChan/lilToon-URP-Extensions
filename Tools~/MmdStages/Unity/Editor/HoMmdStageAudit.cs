@@ -41,10 +41,10 @@ public static class HoMmdStageAudit
                 var renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
                 if(renderer==null)renderer=RendererFromPipeline(env.pipeline);
                 string rendererPath=renderer!=null?AssetDatabase.GetAssetPath(renderer):string.Empty;
-                bool sharedRenderAssets=env.pipeline!=null&&AssetDatabase.GetAssetPath(env.pipeline)=="Assets/mmd场景测试/_共享渲染/HoMmd_RPAsset.asset"&&rendererPath=="Assets/mmd场景测试/_共享渲染/HoMmd_Renderer.asset";
+                bool sharedRenderAssets=env.pipeline!=null&&AssetDatabase.GetAssetPath(env.pipeline)=="Assets/Settings/PC_RPAsset.asset"&&rendererPath=="Assets/Settings/PC_Renderer.asset";
                 var invalid=AssetDatabase.GetDependencies(path,true).Where(x=>
-                    (x.StartsWith("Assets/mmd场景测试/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/mmd场景测试/_制作工具/")&&!x.StartsWith("Assets/mmd场景测试/_共享渲染/"))||
-                    x=="Assets/Settings/PC_Renderer.asset"||x=="Assets/Settings/PC_RPAsset.asset").ToArray();
+                    (x.StartsWith("Assets/mmd场景测试/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/mmd场景测试/_制作工具/"))||
+                    (x=="Assets/Settings/PC_Renderer.asset"||x=="Assets/Settings/PC_RPAsset.asset")&&!sharedRenderAssets).ToArray();
                 var modelRenderers=renderers.Where(x=>x.transform.parent.name!="04 环境与后处理").ToArray();
                 bool skySphere=renderers.Any(x=>x.name=="天空球"&&x.sharedMaterial!=null&&x.sharedMaterial.shader!=null&&x.sharedMaterial.shader.name=="Ho/MMD Stage Sky Sphere");
                 var missing=mats.Where(x=>x==null||x.shader==null||(!x.shader.name.Contains("lilToon")&&x.shader.name!="Ho/MMD Stage Sky Sphere")).Select(x=>x==null?"null":x.name).ToArray();
@@ -62,6 +62,10 @@ public static class HoMmdStageAudit
                     modelRenderers.Count(x=>(x.renderingLayerMask&2u)!=0)==6;
                 if(renderer==null){errors.Add(recipe.name+": renderer asset missing");continue;}
                 var rtgi=renderer.rendererFeatures.OfType<HoRTGIRendererFeature>().FirstOrDefault(x=>x.isActive);
+                profile.TryGet<HoRTGIVolume>(out var rtgiVolume);
+                var rtgiExcluded=rtgi!=null&&rtgi.Settings.excludedRayMaterials!=null&&rtgi.Settings.excludedRayMaterials.Length==1?rtgi.Settings.excludedRayMaterials:
+                    rtgiVolume!=null&&rtgiVolume.excludedRayMaterials.overrideState?rtgiVolume.excludedRayMaterials.value:null;
+                bool rtgiSkyExcluded=rtgiExcluded!=null&&rtgiExcluded.Length==1&&rtgiExcluded[0]!=null&&rtgiExcluded[0].shader!=null&&rtgiExcluded[0].shader.name=="Ho/MMD Stage Sky Sphere";
                 var objectBuffer=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.ObjectBuffer.HoObjectBufferRendererFeature>().FirstOrDefault(x=>x.isActive);
                 var attribute=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.AttributeComposite.HoAttributeCompositeRendererFeature>().FirstOrDefault(x=>x.isActive);
                 var plrFeature=renderer.rendererFeatures.OfType<HoPlanarReflectionRendererFeature>().FirstOrDefault(x=>x.isActive);
@@ -117,8 +121,7 @@ public static class HoMmdStageAudit
                     if(rtgi!=null)
                     {
                         var host=renderer.rendererFeatures.OfType<HoRTRendererFeature>().SingleOrDefault(x=>x.isActive);
-                        if(host==null||renderer.rendererFeatures.IndexOf(host)>renderer.rendererFeatures.IndexOf(rtgi)||
-                            rtgi.Settings.excludedRayMaterials.Length!=1||rtgi.Settings.excludedRayMaterials[0].shader.name!="Ho/MMD Stage Sky Sphere")
+                        if(host==null||renderer.rendererFeatures.IndexOf(host)>renderer.rendererFeatures.IndexOf(rtgi)||!rtgiSkyExcluded)
                             errors.Add(recipe.name+": RT host / sky exclusion audit failed");
                     }
                 }

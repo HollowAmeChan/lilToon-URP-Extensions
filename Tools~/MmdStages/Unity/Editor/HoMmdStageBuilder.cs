@@ -19,6 +19,17 @@ using Object=UnityEngine.Object;
 public static class HoMmdStageBuilder
 {
     public const string Root="Assets/mmd场景测试/H2Cu阿相/";
+    public const string FixedPipelinePath="Assets/Settings/PC_RPAsset.asset";
+    public const string FixedRendererPath="Assets/Settings/PC_Renderer.asset";
+    public static UniversalRendererData ResolveRenderer(string folder)
+    {
+        var local=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
+        if(local!=null)return local;
+        var pipeline=AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(FixedPipelinePath);
+        if(pipeline==null)return null;
+        var so=new SerializedObject(pipeline);var list=so.FindProperty("m_RendererDataList");
+        return list!=null&&list.arraySize>0?list.GetArrayElementAtIndex(0).objectReferenceValue as UniversalRendererData:null;
+    }
     public static void BuildRemainingBatch()
     {
         try{EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
@@ -103,13 +114,13 @@ public static class HoMmdStageBuilder
             camera=>{
                 if(Environment.GetCommandLineArgs().Contains("-hoDiagnostic"))
                 {
-                    var renderer=Asset<UniversalRendererData>(Root+r.name+"/Rendering/Ho Renderer.asset");
+                    var renderer=ResolveRenderer(Root+r.name);
                     foreach(var f in renderer.rendererFeatures)f.SetActive(false);
                 }
                 if(Environment.GetCommandLineArgs().Contains("-hoNoPost"))camera.GetUniversalAdditionalCameraData().renderPostProcessing=false;
                 if(Environment.GetCommandLineArgs().Contains("-hoNoVolume"))
                 {
-                    var renderer=Asset<UniversalRendererData>(Root+r.name+"/Rendering/Ho Renderer.asset");
+                    var renderer=ResolveRenderer(Root+r.name);
                     foreach(var feature in renderer.rendererFeatures.OfType<HoVolumeLightRendererFeature>())feature.SetActive(false);
                 }
                 if(request.view>0)
@@ -206,7 +217,7 @@ public static class HoMmdStageBuilder
             profile.TryGet(out ColorAdjustments color);color.postExposure.Override(r.exposure);
             profile.TryGet(out Bloom bloom);bloom.intensity.Override(r.bloom);
             profile.TryGet(out HoVolumeLightVolume lightVolume);lightVolume.intensity.Override(r.volume);
-            var rendererData=Asset<UniversalRendererData>(Root+r.name+"/Rendering/Ho Renderer.asset");
+            var rendererData=ResolveRenderer(Root+r.name);
             var kept=new HashSet<string>();
             foreach(var feature in rendererData.rendererFeatures)
             {
@@ -304,7 +315,7 @@ public static class HoMmdStageBuilder
             EditorSceneManager.SaveScene(scene,scenePath);
             File.WriteAllText(folder+"/Rendering/制作参数.json",JsonUtility.ToJson(r,true));
             AssetDatabase.SaveAssets();
-            File.WriteAllText(folder+"/场景说明.md","# "+r.name+"\n\n模型作者：H2CU阿相。原始文件和使用规约在 Source/。\n\n使用 Ho PMX 与 Ho lilToon。Materials/ 为可直接编辑的外置材质；Rendering/ 仅属于本场景；主相机为初始构图。\n\n打开本场景后“环境与后处理”组件选择本场景独立 HoURP 配置，离开时恢复。Source 保留作者原始材质，不把配布图当作最终渲染。\n");
+            File.WriteAllText(folder+"/场景说明.md","# "+r.name+"\n\n模型作者：H2CU阿相。原始文件和使用规约在 Source/。\n\n使用 Ho PMX 与 Ho lilToon。Materials/ 为可直接编辑的外置材质；Rendering/ 保存本场景 Volume、天空与镜头资产；主相机为初始构图。\n\n本场景使用工程固定的 Assets/Settings/PC_RPAsset.asset 与 PC_Renderer.asset；场景差异通过 Volume、材质、灯光和反射面表达。Source 保留作者原始材质，不把配布图当作最终渲染。\n");
             return Audit(r);
         }
         finally
@@ -370,35 +381,9 @@ public static class HoMmdStageBuilder
     }
     static UniversalRenderPipelineAsset CreatePipeline(string folder,Recipe r,Bounds bounds)
     {
-        string rendererPath=folder+"/Rendering/Ho Renderer.asset";
-        if(!AssetDatabase.CopyAsset("Assets/Settings/PC_Renderer.asset",rendererPath))throw new Exception("Cannot copy Ho Renderer");
-        var renderer=Asset<UniversalRendererData>(rendererPath);
-        var kept=new HashSet<string>();
-        foreach(var feature in renderer.rendererFeatures)
-        {
-            string n=feature.GetType().Name;
-            bool enable=new[]{"HoGeometryDataRendererFeature","HoGeometryBufferRendererFeature","HoObjectBufferRendererFeature","HoSurfaceBufferRendererFeature","HoAttributeCompositeRendererFeature",
-                "HoAtmosphereRendererFeature","HoGTAORendererFeature","HoShadowCastRendererFeature",
-                "HoVolumeLightRendererFeature","ImageProcessRendererFeature","WeightedOITRendererFeature"}.Contains(n)&&kept.Add(n);
-            feature.SetActive(enable);
-            if(feature is HoGTAORendererFeature ao){ao.Settings.quality=HoGTAOQuality.Medium;ao.Settings.worldSpaceRadius=.55f;}
-            if(feature is HoVolumeLightRendererFeature vl){vl.FeatureSettings.intensity=r.volume;vl.FeatureSettings.stepCount=32;vl.FeatureSettings.maxDistance=80;vl.FeatureSettings.antialiasing=HoVolumeLightAntialiasing.Spatial;}
-            EditorUtility.SetDirty(feature);
-        }
-        PruneRenderer(renderer);
-        EditorUtility.SetDirty(renderer);
-        string pipelinePath=folder+"/Rendering/Ho Pipeline.asset";
-        AssetDatabase.CopyAsset("Assets/Settings/PC_RPAsset.asset",pipelinePath);
-        var pipeline=Asset<UniversalRenderPipelineAsset>(pipelinePath);
-        var so=new SerializedObject(pipeline);
-        so.FindProperty("m_RendererDataList").arraySize=1;
-        so.FindProperty("m_RendererDataList").GetArrayElementAtIndex(0).objectReferenceValue=renderer;
-        so.FindProperty("m_MainLightShadowmapResolution").intValue=2048;
-        so.FindProperty("m_AdditionalLightsShadowmapResolution").intValue=2048;
-        so.FindProperty("m_ShadowDistance").floatValue=80;
-        so.FindProperty("m_MSAA").intValue=1;
-        so.FindProperty("m_VolumeProfile").objectReferenceValue=null;
-        so.ApplyModifiedPropertiesWithoutUndo();EditorUtility.SetDirty(pipeline);return pipeline;
+        var pipeline=Asset<UniversalRenderPipelineAsset>("Assets/Settings/PC_RPAsset.asset");
+        if(pipeline==null)throw new Exception("Fixed PC_RPAsset is missing; run HoMmdSharedRenderAssets.Run first.");
+        return pipeline;
     }
     static void PruneRenderer(UniversalRendererData renderer)
     {

@@ -98,7 +98,7 @@ public static class HoMmdStageLighting
         var env=root.GetComponentInChildren<HoMmdStageEnvironment>();
         var camera=root.GetComponentInChildren<Camera>();
         var profile=root.GetComponentInChildren<Volume>().sharedProfile;
-        var renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
+        var renderer=HoMmdStageBuilder.ResolveRenderer(folder);
         env.ambientSky=look.ambient;env.ambientEquator=look.ambient*.55f;env.ambientGround=look.ambient*.25f;
         env.ambientIntensity=look.ambientIntensity;env.sun.color=look.sun;env.sun.intensity=look.sunPower;
         env.sun.transform.rotation=Quaternion.Euler(look.sunAngles);env.sun.shadowStrength=1;
@@ -363,7 +363,7 @@ public static class HoMmdStageLighting
         var screen=ScreenProcessRuntimeDiagnostics.CurrentSnapshot;
         var image=ImageProcessRuntimeDiagnostics.CurrentSnapshot;
         string name=Path.GetFileNameWithoutExtension(scenePath);
-        var data=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(HoMmdStageBuilder.Root+name+"/Rendering/Ho Renderer.asset");
+        var data=HoMmdStageBuilder.ResolveRenderer(HoMmdStageBuilder.Root+name);
         var feature=data.rendererFeatures.OfType<HoVolumeLightRendererFeature>().First();
         var stack=VolumeManager.instance.stack;
         var dof=stack.GetComponent<ScreenProcessStackVolume>().layers.value.FirstOrDefault(x=>x.effect==ScreenProcessEffect.DepthOfField);

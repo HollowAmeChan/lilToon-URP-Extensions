@@ -91,7 +91,7 @@ public static class HoMmdStageAdvanced
         var scene=EditorSceneManager.OpenScene(folder+"/"+name+".unity",OpenSceneMode.Single);
         var root=scene.GetRootGameObjects().Single(x=>x.GetComponentInChildren<HoMmdStageEnvironment>()!=null);
         var profile=root.GetComponentInChildren<Volume>().sharedProfile;
-        var d=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
+        var d=HoMmdStageBuilder.ResolveRenderer(folder);
         var sky=root.GetComponentsInChildren<MeshRenderer>().Single(x=>x.name=="天空球").sharedMaterial;
         var gb=d.rendererFeatures.OfType<HoGeometryBufferRendererFeature>().Single();
         gb.Settings.minRenderQueue=1500;gb.Settings.renderScale=HoGeometryBufferRenderScale.Full;
@@ -181,7 +181,7 @@ public static class HoMmdStageAdvanced
     {
         string[] args=Environment.GetCommandLineArgs();var p=camera.transform.root.GetComponentInChildren<Volume>().sharedProfile;
         string name=camera.gameObject.scene.name;
-        var d=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(HoMmdStageBuilder.Root+name+"/Rendering/Ho Renderer.asset");
+        var d=HoMmdStageBuilder.ResolveRenderer(HoMmdStageBuilder.Root+name);
         if(args.Contains("-hoNoGi"))foreach(var f in d.rendererFeatures.OfType<HoRTGIRendererFeature>())f.SetActive(false);
         if(args.Contains("-hoGiOnly"))
         {
@@ -201,7 +201,7 @@ public static class HoMmdStageAdvanced
         if(frame!=32||Environment.GetCommandLineArgs().Contains("-hoNoGi")||Environment.GetCommandLineArgs().Contains("-hoGiOnly"))return;
         string name=camera.gameObject.scene.name,folder=HoMmdStageBuilder.Root+name;
         if(!File.Exists(folder+"/Rendering/进阶效果.json"))return;
-        var d=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
+        var d=HoMmdStageBuilder.ResolveRenderer(folder);
         var rt=d.rendererFeatures.OfType<HoRTGIRendererFeature>().FirstOrDefault(x=>x.isActive);
         // Read the actual main camera's persistent output. Reflection cameras reset
         // compatibility globals after the main render, so globals are not evidence.
@@ -213,9 +213,13 @@ public static class HoMmdStageAdvanced
             var handle=context!=null?context.GetType().GetProperty("PublishedDiffuse",flags).GetValue(context) as RTHandle:null;
             tex=handle?.rt;
         }
+        var volume=camera.transform.root.GetComponentInChildren<Volume>();HoRTGIVolume rtVolume=null;
+        if(volume!=null&&volume.sharedProfile.TryGet<HoRTGIVolume>(out var volumeValue))rtVolume=volumeValue;
+        bool skyExcluded=rt==null||rt.Settings.excludedRayMaterials.Length==1||
+            (rtVolume!=null&&rtVolume.excludedRayMaterials.overrideState&&rtVolume.excludedRayMaterials.value!=null&&rtVolume.excludedRayMaterials.value.Length==1);
         var s=new State{stage=name,api=SystemInfo.graphicsDeviceType.ToString(),mode=rt!=null?"RTGI":"Off",frame=frame,
             rayTracing=SystemInfo.supportsRayTracing,rtStatus=rt!=null?rt.Status:"",giTexture=tex!=null&&tex.width>2,width=tex!=null?tex.width:0,height=tex!=null?tex.height:0,
-            skyExcluded=rt==null||rt.Settings.excludedRayMaterials.Length==1,
+            skyExcluded=skyExcluded,
             spLayers=ScreenProcessRuntimeDiagnostics.CurrentSnapshot.WrittenLayerCount,ipLayers=ImageProcessRuntimeDiagnostics.CurrentSnapshot.WrittenLayerCount};
         if(s.giTexture)
         {

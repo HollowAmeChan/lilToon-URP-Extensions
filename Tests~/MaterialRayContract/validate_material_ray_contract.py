@@ -95,7 +95,7 @@ class Audit:
         self.require("rtgi.sky-exclusion", "RTGI sky exclusion", "RTGI exposes explicit excluded material inputs and forwards them to the ray scene synchronizer.",
                      [r / "Runtime/RTGI/HoRTGISettings.cs", r / "Runtime/RTGI/HoRTGIRendererFeature.cs", r / "Runtime/RT/HoRTScene.cs"], {
                          r / "Runtime/RTGI/HoRTGISettings.cs": [r"excludedRayMaterials", r"includeDirectEnvironment", r"useEnvironment"],
-                         r / "Runtime/RTGI/HoRTGIRendererFeature.cs": [r"new HoRTViewRequest\([^\n]*settings\.excludedRayMaterials", r"useEnvironment", r"includeDirectEnvironment"],
+                         r / "Runtime/RTGI/HoRTGIRendererFeature.cs": [r"new HoRTViewRequest", r"excludedRayMaterials", r"useEnvironment", r"includeDirectEnvironment"],
                          r / "Runtime/RT/HoRTScene.cs": [r"excludedMaterials", r"excluded\.Contains", r"excluded by material filter"]})
         self.require("rtgi.material-domain", "Ray material domain", "GI adapters preserve source properties while rejecting unsupported animated/parallax material domains.",
                      [r / "Runtime/RTGI/HoRTGISecondaryMaterials.cs", r / "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl"], {

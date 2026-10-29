@@ -45,7 +45,7 @@ public static class HoMmdFeatureRepair
     static void Repair(string name)
     {
         string folder=HoMmdStageBuilder.Root+name;
-        var renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
+        var renderer=HoMmdStageBuilder.ResolveRenderer(folder);
         if(renderer==null)throw new InvalidOperationException("Missing renderer "+name);
         Ensure<HoGeometryDataRendererFeature>(renderer,"Ho-GeometryData");
         Ensure<HoGeometryBufferRendererFeature>(renderer,"Ho-GeometryBuffer");
@@ -60,17 +60,19 @@ public static class HoMmdFeatureRepair
         foreach(var f in renderer.rendererFeatures)if(f!=null&&!ordered.Contains(f)&&f.isActive)ordered.Add(f);
         renderer.rendererFeatures.Clear();renderer.rendererFeatures.AddRange(ordered);
         var scene=UnityEditor.SceneManagement.EditorSceneManager.OpenScene(folder+"/"+name+".unity",UnityEditor.SceneManagement.OpenSceneMode.Single);
+        var sky=scene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<MeshRenderer>(true)).FirstOrDefault(x=>x.name=="天空球")?.sharedMaterial;
         foreach(var root in scene.GetRootGameObjects())foreach(var surface in root.GetComponentsInChildren<HoPlanarReflectionSurface>())
         {
             var so=new SerializedObject(surface);var prop=so.FindProperty("reflectSceneView");if(prop!=null)prop.boolValue=true;so.ApplyModifiedPropertiesWithoutUndo();EditorUtility.SetDirty(surface);
         }
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
         UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene,true);
-        EnsurePlanarVolume(folder);
+        EnsurePlanarVolume(folder,sky);
+        renderer=HoMmdStageBuilder.ResolveRenderer(folder);
         EditorUtility.SetDirty(renderer);Debug.Log("MMD_FEATURE_REPAIRED "+name+" order="+string.Join(",",ordered.Select(x=>x.GetType().Name)));
     }
 
-    static void EnsurePlanarVolume(string folder)
+    static void EnsurePlanarVolume(string folder,Material sky)
     {
         var profile=AssetDatabase.LoadAssetAtPath<VolumeProfile>(folder+"/Rendering/后处理.asset");
         if(profile==null)return;
@@ -81,6 +83,7 @@ public static class HoMmdFeatureRepair
         }
         planar.enable.Override(true);planar.renderGameView.Override(true);planar.renderSceneView.Override(true);
         planar.maxSurfacesPerCamera.Override(8);planar.compositeEnabled.Override(false);
+        if(sky!=null&&profile.TryGet<HoRTGIVolume>(out var rtgi))rtgi.excludedRayMaterials.Override(new[]{sky});
         EditorUtility.SetDirty(planar);EditorUtility.SetDirty(profile);
     }
 }

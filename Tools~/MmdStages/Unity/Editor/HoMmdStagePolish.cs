@@ -63,7 +63,7 @@ public static class HoMmdStagePolish
         EditorUtility.SetDirty(sky);
         camera.clearFlags=CameraClearFlags.Skybox;
         if(!day){camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=C(.11f,.08f,.22f);}
-        var renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
+        var renderer=HoMmdStageBuilder.ResolveRenderer(folder);
         // Keep the atmosphere contribution restrained; local lights define the set.
         profile.TryGet(out Bloom bloom);bloom.intensity.Override(day?.24f:.38f);bloom.threshold.Override(1);
         profile.TryGet(out ColorAdjustments grading);

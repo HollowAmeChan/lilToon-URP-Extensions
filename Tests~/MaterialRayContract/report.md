@@ -1,6 +1,6 @@
 # lilToon / HoURP material-ray contract audit
 
-Generated: `2026-10-29T18:42:28.586654+00:00`
+Generated: `2026-10-29T22:29:05.953399+00:00`
 
 This is a source-only audit. It does not modify BREAK_URP or run Unity.
 
@@ -50,8 +50,8 @@ lilToon OIT entry point is present in generated forward include paths.
 ### `rtgi.sky-exclusion`
 
 RTGI exposes explicit excluded material inputs and forwards them to the ray scene synchronizer.
-- `Runtime\RTGI\HoRTGISettings.cs` (267fad96a9bfb24e…): excludedRayMaterials @ [29], includeDirectEnvironment @ [25], useEnvironment @ [23]
-- `Runtime\RTGI\HoRTGIRendererFeature.cs` (088c0f26d5860520…): new HoRTViewRequest\([^\n]*settings\.excludedRayMaterials @ [72], useEnvironment @ [107, 174, 179, 188, 243, 269, 276, 372], includeDirectEnvironment @ [174, 179, 188, 276]
+- `Runtime\RTGI\HoRTGISettings.cs` (5baea53ecce48865…): excludedRayMaterials @ [29, 39], includeDirectEnvironment @ [25, 38], useEnvironment @ [23, 38]
+- `Runtime\RTGI\HoRTGIRendererFeature.cs` (bcc30626457d24d9…): new HoRTViewRequest @ [82], excludedRayMaterials @ [71, 72, 82], useEnvironment @ [117, 184, 189, 198, 253, 279, 286, 382], includeDirectEnvironment @ [184, 189, 198, 286]
 - `Runtime\RT\HoRTScene.cs` (cdba6fd6bb143c0f…): excludedMaterials @ [109, 117, 118], excluded\.Contains @ [132, 160, 175], excluded by material filter @ [176]
 
 ### `rtgi.material-domain`
@@ -70,7 +70,7 @@ Primary ray surface reads SB material channels as perceptual roughness/metallic 
 
 PLR composite derives smoothness from perceptual roughness and gates by metallic/F0/strength.
 - `Runtime\PlanarReflection\HoPlanarReflectionComposite.shader` (0b63c1b08be8cf67…): perceptualRoughness @ [74, 86, 87, 98, 162, 171], smoothness\s*=\s*1\.0h\s*-\s*perceptualRoughness @ [87], metallic @ [74, 75, 88, 99, 164, 165], reflectance @ [74, 76, 89, 100, 164, 165]
-- `Runtime\PlanarReflection\HoPlanarReflectionRendererFeature.cs` (9d78860bda1fbbeb…): minSmoothness @ [68, 342, 410], _UsePlanarReflection @ [376], reflectionMaterial @ [367, 534, 663, 664, 672, 676, 712, 727]
+- `Runtime\PlanarReflection\HoPlanarReflectionRendererFeature.cs` (29f0ae2bdc6a7811…): minSmoothness @ [69, 311, 339, 428, 496], _UsePlanarReflection @ [462], reflectionMaterial @ [453, 620, 749, 750, 758, 762, 798, 813]
 - `D:\Unity_Fork\lilToon\Assets\lilToon\Shader\Includes\lil_common_frag.hlsl` (9fc634df0db84dc3…): _UsePlanarReflection @ [1978], _PlanarReflectionStrength @ [1978, 2031], smoothnessFade @ [1991, 1992, 2031]
 
 ### `apv.variant`

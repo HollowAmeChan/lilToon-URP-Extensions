@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Hollow.HoMmdStages;
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.CharacterShadow;
 using lilToon.URP.Extensions.CharacterSpecialization;
 using lilToon.URP.Extensions.GeometryBuffer;
@@ -26,15 +28,14 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using Object = UnityEngine.Object;
 
-// One renderer/pipeline pair for the MMD stage family. It is deliberately kept
-// under the MMD folder so other project scenes can continue to use PC_Renderer.
+// The project-wide Ho renderer boundary. MMD scenes deliberately use the
+// existing PC assets so no second RendererData/RenderPipelineAsset family is
+// scattered through the project. Volume profiles still remain scene-owned.
 public static class HoMmdSharedRenderAssets
 {
-    public const string Root = "Assets/mmd场景测试/_共享渲染/";
-    public const string RendererPath = Root + "HoMmd_Renderer.asset";
-    public const string PipelinePath = Root + "HoMmd_RPAsset.asset";
-    const string SourceRenderer = "Assets/Settings/PC_Renderer.asset";
-    const string SourcePipeline = "Assets/Settings/PC_RPAsset.asset";
+    public const string Root = "Assets/Settings/";
+    public const string RendererPath = Root + "PC_Renderer.asset";
+    public const string PipelinePath = Root + "PC_RPAsset.asset";
 
     static string Arg(string key)
     {
@@ -62,15 +63,13 @@ public static class HoMmdSharedRenderAssets
 
     public static void EnsureAssets()
     {
-        Directory.CreateDirectory(Path.Combine(Application.dataPath, "mmd场景测试/_共享渲染"));
-        if (AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath) == null)
-            AssetDatabase.CopyAsset(SourceRenderer, RendererPath);
-        if (AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelinePath) == null)
-            AssetDatabase.CopyAsset(SourcePipeline, PipelinePath);
-
         var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
         var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelinePath);
-        if (renderer == null || pipeline == null) throw new InvalidOperationException("无法建立 MMD shared Renderer/RenderPipelineAsset。");
+        if (renderer == null || pipeline == null) throw new InvalidOperationException("固定 PC_Renderer/PC_RPAsset 不存在。");
+        RemoveDuplicateFeatureSubassets(renderer);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.ImportAsset(RendererPath,ImportAssetOptions.ForceSynchronousImport);
+        renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
         ConfigureRenderer(renderer);
         var pipelineObject = new SerializedObject(pipeline);
         var rendererList = pipelineObject.FindProperty("m_RendererDataList");
@@ -87,11 +86,22 @@ public static class HoMmdSharedRenderAssets
 
     static void ConfigureRenderer(UniversalRendererData renderer)
     {
-        var features = renderer.rendererFeatures.Where(x => x != null && x.isActive).ToList();
+        var features = renderer.rendererFeatures.Where(x => x != null).ToList();
         var unique = new List<ScriptableRendererFeature>();
         var types = new HashSet<Type>();
         foreach (var feature in features)
+        {
             if (types.Add(feature.GetType())) unique.Add(feature);
+            else
+            {
+                renderer.rendererFeatures.Remove(feature);
+                Object.DestroyImmediate(feature, true);
+            }
+        }
+        foreach(var forbidden in unique.Where(x=>x.GetType().Name=="HoSSGIRendererFeature").ToArray())
+        {
+            unique.Remove(forbidden);renderer.rendererFeatures.Remove(forbidden);Object.DestroyImmediate(forbidden,true);
+        }
 
         Ensure<HoRTRendererFeature>(unique, types, renderer, "Ho-RT");
         Ensure<HoGeometryDataRendererFeature>(unique, types, renderer, "Ho-GeometryData");
@@ -129,9 +139,29 @@ public static class HoMmdSharedRenderAssets
         }
         foreach (var feature in unique)
             if (!ordered.Contains(feature)) ordered.Add(feature);
-        foreach (var feature in ordered) feature.SetActive(true);
+        var required = new HashSet<Type>(order);
+        foreach (var feature in ordered)
+            if (required.Contains(feature.GetType())) feature.SetActive(true);
         renderer.rendererFeatures.Clear();
         renderer.rendererFeatures.AddRange(ordered);
+        var serializedRenderer=new SerializedObject(renderer);
+        var serializedFeatures=serializedRenderer.FindProperty("m_RendererFeatures");
+        if(serializedFeatures!=null)
+        {
+            serializedFeatures.arraySize=ordered.Count;
+            for(int i=0;i<ordered.Count;i++)serializedFeatures.GetArrayElementAtIndex(i).objectReferenceValue=ordered[i];
+            var serializedMap=serializedRenderer.FindProperty("m_RendererFeatureMap");
+            if(serializedMap!=null)
+            {
+                serializedMap.arraySize=ordered.Count;
+                for(int i=0;i<ordered.Count;i++)
+                {
+                    AssetDatabase.TryGetGUIDAndLocalFileIdentifier(ordered[i],out _,out long localId);
+                    serializedMap.GetArrayElementAtIndex(i).longValue=localId;
+                }
+            }
+            serializedRenderer.ApplyModifiedProperties();
+        }
 
         var plr = ordered.OfType<HoPlanarReflectionRendererFeature>().First();
         plr.FeatureSettings.renderGameView = true;
@@ -143,6 +173,31 @@ public static class HoMmdSharedRenderAssets
         var rtgi = ordered.OfType<HoRTGIRendererFeature>().First();
         rtgi.SetActive(true);
         EditorUtility.SetDirty(renderer);
+        renderer.SetDirty();
+        var validate=typeof(ScriptableRendererData).GetMethod("ValidateRendererFeatures",BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public);
+        if(validate!=null)validate.Invoke(renderer,null);
+        AssetDatabase.SaveAssets();
+        Debug.Log("MMD_SHARED_RENDERER "+string.Join(",",ordered.Select(x=>{AssetDatabase.TryGetGUIDAndLocalFileIdentifier(x,out _,out long id);return x.GetType().Name+"@"+AssetDatabase.GetAssetPath(x)+"#"+AssetDatabase.Contains(x)+"/"+id;})));
+        Debug.Log("MMD_SHARED_SUBASSETS "+string.Join(",",AssetDatabase.LoadAllAssetsAtPath(RendererPath).OfType<ScriptableRendererFeature>().Select(x=>x.GetType().Name)));
+    }
+
+    static void RemoveDuplicateFeatureSubassets(UniversalRendererData renderer)
+    {
+        var all=renderer.rendererFeatures.Where(x=>x!=null).ToList();
+        var unique=new List<ScriptableRendererFeature>();var types=new HashSet<Type>();
+        foreach(var feature in all)
+        {
+            if(types.Add(feature.GetType()))unique.Add(feature);
+            else{renderer.rendererFeatures.Remove(feature);Object.DestroyImmediate(feature,true);}
+        }
+        string path=AssetDatabase.GetAssetPath(renderer);
+        foreach(var orphan in AssetDatabase.LoadAllAssetsAtPath(path).OfType<ScriptableRendererFeature>().Where(x=>!unique.Contains(x)).ToArray())
+            Object.DestroyImmediate(orphan,true);
+        renderer.rendererFeatures.Clear();renderer.rendererFeatures.AddRange(unique);
+        var so=new SerializedObject(renderer);var list=so.FindProperty("m_RendererFeatures");var map=so.FindProperty("m_RendererFeatureMap");
+        if(list!=null){list.arraySize=unique.Count;for(int i=0;i<unique.Count;i++)list.GetArrayElementAtIndex(i).objectReferenceValue=unique[i];}
+        if(map!=null){map.arraySize=unique.Count;for(int i=0;i<unique.Count;i++){AssetDatabase.TryGetGUIDAndLocalFileIdentifier(unique[i],out _,out long id);map.GetArrayElementAtIndex(i).longValue=id;}}
+        so.ApplyModifiedProperties();renderer.SetDirty();EditorUtility.SetDirty(renderer);
     }
 
     static void Ensure<T>(List<ScriptableRendererFeature> list, HashSet<Type> types, UniversalRendererData renderer, string name)
@@ -153,6 +208,7 @@ public static class HoMmdSharedRenderAssets
         feature.name = name;
         AssetDatabase.AddObjectToAsset(feature, renderer);
         feature.Create();
+        EditorUtility.SetDirty(feature);
         list.Add(feature);types.Add(typeof(T));
     }
 

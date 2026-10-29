@@ -65,7 +65,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public BoolParameter enableDepthGate = new BoolParameter(false);
 
         [InspectorName("深度容差")]
-        public MinFloatParameter depthTolerance = new MinFloatParameter(0.0f);
+        public MinFloatParameter depthTolerance = new MinFloatParameter(0.0f, 0.0f, false);
 
         [InspectorName("反射曝光")]
         public ClampedFloatParameter reflectionExposure = new ClampedFloatParameter(0.0f, -4.0f, 4.0f);
@@ -80,10 +80,10 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public HoPlanarReflectionDebugModeParameter debugMode = new HoPlanarReflectionDebugModeParameter(HoPlanarReflectionDebugMode.Off);
 
         [InspectorName("调试远裁剪")]
-        public MinFloatParameter debugDepthFar = new MinFloatParameter(100.0f);
+        public MinFloatParameter debugDepthFar = new MinFloatParameter(100.0f, 0.0f, false);
 
         [InspectorName("调试扰动倍率")]
-        public MinFloatParameter debugDistortionScale = new MinFloatParameter(32.0f);
+        public MinFloatParameter debugDistortionScale = new MinFloatParameter(32.0f, 0.0f, false);
 
         public bool IsActive() => active;
         public bool IsTileCompatible() => false;

@@ -101,7 +101,7 @@ public static class HoMmdStageRemaining
         var root=scene.GetRootGameObjects().Single(x=>x.GetComponentInChildren<HoMmdStageEnvironment>()!=null);
         var env=root.GetComponentInChildren<HoMmdStageEnvironment>();
         var camera=root.GetComponentInChildren<Camera>();var recipe=HoMmdStageBuilder.ReadRecipe(name);
-        var renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
+        var renderer=HoMmdStageBuilder.ResolveRenderer(folder);
         if(name=="月昔梅"&&recipe.models.Length==1)Studio(root,folder);
         var meshes=root.transform.Find("01 场景模型").GetComponentsInChildren<MeshRenderer>();
         foreach(var m in meshes.Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct())

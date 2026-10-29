@@ -28,5 +28,15 @@ namespace lilToon.URP.Extensions.RTGI
         [Tooltip("使用这些材质的子网格不参与GI世界求交，可排除合并模型内的天空壳；光线穿过它们，不改变原画面绘制。")]
         public Material[] excludedRayMaterials=Array.Empty<Material>();
         public LayerMask lightLayers = -1;
+
+        public void CopyFrom(HoRTGISettings source)
+        {
+            if (source == null) return;
+            enabled=source.enabled;inSceneView=source.inSceneView;composite=source.composite;intensity=source.intensity;denoise=source.denoise;
+            secondaryLightSamples=source.secondaryLightSamples;temporal=source.temporal;maxHistory=source.maxHistory;spatial=source.spatial;
+            spatialSamples=source.spatialSamples;spatialRadius=source.spatialRadius;rayBias=source.rayBias;maxDistance=source.maxDistance;
+            useEnvironment=source.useEnvironment;includeDirectEnvironment=source.includeDirectEnvironment;secondaryEnvironmentSamples=source.secondaryEnvironmentSamples;
+            geometryLayers=source.geometryLayers;excludedRayMaterials=source.excludedRayMaterials??Array.Empty<Material>();lightLayers=source.lightLayers;
+        }
     }
 }

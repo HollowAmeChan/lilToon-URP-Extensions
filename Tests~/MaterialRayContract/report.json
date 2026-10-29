@@ -1,6 +1,6 @@
 {
   "schema": "ho.material-ray-contract.v1",
-  "generatedUtc": "2026-10-29T18:42:28.586654+00:00",
+  "generatedUtc": "2026-10-29T22:29:05.953399+00:00",
   "repository": "D:\\Unity_Fork\\lilToon-URP-Extensions",
   "liltoon": "D:\\Unity_Fork\\lilToon",
   "pass": true,
@@ -201,58 +201,69 @@
       "evidence": [
         {
           "file": "Runtime\\RTGI\\HoRTGISettings.cs",
-          "sha256": "267fad96a9bfb24e226e4a56e1476d1597d638457cd52ba876e82b568a28ba5c",
+          "sha256": "5baea53ecce488653b6ced704065bb9b71eaf4169be33e38c1c23eb3d8eb9048",
           "matches": [
             {
               "pattern": "excludedRayMaterials",
               "lines": [
-                29
+                29,
+                39
               ]
             },
             {
               "pattern": "includeDirectEnvironment",
               "lines": [
-                25
+                25,
+                38
               ]
             },
             {
               "pattern": "useEnvironment",
               "lines": [
-                23
+                23,
+                38
               ]
             }
           ]
         },
         {
           "file": "Runtime\\RTGI\\HoRTGIRendererFeature.cs",
-          "sha256": "088c0f26d5860520544918104066b64a8bea7cd18f850afddb840254ba6063cf",
+          "sha256": "bcc30626457d24d91158ddb95205b345e32115676177d9643288188ab65e4313",
           "matches": [
             {
-              "pattern": "new HoRTViewRequest\\([^\\n]*settings\\.excludedRayMaterials",
+              "pattern": "new HoRTViewRequest",
               "lines": [
-                72
+                82
+              ]
+            },
+            {
+              "pattern": "excludedRayMaterials",
+              "lines": [
+                71,
+                72,
+                82
               ]
             },
             {
               "pattern": "useEnvironment",
               "lines": [
-                107,
-                174,
-                179,
-                188,
-                243,
-                269,
-                276,
-                372
+                117,
+                184,
+                189,
+                198,
+                253,
+                279,
+                286,
+                382
               ]
             },
             {
               "pattern": "includeDirectEnvironment",
               "lines": [
-                174,
-                179,
-                188,
-                276
+                184,
+                189,
+                198,
+                286
               ]
             }
           ]
@@ -481,33 +492,35 @@
         },
         {
           "file": "Runtime\\PlanarReflection\\HoPlanarReflectionRendererFeature.cs",
-          "sha256": "9d78860bda1fbbeb1db1744ad3f423ccfc59c2376c4439770b947aa418deef7c",
+          "sha256": "29f0ae2bdc6a7811b5ed226464bcb87a2f4ca3ba58d0a07e6eca49de9c5dc784",
           "matches": [
             {
               "pattern": "minSmoothness",
               "lines": [
-                68,
-                342,
-                410
+                69,
+                311,
+                339,
+                428,
+                496
               ]
             },
             {
               "pattern": "_UsePlanarReflection",
               "lines": [
-                376
+                462
               ]
             },
             {
               "pattern": "reflectionMaterial",
               "lines": [
-                367,
-                534,
-                663,
-                664,
-                672,
-                676,
-                712,
-                727
+                453,
+                620,
+                749,
+                750,
+                758,
+                762,
+                798,
+                813
               ]
             }
           ]

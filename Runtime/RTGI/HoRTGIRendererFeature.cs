@@ -63,13 +63,23 @@ namespace lilToon.URP.Extensions.RTGI
             Shader.SetGlobalTexture("_HoRTGIRawDiffuseTexture",Texture2D.blackTexture);
             if(!isActive||!settings.enabled)foreach(var item in contexts.Values){item.historyValid=false;if(item.nrd!=null)item.nrd.historyValid=false;}
         }
+        private HoRTGISettings ResolveSettings()
+        {
+            var active=new HoRTGISettings();active.CopyFrom(settings);
+            var stack=VolumeManager.instance!=null?VolumeManager.instance.stack:null;
+            var volume=stack?.GetComponent<HoRTGIVolume>();
+            if(volume!=null&&volume.excludedRayMaterials.overrideState)
+                active.excludedRayMaterials=volume.excludedRayMaterials.value??System.Array.Empty<Material>();
+            return active;
+        }
         public override void OnCameraPreCull(ScriptableRenderer renderer,in CameraData data)
         {
             var camera=data.camera;
-            if(!settings.enabled||data.renderType!=CameraRenderType.Base
-                ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!settings.inSceneView)))return;
+            var active=ResolveSettings();
+            if(!active.enabled||data.renderType!=CameraRenderType.Base
+                ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!active.inSceneView)))return;
             if(!HoRTScene.IsSupported||!SystemInfo.supportsRayTracing||shader==null||rayShader==null||createSceneProfile==null)return;
-            var request=new HoRTViewRequest(settings.geometryLayers.value,settings.excludedRayMaterials,
+            var request=new HoRTViewRequest(active.geometryLayers,active.excludedRayMaterials,
                 profileKey:sceneProfileKey,createProfile:createSceneProfile);
             if(!HoRTRendererFeature.Declare(renderer,camera,this,request,out var reason))Status="Ho-RT："+reason;
         }
@@ -80,9 +90,9 @@ namespace lilToon.URP.Extensions.RTGI
         }
         public override void AddRenderPasses(ScriptableRenderer renderer,ref RenderingData data)
         {
-            var camera=data.cameraData.camera;var volume=VolumeManager.instance.stack.GetComponent<HoRTGIVolume>();
-            if(!settings.enabled||(volume!=null&&volume.enable.overrideState&&!volume.enable.value)||data.cameraData.renderType!=CameraRenderType.Base
-                ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!settings.inSceneView)))
+            var camera=data.cameraData.camera;var volume=VolumeManager.instance.stack.GetComponent<HoRTGIVolume>();var active=ResolveSettings();
+            if(!active.enabled||(volume!=null&&volume.enable.overrideState&&!volume.enable.value)||data.cameraData.renderType!=CameraRenderType.Base
+                ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!active.inSceneView)))
             {if(contexts.TryGetValue(camera,out var skipped)){skipped.historyValid=false;if(skipped.nrd!=null)skipped.nrd.historyValid=false;}return;}
             if(!HoRTScene.IsSupported||!SystemInfo.supportsRayTracing||shader==null||rayShader==null||createSceneProfile==null)
             {InvalidateCamera(camera);Status="需要 D3D12 DXR / inline RT 与完整 GI Shader";return;}
@@ -96,8 +106,8 @@ namespace lilToon.URP.Extensions.RTGI
             dead.Clear();foreach(var pair in contexts)if(pair.Key==null)dead.Add(pair.Key);
             foreach(var key in dead){contexts[key].Dispose();contexts.Remove(key);sceneViews.Remove(key);sceneLifetimes.Remove(key);}
             sceneViews[camera]=sceneView;
-            var lights=CollectLights(settings.lightLayers.value,out int excluded,out int signature);
-            var captured=new PassSettings(settings);
+            var lights=CollectLights(active.lightLayers,out int excluded,out int signature);
+            var captured=new PassSettings(active);
             unchecked {signature=(signature*397^materials.Signature)*397^captured.signature;}
             if(!contexts.TryGetValue(camera,out var context)){context=new HoRTGIContext();contexts.Add(camera,context);}
             if(!sceneLifetimes.TryGetValue(camera,out long lifetime)||lifetime!=scene.Lifetime)
