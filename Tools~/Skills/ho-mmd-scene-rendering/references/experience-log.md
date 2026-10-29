@@ -29,6 +29,13 @@ This is a maintained evidence log, not a list of universal rules. Append only ob
 
 Use the date and a short subsystem heading. State the failed or surprising behavior, the change made, the exact evidence path, and whether it is confirmed or a working hypothesis. Prefer a focused note over a general slogan.
 
+## 2026-10-30 — MME/FX/Ray audit
+
+- The H2CU source tree contains 32 package directories, 31 author preview images, 88 PMX files and no direct `.fx`, `.pmd` or `.x` files; readable ZIP entries also contain no `.fx`. `.7z` archives were intentionally not unpacked. This means visible MME behavior must be reconstructed from previews/material conventions and marked as inferred.
+- Highest priority follow-up is a PMX effect manifest and material/ray truth table: preserve alpha mode, toon/sphere maps, shininess, emission hints, source hashes and explicit `unknown` MME fields. Then verify PMX shininess→lilToon smoothness, cutout/transparent/OIT/RT behavior and sky ray exclusion.
+- The existing Ho paths cover Glow, Particle/Weather, atmosphere dust, local HD volume lights, PLR, RTGI+RELAX and APV-related URP plumbing. APV/reflection-probe activation and PMX-specific MME reconstruction are not proven by the source packages or this audit.
+- Evidence: `Temp~/MmdStages/EffectAudit-20261030/H2CU-HoURP-EffectGapReport.md`, `effect-inventory.json`, `author-preview-index.json`. Confidence: source inventory confirmed; effect semantics remain confidence-scored inference.
+
 ## 2026-10-30 — H2CU inventory expansion
 
 - The reorganized source tree contains 32 H2CU source packages. After the original 19 scenes and recovered complete Yueximei, eight additional independent scene packages were identified: 孔雀月令, 孔雀月令青瓷, 丝苇楼梯, 月极蝶夜礼, 虫无阶梯, 虫染阶梯, 乐园·葡萄柚 and 乐园·西瓜霜.
