@@ -16,6 +16,7 @@ The workflow is iterative. Read only the references needed for the current phase
 - Use RTGI + RELAX when ray GI is enabled. SSGI is prohibited, including inactive or orphaned RendererFeature/Volume subassets.
 - Prefer world-space lights, real shadow casting, local Point/Spot HD volume lights and material emission over screen-center PostLighting or CenterColorCorrection. Screen effects may grade the image, but they must not carry the subject illumination.
 - Give every stage its own scene, Pipeline, Renderer, Volume/profile, materials, rendering assets and evidence. Do not share stage model/material/Volume assets.
+- Treat Attribute Composite as a hard prerequisite for Planar Reflection: stage renderers must keep `GeometryData → GeometryBuffer → ObjectBuffer → SurfaceBuffer → AttributeComposite → PlanarReflection`, and every PLR surface must keep Scene View preview enabled for authoring.
 - Review at least the main camera plus left and right observation cameras. A stage is not ready from one flattering still.
 - Finish with a Unity-native audit and actual GPU captures. Evidence must include image dimensions, RTGI state, local-volume state, no-SSGI state, material/caster coverage, PLR, source hashes and unchanged unrelated stages.
 

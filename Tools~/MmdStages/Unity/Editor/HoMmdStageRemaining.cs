@@ -179,7 +179,7 @@ public static class HoMmdStageRemaining
         var surface=floor.GetComponent<HoPlanarReflectionSurface>()??floor.gameObject.AddComponent<HoPlanarReflectionSurface>();
         var anchor=floor.transform.Find("地面反射平面");if(anchor==null){anchor=new GameObject("地面反射平面").transform;anchor.SetParent(floor.transform,false);}
         anchor.position=new Vector3(floor.bounds.center.x,y,floor.bounds.center.z);anchor.rotation=Quaternion.identity;
-        var so=new SerializedObject(surface);so.FindProperty("resolution").intValue=1024;so.FindProperty("reflectSceneView").boolValue=false;
+        var so=new SerializedObject(surface);so.FindProperty("resolution").intValue=1024;so.FindProperty("reflectSceneView").boolValue=true;
         so.FindProperty("planeTransform").objectReferenceValue=anchor;so.ApplyModifiedPropertiesWithoutUndo();
         var mat=floor.sharedMaterial;F(mat,"_UseReflection",1);F(mat,"_UsePlanarReflection",1);F(mat,"_PlanarReflectionStrength",strength);
         F(mat,"_Smoothness",.78f);F(mat,"_ApplySpecular",0);F(mat,"_ApplyReflection",0);EditorUtility.SetDirty(mat);

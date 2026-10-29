@@ -19,7 +19,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 public static class HoMmdStageAudit
 {
     [Serializable]sealed class Audit
-    {public string stage,scene,pipeline,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting;}
+    {public string stage,scene,pipeline,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting,hasObjectBuffer,hasAttributeComposite,plrAfterAttributeComposite,plrSceneView;}
     [Serializable]sealed class Report{public string date;public Audit[] stages;public string[] errors;}
     public static void RunBatch()
     {
@@ -58,6 +58,9 @@ public static class HoMmdStageAudit
                 bool layerIsolation=exterior.Length>0&&exterior.All(x=>(uint)x.GetUniversalAdditionalLightData().renderingLayers==2u)&&
                     modelRenderers.Count(x=>(x.renderingLayerMask&2u)!=0)==6;
                 var rtgi=renderer.rendererFeatures.OfType<HoRTGIRendererFeature>().FirstOrDefault(x=>x.isActive);
+                var objectBuffer=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.ObjectBuffer.HoObjectBufferRendererFeature>().FirstOrDefault(x=>x.isActive);
+                var attribute=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.AttributeComposite.HoAttributeCompositeRendererFeature>().FirstOrDefault(x=>x.isActive);
+                var plrFeature=renderer.rendererFeatures.OfType<HoPlanarReflectionRendererFeature>().FirstOrDefault(x=>x.isActive);
                 int ssgiFeatures=AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(renderer)).Count(x=>x!=null&&x.GetType().Name=="HoSSGIRendererFeature");
                 int ssgiVolumes=AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(profile)).Count(x=>x!=null&&x.GetType().Name=="HoSSGIVolume");
                 var advanced=File.Exists(folder+"/Rendering/进阶效果.json");
@@ -77,6 +80,9 @@ public static class HoMmdStageAudit
                     cinematicBars=bars!=null,centeredLogo=centeredLogo,logoContrast=contrast,
                     reviewCameras=roots.SelectMany(x=>x.GetComponentsInChildren<Camera>()).Count(),
                     centerPostLighting=screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.PostLighting)||image.layers.value.Any(x=>x.enabled&&x.effect==ImageProcessEffect.CenterColorCorrection),
+                    hasObjectBuffer=objectBuffer!=null,hasAttributeComposite=attribute!=null,
+                    plrAfterAttributeComposite=plrFeature!=null&&attribute!=null&&renderer.rendererFeatures.IndexOf(plrFeature)>renderer.rendererFeatures.IndexOf(attribute),
+                    plrSceneView=plrSurfaces.Any(x=>new SerializedObject(x).FindProperty("reflectSceneView")?.boolValue==true),
                     lowFillPoints=lowPoints,exteriorLights=exterior.Length,exteriorLayerIsolation=layerIsolation,
                     giMode=rtgi!=null?"RTGI":"Off",advancedImageLayers=image.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),
                     ssgiFeatures=ssgiFeatures,ssgiVolumes=ssgiVolumes,
@@ -98,6 +104,8 @@ public static class HoMmdStageAudit
                     errors.Add(recipe.name+": AO art / all-floor PLR audit failed");
                 if(File.Exists(folder+"/Rendering/细节灯光.json")&&(audit.reviewCameras!=3||audit.centerPostLighting))
                     errors.Add(recipe.name+": three cameras / world-space lighting audit failed");
+                if(!audit.hasObjectBuffer||!audit.hasAttributeComposite||!audit.plrAfterAttributeComposite||!audit.plrSceneView)
+                    errors.Add(recipe.name+": OB/SB/AC/PLR dependency or SceneView reflection audit failed");
                 if(advanced)
                 {
                     if(rtgi==null||ssgiFeatures!=0||ssgiVolumes!=0||audit.advancedImageLayers<2||

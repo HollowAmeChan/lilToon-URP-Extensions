@@ -376,7 +376,7 @@ public static class HoMmdStageBuilder
         foreach(var feature in renderer.rendererFeatures)
         {
             string n=feature.GetType().Name;
-            bool enable=new[]{"HoGeometryDataRendererFeature","HoGeometryBufferRendererFeature","HoSurfaceBufferRendererFeature",
+            bool enable=new[]{"HoGeometryDataRendererFeature","HoGeometryBufferRendererFeature","HoObjectBufferRendererFeature","HoSurfaceBufferRendererFeature","HoAttributeCompositeRendererFeature",
                 "HoAtmosphereRendererFeature","HoGTAORendererFeature","HoShadowCastRendererFeature",
                 "HoVolumeLightRendererFeature","ImageProcessRendererFeature","WeightedOITRendererFeature"}.Contains(n)&&kept.Add(n);
             feature.SetActive(enable);

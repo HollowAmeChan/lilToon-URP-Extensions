@@ -28,7 +28,7 @@ def main():
     by_name = {item["stage"]: item for item in audit["stages"]}
     errors.extend(audit["errors"])
     if set(by_name) != set(NAMES):
-        errors.append("Unity audit scope does not equal all 19 authored scenes")
+        errors.append(f"Unity audit scope does not equal all {len(NAMES)} authored scenes")
     source = read(SOURCE)
     source_count = 0
     for stage in source["stages"]:
@@ -99,10 +99,10 @@ def main():
     if "stageReplacement" in report: (RECOVERY / "final-delivery.json").write_text(text, encoding="utf-8")
     (EVIDENCE / "final-detail-delivery.json").write_text(text, encoding="utf-8")
     (ROOT / "Rendering-check.json").write_text(text, encoding="utf-8")
-    lines = ["# H2Cu 阿相场景索引", "", "19 个独立 Ho 渲场景，每个场景保留 Source、Materials、Rendering、Prefabs、Renders；原八场景和新增十一场均已完成主、左侧、右侧三个机位的实际 D3D12 渲染。", "", "本轮中心塑形使用世界空间灯光，已移除后处理 PostLighting 与 CenterColorCorrection。其余场景降低泛白的太阳散射和多层雾，乐园·墟实保留原有雾光风格；百鸟溯归新增两侧书墙和远书架照明，以保留远处细节。", "", "| 场景 | 主机位 | 左侧 | 右侧 | 三机位总览 |", "| --- | --- | --- | --- | --- |"]
+    lines = ["# H2Cu 阿相场景索引", "", f"{len(NAMES)} 个独立 Ho 渲场景，每个场景保留 Source、Materials、Rendering、Prefabs、Renders；每个场景均已完成主、左侧、右侧三个机位的实际 D3D12 渲染。", "", "本轮中心塑形使用世界空间灯光，已移除后处理 PostLighting 与 CenterColorCorrection。其余场景降低泛白的太阳散射和多层雾，乐园·墟实保留原有雾光风格；百鸟溯归新增两侧书墙和远书架照明，以保留远处细节。", "", "| 场景 | 主机位 | 左侧 | 右侧 | 三机位总览 |", "| --- | --- | --- | --- | --- |"]
     for name in NAMES:
         lines.append(f"| [{name}]({name}/{name}.unity) | [主]({name}/Renders/{name}_主视角.png) | [左]({name}/Renders/{name}_左侧视角.png) | [右]({name}/Renders/{name}_右侧视角.png) | [总览]({name}/Renders/三机位总览.jpg) |")
-    lines.extend(["", "## 调节位置", "", "- `09 细节灯光` 放主体真实补光、远景细节灯及局部斑驳遮片。普通 Point/Spot 上的 Ho-VolumeLight 局部体积光组件负责 HD 独立光源遮挡，步数、柔边、亮度均可在 Inspector 调节。", "- 原主相机保持启用，`10 观察机位` 内保存两台关闭的观察相机，供多角度检查。Renders 内已有三张正式图。", "- `Rendering/细节灯光.json` 是本轮参数记录；`细节灯光基线.json` 防止重复执行脚本时叠乘变暗。日常继续编辑实际灯光与材质即可。", "- Bloom、全局渐变调色、景深、电影边框与底部正中 Hollow Logo 继续保留；日景白边黑标，夜景黑边白标。", "", "## 已核对", "", f"57 张 1280×720 图，19 个场景原生审计与逐机位 RTGI GPU 输出检查；SSGI feature/volume 为 0。AO 艺术参数、全部模型投影、1024 PLR、独立 pipeline/profile 和场景资源引用均通过。{source_count} 个 E 盘源文件及 Assets 副本哈希吻合。", "", "云蜃马戏团·有识月按用户要求跳过；朱木古堂、血月古堡未被本轮脚本覆盖。月昔梅现已恢复完整黄梅庭院：主体、树、花枝、灯四份 PMX 均使用 Source/完整场景 的相对贴图；原团扇保留为可选关闭道具与独立 prefab。", "", "详细状态、图片与场景哈希见 Rendering-check.json；本轮原图与基线备份在扩展仓库 Temp~/MmdStages/DetailLighting-20261029，月昔梅恢复记录在 Temp~/MmdStages/YueximeiComplete-20261030。"])
+    lines.extend(["", "## 调节位置", "", "- `09 细节灯光` 放主体真实补光、远景细节灯及局部斑驳遮片。普通 Point/Spot 上的 Ho-VolumeLight 局部体积光组件负责 HD 独立光源遮挡，步数、柔边、亮度均可在 Inspector 调节。", "- 原主相机保持启用，`10 观察机位` 内保存两台关闭的观察相机，供多角度检查。Renders 内已有三张正式图。", "- `Rendering/细节灯光.json` 是本轮参数记录；`细节灯光基线.json` 防止重复执行脚本时叠乘变暗。日常继续编辑实际灯光与材质即可。", "- Bloom、全局渐变调色、景深、电影边框与底部正中 Hollow Logo 继续保留；日景白边黑标，夜景黑边白标。", "", "## 已核对", "", f"{capture_count} 张 1280×720 图，{len(NAMES)} 个场景原生审计与逐机位 RTGI GPU 输出检查；SSGI feature/volume 为 0。AO 艺术参数、全部模型投影、1024 PLR、独立 pipeline/profile 和场景资源引用均通过。{source_count} 个 E 盘源文件及 Assets 副本哈希吻合。", "", "云蜃马戏团·有识月按用户要求跳过；朱木古堂、血月古堡未被本轮脚本覆盖。月昔梅现已恢复完整黄梅庭院：主体、树、花枝、灯四份 PMX 均使用 Source/完整场景 的相对贴图；原团扇保留为可选关闭道具与独立 prefab。", "", "详细状态、图片与场景哈希见 Rendering-check.json；本轮原图与基线备份在扩展仓库 Temp~/MmdStages/DetailLighting-20261029，月昔梅恢复记录在 Temp~/MmdStages/YueximeiComplete-20261030。"])
     (ROOT / "场景索引.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps({"stages": len(report["stages"]), "captures": capture_count, "sourceFilesVerified": source_count, "errors": errors}, ensure_ascii=False))
     return 1 if errors else 0

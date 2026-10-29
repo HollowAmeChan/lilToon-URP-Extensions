@@ -55,3 +55,9 @@ Use the date and a short subsystem heading. State the failed or surprising behav
 - The reorganized source tree contains 32 H2CU source packages. After the original 19 scenes and recovered complete Yueximei, eight additional independent scene packages were identified: 孔雀月令, 孔雀月令青瓷, 丝苇楼梯, 月极蝶夜礼, 虫无阶梯, 虫染阶梯, 乐园·葡萄柚 and 乐园·西瓜霜.
 - Evidence: `Temp~/MmdStages/H2CuInventory-20261030/agent-inventory.json`, `new-source-copy.json`, and `new-scenes-three-review.jpg`. Confidence: confirmed; 369 source files are covered by the expanded manifest.
 - Author preview evidence suggests the blue/red insect stairs are intentionally stylized, while the ladder scene has deliberately high-contrast sparse materials. Preserve those styles during refinement instead of treating them as importer failures.
+
+## 2026-10-30 — AC prerequisite for PLR and Scene View preview
+
+- A renderer can contain a PLR feature and still fail to produce valid coverage when Object Buffer/Attribute Composite are absent or when PLR is ordered before AC. The stable order is `GeometryData → GeometryBuffer → ObjectBuffer → SurfaceBuffer → AttributeComposite → PlanarReflection`.
+- `HoMmdFeatureRepair.Run` now repairs all 27 H2CU renderer assets, enables PLR for game and Scene View, and serializes `reflectSceneView: 1` on each floor receiver. A serial audit after the repair reported `errors=[]`; a D3D12 capture of 孔雀月令 and 乐园·墟实 produced all six requested views, with the former showing the floor reflection and the latter retaining its authored haze and window shafts.
+- Evidence: `D:/Unity_Project/BREAK_URP/Library/HoMmdStages/scene-audit.json`, `D:/Unity_Project/BREAK_URP/Library/HoMmdStages/plr-ac-render-check-d3d12.log`, `Assets/mmd场景测试/H2Cu阿相/孔雀月令/Renders/` and `Assets/mmd场景测试/H2Cu阿相/乐园·墟实/Renders/`. Confidence: confirmed on the 27-scene set.
