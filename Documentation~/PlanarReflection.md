@@ -10,11 +10,12 @@ PLR 的 PBR 材质路径只支持完整 lilToon Forward，不接入 lilToonLite/
 
 ## 快速设置
 
-1. 启用 `Ho-GeometryBuffer`、`Ho-ObjectBuffer`、`Ho-SurfaceBuffer` 三个 Renderer Feature（PLR 要读几何、接收面覆盖率与材质数值），并保证它们排在 PLR 之前。
+1. 按管线总览的列表顺序放置 PLR（Atmosphere 后、GeometryBuffer 前）。镜像源在 `beginCameraRendering` 生成；特殊合成和调试在 GB/OB/SB/AC 产出之后执行，不能用 Feature 列表位置代替 pass 时序。
 2. 启用 `Ho-PlanarReflection` Renderer Feature，在需要透明/OIT 合成时才打开 `启用特殊表面后处理合成`。
 3. 在水面、镜面或光滑地面 renderer 上添加 `Ho-PlanarReflection Surface`。
 4. 设置反射层遮罩，通常排除接收平面自身；按需要设置分辨率、更新帧间隔、裁剪和 Scene View 开关。
 5. opaque ForwardLit 只依赖 surface 写入的 source 与 `_UsePlanarReflection`；特殊 fullscreen 路径还要求材质拥有 `HoGeometryBuffer` pass 与 SB 的材质 pass（`HO_SURFACE_BUFFER`，22 个 lilToon URP lilblock 都带）。
+6. 特殊合成与材质调试还需要 GB、OB、SB、AC，以及接收 Renderer 的 `HoObjectBufferGroup` 身份。没有身份时，SB owner=0，AC 返回空遮罩；仅把 Feature 填进列表不能赋予物件身份。场景物件使用 `tags=None`，不要添加角色标签。
 
 ## Surface 参数
 
@@ -86,13 +87,16 @@ PLR 始终服从 lilToon 的 `_UseReflection` 总开关。总开关关闭时，�
 
 DebugTile / 整屏调试里 PLR 有自己的一整套视图（`planar-reflection.*`，与 `HoPlanarReflectionDebugMode` 一一对应）：
 
-- `planar-reflection.inputs`：输入自检 —— R = source 有效、G = 接收面遮罩、B = 几何、A = 材质数值。
+- `planar-reflection.inputs`：RGB 输入自检 —— R = source 句柄存在、G = AC/覆盖率/颜色/反射属性资源存在、B = 几何资源存在，A 恒 1。白色表示资源存在，仍需检查 Mask/属性图确认接收像素。
 - `planar-reflection.surface-mask` / `perceptual-roughness` / `metallic` / `reflectance` / `reflection-strength`：逐项对齐 composite 的输入。
-- `planar-reflection.composite-weight` / `depth-gate` / `reflection-color` / `edge-extend`：合成权重、深度门控与 source 采样。
+- `planar-reflection.composite-weight` / `depth-gate` / `edge-extend`：特殊合成权重、深度门控与边界。它们不代表 ForwardLit 的最终逐材质权重。
+- `planar-reflection.reflection-color`：未遮罩的 source mip 0；多 surface 时显示最后一个成功渲染的 source。全屏合成关闭或存在多个 surface 不再使调试返回紫色。
 - `geometry.world-normal` / `geometry.linear-depth`：物理几何输入；描边不得成为 coverage。
 - PLR source debug：检查镜像相机内容、Flip Y、source 有效性和分辨率。
 
-无反射时依次检查 Feature、surface renderer、反射层遮罩、`_UsePlanarReflection`、GB/OB/SB 是否都在 renderer 里且排在 PLR 之前，以及 source 是否被清成 black。
+无反射时依次检查 Feature、surface renderer、反射层遮罩、材质 `_UseReflection`/`_UsePlanarReflection`，并读回 source 的 mip 0 和粗糙度使用的 mip。原图有内容而 mip 1+ 全黑，仍然会让光滑度小于 1 的材质几乎没有反射。预过滤必须显式采样输入的 LOD 0；隐式 LOD 会在第一次缩小时读到尚未生成的 mip 1。
+
+`Ready=true` 只代表镜像源被分配并提交渲染，不证明像素非黑或最终地面有反射。使用 `HoMmdPlrValidation.Run -plrMode on/off/debug -hoStage 孔雀月令` 做同镜头开关对比、source/mip 读回；debug 模式还执行 `HoMmdPlrGpuCheck.CheckPrefilter` 的恒定 HDR 能量测试。CLI 入口复制到项目制作工具后使用，不加 `-quit` 或 `-nographics`。
 
 回归检查：将材质 `_UseReflection = 0`、`_UsePlanarReflection = 1`；`Reflection.g`（PLR 接收强度）应为 0，ForwardLit 与特殊 composite 都必须保持原色。再打开 `_UseReflection` 后，才允许按 `_UsePlanarReflection` 和 source 有效性产生 PLR。
 

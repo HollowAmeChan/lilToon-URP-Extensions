@@ -103,6 +103,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
             new List<HoPlanarReflectionRendererFeature>();
 
         private static bool registered;
+        // URP exposes a protected property, not a field with this name.
+        private static readonly PropertyInfo RendererFeaturesProperty = typeof(ScriptableRenderer).GetProperty(
+            "rendererFeatures", BindingFlags.Instance | BindingFlags.NonPublic);
 
         [SerializeField]
         private Settings settings = new Settings();
@@ -146,6 +149,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
             // Reflection rendering is driven from beginCameraRendering so the mirror camera renders before the source camera.
             Settings activeSettings = ResolveSettings(renderingData.cameraData.camera);
             if (!ShouldCompositeRender(in renderingData, activeSettings))
@@ -161,6 +165,10 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return;
             }
 
+            HoAttributeCompositeConsumerRegistry.DeclareForCamera(renderingData.cameraData.camera, this,
+                "PLR composite/debug", Array.Empty<HoACQueryDescriptor>(), null,
+                HoACDemandResources.Identity | HoACDemandResources.SurfaceAttributes | HoACDemandResources.SurfaceColor,
+                (1u << 1) | (1u << 2));
             compositePass?.SetupRenderGraph(activeSettings, compositeMaterial);
             if (activeSettings.debugMode != HoPlanarReflectionDebugMode.Off) compositePass.Enqueue(renderer);
             else renderer.EnqueuePass(compositePass);
@@ -168,6 +176,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         protected override void Dispose(bool disposing)
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this);
             UnregisterFeature(this);
             compositePass?.ReleaseCompatibilityResources();
             compositePass = null;
@@ -250,26 +259,22 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return null;
             }
 
-            HoPlanarReflectionRendererFeature fallback = null;
             List<ScriptableRendererFeature> currentRendererFeatures = ResolveCurrentRendererFeatures(camera);
+            if (currentRendererFeatures == null) return null;
             for (int i = 0; i < ActiveFeatures.Count; i++)
             {
                 HoPlanarReflectionRendererFeature feature = ActiveFeatures[i];
                 if (feature != null && feature.isActive && feature.settings != null)
                 {
-                    fallback ??= feature;
-                    if (currentRendererFeatures != null && !currentRendererFeatures.Contains(feature))
+                    if (!currentRendererFeatures.Contains(feature))
                     {
                         continue;
                     }
-                    if (feature.settings.enabled)
-                    {
-                        return feature;
-                    }
+                    return feature; // ResolveSettings applies the camera's Volume enable override.
                 }
             }
 
-            return currentRendererFeatures == null ? fallback : null;
+            return null;
         }
 
         private static List<ScriptableRendererFeature> ResolveCurrentRendererFeatures(Camera camera)
@@ -279,17 +284,15 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return null;
             }
 
-            UniversalAdditionalCameraData cameraData = camera.GetUniversalAdditionalCameraData();
-            ScriptableRenderer renderer = cameraData != null ? cameraData.scriptableRenderer : null;
+            camera.TryGetComponent<UniversalAdditionalCameraData>(out var cameraData);
+            ScriptableRenderer renderer = cameraData != null ? cameraData.scriptableRenderer
+                : (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset)?.GetRenderer(-1);
             if (renderer == null)
             {
                 return null;
             }
 
-            FieldInfo field = typeof(ScriptableRenderer).GetField(
-                "rendererFeatures",
-                BindingFlags.Instance | BindingFlags.NonPublic);
-            return field?.GetValue(renderer) as List<ScriptableRendererFeature>;
+            return RendererFeaturesProperty?.GetValue(renderer) as List<ScriptableRendererFeature>;
         }
 
         private Settings ResolveSettings(Camera camera)

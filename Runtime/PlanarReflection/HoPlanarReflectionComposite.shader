@@ -53,15 +53,24 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                 if (debugMode == 1)
                 {
                     return half4(
-                        saturate(_HoPlanarReflectionCompositeActive * _LILPBRPlanarReflectionParams.x * _HoPlanarReflectionDebugInputStatus.x),
+                        saturate(_HoPlanarReflectionDebugInputStatus.x),
                         saturate(_HoACActive * _HoPlanarReflectionDebugInputStatus.y * _HoPlanarReflectionDebugInputStatus.w),
                         saturate(_HoPlanarReflectionDebugInputStatus.z),
                         1.0h);
                 }
 
-                if (_HoPlanarReflectionCompositeActive < 0.5 ||
-                    _HoACActive < 0.5 ||
-                    _LILPBRPlanarReflectionParams.x < 0.5)
+                // Source inspection must also work with opaque ForwardLit and multiple surfaces.
+                // The fullscreen-composite eligibility flag says nothing about source validity.
+                if (debugMode == 11)
+                {
+                    if (_HoPlanarReflectionDebugInputStatus.x < 0.5) return half4(1, 0, 1, 1);
+                    float2 sourceUv = uv;
+                    if (_HoPlanarReflectionCompositeOptions.x > 0.5) sourceUv.y = 1.0 - sourceUv.y;
+                    return half4(SAMPLE_TEXTURE2D_LOD(_HoPlanarReflectionProcessedTexture, sampler_HoPlanarReflectionProcessedTexture, sourceUv, 0).rgb, 1);
+                }
+
+                if ((debugMode == 0 && (_HoPlanarReflectionCompositeActive < 0.5 || _LILPBRPlanarReflectionParams.x < 0.5)) ||
+                    _HoACActive < 0.5)
                 {
                     if (debugMode > 0)
                     {
@@ -174,7 +183,6 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                 #endif
                 half compositeWeight = saturate(centerWeight * depthGate * _HoPlanarReflectionCompositeParams.x * _HoPlanarReflectionCompositeTint.a);
                 half3 reflectionContribution = reflection * surfaceReduction * fresnel * compositeWeight;
-                if (debugMode == 11) return half4(reflection, 1.0h);
                 if (debugMode == 12) return half4(compositeWeight, compositeWeight, compositeWeight, 1.0h);
                 if (debugMode == 15)
                 {

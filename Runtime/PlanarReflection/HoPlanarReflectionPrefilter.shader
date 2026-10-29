@@ -28,7 +28,9 @@ Shader "Hidden/lilToon/URP/PLR/Prefilter"
 
             float3 SampleSource(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb;
+                // The first source has an allocated, unfinished mip chain. Implicit LOD
+                // selects its empty mip 1 when downsampling, making every roughness mip black.
+                return SAMPLE_TEXTURE2D_X_LOD(_BlitTexture, sampler_LinearClamp, uv, 0).rgb;
             }
 
             float4 Frag(Varyings input) : SV_Target
