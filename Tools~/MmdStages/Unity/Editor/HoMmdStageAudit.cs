@@ -19,7 +19,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 public static class HoMmdStageAudit
 {
     [Serializable]sealed class Audit
-    {public string stage,scene,pipeline,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting,hasObjectBuffer,hasAttributeComposite,plrAfterAttributeComposite,plrSceneView;}
+    {public string stage,scene,pipeline,renderer,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting,hasObjectBuffer,hasAttributeComposite,plrAfterAttributeComposite,plrSceneView,sharedRenderAssets;}
     [Serializable]sealed class Report{public string date;public Audit[] stages;public string[] errors;}
     public static void RunBatch()
     {
@@ -39,8 +39,11 @@ public static class HoMmdStageAudit
                 var camera=roots.SelectMany(x=>x.GetComponentsInChildren<Camera>()).FirstOrDefault();
                 var profile=roots.SelectMany(x=>x.GetComponentsInChildren<Volume>()).Single().sharedProfile;
                 var renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
+                if(renderer==null)renderer=RendererFromPipeline(env.pipeline);
+                string rendererPath=renderer!=null?AssetDatabase.GetAssetPath(renderer):string.Empty;
+                bool sharedRenderAssets=env.pipeline!=null&&AssetDatabase.GetAssetPath(env.pipeline)=="Assets/mmd场景测试/_共享渲染/HoMmd_RPAsset.asset"&&rendererPath=="Assets/mmd场景测试/_共享渲染/HoMmd_Renderer.asset";
                 var invalid=AssetDatabase.GetDependencies(path,true).Where(x=>
-                    (x.StartsWith("Assets/mmd场景测试/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/mmd场景测试/_制作工具/"))||
+                    (x.StartsWith("Assets/mmd场景测试/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/mmd场景测试/_制作工具/")&&!x.StartsWith("Assets/mmd场景测试/_共享渲染/"))||
                     x=="Assets/Settings/PC_Renderer.asset"||x=="Assets/Settings/PC_RPAsset.asset").ToArray();
                 var modelRenderers=renderers.Where(x=>x.transform.parent.name!="04 环境与后处理").ToArray();
                 bool skySphere=renderers.Any(x=>x.name=="天空球"&&x.sharedMaterial!=null&&x.sharedMaterial.shader!=null&&x.sharedMaterial.shader.name=="Ho/MMD Stage Sky Sphere");
@@ -57,6 +60,7 @@ public static class HoMmdStageAudit
                 int lowPoints=sceneLights.Count(x=>x.enabled&&x.type==LightType.Point&&x.transform.parent.name=="06 摄影灯光"&&x.transform.position.y<2);
                 bool layerIsolation=exterior.Length>0&&exterior.All(x=>(uint)x.GetUniversalAdditionalLightData().renderingLayers==2u)&&
                     modelRenderers.Count(x=>(x.renderingLayerMask&2u)!=0)==6;
+                if(renderer==null){errors.Add(recipe.name+": renderer asset missing");continue;}
                 var rtgi=renderer.rendererFeatures.OfType<HoRTGIRendererFeature>().FirstOrDefault(x=>x.isActive);
                 var objectBuffer=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.ObjectBuffer.HoObjectBufferRendererFeature>().FirstOrDefault(x=>x.isActive);
                 var attribute=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.AttributeComposite.HoAttributeCompositeRendererFeature>().FirstOrDefault(x=>x.isActive);
@@ -71,7 +75,7 @@ public static class HoMmdStageAudit
                 var eligible=roots.SelectMany(x=>x.GetComponentsInChildren<Transform>()).Where(x=>x.name=="01 场景模型")
                     .SelectMany(x=>x.GetComponentsInChildren<MeshRenderer>()).Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct().ToArray();
                 int triangleCount=meshes.Sum(x=>(int)x.sharedMesh.GetIndexCount(0)/3);
-                var audit=new Audit{stage=recipe.name,scene=path,pipeline=AssetDatabase.GetAssetPath(env.pipeline),
+                var audit=new Audit{stage=recipe.name,scene=path,pipeline=AssetDatabase.GetAssetPath(env.pipeline),renderer=rendererPath,sharedRenderAssets=sharedRenderAssets,
                     profile=AssetDatabase.GetAssetPath(profile),meshes=meshes.Length,triangles=triangleCount,materials=mats.Length,
                     lights=roots.SelectMany(x=>x.GetComponentsInChildren<Light>()).Count(),
                     enabledLights=roots.SelectMany(x=>x.GetComponentsInChildren<Light>()).Count(x=>x.enabled),
@@ -93,7 +97,7 @@ public static class HoMmdStageAudit
                     externalStageReferences=invalid,missingShaders=missing};
                 results.Add(audit);
                 if(invalid.Length>0||missing.Length>0||!audit.hasCamera||!audit.postProcessing||audit.regions!=1||
-                    !audit.pipeline.StartsWith(folder+"/")||!audit.profile.StartsWith(folder+"/")||!skySphere||!dof||!audit.cinematicBars||!centeredLogo||!contrast||audit.modelShadowCasters!=audit.modelRenderers||
+                    !((audit.pipeline.StartsWith(folder+"/")&&audit.renderer.StartsWith(folder+"/"))||audit.sharedRenderAssets)||!audit.profile.StartsWith(folder+"/")||!skySphere||!dof||!audit.cinematicBars||!centeredLogo||!contrast||audit.modelShadowCasters!=audit.modelRenderers||
                     modelRenderers.Any(x=>x.sharedMaterial!=null&&!x.sharedMaterial.GetShaderPassEnabled("ShadowCaster")))
                     errors.Add(recipe.name+": scene dependency/state audit failed");
                 if(recipe.name=="花吐电気"&&(!layerIsolation||exterior.Length!=3||!screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.SkyTyndall)))
@@ -125,5 +129,12 @@ public static class HoMmdStageAudit
             EditorApplication.Exit(errors.Count==0?0:1);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
+    }
+    static UniversalRendererData RendererFromPipeline(UniversalRenderPipelineAsset pipeline)
+    {
+        if(pipeline==null)return null;
+        var so=new SerializedObject(pipeline);var list=so.FindProperty("m_RendererDataList");
+        if(list==null||list.arraySize==0)return null;
+        return list.GetArrayElementAtIndex(0).objectReferenceValue as UniversalRendererData;
     }
 }

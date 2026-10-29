@@ -66,6 +66,21 @@ public static class HoMmdFeatureRepair
         }
         UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene);
         UnityEditor.SceneManagement.EditorSceneManager.CloseScene(scene,true);
+        EnsurePlanarVolume(folder);
         EditorUtility.SetDirty(renderer);Debug.Log("MMD_FEATURE_REPAIRED "+name+" order="+string.Join(",",ordered.Select(x=>x.GetType().Name)));
+    }
+
+    static void EnsurePlanarVolume(string folder)
+    {
+        var profile=AssetDatabase.LoadAssetAtPath<VolumeProfile>(folder+"/Rendering/后处理.asset");
+        if(profile==null)return;
+        if(!profile.TryGet<HoPlanarReflectionVolume>(out var planar))
+        {
+            planar=profile.Add<HoPlanarReflectionVolume>(true);planar.name="HoPlanarReflectionVolume";
+            AssetDatabase.AddObjectToAsset(planar,profile);
+        }
+        planar.enable.Override(true);planar.renderGameView.Override(true);planar.renderSceneView.Override(true);
+        planar.maxSurfacesPerCamera.Override(8);planar.compositeEnabled.Override(false);
+        EditorUtility.SetDirty(planar);EditorUtility.SetDirty(profile);
     }
 }

@@ -13,6 +13,7 @@ using UnityEngine.SceneManagement;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.GTAO;
 using lilToon.URP.Extensions.VolumeLight;
+using lilToon.URP.Extensions.PlanarReflection;
 using Object=UnityEngine.Object;
 
 public static class HoMmdStageBuilder
@@ -423,6 +424,9 @@ public static class HoMmdStageBuilder
         var ao=Add<HoGTAOVolume>();ao.enable.Override(true);ao.quality.Override(HoGTAOQuality.Medium);ao.worldSpaceRadius.Override(.55f);
         var vl=Add<HoVolumeLightVolume>();vl.enable.Override(true);vl.intensity.Override(r.volume);vl.stepCount.Override(32);vl.antialiasing.Override(HoVolumeLightAntialiasing.Spatial);
         var atmos=Add<HoAtmosphereVolume>();atmos.enable.Override(true);atmos.intensity.Override(.6f);
+        var planar=Add<HoPlanarReflectionVolume>();
+        planar.enable.Override(true);planar.renderGameView.Override(true);planar.renderSceneView.Override(true);
+        planar.maxSurfacesPerCamera.Override(8);planar.compositeEnabled.Override(false);
         EditorUtility.SetDirty(profile);return profile;
     }
     public static string Audit(Recipe r)

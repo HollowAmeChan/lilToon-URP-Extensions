@@ -25,6 +25,10 @@ Use per-scene HDR sky copies. Exclude the stage sky material from RTGI rays. App
 
 Identify real floors and water by material name and geometry, not just the lowest mesh bound. Add a `HoPlanarReflectionSurface` per named horizontal receiver when appropriate, set resolution to 1024, assign a stage-owned plane transform and enable the material’s planar reflection. Use the feature surface cap for multiple floors. Check the reflection plane height for water, thick floors and elevated platforms.
 
+The MMD scene family should use one **MMD-only shared** RenderPipelineAsset/RendererData pair, kept under `Assets/mmd场景测试/_共享渲染/`; do not point unrelated project scenes at it. Scene-owned Volume profiles, materials, lights and `HoPlanarReflectionSurface` components still carry the art direction. ScreenProcess, ImageProcess, CharacterSpecialization and RTGI are designed to read scene Volume state; PLR now has `HoPlanarReflectionVolume` for enable/view/debug/composite controls. The renderer asset remains the place where the feature exists and its producer order is fixed.
+
+There is a concrete reason to avoid multiple simultaneously loaded PLR Renderer assets: PLR registers a static callback. Its resolver must select the feature instance belonging to the camera's actual `ScriptableRenderer`; otherwise a PC Renderer or another stage copy can win the global list and make a valid surface appear inert. The runtime resolver now matches the active renderer before falling back.
+
 ## Known scene choices
 
 - 花吐电気: bright window daylight, outdoor lights on a separate rendering layer, low haze and real window/room light.

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 // Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
 #pragma warning disable CS0618, CS0672
 
@@ -126,7 +127,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
-            if (!ShouldCompositeRender(in renderingData))
+            Settings activeSettings = ResolveSettings(renderingData.cameraData.camera);
+            if (!ShouldCompositeRender(in renderingData, activeSettings))
             {
                 compositePass?.ReleaseCompatibilityResources();
                 return;
@@ -139,13 +141,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return;
             }
 
-            compositePass?.Setup(settings, renderer.cameraColorTargetHandle, compositeMaterial);
+            compositePass?.Setup(activeSettings, renderer.cameraColorTargetHandle, compositeMaterial);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             // Reflection rendering is driven from beginCameraRendering so the mirror camera renders before the source camera.
-            if (!ShouldCompositeRender(in renderingData))
+            Settings activeSettings = ResolveSettings(renderingData.cameraData.camera);
+            if (!ShouldCompositeRender(in renderingData, activeSettings))
             {
                 compositePass?.ReleaseCompatibilityResources();
                 return;
@@ -158,8 +161,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return;
             }
 
-            compositePass?.SetupRenderGraph(settings, compositeMaterial);
-            if (settings.debugMode != HoPlanarReflectionDebugMode.Off) compositePass.Enqueue(renderer);
+            compositePass?.SetupRenderGraph(activeSettings, compositeMaterial);
+            if (activeSettings.debugMode != HoPlanarReflectionDebugMode.Off) compositePass.Enqueue(renderer);
             else renderer.EnqueuePass(compositePass);
         }
 
@@ -225,17 +228,18 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return;
             }
 
-            if (feature.settings != null && feature.settings.enabled && feature.settings.compositeEnabled)
+            Settings activeSettings = feature.ResolveSettings(camera);
+            if (activeSettings != null && activeSettings.enabled && activeSettings.compositeEnabled)
             {
                 feature.EnsureCompositeMaterial();
             }
 
-            feature.PublishGlobalCompositeSettings();
+            feature.PublishGlobalCompositeSettings(activeSettings);
 
             HoPlanarReflectionRenderStats stats = HoPlanarReflectionSurface.RenderAllSurfaces(
                 context,
                 camera,
-                feature.CreateRenderSettings());
+                feature.CreateRenderSettings(activeSettings));
             HoPlanarReflectionRuntimeDiagnostics.Publish(camera, stats);
         }
 
@@ -247,12 +251,17 @@ namespace lilToon.URP.Extensions.PlanarReflection
             }
 
             HoPlanarReflectionRendererFeature fallback = null;
+            List<ScriptableRendererFeature> currentRendererFeatures = ResolveCurrentRendererFeatures(camera);
             for (int i = 0; i < ActiveFeatures.Count; i++)
             {
                 HoPlanarReflectionRendererFeature feature = ActiveFeatures[i];
                 if (feature != null && feature.isActive && feature.settings != null)
                 {
                     fallback ??= feature;
+                    if (currentRendererFeatures != null && !currentRendererFeatures.Contains(feature))
+                    {
+                        continue;
+                    }
                     if (feature.settings.enabled)
                     {
                         return feature;
@@ -260,12 +269,89 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 }
             }
 
-            return fallback;
+            return currentRendererFeatures == null ? fallback : null;
         }
 
-        private HoPlanarReflectionRenderSettings CreateRenderSettings()
+        private static List<ScriptableRendererFeature> ResolveCurrentRendererFeatures(Camera camera)
         {
-            Settings activeSettings = settings ?? new Settings();
+            if (camera == null)
+            {
+                return null;
+            }
+
+            UniversalAdditionalCameraData cameraData = camera.GetUniversalAdditionalCameraData();
+            ScriptableRenderer renderer = cameraData != null ? cameraData.scriptableRenderer : null;
+            if (renderer == null)
+            {
+                return null;
+            }
+
+            FieldInfo field = typeof(ScriptableRenderer).GetField(
+                "rendererFeatures",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            return field?.GetValue(renderer) as List<ScriptableRendererFeature>;
+        }
+
+        private Settings ResolveSettings(Camera camera)
+        {
+            Settings source = settings ?? new Settings();
+            Settings resolved = new Settings
+            {
+                enabled = source.enabled,
+                renderGameView = source.renderGameView,
+                renderSceneView = source.renderSceneView,
+                maxSurfacesPerCamera = source.maxSurfacesPerCamera,
+                compositeEnabled = source.compositeEnabled,
+                compositePassEvent = source.compositePassEvent,
+                compositeShader = source.compositeShader,
+                compositeStrength = source.compositeStrength,
+                distortion = source.distortion,
+                edgeExtendDistance = source.edgeExtendDistance,
+                compositeFlipY = source.compositeFlipY,
+                minSmoothness = source.minSmoothness,
+                enableDepthGate = source.enableDepthGate,
+                depthTolerance = source.depthTolerance,
+                reflectionExposure = source.reflectionExposure,
+                reflectionBlurRadiusPixels = source.reflectionBlurRadiusPixels,
+                tint = source.tint,
+                debugMode = source.debugMode,
+                debugDepthFar = source.debugDepthFar,
+                debugDistortionScale = source.debugDistortionScale
+            };
+
+            VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
+            HoPlanarReflectionVolume volume = stack?.GetComponent<HoPlanarReflectionVolume>();
+            if (volume == null || !volume.IsActive())
+            {
+                ClampSettings(resolved);
+                return resolved;
+            }
+
+            if (volume.enable.overrideState) resolved.enabled = volume.enable.value;
+            if (volume.renderGameView.overrideState) resolved.renderGameView = volume.renderGameView.value;
+            if (volume.renderSceneView.overrideState) resolved.renderSceneView = volume.renderSceneView.value;
+            if (volume.maxSurfacesPerCamera.overrideState) resolved.maxSurfacesPerCamera = volume.maxSurfacesPerCamera.value;
+            if (volume.compositeEnabled.overrideState) resolved.compositeEnabled = volume.compositeEnabled.value;
+            if (volume.compositeStrength.overrideState) resolved.compositeStrength = volume.compositeStrength.value;
+            if (volume.distortion.overrideState) resolved.distortion = volume.distortion.value;
+            if (volume.edgeExtendDistance.overrideState) resolved.edgeExtendDistance = volume.edgeExtendDistance.value;
+            if (volume.compositeFlipY.overrideState) resolved.compositeFlipY = volume.compositeFlipY.value;
+            if (volume.minSmoothness.overrideState) resolved.minSmoothness = volume.minSmoothness.value;
+            if (volume.enableDepthGate.overrideState) resolved.enableDepthGate = volume.enableDepthGate.value;
+            if (volume.depthTolerance.overrideState) resolved.depthTolerance = volume.depthTolerance.value;
+            if (volume.reflectionExposure.overrideState) resolved.reflectionExposure = volume.reflectionExposure.value;
+            if (volume.reflectionBlurRadiusPixels.overrideState) resolved.reflectionBlurRadiusPixels = volume.reflectionBlurRadiusPixels.value;
+            if (volume.tint.overrideState) resolved.tint = volume.tint.value;
+            if (volume.debugMode.overrideState) resolved.debugMode = volume.debugMode.value;
+            if (volume.debugDepthFar.overrideState) resolved.debugDepthFar = volume.debugDepthFar.value;
+            if (volume.debugDistortionScale.overrideState) resolved.debugDistortionScale = volume.debugDistortionScale.value;
+            ClampSettings(resolved);
+            return resolved;
+        }
+
+        private HoPlanarReflectionRenderSettings CreateRenderSettings(Settings activeSettings)
+        {
+            activeSettings ??= settings ?? new Settings();
             ClampSettings(activeSettings);
             bool compositeAvailable = activeSettings.compositeEnabled && compositeMaterial != null;
             return new HoPlanarReflectionRenderSettings(
@@ -276,9 +362,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 compositeAvailable);
         }
 
-        private void PublishGlobalCompositeSettings()
+        private void PublishGlobalCompositeSettings(Settings activeSettings)
         {
-            Settings activeSettings = settings ?? new Settings();
+            activeSettings ??= settings ?? new Settings();
             ClampSettings(activeSettings);
             Shader.SetGlobalVector(HoPlanarReflectionShaderConstants.CompositeParamsId, HoPlanarReflectionShaderParams.CreateCompositeParams(activeSettings));
             Shader.SetGlobalVector(HoPlanarReflectionShaderConstants.CompositeOptionsId, HoPlanarReflectionShaderParams.CreateCompositeOptions(activeSettings));
@@ -288,16 +374,16 @@ namespace lilToon.URP.Extensions.PlanarReflection
             Shader.SetGlobalVector(HoPlanarReflectionShaderConstants.DebugInputStatusId, Vector4.one);
         }
 
-        private bool ShouldCompositeRender(in RenderingData renderingData)
+        private bool ShouldCompositeRender(in RenderingData renderingData, Settings activeSettings)
         {
-            if (settings == null || !settings.enabled || (!settings.compositeEnabled && settings.debugMode == HoPlanarReflectionDebugMode.Off))
+            if (activeSettings == null || !activeSettings.enabled || (!activeSettings.compositeEnabled && activeSettings.debugMode == HoPlanarReflectionDebugMode.Off))
             {
                 return false;
             }
 
             CameraType cameraType = renderingData.cameraData.cameraType;
-            return (cameraType == CameraType.Game && settings.renderGameView)
-                || (cameraType == CameraType.SceneView && settings.renderSceneView);
+            return (cameraType == CameraType.Game && activeSettings.renderGameView)
+                || (cameraType == CameraType.SceneView && activeSettings.renderSceneView);
         }
 
         private void EnsureCompositeMaterial()
