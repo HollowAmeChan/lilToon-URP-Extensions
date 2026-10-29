@@ -43,6 +43,13 @@ Use the date and a short subsystem heading. State the failed or surprising behav
 - New packages may not carry an HDR sky. Copy a selected SkySeries HDR into each stage-owned Rendering folder before invoking `HdrSky`; otherwise Unity import can leave the `TextureImporter` null.
 - Evidence: `Temp~/MmdStages/H2CuInventory-20261030/new-source-copy.json`, `new-scenes-three-review.jpg`, and the 27-scene `Library/HoMmdStages/scene-audit.json`. Confidence: confirmed.
 
+## 2026-10-30 — P0 PMX and Ray material contract
+
+- The repeatable source-only manifest in `Tools~/MmdStages/EffectAudit-20261030` records PMX SHA256, relative textures, toon/sphere maps, flags, alpha inference, Ray emission/template fields, warnings/dependencies and `smoothnessFromShininess`. Unity-side texture alpha classification remains separate and is never fabricated by the pure parser.
+- The Ray truth table confirms PMX shininess is converted to lilToon smoothness, then RTGI uses perceptual roughness `1 - smoothness`; metallic and smoothness feed RTGI bounce energy and primary ray material buffers. Opaque and a bounded Cutout subset have RTGI hit/any-hit support. Continuous Transparent and Weighted OIT remain raster-only for RTGI.
+- Reflection probes, PLR and APV are raster primary-lighting paths. RELAX is a denoiser, not a material or light transport feature. Sky shells require exact material exclusion; local Point/Spot volume lights use an independent raster depth atlas and do not add transparent/OIT RT support.
+- Evidence: `Tools~/MmdStages/EffectAudit-20261030/ray-material-truth-table.md`, `ray-material-truth-table.json`, `Tests~/MaterialRayContract/report.md`. Static fixture result: 9 pass, 0 fail, 3 runtime GPU checks unverified. Confidence: source claims confirmed; the three runtime items require an isolated D3D12 Unity fixture.
+
 ## 2026-10-30 — H2CU inventory expansion
 
 - The reorganized source tree contains 32 H2CU source packages. After the original 19 scenes and recovered complete Yueximei, eight additional independent scene packages were identified: 孔雀月令, 孔雀月令青瓷, 丝苇楼梯, 月极蝶夜礼, 虫无阶梯, 虫染阶梯, 乐园·葡萄柚 and 乐园·西瓜霜.
