@@ -49,6 +49,8 @@ Use the date and a short subsystem heading. State the failed or surprising behav
 - The Ray truth table confirms PMX shininess is converted to lilToon smoothness, then RTGI uses perceptual roughness `1 - smoothness`; metallic and smoothness feed RTGI bounce energy and primary ray material buffers. Opaque and a bounded Cutout subset have RTGI hit/any-hit support. Continuous Transparent and Weighted OIT remain raster-only for RTGI.
 - Reflection probes, PLR and APV are raster primary-lighting paths. RELAX is a denoiser, not a material or light transport feature. Sky shells require exact material exclusion; local Point/Spot volume lights use an independent raster depth atlas and do not add transparent/OIT RT support.
 - Evidence: `Tools~/MmdStages/EffectAudit-20261030/ray-material-truth-table.md`, `ray-material-truth-table.json`, `Tests~/MaterialRayContract/report.md`. Static fixture result: 9 pass, 0 fail, 3 runtime GPU checks unverified. Confidence: source claims confirmed; the three runtime items require an isolated D3D12 Unity fixture.
+- A fresh E-drive run generated the 88-file H2CU PMX snapshot: 1,078 materials, 331 texture slots and zero parser failures. The committed evidence records source hashes, relative textures, toon/sphere, shininess conversion hints, alpha uncertainty and MME unknown fields; the three GPU caveats remain explicit.
+- Evidence: `Tools~/MmdStages/EffectAudit-20261030/evidence/H2CU-P0-effect-and-ray-evidence-20261030.md` and `H2CU-pmx-effect-manifest-20261030.json`. Confidence: manifest and static contracts confirmed; isolated GPU matrix still unverified.
 
 ## 2026-10-30 — H2CU inventory expansion
 
