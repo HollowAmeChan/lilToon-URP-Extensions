@@ -1,6 +1,6 @@
 # lilToon / HoURP material-ray contract audit
 
-Generated: `2026-10-29T22:29:05.953399+00:00`
+Generated: `2026-10-29T22:45:45.147426+00:00`
 
 This is a source-only audit. It does not modify BREAK_URP or run Unity.
 

@@ -19,7 +19,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 public static class HoMmdStageAudit
 {
     [Serializable]sealed class Audit
-    {public string stage,scene,pipeline,renderer,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting,hasObjectBuffer,hasAttributeComposite,plrAfterAttributeComposite,plrSceneView,sharedRenderAssets;}
+    {public string stage,scene,pipeline,renderer,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiFeatureAssets,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces,reviewCameras;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation,centerPostLighting,hasObjectBuffer,hasAttributeComposite,plrAfterAttributeComposite,plrSourceBeforeGeometryBuffer,plrSceneView,sharedRenderAssets,canonicalFeatureOrder,disabledFeaturesPresent;}
     [Serializable]sealed class Report{public string date;public Audit[] stages;public string[] errors;}
     public static void RunBatch()
     {
@@ -69,7 +69,8 @@ public static class HoMmdStageAudit
                 var objectBuffer=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.ObjectBuffer.HoObjectBufferRendererFeature>().FirstOrDefault(x=>x.isActive);
                 var attribute=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.AttributeComposite.HoAttributeCompositeRendererFeature>().FirstOrDefault(x=>x.isActive);
                 var plrFeature=renderer.rendererFeatures.OfType<HoPlanarReflectionRendererFeature>().FirstOrDefault(x=>x.isActive);
-                int ssgiFeatures=AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(renderer)).Count(x=>x!=null&&x.GetType().Name=="HoSSGIRendererFeature");
+                var ssgiAssets=AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(renderer)).OfType<ScriptableRendererFeature>().Where(x=>x.GetType().Name=="HoSSGIRendererFeature").ToArray();
+                int ssgiFeatureAssets=ssgiAssets.Length;int ssgiFeatures=ssgiAssets.Count(x=>x.isActive);
                 int ssgiVolumes=AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(profile)).Count(x=>x!=null&&x.GetType().Name=="HoSSGIVolume");
                 var advanced=File.Exists(folder+"/Rendering/进阶效果.json");
                 int reflectionResolution=0;
@@ -79,8 +80,10 @@ public static class HoMmdStageAudit
                 var eligible=roots.SelectMany(x=>x.GetComponentsInChildren<Transform>()).Where(x=>x.name=="01 场景模型")
                     .SelectMany(x=>x.GetComponentsInChildren<MeshRenderer>()).Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct().ToArray();
                 int triangleCount=meshes.Sum(x=>(int)x.sharedMesh.GetIndexCount(0)/3);
+                bool disabledFeaturesPresent;bool canonicalFeatureOrder=CheckFeatureOrder(renderer,out disabledFeaturesPresent);
                 var audit=new Audit{stage=recipe.name,scene=path,pipeline=AssetDatabase.GetAssetPath(env.pipeline),renderer=rendererPath,sharedRenderAssets=sharedRenderAssets,
                     profile=AssetDatabase.GetAssetPath(profile),meshes=meshes.Length,triangles=triangleCount,materials=mats.Length,
+                    canonicalFeatureOrder=canonicalFeatureOrder,disabledFeaturesPresent=disabledFeaturesPresent,
                     lights=roots.SelectMany(x=>x.GetComponentsInChildren<Light>()).Count(),
                     enabledLights=roots.SelectMany(x=>x.GetComponentsInChildren<Light>()).Count(x=>x.enabled),
                     regions=roots.SelectMany(x=>x.GetComponentsInChildren<HoAtmosphereRegion>()).Count(),
@@ -89,11 +92,12 @@ public static class HoMmdStageAudit
                     reviewCameras=roots.SelectMany(x=>x.GetComponentsInChildren<Camera>()).Count(),
                     centerPostLighting=screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.PostLighting)||image.layers.value.Any(x=>x.enabled&&x.effect==ImageProcessEffect.CenterColorCorrection),
                     hasObjectBuffer=objectBuffer!=null,hasAttributeComposite=attribute!=null,
-                    plrAfterAttributeComposite=plrFeature!=null&&attribute!=null&&renderer.rendererFeatures.IndexOf(plrFeature)>renderer.rendererFeatures.IndexOf(attribute),
+                    plrAfterAttributeComposite=plrFeature!=null&&attribute!=null,
+                    plrSourceBeforeGeometryBuffer=plrFeature!=null&&renderer.rendererFeatures.IndexOf(plrFeature)<renderer.rendererFeatures.IndexOf(renderer.rendererFeatures.OfType<lilToon.URP.Extensions.GeometryBuffer.HoGeometryBufferRendererFeature>().FirstOrDefault()),
                     plrSceneView=plrSurfaces.Any(x=>new SerializedObject(x).FindProperty("reflectSceneView")?.boolValue==true),
                     lowFillPoints=lowPoints,exteriorLights=exterior.Length,exteriorLayerIsolation=layerIsolation,
                     giMode=rtgi!=null?"RTGI":"Off",advancedImageLayers=image.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),
-                    ssgiFeatures=ssgiFeatures,ssgiVolumes=ssgiVolumes,
+                    ssgiFeatures=ssgiFeatures,ssgiFeatureAssets=ssgiFeatureAssets,ssgiVolumes=ssgiVolumes,
                     aoEligibleMaterials=eligible.Length,aoArtMaterials=eligible.Count(x=>x.HasProperty("_UseRealtimeAO")&&x.GetFloat("_UseRealtimeAO")>.5f&&x.GetFloat("_AOContrast")>=1.5f),plrSurfaces=plrSurfaces.Length,
                     advancedScreenLayers=screen.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),reflectionResolution=reflectionResolution,
                     hasCamera=camera!=null,postProcessing=camera!=null&&camera.GetUniversalAdditionalCameraData().renderPostProcessing,
@@ -112,8 +116,10 @@ public static class HoMmdStageAudit
                     errors.Add(recipe.name+": AO art / all-floor PLR audit failed");
                 if(File.Exists(folder+"/Rendering/细节灯光.json")&&(audit.reviewCameras!=3||audit.centerPostLighting))
                     errors.Add(recipe.name+": three cameras / world-space lighting audit failed");
-                if(!audit.hasObjectBuffer||!audit.hasAttributeComposite||!audit.plrAfterAttributeComposite||!audit.plrSceneView)
+                if(!audit.hasObjectBuffer||!audit.hasAttributeComposite||!audit.plrSourceBeforeGeometryBuffer||!audit.plrSceneView)
                     errors.Add(recipe.name+": OB/SB/AC/PLR dependency or SceneView reflection audit failed");
+                if(!audit.canonicalFeatureOrder||!audit.disabledFeaturesPresent)
+                    errors.Add(recipe.name+": Renderer feature order / disabled feature retention audit failed");
                 if(advanced)
                 {
                     if(rtgi==null||ssgiFeatures!=0||ssgiVolumes!=0||audit.advancedImageLayers<2||
@@ -139,5 +145,14 @@ public static class HoMmdStageAudit
         var so=new SerializedObject(pipeline);var list=so.FindProperty("m_RendererDataList");
         if(list==null||list.arraySize==0)return null;
         return list.GetArrayElementAtIndex(0).objectReferenceValue as UniversalRendererData;
+    }
+    static bool CheckFeatureOrder(UniversalRendererData renderer,out bool disabledPresent)
+    {
+        string[] required={"HoGeometryDataRendererFeature","HoRTRendererFeature","HoCharacterShadowRendererFeature","HoShadowCastRendererFeature","HoAtmosphereRendererFeature","HoPlanarReflectionRendererFeature","HoGeometryBufferRendererFeature","HoObjectBufferRendererFeature","HoSurfaceBufferRendererFeature","HoRTShadowRendererFeature","HoAttributeCompositeRendererFeature","HoGTAORendererFeature","HoSSGIRendererFeature","HoRTDIRendererFeature","HoRTGIRendererFeature","HoSubsurfaceScatteringRendererFeature","HoVolumeLightRendererFeature","WeightedOITRendererFeature","HoCharacterSpecializationRendererFeature","ScreenProcessRendererFeature","ImageProcessRendererFeature"};
+        var actual=renderer.rendererFeatures.Where(x=>x!=null).ToArray();int last=-1;bool ordered=true;
+        foreach(string type in required){int index=Array.FindIndex(actual,x=>x.GetType().Name==type);if(index<0||index<last)ordered=false;last=Mathf.Max(last,index);}
+        var ssgi=actual.FirstOrDefault(x=>x.GetType().Name=="HoSSGIRendererFeature");var rtdi=actual.FirstOrDefault(x=>x.GetType().Name=="HoRTDIRendererFeature");var debug=actual.FirstOrDefault(x=>x.GetType().Name=="HoDebugTileRendererFeature");
+        disabledPresent=ssgi!=null&&!ssgi.isActive&&rtdi!=null&&!rtdi.isActive&&debug!=null&&!debug.isActive;
+        return ordered;
     }
 }

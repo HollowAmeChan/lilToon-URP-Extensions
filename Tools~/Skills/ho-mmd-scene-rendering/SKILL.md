@@ -13,10 +13,10 @@ The workflow is iterative. Read only the references needed for the current phase
 
 - Use the project’s Ho PMX importer and Ho lilToon materials. Extract editable materials into the stage folder; preserve PMX-relative external texture layout under that stage’s `Source/` tree.
 - Treat a PMX stage as a static asset. Do not depend on an upstream PMX authoring loop. Record unsupported physics/MME information in the importer report and implement visible effects in Unity scene assets.
-- Use RTGI + RELAX when ray GI is enabled. SSGI is prohibited, including inactive or orphaned RendererFeature/Volume subassets.
+- Use RTGI + RELAX when ray GI is enabled. SSGI is prohibited at runtime; the fixed shared Renderer may retain an inactive SSGI feature placeholder for inspector/debug discoverability, but no SSGI Volume or active SSGI pass is allowed.
 - Prefer world-space lights, real shadow casting, local Point/Spot HD volume lights and material emission over screen-center PostLighting or CenterColorCorrection. Screen effects may grade the image, but they must not carry the subject illumination.
-- Give every stage its own scene, Pipeline, Renderer, Volume/profile, materials, rendering assets and evidence. Do not share stage model/material/Volume assets.
-- Treat Attribute Composite as a hard prerequisite for Planar Reflection: stage renderers must keep `GeometryData → GeometryBuffer → ObjectBuffer → SurfaceBuffer → AttributeComposite → PlanarReflection`, and every PLR surface must keep Scene View preview enabled for authoring.
+- Give every stage its own scene, Volume/profile, materials, rendering assets and evidence. The H2CU family uses the fixed project `PC_RPAsset/PC_Renderer`; do not create per-stage RendererData copies. Do not share stage model/material/Volume assets.
+- Treat Attribute Composite as a hard prerequisite for PLR's opaque material consumption, while keeping the PLR source callback early: `GeometryData → Ho-RT → CharacterShadow → ShadowCast → Atmosphere → PLR source → GeometryBuffer → ObjectBuffer → SurfaceBuffer → RTShadow → AttributeComposite → GTAO`. Every PLR surface must keep Scene View preview enabled for authoring.
 - Review at least the main camera plus left and right observation cameras. A stage is not ready from one flattering still.
 - Finish with a Unity-native audit and actual GPU captures. Evidence must include image dimensions, RTGI state, local-volume state, no-SSGI state, material/caster coverage, PLR, source hashes and unchanged unrelated stages.
 

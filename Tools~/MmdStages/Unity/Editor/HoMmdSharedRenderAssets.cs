@@ -8,6 +8,7 @@ using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.CharacterShadow;
 using lilToon.URP.Extensions.CharacterSpecialization;
+using lilToon.URP.Extensions.Debugging;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.GeometryData;
 using lilToon.URP.Extensions.GTAO;
@@ -16,9 +17,12 @@ using lilToon.URP.Extensions.OIT;
 using lilToon.URP.Extensions.PostProcessing;
 using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.RT;
+using lilToon.URP.Extensions.RTDI;
 using lilToon.URP.Extensions.RTGI;
 using lilToon.URP.Extensions.RTShadow;
 using lilToon.URP.Extensions.ShadowCast;
+using lilToon.URP.Extensions.SSGI;
+using lilToon.URP.Extensions.SubsurfaceScattering;
 using lilToon.URP.Extensions.SurfaceBuffer;
 using lilToon.URP.Extensions.VolumeLight;
 using UnityEditor;
@@ -98,11 +102,6 @@ public static class HoMmdSharedRenderAssets
                 Object.DestroyImmediate(feature, true);
             }
         }
-        foreach(var forbidden in unique.Where(x=>x.GetType().Name=="HoSSGIRendererFeature").ToArray())
-        {
-            unique.Remove(forbidden);renderer.rendererFeatures.Remove(forbidden);Object.DestroyImmediate(forbidden,true);
-        }
-
         Ensure<HoRTRendererFeature>(unique, types, renderer, "Ho-RT");
         Ensure<HoGeometryDataRendererFeature>(unique, types, renderer, "Ho-GeometryData");
         Ensure<HoGeometryBufferRendererFeature>(unique, types, renderer, "Ho-GeometryBuffer");
@@ -121,15 +120,20 @@ public static class HoMmdSharedRenderAssets
         Ensure<ImageProcessRendererFeature>(unique, types, renderer, "Ho-ImageProcess");
         Ensure<HoPlanarReflectionRendererFeature>(unique, types, renderer, "Ho-PlanarReflection");
         Ensure<HoRTGIRendererFeature>(unique, types, renderer, "Ho-RTGI");
+        Ensure<HoSSGIRendererFeature>(unique, types, renderer, "Ho-SSGI");
+        Ensure<HoRTDIRendererFeature>(unique, types, renderer, "Ho-RTDI");
+        Ensure<HoDebugTileRendererFeature>(unique, types, renderer, "Ho-DebugTile");
 
         var order = new Type[]
         {
-            typeof(HoRTRendererFeature), typeof(HoGeometryDataRendererFeature), typeof(HoGeometryBufferRendererFeature),
-            typeof(HoObjectBufferRendererFeature), typeof(HoSurfaceBufferRendererFeature), typeof(HoAttributeCompositeRendererFeature),
-            typeof(HoCharacterShadowRendererFeature), typeof(HoShadowCastRendererFeature), typeof(HoAtmosphereRendererFeature),
-            typeof(HoGTAORendererFeature), typeof(HoRTShadowRendererFeature), typeof(HoVolumeLightRendererFeature),
-            typeof(WeightedOITRendererFeature), typeof(HoCharacterSpecializationRendererFeature), typeof(ScreenProcessRendererFeature),
-            typeof(ImageProcessRendererFeature), typeof(HoPlanarReflectionRendererFeature), typeof(HoRTGIRendererFeature)
+            typeof(HoGeometryDataRendererFeature), typeof(HoRTRendererFeature), typeof(HoCharacterShadowRendererFeature),
+            typeof(HoShadowCastRendererFeature), typeof(HoAtmosphereRendererFeature), typeof(HoPlanarReflectionRendererFeature),
+            typeof(HoGeometryBufferRendererFeature), typeof(HoObjectBufferRendererFeature), typeof(HoSurfaceBufferRendererFeature),
+            typeof(HoRTShadowRendererFeature), typeof(HoAttributeCompositeRendererFeature), typeof(HoGTAORendererFeature),
+            typeof(HoSSGIRendererFeature), typeof(HoRTDIRendererFeature), typeof(HoRTGIRendererFeature),
+            typeof(HoSubsurfaceScatteringRendererFeature), typeof(HoVolumeLightRendererFeature), typeof(WeightedOITRendererFeature),
+            typeof(HoCharacterSpecializationRendererFeature), typeof(ScreenProcessRendererFeature), typeof(ImageProcessRendererFeature),
+            typeof(HoDebugTileRendererFeature)
         };
         var ordered = new List<ScriptableRendererFeature>();
         foreach (var type in order)
@@ -139,9 +143,14 @@ public static class HoMmdSharedRenderAssets
         }
         foreach (var feature in unique)
             if (!ordered.Contains(feature)) ordered.Add(feature);
+        var postFeatures=ordered.Where(x=>x.GetType().Name=="HoPostProcessRendererFeature"||x.GetType().Name=="ShoostPostProcessRendererFeature").ToList();
+        foreach(var feature in postFeatures)ordered.Remove(feature);
+        int debugIndex=ordered.FindIndex(x=>x.GetType()==typeof(HoDebugTileRendererFeature));
+        if(debugIndex<0)ordered.AddRange(postFeatures);else ordered.InsertRange(debugIndex,postFeatures);
         var required = new HashSet<Type>(order);
+        var disabled = new HashSet<Type>{typeof(HoSSGIRendererFeature),typeof(HoRTDIRendererFeature),typeof(HoDebugTileRendererFeature)};
         foreach (var feature in ordered)
-            if (required.Contains(feature.GetType())) feature.SetActive(true);
+            if (required.Contains(feature.GetType())) feature.SetActive(!disabled.Contains(feature.GetType()));
         renderer.rendererFeatures.Clear();
         renderer.rendererFeatures.AddRange(ordered);
         var serializedRenderer=new SerializedObject(renderer);

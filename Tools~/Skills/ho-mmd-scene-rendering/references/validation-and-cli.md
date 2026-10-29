@@ -31,10 +31,10 @@ Store `<stage>_主视角.png`, `<stage>_左侧视角.png`, `<stage>_右侧视角
 - DoF, cinematic bars, centered Hollow Logo and opposite border/logo colors
 - AO art coverage equals eligible material count
 - at least one 1024 PLR surface per scene
-- active Object Buffer and Attribute Composite features, with PLR after AC in the renderer list
+- active Object Buffer and Attribute Composite features, with the PLR source before GeometryBuffer and its opaque consumption after AC
 - PLR Scene View preview enabled both on the feature and on every surface
 - RTGI active, Ho RT host before RTGI, sky excluded
-- SSGI feature and volume asset counts are zero
+- active SSGI feature and SSGI volume counts are zero; an inactive SSGI RendererFeature placeholder may remain for inspector discoverability
 - three review cameras and no screen-center illumination layers after the world-light pass
 
 ## Source and visual verification
