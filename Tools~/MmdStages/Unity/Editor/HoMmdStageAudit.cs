@@ -19,7 +19,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 public static class HoMmdStageAudit
 {
     [Serializable]sealed class Audit
-    {public string stage,scene,pipeline,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation;}
+    {public string stage,scene,pipeline,profile,giMode;public int meshes,triangles,materials,lights,enabledLights,regions,modelShadowCasters,modelRenderers,lowFillPoints,exteriorLights,advancedImageLayers,advancedScreenLayers,reflectionResolution,ssgiFeatures,ssgiVolumes,aoArtMaterials,aoEligibleMaterials,plrSurfaces;public string[] features,externalStageReferences,missingShaders;public bool hasCamera,postProcessing,skySphere,depthOfField,cinematicBars,centeredLogo,logoContrast,exteriorLayerIsolation;}
     [Serializable]sealed class Report{public string date;public Audit[] stages;public string[] errors;}
     public static void RunBatch()
     {
@@ -62,8 +62,11 @@ public static class HoMmdStageAudit
                 int ssgiVolumes=AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(profile)).Count(x=>x!=null&&x.GetType().Name=="HoSSGIVolume");
                 var advanced=File.Exists(folder+"/Rendering/进阶效果.json");
                 int reflectionResolution=0;
-                foreach(var surface in roots.SelectMany(x=>x.GetComponentsInChildren<HoPlanarReflectionSurface>()))
+                var plrSurfaces=roots.SelectMany(x=>x.GetComponentsInChildren<HoPlanarReflectionSurface>()).ToArray();
+                foreach(var surface in plrSurfaces)
                     reflectionResolution=new SerializedObject(surface).FindProperty("resolution").intValue;
+                var eligible=roots.SelectMany(x=>x.GetComponentsInChildren<Transform>()).Where(x=>x.name=="01 场景模型")
+                    .SelectMany(x=>x.GetComponentsInChildren<MeshRenderer>()).Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct().ToArray();
                 int triangleCount=meshes.Sum(x=>(int)x.sharedMesh.GetIndexCount(0)/3);
                 var audit=new Audit{stage=recipe.name,scene=path,pipeline=AssetDatabase.GetAssetPath(env.pipeline),
                     profile=AssetDatabase.GetAssetPath(profile),meshes=meshes.Length,triangles=triangleCount,materials=mats.Length,
@@ -75,6 +78,7 @@ public static class HoMmdStageAudit
                     lowFillPoints=lowPoints,exteriorLights=exterior.Length,exteriorLayerIsolation=layerIsolation,
                     giMode=rtgi!=null?"RTGI":"Off",advancedImageLayers=image.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),
                     ssgiFeatures=ssgiFeatures,ssgiVolumes=ssgiVolumes,
+                    aoEligibleMaterials=eligible.Length,aoArtMaterials=eligible.Count(x=>x.HasProperty("_UseRealtimeAO")&&x.GetFloat("_UseRealtimeAO")>.5f&&x.GetFloat("_AOContrast")>=1.5f),plrSurfaces=plrSurfaces.Length,
                     advancedScreenLayers=screen.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),reflectionResolution=reflectionResolution,
                     hasCamera=camera!=null,postProcessing=camera!=null&&camera.GetUniversalAdditionalCameraData().renderPostProcessing,
                     features=renderer.rendererFeatures.Where(x=>x.isActive).Select(x=>x.GetType().Name).ToArray(),
@@ -88,6 +92,8 @@ public static class HoMmdStageAudit
                     errors.Add(recipe.name+": exterior lighting / sky scattering audit failed");
                 if(recipe.name=="圣诞万花镜"&&(lowPoints!=12||(int)renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().Single().Settings.lightCapacity<(int)HoShadowCastLightCapacity.Medium))
                     errors.Add(recipe.name+": low point fill / shadow capacity audit failed");
+                if(audit.aoArtMaterials!=audit.aoEligibleMaterials||audit.plrSurfaces<1)
+                    errors.Add(recipe.name+": AO art / all-floor PLR audit failed");
                 if(advanced)
                 {
                     if(rtgi==null||ssgiFeatures!=0||ssgiVolumes!=0||audit.advancedImageLayers<2||audit.advancedScreenLayers<1||

@@ -196,7 +196,10 @@ public static class HoMmdStageLighting
         EnsureFeature<ScreenProcessRendererFeature>(renderer,"Ho 景深与空气透视").UseVolumes=true;
         EnsureFeature<ImageProcessRendererFeature>(renderer,"Ho 镜头柔光").UseVolumes=true;
         var shadow=renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().FirstOrDefault();
-        if(shadow!=null){shadow.Settings.shadowStrength=1;shadow.Settings.punctualShadowStrength=.85f;shadow.Settings.pcssEnabled=true;shadow.Settings.pcssMaxPenumbraRadius=5;EditorUtility.SetDirty(shadow);}
+        if(shadow!=null){shadow.Settings.shadowStrength=1;shadow.Settings.punctualShadowStrength=.85f;shadow.Settings.pcssEnabled=true;shadow.Settings.pcssMaxPenumbraRadius=5;
+            // 4096 / 512 gives 64 point-light faces, avoiding URP's silent
+            // reduction when dappled scenes use many small shadow casters.
+            shadow.Settings.atlasSize=4096;shadow.Settings.directionalResolution=2048;shadow.Settings.spotResolution=1024;shadow.Settings.pointFaceResolution=512;EditorUtility.SetDirty(shadow);}
         if(shadow!=null&&name=="圣诞万花镜"){shadow.Settings.lightCapacity=HoShadowCastLightCapacity.Medium;EditorUtility.SetDirty(shadow);}
         var lighting=renderer.rendererFeatures.OfType<HoVolumeLightRendererFeature>().First();
         lighting.FeatureSettings.stepCount=96;lighting.FeatureSettings.antialiasing=HoVolumeLightAntialiasing.Temporal;EditorUtility.SetDirty(lighting);

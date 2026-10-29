@@ -24,6 +24,17 @@ STAGES = {
     "琉璃万花镜": "琉璃万花镜·H2CU式stage08-1_by_H2Cu阿相_950ad78cd2370fe87921c741211bb74a",
     "古典机械剧场": "古典机械剧场·H2CU式stage15_by_H2Cu阿相_5efec0784e395a9a8548f7f2e2f5f3d6",
     "拟花十字之棺": "拟花十字之棺·H2CU式stage11_by_H2Cu阿相_eeb3c020e3ffecf270f093295624a1c4",
+    "百鸟溯归": "百鸟溯归·H2CU式stage04 (3)_by_H2Cu阿相_9f266086ee892d4fed947b7e89a844d9",
+    "孔雀月令红墨": "孔雀月令红墨·H2CU式stage17-3_by_H2Cu阿相_4b4e7a1073a0e3e3567084a0f524ef16",
+    "乐园·墟实": "乐园·墟实·H2CU式stage05-3_9c2b4a708b000488e529b8160d078c2e",
+    "秘月之泉": "秘月之泉·H2CU式stage14_by_H2Cu阿相_3a0c097d121339b5e418630a658642e1",
+    "万象天文": "万象天文·H2CU式stage02_7a233a3ad3a4660d33ef10df346599fb",
+    "炫光夜厅": "炫光夜厅·H2CU式stage16_by_H2Cu阿相_e47df0fcf57f65e49769e87df6c657a5",
+    "夜月蓝": "夜月蓝·H2CU式stage13_by_H2Cu阿相_44b17a1cd084b24d5bacf9703f64198d (1)",
+    "芋泥咩咩": "芋泥咩咩·H2CU式stage18_by_H2Cu阿相_5c3d09622be14b59490b7d97c0468255",
+    "月昔梅": "月昔梅·H2CU式stage20_by_H2Cu阿相_5acc23fda20c8d79429730c53bbf33ee",
+    "古典机械剧场黑蓝白": "古典机械剧场改色版黑蓝白·H2CU式stage15_by_H2Cu阿相_08c525632fad769cb39160305abfa9c5",
+    "冷色古堂": "H2CU式stage09改色-冷色古堂_by_H2Cu阿相_65b030403a0f1099aaa683cda626ddd4",
 }
 ALLOWED = {
     ".pmx", ".pmd", ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".dds", ".exr", ".hdr",

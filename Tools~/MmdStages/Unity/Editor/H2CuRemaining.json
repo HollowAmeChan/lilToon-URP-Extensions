@@ -1,0 +1,744 @@
+{
+  "stages": [
+    {
+      "recipe": {
+        "name": "百鸟溯归",
+        "models": [
+          "百鸟溯归·H2CU式stage04.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 2.5,
+          "z": 11
+        },
+        "target": {
+          "x": 0,
+          "y": 3,
+          "z": -7
+        },
+        "key": {
+          "r": 1,
+          "g": 0.72,
+          "b": 0.43,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 1,
+          "g": 0.34,
+          "b": 0.1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 58,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": false,
+      "hdr": "CloudedSunGlow4k.hdr",
+      "floors": [
+        "水"
+      ],
+      "aoLevel": 0.18,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.9,
+      "plrStrength": 0.58,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "floorY": -0.51,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "孔雀月令红墨",
+        "models": [
+          "孔雀月令主体.pmx",
+          "孔雀月令荷花.pmx",
+          "孔雀月令串珠A.pmx",
+          "孔雀月令串珠BC.pmx",
+          "孔雀月令地板裝飾.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 1.3,
+          "z": 3.2
+        },
+        "target": {
+          "x": 0,
+          "y": 1.5,
+          "z": -6.5
+        },
+        "key": {
+          "r": 1,
+          "g": 0.78,
+          "b": 0.55,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 1,
+          "g": 0.3,
+          "b": 0.12,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 62,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "floors": [
+        "地板"
+      ],
+      "aoLevel": 0.18,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.9,
+      "plrStrength": 0.58,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "floorY": 0,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "乐园·墟实",
+        "models": [
+          "场景主体.pmx"
+        ],
+        "camera": {
+          "x": -6,
+          "y": 2,
+          "z": 9
+        },
+        "target": {
+          "x": 1,
+          "y": 6,
+          "z": -7
+        },
+        "key": {
+          "r": 1,
+          "g": 0.85,
+          "b": 0.69,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.85,
+          "g": 0.3,
+          "b": 0.19,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 2.6,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 52,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": true,
+      "hdr": "CloudedSunGlow4k.hdr",
+      "floors": [
+        "地板"
+      ],
+      "aoLevel": 0.12,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.75,
+      "plrStrength": 0.32,
+      "skyExposure": 0.65,
+      "shadowStrength": 0.95,
+      "floorY": 0,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "秘月之泉",
+        "models": [
+          "场景主体A.pmx",
+          "蓝色调B1.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 2,
+          "z": 8
+        },
+        "target": {
+          "x": 0,
+          "y": 2.5,
+          "z": -6
+        },
+        "key": {
+          "r": 0.72,
+          "g": 0.86,
+          "b": 1,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.4,
+          "g": 0.74,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 58,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "floors": [
+        "水面",
+        "地面"
+      ],
+      "aoLevel": 0.18,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.9,
+      "plrStrength": 0.58,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "floorY": 0.01,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "万象天文",
+        "models": [
+          "主体.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 1.5,
+          "z": 5
+        },
+        "target": {
+          "x": 0,
+          "y": 2,
+          "z": -2.5
+        },
+        "key": {
+          "r": 0.66,
+          "g": 0.8,
+          "b": 1,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 1,
+          "g": 0.74,
+          "b": 0.25,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 62,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "floors": [
+        "地板"
+      ],
+      "aoLevel": 0.18,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.9,
+      "plrStrength": 0.58,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "floorY": 0,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "炫光夜厅",
+        "models": [
+          "主体NO16.pmx",
+          "舞动方块大.pmx",
+          "舞动方块小.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 2,
+          "z": 22
+        },
+        "target": {
+          "x": 0,
+          "y": 3,
+          "z": -15
+        },
+        "key": {
+          "r": 0.62,
+          "g": 0.74,
+          "b": 1,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.62,
+          "g": 0.27,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 52,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": false,
+      "hdr": "CosmicCoolCloudEQ_hdr.exr",
+      "floors": [
+        "地板"
+      ],
+      "aoLevel": 0.18,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.9,
+      "plrStrength": 0.58,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "floorY": 0,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "夜月蓝",
+        "models": [
+          "场景.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 1.2,
+          "z": 4.5
+        },
+        "target": {
+          "x": 0,
+          "y": 1.3,
+          "z": -2
+        },
+        "key": {
+          "r": 0.65,
+          "g": 0.82,
+          "b": 1,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.38,
+          "g": 0.7,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 52,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "floors": [
+        "地板"
+      ],
+      "aoLevel": 0.18,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.9,
+      "plrStrength": 0.58,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "floorY": 0,
+      "artLightScale": 0.35
+    },
+    {
+      "recipe": {
+        "name": "芋泥咩咩",
+        "models": [
+          "芋泥咩咩场景.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 1.8,
+          "z": 3.8
+        },
+        "target": {
+          "x": 0,
+          "y": 2,
+          "z": -4
+        },
+        "key": {
+          "r": 1,
+          "g": 0.95,
+          "b": 0.84,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.75,
+          "g": 0.55,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 2.6,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 58,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": true,
+      "hdr": "FluffballDay4k.hdr",
+      "floors": [
+        "芋泥地板"
+      ],
+      "aoLevel": 0.12,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.75,
+      "plrStrength": 0.32,
+      "skyExposure": 0.65,
+      "shadowStrength": 0.95,
+      "floorY": -0.08,
+      "artLightScale": 0.55
+    },
+    {
+      "recipe": {
+        "name": "月昔梅",
+        "models": [
+          "團扇 月昔梅.pmx"
+        ],
+        "camera": {
+          "x": 0.03,
+          "y": 0.13,
+          "z": 1.08
+        },
+        "target": {
+          "x": 0,
+          "y": 0.08,
+          "z": 0
+        },
+        "key": {
+          "r": 1,
+          "g": 0.94,
+          "b": 0.7,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 1,
+          "g": 0.68,
+          "b": 0.2,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 2.6,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 40,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": true,
+      "hdr": "Cloudymorning4k.hdr",
+      "floors": [
+        "展台地面"
+      ],
+      "aoLevel": 0.12,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.75,
+      "plrStrength": 0.32,
+      "skyExposure": 0.65,
+      "shadowStrength": 0.95,
+      "floorY": -0.155,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "古典机械剧场黑蓝白",
+        "models": [
+          "主体-黑蓝白.pmx",
+          "吊饰-黑蓝白.pmx",
+          "地面装饰-黑蓝白.pmx"
+        ],
+        "camera": {
+          "x": 1,
+          "y": 3.5,
+          "z": 3
+        },
+        "target": {
+          "x": 0,
+          "y": 6,
+          "z": -18
+        },
+        "key": {
+          "r": 0.75,
+          "g": 0.85,
+          "b": 1,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.3,
+          "g": 0.58,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 52,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "floors": [
+        "地板========================="
+      ],
+      "aoLevel": 0.18,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.9,
+      "plrStrength": 0.58,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "floorY": 0,
+      "artLightScale": 0.35
+    },
+    {
+      "recipe": {
+        "name": "冷色古堂",
+        "models": [
+          "主体.pmx",
+          "吊饰.pmx",
+          "吊饰+.pmx",
+          "外院.pmx",
+          "家具.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 1.6,
+          "z": 6
+        },
+        "target": {
+          "x": 0,
+          "y": 2.5,
+          "z": -7
+        },
+        "key": {
+          "r": 0.65,
+          "g": 0.8,
+          "b": 1,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.4,
+          "g": 0.55,
+          "b": 0.8,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.4,
+          "g": 0.76,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.23,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 56,
+        "bloom": 0.3,
+        "exposure": 0.2,
+        "fog": 0.002,
+        "volume": 4
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "floors": [
+        "地板"
+      ],
+      "aoLevel": 0.18,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.9,
+      "plrStrength": 0.58,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "floorY": 0,
+      "artLightScale": 1
+    }
+  ]
+}

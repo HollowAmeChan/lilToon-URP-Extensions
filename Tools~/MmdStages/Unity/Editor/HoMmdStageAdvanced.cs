@@ -9,6 +9,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.PostProcessing;
 using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI;
+using lilToon.URP.Extensions.ShadowCast;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -29,6 +30,7 @@ public static class HoMmdStageAdvanced
         public bool denoise=true;
     }
     static Color C(float r,float g,float b)=>new Color(r,g,b,1);
+    static void F(Material m,string key,float value){if(m!=null&&m.HasProperty(key))m.SetFloat(key,value);}
     static string Arg(string key){var a=Environment.GetCommandLineArgs();int i=Array.IndexOf(a,key);return i>=0&&i+1<a.Length?a[i+1]:null;}
     public static Look Default(string name)
     {
@@ -93,6 +95,32 @@ public static class HoMmdStageAdvanced
         var sky=root.GetComponentsInChildren<MeshRenderer>().Single(x=>x.name=="天空球").sharedMaterial;
         var gb=d.rendererFeatures.OfType<HoGeometryBufferRendererFeature>().Single();
         gb.Settings.minRenderQueue=1500;gb.Settings.renderScale=HoGeometryBufferRenderScale.Full;
+        var shadow=d.rendererFeatures.OfType<HoShadowCastRendererFeature>().FirstOrDefault();
+        if(shadow!=null)
+        {
+            shadow.Settings.atlasSize=4096;shadow.Settings.directionalResolution=2048;
+            shadow.Settings.spotResolution=1024;shadow.Settings.pointFaceResolution=512;
+            shadow.Settings.shadowStrength=1;shadow.Settings.punctualShadowStrength=1;
+            EditorUtility.SetDirty(shadow);
+        }
+        // Keep the artistic AO contract consistent for every stage, including the
+        // eight scenes that were authored before the remaining-scene pass.
+        var spec=HoMmdStageRemaining.Specs().FirstOrDefault(x=>x.recipe.name==name);
+        bool day=spec!=null?spec.day:new[]{"花吐电気","乐园·深命","茉莉庭院"}.Contains(name);
+        var modelRoot=root.transform.Find("01 场景模型");
+        if(modelRoot!=null)
+        {
+            float aoLevel=spec!=null?spec.aoLevel:(day?.1f:.14f);
+            float aoContrast=spec!=null?spec.aoContrast:1.7f;
+            float aoDark=spec!=null?spec.aoDarkStrength:(day?.75f:.85f);
+            foreach(var m in modelRoot.GetComponentsInChildren<MeshRenderer>().Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct())
+            {
+                F(m,"_UseRealtimeAO",1);F(m,"_AOStrength",1);F(m,"_AOLevel",aoLevel);
+                F(m,"_AOContrast",aoContrast);F(m,"_AODarkStrength",aoDark);
+                if(m.HasProperty("_AOColor"))m.SetColor("_AOColor",day?C(.13f,.16f,.2f):C(.06f,.07f,.14f));
+                EditorUtility.SetDirty(m);
+            }
+        }
         // User constraint: remove the screen-space GI feature and its serialized Volume,
         // including inactive/orphaned subassets, so it cannot be accidentally re-enabled.
         foreach(var f in AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(d)).OfType<ScriptableRendererFeature>()
@@ -142,7 +170,8 @@ public static class HoMmdStageAdvanced
         foreach(var s in root.GetComponentsInChildren<HoPlanarReflectionSurface>())
         {
             var so=new SerializedObject(s);so.FindProperty("resolution").intValue=1024;so.ApplyModifiedPropertiesWithoutUndo();
-            var m=s.GetComponent<MeshRenderer>().sharedMaterial;if(m.HasProperty("_PlanarReflectionStrength"))m.SetFloat("_PlanarReflectionStrength",l.reflection);EditorUtility.SetDirty(m);
+            var mr=s.GetComponent<MeshRenderer>();var m=mr!=null?mr.sharedMaterial:null;
+            if(m!=null&&m.HasProperty("_PlanarReflectionStrength"))m.SetFloat("_PlanarReflectionStrength",l.reflection);EditorUtility.SetDirty(m);
         }
         EditorUtility.SetDirty(profile);EditorUtility.SetDirty(d);EditorUtility.SetDirty(gb);
         EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();File.WriteAllText(path,JsonUtility.ToJson(l,true));

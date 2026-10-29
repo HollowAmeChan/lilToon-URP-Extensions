@@ -8,6 +8,10 @@ Shader "Ho/MMD Stage Sky Sphere"
         _SunDirection("太阳方向",Vector)=(0,1,0,0)
         _SunSize("圆盘半径",Float)=.01
         _Stars("星空",Range(0,1))=1
+        _HdrTex("本场景 HDR 天空",Cube)=""{}
+        _UseHdr("使用 HDR 天空",Float)=0
+        _HdrExposure("HDR 曝光",Float)=1
+        _HdrRotation("HDR 水平旋转",Float)=0
     }
     SubShader
     {
@@ -19,17 +23,28 @@ Shader "Ho/MMD Stage Sky Sphere"
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/EntityLighting.hlsl"
             struct Attributes{float4 positionOS:POSITION;};
             struct Varyings{float4 positionCS:SV_POSITION;float3 direction:TEXCOORD0;};
             CBUFFER_START(UnityPerMaterial)
             float4 _Top,_Horizon,_SunColor,_SunDirection;
             float _Stars,_SunSize;
+            float _UseHdr,_HdrExposure,_HdrRotation;
+            float4 _HdrTex_HDR;
             CBUFFER_END
+            TEXTURECUBE(_HdrTex);SAMPLER(sampler_HdrTex);
             Varyings Vert(Attributes v){Varyings o;o.positionCS=TransformObjectToHClip(v.positionOS.xyz);o.direction=v.positionOS.xyz;return o;}
             float Hash(float3 p){p=frac(p*.1031);p+=dot(p,p.yzx+33.33);return frac((p.x+p.y)*p.z);}
             half4 Frag(Varyings i):SV_Target
             {
                 float3 d=normalize(i.direction);
+                if(_UseHdr>.5)
+                {
+                    float a=radians(_HdrRotation);float s=sin(a),c=cos(a);
+                    float3 rotated=float3(c*d.x-s*d.z,d.y,s*d.x+c*d.z);
+                    half4 sky=SAMPLE_TEXTURECUBE(_HdrTex,sampler_HdrTex,rotated);
+                    return half4(DecodeHDREnvironment(sky,_HdrTex_HDR)*_HdrExposure,1);
+                }
                 float3 color=lerp(_Horizon.rgb,_Top.rgb,smoothstep(-.12,.8,d.y));
                 float2 uv=float2(atan2(d.x,d.z)*.15915494+.5,asin(d.y)*.31830989+.5);
                 float2 cell=uv*float2(1800,900);
