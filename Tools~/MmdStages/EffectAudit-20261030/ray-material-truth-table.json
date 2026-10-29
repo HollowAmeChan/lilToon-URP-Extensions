@@ -1,0 +1,128 @@
+{
+  "schema": "HoRayMaterialTruthTable/1",
+  "auditDate": "2026-10-30",
+  "scope": "Static source audit; no BREAK_URP edits and no experimental runtime changes",
+  "statusLegend": {"confirmed": "direct source path", "bounded": "supported subset or raster-only path", "unsupported": "explicitly rejected or absent"},
+  "claims": [
+    {
+      "id": "pmx_shininess_smoothness",
+      "status": "confirmed",
+      "claim": "Shininess S maps to smoothness clamp01(1 - pow(2/(S+2), 0.125)); importer writes _Smoothness.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/HoUnityTools/Editor/PmxImport/Ray/HoPmxRayDocument.cs", "lines": "78-82"},
+        {"path": "D:/Unity_Fork/HoUnityTools/Editor/PmxImport/HoPmxMaterials.cs", "lines": "59,106-118"}
+      ],
+      "examples": {"S=0": 0.0, "S=30": 0.2928932, "S=100": 0.3882785}
+    },
+    {
+      "id": "ray_smoothness_map",
+      "status": "bounded",
+      "claim": "Map type 1 is 1-sqrt(value), type 2 is 1-value; scalar mode then multiplies or exponentiates. Supported 2D texture is stored in _SmoothnessTex.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/HoUnityTools/Editor/PmxImport/Ray/HoPmxRayDocument.cs", "lines": "71-76,84-88"},
+        {"path": "D:/Unity_Fork/HoUnityTools/Editor/PmxImport/HoPmxMaterials.cs", "lines": "106-118"}
+      ],
+      "limitation": "Unknown Ray sources/types are warning/manual domains; RTGI secondary samples LOD 0."
+    },
+    {
+      "id": "metallic",
+      "status": "confirmed",
+      "claim": "Ray metallic constant or supported map is imported to _Metallic / _MetallicGlossMap; RTGI hit samples map R and uses metallic for diffuse/specular split.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/HoUnityTools/Editor/PmxImport/Ray/HoPmxRayDocument.cs", "lines": "66-69"},
+        {"path": "D:/Unity_Fork/HoUnityTools/Editor/PmxImport/HoPmxMaterials.cs", "lines": "100-104"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl", "lines": "127-131"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/Shaders/HoRTGI.raytrace", "lines": "58-61"}
+      ]
+    },
+    {
+      "id": "opaque_rtgi",
+      "status": "confirmed",
+      "claim": "HoRTGI adapter supports lilToon opaque queue<AlphaTest and bounded cutout; unsupported opaque remains an occluder with no radiance payload.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGISecondaryMaterials.cs", "lines": "48-63"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RT/HoRTScene.cs", "lines": "206-239"}
+      ]
+    },
+    {
+      "id": "cutout_any_hit",
+      "status": "bounded",
+      "claim": "Cutout any-hit evaluates MainTex/Color alpha plus AlphaMask and calls IgnoreHit below cutoff; surviving hit is shaded by the RTGI adapter.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl", "lines": "62-71,73-131"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RT/HoRTCutoutSupport.cs", "lines": "10-33"}
+      ],
+      "limitation": "Only static Hidden/lilToonCutout alpha domain; dither, animation, main2/main3, parallax and property blocks are rejected."
+    },
+    {
+      "id": "transparent_and_oit",
+      "status": "unsupported",
+      "claim": "Continuous transparent materials and Weighted OIT have no HoRT/RTGI any-hit/material hit path. OIT is raster accumulation/revealage/composite only.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/HoUnityTools/Editor/PmxImport/HoPmxMaterials.cs", "lines": "13-16,77-78"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RT/HoRTScene.cs", "lines": "238-239"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/OIT/WeightedOITRendererFeature.cs", "lines": "427-489,539-570,700-720"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/OIT/WeightedOIT.hlsl", "lines": "7-30"}
+      ]
+    },
+    {
+      "id": "sky_exclusion_and_environment",
+      "status": "confirmed",
+      "claim": "excludedRayMaterials removes exact material submeshes from the HoRT AS; direct sky GI is opt-in via includeDirectEnvironment and requires atmosphere. Default useEnvironment is true but includeDirectEnvironment is false.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGISettings.cs", "lines": "22-30"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGIRendererFeature.cs", "lines": "72,242-246,276"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/Shaders/HoRTGI.raytrace", "lines": "36-47"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RT/HoRTScene.cs", "lines": "103-105,156-159"}
+      ]
+    },
+    {
+      "id": "relax",
+      "status": "confirmed",
+      "claim": "NRD RELAX is a denoiser stage after RTGI tracing/history; it does not change AS material classification or add alpha support.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGIContext.cs", "lines": "101-105"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/HoRTGIRendererFeature.cs", "lines": "108-109,351-358"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTDI/ThirdParty/NRD/provenance.json", "lines": "1-8, file hashes"}
+      ]
+    },
+    {
+      "id": "reflection_probes",
+      "status": "bounded",
+      "claim": "lilToon raster variants compile reflection probe blending/box projection/atlas and call URP GlossyEnvironmentReflection; RTGI secondary adapter does not call probe APIs.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts_o.shader", "lines": "716-769"},
+        {"path": "D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_macro.hlsl", "lines": "944-948"},
+        {"path": "D:/Unity_Fork/HoUrp17.3.0/Runtime/ForwardLights.cs", "lines": "542-547"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl", "lines": "73-131"}
+      ],
+      "limitation": "Source proof only; no scene GPU capture of a populated probe atlas."
+    },
+    {
+      "id": "apv",
+      "status": "bounded",
+      "claim": "lilToon raster uses SampleAPV for L1/L2 SH when HoURP enables ProbeVolume keywords; RTGI secondary material has no SampleAPV path.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_functions.hlsl", "lines": "1051-1083,1107-1116"},
+        {"path": "D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts_o.shader", "lines": "716-717"},
+        {"path": "D:/Unity_Fork/HoUrp17.3.0/Runtime/ForwardLights.cs", "lines": "545-566"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl", "lines": "73-131"}
+      ],
+      "limitation": "APV is established for raster primary lighting only; no RTGI bounce claim."
+    },
+    {
+      "id": "local_volume",
+      "status": "confirmed",
+      "claim": "Local volume pass supports Point/Spot sources with SD camera-depth/range or HD independent shadow atlas; it is a raster media pass.",
+      "evidence": [
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/VolumeLight/HoVolumeLightLocalPass.cs", "lines": "22,64-88,135-159"},
+        {"path": "D:/Unity_Fork/lilToon-URP-Extensions/Runtime/VolumeLight/HoVolumeLightVolume.cs", "lines": "25-42"}
+      ]
+    }
+  ],
+  "limitations": [
+    "No Unity GPU capture was run; claims are source-level and do not prove a specific scene's APV bake, probe atlas population, or active renderer ordering.",
+    "Continuous alpha, OIT, MME submaterial effects, and unsupported Ray texture sources remain outside the proven RTGI material domain.",
+    "The audit intentionally does not modify BREAK_URP or add experimental code."
+  ]
+}
