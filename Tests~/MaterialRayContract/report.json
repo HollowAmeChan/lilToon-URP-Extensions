@@ -1,0 +1,669 @@
+{
+  "schema": "ho.material-ray-contract.v1",
+  "generatedUtc": "2026-10-29T18:40:41.024141+00:00",
+  "repository": "D:\\Unity_Fork\\lilToon-URP-Extensions",
+  "liltoon": "D:\\Unity_Fork\\lilToon",
+  "pass": true,
+  "staticPass": 9,
+  "staticFail": 0,
+  "unverified": 3,
+  "checks": [
+    {
+      "id": "oit.resolve",
+      "area": "transparent/OIT",
+      "status": "pass",
+      "description": "Weighted OIT clips alpha and writes weighted accumulation plus revealage.",
+      "evidence": [
+        {
+          "file": "Runtime\\OIT\\WeightedOIT.hlsl",
+          "sha256": "59a17c23dfb1aa3b14227ea2cefa8f51b6e01c2081f7b8685f8d525ae6e6ec08",
+          "matches": [
+            {
+              "pattern": "clip\\s*\\(\\s*color\\.a\\s*-\\s*_lilOITAlphaClipThreshold",
+              "lines": [
+                22
+              ]
+            },
+            {
+              "pattern": "output\\.accumulation\\s*=",
+              "lines": [
+                28
+              ]
+            },
+            {
+              "pattern": "output\\.revealage\\s*=",
+              "lines": [
+                29
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": "Static shader contract only; blend order and visual correctness need GPU capture."
+    },
+    {
+      "id": "oit.feature",
+      "area": "transparent/OIT",
+      "status": "pass",
+      "description": "Ho-WeightedOIT owns reset, opaque copy, accumulation and composite passes.",
+      "evidence": [
+        {
+          "file": "Runtime\\OIT\\WeightedOITRendererFeature.cs",
+          "sha256": "09d9115df82f11d1f5c3ccc61044a65c9fe82ab750f5495823022c4768b7a17b",
+          "matches": [
+            {
+              "pattern": "WeightedOITResetPass",
+              "lines": [
+                19,
+                33,
+                159
+              ]
+            },
+            {
+              "pattern": "WeightedOITOpaqueCopyPass",
+              "lines": [
+                21,
+                35,
+                198,
+                489
+              ]
+            },
+            {
+              "pattern": "WeightedOITAccumulationPass",
+              "lines": [
+                22,
+                36,
+                398,
+                417
+              ]
+            },
+            {
+              "pattern": "WeightedOITCompositePass",
+              "lines": [
+                23,
+                37,
+                596
+              ]
+            },
+            {
+              "pattern": "renderer\\.EnqueuePass\\(clearPass\\)",
+              "lines": [
+                81
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": ""
+    },
+    {
+      "id": "liltoon.alpha",
+      "area": "transparent/Cutout",
+      "status": "pass",
+      "description": "lilToon forward alpha uses cutoff and Ho surface alpha rejects invisible ordinary transparent fragments.",
+      "evidence": [
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\Includes\\lil_common_frag_alpha.hlsl",
+          "sha256": "2b6bb0415a938d35de0bd7b8374ab407de4ba384cf83849c399d5fa2a8c5c682",
+          "matches": [
+            {
+              "pattern": "clip\\s*\\(\\s*fd\\.col\\.a\\s*-\\s*_Cutoff",
+              "lines": [
+                93
+              ]
+            }
+          ]
+        },
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\Includes\\lil_ho_surface_alpha.hlsl",
+          "sha256": "06cb253e388b49230fee2a71f52b51093206bb204f9ea861b184878ad2c77a10",
+          "matches": [
+            {
+              "pattern": "LIL_RENDER\\s*==\\s*2",
+              "lines": [
+                10
+              ]
+            },
+            {
+              "pattern": "clip\\s*\\(\\s*alpha\\s*-\\s*_Cutoff",
+              "lines": [
+                11
+              ]
+            },
+            {
+              "pattern": "clip\\s*\\(\\s*alpha\\s*>\\s*0\\.0",
+              "lines": [
+                12
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": ""
+    },
+    {
+      "id": "liltoon.oit-entry",
+      "area": "transparent/OIT",
+      "status": "pass",
+      "description": "lilToon OIT entry point is present in generated forward include paths.",
+      "evidence": [
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\Includes\\lil_oit.hlsl",
+          "sha256": "e23f3bd15ed734439c76f3e3a44718aeff50fa977f06f0b8be4122771ddb1338",
+          "matches": [
+            {
+              "pattern": "LIL_OIT_RETURN",
+              "lines": [
+                36
+              ]
+            },
+            {
+              "pattern": "lilOITOutputColor",
+              "lines": [
+                21,
+                36
+              ]
+            }
+          ]
+        },
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\Includes\\lil_pass_forward_normal.hlsl",
+          "sha256": "f8f78a94cca1b76a0b2d14c026ce17a572cf6b53c53f0161778b943cf4dd496f",
+          "matches": [
+            {
+              "pattern": "LIL_OIT_RETURN",
+              "lines": [
+                618
+              ]
+            }
+          ]
+        },
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\Includes\\lil_pass_forward_hair.hlsl",
+          "sha256": "4a668fe8be5e3e1df4a4be9ad1f63a3e3b18923af6c44cc7424fe2931e810d7d",
+          "matches": [
+            {
+              "pattern": "LIL_OIT_RETURN",
+              "lines": [
+                620
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": ""
+    },
+    {
+      "id": "rtgi.sky-exclusion",
+      "area": "RTGI sky exclusion",
+      "status": "pass",
+      "description": "RTGI exposes explicit excluded material inputs and forwards them to the ray scene synchronizer.",
+      "evidence": [
+        {
+          "file": "Runtime\\RTGI\\HoRTGISettings.cs",
+          "sha256": "267fad96a9bfb24e226e4a56e1476d1597d638457cd52ba876e82b568a28ba5c",
+          "matches": [
+            {
+              "pattern": "excludedRayMaterials",
+              "lines": [
+                29
+              ]
+            },
+            {
+              "pattern": "includeDirectEnvironment",
+              "lines": [
+                25
+              ]
+            },
+            {
+              "pattern": "useEnvironment",
+              "lines": [
+                23
+              ]
+            }
+          ]
+        },
+        {
+          "file": "Runtime\\RTGI\\HoRTGIRendererFeature.cs",
+          "sha256": "088c0f26d5860520544918104066b64a8bea7cd18f850afddb840254ba6063cf",
+          "matches": [
+            {
+              "pattern": "new HoRTViewRequest\\([^\\n]*settings\\.excludedRayMaterials",
+              "lines": [
+                72
+              ]
+            },
+            {
+              "pattern": "useEnvironment",
+              "lines": [
+                107,
+                174,
+                179,
+                188,
+                243,
+                269,
+                276,
+                372
+              ]
+            },
+            {
+              "pattern": "includeDirectEnvironment",
+              "lines": [
+                174,
+                179,
+                188,
+                276
+              ]
+            }
+          ]
+        },
+        {
+          "file": "Runtime\\RT\\HoRTScene.cs",
+          "sha256": "cdba6fd6bb143c0f1d9d9a8fac236596ab6d23d95d8d0af739c5b05209a7057e",
+          "matches": [
+            {
+              "pattern": "excludedMaterials",
+              "lines": [
+                109,
+                117,
+                118
+              ]
+            },
+            {
+              "pattern": "excluded\\.Contains",
+              "lines": [
+                132,
+                160,
+                175
+              ]
+            },
+            {
+              "pattern": "excluded by material filter",
+              "lines": [
+                176
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": ""
+    },
+    {
+      "id": "rtgi.material-domain",
+      "area": "Ray material domain",
+      "status": "pass",
+      "description": "GI adapters preserve source properties while rejecting unsupported animated/parallax material domains.",
+      "evidence": [
+        {
+          "file": "Runtime\\RTGI\\HoRTGISecondaryMaterials.cs",
+          "sha256": "7c0f01519bd102909af7adcb8edd8e9e5d1795b38c2a9109a60d23d5a14805cb",
+          "matches": [
+            {
+              "pattern": "CopyPropertiesFromMaterial",
+              "lines": [
+                50
+              ]
+            },
+            {
+              "pattern": "HoRTCutoutSupport\\.Supports",
+              "lines": [
+                24,
+                56,
+                62
+              ]
+            },
+            {
+              "pattern": "remains opaque to RT",
+              "lines": [
+                57
+              ]
+            }
+          ]
+        },
+        {
+          "file": "Runtime\\RTGI\\Shaders\\HoRTGISecondaryMaterial.hlsl",
+          "sha256": "b2783aa471ecf527001c7c72595e1bf90ac8dbfb6446efe07966644b329d9b52",
+          "matches": [
+            {
+              "pattern": "perceptualRoughness\\s*=\\s*saturate\\(1-smoothness\\)",
+              "lines": [
+                130
+              ]
+            },
+            {
+              "pattern": "metallic\\s*=\\s*saturate",
+              "lines": [
+                131
+              ]
+            },
+            {
+              "pattern": "reflectance\\s*=\\s*saturate",
+              "lines": [
+                131
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": ""
+    },
+    {
+      "id": "ray.surface-material",
+      "area": "Ray material domain",
+      "status": "pass",
+      "description": "Primary ray surface reads SB material channels as perceptual roughness/metallic and validates finite data.",
+      "evidence": [
+        {
+          "file": "Runtime\\RT\\Shaders\\HoRTPrimarySurface.hlsl",
+          "sha256": "682cb34f549394edc44c0e123f8471e5c68a42135614e2c7d98e267bcc96949b",
+          "matches": [
+            {
+              "pattern": "value\\.perceptualRoughness\\s*=\\s*material\\.r",
+              "lines": [
+                71
+              ]
+            },
+            {
+              "pattern": "value\\.metallic\\s*=\\s*material\\.g",
+              "lines": [
+                71
+              ]
+            },
+            {
+              "pattern": "value\\.reflectance\\s*=\\s*SAMPLE_TEXTURE2D_X_LOD",
+              "lines": [
+                72
+              ]
+            },
+            {
+              "pattern": "HoRTPrimaryFinite3",
+              "lines": [
+                40,
+                76,
+                77,
+                78
+              ]
+            }
+          ]
+        },
+        {
+          "file": "Runtime\\RT\\HoRTPrimarySurfaceInputs.cs",
+          "sha256": "f91b4f901c0c4032680f510262af551069538846e286b75c032a4c82ddaa1d14",
+          "matches": [
+            {
+              "pattern": "materialTexture",
+              "lines": [
+                36,
+                45,
+                57,
+                94,
+                108,
+                117
+              ]
+            },
+            {
+              "pattern": "reflectionTexture",
+              "lines": [
+                36,
+                45,
+                57,
+                95,
+                109,
+                117
+              ]
+            },
+            {
+              "pattern": "attributes",
+              "lines": [
+                45,
+                54,
+                60,
+                62,
+                116,
+                121
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": ""
+    },
+    {
+      "id": "plr.material-gate",
+      "area": "PLR/reflection",
+      "status": "pass",
+      "description": "PLR composite derives smoothness from perceptual roughness and gates by metallic/F0/strength.",
+      "evidence": [
+        {
+          "file": "Runtime\\PlanarReflection\\HoPlanarReflectionComposite.shader",
+          "sha256": "0b63c1b08be8cf67824a80e6caaf8168ed7ffc254d377d0a1b2778b6f10e6265",
+          "matches": [
+            {
+              "pattern": "perceptualRoughness",
+              "lines": [
+                74,
+                86,
+                87,
+                98,
+                162,
+                171
+              ]
+            },
+            {
+              "pattern": "smoothness\\s*=\\s*1\\.0h\\s*-\\s*perceptualRoughness",
+              "lines": [
+                87
+              ]
+            },
+            {
+              "pattern": "metallic",
+              "lines": [
+                74,
+                75,
+                88,
+                99,
+                164,
+                165
+              ]
+            },
+            {
+              "pattern": "reflectance",
+              "lines": [
+                74,
+                76,
+                89,
+                100,
+                164,
+                165
+              ]
+            }
+          ]
+        },
+        {
+          "file": "Runtime\\PlanarReflection\\HoPlanarReflectionRendererFeature.cs",
+          "sha256": "9d78860bda1fbbeb1db1744ad3f423ccfc59c2376c4439770b947aa418deef7c",
+          "matches": [
+            {
+              "pattern": "minSmoothness",
+              "lines": [
+                68,
+                342,
+                410
+              ]
+            },
+            {
+              "pattern": "_UsePlanarReflection",
+              "lines": [
+                376
+              ]
+            },
+            {
+              "pattern": "reflectionMaterial",
+              "lines": [
+                367,
+                534,
+                663,
+                664,
+                672,
+                676,
+                712,
+                727
+              ]
+            }
+          ]
+        },
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\Includes\\lil_common_frag.hlsl",
+          "sha256": "9fc634df0db84dc32e47972b52692213bd3687cd60ede5f6fd9da360bdbcb37d",
+          "matches": [
+            {
+              "pattern": "_UsePlanarReflection",
+              "lines": [
+                1978
+              ]
+            },
+            {
+              "pattern": "_PlanarReflectionStrength",
+              "lines": [
+                1978,
+                2031
+              ]
+            },
+            {
+              "pattern": "smoothnessFade",
+              "lines": [
+                1991,
+                1992,
+                2031
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": ""
+    },
+    {
+      "id": "apv.variant",
+      "area": "APV/probe",
+      "status": "pass",
+      "description": "Generated lilToon Standard and Cutout shaders include URP probe-volume variants and runtime APV sampling exists.",
+      "evidence": [
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\lts.shader",
+          "sha256": "96b518bd2c93f6e22aa2e886de3f0f7f2f5e8b922486af5f3f14567e1493a376",
+          "matches": [
+            {
+              "pattern": "ProbeVolumeVariants\\.hlsl",
+              "lines": [
+                777
+              ]
+            },
+            {
+              "pattern": "_REFLECTION_PROBE_BLENDING",
+              "lines": [
+                767
+              ]
+            }
+          ]
+        },
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\lts_cutout.shader",
+          "sha256": "e5989f238fec205746ca57395b2d055d4889bf6319eeb161d5a41d2cc07f3b75",
+          "matches": [
+            {
+              "pattern": "ProbeVolumeVariants\\.hlsl",
+              "lines": [
+                777
+              ]
+            },
+            {
+              "pattern": "_REFLECTION_PROBE_BLENDING",
+              "lines": [
+                767
+              ]
+            }
+          ]
+        },
+        {
+          "file": "D:\\Unity_Fork\\lilToon\\Assets\\lilToon\\Shader\\Includes\\lil_common_functions.hlsl",
+          "sha256": "9bc82ffcd400b11f08484f6c694a6c31a4b9e4e1f6aa8470982c8fa1abe9b472",
+          "matches": [
+            {
+              "pattern": "SampleAPV",
+              "lines": [
+                1062,
+                1114
+              ]
+            },
+            {
+              "pattern": "PROBE_VOLUMES_L1",
+              "lines": [
+                1049,
+                1067
+              ]
+            },
+            {
+              "pattern": "lilGetLightColorDoubleAPV",
+              "lines": [
+                1128
+              ]
+            }
+          ]
+        },
+        {
+          "file": "Runtime\\Debug\\Shaders\\HoDebugTile.shader",
+          "sha256": "af0925923faf699e7913627c2329aa2723b5771ff0e242e8dfdea5b502b1343d",
+          "matches": [
+            {
+              "pattern": "SampleAPV",
+              "lines": [
+                121,
+                142
+              ]
+            },
+            {
+              "pattern": "EvaluateAdaptiveProbeVolume",
+              "lines": [
+                138
+              ]
+            },
+            {
+              "pattern": "APV_SAMPLE_STATUS_INVALID",
+              "lines": [
+                44,
+                69,
+                125,
+                130
+              ]
+            }
+          ]
+        }
+      ],
+      "caveat": ""
+    },
+    {
+      "id": "gpu.transparent-cutout",
+      "area": "GPU qualification",
+      "status": "unverified",
+      "description": "Render a real lilToon opaque/transparent/cutout/OIT matrix and inspect depth, coverage, ordering and shadow outputs.",
+      "evidence": [],
+      "caveat": "UNVERIFIED here: requires Unity 6000.3.x, URP renderer, D3D12 and actual GPU readback."
+    },
+    {
+      "id": "gpu.rtgi-sky",
+      "area": "GPU qualification",
+      "status": "unverified",
+      "description": "Toggle an excluded sky shell and compare RTGI sky radiance while preserving raster output.",
+      "evidence": [],
+      "caveat": "UNVERIFIED here: source path proves the filter exists, not that the configured material is present or the result is visually correct."
+    },
+    {
+      "id": "gpu.plr-probe",
+      "area": "GPU qualification",
+      "status": "unverified",
+      "description": "Probe PLR with metallic/smoothness extremes and verify reflection probe/APV debug views in Frame Debugger.",
+      "evidence": [],
+      "caveat": "UNVERIFIED here: requires a baked/loaded probe volume and reflection capture; static source cannot prove resource validity."
+    }
+  ]
+}
