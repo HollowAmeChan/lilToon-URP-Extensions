@@ -8,12 +8,18 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.Rendering;
 
-// Project-local authoring queue. Only this project and a fixed scene-building entry point
-// are handled; requests/results are kept under Library, never among scene resources.
+// Explicit authoring/review requests for the project where these tools are installed.
+// Nothing reapplies recipes or audits scenes in the background.
 [InitializeOnLoad]
 public static class HoMmdStageWork
 {
-    [Serializable] public sealed class Request { public string id; public string action; public string stage; public int width=1280; public int height=720; public int view; }
+    [Serializable] public sealed class Request
+    {
+        public string id, action, stage, scenePath, stageFolder, outputPath, logoPath;
+        public string[] pmxPaths;
+        public int width=1280, height=720, view, warmup=16;
+        public float logoY=.1f, logoSize=.3f;
+    }
     [Serializable] public sealed class SceneInfo { public string path; public string name; public bool dirty; }
     [Serializable] public sealed class Status { public string time; public string project; public bool compiling; public bool playing; public string activeScene; public SceneInfo[] scenes; public string pipeline; public string graphics; }
     [Serializable] public sealed class Response { public string id; public string status; public string message; public string result; }
@@ -31,7 +37,6 @@ public static class HoMmdStageWork
     {
         if(EditorApplication.timeSinceStartup<next || busy) return;
         next=EditorApplication.timeSinceStartup+1;
-        if(!Application.dataPath.Replace('\\','/').EndsWith("/BREAK_URP/Assets",StringComparison.OrdinalIgnoreCase))return;
         Directory.CreateDirectory(Work);
         var scenes=Enumerable.Range(0,SceneManager.sceneCount).Select(i=>SceneManager.GetSceneAt(i))
             .Select(s=>new SceneInfo{path=s.path,name=s.name,dirty=s.isDirty}).ToArray();
@@ -50,13 +55,25 @@ public static class HoMmdStageWork
             File.Move(request,Path.Combine(Work,"running.json"));
             if(command.action=="render")
             {
-                HoMmdStageBuilder.BeginRender(command,path=>Complete(command,"ok",path,null),
+                if(!string.IsNullOrEmpty(command.scenePath))
+                    HoMmdSceneWorkshop.RenderOne(command,path=>Complete(command,"ok",path,null),
+                        error=>Complete(command,"error",null,error.ToString()));
+                else HoMmdStageBuilder.BeginRender(command,path=>Complete(command,"ok",path,null),
+                    error=>Complete(command,"error",null,error.ToString()));
+                deferred=true;return;
+            }
+            if(command.action=="review")
+            {
+                HoMmdSceneWorkshop.Review(command,path=>Complete(command,"ok",path,null),
                     error=>Complete(command,"error",null,error.ToString()));
                 deferred=true;return;
             }
             string result;
             if(command.action=="refresh"){AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);result="refreshed";}
             else if(command.action=="status")result=File.ReadAllText(Path.Combine(Work,"status.json"));
+            else if(command.action=="logo")result=HoMmdStageBranding.SetLogos(
+                string.IsNullOrEmpty(command.stageFolder)?"Assets/mmd场景测试":command.stageFolder,command.logoY,command.logoSize);
+            else if(command.action=="create")result=HoMmdSceneWorkshop.Create(command);
             else
             {
                 Type type=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("HoMmdStageBuilder")).FirstOrDefault(x=>x!=null);

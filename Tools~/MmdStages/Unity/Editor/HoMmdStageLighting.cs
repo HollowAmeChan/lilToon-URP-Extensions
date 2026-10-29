@@ -346,7 +346,7 @@ public static class HoMmdStageLighting
         image.layers.value.Add(new ImageProcessLayer{name="电影画幅 · "+(look.whiteFrame?"白边":"黑边"),effect=ImageProcessEffect.CinematicBars,
             color=look.whiteFrame?Color.white:Color.black,parameters0=new Vector4(look.frameAspect,0,0,0)});
         image.layers.value.Add(new ImageProcessLayer{name="Hollow · 底部正中",effect=ImageProcessEffect.LogoOverlay,
-            color=look.whiteFrame?Color.black:Color.white,logoTexture0=texture,parameters0=new Vector4(.5f,.08f,.15f,1),
+            color=look.whiteFrame?Color.black:Color.white,logoTexture0=texture,parameters0=new Vector4(.5f,HoMmdStageBranding.DefaultY,HoMmdStageBranding.DefaultSize,1),
             parameters8=new Vector4(0,1,2,3),parameters9=new Vector4(4,5,6,7),parameters10=Vector4.one,parameters11=Vector4.one,
             parameters12=new Vector4(-12347,0,0,0)});
     }

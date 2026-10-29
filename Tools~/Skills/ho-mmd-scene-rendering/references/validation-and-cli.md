@@ -1,61 +1,59 @@
-# Unity CLI and evidence
+# CLI 制作与多角度渲染 review
 
-## Capture
+默认：改需要的内容 → 渲图 → 看图 → 继续调。无需匹配旧 H2CU 配方、固定效果清单或资产哈希，不默认跑全场景审计。
 
-Use Unity 6000.3.15f1 with D3D12 for ray scenes. Do not launch two Editors for BREAK_URP. Prefer an execute method that performs authoring, returns to `Assets/Hollow/WTD-summer/WTD.unity`, then schedules `HoMmdStageBuilder.BeginRender` through `EditorApplication.delayCall`. Do not pass `-quit` to an async capture entry; Unity can exit before the queued callback. Capture runs need a graphics device, so do not pass `-nographics` when rendering PNGs; use `-nographics` only for authoring or audit passes that never submit a frame.
+## 工程打开：文件队列
 
-## Renderer feature dependency and Scene View preview
-
-For the fixed PC renderer, follow the pipeline overview's list order:
-
-`GeometryData → Ho-RT → CharacterShadow → ShadowCast → Atmosphere → PLR → GeometryBuffer → ObjectBuffer → SurfaceBuffer → RTShadow → AC → GTAO → …`.
-
-Feature list order differs from execution order: PLR's source is generated in the early camera callback; debug/composite executes after GB/OB/SB/AC. Opaque ForwardLit needs its per-renderer source and material settings. Material debug/composite additionally requires AC and a nonzero OB identity on each receiver (`tags=None` for scenery). `HoMmdPlrRepair.RunBatch` fills missing receiver identities without editing renderer assets, profiles, lights or materials. Use `HoMmdSharedRenderAssets` for the canonical renderer structure; the older `HoMmdFeatureRepair` ordering is superseded.
-
-Use `HoMmdPlrValidation.Run -hoStage 孔雀月令 -plrMode on`, then `off` and `debug`, with graphics enabled and without `-quit`. Outputs go under `Library/HoMmdStages/PLR-validation/<stage>/`. Compare the same camera and original material parameters. Inspect source mip 0 and mips 1–3, not just runtime `Ready`. Debug also runs a constant-HDR GPU test through the shipping prefilter: mip 1+ must preserve `(2,.5,.25)` within .025 per channel. `RunReview -hoStages 孔雀月令,花吐电気` refreshes three authored views without rerunning light authoring.
-
-Capture with StandardRequest across warmup frames (32 in this project), then read back the HDR render target asynchronously and encode PNG once. For each stage capture:
-
-- main camera
-- left observation camera
-- right observation camera
-
-Store `<stage>_主视角.png`, `<stage>_左侧视角.png`, `<stage>_右侧视角.png` and `三机位总览.jpg` under that stage’s Renders folder. Store runtime per-view state under `Library/HoMmdStages`.
-
-## Audit gates
-
-`HoMmdStageAudit.RunBatch` must report `errors=[]` for all authored scenes (27 in the current H2CU set). Check:
-
-- fixed PC Pipeline/Renderer references, plus stage-owned Volume/profile dependencies
-- all model renderers have ShadowCaster and receive shadows
-- Ho lilToon/sky shaders only, with no missing shaders
-- one atmosphere region, camera post processing and sky sphere
-- DoF, cinematic bars, centered Hollow Logo and opposite border/logo colors
-- AO art coverage equals eligible material count
-- at least one 1024 PLR surface per scene
-- active Object Buffer and Attribute Composite features, with the PLR source before GeometryBuffer and receiver identities present for debug/composite
-- PLR Scene View preview enabled both on the feature and on every surface
-- RTGI active, Ho RT host before RTGI, sky excluded
-- active SSGI feature and SSGI volume counts are zero; an inactive SSGI RendererFeature placeholder may remain for inspector discoverability
-- three review cameras and no screen-center illumination layers after the world-light pass
-
-## Source and visual verification
-
-Use `Tools~/MmdStages/verify-detail-lighting.py` after final captures. It checks the current capture count (81 images for the 27-scene H2CU set), 1280×720 dimensions, per-view RTGI output, `HD：独立光源遮挡` local volume status, three distinct camera positions, source hashes and unchanged unrelated scene hashes. Keep the resulting `Temp~/MmdStages/DetailLighting-20261029/final-detail-delivery.json` or the replacement-stage report with the scene index.
-
-When replacing a stage package, archive the prior prop-only scene state under a task evidence folder before modifying it. Verify the replacement scene’s own PMX report, extracted material folder, relative texture paths, view captures, PLR count and RTGI state.
-
-## Useful commands
+同步 Tools~/MmdStages/Unity/Editor 到项目 Assets/mmd场景测试/_制作工具/Editor。现有队列可以触发编译：
 
 ```powershell
-python Tools~/MmdStages/prepare-stage-sources.py --evidence Temp~/MmdStages/source-copy.json
-python Tools~/MmdStages/verify-detail-lighting.py
+python Tools~/MmdStages/stage-cli.py status
+python Tools~/MmdStages/stage-cli.py refresh
 ```
 
-```text
--batchmode -force-d3d12 -projectPath D:\Unity_Project\BREAK_URP
--executeMethod HoMmdStageDetail.Run
+请求/结果在 Library/HoMmdStages。一次一个任务；超时只代表观察超时，先看 status/running/capture-status，不直接重复提交或启动第二个同项目 Editor。--project 可指定其他安装了队列的工程。
+
+## 定点修改 Logo
+
+```powershell
+python Tools~/MmdStages/stage-cli.py logo --logo-y .1 --logo-size .3
+python Tools~/MmdStages/stage-cli.py logo --folder "Assets/mmd场景测试/作者/新场景" --logo-y .1 --logo-size .3
 ```
 
-Use `-hoStages Name1,Name2` to limit a pass, `-hoApplyOnly 1` to apply without capture, and `-hoWidth 960 -hoOutputSuffix preview` for quick previews. Never treat an observation timeout as a failed capture; inspect the actual Unity PID, log and `capture-status.json` first.
+只改找到的 Hollow 图层 Y/size；保留 X、颜色、贴图、启用状态与其他滤镜。不打开/重建场景，只保存目标 Volume。后续想变尺寸时显式运行，不在每次渲图时强制恢复。
 
+## 只渲染当前效果
+
+```powershell
+python Tools~/MmdStages/stage-cli.py render --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --width 1280 --height 720 --warmup 16
+python Tools~/MmdStages/stage-cli.py review --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --width 1280 --height 720 --warmup 32
+```
+
+单张使用 MainCamera。review 使用主机位、左侧观察相机、右侧观察相机，先在 Unity 按空间摆好；starter 创建初始机位。输出默认 Library/HoMmdStages/Review/<场景>/<时间>/main.png,left.png,right.png，不覆盖正式渲图。单张 --output 传 PNG 文件，review --output 传目录。
+
+不调用调灯配方，不改 Volume，不强制 GI/雾/滤镜，默认关闭依赖旧 H2CU 层级的 diagnostics。采用 URP StandardRequest、跨帧预热与 HDR GPU 读回，没有 Environment 组件也可以渲染普通 URP 场景。
+
+捕获需要切场景时，先保存当前场景。工具拒绝自动保存/丢弃你的编辑，完成后恢复布局与管线；这是防止丢修改，不是审查艺术参数。活 Editor 的文件队列渲图会占用该 Editor 一段时间。真正隐藏批处理在工程关闭时运行。
+
+review 按需求看主体照明、亮部层次、地板/远景可读性、阴影和光束落点、侧面可读性、调色/景深的角度稳定性。发现问题只修对应灯、材质或图层，不要求固定机位数作为完成条件。
+
+## 工程关闭：隐藏批处理
+
+请求 JSON 示例：
+
+```json
+{"action":"review","scenePath":"Assets/mmd场景测试/作者/新场景/新场景.unity","width":1280,"height":720,"warmup":32}
+```
+
+```powershell
+$editor = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe'
+Start-Process -FilePath $editor -WindowStyle Hidden -ArgumentList @('-batchmode','-force-d3d12','-projectPath','D:/Unity_Project/BREAK_URP','-executeMethod','HoMmdSceneWorkshop.RunBatch','-hoRequest','D:/Requests/review.json','-logFile','D:/Requests/review.log')
+```
+
+捕获不带 -quit 或 -nographics，异步任务完成后入口自行退出。D3D12 用于 RTGI/DXR。create、logo 也支持 JSON 入口。
+
+## 可选排错
+
+缺图/透明异常查单个 PMX report 与材质；反射异常才跑 PLR debug/on-off/mip；体积异常查对应 Source/Volume；怀疑底层依赖才看管线总览，不批量重置共享 Renderer。
+
+HoMmdStageAudit.RunBatch、verify-detail-lighting.py、旧 source/hash manifests 与固定机位数量属于早期批量制作的可选回归工具，不再是日常完成条件。只有明确复现旧批次、查回归、验证底层改动时才选用需要的部分。

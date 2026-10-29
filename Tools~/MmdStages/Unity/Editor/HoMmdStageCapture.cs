@@ -21,7 +21,8 @@ public static class HoMmdStageCapture
     public static string Status => session != null ? session.status : "空闲";
 
     public static void Begin(string scenePath, string outputPath, int width, int height,
-        Action<string> completed, Action<Exception> failed, Action<Camera> configure = null, int warmupFrames = 4)
+        Action<string> completed, Action<Exception> failed, Action<Camera> configure = null, int warmupFrames = 4,
+        bool legacyDiagnostics = false)
     {
         if (Busy) throw new InvalidOperationException("已有 MMD 场景截帧正在执行。");
         if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating)
@@ -38,7 +39,7 @@ public static class HoMmdStageCapture
                 throw new InvalidOperationException("检测到未保存场景，截帧不会自动保存或丢弃它：" + loaded.name);
 
         var next = new Session(scenePath, outputPath, width, height, completed, failed, configure,
-            Mathf.Clamp(warmupFrames, 1, 32));
+            Mathf.Clamp(warmupFrames, 1, 128), legacyDiagnostics);
         session = next;
         try { next.Start(); }
         catch (Exception error) { next.Finish(error); }
@@ -57,6 +58,7 @@ public static class HoMmdStageCapture
         private readonly Action<string> completed;
         private readonly Action<Exception> failed;
         private readonly Action<Camera> configure;
+        private readonly bool legacyDiagnostics;
         private readonly SceneSetup[] previousSetup;
         private readonly RenderPipelineAsset previousPipeline;
         private readonly double began;
@@ -74,13 +76,14 @@ public static class HoMmdStageCapture
         internal string status;
 
         internal Session(string scenePath, string outputPath, int width, int height,
-            Action<string> completed, Action<Exception> failed, Action<Camera> configure, int warmupFrames)
+            Action<string> completed, Action<Exception> failed, Action<Camera> configure, int warmupFrames, bool legacyDiagnostics)
         {
             this.scenePath = scenePath;
             this.outputPath = Path.GetFullPath(outputPath);
             this.width = width; this.height = height;
             this.completed = completed; this.failed = failed; this.configure = configure;
             this.warmupFrames = warmupFrames;
+            this.legacyDiagnostics = legacyDiagnostics;
             previousSetup = EditorSceneManager.GetSceneManagerSetup();
             previousPipeline = QualitySettings.renderPipeline;
             began = EditorApplication.timeSinceStartup;
@@ -98,8 +101,6 @@ public static class HoMmdStageCapture
             var roots = captureScene.GetRootGameObjects();
             stageReflectionSurfaces=roots.SelectMany(x=>x.GetComponentsInChildren<lilToon.URP.Extensions.PlanarReflection.HoPlanarReflectionSurface>()).Count(x=>x.enabled);
             environment = roots.SelectMany(x => x.GetComponentsInChildren<HoMmdStageEnvironment>(true)).FirstOrDefault(x => x.isActiveAndEnabled);
-            if (environment == null || environment.pipeline == null)
-                throw new InvalidOperationException("场景缺少有效的 HoMmdStageEnvironment/pipeline。");
             camera = roots.SelectMany(x => x.GetComponentsInChildren<Camera>(true))
                 .Where(x => x.gameObject.activeInHierarchy)
                 .OrderByDescending(x => x.CompareTag("MainCamera")).ThenBy(x => x.depth).FirstOrDefault();
@@ -118,7 +119,7 @@ public static class HoMmdStageCapture
             };
             if (!target.Create()) throw new InvalidOperationException("无法创建截帧 RenderTexture。");
             camera.targetTexture = target;
-            environment.ApplyNow();
+            environment?.ApplyNow();
             phase = Phase.Settle;
             status = "等待场景与渲染管线切换";
             EditorApplication.update += Tick;
@@ -147,8 +148,9 @@ public static class HoMmdStageCapture
                 {
                     case Phase.Settle:
                         if (++ticks < 3) break;
-                        if (GraphicsSettings.currentRenderPipeline != environment.pipeline ||
-                            QualitySettings.renderPipeline != environment.pipeline)
+                        if (environment != null && environment.pipeline != null &&
+                            (GraphicsSettings.currentRenderPipeline != environment.pipeline ||
+                            QualitySettings.renderPipeline != environment.pipeline))
                             throw new InvalidOperationException("活动渲染管线不匹配场景配置。");
                         var request = new RenderPipeline.StandardRequest { destination = target };
                         if (!RenderPipeline.SupportsRenderRequest(camera, request))
@@ -162,6 +164,10 @@ public static class HoMmdStageCapture
                         lastFrame = Time.frameCount;
                         var warmup = new RenderPipeline.StandardRequest { destination = target };
                         RenderPipeline.SubmitRenderRequest(camera, warmup);
+                        // Historical H2Cu diagnostics assume specific fog/features/hierarchy.
+                        // Ordinary review accepts the artist's current scene as authored.
+                        if (legacyDiagnostics)
+                        {
                         HoMmdStageLighting.RecordRenderState(camera,scenePath,frames+1);
                         HoMmdStageAdvanced.Record(camera,frames+1);
                         HoMmdStageDetail.Record(camera,frames+1);
@@ -180,6 +186,7 @@ public static class HoMmdStageCapture
                             "\",\"surfaces\":"+stageReflectionSurfaces+",\"targetSrgb\":"+target.sRGB.ToString().ToLowerInvariant()+
                             ",\"exposure\":"+adjustments.postExposure.value.ToString(System.Globalization.CultureInfo.InvariantCulture)+
                             ",\"bloom\":"+bloom.intensity.value.ToString(System.Globalization.CultureInfo.InvariantCulture)+"}");
+                        }
                         if (renderError != null) throw new InvalidOperationException("渲染报告错误：" + renderError);
                         status = "预热 " + (++frames) + "/" + warmupFrames;
                         if (frames >= warmupFrames)

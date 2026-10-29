@@ -1,5 +1,19 @@
 # H2Cu 场景本地资源准备
 
+## 当前制作入口
+
+日常制作改用 [Ho PMX 场景制作 skill](../Skills/ho-mmd-scene-rendering/SKILL.md)：新 PMX 导入/抽材质、创建初始层级、定点调整灯光/Volume、只渲染多角度 review。手工场景是当前版本，不每次跑旧全场景审计或恢复配方。下文的固定批次验收和全量哈希是历史记录，不作为日常门槛。
+
+```powershell
+python Tools~/MmdStages/stage-cli.py create --folder "Assets/mmd场景测试/作者/新场景" --pmx "Assets/mmd场景测试/作者/新场景/Source/原始包/主体.pmx"
+python Tools~/MmdStages/stage-cli.py logo --logo-y .1 --logo-size .3
+python Tools~/MmdStages/stage-cli.py review --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --warmup 32
+```
+
+先将完整包保持相对贴图路径复制进 Source。create 不覆盖已有场景；review 不调用制作配方，默认把三机位 PNG 写入 Library/HoMmdStages/Review/<场景>/<时间>。单张使用 render --scene，Logo 默认 Y=.1、大小=.3。只保存目标 Logo Profile，不顺手保存用户场景。任意场景 review 入口不要求固定雾、GI、景深、灯数、天空或材质参数。
+
+旧的 StageDetail/Lighting/Advanced/Remaining 会重新应用早期艺术配方，仅在明确需要重置该配方时调用。新通用入口为 HoMmdSceneWorkshop、HoMmdStageBranding，捕获底层为 HoMmdStageCapture。
+
 PLR 像素回归与当前 CLI 入口见 [PlrRegression-20261030.md](PlrRegression-20261030.md)。场景现已共用固定 PC Renderer/Pipeline；下文早期十九场景的独立 Renderer 描述已由共享方案取代，Volume/材质/模型仍按场景独立。
 
 `prepare-stage-sources.py` 将本机已整理的十九个 H2Cu 场景及月昔梅补回包复制到 BREAK_URP 的各场景 `Source/`。保留 PMX 相对路径和作者说明，不移动源素材，不复制压缩包、Blender 中间文件或其他工程的 `.meta`。

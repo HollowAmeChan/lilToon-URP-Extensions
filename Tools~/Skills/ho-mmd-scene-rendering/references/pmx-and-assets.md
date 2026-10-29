@@ -1,25 +1,33 @@
-# PMX and asset handling
+# 新 PMX 从零搭建
 
-## Source layout
+先看作者预览与说明：主体、树/花枝、灯、地面追加可能需要组合；改色版、单独道具、重复合并版按需选择。不要把包内所有 PMX 叠在一起。
 
-Keep the original package on `E:\BaiduSyncdisk\大师\_完整场景\H2Cu阿相` read-only. Copy only the package’s supported files into `Assets/mmd场景测试/H2Cu阿相/<stage>/Source`, retaining the PMX-relative texture directories. When a package has multiple models, put the complete package in a nested source directory such as `Source/完整场景`; this avoids collisions with an older prop package and makes the source relationship explicit.
+## 文件和导入
 
-Run `python Tools~/MmdStages/prepare-stage-sources.py --evidence <report.json>` and compare SHA256 for both source and destination. If a destination differs, stop instead of overwriting an artist edit.
+推荐 `Assets/mmd场景测试/<作者>/<场景>/`，下设 Source、Materials、Rendering、Renders，场景文件放在根目录。作者/名称不依赖 H2CU 清单。
 
-## Import decisions
+复制完整原包到 Source，保留 PMX 到贴图的相对目录，不扁平化同名纹理，不复制其他 Unity 工程的 .meta。E 盘原包不需要改写。普通制作不要求反复比较全库哈希。
 
-Use `HoPmxImporter` with the scene’s scale convention (`0.08` in this project), `generateOutline=false` for static stage work, `readRayMaterials=true`, and extract editable materials using `HoPmxMaterialExtraction.Extract` into a stage-owned Materials folder. PMX material texture paths are relative to the PMX file; never flatten them into a shared global texture directory.
+PMX Inspector 使用 Ho PMX importer：本工程常用缩放 0.08，静态舞台通常关闭自动描边，按需读取 Ray 材质。检查缺图与 alpha 分类，再抽出可编辑材质到 Materials。程序入口为 HoPmxMaterialExtraction.Extract。外置材质承担后续编辑，PMX 不需要回写。
 
-The importer already maps common alpha modes and records source facts in `HoPmxImportReport`: PMX version, vertices/triangles, materials, morphs, rigid bodies, joints, soft bodies and warnings. Physics, MME effects and author preview lighting are not a reliable Unity scene. Recreate visible presentation with Ho lilToon, lights, shadow casting, local volume sources and post processing.
+PMX/MME 预览中的灯光、粒子、镜头和天空不会自动变成完整 Unity 效果，按用途重建。导入信息只在出现缺失/转换疑问时查。
 
-## Complete package example
+## 通用创建入口
 
-The recovered Yueximei package contains `月昔梅 主體.pmx`, `月昔梅 樹.pmx`, `月昔梅 花枝.pmx` and `月昔梅 燈.pmx`, plus `tex/tex21.png`, `tex/tex22.png`, `tex/tex3.png` and `tex/YUE.jpg`. It is a full courtyard, unlike the older `團扇 月昔梅.pmx` prop package. Assemble the four models under `01 场景模型`, preserve the fan as an optional disabled prop prefab, remove the temporary studio plane, and keep each source package’s relative texture tree intact.
+工程打开、队列脚本编译完成后：
 
-## What to inspect before lighting
+```powershell
+python Tools~/MmdStages/stage-cli.py create --folder "Assets/mmd场景测试/作者/新场景" --pmx "Assets/mmd场景测试/作者/新场景/Source/原始包/主体.pmx"
+```
 
-- Material names that identify floors, water, windows, glass, lamps, foliage, metal and emissive ornaments.
-- Mesh bounds and coordinate orientation. A floor’s reflection plane should use its top surface; a large wall or stray object can distort automatic camera bounds.
-- Missing texture reports and duplicate texture names across separate packages.
-- PMX components that are decorative duplicates. Do not stack every PMX in a distribution package without checking the author preview and material/geometry overlap.
+重复 --pmx 可组合部件。可选 --logo "Assets/.../Hollow Logo.png" 会复制 Logo 到 Rendering，创建黑边/白 Logo，Y=.1、大小=.3。先复制完整包到 Source；创建入口不推断外部纹理依赖，也不覆盖已有 .unity。
 
+Starter 创建 PMX 实例、外置材质、一个初始主方向光、主/左/右相机、已有 PC 管线引用、独立天空与 Volume。Bloom 轻量起步，SP/IP 堆栈用于后续加效果。不重写统一金属度，不自动开整套艺术效果。
+
+层级为 01 场景模型 / 02 灯光 / 03 相机 / 04 环境与后处理。打开新场景后重新构图：地下结构、远处散点、大墙面可能干扰自动包围盒。也可直接手工拖 PMX、放灯和相机、加 Global Volume；HoMmdStageEnvironment 可承载当前场景天空/环境。通用渲图也接受没有该组件的 URP 场景。
+
+## 开始调整
+
+先处理玻璃、窗帘、植被的透明/裁切，再处理灯芯、发光球的 Emission 与对应真实灯。金属、地板、水面的 smoothness/metallic/reflectance 按材质用途调，不统一覆盖所有材质。
+
+月昔梅的历史经验：完整庭院有主体、树、花枝、灯四个 PMX，旧团扇包只是道具。先辨认资源组成，再考虑灯光配方。

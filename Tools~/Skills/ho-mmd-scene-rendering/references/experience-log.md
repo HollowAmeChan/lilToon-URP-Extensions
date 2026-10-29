@@ -2,6 +2,12 @@
 
 This is a maintained evidence log, not a list of universal rules. Append only observations that changed a decision or were confirmed by a rendered/audit artifact. Each entry should include date, stage/subsystem, evidence path and confidence.
 
+## 2026-10-30 — artist-led editing and generic workshop
+
+The user has begun manual lighting/filter work. Existing scenes are editable art, not frozen fixtures: stop routine full-scene audits, old-hash comparisons and fixed-effect/three-camera gates. Preserve the current authored state; targeted edits and capture-only review are the normal workflow. Earlier audit records below describe historical batch work and do not impose current requirements.
+
+Hollow logo defaults are now Y=.1 and size=.3 (center X=.5), with existing contrast colors retained. The targeted editor command found 30 Hollow layers across the scene asset tree, without switching/saving the user's loaded scene. New generic tools create a starter from explicit PMX paths, edit logo fields in profiles, and render arbitrary saved scenes without H2CU recipes. See the current phase guides for commands.
+
 ## 2026-10-29 — H2Cu batch authoring
 
 - Scope: 19 independent H2Cu scenes in `BREAK_URP/Assets/mmd场景测试/H2Cu阿相`.

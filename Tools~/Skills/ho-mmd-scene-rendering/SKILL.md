@@ -1,40 +1,37 @@
 ---
 name: ho-mmd-scene-rendering
-description: Build and refine static PMX scene renders in Unity with Ho lilToon and HoURP, including local volume lights, RTGI, PLR, three-view review, and CLI evidence.
+description: Import a new static PMX stage into HoURP, extract Ho lilToon materials, build an editable scene, adjust lighting and Volume filters, and render selected cameras through CLI without reapplying authoring recipes.
 ---
 
-# Ho Mmd Scene Rendering
+# Ho PMX 场景制作与调整
 
-Use this skill when a static PMX/PMD stage must become a clean, editable HoURP scene or when an existing scene needs a lighting/render-quality pass. The normal target is `D:\Unity_Project\BREAK_URP`; use CLI and Unity batch mode, preserve the source package, and keep each stage self-contained.
+用于“新 PMX 从零搭建”“现有场景调灯、材质、滤镜”“后台多角度渲图 review”。默认工程 `D:/Unity_Project/BREAK_URP`。当前手工版本是工作起点，这是一套制作指南和动态经验库，不是固定场景验收标准。
 
-The workflow is iterative. Read only the references needed for the current phase, then add durable discoveries to [experience-log.md](references/experience-log.md) with a date, evidence path, and confidence. Do not turn a one-scene accident into a global rule without a second observation.
+## 工作方式
 
-## Required contract
+- **新建、定点修改、只渲染分开执行。** 初始场景创建后，不为预览重跑旧配方，不把用户灯光、材质、相机和滤镜恢复成历史数值。
+- 默认只处理指定场景/参数。不每次检查全体 H2CU、固定效果清单/机位数或旧哈希；历史截图不是艺术要求。遇到实际故障才调用相关诊断。
+- 使用 Ho PMX importer 和魔改 Ho lilToon，抽出材质，保持 PMX 贴图相对路径。按场景整理 Source/Materials/Rendering/Renders。默认使用已有 PC_RPAsset/PC_Renderer，通过场景 Volume、灯光、材质调效果，不顺手重置共享 Feature。
+- 用户禁用 SSGI；需要 GI 时使用 RTGI，可配 RELAX。其他效果按需求选择，不要求每场景开满。
+- 重点区域用真实光源塑形，后处理负责风格。多角度比较帮助调整，不是固定配方的通过/失败审查。
+- CLI 优先。打开的工程用文件队列；不启动第二个同项目 Editor，不丢弃未保存内容。Logo 等资产定点修改不需要切换或保存场景。
 
-- Use the project’s Ho PMX importer and Ho lilToon materials. Extract editable materials into the stage folder; preserve PMX-relative external texture layout under that stage’s `Source/` tree.
-- Treat a PMX stage as a static asset. Do not depend on an upstream PMX authoring loop. Record unsupported physics/MME information in the importer report and implement visible effects in Unity scene assets.
-- Use RTGI + RELAX when ray GI is enabled. SSGI is prohibited at runtime; the fixed shared Renderer may retain an inactive SSGI feature placeholder for inspector/debug discoverability, but no SSGI Volume or active SSGI pass is allowed.
-- Prefer world-space lights, real shadow casting, local Point/Spot HD volume lights and material emission over screen-center PostLighting or CenterColorCorrection. Screen effects may grade the image, but they must not carry the subject illumination.
-- Give every stage its own scene, Volume/profile, materials, rendering assets and evidence. The H2CU family uses the fixed project `PC_RPAsset/PC_Renderer`; do not create per-stage RendererData copies. Do not share stage model/material/Volume assets.
-- Keep the documented feature order: `GeometryData → Ho-RT → CharacterShadow → ShadowCast → Atmosphere → PLR source → GeometryBuffer → ObjectBuffer → SurfaceBuffer → RTShadow → AttributeComposite → GTAO`. Opaque ForwardLit consumes the per-renderer source directly; PLR material debug and special fullscreen composite additionally need OB identities plus GB/SB/AC. Enable Scene View preview on each surface.
-- Review at least the main camera plus left and right observation cameras. A stage is not ready from one flattering still.
-- Finish with a Unity-native audit and actual GPU captures. Evidence must include image dimensions, RTGI state, local-volume state, no-SSGI state, material/caster coverage, PLR, source hashes and unchanged unrelated stages.
-- PLR `Ready=true` is an allocation/submission check. Verify non-black roughness mips and a same-camera reflection on/off pixel difference before claiming reflection works.
+## 按当前任务阅读
 
-## Choose the phase
+| 任务 | 指南 |
+| --- | --- |
+| 资源整理、组合部件、导入/抽材质、创建起点 | [pmx-and-assets.md](references/pmx-and-assets.md) |
+| 去哪里调灯、AO、反射、体积、天空、景深、调色和 Logo | [lighting-and-rendering.md](references/lighting-and-rendering.md) |
+| CLI、只渲染、三机位、隐藏批处理、输出、按需排错 | [validation-and-cli.md](references/validation-and-cli.md) |
+| 遇到具体历史问题才查 | [experience-log.md](references/experience-log.md) |
 
-- For source selection, PMX import, relative textures or recovered multi-PMX packages, read [pmx-and-assets.md](references/pmx-and-assets.md).
-- For atmosphere, shadows, local volume lights, world-space subject lighting, AO and PLR, read [lighting-and-rendering.md](references/lighting-and-rendering.md).
-- For Unity CLI capture, three-view checks and delivery gates, read [validation-and-cli.md](references/validation-and-cli.md).
-- Before changing a workflow, search [experience-log.md](references/experience-log.md) for the stage or subsystem and append the new evidence after the change.
+## 常用循环
 
-## Working loop
+1. 看作者预览/说明，确认主体、追加件、改色版与可选件。
+2. 保留相对贴图目录导入并抽材质；用 HoMmdSceneWorkshop.Create 或手工创建初始层级。
+3. 按空间调整主/观察机位，再做主光、环境与局部补光、材质。初始包围盒相机只是起点。
+4. 按风格增加 AO、斑驳投影、局部体积、PLR、RTGI、天空与后处理；只改需要的部分。
+5. 用 render --scene 拍单张，或 review --scene 拍三机位。看构图、亮暗、过曝、远景、反射和角度稳定性，继续调整。
+6. 有可复用发现时补入指南/经验库。普通调色打灯不要求全工程审计或重新生成旧基线。
 
-1. Inventory the package and source hashes. Identify whether it is a complete stage, a prop-only package, or multiple PMX components. Keep source read-only.
-2. Build or update the scene with independent assets. Extract materials and inspect texture/alpha/normal/metallic/smoothness roles before lighting.
-3. Establish the world-space lighting composition: key, fill, rim, practicals, distant detail lights and local HD volume sources. Keep atmosphere strong only where it is part of the stage style; reduce competing global haze elsewhere.
-4. Apply Ho lilToon AO, ShadowCaster, sky, PLR, RTGI/RELAX, depth of field, grading, bars and the bottom centered Hollow logo.
-5. Capture three views across frames with StandardRequest and GPU readback. Inspect a contact sheet and individual views. Correct overexposure, unreadable distance detail, flat shadows and view-dependent center lighting.
-6. Run the native audit, source/hash audit and unrelated-scene hash check. Update the scene index and evidence report, then commit only the reusable tool/skill changes.
-
-The current durable implementation lives in `Tools~/MmdStages/Unity/Editor/HoMmdStageDetail.cs`, `HoMmdStageRemaining.cs`, `HoMmdStageAdvanced.cs`, `HoMmdStageAudit.cs`, and `HoMmdYueximeiComplete.cs`; use those as examples, not as a reason to overwrite artist edits.
+通用工具：Tools~/MmdStages/Unity/Editor 下的 HoMmdSceneWorkshop、HoMmdStageBranding、HoMmdStageCapture，以及 Tools~/MmdStages/stage-cli.py。旧 StageDetail/StageLighting/StageAdvanced/StageRemaining 是首次 H2CU 制作配方，只有明确要求重新应用配方时使用。
