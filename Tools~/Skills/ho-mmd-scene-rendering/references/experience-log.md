@@ -36,6 +36,13 @@ Use the date and a short subsystem heading. State the failed or surprising behav
 - The existing Ho paths cover Glow, Particle/Weather, atmosphere dust, local HD volume lights, PLR, RTGI+RELAX and APV-related URP plumbing. APV/reflection-probe activation and PMX-specific MME reconstruction are not proven by the source packages or this audit.
 - Evidence: `Temp~/MmdStages/EffectAudit-20261030/H2CU-HoURP-EffectGapReport.md`, `effect-inventory.json`, `author-preview-index.json`. Confidence: source inventory confirmed; effect semantics remain confidence-scored inference.
 
+## 2026-10-30 — eight additional H2CU stages
+
+- The reorganized source tree added eight independent stage packages beyond the first 19 scenes: 孔雀月令, 孔雀月令青瓷, 丝苇楼梯, 月极蝶夜礼, 虫无阶梯, 虫染阶梯, 乐园·葡萄柚 and 乐园·西瓜霜. The resulting project has 27 Unity scenes.
+- Some packages used different PMX filenames than their archive description: `场景.pmx` for both insect stairs, `主体/合并版/植物.pmx` for 丝苇楼梯, and `场景主体/吊饰/地板追加.pmx` for the two stage05-2 recolors. Confirm the actual copied filenames before building.
+- New packages may not carry an HDR sky. Copy a selected SkySeries HDR into each stage-owned Rendering folder before invoking `HdrSky`; otherwise Unity import can leave the `TextureImporter` null.
+- Evidence: `Temp~/MmdStages/H2CuInventory-20261030/new-source-copy.json`, `new-scenes-three-review.jpg`, and the 27-scene `Library/HoMmdStages/scene-audit.json`. Confidence: confirmed.
+
 ## 2026-10-30 — H2CU inventory expansion
 
 - The reorganized source tree contains 32 H2CU source packages. After the original 19 scenes and recovered complete Yueximei, eight additional independent scene packages were identified: 孔雀月令, 孔雀月令青瓷, 丝苇楼梯, 月极蝶夜礼, 虫无阶梯, 虫染阶梯, 乐园·葡萄柚 and 乐园·西瓜霜.
