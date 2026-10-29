@@ -37,6 +37,12 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static bool densityPresetsOnly;
         public static void RunDensityPresets() { densityPresetsOnly = true; Run(); }
         private static bool dustOnly;
+        private static bool localOnly;
+        public static void RunLocal()
+        {
+            Require(Application.dataPath.Replace('\\', '/').Contains("/.codex-research/LocalVolumeValidation/"), "Use the dedicated LocalVolumeValidation project");
+            localOnly = true; Run();
+        }
         public static void RunDust() { dustOnly = true; Run(); }
         private static string renderError;
         private static void CaptureError(string message, string stack, LogType type)
@@ -118,6 +124,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 EditorApplication.update -= Tick;
                 if (densityPresetsOnly) { ValidateDensityPresets(); Finish(null); return; }
                 if (dustOnly) { ValidateDust(); BeginDustTiming(); return; }
+                if (localOnly) { localSteps = ValidateLocal(); EditorApplication.update += TickLocal; return; }
                 ValidateAuthoring(); ValidateMedium(); ValidateAntialiasing(); ValidateSolar();
                 Debug.Log("[HoVolumeLightValidation] PASS: Medium GPU sampling/revision + solar shadow/cutout/offscreen/region mask/depth/inside/SSS + lifecycle; API=" + SystemInfo.graphicsDeviceType);
                 Finish(null);
@@ -337,6 +344,7 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static void Finish(Exception error)
         {
             EditorApplication.update -= Tick;
+            EditorApplication.update -= TickLocal;
             EditorApplication.update -= TickDustTiming;
             HoVolumeLightDustPass.Profiling.enableRecording = false;
             HoVolumeLightDustPass.ProfilingCameraId = 0;
@@ -357,7 +365,8 @@ namespace lilToon.URP.Extensions.VolumeLight
                 antialiasing = aaReport,
                 dust = dustReport,
                 windowReduction = results.ContainsKey("windowReduction") ? Convert.ToSingle(results["windowReduction"]) : 0 };
-            File.WriteAllText(Path.Combine(dir, (dustOnly ? "result-dust-" : densityPresetsOnly ? "result-density-presets-" : "result-") + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(report, true));
+            File.WriteAllText(Path.Combine(dir, (localOnly ? "result-local-" : dustOnly ? "result-dust-" : densityPresetsOnly ? "result-density-presets-" : "result-") + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(report, true));
+            if (localOnly) File.WriteAllText(Path.Combine(dir, "local-metrics-" + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(localReport, true));
             if (error != null) Debug.LogException(error);
             EditorApplication.Exit(error == null ? 0 : 1);
         }

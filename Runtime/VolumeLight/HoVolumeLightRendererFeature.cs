@@ -31,6 +31,7 @@ namespace lilToon.URP.Extensions.VolumeLight
         private SolarPass pass;
         private SolarDebugPass debugPass;
         private HoVolumeLightDustPass dustPass;
+        private HoVolumeLightLocalPass localPass;
         private bool registered;
         private readonly HoVolumeLightReconstruction reconstruction = new();
         private Texture2D blueNoise;
@@ -45,11 +46,13 @@ namespace lilToon.URP.Extensions.VolumeLight
         public int DustParticleCount => DustClusterCount;
         public bool DustCapacityLimited => dustPass != null && dustPass.CapacityLimited;
         public bool HasDustMaterial => dustPass != null && dustPass.HasMaterial;
+        public int LocalLightCount => localPass != null ? localPass.Count : 0;
         public void ResetHistory() => reconstruction.Dispose();
         public override void Create()
         {
             ResetHistory();
             dustPass?.Dispose(); dustPass = new HoVolumeLightDustPass();
+            localPass?.Dispose(); localPass = new HoVolumeLightLocalPass();
             pass = new SolarPass(this);
             debugPass?.ReleaseDebugResources();
             debugPass = new SolarDebugPass(pass);
@@ -66,6 +69,7 @@ namespace lilToon.URP.Extensions.VolumeLight
         private void SceneUnloaded(Scene scene) => ResetHistory();
         private void BeginCamera(ScriptableRenderContext context, Camera camera)
         {
+            localPass?.SetContext(context);
             if (!isActive) ReleaseResources();
         }
         private void ReleaseResources()
@@ -73,6 +77,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             debugPass?.ReleaseDebugResources();
             ResetHistory(); blueNoise = null;
             dustPass?.Dispose();
+            localPass?.Dispose();
             blueNoiseHandle?.Release(); blueNoiseHandle = null;
             CoreUtils.Destroy(material); material = null;
         }
@@ -99,11 +104,17 @@ namespace lilToon.URP.Extensions.VolumeLight
                 else ReleaseResources();
                 return;
             }
+            float localIntensity = volume != null && volume.intensity.overrideState ? volume.intensity.value : settings.intensity;
+            float localDistance = volume != null && volume.maxDistance.overrideState ? volume.maxDistance.value : settings.maxDistance;
+            float localG = volume != null && volume.anisotropy.overrideState ? Mathf.Clamp(HoAtmosphereRegion.Finite(volume.anisotropy.value), -.9f, .9f) :
+                settings.overrideAnisotropy ? Mathf.Clamp(HoAtmosphereRegion.Finite(settings.anisotropy), -.9f, .9f) : 2;
+            localPass.Setup(Mathf.Max(0, HoAtmosphereRegion.Finite(localIntensity)), localG, Mathf.Max(.01f, HoAtmosphereRegion.Finite(localDistance, 100)));
+            renderer.EnqueuePass(localPass);
             int main = data.lightData.mainLightIndex;
             if (main < 0 || data.lightData.visibleLights[main].lightType != LightType.Directional)
             {
-                Status = "缺少主方向光";
-                ReleaseCameraResources(data.cameraData.camera);
+                Status = "局部体积光；无主方向光";
+                reconstruction.Remove(data.cameraData.camera); dustPass.Dispose(); debugPass.ReleaseDebugResources();
                 return;
             }
             Shader shader = settings.shader != null ? settings.shader : Resources.Load<Shader>("HoVolumeLightSolarHD");
@@ -158,7 +169,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 #endif
             }
             registered = false;
-            ReleaseResources(); debugPass = null; pass = null; dustPass = null;
+            ReleaseResources(); debugPass = null; pass = null; dustPass = null; localPass = null;
         }
 
         private sealed class SolarDebugPass : HoDebugRenderPass

@@ -1,5 +1,7 @@
 # Ho-VolumeLight v0.1：太阳 HD 丁达尔
 
+Point / Spot 的 Light 挂件、SD/HD 设置、D3D12 GPU 证据与当前接入边界见[局部体积光](Ho-VolumeLight-Local.md)。太阳 HD 与共享灰尘路径保持有效。
+
 面向 HoURP 17 RenderGraph。读取固定 HoAtmosphere 的空间介质输入与场景已有主方向光，在 SDF 激活区域内显示体积光；无需逐窗添加灯。
 
 ## 使用

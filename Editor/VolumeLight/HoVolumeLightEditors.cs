@@ -14,7 +14,7 @@ namespace lilToon.URP.Extensions.Editor.VolumeLight
         {
             serializedObject.Update();
             var settings = serializedObject.FindProperty("settings");
-            EditorGUILayout.HelpBox("读取固定 HoAtmosphere 介质输入与当前主方向光；v0.1 使用 RenderGraph。", MessageType.Info);
+            EditorGUILayout.HelpBox("读取 HoAtmosphere 介质；太阳 HD 自动启用，Point / Spot 在 Light 上添加 Ho-VolumeLight 局部体积光。", MessageType.Info);
             if (LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行（兜底默认值）", "太阳 HD", RuntimeColor))
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
@@ -26,6 +26,22 @@ namespace lilToon.URP.Extensions.Editor.VolumeLight
             serializedObject.ApplyModifiedProperties();
             EditorGUILayout.HelpBox("逐相机覆盖与调试位于 Ho-VolumeLight Volume。", MessageType.Info);
             EditorGUILayout.LabelField("运行状态", ((HoVolumeLightRendererFeature)target).Status);
+            EditorGUILayout.LabelField("本相机局部光", ((HoVolumeLightRendererFeature)target).LocalLightCount.ToString());
+        }
+    }
+    [CustomEditor(typeof(HoVolumeLightSource)), CanEditMultipleObjects]
+    internal sealed class HoVolumeLightSourceEditor : UnityEditor.Editor
+    {
+        public override void OnInspectorGUI()
+        {
+            serializedObject.Update();
+            EditorGUILayout.LabelField("同步同物体 Light 的颜色、强度、范围、锥角与开关。", EditorStyles.wordWrappedMiniLabel);
+            foreach (string name in new[] { "quality", "intensity", "tint", "sourceRadius", "edgeSoftness", "stepCount", "jitter" }) EditorGUILayout.PropertyField(serializedObject.FindProperty(name));
+            var quality = serializedObject.FindProperty("quality");
+            if (quality.hasMultipleDifferentValues || quality.enumValueIndex == (int)HoVolumeLightQuality.HD)
+                foreach (string name in new[] { "shadowResolution", "shadowStrength" }) EditorGUILayout.PropertyField(serializedObject.FindProperty(name));
+            serializedObject.ApplyModifiedProperties();
+            if (targets.Length == 1) EditorGUILayout.LabelField("运行状态", ((HoVolumeLightSource)target).Status);
         }
     }
     [CustomEditor(typeof(HoVolumeLightVolume))]
