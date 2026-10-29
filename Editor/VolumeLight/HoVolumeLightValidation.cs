@@ -40,7 +40,8 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static bool localOnly;
         public static void RunLocal()
         {
-            Require(Application.dataPath.Replace('\\', '/').Contains("/.codex-research/LocalVolumeValidation/"), "Use the dedicated LocalVolumeValidation project");
+            string validationPath = Application.dataPath.Replace('\\', '/');
+            Require(validationPath.Contains("/.codex-research/LocalVolumeValidation/") || validationPath.Contains("/.codex-research/RTInputValidation/"), "Use a dedicated .codex-research validation project");
             localOnly = true; Run();
         }
         public static void RunDust() { dustOnly = true; Run(); }
@@ -414,3 +415,4 @@ namespace lilToon.URP.Extensions.VolumeLight
         }
     }
 }
+

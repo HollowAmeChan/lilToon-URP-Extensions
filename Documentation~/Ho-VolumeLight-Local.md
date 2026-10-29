@@ -35,7 +35,7 @@ HD 从光源完整范围执行独立场景剔除与阴影剔除，使用材质�
 
 ## GPU 验证结果
 
-2026-10-29，Unity 6000.3.15f1、HoURP 17.3.0、RTX 4060、D3D12 RenderGraph 实际 GPU readback 通过。测试明确关闭太阳后仍验证 Point / Spot；因此局部体积光不是借用太阳路径。结果归档在 `Tests~/VolumeLight/Local/Direct3D12.json`，侧视证据图在 `Documentation~/Images/VolumeLight-Local-Preview.png`。
+2026-10-29，Unity 6000.3.15f1、HoURP 17.3.0、RTX 4060，D3D11 / D3D12 RenderGraph 实际 GPU readback 均通过。测试明确关闭太阳后仍验证 Point / Spot；因此局部体积光不是借用太阳路径。结果归档在 `Tests~/VolumeLight/Local/Direct3D11.json` 与 `Direct3D12.json`，侧视证据图在 `Documentation~/Images/VolumeLight-Local-Preview.png`。
 
 | 检查 | 结果 |
 | --- | --- |
@@ -49,6 +49,6 @@ HD 从光源完整范围执行独立场景剔除与阴影剔除，使用材质�
 | 相机与采样路径 | 相机进入光锥、正交、半分辨率、MSAA4 均通过 |
 | 动态大气 | Texture3D 密度流动已保存 `spot-side-flow.png`；局部片元读取共享世界介质 |
 
-D3D11 专用复制工程在本机 Unity 启动导入阶段退出，未进入 `RunLocal`，因此没有伪造 D3D11 局部光结果；启动日志为 `Tests~/VolumeLight/Local/D3D11-startup-retry.log`。同一 worktree 的太阳 HD D3D11 历史验证仍可用，但不能替代局部光 API 的 D3D11 证明。
+D3D11 复用此前已完成导入的 `RTInputValidation` Library，并只替换扩展包路径到当前 worktree；这样绕过了全新复制工程的启动导入退出。D3D11 局部光和太阳回归的独立结果分别为 `Direct3D11.json` 与 `Solar-Regression-Direct3D11.json`。最初失败的全新工程启动日志仍保留在 `D3D11-startup-retry.log`，作为环境诊断，不作为功能证据。
 
 ![局部光聚光灯、Cutout、Texture3D 和点光证据](Images/VolumeLight-Local-Preview.png)

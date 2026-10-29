@@ -1,0 +1,19 @@
+{
+    "passed": true,
+    "spotMean": 0.022549884393811227,
+    "spotShadowReduction": 1.0,
+    "cutoutContrast": 1.0,
+    "pointMean": 0.6639431118965149,
+    "rangeRatio": 0.2342541515827179,
+    "linearityError": 1.6520219503490808e-7,
+    "depthLeak": 0.0,
+    "twoLightRatio": 1.0,
+    "pointFaceReduction": [
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0,
+        1.0
+    ]
+}

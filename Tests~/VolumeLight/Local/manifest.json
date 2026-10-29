@@ -5,7 +5,7 @@
   "entry": "lilToon.URP.Extensions.VolumeLight.HoVolumeLightValidation.RunLocal",
   "api": "Direct3D12",
   "d3d12": "PASS; actual GPU readback; Point and Spot fixture",
-  "d3d11": "Unavailable in this host: isolated LocalVolumeValidationD3D11 Unity process exits during startup/import before RunLocal; no GPU assertion result. See D3D11-startup-retry.log.",
+  "d3d11": "PASS; actual GPU readback; reused RTInputValidation Library with worktree package path; Point/Spot local and solar regression",
   "checks": [
     "Point and Spot without a directional sun",
     "Light intensity/color/range/spot-angle synchronization",
@@ -25,7 +25,9 @@
     "Runtime/VolumeLight/Resources/HoVolumeLightLocal.shader": "07caf814114ebb6231cacabe034eac4cc43b5b26bc579dbf09194cb8fe2314ff",
     "Runtime/VolumeLight/HoVolumeLightRendererFeature.cs": "9af4e328a707d32ba78b9afe08d98f9dc389a36de752e65ef74bc517afba3d67",
     "Editor/VolumeLight/HoVolumeLightLocalValidation.cs": "c128e48e88ce8efb799e46a40e3b9e5e73e394f8cb7c0af4f4ca6e1fec2ee5db",
-    "Editor/VolumeLight/HoVolumeLightValidation.cs": "71f98683dd24a733c517ec6efbadb052a235e19823f0a55d4b348b929c0857aa",
+    "Editor/VolumeLight/HoVolumeLightValidation.cs": "156991418648f8b5edd0aff63ba98da32d3a9ea9c4f838716ae2c85b2f25fd9b",
     "Editor/VolumeLight/HoVolumeLightEditors.cs": "f15bffe8eca9191f1df07196a28625f983185266aef759f5fc638f09e92521fc"
-  }
+  },
+  "d3d11_local": "PASS; result in Direct3D11.json",
+  "d3d11_solar": "PASS; result in Solar-Regression-Direct3D11.json"
 }
