@@ -744,6 +744,534 @@
       "shadowStrength": 0.95,
       "floorY": 0,
       "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "孔雀月令",
+        "models": [
+          "孔雀月令主体.pmx",
+          "孔雀月令荷花.pmx",
+          "孔雀月令串珠A.pmx",
+          "孔雀月令串珠BC.pmx",
+          "孔雀月令地板裝飾.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 1.3,
+          "z": 3.2
+        },
+        "target": {
+          "x": 0,
+          "y": 1.5,
+          "z": -6.5
+        },
+        "key": {
+          "r": 1,
+          "g": 0.78,
+          "b": 0.55,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.42,
+          "g": 0.58,
+          "b": 0.9,
+          "a": 1
+        },
+        "accent": {
+          "r": 1,
+          "g": 0.3,
+          "b": 0.12,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.18,
+          "g": 0.2,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 62,
+        "bloom": 0.3,
+        "exposure": 0.1,
+        "fog": 0.002,
+        "volume": 0.2
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "aoLevel": 0.15,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.85,
+      "plrStrength": 0.5,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "孔雀月令青瓷",
+        "models": [
+          "孔雀月令主体.pmx",
+          "孔雀月令荷花.pmx",
+          "孔雀月令串珠A.pmx",
+          "孔雀月令串珠BC.pmx",
+          "孔雀月令地板裝飾.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 1.3,
+          "z": 3.2
+        },
+        "target": {
+          "x": 0,
+          "y": 1.5,
+          "z": -6.5
+        },
+        "key": {
+          "r": 0.72,
+          "g": 0.9,
+          "b": 1,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.35,
+          "g": 0.6,
+          "b": 0.85,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.35,
+          "g": 0.85,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.12,
+          "g": 0.2,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.3,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 62,
+        "bloom": 0.3,
+        "exposure": 0.1,
+        "fog": 0.002,
+        "volume": 0.18
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "aoLevel": 0.15,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.85,
+      "plrStrength": 0.5,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "artLightScale": 1
+    },
+    {
+      "recipe": {
+        "name": "丝苇楼梯",
+        "models": [
+          "主体.pmx",
+          "合并版.pmx",
+          "植物.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 3,
+          "z": 13
+        },
+        "target": {
+          "x": 0,
+          "y": 4,
+          "z": -2
+        },
+        "key": {
+          "r": 1,
+          "g": 0.85,
+          "b": 0.65,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.35,
+          "g": 0.65,
+          "b": 1,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.75,
+          "g": 0.35,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.12,
+          "g": 0.16,
+          "b": 0.25,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 55,
+        "bloom": 0.3,
+        "exposure": 0.1,
+        "fog": 0.002,
+        "volume": 0.18
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "aoLevel": 0.15,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.85,
+      "plrStrength": 0.5,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "artLightScale": 1,
+      "floors": [
+        "楼梯1平台"
+      ]
+    },
+    {
+      "recipe": {
+        "name": "月极蝶夜礼",
+        "models": [
+          "月极蝶夜礼-H2CU式stage07-2.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 3.2,
+          "z": 12
+        },
+        "target": {
+          "x": 0,
+          "y": 2.5,
+          "z": -4
+        },
+        "key": {
+          "r": 1,
+          "g": 0.78,
+          "b": 0.35,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.25,
+          "g": 0.45,
+          "b": 1,
+          "a": 1
+        },
+        "accent": {
+          "r": 1,
+          "g": 0.28,
+          "b": 0.12,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.1,
+          "g": 0.12,
+          "b": 0.25,
+          "a": 1
+        },
+        "keyIntensity": 1.5,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 58,
+        "bloom": 0.3,
+        "exposure": 0.1,
+        "fog": 0.002,
+        "volume": 0.18
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "aoLevel": 0.15,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.85,
+      "plrStrength": 0.5,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "artLightScale": 1,
+      "floors": [
+        "地板上"
+      ]
+    },
+    {
+      "recipe": {
+        "name": "虫无阶梯",
+        "models": [
+          "场景.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 3,
+          "z": 12
+        },
+        "target": {
+          "x": 0,
+          "y": 3,
+          "z": -5
+        },
+        "key": {
+          "r": 0.2,
+          "g": 0.75,
+          "b": 1,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.2,
+          "g": 0.35,
+          "b": 1,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.4,
+          "g": 0.7,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.02,
+          "g": 0.06,
+          "b": 0.15,
+          "a": 1
+        },
+        "keyIntensity": 1.3,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 58,
+        "bloom": 0.3,
+        "exposure": 0.1,
+        "fog": 0.002,
+        "volume": 0.2
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "aoLevel": 0.15,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.85,
+      "plrStrength": 0.5,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "artLightScale": 1,
+      "floors": [
+        "楼梯"
+      ]
+    },
+    {
+      "recipe": {
+        "name": "虫染阶梯",
+        "models": [
+          "场景.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 3,
+          "z": 12
+        },
+        "target": {
+          "x": 0,
+          "y": 3,
+          "z": -5
+        },
+        "key": {
+          "r": 1,
+          "g": 0.18,
+          "b": 0.08,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.45,
+          "g": 0.05,
+          "b": 0.02,
+          "a": 1
+        },
+        "accent": {
+          "r": 1,
+          "g": 0.3,
+          "b": 0.08,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.12,
+          "g": 0.01,
+          "b": 0.01,
+          "a": 1
+        },
+        "keyIntensity": 1.2,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 58,
+        "bloom": 0.3,
+        "exposure": 0.1,
+        "fog": 0.002,
+        "volume": 0.18
+      },
+      "day": false,
+      "hdr": "CoriolisNight4k.hdr",
+      "aoLevel": 0.15,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.85,
+      "plrStrength": 0.5,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "artLightScale": 1,
+      "floors": [
+        "楼梯"
+      ]
+    },
+    {
+      "recipe": {
+        "name": "乐园·葡萄柚",
+        "models": [
+          "场景主体.pmx",
+          "吊饰.pmx",
+          "地板追加.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 4,
+          "z": 16
+        },
+        "target": {
+          "x": 0,
+          "y": 3,
+          "z": -4
+        },
+        "key": {
+          "r": 1,
+          "g": 0.85,
+          "b": 0.9,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.55,
+          "g": 0.65,
+          "b": 1,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.7,
+          "g": 0.35,
+          "b": 1,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.35,
+          "g": 0.3,
+          "b": 0.45,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 58,
+        "bloom": 0.3,
+        "exposure": 0.1,
+        "fog": 0.002,
+        "volume": 0.15
+      },
+      "day": false,
+      "hdr": "FluffballDay4k.hdr",
+      "aoLevel": 0.15,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.85,
+      "plrStrength": 0.5,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "artLightScale": 1,
+      "floors": [
+        "地板"
+      ]
+    },
+    {
+      "recipe": {
+        "name": "乐园·西瓜霜",
+        "models": [
+          "场景主体.pmx",
+          "吊饰.pmx",
+          "地板追加.pmx"
+        ],
+        "camera": {
+          "x": 0,
+          "y": 4,
+          "z": 16
+        },
+        "target": {
+          "x": 0,
+          "y": 3,
+          "z": -4
+        },
+        "key": {
+          "r": 1,
+          "g": 0.9,
+          "b": 0.78,
+          "a": 1
+        },
+        "fill": {
+          "r": 0.5,
+          "g": 0.8,
+          "b": 0.65,
+          "a": 1
+        },
+        "accent": {
+          "r": 0.75,
+          "g": 0.35,
+          "b": 0.45,
+          "a": 1
+        },
+        "ambient": {
+          "r": 0.4,
+          "g": 0.35,
+          "b": 0.3,
+          "a": 1
+        },
+        "keyIntensity": 1.4,
+        "keyAngles": {
+          "x": 30,
+          "y": -45,
+          "z": 0
+        },
+        "fov": 58,
+        "bloom": 0.3,
+        "exposure": 0.1,
+        "fog": 0.002,
+        "volume": 0.15
+      },
+      "day": false,
+      "hdr": "FluffballDay4k.hdr",
+      "aoLevel": 0.15,
+      "aoContrast": 1.7,
+      "aoDarkStrength": 0.85,
+      "plrStrength": 0.5,
+      "skyExposure": 0.12,
+      "shadowStrength": 0.95,
+      "artLightScale": 1,
+      "floors": [
+        "地板"
+      ]
     }
   ]
 }

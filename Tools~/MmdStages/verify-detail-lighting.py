@@ -10,8 +10,9 @@ ROOT = Path(r"D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\H2Cu阿相")
 LIB = Path(r"D:\Unity_Project\BREAK_URP\Library\HoMmdStages")
 EVIDENCE = Path(__file__).resolve().parents[2] / "Temp~" / "MmdStages" / "DetailLighting-20261029"
 RECOVERY = EVIDENCE.parent / "YueximeiComplete-20261030"
-SOURCE = RECOVERY / "all-source-copy.json" if (RECOVERY / "all-source-copy.json").exists() else EVIDENCE.parent / "Remaining-20261029" / "source-copy.json"
-NAMES = ["花吐电気", "乐园·深命", "圣诞万花镜", "茉莉庭院", "六角花台绣球", "琉璃万花镜", "古典机械剧场", "拟花十字之棺", "百鸟溯归", "孔雀月令红墨", "乐园·墟实", "秘月之泉", "万象天文", "炫光夜厅", "夜月蓝", "芋泥咩咩", "月昔梅", "古典机械剧场黑蓝白", "冷色古堂"]
+NEW_INVENTORY = EVIDENCE.parent / "H2CuInventory-20261030"
+SOURCE = NEW_INVENTORY / "new-source-copy.json" if (NEW_INVENTORY / "new-source-copy.json").exists() else RECOVERY / "all-source-copy.json" if (RECOVERY / "all-source-copy.json").exists() else EVIDENCE.parent / "Remaining-20261029" / "source-copy.json"
+NAMES = ["花吐电気", "乐园·深命", "圣诞万花镜", "茉莉庭院", "六角花台绣球", "琉璃万花镜", "古典机械剧场", "拟花十字之棺", "百鸟溯归", "孔雀月令红墨", "乐园·墟实", "秘月之泉", "万象天文", "炫光夜厅", "夜月蓝", "芋泥咩咩", "月昔梅", "古典机械剧场黑蓝白", "冷色古堂", "孔雀月令", "孔雀月令青瓷", "丝苇楼梯", "月极蝶夜礼", "虫无阶梯", "虫染阶梯", "乐园·葡萄柚", "乐园·西瓜霜"]
 LABELS = ["主视角", "左侧视角", "右侧视角"]
 
 def read(path):
@@ -74,7 +75,9 @@ def main():
         board.save(folder / "Renders" / "三机位总览.jpg", quality=93)
         report["stages"].append(stage)
     capture_count = (EVIDENCE / "final-three-views.log").read_text(encoding="utf-8-sig").count("MMD_DETAIL_CAPTURE ")
-    if capture_count != 57: errors.append(f"Final capture log contains {capture_count} outputs, expected 57")
+    new_log = NEW_INVENTORY / "detail-new.log"
+    if new_log.exists(): capture_count += new_log.read_text(encoding="utf-8-sig").count("MMD_DETAIL_CAPTURE ")
+    if capture_count != len(NAMES) * 3: errors.append(f"Final capture logs contain {capture_count} outputs, expected {len(NAMES) * 3}")
     report["captureCount"] = capture_count
     if (RECOVERY / "complete-final.log").exists():
         recovery_count = (RECOVERY / "complete-final.log").read_text(encoding="utf-8-sig").count("MMD_DETAIL_CAPTURE ")

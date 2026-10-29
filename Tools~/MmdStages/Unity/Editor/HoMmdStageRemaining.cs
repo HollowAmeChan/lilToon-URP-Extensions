@@ -188,6 +188,8 @@ public static class HoMmdStageRemaining
     {
         string path=folder+"/Rendering/"+spec.hdr;
         var importer=(TextureImporter)AssetImporter.GetAtPath(path);
+        if(importer==null){AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);importer=(TextureImporter)AssetImporter.GetAtPath(path);}
+        if(importer==null)throw new InvalidOperationException("HDR importer unavailable "+path);
         if(importer.textureShape!=TextureImporterShape.TextureCube){importer.textureShape=TextureImporterShape.TextureCube;importer.generateCubemap=TextureImporterGenerateCubemap.AutoCubemap;importer.maxTextureSize=2048;importer.SaveAndReimport();}
         var cube=AssetDatabase.LoadAssetAtPath<Cubemap>(path);if(cube==null)throw new Exception("HDR cubemap import failed "+path);
         env.skybox.shader=Shader.Find("Skybox/Cubemap");env.skybox.SetTexture("_Tex",cube);env.skybox.SetFloat("_Exposure",spec.skyExposure);env.skybox.SetFloat("_Rotation",20);

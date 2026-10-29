@@ -35,6 +35,14 @@ STAGES = {
     "月昔梅": "月昔梅·H2CU式stage20_by_H2Cu阿相_5acc23fda20c8d79429730c53bbf33ee",
     "古典机械剧场黑蓝白": "古典机械剧场改色版黑蓝白·H2CU式stage15_by_H2Cu阿相_08c525632fad769cb39160305abfa9c5",
     "冷色古堂": "H2CU式stage09改色-冷色古堂_by_H2Cu阿相_65b030403a0f1099aaa683cda626ddd4",
+    "孔雀月令": "孔雀月令·H2CU式stage17_by_H2Cu阿相_942d46105519b49b4312a5598fc50a1e",
+    "孔雀月令青瓷": "孔雀月令青瓷·H2CU式stage17-2_by_H2Cu阿相_42a50a48445db9f753e7f938e92df32a",
+    "丝苇楼梯": "丝苇楼梯 H2CU式stage21_by_H2Cu阿相_a74d1e8b306ad491384ae2d5fe000117",
+    "月极蝶夜礼": "月极蝶夜礼1-H2CU式stage07-2 2_by_H2Cu阿相_a9861e02af0ed58453b713b58426bb76",
+    "虫无阶梯": "虫无阶梯·H2CU式stage10-1_by_H2Cu阿相_ae71b3207466144f6a676c53c7949c10",
+    "虫染阶梯": "虫染阶梯·H2CU式stage10-3_by_H2Cu阿相_0fcf040439bde557efa3b0cf6d50280c",
+    "乐园·葡萄柚": "H2CU式stage05-2改色 -葡萄柚_by_H2Cu阿相_b17d55a87b0fedca74962481299eaf40",
+    "乐园·西瓜霜": "H2CU式stage05-2改色 -西瓜霜_by_H2Cu阿相_d6d1731e2cfe91d3797aad9471313daf",
 }
 ALLOWED = {
     ".pmx", ".pmd", ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".dds", ".exr", ".hdr",

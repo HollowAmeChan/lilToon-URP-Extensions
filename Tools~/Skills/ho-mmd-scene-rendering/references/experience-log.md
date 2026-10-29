@@ -28,3 +28,9 @@ This is a maintained evidence log, not a list of universal rules. Append only ob
 ## How to append
 
 Use the date and a short subsystem heading. State the failed or surprising behavior, the change made, the exact evidence path, and whether it is confirmed or a working hypothesis. Prefer a focused note over a general slogan.
+
+## 2026-10-30 — H2CU inventory expansion
+
+- The reorganized source tree contains 32 H2CU source packages. After the original 19 scenes and recovered complete Yueximei, eight additional independent scene packages were identified: 孔雀月令, 孔雀月令青瓷, 丝苇楼梯, 月极蝶夜礼, 虫无阶梯, 虫染阶梯, 乐园·葡萄柚 and 乐园·西瓜霜.
+- Evidence: `Temp~/MmdStages/H2CuInventory-20261030/agent-inventory.json`, `new-source-copy.json`, and `new-scenes-three-review.jpg`. Confidence: confirmed; 369 source files are covered by the expanded manifest.
+- Author preview evidence suggests the blue/red insect stairs are intentionally stylized, while the ladder scene has deliberately high-contrast sparse materials. Preserve those styles during refinement instead of treating them as importer failures.

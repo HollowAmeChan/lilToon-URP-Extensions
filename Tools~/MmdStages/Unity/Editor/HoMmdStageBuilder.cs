@@ -137,6 +137,7 @@ public static class HoMmdStageBuilder
         new Recipe{name="琉璃万花镜",models=new[]{"主体·琉璃万花镜.pmx","吊饰（AL+）·琉璃万花镜.pmx"},key=C(.7f,.84f,1),fill=C(.44f,.52f,.9f),accent=C(.45f,.88f,1),ambient=C(.19f,.24f,.4f),camera=new Vector3(0,3,-22),target=new Vector3(0,5,10),keyAngles=new Vector3(30,-30,0),keyIntensity=1.45f,bloom=.32f,volume=.2f},
         new Recipe{name="古典机械剧场",models=new[]{"主体.pmx","吊饰.pmx","地面装饰.pmx"},key=C(1,.73f,.4f),fill=C(.4f,.53f,.8f),accent=C(1,.32f,.12f),ambient=C(.24f,.19f,.25f),camera=new Vector3(0,4,27),target=new Vector3(0,5,0),keyAngles=new Vector3(35,175,0),keyIntensity=1.7f,bloom=.22f,volume=.3f},
         new Recipe{name="拟花十字之棺",models=new[]{"场景.pmx"},key=C(.85f,.76f,1),fill=C(.38f,.53f,.9f),accent=C(.92f,.35f,.57f),ambient=C(.25f,.21f,.35f),camera=new Vector3(13,7,-21),target=new Vector3(0,9,0),keyAngles=new Vector3(42,15,0),keyIntensity=1.65f,bloom=.3f,volume=.18f}
+,
     }.Concat(HoMmdStageRemaining.Recipes()).ToArray();
 
     public static string Execute(HoMmdStageWork.Request request)
