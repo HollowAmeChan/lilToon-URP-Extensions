@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ho MMD Scene Rendering"
+  short_description: "Build HoURP PMX scene renders"
+  default_prompt: "Use $ho-mmd-scene-rendering to build or refine a PMX scene with Ho lilToon, RTGI, local volume lights, PLR, three-view review, and CLI evidence."
