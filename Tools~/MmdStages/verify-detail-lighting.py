@@ -9,7 +9,8 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(r"D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\H2Cu阿相")
 LIB = Path(r"D:\Unity_Project\BREAK_URP\Library\HoMmdStages")
 EVIDENCE = Path(__file__).resolve().parents[2] / "Temp~" / "MmdStages" / "DetailLighting-20261029"
-SOURCE = EVIDENCE.parent / "Remaining-20261029" / "source-copy.json"
+RECOVERY = EVIDENCE.parent / "YueximeiComplete-20261030"
+SOURCE = RECOVERY / "all-source-copy.json" if (RECOVERY / "all-source-copy.json").exists() else EVIDENCE.parent / "Remaining-20261029" / "source-copy.json"
 NAMES = ["花吐电気", "乐园·深命", "圣诞万花镜", "茉莉庭院", "六角花台绣球", "琉璃万花镜", "古典机械剧场", "拟花十字之棺", "百鸟溯归", "孔雀月令红墨", "乐园·墟实", "秘月之泉", "万象天文", "炫光夜厅", "夜月蓝", "芋泥咩咩", "月昔梅", "古典机械剧场黑蓝白", "冷色古堂"]
 LABELS = ["主视角", "左侧视角", "右侧视角"]
 
@@ -65,7 +66,7 @@ def main():
             if gi["mode"] != "RTGI" or gi["api"] != "Direct3D12" or not gi["giTexture"] or gi["nonzeroFraction"] <= 0:
                 errors.append(f"{name}/{view}: runtime GI output")
             if not gi["skyExcluded"]: errors.append(f"{name}/{view}: sky ray exclusion")
-            if name != "月昔梅" and not any("独立光源遮挡" in value for value in detail["status"]):
+            if not any("独立光源遮挡" in value for value in detail["status"]):
                 errors.append(f"{name}/{view}: no real HD local light depth")
             stage["views"].append({"view": view, "label": label, "render": str(path), "size": size, "sha256": sha(path), "detail": detail, "gi": gi, "lighting": lighting})
         cameras = [tuple(item["detail"]["camera"].values()) for item in stage["views"]]
@@ -75,14 +76,30 @@ def main():
     capture_count = (EVIDENCE / "final-three-views.log").read_text(encoding="utf-8-sig").count("MMD_DETAIL_CAPTURE ")
     if capture_count != 57: errors.append(f"Final capture log contains {capture_count} outputs, expected 57")
     report["captureCount"] = capture_count
+    if (RECOVERY / "complete-final.log").exists():
+        recovery_count = (RECOVERY / "complete-final.log").read_text(encoding="utf-8-sig").count("MMD_DETAIL_CAPTURE ")
+        if recovery_count != 3: errors.append(f"Recovered stage requires 3 final outputs, found {recovery_count}")
+        report["stageReplacement"] = {"stage": "月昔梅", "captureCount": recovery_count, "log": str(RECOVERY / "complete-final.log"), "models": ["月昔梅 主體.pmx", "月昔梅 樹.pmx", "月昔梅 花枝.pmx", "月昔梅 燈.pmx"], "companionFan": "preserved as an optional disabled prop"}
+        recovered_audit = read(LIB / "月昔梅-complete-audit.json")
+        errors.extend(recovered_audit["errors"])
+        report["stageReplacement"]["assemblyAudit"] = recovered_audit
+        previous = read(RECOVERY / "previous-delivery.json")
+        unchanged = []
+        for stage in previous["stages"]:
+            if stage["name"] == "月昔梅": continue
+            if sha(Path(stage["scene"])) != stage["sceneSha256"] or any(sha(Path(view["render"])) != view["sha256"] for view in stage["views"]):
+                errors.append(stage["name"] + ": unrelated scene/render changed during recovery")
+            else: unchanged.append(stage["name"])
+        report["stageReplacement"]["unaffectedScenesVerified"] = unchanged
     report["errors"] = errors
     text = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
+    if "stageReplacement" in report: (RECOVERY / "final-delivery.json").write_text(text, encoding="utf-8")
     (EVIDENCE / "final-detail-delivery.json").write_text(text, encoding="utf-8")
     (ROOT / "Rendering-check.json").write_text(text, encoding="utf-8")
     lines = ["# H2Cu 阿相场景索引", "", "19 个独立 Ho 渲场景，每个场景保留 Source、Materials、Rendering、Prefabs、Renders；原八场景和新增十一场均已完成主、左侧、右侧三个机位的实际 D3D12 渲染。", "", "本轮中心塑形使用世界空间灯光，已移除后处理 PostLighting 与 CenterColorCorrection。其余场景降低泛白的太阳散射和多层雾，乐园·墟实保留原有雾光风格；百鸟溯归新增两侧书墙和远书架照明，以保留远处细节。", "", "| 场景 | 主机位 | 左侧 | 右侧 | 三机位总览 |", "| --- | --- | --- | --- | --- |"]
     for name in NAMES:
         lines.append(f"| [{name}]({name}/{name}.unity) | [主]({name}/Renders/{name}_主视角.png) | [左]({name}/Renders/{name}_左侧视角.png) | [右]({name}/Renders/{name}_右侧视角.png) | [总览]({name}/Renders/三机位总览.jpg) |")
-    lines.extend(["", "## 调节位置", "", "- `09 细节灯光` 放主体真实补光、远景细节灯及局部斑驳遮片。普通 Point/Spot 上的 Ho-VolumeLight 局部体积光组件负责 HD 独立光源遮挡，步数、柔边、亮度均可在 Inspector 调节。", "- 原主相机保持启用，`10 观察机位` 内保存两台关闭的观察相机，供多角度检查。Renders 内已有三张正式图。", "- `Rendering/细节灯光.json` 是本轮参数记录；`细节灯光基线.json` 防止重复执行脚本时叠乘变暗。日常继续编辑实际灯光与材质即可。", "- Bloom、全局渐变调色、景深、电影边框与底部正中 Hollow Logo 继续保留；日景白边黑标，夜景黑边白标。", "", "## 已核对", "", f"57 张 1280×720 图，19 个场景原生审计与逐机位 RTGI GPU 输出检查；SSGI feature/volume 为 0。AO 艺术参数、全部模型投影、1024 PLR、独立 pipeline/profile 和场景资源引用均通过。{source_count} 个 E 盘源文件及 Assets 副本哈希吻合。", "", "云蜃马戏团·有识月按用户要求跳过；朱木古堂、血月古堡未被本轮脚本覆盖。月昔梅原包仅含团扇，按独立静物展台处理。", "", "详细状态、图片与场景哈希见 Rendering-check.json；本轮原图与基线备份在扩展仓库 Temp~/MmdStages/DetailLighting-20261029。"])
+    lines.extend(["", "## 调节位置", "", "- `09 细节灯光` 放主体真实补光、远景细节灯及局部斑驳遮片。普通 Point/Spot 上的 Ho-VolumeLight 局部体积光组件负责 HD 独立光源遮挡，步数、柔边、亮度均可在 Inspector 调节。", "- 原主相机保持启用，`10 观察机位` 内保存两台关闭的观察相机，供多角度检查。Renders 内已有三张正式图。", "- `Rendering/细节灯光.json` 是本轮参数记录；`细节灯光基线.json` 防止重复执行脚本时叠乘变暗。日常继续编辑实际灯光与材质即可。", "- Bloom、全局渐变调色、景深、电影边框与底部正中 Hollow Logo 继续保留；日景白边黑标，夜景黑边白标。", "", "## 已核对", "", f"57 张 1280×720 图，19 个场景原生审计与逐机位 RTGI GPU 输出检查；SSGI feature/volume 为 0。AO 艺术参数、全部模型投影、1024 PLR、独立 pipeline/profile 和场景资源引用均通过。{source_count} 个 E 盘源文件及 Assets 副本哈希吻合。", "", "云蜃马戏团·有识月按用户要求跳过；朱木古堂、血月古堡未被本轮脚本覆盖。月昔梅现已恢复完整黄梅庭院：主体、树、花枝、灯四份 PMX 均使用 Source/完整场景 的相对贴图；原团扇保留为可选关闭道具与独立 prefab。", "", "详细状态、图片与场景哈希见 Rendering-check.json；本轮原图与基线备份在扩展仓库 Temp~/MmdStages/DetailLighting-20261029，月昔梅恢复记录在 Temp~/MmdStages/YueximeiComplete-20261030。"])
     (ROOT / "场景索引.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(json.dumps({"stages": len(report["stages"]), "captures": capture_count, "sourceFilesVerified": source_count, "errors": errors}, ensure_ascii=False))
     return 1 if errors else 0

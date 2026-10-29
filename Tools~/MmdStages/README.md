@@ -1,6 +1,6 @@
 # H2Cu 场景本地资源准备
 
-`prepare-stage-sources.py` 将本机已整理的十九个 H2Cu 场景包复制到 BREAK_URP 的各场景 `Source/`。保留 PMX 相对路径和作者说明，不移动源素材，不复制压缩包、Blender 中间文件或其他工程的 `.meta`。
+`prepare-stage-sources.py` 将本机已整理的十九个 H2Cu 场景及月昔梅补回包复制到 BREAK_URP 的各场景 `Source/`。保留 PMX 相对路径和作者说明，不移动源素材，不复制压缩包、Blender 中间文件或其他工程的 `.meta`。
 
 ~~~powershell
 python Tools~/MmdStages/prepare-stage-sources.py
@@ -37,11 +37,11 @@ AL+ 命名或附加 UV Morph 是 MME 控制约定，不等于源文件包含 Uni
 
 现有 19 个独立场景，每场景均已保存主、左侧、右侧三个机位和实际 1280×720 渲染，共 57 张 PNG。各自 Renders/三机位总览.jpg 便于对比；主目录场景索引.md 连接全部场景与机位，Rendering-check.json 保存逐机位 RTGI/RELAX、局部体积光状态与文件哈希。
 
-Ho lilToon 模型材质统一开启 ShadowCaster 和 AO 艺术增强，每场景都配置 1024 PLR、天空球、景深、电影边框与底部 Hollow Logo。模型、贴图、材质、Pipeline、Renderer、Volume 均按场景独立维护。使用实时光照，不依赖共享 Lightmap；源文件复制清单的 271 个文件及 E 盘源文件哈希均核对一致。
+Ho lilToon 模型材质统一开启 ShadowCaster 和 AO 艺术增强，每场景都配置 1024 PLR、天空球、景深、电影边框与底部 Hollow Logo。模型、贴图、材质、Pipeline、Renderer、Volume 均按场景独立维护。使用实时光照，不依赖共享 Lightmap；源文件复制清单的 283 个文件及 E 盘源文件哈希均核对一致。
 
 局部 Point/Spot HD 体积光挂在真实灯物体上，使用独立光源深度与材质 ShadowCaster。主体重点、轮廓与远景由世界空间灯光塑形，已移除屏幕 PostLighting 与 CenterColorCorrection。其他全局调色、Bloom、轻微颗粒和镜头柔光保留。夜景削弱太阳散射与层叠灰雾；乐园·墟实保留原有废墟雾光风格，百鸟溯归增加两侧书墙与远书架补光，保留远处细节。
 
-花吐电気保留明亮晴日窗景和室外 Rendering Layer 2 专用照明；圣诞保留中央树、礼物与地面低位点光补光。月昔梅原包仅有团扇，按独立静物展台处理。云蜃马戏团·有识月按用户要求跳过，朱木古堂与血月古堡未被本套脚本覆盖。
+花吐电気保留明亮晴日窗景和室外 Rendering Layer 2 专用照明；圣诞保留中央树、礼物与地面低位点光补光。月昔梅补回完整包后，由主体、树、花枝、灯四份 PMX 组成黄梅庭院；补回包独立保存在 Source/完整场景，维持贴图相对引用。原团扇保留为独立 prefab 和默认关闭的配套道具，临时展台已撤除。云蜃马戏团·有识月按用户要求跳过，朱木古堂与血月古堡未被本套脚本覆盖。
 
 用户要求：**禁止使用 SSGI，GI 只允许 RTGI。** Renderer/Volume 的 inactive/orphaned SSGI 子资源也被移除，审计要求两者数量均为零。RTGI 使用 D3D12 DXR + RELAX；各场景天空球材质排除出 RT 求交。无 DXR 不回落到 SSGI。太阳 HD 和局部体积光的 D3D11/D3D12 单独功能验证见 Tests~/VolumeLight/Local，本套实际场景机位验收为 D3D12，不是帧率认证。
 
@@ -50,6 +50,7 @@ Ho lilToon 模型材质统一开启 ShadowCaster 和 AO 艺术增强，每场景
 Unity/ 是本机 Assets/mmd场景测试/_制作工具 的源码快照，不包含第三方模型或贴图：
 
 - HoMmdStageDetail：本轮细节灯光制作与三个机位捕获。细节灯光基线.json 防止多次执行叠乘；细节灯光.json 保存可调取值。09 细节灯光是新增真实灯与遮片；10 观察机位保存两台关闭的辅助相机，原主相机继续启用。
+- HoMmdYueximeiComplete：补回月昔梅完整包的一次性装配，保留原场景 GUID 与团扇；Run 之后进入标准三机位细节灯光捕获，AuditBatch 核对四份模型、外置材质和相对贴图。
 - HoMmdStageRemaining：新增十一场景的模型组合、HDR、地面、材质与局部灯配方。
 - HoMmdStageBuilder：初建、调整入口及场景初始配方。
 - HoMmdStagePolish：本套场景的美术配方。重跑会重设相关材质和灯光，日常使用请直接修改场景。

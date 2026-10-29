@@ -540,17 +540,20 @@
       "recipe": {
         "name": "月昔梅",
         "models": [
-          "團扇 月昔梅.pmx"
+          "月昔梅 主體.pmx",
+          "月昔梅 樹.pmx",
+          "月昔梅 花枝.pmx",
+          "月昔梅 燈.pmx"
         ],
         "camera": {
-          "x": 0.03,
-          "y": 0.13,
-          "z": 1.08
+          "x": 0,
+          "y": 1.65,
+          "z": 5.5
         },
         "target": {
-          "x": 0,
-          "y": 0.08,
-          "z": 0
+          "x": 0.6,
+          "y": 1.65,
+          "z": -11.5
         },
         "key": {
           "r": 1,
@@ -576,30 +579,32 @@
           "b": 0.3,
           "a": 1
         },
-        "keyIntensity": 2.6,
+        "keyIntensity": 2,
         "keyAngles": {
           "x": 30,
           "y": -45,
           "z": 0
         },
-        "fov": 40,
+        "fov": 60,
         "bloom": 0.3,
-        "exposure": 0.2,
+        "exposure": 0.12,
         "fog": 0.002,
         "volume": 4
       },
       "day": true,
       "hdr": "Cloudymorning4k.hdr",
       "floors": [
-        "展台地面"
+        "主体地板",
+        "水",
+        "对面地板"
       ],
       "aoLevel": 0.12,
       "aoContrast": 1.7,
-      "aoDarkStrength": 0.75,
-      "plrStrength": 0.32,
-      "skyExposure": 0.65,
+      "aoDarkStrength": 0.7,
+      "plrStrength": 0.4,
+      "skyExposure": 0.45,
       "shadowStrength": 0.95,
-      "floorY": -0.155,
+      "floorY": 0,
       "artLightScale": 1
     },
     {

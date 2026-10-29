@@ -102,7 +102,7 @@ public static class HoMmdStageRemaining
         var env=root.GetComponentInChildren<HoMmdStageEnvironment>();
         var camera=root.GetComponentInChildren<Camera>();var recipe=HoMmdStageBuilder.ReadRecipe(name);
         var renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
-        if(name=="月昔梅")Studio(root,folder);
+        if(name=="月昔梅"&&recipe.models.Length==1)Studio(root,folder);
         var meshes=root.transform.Find("01 场景模型").GetComponentsInChildren<MeshRenderer>();
         foreach(var m in meshes.Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct())
         {
@@ -158,14 +158,15 @@ public static class HoMmdStageRemaining
             // Every explicitly named horizontal floor/water receiver gets its
             // own PLR surface. The feature cap is raised below so this remains
             // useful for scenes with a water sheet plus a walkable floor.
-            foreach(var candidate in floorCandidates.Take(8))Reflection(candidate,renderer,spec?.plrStrength??.3f,reflectionY);
+            foreach(var candidate in floorCandidates.Take(8))Reflection(candidate,renderer,spec?.plrStrength??.3f,
+                name=="月昔梅"&&Name(candidate.sharedMaterial)=="水"?candidate.bounds.center.y:reflectionY);
         }
         else throw new Exception("No usable PLR floor in "+name);
         // Remove a receiver left by an earlier candidate selection. A terrain or
         // fountain bowl with several elevations is not another horizontal floor.
         foreach(var other in root.GetComponentsInChildren<HoPlanarReflectionSurface>().Where(x=>!floorCandidates.Contains(x.GetComponent<MeshRenderer>())).ToArray())
         {var otherMat=other.GetComponent<MeshRenderer>()?.sharedMaterial;F(otherMat,"_UsePlanarReflection",0);Object.DestroyImmediate(other);}
-        if(name!="月昔梅")Dapple(root,folder,env.sun,recipe.target,day?12:18);
+        if(name!="月昔梅"||recipe.models.Length>1)Dapple(root,folder,env.sun,recipe.target,day?12:18);
         AddPost(root,spec,name);
         env.ApplyNow();EditorUtility.SetDirty(renderer);EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
         Debug.Log("MMD_REMAINING_ART "+name);
@@ -203,7 +204,7 @@ public static class HoMmdStageRemaining
     static void Lights(Spec s,Transform rig,MeshRenderer[] meshes)
     {
         var r=s.recipe;string n=r.name;var target=r.target;
-        float scale=n=="月昔梅"?.05f:1;
+        float scale=n=="月昔梅"&&r.models.Length==1?.05f:1;
         Light(rig,"主体方向重点",target+new Vector3(-4,7,5)*scale,target,r.key,100*scale*scale,25*scale);
         Light(rig,"色彩轮廓",target+new Vector3(5,4,-4)*scale,target,r.accent,65*scale*scale,23*scale);
         if(n=="孔雀月令红墨")

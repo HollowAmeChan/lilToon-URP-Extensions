@@ -54,7 +54,7 @@ public static class HoMmdStageDetail
             case "炫光夜厅":l.sun=.5f;l.density=.32f;l.solar=.05f;l.air=.2f;l.fog=.1f;l.glow=.25f;l.emission=.55f;l.beam=5;l.rim=3;l.exposure=-.2f;break;
             case "夜月蓝":l.sun=.7f;l.emission=.6f;l.beam=5;l.rim=2;l.exposure=-.05f;break;
             case "芋泥咩咩":l.sun=.7f;l.solar=.06f;l.air=.3f;l.exposure=-.1f;l.emission=.7f;l.beam=2;l.rim=1;break;
-            case "月昔梅":l.sun=.9f;l.solar=0;l.air=0;l.fog=0;l.beam=0;l.rim=0;l.exposure=0;break;
+            case "月昔梅":l.sun=.5f;l.ambient=1.1f;l.solar=.16f;l.air=.4f;l.fog=.15f;l.beam=2;l.rim=1;l.exposure=-.12f;l.emission=.5f;l.localPower=2;break;
             case "古典机械剧场黑蓝白":l.sun=.8f;l.ambient=.65f;l.solar=.08f;l.beam=6;l.rim=2;l.exposure=.1f;l.beams=new[]{"钟表银蓝追光","色彩轮廓"};break;
             case "冷色古堂":l.sun=.7f;l.emission=.55f;l.solar=.08f;l.exposure=-.08f;l.beam=6;l.rim=2;l.beams=new[]{"圆屏柔和重点","色彩轮廓"};break;
         }
@@ -130,7 +130,7 @@ public static class HoMmdStageDetail
         foreach(var e in b.emission){var m=AssetDatabase.LoadAssetAtPath<Material>(e.path);if(m==null)continue;m.SetColor("_EmissionColor",e.color*l.emission);EditorUtility.SetDirty(m);}
         if(name=="冷色古堂")foreach(var m in mats.Where(x=>x.name.EndsWith("背景板")||x.name.EndsWith("背景圆前")||x.name.EndsWith("背景圆后")))
         {m.SetFloat("_LightMaxLimit",.85f);m.SetColor("_Color",new Color(.68f,.75f,.87f,1));EditorUtility.SetDirty(m);}
-        if(name=="月昔梅")
+        if(name=="月昔梅"&&HoMmdStageBuilder.ReadRecipe(name).models.Length==1)
         {
             var sky=root.GetComponentsInChildren<MeshRenderer>().Single(x=>x.name=="天空球").sharedMaterial;
             sky.SetFloat("_UseHdr",0);sky.SetColor("_Top",new Color(.012f,.019f,.035f,1));sky.SetColor("_Horizon",new Color(.055f,.075f,.1f,1));sky.SetColor("_SunColor",Color.black);sky.SetFloat("_Stars",0);EditorUtility.SetDirty(sky);
@@ -244,8 +244,11 @@ public static class HoMmdStageDetail
             Spot(rig,"前景地毯月光",new Vector3(4,5,7),new Vector3(-1,.1f,1),new Color(.5f,.69f,1),42,55,18,1,global);
         else if(name=="月昔梅")
         {
-            Spot(rig,"展台柔光",new Vector3(.2f,.4f,.6f),new Vector3(0,-.15f,.1f),new Color(1,.87f,.66f),1.6f,72,2,0,global);
-            Spot(rig,"团扇轮廓",new Vector3(-.3f,.3f,-.2f),new Vector3(0,.13f,0),cool,.8f,60,2,0,global);
+            Spot(rig,"梅花暖日主光",new Vector3(6,7,1),new Vector3(0,1.2f,-9),new Color(1,.88f,.6f),180,52,28,2,global);
+            Spot(rig,"月洞冷色分离",new Vector3(-6,6,-12),new Vector3(0,1.8f,-7),new Color(.57f,.7f,1),95,55,20,1,global);
+            Spot(rig,"花纹与月牙柔光",new Vector3(-2,5,3),new Vector3(0,.5f,-9),new Color(1,.93f,.78f),55,70,23,0,global);
+            Spot(rig,"左梅枝低位补光",new Vector3(-4,3,5),new Vector3(-4,1,-6),new Color(1,.9f,.7f),130,72,24,0,global);
+            Spot(rig,"右梅枝低位补光",new Vector3(4,3,5),new Vector3(4,1,-6),new Color(1,.9f,.7f),130,72,24,0,global);
         }
     }
     static void Gobo(Transform rig,Light light,string folder)

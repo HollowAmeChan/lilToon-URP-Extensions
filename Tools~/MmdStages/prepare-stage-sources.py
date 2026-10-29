@@ -40,6 +40,12 @@ ALLOWED = {
     ".pmx", ".pmd", ".png", ".jpg", ".jpeg", ".tga", ".bmp", ".dds", ".exr", ".hdr",
     ".fx", ".fxsub", ".emd", ".emm", ".x", ".vmd", ".vpd", ".txt", ".md", ".pdf",
 }
+SUPPLEMENTAL = {
+    "月昔梅（完整场景）": (
+        "月昔梅·H2CU式stage20_by_H2Cu阿相_32903cd061fc7937dd3f529c539d094c",
+        "月昔梅/Source/完整场景",
+    ),
+}
 
 
 def sha256(path: pathlib.Path) -> str:
@@ -57,9 +63,10 @@ def run(source_root: pathlib.Path, target_root: pathlib.Path, evidence: pathlib.
         raise ValueError("Source and destination must be separate directory trees")
     report = {"timestampUtc": datetime.now(timezone.utc).isoformat(), "sourceRoot": str(source_root),
               "targetRoot": str(target_root), "stages": [], "copiedFiles": 0, "reusedFiles": 0}
-    for name, directory in STAGES.items():
+    packages = [(name, directory, target_root / name / "Source") for name, directory in STAGES.items()]
+    packages += [(name, value[0], target_root / value[1]) for name, value in SUPPLEMENTAL.items()]
+    for name, directory, destination in packages:
         source = source_root / directory
-        destination = target_root / name / "Source"
         files = sorted(path for path in source.rglob("*") if path.is_file())
         if not files:
             raise ValueError(f"Empty or missing source package: {source}")
