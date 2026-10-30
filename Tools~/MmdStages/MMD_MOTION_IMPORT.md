@@ -6,7 +6,7 @@
 
 参考模型：`E:/BaiduSyncdisk/大师/_完整角色/Sour暄/Sour式初音ミクVer.1.02_by_Sour暄_194b7aa2b8fd2f9d6f0221d8767ad951.zip`，已解压到动作整理库的 `_参考模型/Sour暄`。卜逻desu 和 Taitohimea 的动作先以这个模型作为依赖参考；动作包若指定别的模型，必须按 README 建立动作实例依赖记录。骨骼报告在 `_参考模型/Sour暄/Sour_IK_REPORT.md`。
 
-`HoUnityTools` 现在提供独立 `.vmd` ScriptedImporter，资产类型为 `HoVmdAnimation`。它先保留轨道数据和作者模型名，再交给后续绑定器选择目标骨架；不会与现有静态 `.pmx` importer 争夺扩展名。
+`HoUnityTools` 现在提供独立 `.vmd` ScriptedImporter，资产类型为 `HoVmdAnimation`，以及第一版 `HoVmdMotionPlayer` / `HoVmdCameraPlayer`。Importer 先保留轨道数据和作者模型名；播放器按骨骼/morph 名称绑定，show/IK 段映射到 `HoIkConstraint.IkName`，镜头使用 target + Camera 两节点。它不会与现有静态 `.pmx` importer 争夺扩展名。
 
 ## 作者规约中已经确认的情况
 
