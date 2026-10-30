@@ -4,7 +4,7 @@
 
 首次整理结果：7 个作者目录、128 个压缩包、18 个直接 VMD、666 个 VMD、1 组重复包、0 个解压失败。部分甜茶旧 ZIP 的目录含空文件名，bsdtar 会给 warning，但仍能提取可读 VMD/README；warning 写入 index，不把包标成完全无警告。
 
-参考模型：`E:/BaiduSyncdisk/大师/_完整角色/Sour暄/Sour式初音ミクVer.1.02_by_Sour暄_194b7aa2b8fd2f9d6f0221d8767ad951.zip`，已解压到动作整理库的 `_参考模型/Sour暄`。卜逻desu 和 Taitohimea 的动作先以这个模型作为依赖参考；动作包若指定别的模型，必须按 README 建立动作实例依赖记录。骨骼和 morph 报告在 `_参考模型/Sour暄/Sour_IK_REPORT.md`，其中 morph 名称使用工程的 `HoPmxReader` 生成。
+参考模型：`E:/BaiduSyncdisk/大师/_完整角色/Sour暄/Sour式初音ミクVer.1.02_by_Sour暄_194b7aa2b8fd2f9d6f0221d8767ad951.zip`，已解压到动作整理库的 `_参考模型/Sour暄`。它只作为卜逻desu/Taitohimea 动作的骨骼、IK 和 morph 依赖参考，不要求作为 Unity 角色最终导入格式。真正播放目标可以是 FBX/GLTF 角色，动作包若指定别的模型，必须按 README 建立动作实例依赖记录。骨骼和 morph 报告在 `_参考模型/Sour暄/Sour_IK_REPORT.md`，其中 morph 名称使用工程的 `HoPmxReader` 生成。
 
 `HoUnityTools` 现在提供独立 `.vmd` ScriptedImporter，资产类型为 `HoVmdAnimation`，以及第一版 `HoVmdMotionPlayer` / `HoVmdCameraPlayer`。Importer 先保留轨道数据和作者模型名；播放器按骨骼/morph 名称绑定，show/IK 段映射到 `HoIkConstraint.IkName`，镜头使用 target + Camera 两节点。它不会与现有静态 `.pmx` importer 争夺扩展名。
 
