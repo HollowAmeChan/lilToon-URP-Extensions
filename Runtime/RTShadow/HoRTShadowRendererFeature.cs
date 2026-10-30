@@ -160,8 +160,15 @@ namespace lilToon.URP.Extensions.RTShadow
         }
         public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData data)
         {
-            var effective = ResolveSettings(out _);
-            if (!CameraSupported(data, effective) || !HoRTScene.IsSupported || !SystemInfo.supportsRayTracing || shader == null || visibilityMaterialShader == null) return;
+            // VolumeManager's stack is updated for the camera during the
+            // regular AddRenderPasses path. At pre-cull it may still describe
+            // the previous camera (SceneView -> GameView is the common case),
+            // so never use the resolved Volume value to decide whether the Ho-
+            // RT host request exists. The production path will apply the
+            // camera's effective Volume settings later.
+            if (!settings.enabled || data.renderType != CameraRenderType.Base
+                || (data.camera.cameraType != CameraType.Game && (data.camera.cameraType != CameraType.SceneView || !settings.inSceneView))
+                || !HoRTScene.IsSupported || !SystemInfo.supportsRayTracing || shader == null || visibilityMaterialShader == null) return;
             var hitShader = visibilityMaterialShader;
             if (!HoRTRendererFeature.Declare(renderer, data.camera, this, new HoRTViewRequest(settings.geometryLayers.value,
                 settings.excludedRayMaterials, profileKey: profileKey, createProfile: () => new HoRTVisibilityMaterials(hitShader), geometryPolicy: HoRTGeometryPolicy.ShadowCasters), out var reason)) Status = "Ho-RT：" + reason;
