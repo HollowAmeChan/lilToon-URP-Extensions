@@ -50,7 +50,7 @@ def parse(path):
     for _ in range(max(0,mc)):
         r.text();r.text();r.take(4*4+3*4+4+3*4+1+4*4+4);r.idx(sizes[1]);r.idx(sizes[1]);r.u8();toon=r.u8();r.idx(sizes[2]) if toon==0 else r.u8();r.text();r.i32()
     bc=r.i32(); bones=[]
-    debug_sections = False
+    debug_sections = '--debug' in sys.argv
     if debug_sections: print('DEBUG boneCount',bc,'offset',r.o,file=sys.stderr)
     for _ in range(max(0,bc)):
         n=r.text();r.text();pos=r.vec3();parent=r.idx(sizes[4]);layer=r.i32();flags=r.u16(); b={'name':n,'position':pos,'parentIndex':parent,'layer':layer,'flags':flags}
@@ -93,7 +93,7 @@ def parse(path):
             elif typ==1:r.idx(sizes[0]);r.take(12)
             elif typ==2:r.idx(sizes[3]);r.take(12+16)
             elif 3<=typ<=7:r.idx(sizes[0]);r.take(16)
-            elif typ==8:r.idx(sizes[1]);r.u8();r.take(4*4+3*4+4+3*4+4*4+4*4+4*4)
+            elif typ==8:r.idx(sizes[2]);r.u8();r.take(4*4+3*4+4+3*4+4+4*4+4*4+4*4)
             elif typ==9:r.idx(sizes[4]);r.f32()
             elif typ==10:r.idx(sizes[5]);r.u8();r.u8();r.vec3()
         if debug_sections and len(morphs)<60: print('DEBUG morph end',len(morphs),r.o,'expected?',file=sys.stderr)
