@@ -32,6 +32,8 @@ The motion library was indexed from `E:/BaiduSyncdisk/大师/_完整动作` into
 
 The Sour reference model is the user-provided `Sour式初音ミクVer.1.02`. The UMT research package already covers MMD transform order, CCD IK, morph/VMD/camera conversion and optional physics bake. HoAux twist/fan remains a post-IK auxiliary layer. `HoIkConstraint` was added to HoUnityTools with chain, pole, local limits, axis mask, weight and Manual/LateUpdate modes; Unity D3D12 smoke error was 0.00201 on a three-link chain. Evidence: `HoUnityTools` commit `b5be481`, `Tools~/MmdStages/MMD_MOTION_IMPORT.md`, and `Library/HoMmdStages/ho-ik-smoke.json`. Confidence: constraint core confirmed; full VMD integration remains in progress.
 
+The standalone Ho VMD importer/player now passes Unity D3D12 smoke coverage: a Sour motion bone track applies to a named transform and a SweetTea camera VMD writes a two-node camera rig at frame 8 (`cameraFov=15`). Evidence: `D:/Unity_Project/BREAK_URP/Library/HoMmdStages/ho-vmd-playback-smoke.json` and `HoUnityTools` commits `21ffe87`, `5a4e0c1`, `6712983`. The player is a name-mapping adapter; UMT remains the reference for full MMD transform-order and physics solving.
+
 Hollow logo defaults are now Y=.1 and size=.3 (center X=.5), with existing contrast colors retained. The targeted editor command found 30 Hollow layers across the scene asset tree, without switching/saving the user's loaded scene. New generic tools create a starter from explicit PMX paths, edit logo fields in profiles, and render arbitrary saved scenes without H2CU recipes. See the current phase guides for commands.
 
 ## 2026-10-29 — H2Cu batch authoring
