@@ -12,6 +12,8 @@ FBX/GLTF 角色的适配通过 `HoVmdBindingProfile` 保存：骨骼用目标 Tr
 
 现有 `HoMmdSceneWorkshop` review 支持 `--motion Assets/.../clip.vmd --motion-frame 240`，会在主、左、右三个镜头应用同一个时间点；这条路径用于动作适配审查，不会保存场景中的临时播放器状态。
 
+定格 review 在编辑器模式下会立即执行 Ho IK，避免没有 LateUpdate 时只看到 FK 姿态；播放模式则继续让 Ho IK 约束按 LateUpdate 顺序执行。
+
 ## 作者规约中已经确认的情况
 
 - 卜逻desu 的包明确包含 Sour 动作、Sour 镜头，以及若干 PV 背景＋BGM 组合包。不能只导入一个运动 VMD 后宣称动作完整。
