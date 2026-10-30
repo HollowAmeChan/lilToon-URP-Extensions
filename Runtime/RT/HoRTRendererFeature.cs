@@ -73,12 +73,13 @@ namespace lilToon.URP.Extensions.RT
     public sealed class HoRTRendererFeature : ScriptableRendererFeature
     {
         // This registry locates owned domains. It does not own one global AS.
-        private static readonly Dictionary<ScriptableRenderer, Domain> active = new();
+        // SceneView and GameView can use the same RendererData in one editor
+        // frame. Their screen inputs and GPU lifetimes are independent.
+        private static readonly Dictionary<(ScriptableRenderer renderer, Camera camera), Domain> active = new();
         private static readonly List<Domain> retiring = new();
         private static readonly List<(Domain domain, IDisposable resource)> retiringResources = new();
         private static bool retirementHooked;
-        private readonly Dictionary<ScriptableRenderer, Domain> domains = new();
-        private FencePass fencePass;
+        private readonly Dictionary<(ScriptableRenderer renderer, Camera camera), Domain> domains = new();
         public string Status { get; private set; } = "等待 RT 消费者";
         public double LastPrepareWaitMilliseconds { get; private set; }
         internal uint BakeCount { get { uint count = 0; foreach (var d in domains.Values) count += d.geometry.BakeCount; return count; } }
@@ -108,13 +109,14 @@ namespace lilToon.URP.Extensions.RT
             internal readonly HoRTGeometryCache geometry = new();
             internal readonly Dictionary<Object, View> views = new();
             internal readonly Dictionary<Object, HoRTViewRequest> requests = new();
+            internal readonly FencePass fencePass;
             internal Camera camera;
             internal ulong epoch;
             internal bool frozen, retired, fenceExpected, fenceRecorded, capturedInput;
             internal GraphicsFence fence;
             internal readonly List<Renderer> candidates = new();
             private readonly List<Object> removed = new();
-            internal Domain(HoRTRendererFeature owner) { this.owner = owner; }
+            internal Domain(HoRTRendererFeature owner) { this.owner = owner; fencePass = new FencePass(); }
             internal void CaptureInput()
             {
                 if (retired || !frozen) throw new InvalidOperationException("Ho-RT scene is outside its prepared render epoch");
@@ -177,20 +179,21 @@ namespace lilToon.URP.Extensions.RT
         }
 
         public override void Create()
-        { RetireDomains(); fencePass = new FencePass(); Status = "等待 RT 消费者"; }
+        { RetireDomains(); Status = "等待 RT 消费者"; }
 
         public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
         {
             CollectRetired();
             if (!HoRTScene.IsSupported || !SystemInfo.supportsGraphicsFence)
             { Status = "需要 D3D12 inline RT 与 GraphicsFence"; return; }
-            if (!domains.TryGetValue(renderer, out var domain))
-            { domain = new Domain(this); domains.Add(renderer, domain); }
+            var key = (renderer, cameraData.camera);
+            if (!domains.TryGetValue(key, out var domain))
+            { domain = new Domain(this); domains.Add(key, domain); }
             var wait = Stopwatch.StartNew();
             if (!domain.WaitForPrevious())
-            { LastPrepareWaitMilliseconds = wait.Elapsed.TotalMilliseconds; active.Remove(renderer); Status = "上一相机场景仍在使用，拒绝修改"; return; }
+            { LastPrepareWaitMilliseconds = wait.Elapsed.TotalMilliseconds; active.Remove(key); Status = "当前相机上一帧场景仍在使用，拒绝修改"; return; }
             LastPrepareWaitMilliseconds = wait.Elapsed.TotalMilliseconds;
-            domain.Begin(cameraData.camera); active[renderer] = domain;
+            domain.Begin(cameraData.camera); active[key] = domain;
         }
 
         internal static bool Declare(ScriptableRenderer renderer, Camera camera, Object client, HoRTViewRequest request, out string reason)
@@ -213,7 +216,7 @@ namespace lilToon.URP.Extensions.RT
         private static bool Find(ScriptableRenderer renderer, Camera camera, out Domain domain)
         {
             if (renderer == null) { domain = null; return false; }
-            return active.TryGetValue(renderer, out domain) && !domain.retired
+            return active.TryGetValue((renderer, camera), out domain) && !domain.retired
                 && domain.owner != null && domain.owner.isActive && domain.camera == camera;
         }
 
@@ -223,7 +226,7 @@ namespace lilToon.URP.Extensions.RT
             domain.Prepare();
             if (domain.requests.Count == 0) { Status = "没有 RT 请求"; return; }
             domain.fenceExpected = true;
-            fencePass.domain = domain; renderer.EnqueuePass(fencePass);
+            domain.fencePass.domain = domain; renderer.EnqueuePass(domain.fencePass);
             Status = $"views={domain.views.Count}, epoch={domain.epoch}, bakes={domain.geometry.BakeCount}, wait={LastPrepareWaitMilliseconds:F2}ms";
         }
 
@@ -278,12 +281,20 @@ namespace lilToon.URP.Extensions.RT
         // shared pose cache together, never just the first caller's private view.
         internal bool MarkGeometryDirty(ScriptableRenderer renderer)
         {
-            if (!domains.TryGetValue(renderer, out var domain) || !domain.WaitForPrevious()) return false;
-            foreach (var view in domain.views.Values) view.scene.MarkGeometryDirty();
-            domain.geometry.MarkGeometryDirty(); domain.frozen = false; return true;
+            bool found = false;
+            foreach (var pair in domains)
+            {
+                if (!ReferenceEquals(pair.Key.renderer, renderer)) continue;
+                found = true;
+                var domain = pair.Value;
+                if (!domain.WaitForPrevious()) return false;
+                foreach (var view in domain.views.Values) view.scene.MarkGeometryDirty();
+                domain.geometry.MarkGeometryDirty(); domain.frozen = false;
+            }
+            return found;
         }
 
-        private sealed class FencePass : ScriptableRenderPass
+        internal sealed class FencePass : ScriptableRenderPass
         {
             internal Domain domain;
             internal FencePass() { renderPassEvent = RenderPassEvent.AfterRendering; }
