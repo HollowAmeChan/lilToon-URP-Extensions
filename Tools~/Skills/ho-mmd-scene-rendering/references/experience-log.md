@@ -26,6 +26,12 @@ This is a maintained evidence log, not a list of universal rules. Append only ob
 
 The user has begun manual lighting/filter work. Existing scenes are editable art, not frozen fixtures: stop routine full-scene audits, old-hash comparisons and fixed-effect/three-camera gates. Preserve the current authored state; targeted edits and capture-only review are the normal workflow. Earlier audit records below describe historical batch work and do not impose current requirements.
 
+## 2026-10-30 — MMD motion library and Ho IK
+
+The motion library was indexed from `E:/BaiduSyncdisk/大师/_完整动作` into `E:/BaiduSyncdisk/大师/_完整动作_整理`: 7 authors, 128 archives, 18 direct VMD files and 666 VMD files after extraction. README evidence shows three recurring dependencies: Sour-specific motion, author-specific facial/camera tracks, and action-level IK toggles. Some packages include PV/BGM/audio and should be treated as kits rather than a single motion file. Evidence: `_完整动作_整理/index.json` and `动作需求摘录.md`. Confidence: source inventory confirmed; model compatibility remains per-action.
+
+The Sour reference model is the user-provided `Sour式初音ミクVer.1.02`. The UMT research package already covers MMD transform order, CCD IK, morph/VMD/camera conversion and optional physics bake. HoAux twist/fan remains a post-IK auxiliary layer. `HoIkConstraint` was added to HoUnityTools with chain, pole, local limits, axis mask, weight and Manual/LateUpdate modes; Unity D3D12 smoke error was 0.00201 on a three-link chain. Evidence: `HoUnityTools` commit `b5be481`, `Tools~/MmdStages/MMD_MOTION_IMPORT.md`, and `Library/HoMmdStages/ho-ik-smoke.json`. Confidence: constraint core confirmed; full VMD integration remains in progress.
+
 Hollow logo defaults are now Y=.1 and size=.3 (center X=.5), with existing contrast colors retained. The targeted editor command found 30 Hollow layers across the scene asset tree, without switching/saving the user's loaded scene. New generic tools create a starter from explicit PMX paths, edit logo fields in profiles, and render arbitrary saved scenes without H2CU recipes. See the current phase guides for commands.
 
 ## 2026-10-29 — H2Cu batch authoring
