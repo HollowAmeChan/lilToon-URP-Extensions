@@ -12,6 +12,8 @@ FBX/GLTF 角色的适配通过 `HoVmdBindingProfile` 保存：骨骼用目标 Tr
 
 `HoVmdBindingProfileBuilder` 可从 FBX/GLTF 角色层级生成初始映射，按精确名称、规范化名称和 Humanoid 骨骼顺序匹配；生成后仍需手工检查 WIK、toe、眼睛和作者专用 morph。
 
+镜头 VMD 使用 `HoUnityTools/MMD/VMD Camera Player` 独立播放，不要求角色 PMX。组件的 `cameraTarget` 是 MMD 轨道中心，`targetCamera` 是实际 Unity Camera；它保留负距离、显式写入旋转、处理正交投影，并默认把相邻关键帧当作跳切。场景 review 里如果动作包有单独的 `camera.vmd`，应把它填到 Camera Player，而不是填进角色的 `HoVmdMotionPlayer`。
+
 现有 `HoMmdSceneWorkshop` review 支持 `--motion Assets/.../clip.vmd --motion-frame 240`，会在主、左、右三个镜头应用同一个时间点；这条路径用于动作适配审查，不会保存场景中的临时播放器状态。
 
 review 同时对每个 `HoVmdMotionPlayer` 的 `ModelRoot` 执行 morph 依赖审查：优先验证其 `HoVmdBindingProfile.morphs`，再检查精确名称和规范化名称，并把具体命中、缺失与冲突写到 `Library/HoMmdStages/MorphAudit/<scene>-<motion>.json`。日志会报告 `missing` / `conflicts`，但不会因为缺少某个角色专用表情而修改角色资产或中断静帧渲染；适配阶段应先看这份 JSON，再决定补 Profile 映射、换角色或按 README 关闭该动作实例的表情轨道。
