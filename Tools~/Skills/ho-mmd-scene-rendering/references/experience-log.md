@@ -1,5 +1,25 @@
 # Dynamic experience log
 
+## 2026-10-30 — fixture-by-fixture practical lights
+
+27 H2Cu scenes were viewed from their saved state, with primary-camera before images and three authored views after local edits. 13 scenes contain independent practical fixtures; the remaining scenes retain their lighting and receive hierarchy colors. A material-level bounding box was insufficient: 花吐电気 has 26 separate pendant bulbs, 月昔梅 426 paper lanterns, and 百鸟 306 separate hanging lanterns in addition to ground/river lamps. Coincident upper/lower LED faces in 炫光 are one fixture each.
+
+The explicit per-scene 灯具补光.json plans create individual practical lights and selected downward spots, while retaining main lights and manual filters. Two-sided paper near a Point can clip white from self-illumination; separating the emitter receivers from local practical lights preserves a readable shade and the surrounding light pool. HD volumes are limited to selected fixtures, with existing light/shadow layers preserved. vHierarchy marks structural objects through its data API after saving stable object IDs.
+
+Evidence: project Library/HoMmdStages/PracticalLighting/ and repository Temp~/MmdStages/PracticalLighting-20261030/. These are visual lighting iterations, not fixed-look compliance gates. Tools do not automatically replay these plans during capture.
+
+### Christmas kaleidoscope: match lamp geometry, not only material names
+
+The Christmas stage exposed a useful failure mode: a material inventory can report one lamp surface while a single PMX mesh contains several disconnected components per fixture. The first pass selected only the large, obvious components and therefore created 149 gold and 66 silver light positions, while the scene actually contained 151 gold and 85 silver spherical lamp components. The missing upper balls were visible in the render but had no corresponding practical light.
+
+For hanging lamp materials, validate the authored plan against the component signature used by the source mesh. In this stage the spherical bulb component had 270 vertices; matching those component centers against point-light positions exposed the missing 21 fixtures. Add a point at each bulb and a short down-facing spot below it, then review all three cameras. This catches sparse high-level ornaments that a size threshold or a single representative component would miss without turning every wire or chain segment into a light. Evidence: `Library/HoMmdStages/PracticalLighting/圣诞万花镜/inventory.json`, `圣诞万花镜/Rendering/灯具补光.json` and the refreshed `after*.png` captures. Confidence: confirmed.
+
+### Christmas warm interior look and D3D12 post effects
+
+The author preview depends on HDR bulb emission, warm practical-light color, deep focus falloff and a strongly reflective floor. Low scalar emission colors can make correctly positioned lights look absent; for the Christmas stage the lilToon `_EmissionColor` values were raised into HDR while gold and silver practical lights kept separate warm/cool colors. The stage profile now uses the Ho ImageProcess Glow layers, warm split toning, a stronger URP Bloom, ScreenProcess Bokeh DOF, and a small deterministic Fisheye edge-zoom layer placed before cinematic bars and the Hollow logo. Floor smoothness/PLR strength were raised together so the light balls appear in the reflection.
+
+The ImageProcess BokehZoom effect produced salt-and-pepper noise on D3D12 even at low intensity when fed these bright HDR bulbs. It is not suitable for this stage until that shader path is fixed; replacing it with low-intensity Fisheye preserves a clean edge-zoom cue. Evidence: `Library/HoMmdStages/PracticalLighting/圣诞万花镜/after*.png`, `圣诞万花镜/Rendering/后处理.asset`, and `Materials/000_地面.mat`. Confidence: confirmed on the three final views.
+
 This is a maintained evidence log, not a list of universal rules. Append only observations that changed a decision or were confirmed by a rendered/audit artifact. Each entry should include date, stage/subsystem, evidence path and confidence.
 
 ## 2026-10-30 — artist-led editing and generic workshop

@@ -35,6 +35,8 @@ public static class HoMmdStageWork
     }
     static void Tick()
     {
+        if(busy && File.Exists(Path.Combine(Work,"cancel-capture.txt")))
+        { File.Delete(Path.Combine(Work,"cancel-capture.txt")); HoMmdStageCapture.Cancel(); }
         if(EditorApplication.timeSinceStartup<next || busy) return;
         next=EditorApplication.timeSinceStartup+1;
         Directory.CreateDirectory(Work);
@@ -74,6 +76,10 @@ public static class HoMmdStageWork
             else if(command.action=="logo")result=HoMmdStageBranding.SetLogos(
                 string.IsNullOrEmpty(command.stageFolder)?"Assets/mmd场景测试":command.stageFolder,command.logoY,command.logoSize);
             else if(command.action=="create")result=HoMmdSceneWorkshop.Create(command);
+            else if(command.action=="fixtures")result=HoMmdPracticalLighting.Inventory(
+                string.IsNullOrEmpty(command.scenePath)?HoMmdStageBuilder.Root+command.stage+"/"+command.stage+".unity":command.scenePath);
+            else if(command.action=="practicals")result=HoMmdPracticalLighting.Apply(
+                string.IsNullOrEmpty(command.scenePath)?HoMmdStageBuilder.Root+command.stage+"/"+command.stage+".unity":command.scenePath);
             else
             {
                 Type type=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("HoMmdStageBuilder")).FirstOrDefault(x=>x!=null);

@@ -160,7 +160,9 @@ public static class HoMmdStageCapture
                         break;
                     case Phase.Warmup:
                         // Do not fake temporal warmup by rendering multiple times in one frame.
-                        if (lastFrame == Time.frameCount) break;
+                        // In an idle/minimized edit-mode Editor, frameCount can remain
+                        // unchanged across real EditorApplication.update callbacks.
+                        if ((Application.isBatchMode || EditorApplication.isPlaying) && lastFrame == Time.frameCount) break;
                         lastFrame = Time.frameCount;
                         var warmup = new RenderPipeline.StandardRequest { destination = target };
                         RenderPipeline.SubmitRenderRequest(camera, warmup);
