@@ -46,6 +46,6 @@ public static class HoMmdStageBranding
     }
 
     [Serializable] sealed class Result { public int logos; public string[] changedProfiles; public float y, size; }
-    [MenuItem("Tools/Ho/MMD/Set Hollow Logo Y 0.1 Size 0.3")]
+    [MenuItem("HoUnityTools/MMD/Set Hollow Logo Y 0.1 Size 0.3")]
     public static void ApplyDefaults() => Debug.Log(SetLogos());
 }

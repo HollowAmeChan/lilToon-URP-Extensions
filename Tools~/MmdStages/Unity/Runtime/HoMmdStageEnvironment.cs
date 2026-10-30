@@ -13,7 +13,7 @@ namespace Hollow.HoMmdStages
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    [AddComponentMenu("Ho/MMD Stage Environment")]
+    [AddComponentMenu("HoUnityTools/MMD/Stage Environment")]
     public sealed class HoMmdStageEnvironment : MonoBehaviour
     {
         public UniversalRenderPipelineAsset pipeline;
