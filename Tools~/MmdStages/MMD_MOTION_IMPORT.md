@@ -8,6 +8,8 @@
 
 `HoUnityTools` 现在提供独立 `.vmd` ScriptedImporter，资产类型为 `HoVmdAnimation`，以及第一版 `HoVmdMotionPlayer` / `HoVmdCameraPlayer`。Importer 先保留轨道数据和作者模型名；播放器按骨骼/morph 名称绑定，show/IK 段映射到 `HoIkConstraint.IkName`，镜头使用 target + Camera 两节点。它不会与现有静态 `.pmx` importer 争夺扩展名。
 
+FBX/GLTF 角色的适配通过 `HoVmdBindingProfile` 保存：骨骼用目标 Transform path，形态键用 Renderer path + BlendShape name，IK 用 constraint path。动作包与角色 Profile 分开保存，同一动作可以换不同角色 Profile。
+
 现有 `HoMmdSceneWorkshop` review 支持 `--motion Assets/.../clip.vmd --motion-frame 240`，会在主、左、右三个镜头应用同一个时间点；这条路径用于动作适配审查，不会保存场景中的临时播放器状态。
 
 ## 作者规约中已经确认的情况
