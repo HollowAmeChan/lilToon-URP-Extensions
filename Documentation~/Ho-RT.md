@@ -624,9 +624,13 @@ RTShadow 现在用已有 `rayBias` 同时沿出射侧网格法线偏移起点、
 
 `Synchronize(renderers, mask, excludedMaterials)` 接收与观察相机无关的世界集合；后两个参数可省略。每个 Renderer / submesh 单独登记，要求一材质对应一 submesh、三角形拓扑；支持 MeshRenderer 与 SkinnedMeshRenderer。disabled、inactive、forceRenderingOff、static batch、additional vertex stream、缺失材质等进入拒绝或排除路径。不要传相机 culling results，否则会丢失离屏遮挡物。
 
-默认只登记 opaque；调用者传入共同的 `HoRTCutoutSupport` 和 native hit material 后，可登记有界 lilToon Cutout。要求 UV0、无 MPB，排除动画主 UV、dissolve、distance fade、dither、多主色、视差等复杂情况。DI / GI 的 Surface 用途仍关闭 triangle culling，并保留 `shadowCastingMode=Off` 的可见几何；RTShadow 的 ShadowCasters 用途排除 Cast Off，包含 ShadowsOnly，并按 TwoSided / 材质 `_Cull` 处理射线面向与 AS flags。alpha / surface 运算由 adapter 负责；任意 GPU 顶点位移、布料、Terrain、fur、描边壳不在自动支持域。支持范围见 [DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md)、[GI](Ho-RTGI.md) 与本页 §8.5。
+默认只登记 opaque；调用者传入共同的 `HoRTCutoutSupport` 和 native hit material 后，可登记有界 lilToon Cutout。要求 UV0、无 MPB，排除动画主 UV、dissolve、distance fade、dither、多主色、视差等复杂情况。DI / GI 的 Surface 用途仍关闭 triangle culling，并保留 `shadowCastingMode=Off` 的可见几何；RTShadow 的 ShadowCasters 用途排除 Cast Off，包含 ShadowsOnly，并按 TwoSided / 材质 `_Cull` 处理射线面向与 AS flags。alpha / surface 运算由 adapter 负责；任意 GPU 顶点位移、不经 CPU Mesh / BakeMesh 的布料、Terrain、fur、描边壳不在自动支持域。支持范围见 [DI Cutout](RTDI/技术/Ho-RTDI-Cutout.md)、[GI](Ho-RTGI.md) 与本页 §8.5。
 
-蒙皮通过 `BakeMesh(mesh, true)` 获取当前骨骼 / BlendShape 姿态，补偿 Renderer 缩放后由 AS 应用一次 localToWorld。姿态、源 Mesh 或蒙皮质量变化时更新快照及 BLAS，稳定姿态复用；缺失 / 非有限姿态会移除旧实例。源 Mesh 原地编辑必须调用 `MarkGeometryDirty()` 再同步；仅清 TLAS 后重新加入同一个 Mesh 不能保证旧 BLAS 刷新。CPU Bake 与完整 Mesh 副本仍有成本，兼容 pose 已由 host 共享；[场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md) 中的双副本账本属于历史时点，不能用于推算现状。
+蒙皮通过 `BakeMesh(mesh, true)` 获取当前 CPU 骨骼 / BlendShape 姿态，补偿 Renderer 缩放后由 AS 应用一次 localToWorld。姿态、源 Mesh 或蒙皮质量变化时更新快照及 BLAS。对于可读源 Mesh，同步还核对位置、法线、切线、绑定矩阵及完整骨骼权重签名，识别“同一 Mesh 原地变形而骨骼矩阵未变”的布料更新；稳定输入复用 Bake / BLAS。不可读源无法核对 CPU 内容，保守地每次同步重新 Bake，增加 CPU 成本。索引 / 拓扑、UV 等其他源数据的原地编辑仍须显式 `MarkGeometryDirty()`；仅清 TLAS 后重新加入同一个 Mesh 不能保证旧 BLAS 刷新。CPU Bake 与完整 Mesh 副本仍有成本，兼容 pose 已由 host 共享；[场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md) 中的双副本账本属于历史时点，不能用于推算现状。
+
+骨骼合并与 MC2 MeshCloth 可在播放时重新赋值 `renderer.bones`、创建 Clone Mesh 并改写权重。因此空槽必须按**当前 Mesh 的正权重引用**判断，不能仅因一个空槽排除整个 caster，也不能按编辑态原 Mesh 猜测哪些骨骼有用。实际被权重使用的骨骼缺失、无效权重 / 索引、非有限变换或烘焙位置仍拒绝并退休旧姿态。这里没有捕获并忽略 `NullReferenceException` 的回退；两次骨骼矩阵读取都处理空槽。
+
+WTD 播放回归的报告与前后图集中在 [PlayModeSkin](../Tests~/RT/PlayModeSkin/review.json)，CPU 回归入口为 `HoRTSceneValidation.RunPoseCache()`（不切换 / 保存场景、不创建 AS、不退出编辑器）。成熟播放的裙子 / 袖子 Clone Mesh 共有 635 槽，分别 522 / 491 个空槽，但正权重均指向有效骨骼；鞋子和头发没有同样的 Clone Mesh 状态，不能作为等价反证。第 122、242 帧均保留全部 27 个 caster，当前缓存与同帧 fresh Bake 顶点差为零，导出图不再出现本次裙下细条。14 项 CPU 回归另覆盖位置 / 权重 / 绑定矩阵 / 法线独立改动、稳定缓存、加权骨骼缺失拒绝及恢复。该验证不代表任意动画、大幅运动、GPU 顶点位移或所有 cloth 实现已验收；长期复杂运动与额外 CPU 成本仍需单独评估。
 
 R2 的 [HoRTGeometryCache](../Runtime/RT/HoRTGeometryCache.cs) 可由宿主注入 `HoRTScene` 第三个构造参数：宿主按本次 union 准备一次，scene views 只 acquire 对应 pose lease。每个 AS entry 比较单调 PoseVersion，所有相关 submesh 均更新；不用被首个 view 消耗的 changed 标记。未注入时 scene 自建缓存，既有独立查询验证保持可用。共享 Mesh 保持稳定，修改前由宿主确认 GPU fence；AS 移除 / 释放后才释放 pose lease。`SkinnedBakeCount` 在共享模式反映缓存实际累计 Bake，而非每个 view 重复计数。
 

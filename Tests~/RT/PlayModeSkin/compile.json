@@ -1,0 +1,10 @@
+[
+  {
+    "assembly": "Runtime",
+    "exitCode": 0
+  },
+  {
+    "assembly": "Editor",
+    "exitCode": 0
+  }
+]

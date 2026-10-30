@@ -1,0 +1,20 @@
+{
+    "pass": true,
+    "error": "",
+    "checks": [
+        "Unused null bone slot accepted",
+        "Source mesh remains untouched",
+        "Stable sparse skin reuses snapshot",
+        "In-place positions refresh with unchanged bones",
+        "Updated position reaches owned mesh",
+        "Weight-only edit refreshes pose",
+        "New bone influence reaches owned mesh",
+        "Bindpose-only edit refreshes pose",
+        "Normal-only edit refreshes pose",
+        "Owned geometry matches fresh Unity BakeMesh",
+        "Stable remapped geometry reuses snapshot",
+        "Weighted missing bone still rejected",
+        "Valid remapping recovers",
+        "Destroyed renderer rejected without exception"
+    ]
+}

@@ -108,5 +108,78 @@ namespace lilToon.URP.Extensions.RT
         }
         private static Mesh ResolveMesh(uint identity)
         { Require(scene.TryResolve(identity, out var instance), "missing skin identity"); return instance.mesh; }
+
+        [Serializable] private sealed class PoseCacheReport
+        {
+            public bool pass;
+            public string error;
+            public List<string> checks = new();
+        }
+
+        // CPU-only regression: does not open/save scenes, create an AS, alter
+        // pipeline assets, or exit the user's editor.
+        public static void RunPoseCache()
+        {
+            var report = new PoseCacheReport();
+            var root = new GameObject("Ho RT pose regression") { hideFlags = HideFlags.HideAndDontSave };
+            var input = new Mesh { name = "Mutable sparse bone palette" };
+            HoRTSkinnedMesh pose = null;
+            var fresh = new Mesh();
+            void Check(bool condition, string name)
+            {
+                if (!condition) throw new Exception(name);
+                report.checks.Add(name);
+            }
+            try
+            {
+                var a = new GameObject("bone A").transform; a.SetParent(root.transform, false);
+                var b = new GameObject("bone B").transform; b.SetParent(root.transform, false);
+                b.localPosition = Vector3.forward;
+                input.vertices = new[] { Vector3.zero, Vector3.right, Vector3.up };
+                input.normals = new[] { Vector3.forward, Vector3.forward, Vector3.forward };
+                input.triangles = new[] { 0, 1, 2 };
+                input.bindposes = new[] { Matrix4x4.identity, Matrix4x4.identity, Matrix4x4.identity };
+                input.boneWeights = Enumerable.Repeat(new BoneWeight { boneIndex0 = 0, weight0 = 1 }, 3).ToArray();
+                var target = root.AddComponent<SkinnedMeshRenderer>();
+                target.enabled = false; target.sharedMesh = input; target.bones = new[] { a, b, null }; target.rootBone = a;
+                pose = new HoRTSkinnedMesh(target);
+                Check(pose.Synchronize(out bool changed) && changed, "Unused null bone slot accepted");
+                Check(!input.vertices.Any(p => p.z != 0), "Source mesh remains untouched");
+                Check(pose.Synchronize(out changed) && !changed, "Stable sparse skin reuses snapshot");
+                var points = input.vertices; for (int i = 0; i < points.Length; ++i) points[i].z += .25f; input.vertices = points;
+                Check(pose.Synchronize(out changed) && changed, "In-place positions refresh with unchanged bones");
+                Check(Mathf.Abs(pose.mesh.vertices[0].z - .25f) < 1e-6f, "Updated position reaches owned mesh");
+                input.boneWeights = Enumerable.Repeat(new BoneWeight { boneIndex0 = 1, weight0 = 1 }, 3).ToArray();
+                Check(pose.Synchronize(out changed) && changed, "Weight-only edit refreshes pose");
+                Check(Mathf.Abs(pose.mesh.vertices[0].z - 1.25f) < 1e-6f, "New bone influence reaches owned mesh");
+                var bindings = input.bindposes; bindings[1] = Matrix4x4.Translate(Vector3.forward * .5f); input.bindposes = bindings;
+                Check(pose.Synchronize(out changed) && changed, "Bindpose-only edit refreshes pose");
+                input.normals = new[] { Vector3.up, Vector3.up, Vector3.up };
+                Check(pose.Synchronize(out changed) && changed, "Normal-only edit refreshes pose");
+                target.BakeMesh(fresh, true);
+                Check(pose.mesh.vertices.Zip(fresh.vertices, (x, y) => (x - y).sqrMagnitude).All(d => d < 1e-12f),
+                    "Owned geometry matches fresh Unity BakeMesh");
+                Check(pose.Synchronize(out changed) && !changed, "Stable remapped geometry reuses snapshot");
+                target.bones = new[] { a, (Transform)null, null };
+                Check(!pose.Synchronize(out _), "Weighted missing bone still rejected");
+                target.bones = new[] { a, b, null };
+                Check(pose.Synchronize(out _), "Valid remapping recovers");
+                Object.DestroyImmediate(root); root = null;
+                Check(!pose.Synchronize(out _), "Destroyed renderer rejected without exception");
+                report.pass = true;
+            }
+            catch (Exception error) { report.error = error.ToString(); }
+            finally
+            {
+                pose?.Dispose();
+                if (root != null) Object.DestroyImmediate(root);
+                Object.DestroyImmediate(input); Object.DestroyImmediate(fresh);
+                string folder = Path.GetFullPath(Path.Combine(Application.dataPath, "../Logs/HoRTShadowPlayDebug"));
+                Directory.CreateDirectory(folder);
+                File.WriteAllText(Path.Combine(folder, "pose-cache-regression.json"), JsonUtility.ToJson(report, true));
+            }
+            if (!report.pass) throw new Exception(report.error);
+            Debug.Log("[HoRTSceneValidation] PASS pose cache: " + report.checks.Count + " checks");
+        }
     }
 }

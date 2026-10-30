@@ -1,0 +1,582 @@
+{
+    "label": "step-120-second",
+    "camera": "Main Camera",
+    "shadowStatus": "请求 1 灯 / 生产 1 / 不可用 0",
+    "hostStatus": "",
+    "error": "",
+    "playing": true,
+    "paused": false,
+    "viewValid": true,
+    "frame": 242,
+    "instances": 27,
+    "skins": 27,
+    "width": 960,
+    "height": 540,
+    "activeDomains": 2,
+    "samples": 1,
+    "lifetime": 1,
+    "revision": 4,
+    "rayBias": 0.00009999999747378752,
+    "poses": [
+        {
+            "renderer": "WTD-BUILD/头发-前内",
+            "mesh": "头发-前内",
+            "vertices": 691,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2上衣",
+            "mesh": "衣服2上衣",
+            "vertices": 2930,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/瞳孔",
+            "mesh": "瞳孔",
+            "vertices": 782,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2侧发",
+            "mesh": "衣服2侧发",
+            "vertices": 461,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/头发-前发",
+            "mesh": "头发-前发",
+            "vertices": 1874,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/睫毛下",
+            "mesh": "睫毛下",
+            "vertices": 384,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/头发-前外侧",
+            "mesh": "头发-前外侧",
+            "vertices": 2457,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/木屐 ",
+            "mesh": "木屐 ",
+            "vertices": 2160,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/头发-后发",
+            "mesh": "头发-后发",
+            "vertices": 5505,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/耳饰",
+            "mesh": "耳饰",
+            "vertices": 3386,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Body",
+            "mesh": "Body",
+            "vertices": 3182,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/耳朵",
+            "mesh": "耳朵",
+            "vertices": 1880,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/内裤",
+            "mesh": "内裤",
+            "vertices": 1593,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Body1",
+            "mesh": "Body1",
+            "vertices": 19986,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2鞋",
+            "mesh": "衣服2鞋",
+            "vertices": 20904,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/头发-呆毛",
+            "mesh": "头发-呆毛",
+            "vertices": 90,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/眉",
+            "mesh": "眉",
+            "vertices": 316,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2袖子",
+            "mesh": "衣服2袖子(Clone)",
+            "vertices": 23508,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2束腰",
+            "mesh": "衣服2束腰",
+            "vertices": 672,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2围裙",
+            "mesh": "衣服2围裙(Clone)",
+            "vertices": 4729,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2胸挂",
+            "mesh": "衣服2胸挂",
+            "vertices": 3044,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/睫毛上",
+            "mesh": "睫毛上",
+            "vertices": 1072,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/鼻尖",
+            "mesh": "鼻尖",
+            "vertices": 14,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2缎带",
+            "mesh": "衣服2缎带",
+            "vertices": 6969,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/手环",
+            "mesh": "手环",
+            "vertices": 776,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/头发-前杂",
+            "mesh": "头发-前杂",
+            "vertices": 180,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        },
+        {
+            "renderer": "WTD-BUILD/头发-后杂",
+            "mesh": "头发-后杂",
+            "vertices": 376,
+            "sourceId": 0,
+            "cacheId": 0,
+            "different": 0,
+            "maxWorldDifference": 0.0,
+            "meanWorldDifference": 0.0,
+            "scale": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "readable": false,
+            "propertyBlock": false,
+            "casting": ""
+        }
+    ],
+    "behaviours": [
+        "WTD-BUILD : UnityEngine.Animator enabled=True",
+        "WTD-BUILD/Parts/巫女服/WTD-miko : UnityEngine.Animator enabled=True",
+        "WTD-BUILD/Parts/巫女服/_Physics/挂件 : MagicaCloth2.MagicaCloth enabled=True",
+        "WTD-BUILD/Parts/巫女服/_Physics/鞋子挂件 : MagicaCloth2.MagicaCloth enabled=True",
+        "WTD-BUILD/Parts/巫女服/_Physics/侧发 : MagicaCloth2.MagicaCloth enabled=True",
+        "WTD-BUILD/Parts/巫女服/_Physics/袖子 : MagicaCloth2.MagicaCloth enabled=True",
+        "WTD-BUILD : Hollow.HoUnityTools.MmdMotion.HoVmdMotionPlayer enabled=True",
+        "WTD-BUILD/Parts/巫女服/_Physics/裙子 : MagicaCloth2.MagicaCloth enabled=True"
+    ],
+    "rejections": [],
+    "renderers": [
+        "WTD-BUILD/上衣内层挂饰 mesh=上衣内层挂饰 vertices=292 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/后脑蝴蝶结 (1) mesh=后脑蝴蝶结 vertices=11404 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/腿环 (1) mesh=腿环 vertices=1003 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/头发-前内 mesh=头发-前内 vertices=691 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2上衣 mesh=衣服2上衣 vertices=2930 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=633 nullBones=0 bindposes=633",
+        "WTD-BUILD/瞳孔 mesh=瞳孔 vertices=782 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/外裙 (1) mesh=外裙 vertices=2626 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2侧发 mesh=衣服2侧发 vertices=461 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=633 nullBones=0 bindposes=633",
+        "WTD-BUILD/头发-前发 mesh=头发-前发 vertices=1874 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/睫毛下 mesh=睫毛下 vertices=384 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/上衣蝴蝶结 (1) mesh=上衣蝴蝶结 vertices=2186 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/颈环 (1) mesh=颈环 vertices=266 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/头发-前外侧 mesh=头发-前外侧 vertices=2457 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/上衣蝴蝶结 mesh=上衣蝴蝶结 vertices=2186 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/侧饰 (1) mesh=侧饰 vertices=10199 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/右臂环 mesh=右臂环 vertices=492 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/木屐  mesh=木屐  vertices=2160 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/头发-后发 mesh=头发-后发 vertices=5505 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/上衣内层 (1) mesh=上衣内层 vertices=1800 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/侧饰 mesh=侧饰 vertices=10199 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/外裙 mesh=外裙 vertices=2626 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/耳饰 mesh=耳饰 vertices=3386 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Body mesh=Body vertices=3182 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/耳朵 mesh=耳朵 vertices=1880 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/左臂环 mesh=左臂环 vertices=870 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/上衣内层 mesh=上衣内层 vertices=1800 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/内裤 mesh=内裤 vertices=1593 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/上衣内层挂饰 (1) mesh=上衣内层挂饰 vertices=292 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/颈环 mesh=颈环 vertices=266 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/左臂环 (1) mesh=左臂环 vertices=870 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Body1 mesh=Body1 vertices=19986 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/正面饰品 mesh=正面饰品 vertices=4044 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2鞋 mesh=衣服2鞋 vertices=20904 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=633 nullBones=0 bindposes=633",
+        "WTD-BUILD/Parts/泳装/_Mesh/正面饰品 (1) mesh=正面饰品 vertices=4044 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/头发-呆毛 mesh=头发-呆毛 vertices=90 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/上衣外层 mesh=上衣外层 vertices=7143 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/上身绳子 mesh=上身绳子 vertices=908 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/腿环 mesh=腿环 vertices=1003 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/上衣外层 (1) mesh=上衣外层 vertices=7143 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/眉 mesh=眉 vertices=316 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/后脑蝴蝶结 mesh=后脑蝴蝶结 vertices=11404 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/右臂环 (1) mesh=右臂环 vertices=492 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/腰挂 mesh=腰挂 vertices=2784 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2袖子 mesh=衣服2袖子(Clone) vertices=23508 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=635 nullBones=491 bindposes=635 influences=25070 weightedNull=0 invalidWeightIndex=0 bakedNonFinite=0 bakeBounds=Center: (0.00, 1.34, 0.00), Extents: (0.63, 0.14, 0.10)",
+        "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2束腰 mesh=衣服2束腰 vertices=672 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=633 nullBones=0 bindposes=633",
+        "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2围裙 mesh=衣服2围裙(Clone) vertices=4729 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=635 nullBones=522 bindposes=635 influences=5055 weightedNull=0 invalidWeightIndex=0 bakedNonFinite=0 bakeBounds=Center: (0.00, 0.07, -0.06), Extents: (0.32, 0.24, 0.24)",
+        "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2胸挂 mesh=衣服2胸挂 vertices=3044 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=633 nullBones=0 bindposes=633",
+        "WTD-BUILD/Parts/泳装/_Mesh/腰挂 (1) mesh=腰挂 vertices=2784 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/睫毛上 mesh=睫毛上 vertices=1072 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/上身绳子 (1) mesh=上身绳子 vertices=908 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/腿部绑带 mesh=腿部绑带 vertices=1619 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/泳装/_Mesh/腿部绑带 (1) mesh=腿部绑带 vertices=1619 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/鼻尖 mesh=鼻尖 vertices=14 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/Parts/巫女服/WTD-miko/衣服2缎带 mesh=衣服2缎带 vertices=6969 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=633 nullBones=0 bindposes=633",
+        "WTD-BUILD/手环 mesh=手环 vertices=776 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/头发-前杂 mesh=头发-前杂 vertices=180 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895",
+        "WTD-BUILD/头发-后杂 mesh=头发-后杂 vertices=376 submeshes=1 materials=1 propertyBlock=False rootBone=hips bones=895 nullBones=0 bindposes=895"
+    ],
+    "validPixels": 108117,
+    "shadowPixels": 36932,
+    "unrequestedPixels": 0,
+    "invalidPixels": 410283
+}

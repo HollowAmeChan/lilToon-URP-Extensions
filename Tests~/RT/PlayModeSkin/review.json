@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-31",
+  "project": "D:/Unity_Project/BREAK_URP",
+  "scene": "Assets/Hollow/WTD-summer/WTD.unity",
+  "unity": "6000.3.15f1",
+  "graphics": "Direct3D12",
+  "runtimeSha256": "b56a0ed63ed0fb9e0d163e939d15685e36351065a051e46975f270457f8f2844",
+  "validationSha256": "1f55a10a23778b76fc334c111f7c85507dd6d4fdfca57d1f5359687d210845c4",
+  "before": "before.json",
+  "after": [
+    "frame-122.json",
+    "frame-242.json"
+  ],
+  "cpu": "pose-cache-regression.json",
+  "observed": {
+    "beforeInstances": 25,
+    "afterInstances": 27,
+    "cpuChecks": 14,
+    "clothModes": "MC2 enabled; live Clone Mesh; original animation and physics components enabled",
+    "capture": "Main Camera aligned by user; SingleCameraRequest; 960x540; raw 1 spp; bias 1e-4; 120 EditorApplication.Step advances between samples",
+    "outcome": "Skirt and sleeve no longer rejected; no mesh-cache vs fresh Bake position deltas across all 27 skins; previously visible thigh speckles absent in saved captures"
+  },
+  "limitations": [
+    "These are two sampled simulation frames, not a per-frame flicker oracle or broad animation qualification.",
+    "Fresh CPU Bake equality alone does not prove equality with every GPU-only vertex deformation.",
+    "Extra readable-source signature cost and unreadable-source rebakes are not benchmarked.",
+    "Persistent allocation warning existed on domain reload; this change does not claim to resolve it."
+  ],
+  "compile": "compile.json",
+  "temporaryDiagnosticRemoved": true
+}
