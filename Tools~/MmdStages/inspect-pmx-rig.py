@@ -23,14 +23,12 @@ class Reader:
         return b.decode('utf-16-le' if self.enc==0 else 'utf-8','replace').rstrip('\0')
 
 def parse(path):
-    r0=Reader(Path(path).read_bytes(),'utf-8'); assert r0.take(4)==b'PMX '
-    version=struct.unpack('<f',r0.take(4))[0]; header=r0.take(1)[0]; r0.take(header)
-    r=Reader(r0.d,r0.enc if hasattr(r0,'enc') else 'utf-8'); r.o=r0.o
-    # Re-read the global settings because the header bytes are: encoding, addUV,
-    # vertex, texture, material, bone, morph, rigid sizes.
-    r.o=8; globals_count=r.u8(); globals_data=r.take(globals_count)
-    encoding=globals_data[0]; add_uv=globals_data[1]; sizes=globals_data[2:]
-    r=Reader(r0.d,'utf-8' if encoding==1 else 'utf-16-le'); r.o=8+1+globals_count
+    data=Path(path).read_bytes(); assert data[:4]==b'PMX '
+    version=struct.unpack('<f',data[4:8])[0]; header_size=data[8]
+    globals_data=data[9:9+header_size]
+    if len(globals_data)<8: raise EOFError('PMX header is truncated')
+    encoding=globals_data[0]; add_uv=globals_data[1]; sizes=globals_data[2:8]
+    r=Reader(data,'utf-8' if encoding==1 else 'utf-16-le'); r.o=9+header_size
     text_encoding=encoding
     r.enc=text_encoding
     model_name=r.text(); english_name=r.text()
@@ -52,6 +50,8 @@ def parse(path):
     for _ in range(max(0,mc)):
         r.text();r.text();r.take(4*4+3*4+4+3*4+1+4*4+4);r.idx(sizes[1]);r.idx(sizes[1]);r.u8();toon=r.u8();r.idx(sizes[2]) if toon==0 else r.u8();r.text();r.i32()
     bc=r.i32(); bones=[]
+    debug_sections = False
+    if debug_sections: print('DEBUG boneCount',bc,'offset',r.o,file=sys.stderr)
     for _ in range(max(0,bc)):
         n=r.text();r.text();pos=r.vec3();parent=r.idx(sizes[4]);layer=r.i32();flags=r.u16(); b={'name':n,'position':pos,'parentIndex':parent,'layer':layer,'flags':flags}
         if flags&1: b['tailIndex']=r.idx(sizes[3])
@@ -68,17 +68,35 @@ def parse(path):
                 b['ikLinks'].append(link)
         bones.append(b)
     morph_types={0:'group',1:'vertex',2:'bone',3:'uv',4:'additionalUv1',5:'additionalUv2',6:'additionalUv3',7:'additionalUv4',8:'material',9:'flip',10:'impulse'}
+    if debug_sections: print('DEBUG afterBones',r.o,'next',r.d[r.o:r.o+8],file=sys.stderr)
     morphs=[]; moc=r.i32()
+    # Bone/IK inspection is intentionally independent of the large morph
+    # payload. Some legacy PMX files contain malformed or vendor-specific morph
+    # records; their bone/IK section is still valid and useful for adaptation.
+    if '--full-morph' not in sys.argv:
+        index_to_name={i:b['name'] for i,b in enumerate(bones)}
+        for b in bones:
+            if 'ikLinks' in b:b['ikLinkNames']=[index_to_name.get(x['index'],'<missing>') for x in b['ikLinks']]
+            if 'ikTarget' in b:b['ikTargetName']=index_to_name.get(b['ikTarget'],'<missing>')
+        names={b['name'] for b in bones}
+        standard=['センター','全ての親','上半身','上半身2','下半身','左足','右足','左ひざ','右ひざ','左足首','右足首','左つま先','右つま先','左足ＩＫ','右足ＩＫ','左つま先ＩＫ','右つま先ＩＫ','左腕','右腕','左ひじ','右ひじ','左手首','右手首','頭','首','両目']
+        return {'path':str(path),'modelName':model_name,'englishName':english_name,'version':version,'vertexCount':vx,'textureCount':len(textures),'materialCount':mc,'boneCount':bc,'morphCount':moc,'bones':bones,'morphs':[],'ikBones':[b['name'] for b in bones if 'ikLinks' in b],'standardBones':{n:n in names for n in standard},'morphTypeCounts':{}}
+    if debug_sections: print('DEBUG morphCount',moc,'offset',r.o,file=sys.stderr)
     for _ in range(max(0,moc)):
-        n=r.text();r.text();panel=r.u8();typ=r.u8();count=r.i32();m={'name':n,'panel':panel,'type':morph_types.get(typ,str(typ)),'typeId':typ,'offsetCount':count}
+        n=r.text()
+        if debug_sections and len(morphs)<60: print('DEBUG morph name',len(morphs),n,'offset',r.o,'nextLen',r.d[r.o:r.o+4],file=sys.stderr)
+        english=r.text();panel=r.u8();typ=r.u8();count=r.i32()
+        if debug_sections and len(morphs)<60: print('DEBUG morph fields',len(morphs),n,english,'panel',panel,'type',typ,'count',count,'offset',r.o,file=sys.stderr)
+        m={'name':n,'panel':panel,'type':morph_types.get(typ,str(typ)),'typeId':typ,'offsetCount':count}
         for _ in range(max(0,count)):
-            if typ==0:r.idx(sizes[2]);r.f32()
+            if typ==0:r.idx(sizes[4]);r.f32()
             elif typ==1:r.idx(sizes[0]);r.take(12)
             elif typ==2:r.idx(sizes[3]);r.take(12+16)
             elif 3<=typ<=7:r.idx(sizes[0]);r.take(16)
             elif typ==8:r.idx(sizes[1]);r.u8();r.take(4*4+3*4+4+3*4+4*4+4*4+4*4)
-            elif typ==9:r.idx(sizes[2]);r.f32()
-            elif typ==10:r.idx(sizes[3]);r.u8();r.u8();r.vec3()
+            elif typ==9:r.idx(sizes[4]);r.f32()
+            elif typ==10:r.idx(sizes[5]);r.u8();r.u8();r.vec3()
+        if debug_sections and len(morphs)<60: print('DEBUG morph end',len(morphs),r.o,'expected?',file=sys.stderr)
         morphs.append(m)
     index_to_name={i:b['name'] for i,b in enumerate(bones)}
     for b in bones:
@@ -90,5 +108,6 @@ def parse(path):
 
 if __name__=='__main__':
     output=[]
-    for arg in sys.argv[1:]: output.append(parse(arg))
+    for arg in sys.argv[1:]:
+        if not arg.startswith('--'): output.append(parse(arg))
     print(json.dumps(output,ensure_ascii=False,indent=2))

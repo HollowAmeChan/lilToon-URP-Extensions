@@ -4,7 +4,7 @@
 
 首次整理结果：7 个作者目录、128 个压缩包、18 个直接 VMD、666 个 VMD、1 组重复包、0 个解压失败。部分甜茶旧 ZIP 的目录含空文件名，bsdtar 会给 warning，但仍能提取可读 VMD/README；warning 写入 index，不把包标成完全无警告。
 
-参考模型：`E:/BaiduSyncdisk/大师/_完整角色/Sour暄/Sour式初音ミクVer.1.02_by_Sour暄_194b7aa2b8fd2f9d6f0221d8767ad951.zip`，已解压到动作整理库的 `_参考模型/Sour暄`。卜逻desu 和 Taitohimea 的动作先以这个模型作为依赖参考；动作包若指定别的模型，必须按 README 建立动作实例依赖记录。
+参考模型：`E:/BaiduSyncdisk/大师/_完整角色/Sour暄/Sour式初音ミクVer.1.02_by_Sour暄_194b7aa2b8fd2f9d6f0221d8767ad951.zip`，已解压到动作整理库的 `_参考模型/Sour暄`。卜逻desu 和 Taitohimea 的动作先以这个模型作为依赖参考；动作包若指定别的模型，必须按 README 建立动作实例依赖记录。骨骼报告在 `_参考模型/Sour暄/Sour_IK_REPORT.md`。
 
 ## 作者规约中已经确认的情况
 
