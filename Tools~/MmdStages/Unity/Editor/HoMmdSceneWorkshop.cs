@@ -11,6 +11,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using Hollow.HoUnityTools.MmdMotion;
+using Hollow.HoUnityTools.Editor.MmdMotion;
 using Object = UnityEngine.Object;
 
 /// <summary>Generic PMX starter and capture-only review. Existing H2Cu recipes are not involved.</summary>
@@ -186,16 +187,31 @@ public static class HoMmdSceneWorkshop
         HoVmdAnimation animation = AssetDatabase.LoadAssetAtPath<HoVmdAnimation>(assetPath);
         if (animation == null)
             throw new InvalidOperationException("VMD asset could not be loaded: " + assetPath);
-        GameObject root = captureCamera != null ? captureCamera.transform.root.gameObject : null;
-        if (root == null) return;
-        foreach (HoVmdMotionPlayer player in root.GetComponentsInChildren<HoVmdMotionPlayer>(true))
+        GameObject sceneRoot = captureCamera != null ? captureCamera.transform.root.gameObject : null;
+        if (sceneRoot == null) return;
+        HoVmdMotionPlayer[] players = sceneRoot.GetComponentsInChildren<HoVmdMotionPlayer>(true);
+        foreach (HoVmdMotionPlayer player in players)
         {
             player.Animation = animation;
             player.FrameRate = request.motionRate;
             player.RebuildBindings();
             player.ApplyAtFrame(request.motionFrame);
         }
-        foreach (HoVmdCameraPlayer player in root.GetComponentsInChildren<HoVmdCameraPlayer>(true))
+        string auditStem = Path.GetFileNameWithoutExtension(request.scenePath ?? sceneRoot.scene.name) + "-" + animation.name;
+        for (int i = 0; i < players.Length; i++)
+        {
+            HoVmdMotionPlayer motionPlayer = players[i];
+            if (motionPlayer == null) continue;
+            GameObject target = motionPlayer.ModelRoot != null ? motionPlayer.ModelRoot.gameObject : motionPlayer.gameObject;
+            HoVmdBindingProfile profile = motionPlayer.BindingProfile;
+            string suffix = players.Length == 1 ? string.Empty : "-" + SafeFilePart(motionPlayer.name);
+            string auditPath = Path.Combine(HoMmdStageWork.Work, "MorphAudit", auditStem + suffix + ".json");
+            HoVmdMorphAuditResult audit = HoVmdMorphAudit.Audit(animation, target, profile);
+            HoVmdMorphAudit.WriteJson(animation, target, profile, auditPath);
+            if (audit.missing > 0 || audit.conflicts > 0)
+                Debug.LogWarning("Ho VMD morph audit found missing=" + audit.missing + " conflicts=" + audit.conflicts + ": " + auditPath, target);
+        }
+        foreach (HoVmdCameraPlayer player in sceneRoot.GetComponentsInChildren<HoVmdCameraPlayer>(true))
         {
             player.animation = animation;
             player.frameRate = request.motionRate;
@@ -213,5 +229,12 @@ public static class HoMmdSceneWorkshop
         if (!path.StartsWith("Assets/", StringComparison.Ordinal) || path.Split('/').Contains(".."))
             throw new ArgumentException("Use a project Assets/... path: " + path);
         return path;
+    }
+
+    static string SafeFilePart(string value)
+    {
+        if (string.IsNullOrEmpty(value)) return "player";
+        foreach (char invalid in Path.GetInvalidFileNameChars()) value = value.Replace(invalid, '_');
+        return value;
     }
 }

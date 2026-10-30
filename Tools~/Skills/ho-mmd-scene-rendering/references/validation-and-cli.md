@@ -40,6 +40,8 @@ review 按需求看主体照明、亮部层次、地板/远景可读性、阴影
 
 场景中挂有 `HoVmdMotionPlayer` / `HoVmdCameraPlayer` 时，`--motion` 加 `--motion-frame` 会在三个观察镜头中应用同一个动作帧。可以专门检查脚底 IK、toe、表情 morph 和 VMD 镜头在侧面是否仍然成立。
 
+动作 review 会把 VMD 的 morph 依赖对照播放器 `ModelRoot` 下的 BlendShape，并优先使用 `HoVmdBindingProfile.morphs`。JSON 写入 `Library/HoMmdStages/MorphAudit/`，其中 `exactMatchNames`、`normalizedMatchNames`、`profileMappedNames` 是可用命中，`missingNames` 是目标角色没有的形态键，`conflictNames` 是重复或失效映射。看到缺失时先补 Profile 或检查动作 README；不要为了让审查变绿而给角色资产随意加同名 BlendShape。
+
 ## 工程关闭：隐藏批处理
 
 请求 JSON 示例：

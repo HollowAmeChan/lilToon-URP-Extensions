@@ -14,6 +14,8 @@ FBX/GLTF 角色的适配通过 `HoVmdBindingProfile` 保存：骨骼用目标 Tr
 
 现有 `HoMmdSceneWorkshop` review 支持 `--motion Assets/.../clip.vmd --motion-frame 240`，会在主、左、右三个镜头应用同一个时间点；这条路径用于动作适配审查，不会保存场景中的临时播放器状态。
 
+review 同时对每个 `HoVmdMotionPlayer` 的 `ModelRoot` 执行 morph 依赖审查：优先验证其 `HoVmdBindingProfile.morphs`，再检查精确名称和规范化名称，并把具体命中、缺失与冲突写到 `Library/HoMmdStages/MorphAudit/<scene>-<motion>.json`。日志会报告 `missing` / `conflicts`，但不会因为缺少某个角色专用表情而修改角色资产或中断静帧渲染；适配阶段应先看这份 JSON，再决定补 Profile 映射、换角色或按 README 关闭该动作实例的表情轨道。
+
 定格 review 在编辑器模式下会立即执行 Ho IK，避免没有 LateUpdate 时只看到 FK 姿态；播放模式则继续让 Ho IK 约束按 LateUpdate 顺序执行。
 
 ## 作者规约中已经确认的情况
