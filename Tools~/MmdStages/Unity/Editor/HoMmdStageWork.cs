@@ -15,9 +15,10 @@ public static class HoMmdStageWork
 {
     [Serializable] public sealed class Request
     {
-        public string id, action, stage, scenePath, stageFolder, outputPath, logoPath;
+        public string id, action, stage, scenePath, stageFolder, outputPath, logoPath, motionAsset;
         public string[] pmxPaths;
         public int width=1280, height=720, view, warmup=16;
+        public float motionFrame=-1.0f, motionRate=30.0f;
         public float logoY=.1f, logoSize=.3f;
     }
     [Serializable] public sealed class SceneInfo { public string path; public string name; public bool dirty; }

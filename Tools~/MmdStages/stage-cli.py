@@ -16,6 +16,9 @@ parser.add_argument("--pmx", action="append", default=[], help="PMX Assets/... p
 parser.add_argument("--logo", help="Optional existing logo texture to copy into a new stage")
 parser.add_argument("--output", help="Review directory; default is a new timestamped Library folder")
 parser.add_argument("--warmup", type=int, default=16)
+parser.add_argument("--motion", help="Assets/... VMD asset to apply during review")
+parser.add_argument("--motion-frame", type=float, default=-1.0)
+parser.add_argument("--motion-rate", type=float, default=30.0)
 parser.add_argument("--logo-y", type=float, default=.1)
 parser.add_argument("--logo-size", type=float, default=.3)
 parser.add_argument("--timeout", type=int, default=300)
@@ -29,7 +32,8 @@ if (folder / "request.json").exists() or (folder / "running.json").exists():
 identifier = uuid.uuid4().hex
 request = dict(id=identifier, action=args.action, stage=args.stage, width=args.width, height=args.height, view=args.view)
 request.update(scenePath=args.scene, stageFolder=args.folder, pmxPaths=args.pmx, logoPath=args.logo,
-               outputPath=args.output, warmup=args.warmup, logoY=args.logo_y, logoSize=args.logo_size)
+               outputPath=args.output, warmup=args.warmup, logoY=args.logo_y, logoSize=args.logo_size,
+               motionAsset=args.motion, motionFrame=args.motion_frame, motionRate=args.motion_rate)
 temporary = folder / (identifier + ".tmp")
 temporary.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
 temporary.replace(folder / "request.json")

@@ -10,6 +10,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
+using Hollow.HoUnityTools.MmdMotion;
 using Object = UnityEngine.Object;
 
 /// <summary>Generic PMX starter and capture-only review. Existing H2Cu recipes are not involved.</summary>
@@ -152,6 +153,7 @@ public static class HoMmdSceneWorkshop
                     request.width, request.height, _ => EditorApplication.delayCall += () => next(), failed,
                     camera =>
                     {
+                        ApplyMotionAtFrame(request, camera);
                         if (current == 0) return;
                         string cameraName = current == 1 ? "左侧观察相机" : "右侧观察相机";
                         var other = camera.gameObject.scene.GetRootGameObjects().SelectMany(x => x.GetComponentsInChildren<Camera>(true)).FirstOrDefault(x => x.name == cameraName);
@@ -172,7 +174,33 @@ public static class HoMmdSceneWorkshop
         string output = string.IsNullOrEmpty(request.outputPath)
             ? Path.Combine(HoMmdStageWork.Work, "Review", Path.GetFileNameWithoutExtension(scene), DateTime.Now.ToString("yyyyMMdd-HHmmss"), "main.png")
             : Path.GetFullPath(request.outputPath);
-        HoMmdStageCapture.Begin(scene, output, request.width, request.height, completed, failed, null, request.warmup);
+        HoMmdStageCapture.Begin(scene, output, request.width, request.height, completed, failed,
+            camera => ApplyMotionAtFrame(request, camera), request.warmup);
+    }
+
+    private static void ApplyMotionAtFrame(HoMmdStageWork.Request request, Camera captureCamera)
+    {
+        if (request == null || string.IsNullOrEmpty(request.motionAsset) || request.motionFrame < 0.0f)
+            return;
+        string assetPath = AssetPath(request.motionAsset);
+        HoVmdAnimation animation = AssetDatabase.LoadAssetAtPath<HoVmdAnimation>(assetPath);
+        if (animation == null)
+            throw new InvalidOperationException("VMD asset could not be loaded: " + assetPath);
+        GameObject root = captureCamera != null ? captureCamera.transform.root.gameObject : null;
+        if (root == null) return;
+        foreach (HoVmdMotionPlayer player in root.GetComponentsInChildren<HoVmdMotionPlayer>(true))
+        {
+            player.Animation = animation;
+            player.FrameRate = request.motionRate;
+            player.RebuildBindings();
+            player.ApplyAtFrame(request.motionFrame);
+        }
+        foreach (HoVmdCameraPlayer player in root.GetComponentsInChildren<HoVmdCameraPlayer>(true))
+        {
+            player.animation = animation;
+            player.frameRate = request.motionRate;
+            player.ApplyAtFrame(request.motionFrame);
+        }
     }
 
     static T Add<T>(VolumeProfile profile) where T : VolumeComponent

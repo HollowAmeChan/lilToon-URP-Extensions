@@ -27,6 +27,7 @@ python Tools~/MmdStages/stage-cli.py logo --folder "Assets/mmd场景测试/作�
 ```powershell
 python Tools~/MmdStages/stage-cli.py render --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --width 1280 --height 720 --warmup 16
 python Tools~/MmdStages/stage-cli.py review --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --width 1280 --height 720 --warmup 32
+python Tools~/MmdStages/stage-cli.py review --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --motion "Assets/动作/动作.vmd" --motion-frame 240 --width 1280 --height 720 --warmup 32
 ```
 
 单张使用 MainCamera。review 使用主机位、左侧观察相机、右侧观察相机，先在 Unity 按空间摆好；starter 创建初始机位。输出默认 Library/HoMmdStages/Review/<场景>/<时间>/main.png,left.png,right.png，不覆盖正式渲图。单张 --output 传 PNG 文件，review --output 传目录。
@@ -36,6 +37,8 @@ python Tools~/MmdStages/stage-cli.py review --scene "Assets/mmd场景测试/作�
 捕获需要切场景时，先保存当前场景。工具拒绝自动保存/丢弃你的编辑，完成后恢复布局与管线；这是防止丢修改，不是审查艺术参数。活 Editor 的文件队列渲图会占用该 Editor 一段时间。真正隐藏批处理在工程关闭时运行。
 
 review 按需求看主体照明、亮部层次、地板/远景可读性、阴影和光束落点、侧面可读性、调色/景深的角度稳定性。发现问题只修对应灯、材质或图层，不要求固定机位数作为完成条件。
+
+场景中挂有 `HoVmdMotionPlayer` / `HoVmdCameraPlayer` 时，`--motion` 加 `--motion-frame` 会在三个观察镜头中应用同一个动作帧。可以专门检查脚底 IK、toe、表情 morph 和 VMD 镜头在侧面是否仍然成立。
 
 ## 工程关闭：隐藏批处理
 
