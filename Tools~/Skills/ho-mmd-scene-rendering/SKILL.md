@@ -7,6 +7,14 @@ description: Import a new static PMX stage into HoURP, extract Ho lilToon materi
 
 用于“新 PMX 从零搭建”“现有场景调灯、材质、滤镜”“后台多角度渲图 review”。默认工程 `D:/Unity_Project/BREAK_URP`。当前手工版本是工作起点，这是一套制作指南和动态经验库，不是固定场景验收标准。
 
+## 置顶：影片播放倍率与调试接管
+
+- 搭建 MMD 影片或自动化预览/录制入口时，**显式指定播放倍率**（常规为 `1×`，有特定要求则用指定值），不要继承用户调速面板上一次的残留倍率。
+- 场景可配置 `HoUnityTools/播放速度/自动化倍率`（`HoPlaySpeedOverride`，`Speed` 与 `LockPanel`）；脚本入口使用 `HoPlaySpeedControl.SetOverride(this, speed, lockPanel: true)`，结束时 `Release(this)`。
+- Play 后调速面板的「锁定」开启，info 必须显示请求脚本/对象与倍率。交付说明中显式指出：**要调试可手动关闭「锁定」；本次播放的自动化重复请求不会抢回，再次锁定才恢复自动化。**
+- 锁定/手动接管是运行时状态，不回写场景或 Prefab；开启「播放结束自动复位」时，退出 Play 恢复进入前的面板倍率，下一次 Play 重新按自动化配置锁定。
+- 直接写 `Time.timeScale` 的未知脚本无法可靠自动归因；需要可显示来源、可手动接管的入口应调用上述接口。外部逐帧 `ExternalTime` 采样仍由录制器决定，面板倍率不替代离线采样时钟。
+
 ## 工作方式
 
 - **新建、定点修改、只渲染分开执行。** 初始场景创建后，不为预览重跑旧配方，不把用户灯光、材质、相机和滤镜恢复成历史数值。

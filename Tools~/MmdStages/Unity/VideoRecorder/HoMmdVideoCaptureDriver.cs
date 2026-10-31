@@ -3,6 +3,7 @@ using System;
 using System.IO;
 using System.Linq;
 using Hollow.HoUnityTools.MmdMotion;
+using Hollow.HoUnityTools.PlaySpeed;
 using UnityEditor;
 using UnityEditor.Recorder;
 using UnityEditor.Recorder.Encoder;
@@ -85,6 +86,9 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
         began = EditorApplication.timeSinceStartup;
         try
         {
+            // Explicit ownership keeps warmup/physics deterministic and makes
+            // the requesting script visible in the debug speed panel.
+            HoPlaySpeedControl.SetOverride(this, 1f, lockPanel: true);
             sequences = SceneManager.GetActiveScene().GetRootGameObjects()
                 .Select(x => x.GetComponent<HoVmdSequencePlayer>()).Where(x => x != null).ToArray();
             sequence = sequences.First(x => x.CameraPlayer != null);
@@ -293,6 +297,7 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             Time.captureDeltaTime = previousCaptureDelta;
             Application.runInBackground = previousBackground;
             EditorApplication.update -= Pump;
+            HoPlaySpeedControl.Release(this);
         }
         File.WriteAllText(Path.Combine(work, "result.json"), JsonUtility.ToJson(new HoMmdVideoCaptureResponse {
             id = request?.id, status = error == null ? "ok" : "error",
