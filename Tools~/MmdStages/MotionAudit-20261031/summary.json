@@ -1,0 +1,1066 @@
+{
+  "created": "2026-10-31T19:07:02.240934+08:00",
+  "scope": "Motion/retarget/camera/audio evidence; runtime cloth and final beauty rendering are separate.",
+  "loadedScenesPreserved": true,
+  "hingeBefore": [
+    {
+      "intendedBend": 45.0,
+      "residual": 1.6858739115832577e-07,
+      "kneeEuler": {
+        "x": 45.00001525878906,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "intendedBend": 85.0,
+      "residual": 9.8293116025161e-05,
+      "kneeEuler": {
+        "x": 84.99394989013672,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "intendedBend": 95.0,
+      "residual": 0.08514149487018585,
+      "kneeEuler": {
+        "x": 88.19430541992188,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "intendedBend": 120.0,
+      "residual": 0.6180318593978882,
+      "kneeEuler": {
+        "x": 72.00021362304688,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "intendedBend": 150.0,
+      "residual": 0.956916332244873,
+      "kneeEuler": {
+        "x": 85.00000762939453,
+        "y": 0.0,
+        "z": 0.0
+      }
+    }
+  ],
+  "hingeAfter": [
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": 45.0,
+      "residual": 0.0,
+      "kneeEuler": {
+        "x": 45.000003814697266,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": 85.0,
+      "residual": 9.841427527135238e-05,
+      "kneeEuler": {
+        "x": 84.99382781982422,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": 95.0,
+      "residual": 7.724635361228138e-05,
+      "kneeEuler": {
+        "x": 85.00597381591797,
+        "y": 180.0,
+        "z": 180.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": 120.0,
+      "residual": 9.236967889592052e-05,
+      "kneeEuler": {
+        "x": 60.00612258911133,
+        "y": 180.0,
+        "z": 180.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": 150.0,
+      "residual": 4.3938973249169067e-05,
+      "kneeEuler": {
+        "x": 30.00261116027832,
+        "y": 180.0,
+        "z": 180.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": -45.0,
+      "residual": 0.0,
+      "kneeEuler": {
+        "x": 315.0,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": -85.0,
+      "residual": 9.841427527135238e-05,
+      "kneeEuler": {
+        "x": 275.00616455078125,
+        "y": 0.0,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": -95.0,
+      "residual": 7.724635361228138e-05,
+      "kneeEuler": {
+        "x": 274.9940185546875,
+        "y": 180.0,
+        "z": 180.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": -120.0,
+      "residual": 9.236967889592052e-05,
+      "kneeEuler": {
+        "x": 299.9938659667969,
+        "y": 180.0,
+        "z": 180.0
+      }
+    },
+    {
+      "axis": "(1.00, 0.00, 0.00)",
+      "intendedBend": -150.0,
+      "residual": 4.3938973249169067e-05,
+      "kneeEuler": {
+        "x": 329.99737548828125,
+        "y": 180.0,
+        "z": 180.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": 45.0,
+      "residual": 0.0,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 45.000003814697266,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": 85.0,
+      "residual": 9.844567102845758e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 84.99382781982422,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": 95.0,
+      "residual": 7.724635361228138e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 94.99400329589844,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": 120.0,
+      "residual": 9.236967889592052e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 119.993896484375,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": 150.0,
+      "residual": 4.39428367826622e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 149.9973907470703,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": -45.0,
+      "residual": 0.0,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 315.0,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": -85.0,
+      "residual": 9.844567102845758e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 275.00616455078125,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": -95.0,
+      "residual": 7.724635361228138e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 265.0059814453125,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": -120.0,
+      "residual": 9.236967889592052e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 240.006103515625,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 1.00, 0.00)",
+      "intendedBend": -150.0,
+      "residual": 4.39428367826622e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 210.0026092529297,
+        "z": 0.0
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": 45.0,
+      "residual": 0.0,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 45.000003814697266
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": 85.0,
+      "residual": 9.844567102845758e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 84.99382781982422
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": 95.0,
+      "residual": 7.724635361228138e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 94.99400329589844
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": 120.0,
+      "residual": 9.236967889592052e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 119.993896484375
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": 150.0,
+      "residual": 4.39428367826622e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 149.9973907470703
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": -45.0,
+      "residual": 0.0,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 315.0
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": -85.0,
+      "residual": 9.844567102845758e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 275.00616455078125
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": -95.0,
+      "residual": 7.724635361228138e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 265.0059814453125
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": -120.0,
+      "residual": 9.236967889592052e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 240.006103515625
+      }
+    },
+    {
+      "axis": "(0.00, 0.00, 1.00)",
+      "intendedBend": -150.0,
+      "residual": 4.39428367826622e-05,
+      "kneeEuler": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 210.0026092529297
+      }
+    }
+  ],
+  "regressions": {
+    "hingeCases": 30,
+    "hingeMaxResidualMetres": 9.844567102845758e-05,
+    "poleCases": 24,
+    "poleFailures": [],
+    "production": [
+      "normal signed distance looks at center",
+      "pitch/yaw/roll match MMD view basis",
+      "FOV interpolates without integer stepping",
+      "independent camera XYZ Beziers",
+      "motion origin scales camera radius and center together",
+      "adjacent camera keys stay hard cuts at 60fps",
+      "bounded reference rig maps body and fingers",
+      "Humanoid feet receive automatic Ho IK when absent",
+      "rewind does not recapture animated rest pose",
+      "no external mapping profile assets"
+    ]
+  },
+  "films": [
+    {
+      "scene": "Assets/Hollow/MMD影片/甜茶_EX-HAPPY/Scenes/EX-HAPPY.unity",
+      "sampledFrames": 101,
+      "beforeSeekPositionMetres": 0.23000027239322662,
+      "afterSeekPositionMetres": 0.0,
+      "beforeSeekAngleDegrees": 110.44486999511719,
+      "afterSeekAngleDegrees": 0.0,
+      "sourceReachResidualMetres": 0.05973828211426735,
+      "sourceReachFrame": 0,
+      "maxKneeDifferenceDegrees": 22.175613403320312,
+      "kneeDifferenceFrame": 440,
+      "footRestAxisDifferenceDegrees": 12.677125930786133,
+      "missingNonzeroMorphs": [
+        "(○｀ε´○)",
+        "にこり2",
+        "もぐもぐ",
+        "口上",
+        "口右",
+        "口左",
+        "口横狭め",
+        "垂れ目",
+        "寄り目",
+        "左上",
+        "左真面目",
+        "平行",
+        "怪訝右",
+        "照れ",
+        "笑い目",
+        "見開く"
+      ],
+      "missingZeroMorphs": [
+        "(#｀皿´)",
+        "(。-ω-)zzz",
+        "(￢_￢)ﾉ…",
+        "+目上",
+        "+目下",
+        "C_Down_Face",
+        "C_Up_Face",
+        "C_ZL_Face",
+        "C_ZR_Face",
+        "L_B",
+        "L_B_U",
+        "L_F",
+        "L_F_U",
+        "L_P",
+        "L_Up",
+        "L_Up_U",
+        "M",
+        "MuMu",
+        "O(∩_∩)O",
+        "R_B",
+        "R_B_U",
+        "R_F",
+        "R_F_U",
+        "R_P",
+        "R_Up",
+        "R_Up_U",
+        "S_05",
+        "S_06",
+        "S_07",
+        "S_08",
+        "S_09",
+        "S_10",
+        "S_11",
+        "S_12",
+        "S_13",
+        "S_14",
+        "S_15",
+        "S_16",
+        "S_18",
+        "S_19",
+        "S_20",
+        "S_21",
+        "S_22",
+        "S_23",
+        "S_24",
+        "S_25",
+        "S_26",
+        "S_27",
+        "S_28",
+        "S_29",
+        "S_30",
+        "UTooth",
+        "V",
+        "d(^^*)",
+        "down",
+        "emo3上",
+        "emo3右",
+        "emo3左",
+        "eye al",
+        "eye hi1 al",
+        "eye hi1 off",
+        "eye hi2 al",
+        "eye hi2 off",
+        "eye off",
+        "haha",
+        "han",
+        "handi",
+        "hehe",
+        "heixian",
+        "jing",
+        "jingtanhao",
+        "keshui",
+        "left",
+        "lip thick",
+        "lip thin",
+        "luanma",
+        "nu",
+        "right",
+        "shenluehao",
+        "teeth down",
+        "teeth up",
+        "up",
+        "wenhao",
+        "xin",
+        "zhuyi",
+        "д",
+        "あ3",
+        "い2",
+        "い3",
+        "いい",
+        "いい3",
+        "お2",
+        "じと目2",
+        "じと目L",
+        "じと目R",
+        "なごみL",
+        "なごみR",
+        "にこりA",
+        "にこりB",
+        "びっくり22",
+        "びっくり3",
+        "まばたきA",
+        "スフィアOff",
+        "スフィア強調",
+        "中",
+        "口",
+        "口close",
+        "口下",
+        "口前",
+        "口右turn",
+        "口左turn",
+        "口後",
+        "右にこり",
+        "右にこり2",
+        "右びっくり",
+        "右上",
+        "右上いい",
+        "右下",
+        "右下いい",
+        "右口横広げ",
+        "右口角上げ",
+        "右口角上げ2",
+        "右口角上げ2.5",
+        "右口角上げ3",
+        "右口角下げ",
+        "右口角下げ2",
+        "右困る",
+        "右困る2",
+        "右垂れ目",
+        "右怒り",
+        "右目上",
+        "右目下",
+        "右目内",
+        "右目外",
+        "右真面目",
+        "右笑い目",
+        "右ｷﾘｯ",
+        "右ｷﾘｯ2",
+        "喜(=゜ω゜)ノ",
+        "困るA",
+        "困るB",
+        "左にこり",
+        "左にこり2",
+        "左びっくり",
+        "左上いい",
+        "左下",
+        "左下いい",
+        "左口横広げ",
+        "左口角上げ",
+        "左口角上げ2",
+        "左口角上げ2.5",
+        "左口角下げ",
+        "左口角下げ2",
+        "左困る",
+        "左困る2",
+        "左垂れ目",
+        "左怒り",
+        "左目上",
+        "左目下",
+        "左目内",
+        "左目外",
+        "左笑い目",
+        "左ｷﾘｯ",
+        "左ｷﾘｯ2",
+        "彡(-_-;)彡",
+        "怒りA",
+        "怒りB",
+        "怪訝左",
+        "照れ2",
+        "真面目A",
+        "瞳小L",
+        "瞳小R",
+        "笑いA",
+        "鼻上",
+        "鼻下"
+      ],
+      "durationSeconds": 16.69997787475586,
+      "audioSeconds": 16.69997787475586
+    },
+    {
+      "scene": "Assets/Hollow/MMD影片/甜茶_NEMONEMO/Scenes/NEMONEMO.unity",
+      "sampledFrames": 348,
+      "beforeSeekPositionMetres": 0.23155231773853302,
+      "afterSeekPositionMetres": 0.0,
+      "beforeSeekAngleDegrees": 112.98619842529297,
+      "afterSeekAngleDegrees": 0.0,
+      "sourceReachResidualMetres": 0.0741952434182167,
+      "sourceReachFrame": 45,
+      "maxKneeDifferenceDegrees": 19.111007690429688,
+      "kneeDifferenceFrame": 238,
+      "footRestAxisDifferenceDegrees": 12.677125930786133,
+      "missingNonzeroMorphs": [
+        "もぐもぐ",
+        "もぐもぐ口",
+        "下右",
+        "下左",
+        "下眼上",
+        "口上",
+        "口横狭め",
+        "怒り目",
+        "恥ずかしい",
+        "眼角上",
+        "眼角下"
+      ],
+      "missingZeroMorphs": [
+        "い１",
+        "い２",
+        "じと目2",
+        "なごみ右",
+        "なごみ左",
+        "にこり右",
+        "にこり左",
+        "にやり３",
+        "ジト目",
+        "上右",
+        "上左",
+        "前",
+        "前右",
+        "前左",
+        "口下",
+        "困る右",
+        "困る左",
+        "怒り右",
+        "怒り左",
+        "恥ずかしい右",
+        "恥ずかしい左",
+        "照れ",
+        "舌広げ"
+      ],
+      "durationSeconds": 31.11473846435547,
+      "audioSeconds": 31.11473846435547
+    },
+    {
+      "scene": "Assets/Hollow/MMD影片/甜茶_SWEET-STEP/Scenes/SWEET-STEP.unity",
+      "sampledFrames": 119,
+      "beforeSeekPositionMetres": 0.1013365089893341,
+      "afterSeekPositionMetres": 0.0,
+      "beforeSeekAngleDegrees": 93.63780975341797,
+      "afterSeekAngleDegrees": 0.0,
+      "sourceReachResidualMetres": 0.02131674997508526,
+      "sourceReachFrame": 550,
+      "maxKneeDifferenceDegrees": 1.2288818359375,
+      "kneeDifferenceFrame": 370,
+      "footRestAxisDifferenceDegrees": 12.677125930786133,
+      "missingNonzeroMorphs": [],
+      "missingZeroMorphs": [
+        "----ARKit----",
+        "----Brow----",
+        "----Eye----",
+        "----EyeParts---",
+        "----Face---",
+        "----Iris----",
+        "----Mouth----",
+        "----Other---",
+        "Ahoge_Hide",
+        "Belt_OFF",
+        "BlushRed_Cheek_",
+        "BlushRed_Nose_O",
+        "Bottoms_In",
+        "Bottoms_OFF",
+        "Breast_Large",
+        "Breast_Small",
+        "Brow_Frown",
+        "Brow_Short",
+        "Brow_Thick",
+        "CatEar_Hat_L",
+        "CatEar_Hat_R",
+        "Cat_OFF",
+        "CosA_Bra",
+        "CosA_Shorts",
+        "Costom_Bottom_S",
+        "Costom_HairC_2_",
+        "Costom_HairC_3_",
+        "Costom_HairD_1_",
+        "Costom_HairD_2_",
+        "Costom_HairE_1_",
+        "Costom_HairE_2_",
+        "Costom_Tail_Sho",
+        "Costom_Tail_Smo",
+        "Custom_HairA_Sm",
+        "Custom_HairB_OF",
+        "Custom_HairB_Sh",
+        "Custom_HairB_Sm",
+        "Custom_HairFA_2",
+        "Custom_HairFA_3",
+        "Custom_HairFB_1",
+        "Custom_HairFB_2",
+        "Custom_HairFB_3",
+        "Custom_HairFB_4",
+        "Custom_HairFB_5",
+        "Custom_Intake_S",
+        "Deform",
+        "Ear_Deform",
+        "EyeBottom_OFF",
+        "EyeInner_Up_lef",
+        "EyeInner_Up_rig",
+        "Eye_Shadow_OFF",
+        "Eyelash_Down",
+        "Eyelash_Droop",
+        "Eyelash_Lower_O",
+        "Eyelash_Sharp",
+        "Eyelash_Up",
+        "Eyelid_Relax",
+        "Eyelight_Down",
+        "Eyelight_Heart",
+        "Eyelight_Hide",
+        "Eyelight_Large",
+        "Eyelight_Small",
+        "Eyelight_Star",
+        "Eyelight_SubDot",
+        "Eyelight_Sub_OF",
+        "Eyelight_Wide",
+        "Eyelight_brn",
+        "Eyeunder_Up",
+        "Face_Long",
+        "Foot_Flat",
+        "HairBlend_OFF",
+        "Head_Shrink",
+        "Heel_Foot",
+        "Heel_Toe",
+        "HumanEar_OFF",
+        "HumanEar_ON",
+        "Iris_Shock",
+        "Mouth_Delicious",
+        "Mouth_Egg",
+        "Mouth_Large",
+        "Mouth_Laugh1",
+        "Mouth_Laugh2",
+        "Mouth_Sad",
+        "Mouth_Small",
+        "Mouth_Smile1",
+        "Mouth_Smile2",
+        "Mouth_Square",
+        "Mouth_SquareToo",
+        "Neck_Flat",
+        "OFF_Bra",
+        "OFF_Shorts",
+        "PaleBlue_ON",
+        "Pelvis_Flat",
+        "Pupil_CatON",
+        "Pupil_Hide",
+        "Pupil_Large",
+        "Pupil_Small",
+        "Ribbon_OFF",
+        "Shoes_OFF",
+        "Shrink_Breast_L",
+        "Shrink_Breast_R",
+        "Shrink_Chest1",
+        "Shrink_Chest2",
+        "Shrink_Elbow_L",
+        "Shrink_Elbow_R",
+        "Shrink_Foot_L",
+        "Shrink_Foot_R",
+        "Shrink_Hand_L",
+        "Shrink_Hand_R",
+        "Shrink_Hat",
+        "Shrink_Knee_L",
+        "Shrink_Knee_R",
+        "Shrink_Lowerarm",
+        "Shrink_Lowerleg",
+        "Shrink_Neck",
+        "Shrink_Pelvis",
+        "Shrink_Pelvis_H",
+        "Shrink_Shoulder",
+        "Shrink_Spine1",
+        "Shrink_Spine2",
+        "Shrink_Toe_L",
+        "Shrink_Toe_R",
+        "Shrink_Upperarm",
+        "Shrink_Upperleg",
+        "Sleeve_OFF",
+        "Slim_Arm",
+        "Slim_Arm_Wrist",
+        "Slim_Chest",
+        "Slim_Leg",
+        "Slim_Leg_Ankle",
+        "Slim_Neck",
+        "Slim_Pelvis",
+        "Slim_Spine",
+        "Socks_In",
+        "Socks_OFF",
+        "Stretch",
+        "Sweat_ON",
+        "Tear_1_1_L",
+        "Tear_1_1_R",
+        "Tear_1_2_L",
+        "Tear_1_2_R",
+        "Tear_2_1_L",
+        "Tear_2_1_R",
+        "Tear_2_2_L",
+        "Tear_2_2_R",
+        "Tear_ON",
+        "Tooth_CatON",
+        "Tops_BeltOn",
+        "Tops_OFF",
+        "Tops_Untucked",
+        "Tuck_In",
+        "browOuterUpRigh",
+        "cheekSquintRigh",
+        "eyeLookDownRigh",
+        "mouthDimpleRigh",
+        "mouthLowerDownL",
+        "mouthLowerDownR",
+        "mouthStretchLef",
+        "mouthStretchRig",
+        "mouthUpperUpLef",
+        "mouthUpperUpRig",
+        "vrc.LookingDown",
+        "vrc.LookingUp",
+        "vrc.v_CH",
+        "vrc.v_DD",
+        "vrc.v_E",
+        "vrc.v_FF",
+        "vrc.v_PP",
+        "vrc.v_RR",
+        "vrc.v_SS",
+        "vrc.v_TH",
+        "vrc.v_aa",
+        "vrc.v_ih",
+        "vrc.v_kk",
+        "vrc.v_nn",
+        "vrc.v_oh",
+        "vrc.v_ou",
+        "vrc.v_sil",
+        "じと目_L",
+        "じと目_R"
+      ],
+      "durationSeconds": 19.667301177978516,
+      "audioSeconds": 19.667301177978516
+    },
+    {
+      "scene": "Assets/Hollow/MMD影片/甜茶_しょ食事タイム/Scenes/しょ食事タイム.unity",
+      "sampledFrames": 90,
+      "beforeSeekPositionMetres": 0.006737634539604187,
+      "afterSeekPositionMetres": 0.0,
+      "beforeSeekAngleDegrees": 11.634321212768555,
+      "afterSeekAngleDegrees": 0.0,
+      "sourceReachResidualMetres": 0.03520519286394119,
+      "sourceReachFrame": 325,
+      "maxKneeDifferenceDegrees": 4.9561614990234375,
+      "kneeDifferenceFrame": 35,
+      "footRestAxisDifferenceDegrees": 12.677125930786133,
+      "missingNonzeroMorphs": [
+        "口上",
+        "口右",
+        "口横狭め"
+      ],
+      "missingZeroMorphs": [
+        "M",
+        "え２",
+        "ワ２",
+        "下眼上",
+        "前",
+        "口下",
+        "口左",
+        "怒り目",
+        "怒り目２",
+        "歯上",
+        "歯下",
+        "眼角下"
+      ],
+      "durationSeconds": 14.883991241455078,
+      "audioSeconds": 14.883991241455078
+    },
+    {
+      "scene": "Assets/Hollow/MMD影片/甜茶_頑張りたい人へ/Scenes/頑張りたい人へ.unity",
+      "sampledFrames": 80,
+      "beforeSeekPositionMetres": 0.22774764895439148,
+      "afterSeekPositionMetres": 0.0,
+      "beforeSeekAngleDegrees": 143.6818389892578,
+      "afterSeekAngleDegrees": 0.0,
+      "sourceReachResidualMetres": 0.028887420892715454,
+      "sourceReachFrame": 240,
+      "maxKneeDifferenceDegrees": 8.003265380859375,
+      "kneeDifferenceFrame": 395,
+      "footRestAxisDifferenceDegrees": 12.677125930786133,
+      "missingNonzeroMorphs": [],
+      "missingZeroMorphs": [
+        "Bracelet_main_x",
+        "Bracelet_sub_x",
+        "Breast_big",
+        "Breast_big_PLUS",
+        "Chikubi",
+        "Chikubi_big",
+        "Chikubi_big 2",
+        "Chikubi_small",
+        "Chikubi_up",
+        "Default hair",
+        "Foot_heel",
+        "Foot_heel_high",
+        "Hair_bun_back",
+        "Hair_bun_big",
+        "Hair_bun_down",
+        "Hair_bun_sharp",
+        "Hair_bun_small",
+        "Hair_bun_thick",
+        "Hair_bun_thin",
+        "Hair_bun_up",
+        "Hair_front_ahog",
+        "Hair_front_brai",
+        "Hair_front_long",
+        "Hair_front_shar",
+        "Hair_front_shor",
+        "Hair_front_side",
+        "Hair_side_long",
+        "Hair_side_short",
+        "Hair_side_volum",
+        "Hair_twin_volum",
+        "Hairpin_big",
+        "Hairpin_small",
+        "Nail_long",
+        "Nail_long_sharp",
+        "Nameplate_bee_x",
+        "Nameplate_big",
+        "Nameplate_flowe",
+        "Nameplate_small",
+        "Ribbon_up",
+        "Shrink_Ankle",
+        "Shrink_Chest 1",
+        "Shrink_Chest 2",
+        "Shrink_Elbow",
+        "Shrink_Finger",
+        "Shrink_Foot",
+        "Shrink_Hand",
+        "Shrink_Hips",
+        "Shrink_Knee",
+        "Shrink_LowerArm",
+        "Shrink_LowerLeg",
+        "Shrink_Neck",
+        "Shrink_Shoulder",
+        "Shrink_Spine 1",
+        "Shrink_Spine 2",
+        "Shrink_Toe",
+        "Shrink_UpperArm",
+        "Shrink_UpperLeg",
+        "Shrink_Wrist",
+        "Shrink_stocking",
+        "Shrink_tie (def",
+        "Stocking",
+        "Stocking (only",
+        "Stocking_option",
+        "Tail_volume_dow",
+        "Tail_volume_up",
+        "Toenail_long",
+        "Toenail_long_sh",
+        "Twin tail",
+        "Waist_corset",
+        "ear_big",
+        "ear_cat",
+        "ear_cat 2",
+        "ear_fox",
+        "ear_fox 2",
+        "ear_small",
+        "ribbon_big",
+        "ribbon_small",
+        "えー",
+        "がーん",
+        "はんっ！",
+        "ハイライト消し",
+        "涙",
+        "瞳大",
+        "青ざめ",
+        "頬染め"
+      ],
+      "durationSeconds": 13.258594512939453,
+      "audioSeconds": 13.258594512939453
+    }
+  ],
+  "nemonemo8to10seconds": {
+    "左足ＩＫ": {
+      "beforeWorstResidualMetres": 0.2636431157588959,
+      "beforeWorstFrame": 274.0,
+      "afterWorstResidualMetres": 0.03172539919614792,
+      "afterWorstFrame": 261.0,
+      "samplesPerSide": 121
+    },
+    "右足ＩＫ": {
+      "beforeWorstResidualMetres": 0.25029024481773376,
+      "beforeWorstFrame": 299.5,
+      "afterWorstResidualMetres": 0.0351303368806839,
+      "afterWorstFrame": 271.0,
+      "samplesPerSide": 121
+    }
+  },
+  "sourComparison": {
+    "blender": "4.5.8 LTS",
+    "mmdTools": [
+      4,
+      1,
+      0
+    ],
+    "frames": 181,
+    "physics": false,
+    "status": "Not identical; remaining importer/IK differences require a separate focused comparison.",
+    "bones": {
+      "下半身": {
+        "maxDistanceMetres": 0.005100926355199556,
+        "frame": 275.0
+      },
+      "左足": {
+        "maxDistanceMetres": 0.014427135099681439,
+        "frame": 294.5
+      },
+      "左ひざ": {
+        "maxDistanceMetres": 0.09938828890376017,
+        "frame": 273.0
+      },
+      "左足首": {
+        "maxDistanceMetres": 0.031343199087463094,
+        "frame": 266.5
+      },
+      "左つま先": {
+        "maxDistanceMetres": 0.057221780632622225,
+        "frame": 266.5
+      },
+      "左足ＩＫ": {
+        "maxDistanceMetres": 0.03087004274152885,
+        "frame": 278.5
+      },
+      "左つま先ＩＫ": {
+        "maxDistanceMetres": 0.04892519488977406,
+        "frame": 267.0
+      },
+      "右足": {
+        "maxDistanceMetres": 0.014133194601714878,
+        "frame": 315.0
+      },
+      "右ひざ": {
+        "maxDistanceMetres": 0.11862526484484504,
+        "frame": 299.0
+      },
+      "右足首": {
+        "maxDistanceMetres": 0.045095623775754184,
+        "frame": 304.0
+      },
+      "右つま先": {
+        "maxDistanceMetres": 0.09524880335082607,
+        "frame": 304.0
+      },
+      "右足ＩＫ": {
+        "maxDistanceMetres": 0.04507844895152266,
+        "frame": 304.0
+      },
+      "右つま先ＩＫ": {
+        "maxDistanceMetres": 0.10880338400609892,
+        "frame": 304.0
+      }
+    }
+  },
+  "sha256": {
+    "D:\\Unity_Project\\BREAK_URP\\Library\\HoMmdMotionAudit\\dense-before.json": "40ba230be60aa027bf299e433e740f4d64f8eb8847d375a68cf7a643d34722b5",
+    "D:\\Unity_Project\\BREAK_URP\\Library\\HoMmdMotionAudit\\hinge-fixed.json": "0c3487332dfe8f5671393817f24a2b4495b20005ff7dd4240fa1c19ac705548a",
+    "D:\\Unity_Project\\BREAK_URP\\Library\\HoMmdMotionAudit\\pose-reset.json": "6568c22dabda9b95f3f59ae1a3c2eb0c4cb3d2005381629863b5fd6686ccf0ca",
+    "D:\\Unity_Project\\BREAK_URP\\Library\\HoMmdMotionAudit\\final.json": "b2f4356c6869980fc6ee62a3e127bffd62c4fe0a14eb378520584f95917d6d3c",
+    "D:\\Unity_Project\\BREAK_URP\\Library\\HoMmdMotionAudit\\sour-nemonemo.json": "09f7e6fa5645f417d3926ab6ec37d7124518592eb62e572925569de603c0ffcc",
+    "D:\\Unity_Project\\BREAK_URP\\Library\\HoMmdMotionAudit\\unity-sour-nemonemo.json": "d21c79a6582b419c0f187efc18a3070fc1c2fbad5e8af0bc2db24efa3fbee40e",
+    "D:\\Unity_Project\\BREAK_URP\\Library\\HoMmdMotionAudit\\production-regressions.json": "d3a32673dd8cb2436395e3c6f321b34701731247c177ba69b3756f33dfba303c",
+    "D:\\Unity_Fork\\HoUnityTools\\Runtime\\RigConstraints\\HoIK\\HoIkConstraint.cs": "a3e1181d7e87b86b38c7cb0fb63b00f7ec879c8a65f5718a5313cf76487ccf59",
+    "D:\\Unity_Fork\\HoUnityTools\\Runtime\\MmdMotion\\HoVmdHumanoidRetargeter.cs": "344aca9df1d4c6172fdb2e6cee82ef88ec972122ba6aa2f5ba7cff1d05948afb",
+    "D:\\Unity_Fork\\HoUnityTools\\Tests~\\MmdMotion\\VmdRetargetAudit.cs": "74066c7165fbd698fef1fea36a25802334ed5dc0f714b9891220234887856967",
+    "D:\\Unity_Fork\\HoUnityTools\\Tests~\\MmdMotion\\blender_sour_foot_audit.py": "f05fcc0e2291f5128f07b6b41c990a81841b1b6ea3bf601e80341cf0165e7a66"
+  }
+}

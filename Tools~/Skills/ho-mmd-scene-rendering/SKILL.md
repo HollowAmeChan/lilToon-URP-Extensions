@@ -23,6 +23,7 @@ description: Import a new static PMX stage into HoURP, extract Ho lilToon materi
 | 资源整理、组合部件、导入/抽材质、创建起点 | [pmx-and-assets.md](references/pmx-and-assets.md) |
 | 去哪里调灯、AO、反射、体积、天空、景深、调色和 Logo | [lighting-and-rendering.md](references/lighting-and-rendering.md) |
 | CLI、只渲染、三机位、隐藏批处理、输出、按需排错 | [validation-and-cli.md](references/validation-and-cli.md) |
+| 将角色、VMD 动作/表情/运镜/BGM 组装为影片；指定片段的 IK 排错 | [mmd-motion-review.md](references/mmd-motion-review.md) |
 | 遇到具体历史问题才查 | [experience-log.md](references/experience-log.md) |
 
 ## 常用循环
