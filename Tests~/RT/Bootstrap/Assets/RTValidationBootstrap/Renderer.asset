@@ -1,0 +1,180 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-8583390665712563798
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f6c5e0acc347e9e59196475973580a2, type: 3}
+  m_Name: HoSurfaceBufferRendererFeature
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.SurfaceBuffer.HoSurfaceBufferRendererFeature
+  m_Active: 1
+  settings:
+    enabled: 1
+    enableSemanticLanes: 0
+    enableCorrelatedSemantics: 0
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    minRenderQueue: 0
+    maxRenderQueue: 2500
+    passEvent: 250
+    debugPassEvent: 600
+--- !u!114 &-6479746681157648771
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8f44ba0ca8764b7ca8a8288c8fa05e2c, type: 3}
+  m_Name: HoRTRendererFeature
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.RT.HoRTRendererFeature
+  m_Active: 1
+--- !u!114 &-752569048674620898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e760b6518c424bbc811e2e88e19682d0, type: 3}
+  m_Name: HoRTShadowRendererFeature
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.RTShadow.HoRTShadowRendererFeature
+  m_Active: 1
+  settings:
+    enabled: 1
+    inSceneView: 1
+    lightSelection: 0
+    lightLayers:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    geometryLayers:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    excludedRayMaterials: []
+    rayBias: 0.000001
+    maxDistance: 10000
+    angularDiameter: 0
+    samplesPerPixel: 1
+    samplingSeed: 0
+    reconstruction: 0
+    singleFrameEstimates: 1
+    debugMode: 0
+    debugLight: 0
+    debugDistance: 1
+    debugInSceneView: 1
+    debugInGameView: 0
+  shader: {fileID: 4807578003741378534, guid: 79bd38baf19e4bc59632a8770b196dac, type: 3}
+  primaryGeometryMaterialShader: {fileID: 4800000, guid: 1c0288aef5174b07af8b8ed3467f4802, type: 3}
+  sigmaShader: {fileID: 7200000, guid: 3e8fe584d215447483b2a35299efced5, type: 3}
+  sigmaPipelines:
+  - {fileID: 7200000, guid: 126d634e2ae14b75a607cb32161e6ea8, type: 3}
+  - {fileID: 7200000, guid: aae01a4a60f6499bbc7ca3cb810f81af, type: 3}
+  - {fileID: 7200000, guid: 7621b54b4cf24c41bad613db52f182b7, type: 3}
+  - {fileID: 7200000, guid: cc6361152ea0404ebc7a6ae31102096d, type: 3}
+  - {fileID: 7200000, guid: 6cf2f29e95f4456f916eb908bda368c7, type: 3}
+  - {fileID: 7200000, guid: 445bec0eb9834fdcb0cf5f96e3de9a7c, type: 3}
+  - {fileID: 7200000, guid: c31131195ce3498184eedea0289d3146, type: 3}
+  - {fileID: 7200000, guid: 9583264a25754acfb375dd6826bff0f7, type: 3}
+  - {fileID: 7200000, guid: 396d2d628ca44aa89e4ed44bb4b2d7c6, type: 3}
+  debugShader: {fileID: 4800000, guid: 60f94230e0066804db53c1aaa5d630e9, type: 3}
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de640fe3d0db1804a85f9fc8f5cadab6, type: 3}
+  m_Name: Renderer
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalRendererData
+  debugShaders:
+    debugReplacementPS: {fileID: 4800000, guid: cf852408f2e174538bcd9b7fda1c5ae7, type: 3}
+    hdrDebugViewPS: {fileID: 4800000, guid: 573620ae32aec764abd4d728906d2587, type: 3}
+    probeVolumeSamplingDebugComputeShader: {fileID: 7200000, guid: 53626a513ea68ce47b59dc1299fe3959, type: 3}
+  probeVolumeResources:
+    probeVolumeDebugShader: {fileID: 0}
+    probeVolumeFragmentationDebugShader: {fileID: 0}
+    probeVolumeOffsetDebugShader: {fileID: 0}
+    probeVolumeSamplingDebugShader: {fileID: 0}
+    probeSamplingDebugMesh: {fileID: 0}
+    probeSamplingDebugTexture: {fileID: 0}
+    probeVolumeBlendStatesCS: {fileID: 0}
+  m_RendererFeatures:
+  - {fileID: -6479746681157648771}
+  - {fileID: 4143817296445454985}
+  - {fileID: -8583390665712563798}
+  - {fileID: -752569048674620898}
+  m_RendererFeatureMap: 
+  m_UseNativeRenderPass: 0
+  postProcessData: {fileID: 0}
+  m_AssetVersion: 3
+  m_PrepassLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_OpaqueLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_TransparentLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_DefaultStencilState:
+    overrideStencilState: 0
+    stencilReference: 0
+    stencilCompareFunction: 8
+    passOperation: 2
+    failOperation: 0
+    zFailOperation: 0
+  m_ShadowTransparentReceive: 1
+  m_RenderingMode: 0
+  m_DepthPrimingMode: 0
+  m_CopyDepthMode: 1
+  m_DepthAttachmentFormat: 0
+  m_DepthTextureFormat: 0
+  m_AccurateGbufferNormals: 0
+  m_IntermediateTextureMode: 1
+--- !u!114 &4143817296445454985
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83cb7f0e959b42418616c45a7f70d93e, type: 3}
+  m_Name: HoGeometryBufferRendererFeature
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.GeometryBuffer.HoGeometryBufferRendererFeature
+  m_Active: 1
+  settings:
+    enabled: 1
+    layerMask:
+      serializedVersion: 2
+      m_Bits: 4294967295
+    minRenderQueue: 0
+    maxRenderQueue: 2500
+    passEvent: 250
+    debugPassEvent: 600
+    renderScale: 1
+    enableSkyBuffer: 0
+    skyRenderScale: 2
+    skyPassEvent: 400
+    fallbackShader: {fileID: 0}
+    skyCaptureShader: {fileID: 0}
+    debugShader: {fileID: 0}
+    debugMode: 0
+    debugInSceneView: 1
+    debugInGameView: 0
+    debugDepthNear: 0
+    debugDepthFar: 25

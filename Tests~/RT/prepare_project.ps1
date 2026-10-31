@@ -1,7 +1,17 @@
-param([string]$UnityVersion = '6000.3.15f1')
+param(
+    [string]$UnityVersion = '6000.3.15f1',
+    [string]$ProjectName = 'RTValidation'
+)
 $ErrorActionPreference = 'Stop'
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$taskProject = [IO.Path]::GetFullPath((Join-Path $taskRoot '.codex-research/RTValidation'))
+$taskResearchRoot = [IO.Path]::GetFullPath((Join-Path $taskRoot '.codex-research')) + [IO.Path]::DirectorySeparatorChar
+if ([string]::IsNullOrWhiteSpace($ProjectName) -or [IO.Path]::GetFileName($ProjectName) -ne $ProjectName) {
+    throw 'ProjectName must be a single directory name.'
+}
+$taskProject = [IO.Path]::GetFullPath((Join-Path $taskResearchRoot $ProjectName))
+if (-not $taskProject.StartsWith($taskResearchRoot, [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Independent project must stay under .codex-research.'
+}
 if (Test-Path -LiteralPath $taskProject) {
     Write-Output ('Existing isolated project kept: ' + $taskProject)
     return
@@ -22,6 +32,9 @@ foreach ($taskModule in @('imgui','jsonserialize','ui','uielements','imageconver
     $taskDependencies['com.unity.modules.'+$taskModule] = '1.0.0'
 }
 New-Item -ItemType Directory -Path (Join-Path $taskProject 'Assets'),(Join-Path $taskProject 'Packages'),(Join-Path $taskProject 'ProjectSettings') | Out-Null
+Copy-Item -Path (Join-Path $PSScriptRoot 'Bootstrap/Assets/*') -Destination (Join-Path $taskProject 'Assets') -Recurse
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'Bootstrap/ProjectSettings/GraphicsSettings.asset'),
+    (Join-Path $PSScriptRoot 'Bootstrap/ProjectSettings/QualitySettings.asset') -Destination (Join-Path $taskProject 'ProjectSettings')
 @{dependencies=$taskDependencies} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $taskProject 'Packages/manifest.json') -Encoding utf8
 ('m_EditorVersion: '+$UnityVersion) | Set-Content -LiteralPath (Join-Path $taskProject 'ProjectSettings/ProjectVersion.txt') -Encoding utf8
 @'
@@ -32,4 +45,4 @@ PlayerSettings:
   m_ObjectHideFlags: 0
   m_ActiveColorSpace: 1
 '@ | Set-Content -LiteralPath (Join-Path $taskProject 'ProjectSettings/ProjectSettings.asset') -Encoding utf8
-Write-Output ('Created empty isolated RT validation project: ' + $taskProject)
+Write-Output ('Created isolated RT validation project with its URP bootstrap: ' + $taskProject)

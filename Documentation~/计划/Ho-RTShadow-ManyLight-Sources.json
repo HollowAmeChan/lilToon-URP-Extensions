@@ -1,0 +1,657 @@
+{
+  "schema_version": 1,
+  "researched_on": "2026-10-31",
+  "status": "research_plan_not_implemented",
+  "package_head": "13a303126e7c8802cda4fa9a3c6b20518286ec14",
+  "liltoon_head": "6d44a90b2210e75fe3c066fd52b7c0cf9054102c",
+  "external_versions": {
+    "rtxdi_readme": "3.1.0",
+    "rtxdi_commit": "a6efab966b7c3b272da0461578eb56ac61c7cbff",
+    "rtxdi_library_commit": "f12037fa8e97ebc08e9e3edfd2de528ed1772a4b",
+    "nrd_readme": "4.18.0",
+    "nrd_commit": "8f12a22fc90e6a3c7f5da4c9c3103633c842963a",
+    "local_nrd_headers": "4.17.3",
+    "megalights_document_versions": [
+      "5.6",
+      "5.8"
+    ],
+    "hdrp_document_version": "17.0"
+  },
+  "limitations": [
+    "No external sample, engine feature, or paper implementation was executed.",
+    "ReSTIR 2020 and ReGIR 2021 PDF retrieval was incomplete; evidence level C is intentional.",
+    "2026 research entries were reviewed at project-page/abstract level only.",
+    "Source hashes identify downloaded bytes; rolling pages may contain unstable markup.",
+    "Research recommendations and proposed gates are not measured production results."
+  ],
+  "sources": [
+    {
+      "reference": "S01",
+      "url": "https://github.com/NVIDIA-RTX/RTXDI/blob/a6efab966b7c3b272da0461578eb56ac61c7cbff/README.md",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "rtxdi_readme",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/README.md",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/README.md",
+          "http_status": "200",
+          "bytes": 7684,
+          "sha256": "de7755ce4c7e9a78de36d6c1582b3ccaaf08a8d96608a646e876ae49615bd5bb",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S02",
+      "url": "https://github.com/NVIDIA-RTX/RTXDI/blob/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/Integration.md",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "rtxdi_integration_verified",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/Integration.md",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/Integration.md",
+          "http_status": "200",
+          "bytes": 25737,
+          "sha256": "28f4e0b38eae3ed28765217cc3b17f0dce0cefe5c06f4b78517019ed228e37c5",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S03",
+      "url": "https://github.com/NVIDIA-RTX/RTXDI/blob/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/NoiseAndBias.md",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "rtxdi_noise_pinned",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/NoiseAndBias.md",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/NoiseAndBias.md",
+          "http_status": "200",
+          "bytes": 13326,
+          "sha256": "aefe6a4d47969aaa149f3b64b6b43144c9caa5c5fb54ce0c2633600ccde26f32",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S04",
+      "url": "https://github.com/NVIDIA-RTX/RTXDI/blob/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/Confidence.md",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "rtxdi_confidence_pinned",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/Confidence.md",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Doc/Confidence.md",
+          "http_status": "200",
+          "bytes": 11107,
+          "sha256": "db49069a2ee1552ca554fd89bb57eba2c2fbb9ea71b523ad862b0481a62ed51c",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S05",
+      "url": "https://github.com/NVIDIA-RTX/RTXDI/blob/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/GenerateInitialSamples.hlsl",
+      "evidence_level": "A",
+      "review_scope": "Relevant implementation or paper method sections reviewed; not an execution benchmark.",
+      "captures": [
+        {
+          "id": "rtxdi_initial",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/GenerateInitialSamples.hlsl",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/GenerateInitialSamples.hlsl",
+          "http_status": "200",
+          "bytes": 2211,
+          "sha256": "d4b1dae88890aabbc2637d8c984b0b82d5e9ed12d14251a53c2cb434e72fcfd3",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        },
+        {
+          "id": "rtxdi_temporal",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/TemporalResampling.hlsl",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/TemporalResampling.hlsl",
+          "http_status": "200",
+          "bytes": 3588,
+          "sha256": "3c95132cba238de3d5fff98c2d6eda6571bab9a511fb482c4c98bd1a3b1a2804",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        },
+        {
+          "id": "rtxdi_spatial_retry",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/SpatialResampling.hlsl",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/SpatialResampling.hlsl",
+          "http_status": "200",
+          "bytes": 2309,
+          "sha256": "dedfe98a423a7fb7b43bb35bc7291e5759b59bb3add474b32be873fca63a2979",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        },
+        {
+          "id": "rtxdi_shade_retry",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/ShadeSamples.hlsl",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/LightingPasses/DI/ShadeSamples.hlsl",
+          "http_status": "200",
+          "bytes": 3598,
+          "sha256": "da93f1e59f2b28f3db80e026396735f49cbb48623de4c37af055dbc4581aa84b",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        },
+        {
+          "id": "rtxdi_gradient",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/DenoisingPasses/ComputeGradients.hlsl",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI/a6efab966b7c3b272da0461578eb56ac61c7cbff/Samples/FullSample/Shaders/DenoisingPasses/ComputeGradients.hlsl",
+          "http_status": "200",
+          "bytes": 8610,
+          "sha256": "0384093e330df90910d0ef753bc940a785cf23228e9842868ebf8323bb0f1b29",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        },
+        {
+          "id": "rtxdi_library_reservoir",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI-Library/f12037fa8e97ebc08e9e3edfd2de528ed1772a4b/Include/Rtxdi/DI/Reservoir.hlsli",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/RTXDI-Library/f12037fa8e97ebc08e9e3edfd2de528ed1772a4b/Include/Rtxdi/DI/Reservoir.hlsli",
+          "http_status": "200",
+          "bytes": 9757,
+          "sha256": "be474731482b1edb0669f19a1c07f4abe23d8ceee895948e933f685566a0111d",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S06",
+      "url": "https://github.com/NVIDIA-RTX/NRD/blob/8f12a22fc90e6a3c7f5da4c9c3103633c842963a/README.md",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "nrd_pinned",
+          "requested_url": "https://raw.githubusercontent.com/NVIDIA-RTX/NRD/8f12a22fc90e6a3c7f5da4c9c3103633c842963a/README.md",
+          "effective_url": "https://raw.githubusercontent.com/NVIDIA-RTX/NRD/8f12a22fc90e6a3c7f5da4c9c3103633c842963a/README.md",
+          "http_status": "200",
+          "bytes": 81517,
+          "sha256": "acaa18f898bb41dae0d2fe585f94e04f21ab10caeee91c5e4d007aac9512425a",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S07",
+      "url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/megalights-in-unreal-engine?application_version=5.6",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "megalights56",
+          "requested_url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/megalights-in-unreal-engine?application_version=5.6",
+          "effective_url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/megalights-in-unreal-engine?application_version=5.6",
+          "http_status": "200",
+          "bytes": 193281,
+          "sha256": "8f5ce26f85e3c0d6143a244982bfdcafaec1a751380b1625f89a377d588ec65c",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S08",
+      "url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/megalights-in-unreal-engine?application_version=5.8",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "megalights58",
+          "requested_url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/megalights-in-unreal-engine?application_version=5.8",
+          "effective_url": "https://dev.epicgames.com/documentation/en-us/unreal-engine/megalights-in-unreal-engine?application_version=5.8",
+          "http_status": "200",
+          "bytes": 265358,
+          "sha256": "f99273f08d8db8243b7b4e759c56db7a483b596c228bd7ffdbd73517b257737a",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S09",
+      "url": "https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@17.0/manual/Ray-Traced-Shadows.html",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "hdrp_ray_shadows",
+          "requested_url": "https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@17.0/manual/Ray-Traced-Shadows.html",
+          "effective_url": "https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@17.0/manual/Ray-Traced-Shadows.html",
+          "http_status": "200",
+          "bytes": 20106,
+          "sha256": "8b60d717d0a903f04856d68bb237df911087291aebeda526b666052c3fbf343e",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S10",
+      "url": "https://github.com/Unity-Technologies/Graphics/blob/master/Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/HDDiffuseShadowDenoiser.cs",
+      "evidence_level": "A",
+      "review_scope": "Relevant implementation or paper method sections reviewed; not an execution benchmark.",
+      "captures": [
+        {
+          "id": "hdrp_denoiser",
+          "requested_url": "https://raw.githubusercontent.com/Unity-Technologies/Graphics/master/Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/HDDiffuseShadowDenoiser.cs",
+          "effective_url": "https://raw.githubusercontent.com/Unity-Technologies/Graphics/master/Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/Raytracing/HDDiffuseShadowDenoiser.cs",
+          "http_status": "200",
+          "bytes": 19994,
+          "sha256": "c162cb3fe4dacf4df7d376c0bd8080bf60abde2a308ea076b99cf51daf9e974e",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S11",
+      "url": "https://gpuopen.com/manuals/fidelityfx_sdk/techniques/denoiser/",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "amd_denoiser",
+          "requested_url": "https://gpuopen.com/manuals/fidelityfx_sdk/techniques/denoiser/",
+          "effective_url": "https://gpuopen.com/manuals/fidelityfx_sdk/techniques/denoiser/",
+          "http_status": "200",
+          "bytes": 354641,
+          "sha256": "10d259ce7d79d23db1e188358140c94c102c703de53c4b02709cb4e54efb37f5",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S12",
+      "url": "https://www.cs.cornell.edu/~kb/projects/lightcuts/",
+      "evidence_level": "C",
+      "review_scope": "Author/publisher project page and abstract reviewed; full paper/code review not claimed.",
+      "captures": [
+        {
+          "id": "lightcuts2005_retry",
+          "requested_url": "https://www.cs.cornell.edu/~kb/projects/lightcuts/",
+          "effective_url": "https://www.cs.cornell.edu/~kb/projects/lightcuts/",
+          "http_status": "200",
+          "bytes": 1992,
+          "sha256": "31d25678bf54b9951a2fd1fe9865f1c4c3940fd8434b9ade03abdd82d3af2b59",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S13",
+      "url": "https://research.nvidia.com/labs/rtr/publication/bitterli2020spatiotemporal/",
+      "evidence_level": "C",
+      "review_scope": "Author/publisher project page and abstract reviewed; full paper/code review not claimed.",
+      "captures": [
+        {
+          "id": "restir2020",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/bitterli2020spatiotemporal/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/bitterli2020spatiotemporal/",
+          "http_status": "200",
+          "bytes": 35046,
+          "sha256": "e9f0383307ecf3e499d9b2e3f4f5dcb33eeff86449e9f293ba62b87732a6bf52",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S14",
+      "url": "https://research.nvidia.com/labs/rtr/publication/wyman2021rearchitecting/",
+      "evidence_level": "A",
+      "review_scope": "Relevant implementation or paper method sections reviewed; not an execution benchmark.",
+      "captures": [
+        {
+          "id": "production2021",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/wyman2021rearchitecting/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/wyman2021rearchitecting/",
+          "http_status": "200",
+          "bytes": 27954,
+          "sha256": "4bd8f9a69b3d8d82dba8f4f9a6946621661cab34e2e6840e5104634481878939",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        },
+        {
+          "id": "production_pdf_retry",
+          "requested_url": "https://d1qx31qr3h6wln.cloudfront.net/publications/hpg21_rearchitectingReSTIR.pdf",
+          "effective_url": "https://d1qx31qr3h6wln.cloudfront.net/publications/hpg21_rearchitectingReSTIR.pdf",
+          "http_status": "200",
+          "bytes": 92156535,
+          "sha256": "b8f225c6989527003dfc0963b44c78fc5e7c4ff0390f1fe620ed33bd3c4d2265",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0,
+          "pdf_pages": 19
+        }
+      ]
+    },
+    {
+      "reference": "S15",
+      "url": "https://research.nvidia.com/labs/rtr/publication/boksansky2021rendering/",
+      "evidence_level": "C",
+      "review_scope": "Author/publisher project page and abstract reviewed; full paper/code review not claimed.",
+      "captures": [
+        {
+          "id": "regir2021",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/boksansky2021rendering/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/boksansky2021rendering/",
+          "http_status": "200",
+          "bytes": 27211,
+          "sha256": "655b53039bea50e708d3069c90975d42e17986e864c9e15626bb5608e770edb2",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S16",
+      "url": "https://research.nvidia.com/labs/rtr/publication/lin2022generalized/",
+      "evidence_level": "A",
+      "review_scope": "Relevant implementation or paper method sections reviewed; not an execution benchmark.",
+      "captures": [
+        {
+          "id": "gris2022",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/lin2022generalized/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/lin2022generalized/",
+          "http_status": "200",
+          "bytes": 36247,
+          "sha256": "408db1157df5a096292f9d724f0ff7c363dac92e40948d98f791693fa622417a",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        },
+        {
+          "id": "gris_pdf_retry",
+          "requested_url": "https://d1qx31qr3h6wln.cloudfront.net/publications/sig22_GRIS.pdf",
+          "effective_url": "https://d1qx31qr3h6wln.cloudfront.net/publications/sig22_GRIS.pdf",
+          "http_status": "200",
+          "bytes": 53532327,
+          "sha256": "38b86bffc20f61d6984b868be3f5a630b9d3d93a92c106896133799188a33f00",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0,
+          "pdf_pages": 23
+        }
+      ]
+    },
+    {
+      "reference": "S17",
+      "url": "https://diglib.eg.org/handle/10.2312/sr20221161",
+      "evidence_level": "C",
+      "review_scope": "Author/publisher project page and abstract reviewed; full paper/code review not claimed.",
+      "captures": [
+        {
+          "id": "stbn2022author",
+          "requested_url": "https://diglib.eg.org/handle/10.2312/sr20221161",
+          "effective_url": "https://diglib.eg.org/items/a96087bb-abe8-4851-968c-cccc7f17e08c",
+          "http_status": "200",
+          "bytes": 472776,
+          "sha256": "96e4e66262fec1e4b9e6ae6102dcd99fee69b990e3ea44e5beef26418f5399ed",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S18",
+      "url": "https://intro-to-restir.cwyman.org/",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "course2023",
+          "requested_url": "https://intro-to-restir.cwyman.org/",
+          "effective_url": "https://intro-to-restir.cwyman.org/",
+          "http_status": "200",
+          "bytes": 12343,
+          "sha256": "e2a9ca31949dc8ab9eec67de99131fc61c5948478f1ec7b6f680f65a5a3552f6",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S19",
+      "url": "https://research.nvidia.com/labs/rtr/publication/sawhney2024decorrelating/",
+      "evidence_level": "C",
+      "review_scope": "Author/publisher project page and abstract reviewed; full paper/code review not claimed.",
+      "captures": [
+        {
+          "id": "mcmc2024",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/sawhney2024decorrelating/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/sawhney2024decorrelating/",
+          "http_status": "200",
+          "bytes": 36446,
+          "sha256": "a3583685c6e5a79cd21f8eb40180a8896cfbddcd1df65f170da5b4c5ca323aef",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S20",
+      "url": "https://research.nvidia.com/labs/rtr/publication/zhang2025many-light/",
+      "evidence_level": "A",
+      "review_scope": "Relevant implementation or paper method sections reviewed; not an execution benchmark.",
+      "captures": [
+        {
+          "id": "shadowmaps2025",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/zhang2025many-light/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/zhang2025many-light/",
+          "http_status": "200",
+          "bytes": 29254,
+          "sha256": "6807c957b6b0b03dbf1460061f58218e3f1a63e60788b924c44544ecb3a072af",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        },
+        {
+          "id": "shadowmaps_pdf",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/zhang2025many-light/zhang2025many-light.pdf",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/zhang2025many-light/zhang2025many-light.pdf",
+          "http_status": "200",
+          "bytes": 280602378,
+          "sha256": "882afe0b928403e8cc92f7e46d6d15cce8ab55bdccedd6e194a6ead5cf1db2d7",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0,
+          "pdf_pages": 12
+        }
+      ]
+    },
+    {
+      "reference": "S21",
+      "url": "https://research.nvidia.com/labs/rtr/publication/zhang2024area/",
+      "evidence_level": "C",
+      "review_scope": "Author/publisher project page and abstract reviewed; full paper/code review not claimed.",
+      "captures": [
+        {
+          "id": "area2024",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/zhang2024area/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/zhang2024area/",
+          "http_status": "200",
+          "bytes": 31998,
+          "sha256": "d4f3c929421c675ce34169554ad845f0647cc1710edb923dcd68384ea3d77aaf",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S22",
+      "url": "https://research.nvidia.com/labs/rtr/publication/hedstrom2026stochastic/",
+      "evidence_level": "C",
+      "review_scope": "Author/publisher project page and abstract reviewed; full paper/code review not claimed.",
+      "captures": [
+        {
+          "id": "stochastic2026",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/hedstrom2026stochastic/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/hedstrom2026stochastic/",
+          "http_status": "200",
+          "bytes": 31723,
+          "sha256": "81ed843f3d943643760785483b64d91dca0fdbc64ecf1440bf4139b4175a1160",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S23",
+      "url": "https://research.nvidia.com/labs/rtr/publication/junkins2026compatibility/",
+      "evidence_level": "C",
+      "review_scope": "Author/publisher project page and abstract reviewed; full paper/code review not claimed.",
+      "captures": [
+        {
+          "id": "compatibility2026",
+          "requested_url": "https://research.nvidia.com/labs/rtr/publication/junkins2026compatibility/",
+          "effective_url": "https://research.nvidia.com/labs/rtr/publication/junkins2026compatibility/",
+          "http_status": "200",
+          "bytes": 33457,
+          "sha256": "643ee5a2ca3c93df753bc2d810078c59b11f781e7114eb2a1ec414771364cc4c",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S24",
+      "url": "https://pbr-book.org/4ed/Light_Sources/Light_Sampling",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "pbrt_light_sampling",
+          "requested_url": "https://pbr-book.org/4ed/Light_Sources/Light_Sampling",
+          "effective_url": "https://pbr-book.org/4ed/Light_Sources/Light_Sampling",
+          "http_status": "200",
+          "bytes": 493931,
+          "sha256": "04fdd13447c8680b009705326fa70298199f06488d95b7e967629931e20c9c3e",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S25",
+      "url": "https://docs.unity3d.com/6000.0/Documentation/Manual/urp/lighting/light-limits-in-urp.html",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "urp_lights",
+          "requested_url": "https://docs.unity3d.com/6000.0/Documentation/Manual/urp/lighting/light-limits-in-urp.html",
+          "effective_url": "https://docs.unity.com/en-us/engine/6000.0/manual/lighting-overview/lighting/light-limits-in-urp",
+          "http_status": "200",
+          "bytes": 425562,
+          "sha256": "299f01422dbaa02cc3506aad7a4d54792e3576323ea3e420ea9dbdfc0f4d5e48",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    },
+    {
+      "reference": "S26",
+      "url": "https://docs.unity3d.com/6000.0/Documentation/Manual/urp/rendering/forward-plus-rendering-path.html",
+      "evidence_level": "B",
+      "review_scope": "Official documentation or course resource page reviewed.",
+      "captures": [
+        {
+          "id": "urp_forward_plus",
+          "requested_url": "https://docs.unity3d.com/6000.0/Documentation/Manual/urp/rendering/forward-plus-rendering-path.html",
+          "effective_url": "https://docs.unity.com/en-us/engine/6000.0/manual/render-pipelines/universal-render-pipeline/introduction/urp-concepts/rendering-paths/forward-rendering-paths",
+          "http_status": "200",
+          "bytes": 442744,
+          "sha256": "b9fdda47590569df3c75e29b975fc8c16efb6781f890c4f82cfa7dd8ac17a2a6",
+          "retrieved_on": "2026-10-31",
+          "curl_exit_code": 0
+        }
+      ]
+    }
+  ],
+  "local_code_snapshot": [
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTShadow/HoRTShadowRendererFeature.cs",
+      "sha256": "245e162183f237aaf4da1e9aad72df1f794fa335f7e48ff46dace3f7603e89d1"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTShadow/HoRTShadowProducts.cs",
+      "sha256": "ad682d90d0890a89e6d59c70f4010022136e837d1f1955408fce6cac6ee70142"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTShadow/Shaders/HoRTShadowSampling.hlsl",
+      "sha256": "ba86536b1d290913892d767bccae5c4907f0412535f8d8d46b1ac9800e2b77de"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTShadow/Shaders/HoRTShadow.raytrace",
+      "sha256": "993b5871447801d954b32e4576467993e6fae3637d5295b8a9b42c2c01f72d10"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTShadow/HoRTShadowSigmaContext.cs",
+      "sha256": "3670a8a92847d10014f79096c8a9ab596cd7e3c3cef256e458adb7cb159dd8c8"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTShadow/HoRTShadowReceiver.cs",
+      "sha256": "016f5806568aa63908e80c44f49613905807734807e3a6667c5f7bb01038b7bd"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RT/HoRTLightIdentity.cs",
+      "sha256": "b48a7bfa1a70a48f20f89ba845162611d3df838ec649e762fd7eef05677e4939"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RT/HoRTSharedData.cs",
+      "sha256": "14140be3a19ba86201ef03ba1ad21f06c790b2a4c3e27d70468524dc51da7a77"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RT/Shaders/HoRTNativeVisibility.hlsl",
+      "sha256": "9b71da1084e3eb65d46d24ad5e63bacc90236d3e9b2474803fc04d4c253e52d2"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl",
+      "sha256": "ecbddc3320eadb1b188c152d8fb6eba3129c647137529d10b4443e4b13dae6ad"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTDI/HoRTDIContext.cs",
+      "sha256": "71adbeafeb348e22745b0bea30d430b94764d83744270f151ec9aa8a69fa3a91"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/RtxdiParameters.h",
+      "sha256": "998cfee3b159548e9b5d1e5726fa1644e71c9a2a1e32d63fb90cdda0e24a7761"
+    },
+    {
+      "repository": "lilToon-URP-Extensions",
+      "path": "Runtime/RTDI/ThirdParty/NRD/Include/NRD.h",
+      "sha256": "250f990b8f2f200eceff9cb8ecc3615bb7aa719d984d549555cb9c4850924be3"
+    },
+    {
+      "repository": "lilToon",
+      "path": "Assets/lilToon/Shader/Includes/lil_common_macro.hlsl",
+      "sha256": "4b6fc589f9e3670a9e10d1633580fd065b806e555eb88c75704c8d18a6403114"
+    },
+    {
+      "repository": "lilToon",
+      "path": "Assets/lilToon/Shader/Includes/lil_common_frag.hlsl",
+      "sha256": "9fc634df0db84dc32e47972b52692213bd3687cd60ede5f6fd9da360bdbcb37d"
+    }
+  ]
+}

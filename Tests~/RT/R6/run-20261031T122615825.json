@@ -1,0 +1,34 @@
+{
+  "stage": "R6",
+  "sourceCommit": "13a303126e7c8802cda4fa9a3c6b20518286ec14",
+  "startedUtc": "2026-10-31T12:26:29.4223907Z",
+  "sourcesFile": "sources-20261031T122615825.json",
+  "runnerSha256": "DBA9892D69F3842A01F964AD540C3356F766BF99DF88C4F06F2E0B2200125250",
+  "activeProcess": null,
+  "entries": [
+    {
+      "name": "multi-rg",
+      "entry": "lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti",
+      "api": "d3d12",
+      "colorSpace": "Linear",
+      "actualExit": 1,
+      "abort": null,
+      "marker": false,
+      "diagnostics": [
+        "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'\r",
+        "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'\r",
+        "Shader warning in 'lilToon': use of potentially uninitialized variable (lilEmissionComponent) at /Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl(1788) (on d3d11)\r",
+        "Shader warning in 'lilToon': use of potentially uninitialized variable (lilEmission2ndComponent) at /Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl(1852) (on d3d11)\r",
+        "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'\r",
+        "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'\r",
+        "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (lilEmissionComponent) at /Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl(1788) (on d3d11)\r",
+        "Shader warning in 'Hidden/lilToonCutout': use of potentially uninitialized variable (lilEmission2ndComponent) at /Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl(1852) (on d3d11)\r",
+        "Exception: Scheduled product count expected=4 actual=1 status=请求 4 灯 / 生产 1 / 不可用 3 rejected=Point product=Unsupported:Light is not present in the current URP additional-light buffer | Spot product=Unsupported:Light is not present in the current URP additional-light buffer | Opposite directional product=Unsupported:Light is not present in the current URP additional-light buffer\r"
+      ],
+      "logSha256": "9AB6383FA7AB78C48428EDF1C3B8E797CD8283D2B5340E2F525BB1E9D4818077",
+      "seconds": 28.4670746,
+      "pass": false,
+      "logFile": "ho-rt-r6-multi-rg-20261031T122615825.log"
+    }
+  ]
+}

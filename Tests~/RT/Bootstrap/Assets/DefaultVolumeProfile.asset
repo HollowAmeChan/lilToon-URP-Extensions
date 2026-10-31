@@ -1,0 +1,1480 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-9101807671511275820
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c5e1dc532bcb41949b58bc4f2abfbb7e, type: 3}
+  m_Name: LensDistortion
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.LensDistortion
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  xMultiplier:
+    m_OverrideState: 1
+    m_Value: 1
+  yMultiplier:
+    m_OverrideState: 1
+    m_Value: 1
+  center:
+    m_OverrideState: 1
+    m_Value: {x: 0.5, y: 0.5}
+  scale:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &-9033917350441036765
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c762553d80f444ca37d176d04554e66, type: 3}
+  m_Name: HoObjectBufferVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.ObjectBuffer.HoObjectBufferVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-8874471646285898762
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66f335fb1ffd8684294ad653bf1c7564, type: 3}
+  m_Name: ColorAdjustments
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ColorAdjustments
+  active: 1
+  postExposure:
+    m_OverrideState: 1
+    m_Value: 0
+  contrast:
+    m_OverrideState: 1
+    m_Value: 0
+  colorFilter:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  hueShift:
+    m_OverrideState: 1
+    m_Value: 0
+  saturation:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-7274633853020410938
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e7f5dbd2c66467f9f87a62c8c9e4f07, type: 3}
+  m_Name: HoSSGIVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.SSGI.HoSSGIVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  rayCount:
+    m_OverrideState: 1
+    m_Value: 8
+  stepCount:
+    m_OverrideState: 1
+    m_Value: 24
+  rayLength:
+    m_OverrideState: 1
+    m_Value: 4
+  thickness:
+    m_OverrideState: 1
+    m_Value: 0.08
+  temporalBlend:
+    m_OverrideState: 1
+    m_Value: 0.9
+  spatialRadius:
+    m_OverrideState: 1
+    m_Value: 2
+  temporalReservoirReuse:
+    m_OverrideState: 1
+    m_Value: 1
+  spatialReservoirReuse:
+    m_OverrideState: 1
+    m_Value: 1
+  temporalReservoirValidation:
+    m_OverrideState: 1
+    m_Value: 1
+  spatialReservoirValidation:
+    m_OverrideState: 1
+    m_Value: 1
+  fireflySuppression:
+    m_OverrideState: 1
+    m_Value: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  sourceSaturation:
+    m_OverrideState: 1
+    m_Value: 1
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-6491768356910449972
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ed16727000f001ccc439e1c7585e8b7, type: 3}
+  m_Name: HoSurfaceBufferVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.SurfaceBuffer.HoSurfaceBufferVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &-5928173397194884418
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e021b4c809a781e468c2988c016ebbea, type: 3}
+  m_Name: ColorLookup
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ColorLookup
+  active: 1
+  texture:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  contribution:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-5853104432774667653
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c23e3b12dc18c42a140437e53d3951, type: 3}
+  m_Name: Tonemapping
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Tonemapping
+  active: 1
+  mode:
+    m_OverrideState: 1
+    m_Value: 0
+  neutralHDRRangeReductionMode:
+    m_OverrideState: 1
+    m_Value: 2
+  acesPreset:
+    m_OverrideState: 1
+    m_Value: 3
+  hueShiftAmount:
+    m_OverrideState: 1
+    m_Value: 0
+  detectPaperWhite:
+    m_OverrideState: 1
+    m_Value: 0
+  paperWhite:
+    m_OverrideState: 1
+    m_Value: 300
+  detectBrightnessLimits:
+    m_OverrideState: 1
+    m_Value: 1
+  minNits:
+    m_OverrideState: 1
+    m_Value: 0.005
+  maxNits:
+    m_OverrideState: 1
+    m_Value: 1000
+--- !u!114 &-5743195176608604465
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c01700fd266d6914ababb731e09af2eb, type: 3}
+  m_Name: DepthOfField
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.DepthOfField
+  active: 1
+  mode:
+    m_OverrideState: 1
+    m_Value: 0
+  gaussianStart:
+    m_OverrideState: 1
+    m_Value: 10
+  gaussianEnd:
+    m_OverrideState: 1
+    m_Value: 30
+  gaussianMaxRadius:
+    m_OverrideState: 1
+    m_Value: 1
+  highQualitySampling:
+    m_OverrideState: 1
+    m_Value: 0
+  focusDistance:
+    m_OverrideState: 1
+    m_Value: 10
+  aperture:
+    m_OverrideState: 1
+    m_Value: 5.6
+  focalLength:
+    m_OverrideState: 1
+    m_Value: 50
+  bladeCount:
+    m_OverrideState: 1
+    m_Value: 5
+  bladeCurvature:
+    m_OverrideState: 1
+    m_Value: 1
+  bladeRotation:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-5624561546863138367
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8e140b2efb490144f9f5d39ab6a99999, type: 3}
+  m_Name: HoRTDIVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.RTDI.HoRTDIVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 0
+  composite:
+    m_OverrideState: 1
+    m_Value: 0
+  compositeMode:
+    m_OverrideState: 1
+    m_Value: 0
+  compositeWeight:
+    m_OverrideState: 1
+    m_Value: 1
+  additiveIntensity:
+    m_OverrideState: 1
+    m_Value: 0.25
+  useEnvironment:
+    m_OverrideState: 1
+    m_Value: 1
+  environmentIntensity:
+    m_OverrideState: 1
+    m_Value: 1
+  denoise:
+    m_OverrideState: 1
+    m_Value: 0
+  localSampling:
+    m_OverrideState: 1
+    m_Value: 0
+  initialSamples:
+    m_OverrideState: 1
+    m_Value: 8
+  temporal:
+    m_OverrideState: 1
+    m_Value: 1
+  maxHistory:
+    m_OverrideState: 1
+    m_Value: 4
+  spatial:
+    m_OverrideState: 1
+    m_Value: 1
+  spatialSamples:
+    m_OverrideState: 1
+    m_Value: 4
+  spatialRadius:
+    m_OverrideState: 1
+    m_Value: 16
+  finalSampling:
+    m_OverrideState: 1
+    m_Value: 0
+  environmentSamples:
+    m_OverrideState: 1
+    m_Value: 4
+  environmentBrdfSamples:
+    m_OverrideState: 1
+    m_Value: 4
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &-5366708644816517768
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29fa0085f50d5e54f8144f766051a691, type: 3}
+  m_Name: FilmGrain
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.FilmGrain
+  active: 1
+  type:
+    m_OverrideState: 1
+    m_Value: 0
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  response:
+    m_OverrideState: 1
+    m_Value: 0.8
+  texture:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+--- !u!114 &-5067522639517146378
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2efcc2fa0d98a75489365bfbbd0264ad, type: 3}
+  m_Name: HoCharacterSpecializationVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.CharacterSpecialization.HoCharacterSpecializationVolume
+  active: 1
+  Effects:
+    m_OverrideState: 1
+    m_Value:
+      eyeRevealEnabled: 1
+      eyeRevealStrength: 0.05
+      eyeRevealFeatherPixels: 1
+      eyeRevealDilationPixels: 2
+      eyeRevealDepthBias: 0.01
+      useEyeRevealArea: 1
+      sameCharacterOnly: 1
+      eyeRevealAngleEnabled: 0
+      eyeRevealAngleStrength: 1
+      eyeRevealAngleYawRangeDegrees: 90
+      eyeRevealAnglePitchRangeDegrees: 60
+      eyeRevealAngleSoftnessDegrees: 40
+      hairDropShadowEnabled: 1
+      hairShadowColor: {r: 0.78, g: 0.68, b: 0.72, a: 1}
+      hairShadowOpacity: 1
+      hairShadowDistancePixels: 15
+      hairShadowDistancePerspectiveStrength: 1
+      hairShadowDistanceReferenceDepth: 2
+      hairShadowDistanceMinScale: 0.25
+      hairShadowAngleDegrees: 240
+      hairShadowSoftnessPixels: 2
+      hairShadowSpreadPixels: 0
+      hairShadowBlendMode: 0
+      faceHairDiffuseEnabled: 0
+      faceHairDiffuseStrength: 0.35
+      faceHairDiffuseRadiusPixels: 48
+      faceHairDiffuseDepthTolerance: 0.25
+      faceHairDiffuseLevelBlack: 0.02
+      faceHairDiffuseLevelWhite: 0.45
+      faceHairDiffuseTintColor: {r: 1, g: 0.78, b: 0.72, a: 1}
+      faceHairDiffuseBlendMode: 1
+      subjectOutlineEnabled: 0
+      subjectOutlineStrength: 1
+      subjectOutlineRadiusPixels: 6
+      subjectOutlineLevelBlack: 0.02
+      subjectOutlineLevelWhite: 0.35
+      subjectOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+      subjectOutlineFillMode: 0
+      subjectOutlineNormalRotationDegrees: 0
+      subjectOutlineNormalFlowDegreesPerSecond: 0
+      subjectOutlineFogColor: {r: 1, g: 0.85, b: 0.65, a: 1}
+      subjectOutlineFogHueShiftDegrees: 0
+      subjectOutlineFogSaturation: 1
+      subjectOutlineFogValue: 1
+      subjectOutlineFogSoftness: 0.55
+      outlineHeightFadeReferenceDistance: 0
+      subjectOutlineHeightFadeMode: 0
+      subjectOutlineHeightFadeGroundY: 0
+      subjectOutlineHeightFadeStart: 0
+      subjectOutlineHeightFadeEnd: 1
+      subjectOutlineHeightFadeHardness: 1
+      enhancedOutlineEnabled: 0
+      enhancedOutlineSourceChannel: 6
+      enhancedOutlineStrength: 0.65
+      enhancedOutlineRadiusPixels: 18
+      enhancedOutlineFogColor: {r: 1, g: 0.76, b: 0.55, a: 1}
+      enhancedOutlineFogHueShiftDegrees: 0
+      enhancedOutlineFogSaturation: 1
+      enhancedOutlineFogValue: 1
+      enhancedOutlineFogSoftness: 0.45
+      enhancedOutlineHeightFadeMode: 0
+      enhancedOutlineHeightFadeGroundY: 0
+      enhancedOutlineHeightFadeStart: 0
+      enhancedOutlineHeightFadeEnd: 1
+      enhancedOutlineHeightFadeHardness: 1
+--- !u!114 &-4447142907704699296
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3eb4b772797da9440885e8bd939e9560, type: 3}
+  m_Name: ColorCurves
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ColorCurves
+  active: 1
+  master:
+    m_OverrideState: 1
+    m_Value:
+      <length>k__BackingField: 2
+      m_Loop: 0
+      m_ZeroValue: 0
+      m_Range: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  red:
+    m_OverrideState: 1
+    m_Value:
+      <length>k__BackingField: 2
+      m_Loop: 0
+      m_ZeroValue: 0
+      m_Range: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  green:
+    m_OverrideState: 1
+    m_Value:
+      <length>k__BackingField: 2
+      m_Loop: 0
+      m_ZeroValue: 0
+      m_Range: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  blue:
+    m_OverrideState: 1
+    m_Value:
+      <length>k__BackingField: 2
+      m_Loop: 0
+      m_ZeroValue: 0
+      m_Range: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve:
+        - serializedVersion: 3
+          time: 0
+          value: 0
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 1
+          value: 1
+          inSlope: 1
+          outSlope: 1
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  hueVsHue:
+    m_OverrideState: 1
+    m_Value:
+      <length>k__BackingField: 0
+      m_Loop: 1
+      m_ZeroValue: 0.5
+      m_Range: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  hueVsSat:
+    m_OverrideState: 1
+    m_Value:
+      <length>k__BackingField: 0
+      m_Loop: 1
+      m_ZeroValue: 0.5
+      m_Range: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  satVsSat:
+    m_OverrideState: 1
+    m_Value:
+      <length>k__BackingField: 0
+      m_Loop: 0
+      m_ZeroValue: 0.5
+      m_Range: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+  lumVsSat:
+    m_OverrideState: 1
+    m_Value:
+      <length>k__BackingField: 0
+      m_Loop: 0
+      m_ZeroValue: 0.5
+      m_Range: 1
+      m_Curve:
+        serializedVersion: 2
+        m_Curve: []
+        m_PreInfinity: 2
+        m_PostInfinity: 2
+        m_RotationOrder: 4
+--- !u!114 &-3778777065303019063
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d588c2d4d18d0964a90161d831a55257, type: 3}
+  m_Name: HoGTAOVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.GTAO.HoGTAOVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 0
+  quality:
+    m_OverrideState: 1
+    m_Value: 2
+  resolution:
+    m_OverrideState: 1
+    m_Value: 0
+  worldSpaceRadius:
+    m_OverrideState: 1
+    m_Value: 5
+  screenSpaceRadius:
+    m_OverrideState: 1
+    m_Value: 25
+  thickness:
+    m_OverrideState: 1
+    m_Value: 0.2
+  sliceCount:
+    m_OverrideState: 1
+    m_Value: 4
+  stepCount:
+    m_OverrideState: 1
+    m_Value: 32
+  useAttenuation:
+    m_OverrideState: 1
+    m_Value: 1
+  useLinearThickness:
+    m_OverrideState: 1
+    m_Value: 1
+  temporalFrameCount:
+    m_OverrideState: 1
+    m_Value: 12
+  temporalRejection:
+    m_OverrideState: 1
+    m_Value: 0.7
+  spatialFilter:
+    m_OverrideState: 1
+    m_Value: 1
+  filterRadius:
+    m_OverrideState: 1
+    m_Value: 0.4
+  filterAdaptivity:
+    m_OverrideState: 1
+    m_Value: 0.1
+  boxPassCount:
+    m_OverrideState: 1
+    m_Value: 3
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugIntensity:
+    m_OverrideState: 1
+    m_Value: 3.672
+--- !u!114 &-563878311413235856
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0b2db86121404754db890f4c8dfe81b2, type: 3}
+  m_Name: Bloom
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Bloom
+  active: 1
+  skipIterations:
+    m_OverrideState: 1
+    m_Value: 1
+  threshold:
+    m_OverrideState: 1
+    m_Value: 0.9
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  scatter:
+    m_OverrideState: 1
+    m_Value: 0.7
+  clamp:
+    m_OverrideState: 1
+    m_Value: 65472
+  tint:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  highQualityFiltering:
+    m_OverrideState: 1
+    m_Value: 0
+  filter:
+    m_OverrideState: 1
+    m_Value: 0
+  downscale:
+    m_OverrideState: 1
+    m_Value: 0
+  maxIterations:
+    m_OverrideState: 1
+    m_Value: 6
+  dirtTexture:
+    m_OverrideState: 1
+    m_Value: {fileID: 0}
+    dimension: 1
+  dirtIntensity:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &-316324966199676415
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6067a16ce5f548f194d5a7c01ad0bb5a, type: 3}
+  m_Name: ImageProcessStackVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.PostProcessing.ImageProcessStackVolume
+  active: 1
+  Enable:
+    m_OverrideState: 1
+    m_Value: 0
+  ShowInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  layers:
+    m_OverrideState: 1
+    m_Value: []
+--- !u!114 &-290204792302860610
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 558a8e2b6826cf840aae193990ba9f2e, type: 3}
+  m_Name: ShadowsMidtonesHighlights
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ShadowsMidtonesHighlights
+  active: 1
+  shadows:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1, z: 1, w: 0}
+  midtones:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1, z: 1, w: 0}
+  highlights:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1, z: 1, w: 0}
+  shadowsStart:
+    m_OverrideState: 1
+    m_Value: 0
+  shadowsEnd:
+    m_OverrideState: 1
+    m_Value: 0.3
+  highlightsStart:
+    m_OverrideState: 1
+    m_Value: 0.55
+  highlightsEnd:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
+  m_Name: DefaultVolumeProfile
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
+  components:
+  - {fileID: -5743195176608604465}
+  - {fileID: 9174530699093009018}
+  - {fileID: 2678669328757451651}
+  - {fileID: -5928173397194884418}
+  - {fileID: -563878311413235856}
+  - {fileID: 237822489230546895}
+  - {fileID: 6377991818461017082}
+  - {fileID: -290204792302860610}
+  - {fileID: 8370536023609386914}
+  - {fileID: -5853104432774667653}
+  - {fileID: -4447142907704699296}
+  - {fileID: 2547861711154376381}
+  - {fileID: -5366708644816517768}
+  - {fileID: -8874471646285898762}
+  - {fileID: 405764708698555595}
+  - {fileID: 9163412202343765153}
+  - {fileID: -9101807671511275820}
+  - {fileID: 4749453581602151689}
+  - {fileID: 958586609781004030}
+  - {fileID: 4178133329245605459}
+  - {fileID: 6179560209045722369}
+  - {fileID: -5624561546863138367}
+  - {fileID: 558678627948719175}
+  - {fileID: 2724216211629432502}
+  - {fileID: 1973117614331898596}
+  - {fileID: 3829998725924007092}
+  - {fileID: -316324966199676415}
+  - {fileID: 8149025901021941571}
+  - {fileID: -5067522639517146378}
+  - {fileID: -9033917350441036765}
+  - {fileID: -3778777065303019063}
+  - {fileID: -7274633853020410938}
+  - {fileID: -6491768356910449972}
+  - {fileID: 3533802340711146635}
+--- !u!114 &237822489230546895
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 221518ef91623a7438a71fef23660601, type: 3}
+  m_Name: WhiteBalance
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.WhiteBalance
+  active: 1
+  temperature:
+    m_OverrideState: 1
+    m_Value: 0
+  tint:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &405764708698555595
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccf1aba9553839d41ae37dd52e9ebcce, type: 3}
+  m_Name: MotionBlur
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.MotionBlur
+  active: 1
+  mode:
+    m_OverrideState: 1
+    m_Value: 0
+  quality:
+    m_OverrideState: 1
+    m_Value: 0
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  clamp:
+    m_OverrideState: 1
+    m_Value: 0.05
+--- !u!114 &558678627948719175
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 476ad1b2df3a28741b9fa75292ff3dab, type: 3}
+  m_Name: HoGeometryDataVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.GeometryData.HoGeometryDataVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugLayerMask:
+    m_OverrideState: 1
+    m_Value:
+      serializedVersion: 2
+      m_Bits: 4294967295
+  debugMaxValue:
+    m_OverrideState: 1
+    m_Value: 0.2
+  debugPassEvent:
+    m_OverrideState: 1
+    m_Value: 600
+--- !u!114 &958586609781004030
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bd486065ce11414fa40e631affc4900, type: 3}
+  m_Name: ProbeVolumesOptions
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.ProbeVolumesOptions
+  active: 1
+  normalBias:
+    m_OverrideState: 1
+    m_Value: 0.05
+  viewBias:
+    m_OverrideState: 1
+    m_Value: 0.1
+  scaleBiasWithMinProbeDistance:
+    m_OverrideState: 1
+    m_Value: 0
+  samplingNoise:
+    m_OverrideState: 1
+    m_Value: 0.1
+  animateSamplingNoise:
+    m_OverrideState: 1
+    m_Value: 1
+  leakReductionMode:
+    m_OverrideState: 1
+    m_Value: 2
+  minValidDotProductValue:
+    m_OverrideState: 1
+    m_Value: 0.1
+  occlusionOnlyReflectionNormalization:
+    m_OverrideState: 1
+    m_Value: 1
+  intensityMultiplier:
+    m_OverrideState: 1
+    m_Value: 1
+  skyOcclusionIntensityMultiplier:
+    m_OverrideState: 1
+    m_Value: 1
+  worldOffset:
+    m_OverrideState: 1
+    m_Value: {x: 0, y: 0, z: 0}
+--- !u!114 &1973117614331898596
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 68f49b3ebfe64c7b8396a7ab5f68fc9c, type: 3}
+  m_Name: HoCharacterShadowVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  resolution:
+    m_OverrideState: 1
+    m_Value: 2048
+  pcssEnabled:
+    m_OverrideState: 1
+    m_Value: 1
+  softnessRadius:
+    m_OverrideState: 1
+    m_Value: 0.005
+  pcssQuality:
+    m_OverrideState: 1
+    m_Value: 3
+  pcssSoftness:
+    m_OverrideState: 1
+    m_Value: 2
+  pcssBlockerSearchRadius:
+    m_OverrideState: 1
+    m_Value: 0.02
+  pcssMaxPenumbraRadius:
+    m_OverrideState: 1
+    m_Value: 0.04
+  pcssDepthBias:
+    m_OverrideState: 1
+    m_Value: 0.0005
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 0
+  debugCharacter:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &2547861711154376381
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cdfbdbb87d3286943a057f7791b43141, type: 3}
+  m_Name: ChannelMixer
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ChannelMixer
+  active: 1
+  redOutRedIn:
+    m_OverrideState: 1
+    m_Value: 100
+  redOutGreenIn:
+    m_OverrideState: 1
+    m_Value: 0
+  redOutBlueIn:
+    m_OverrideState: 1
+    m_Value: 0
+  greenOutRedIn:
+    m_OverrideState: 1
+    m_Value: 0
+  greenOutGreenIn:
+    m_OverrideState: 1
+    m_Value: 100
+  greenOutBlueIn:
+    m_OverrideState: 1
+    m_Value: 0
+  blueOutRedIn:
+    m_OverrideState: 1
+    m_Value: 0
+  blueOutGreenIn:
+    m_OverrideState: 1
+    m_Value: 0
+  blueOutBlueIn:
+    m_OverrideState: 1
+    m_Value: 100
+--- !u!114 &2678669328757451651
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81180773991d8724ab7f2d216912b564, type: 3}
+  m_Name: ChromaticAberration
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ChromaticAberration
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &2724216211629432502
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98e00703325402c4aa54e8189ad77e8b, type: 3}
+  m_Name: HoAttributeCompositeVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.AttributeComposite.HoAttributeCompositeVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugCategory:
+    m_OverrideState: 1
+    m_Value: 0
+  debugTarget:
+    m_OverrideState: 1
+    m_Value: 
+  debugSemanticName:
+    m_OverrideState: 1
+    m_Value: Face
+  debugSelectionName:
+    m_OverrideState: 1
+    m_Value: Selection
+  debugGroupId:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &3533802340711146635
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b911a485c4046e545bf4faa0b80b7fd8, type: 3}
+  m_Name: HoRTShadowVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.RTShadow.HoRTShadowVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  reconstruction:
+    m_OverrideState: 1
+    m_Value: 0
+  terminatorCorrection:
+    m_OverrideState: 1
+    m_Value: 1
+  angularDiameter:
+    m_OverrideState: 1
+    m_Value: 0
+  samplesPerPixel:
+    m_OverrideState: 1
+    m_Value: 1
+  singleFrameEstimates:
+    m_OverrideState: 1
+    m_Value: 1
+  samplingSeed:
+    m_OverrideState: 1
+    m_Value: 0
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugLight:
+    m_OverrideState: 1
+    m_Value: 0
+  debugDistance:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &3829998725924007092
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb8453798b444a5f8d3f9d4950c9ff8d, type: 3}
+  m_Name: ScreenProcessStackVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.PostProcessing.ScreenProcessStackVolume
+  active: 1
+  Enable:
+    m_OverrideState: 1
+    m_Value: 0
+  ShowInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  layers:
+    m_OverrideState: 1
+    m_Value: []
+--- !u!114 &4178133329245605459
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ba002b83972f1e54199ce4489e07fb76, type: 3}
+  m_Name: HoAtmosphereVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.Atmosphere.HoAtmosphereVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  tint:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  rotationY:
+    m_OverrideState: 1
+    m_Value: 0
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &4749453581602151689
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 06437c1ff663d574d9447842ba0a72e4, type: 3}
+  m_Name: ScreenSpaceLensFlare
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.ScreenSpaceLensFlare
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  tintColor:
+    m_OverrideState: 1
+    m_Value: {r: 1, g: 1, b: 1, a: 1}
+  bloomMip:
+    m_OverrideState: 1
+    m_Value: 1
+  firstFlareIntensity:
+    m_OverrideState: 1
+    m_Value: 1
+  secondaryFlareIntensity:
+    m_OverrideState: 1
+    m_Value: 1
+  warpedFlareIntensity:
+    m_OverrideState: 1
+    m_Value: 1
+  warpedFlareScale:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1}
+  samples:
+    m_OverrideState: 1
+    m_Value: 1
+  sampleDimmer:
+    m_OverrideState: 1
+    m_Value: 0.5
+  vignetteEffect:
+    m_OverrideState: 1
+    m_Value: 1
+  startingPosition:
+    m_OverrideState: 1
+    m_Value: 1.25
+  scale:
+    m_OverrideState: 1
+    m_Value: 1.5
+  streaksIntensity:
+    m_OverrideState: 1
+    m_Value: 0
+  streaksLength:
+    m_OverrideState: 1
+    m_Value: 0.5
+  streaksOrientation:
+    m_OverrideState: 1
+    m_Value: 0
+  streaksThreshold:
+    m_OverrideState: 1
+    m_Value: 0.25
+  resolution:
+    m_OverrideState: 1
+    m_Value: 4
+  chromaticAbberationIntensity:
+    m_OverrideState: 1
+    m_Value: 0.5
+--- !u!114 &6179560209045722369
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9feff4eb23d1504cac1c0d80d3b29c2, type: 3}
+  m_Name: HoRTGIVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.RTGI.HoRTGIVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  composite:
+    m_OverrideState: 1
+    m_Value: 0
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0.25
+  denoise:
+    m_OverrideState: 1
+    m_Value: 0
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &6377991818461017082
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb60a22f311433c4c962b888d1393f88, type: 3}
+  m_Name: PaniniProjection
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.PaniniProjection
+  active: 1
+  distance:
+    m_OverrideState: 1
+    m_Value: 0
+  cropToFit:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &8149025901021941571
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22469632751a3034ab45255110e9642a, type: 3}
+  m_Name: HoVolumeLightVolume
+  m_EditorClassIdentifier: jp.lilxyzw.liltoon.urp.extensions.Runtime::lilToon.URP.Extensions.VolumeLight.HoVolumeLightVolume
+  active: 1
+  enable:
+    m_OverrideState: 1
+    m_Value: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 1
+  maxDistance:
+    m_OverrideState: 1
+    m_Value: 100
+  stepCount:
+    m_OverrideState: 1
+    m_Value: 48
+  antialiasing:
+    m_OverrideState: 1
+    m_Value: 2
+  anisotropy:
+    m_OverrideState: 1
+    m_Value: 0.3
+  debugMode:
+    m_OverrideState: 1
+    m_Value: 0
+  debugInSceneView:
+    m_OverrideState: 1
+    m_Value: 1
+  debugInGameView:
+    m_OverrideState: 1
+    m_Value: 1
+--- !u!114 &8370536023609386914
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5485954d14dfb9a4c8ead8edb0ded5b1, type: 3}
+  m_Name: LiftGammaGain
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.LiftGammaGain
+  active: 1
+  lift:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1, z: 1, w: 0}
+  gamma:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1, z: 1, w: 0}
+  gain:
+    m_OverrideState: 1
+    m_Value: {x: 1, y: 1, z: 1, w: 0}
+--- !u!114 &9163412202343765153
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 899c54efeace73346a0a16faa3afe726, type: 3}
+  m_Name: Vignette
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Vignette
+  active: 1
+  color:
+    m_OverrideState: 1
+    m_Value: {r: 0, g: 0, b: 0, a: 1}
+  center:
+    m_OverrideState: 1
+    m_Value: {x: 0.5, y: 0.5}
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  smoothness:
+    m_OverrideState: 1
+    m_Value: 0.2
+  rounded:
+    m_OverrideState: 1
+    m_Value: 0
+--- !u!114 &9174530699093009018
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 70afe9e12c7a7ed47911bb608a23a8ff, type: 3}
+  m_Name: SplitToning
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.SplitToning
+  active: 1
+  shadows:
+    m_OverrideState: 1
+    m_Value: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  highlights:
+    m_OverrideState: 1
+    m_Value: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  balance:
+    m_OverrideState: 1
+    m_Value: 0

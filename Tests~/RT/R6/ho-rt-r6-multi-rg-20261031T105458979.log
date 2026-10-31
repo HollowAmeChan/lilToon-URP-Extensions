@@ -1,0 +1,181 @@
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+.codex-research is not a valid directory name. Please make sure there are no unallowed characters in the name.
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Built from '6000.3/staging' branch; Version is '6000.3.15f1 (c1aa84e375f6) revision 12692100'; Using compiler version '194234433'; Build Type 'Release'
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12" at "2026-10-31T10:54:59.9989474Z"
+OS: 'Windows 11  (10.0.26200) CoreCountrySpecific' Language: 'zh' Physical Memory: 31908 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-31T10:54:59Z
+
+COMMAND LINE ARGUMENTS:
+C:\Program Files\Unity\Hub\Editor\6000.3.15f1\Editor\Unity.exe
+-batchmode
+-force-d3d12
+-projectPath
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidationCurrent
+-executeMethod
+lilToon.URP.Extensions.Editor.RTShadow.HoRTShadowValidation.RunMulti
+-logFile
+D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\ho-rt-r6-multi-rg-20261031T105458979.log
+-force-d3d12-debug
+Successfully changed project path to: D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidationCurrent
+D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidationCurrent
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Player connection [50816]  Target information:
+
+Player connection [50816]  * "[IP] 26.182.211.171 [Port] 55505 [Flags] 2 [Guid] 2235180415 [EditorId] 2235180415 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [50816]  * "[IP] 192.168.1.6 [Port] 55505 [Flags] 2 [Guid] 2235180415 [EditorId] 2235180415 [Version] 1048832 [Id] WindowsEditor(7,Hollow) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+
+Player connection [50816] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [50816] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-77012" after 0.2 seconds.
+[Licensing::Module] Licensing is not yet initialized.
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.1'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-hhh12"
+[Licensing::IpcConnector] LicenseClient-hhh12 channel disconnected successfully.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15" at "2026-10-31T10:55:00.9199005Z"
+[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 68100, path: "C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/Licensing/Client/Unity.Licensing.Client.exe")
+[Licensing::Module] LicensingClient has failed validation; ignoring
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              631a564889384c1fa41484b7155767c3
+  Correlation Id:          a85693624bde58468d94a504209acf4c
+  External correlation Id: 1784726128668685014
+  Machine Id:              1CwKlLouk/VY6hjRtF7o1PKDkww=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-hhh12-6000.3.15" (connect: 0.00s, validation: 0.00s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-hhh12-6000.3.15-notifications" at "2026-10-31T10:55:00.9273496Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] License group:
+  Id: ewogICJzdWJzR3JvdXAiIDogInVuaXR5IGVkaXRvciIsCiAgIm5hbWVzcGFjZSIgOiAidW5pdHlfZWRpdG9yIiwKICAidHlwZSIgOiAiRURJVE9SIiwKICAidGFnIiA6ICJVbml0eVBlcnNvbmFsXXXX
+  Product: Unity Personal Version
+  Type: Assigned
+  Expiration: Unlimited
+[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00
+[Licensing::Client] Successfully resolved entitlement details
+[Licensing::Module] Licensing Background thread has ended after 0.95s
+[Licensing::Module] Licensing is initialized (took 0.26s).
+[Licensing::Client] Successfully resolved entitlement details
+Library Redirect Path: Library/
+正在重新生成库，因为无法找到资产数据库！
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.15f1 (c1aa84e375f6)
+[Subsystems] Discovering subsystems at path C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path D:/Unity_Fork/lilToon-URP-Extensions/.codex-research/RTValidationCurrent/Assets
+Forcing GfxDevice: Direct3D 12
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 4060 (ID=0x2882)
+    Vendor:          NVIDIA
+    VRAM:            7956 MB
+    App VRAM Budget: 7188 MB
+    Driver:          32.0.16.1742
+Initialize mono
+Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/Managed'
+Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56012
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.003765 seconds.
+- Loaded All Assemblies, in  0.329 seconds
+Native extension for WindowsStandalone target not found
+Package Manager log level set to [2]
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:False
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  0.262 seconds
+Domain Reload Profiling: 582ms
+	BeginReloadAssembly (127ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (10ms)
+	RebuildCommonClasses (25ms)
+	RebuildNativeTypeToScriptingClass (7ms)
+	initialDomainReloadingComplete (44ms)
+	LoadAllAssembliesAndSetupDomain (116ms)
+		LoadAssemblies (110ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (113ms)
+			TypeCache.Refresh (112ms)
+				TypeCache.ScanAssembly (102ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (262ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (238ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (32ms)
+			SetLoadedEditorAssemblies (2ms)
+			BeforeProcessingInitializeOnLoad (45ms)
+			ProcessInitializeOnLoadAttributes (83ms)
+			ProcessInitializeOnLoadMethodAttributes (77ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+[Licensing::Client] Successfully resolved entitlement details
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Done resolving packages in 17.45 seconds
+[Licensing::Client] Successfully resolved entitlement details
+An error occurred while resolving packages:
+  One or more packages could not be added to the local file system:
+    com.unity.ugui: EPERM: operation not permitted, rename 'D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidationCurrent\Library\PackageCache\.tmp-59104-3LQx1QVhWOQO\package' -> 'D:\Unity_Fork\lilToon-URP-Extensions\.codex-research\RTValidationCurrent\Library\PackageCache\com.unity.ugui@23e8d17bfaf9'
+Exiting without the bug reporter. Application will terminate with return code 1

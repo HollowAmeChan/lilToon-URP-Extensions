@@ -1,13 +1,15 @@
 param(
     [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4','R5Sigma','R5Cast','R5Npr','R5Export','R5Thin','R6','Controls','Spatial','InputOrder','Self')][string]$Stage = 'R1',
     [string]$Case = '',
+    [string]$ProjectName = 'RTValidation',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
     [int]$TimeoutSeconds = 600
 )
 $ErrorActionPreference = 'Stop'
 $taskRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$taskProject = [IO.Path]::GetFullPath((Join-Path $taskRoot '.codex-research/RTValidation'))
 $taskIsolatedRoot = [IO.Path]::GetFullPath((Join-Path $taskRoot '.codex-research')) + [IO.Path]::DirectorySeparatorChar
+if ([string]::IsNullOrWhiteSpace($ProjectName) -or [IO.Path]::GetFileName($ProjectName) -ne $ProjectName) { throw 'ProjectName must be a single directory name.' }
+$taskProject = [IO.Path]::GetFullPath((Join-Path $taskIsolatedRoot $ProjectName))
 if (-not $taskProject.StartsWith($taskIsolatedRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Independent project required' }
 if (-not (Test-Path -LiteralPath (Join-Path $taskProject 'Packages/manifest.json'))) { throw 'Initialize the independent validation project first' }
 $taskPackageManifest=Get-Content -LiteralPath (Join-Path $taskProject 'Packages/manifest.json') -Raw|ConvertFrom-Json
