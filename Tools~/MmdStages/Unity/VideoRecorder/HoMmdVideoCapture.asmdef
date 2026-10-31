@@ -1,0 +1,7 @@
+{
+  "name": "HoMmdVideoCapture",
+  "references": ["HoUnityTools.Runtime", "Unity.Recorder.Editor", "jp.lilxyzw.liltoon.urp.extensions.Runtime", "GUID:df380645f10b7bc4b97d4f5eb6303d95", "Unity.RenderPipelines.Universal.Runtime"],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "autoReferenced": true
+}
