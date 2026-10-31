@@ -35,7 +35,7 @@ MMD 动画的正确顺序是：
 VMD FK/位置曲线 → morph 曲线 → append/inherit → MMD IK → physics → HoAux 辅助骨 → 相机/渲染
 ```
 
-HoAux 的 twist、fan、体积保持属于辅助形变层，不能替代 MMD IK。`HoIkConstraint` 已加入 `HoUnityTools`：它支持任意 CCD 链、Pole、局部 Euler 限制、轴遮罩、最大步进角、权重和手动求解。典型足链为 `脚踝 → 膝盖 → 大腿`；toe IK 单独建一个约束，按模型实际 toe 父骨配置。
+HoAux 的 twist、fan、体积保持属于辅助形变层，不能替代 MMD IK。`HoIkConstraint` 已加入 `HoUnityTools`，组件显示为 `Ho IK Constraint`，入口为 `HoUnityTools/Constraints/Ho IK Constraint`。它支持 CCD 链、Pole、局部 Euler 限制、轴遮罩、最大步进角、权重和手动求解。脚踝作为效应器时，链只填 `膝盖 → 大腿`；脚趾 IK 单独建一个约束，效应器设为脚趾，链按模型层级填写其父骨。
 
 `HoIkConstraint` 默认 LateUpdate，适合 Animator/VMD FK 曲线之后求解；动作播放器需要严格控制 transform order 时设为 Manual。VMD show/IK 开关应映射到对应约束的 `SolveEnabled` 或 `Weight`，不能把 IK toggle 当成一次性导入设置。
 
