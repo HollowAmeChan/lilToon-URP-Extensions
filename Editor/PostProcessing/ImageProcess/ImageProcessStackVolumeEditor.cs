@@ -280,6 +280,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static readonly Color LayerHighlightAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
 
         private SerializedDataParameter showInSceneView;
+        private SerializedDataParameter replaceBuiltinPostProcessing;
         private SerializedProperty layers;
         private SerializedProperty layerValues;
         private ReorderableList layerList;
@@ -288,6 +289,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             PropertyFetcher<ImageProcessStackVolume> fetcher = new PropertyFetcher<ImageProcessStackVolume>(serializedObject);
             showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
+            replaceBuiltinPostProcessing = Unpack(fetcher.Find(x => x.ReplaceBuiltinPostProcessing));
             layers = serializedObject.FindProperty("layers");
             layerValues = layers != null ? layers.FindPropertyRelative("m_Value") : null;
             if (layerValues == null || !layerValues.isArray)
@@ -314,8 +316,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             serializedObject.Update();
             CleanupLayersForUserOrder();
 
+            PropertyField(replaceBuiltinPostProcessing, new GUIContent("仅使用 Ho 后处理"));
             PropertyField(showInSceneView, new GUIContent("场景视图"));
-            SceneViewPostProcessingNotice.Draw(showInSceneView.value.boolValue);
+            if (replaceBuiltinPostProcessing.value.boolValue)
+                EditorGUILayout.HelpBox("Ho 接管图像效果：URP 内置调色、Bloom、景深等不执行。" +
+                    "抗锯齿、升采样和显示编码保留；色调映射由 Ho 图层按列表顺序控制。", MessageType.Info);
+            SceneViewPostProcessingNotice.Draw(showInSceneView.value.boolValue, replaceBuiltinPostProcessing.value.boolValue);
             EditorGUILayout.Space(4.0f);
             EnsureEffectBrowser();
             EffectBrowserView.Draw(effectBrowserCatalog, effectBrowserState, DrawLayerList);
@@ -1682,7 +1688,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.Glow:
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.white);
-                    SetVector4(element, "parameters0", new Vector4(0.7f, 0.5f, 2.0f, 0.0f));
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.0f, 2.0f, 0.0f));
                     SetVector4(element, "parameters1", new Vector4(0.2f, 0.0f, 0.0f, 1.0f));
                     SetVector4(element, "parameters2", new Vector4(3.0f, 180.0f, 0.0f, 0.0f));
                     break;

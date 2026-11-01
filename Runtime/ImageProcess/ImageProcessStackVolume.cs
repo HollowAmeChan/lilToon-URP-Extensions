@@ -41,6 +41,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         [InspectorName("启用"), Tooltip("启用 ImageProcess 风格的后处理栈。")]
         public BoolParameter Enable = new BoolParameter(false, BoolParameter.DisplayType.EnumPopup);
 
+        [InspectorName("仅使用 Ho 后处理"), Tooltip("由 Ho 接管图像效果，跳过 URP 内置曝光、色调映射、Bloom、景深等；保留抗锯齿、升采样和最终显示编码。关闭可兼容旧的混合流程。")]
+        public BoolParameter ReplaceBuiltinPostProcessing = new BoolParameter(true, false);
+
         [InspectorName("场景视图"), Tooltip("是否让 Scene View 也应用这个后处理栈。")]
         public BoolParameter ShowInSceneView = new BoolParameter(true, false);
 

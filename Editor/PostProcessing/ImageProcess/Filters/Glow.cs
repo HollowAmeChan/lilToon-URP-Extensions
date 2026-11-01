@@ -8,11 +8,27 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private static readonly string[] GlowModeNames = { "正常", "条纹", "星芒" };
 
-        private static int GetGlowLineCount(SerializedProperty element)
+        private bool GetGlowUsesMappedInput(SerializedProperty element)
+        {
+            if (!replaceBuiltinPostProcessing.value.boolValue) return true;
+            for (int i = 0; i < layerValues.arraySize; ++i)
+            {
+                var previous = layerValues.GetArrayElementAtIndex(i);
+                if (previous.propertyPath == element.propertyPath) break;
+                if (GetEffect(previous) == ImageProcessEffect.ToonMap &&
+                    previous.FindPropertyRelative("enabled").boolValue &&
+                    previous.FindPropertyRelative("intensity").floatValue > 0 &&
+                    previous.FindPropertyRelative("parameters0").vector4Value.x > 0.5f)
+                    return true;
+            }
+            return false;
+        }
+
+        private int GetGlowLineCount(SerializedProperty element)
         {
             int count = 11;
             SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
-            if (parameters0 != null && parameters0.vector4Value.x > 1.0f)
+            if (GetGlowUsesMappedInput(element) && parameters0 != null && parameters0.vector4Value.x > 1.0f)
                 count++;
             if (GetGlowMode(element) == 2)
             {
@@ -56,7 +72,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 star = parameters2.vector4Value;
 
             threshold.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight),
-                new GUIContent("阈值", "读取当前图像亮度，位于 URP 色调映射之后。ACES/Neutral 下可从 0.7 开始调整；HDR 亮部提取使用 URP Bloom。"),
+                new GUIContent("阈值", "按当前图像亮度提取发光。Ho 模式的初始输入为 HDR；发光放在色调映射之前时，阈值可以大于 1。"),
                 Mathf.Clamp(threshold.x, 0.0f, 16.0f), 0.0f, 16.0f);
             y += LineHeight + LineSpacing;
             threshold.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值平滑", Mathf.Clamp01(threshold.y), 0.0f, 1.0f);
@@ -84,11 +100,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 y += LineHeight + LineSpacing;
             }
 
+            bool mappedInput = GetGlowUsesMappedInput(element);
             EditorGUI.HelpBox(new Rect(rect.x, y, rect.width, LineHeight * 3),
-                "此效果读取色调映射后的图像；ACES/Neutral 下阈值 > 1 可能无效。" +
-                "HDR 亮部发光请用 URP Bloom。", threshold.x > 1.0f ? MessageType.Warning : MessageType.Info);
+                mappedInput ?
+                    "前面可能已有色调映射，阈值 > 1 时请检查输入亮度。" +
+                    "需要 HDR 发光时，将发光放在 Ho 色调映射之前。" :
+                    "Ho 模式保留 HDR 亮部，阈值可以大于 1。" +
+                    "需要色调映射时，在发光之后添加 Ho 色调映射图层。",
+                mappedInput && threshold.x > 1.0f ? MessageType.Warning : MessageType.Info);
             y += (LineHeight + LineSpacing) * 3;
-            if (threshold.x > 1.0f &&
+            if (mappedInput && threshold.x > 1.0f &&
                 GUI.Button(new Rect(rect.x, y, rect.width, LineHeight), "将阈值设为图像域起点 0.7"))
                 threshold.x = 0.7f;
 
@@ -102,7 +123,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
             {
-                parameters0.vector4Value = new Vector4(0.7f, 0.5f, 2.0f, 0.0f);
+                parameters0.vector4Value = new Vector4(1.0f, 0.0f, 2.0f, 0.0f);
             }
 
             if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4)

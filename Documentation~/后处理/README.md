@@ -71,17 +71,21 @@
 2. `Ho-ObjectBuffer` / `Ho-SurfaceBuffer`（以及 `Ho-GeometryBuffer`）默认都在 `BeforeRenderingOpaques` 输出身份、表面数值与几何；`Ho-AttributeComposite` 紧随其后把身份 + 标签解压成 Selection 池 —— 消费者按自己的 pass 时机读，不要求它更晚。
 3. `HoGeometryBufferRendererFeature` 默认也是在 `BeforeRenderingOpaques` 输出 normal/depth；启用 Sky buffer 时，`HoGeometryBufferSkyPass` 在 `AfterRenderingSkybox` 默认时机从当前 camera color 捕获天空信息。
 4. `HoCharacterSpecializationRendererFeature` 在 `AfterRenderingTransparents` 默认时机执行角色捕获和合成。
-5. URP 原生后处理执行。
+5. 默认 Ho 接管模式只执行管线的 AA / 升采样与颜色复制，不执行 URP 内置图像效果或调色 LUT；显式关闭 Ho 接管时兼容原生混合链。
 6. `ScreenProcessRendererFeature` 在 `AfterRenderingPostProcessing` 执行语义屏幕效果。
 7. `ImageProcessRendererFeature` 在 `AfterRenderingPostProcessing + 1` 执行最终图像域效果。
 
 `ScreenProcess` 必须早于 `ImageProcess`，因为前者负责需要场景语义的效果，后者负责最终图像风格叠加。
 
-### 预览一致性与发光阈值
+### Ho 接管与预览一致性
 
-Scene View 自己的 URP 后处理开关，与 Ho Volume 的 `ShowInSceneView` 是两套开关。当前 Ho 栈可在前者关闭时继续运行，此时缺少 URP 曝光、色调映射与 Bloom，不能直接与开启完整后处理的 Game Camera 比效果。两组 Volume Inspector 会提示这个状态，并提供开启当前 Scene View 完整后处理的按钮；不修改场景 Volume 或 Game Camera。
+`ImageProcessStackVolume.ReplaceBuiltinPostProcessing`（Inspector「仅使用 Ho 后处理」）默认开启。ImageProcess Feature 通过 HoURP 的 `IHoPostProcessingProvider` 对每个相机声明接管，管线在更新该相机 Volume 后计算所有权，不用跨相机共享的静态开关决定渲染。Game / Scene View 均跳过原生曝光、调色 LUT、色调映射、Bloom、景深、运动模糊、暗角、色差、镜头畸变、Panini、原生 Lens Flare、Film Grain 与抖动。TAA / SMAA / FXAA、升采样和最终显示编码属于基础设施，继续执行；相机和 Scene View 的原生后处理勾选框不再影响 Ho 输入域或让 TAA 意外失效。
 
-ImageProcess 的 `Glow` 在色调映射后按当前图像亮度提取发光。ACES/Neutral 下高于 1 的阈值可能提取不到亮部；新图层默认阈值 0.7、平滑 0.5，旧图层只提示，不自动改参数。Inspector 的显式按钮可将阈值调整为 0.7。需要按场景 HDR 亮度提取时使用 URP Bloom；ImageProcess 的星芒是图像域效果。
+接管开关与 Ho 图层总开关独立。关闭图层不能让旧的原生 Volume 效果突然恢复；尚未清理的内置组件不参与输出。新场景模板只添加 Ho 滤镜；用户要求清理旧场景时移除其局部 Profile 中的内置滤镜，不改 Ho 参数。需要旧混合链时显式覆盖接管开关为关闭；停用 ImageProcess Feature 也会释放接管。RenderGraph 和兼容路径都提供 AA 后的无调色复制路径，RenderGraph 还跳过原生调色 LUT 的生成。
+
+Ho 栈的初始颜色为 HDR，ImageProcess `Glow` 可以直接提取 HDR 亮部，阈值大于 1 合法；新图层默认阈值 1、平滑 0。需要色调映射时使用已有 Ho `ToonMap` 图层（无 / Neutral / ACES），由作者把它排在发光之后或选择其它顺序。Inspector 只在前面已有 Ho 色调映射、或显式启用旧混合链时提示高阈值问题，不再建议为了发光改用 URP Bloom。
+
+只有旧混合链仍可能出现「Scene View 关闭原生后处理但 Ho 栈继续运行」的亮度域差异；对应提示和开启预览按钮仅在旧模式出现。不能把“切小阈值”或“强制勾选预览”当作接管模式的根因修复。
 
 ## 语义缓冲层
 

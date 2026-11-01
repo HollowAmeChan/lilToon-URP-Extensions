@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 {
     [DisallowMultipleRendererFeature("Ho-ImageProcess")]
     [ExecuteAlways]
-    public sealed class ImageProcessRendererFeature : ScriptableRendererFeature
+    public sealed class ImageProcessRendererFeature : ScriptableRendererFeature, IHoPostProcessingProvider
     {
         [SerializeField]
         private ImageProcessStackSettings settings = new ImageProcessStackSettings();
@@ -25,6 +25,17 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static bool IsUseVolumes { get; private set; } = true;
 
         public ImageProcessStackSettings Settings => settings;
+
+        public bool ReplacesBuiltinPostProcessing(Camera camera)
+        {
+            if (camera == null || (camera.cameraType != CameraType.Game && camera.cameraType != CameraType.SceneView) ||
+                settings == null || !settings.enabled || !UseVolumes)
+                return false;
+            var volume = GetVolumeComponent();
+            // Ownership is separate from the layer master switch: disabling Ho
+            // layers must not unexpectedly resurrect old native Volume effects.
+            return volume != null && volume.active && volume.ReplaceBuiltinPostProcessing.value;
+        }
 
         public override void Create()
         {

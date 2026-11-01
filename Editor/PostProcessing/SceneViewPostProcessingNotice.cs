@@ -1,13 +1,17 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using lilToon.URP.Extensions.PostProcessing;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
     internal static class SceneViewPostProcessingNotice
     {
-        internal static void Draw(bool showInSceneView)
+        internal static void Draw(bool showInSceneView, bool? hoOnly = null)
         {
+            var image = VolumeManager.instance?.stack?.GetComponent<ImageProcessStackVolume>();
+            bool replacesBuiltin = hoOnly ?? (image != null && image.ReplaceBuiltinPostProcessing.value);
+            if (replacesBuiltin) return;
             var view = SceneView.lastActiveSceneView;
             if (!showInSceneView || view == null || view.camera == null ||
                 CoreUtils.ArePostProcessesEnabled(view.camera))
