@@ -27,6 +27,7 @@ public static class HoMmdVideoWorkshop
         public Vector3 performancePosition;
         public float performanceYaw;
         public float seconds, distanceMultiplier = 1;
+        public float durationSeconds, soundtrackTimeOffset;
         public int width = 720, height = 1280, fps = 60;
         public bool fullBody, disableRtgi;
         public bool handStudy;
@@ -123,6 +124,8 @@ public static class HoMmdVideoWorkshop
                     return;
                 case "inspect": result = Inspect(); break;
                 case "create": result = Create(request); break;
+                case "clone-performance": result = HoMmdPerformanceVariants.Clone(request); break;
+                case "update-performance": result = HoMmdPerformanceVariants.Update(request); break;
                 case "source-rig": result = InspectSourceRig(request); break;
                 case "setup": result = Setup(request); break;
                 case "sample": result = Sample(request); break;

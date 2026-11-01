@@ -23,6 +23,21 @@
 人工卡点使用 Sequence 的 **BGM 时间偏移（秒）**，正值延后、负值提前，不移动动作和镜头。
 录制报告保存实际偏移，合音优先使用报告值，避免拿后来修改的组件参数去合旧视频。
 
+### 已有舞台增加一个动作
+
+CLI 的 `clone-performance --config <新动作.json>` 对应“复制已有动作 Scene → 更新素材（保留适配）”：
+配置指定 `sourceScene`、全新的 `scene`、`motion`、`facial`、`camera`、`audio`、
+`durationSeconds`、`soundtrackTimeOffset`，以及可选衣装开关。已有目标 Scene 会被拒绝覆盖。
+`update-performance` 仅针对配置指定的已有 Scene 更新这些演出素材。
+
+两者都保留目标角色、现有参考骨架、手指校准、舞台、灯光、Volume 与材质；`sourceRig`
+若与实际参考不同会报错，需要另行显式适配，不能只更换字段假装已经更新源尺寸。
+配套作者 sizing PMX 可以在制作配置中作为 `authorSizingPmx` 记录，不能误报为正在使用。
+
+拆分的脸、眼、眉等网格可能都包含同名形态键。此入口对实际使用的表情建立精确名称 /
+Unicode 规范化名称的一对多本地绑定，保存在组件内；不创建额外映射资产，也不按近似语义
+猜不存在的表情。`Library/HoMmdVideo/Variants/<动作>.json` 记录实际缺项和适配是否保留。
+
 ## 批次渲染
 
 `render-video-batch.py` 读取批次 JSON，串行调用已有 `video-cli.py record` 和 `mux`。
