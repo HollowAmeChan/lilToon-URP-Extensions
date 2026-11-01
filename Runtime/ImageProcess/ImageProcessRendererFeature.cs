@@ -59,6 +59,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             ImageProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
+                ImageProcessRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    GetSkipReason(in renderingData, volume));
                 afterPostProcessPass?.ClearRuntimeLayers();
                 if (ShouldReleaseRuntimeResources(in renderingData, volume))
                 {

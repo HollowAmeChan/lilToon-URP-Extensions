@@ -51,7 +51,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public bool IsActive()
         {
-            if (!active || layers.value == null)
+            if (!active || !Enable.value || layers.value == null)
             {
                 return false;
             }
