@@ -10,7 +10,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static int GetGlowLineCount(SerializedProperty element)
         {
-            int count = 8;
+            int count = 11;
+            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
+            if (parameters0 != null && parameters0.vector4Value.x > 1.0f)
+                count++;
             if (GetGlowMode(element) == 2)
             {
                 count += 2;
@@ -52,7 +55,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 look = parameters1.vector4Value;
             Vector4 star = parameters2.vector4Value;
 
-            threshold.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值", Mathf.Clamp(threshold.x, 0.0f, 16.0f), 0.0f, 16.0f);
+            threshold.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight),
+                new GUIContent("阈值", "读取当前图像亮度，位于 URP 色调映射之后。ACES/Neutral 下可从 0.7 开始调整；HDR 亮部提取使用 URP Bloom。"),
+                Mathf.Clamp(threshold.x, 0.0f, 16.0f), 0.0f, 16.0f);
             y += LineHeight + LineSpacing;
             threshold.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值平滑", Mathf.Clamp01(threshold.y), 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
@@ -79,6 +84,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 y += LineHeight + LineSpacing;
             }
 
+            EditorGUI.HelpBox(new Rect(rect.x, y, rect.width, LineHeight * 3),
+                "此效果读取色调映射后的图像；ACES/Neutral 下阈值 > 1 可能无效。" +
+                "HDR 亮部发光请用 URP Bloom。", threshold.x > 1.0f ? MessageType.Warning : MessageType.Info);
+            y += (LineHeight + LineSpacing) * 3;
+            if (threshold.x > 1.0f &&
+                GUI.Button(new Rect(rect.x, y, rect.width, LineHeight), "将阈值设为图像域起点 0.7"))
+                threshold.x = 0.7f;
+
             parameters0.vector4Value = threshold;
             parameters1.vector4Value = look;
             parameters2.vector4Value = star;
@@ -89,7 +102,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
             {
-                parameters0.vector4Value = new Vector4(1.0f, 0.0f, 2.0f, 0.0f);
+                parameters0.vector4Value = new Vector4(0.7f, 0.5f, 2.0f, 0.0f);
             }
 
             if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4)

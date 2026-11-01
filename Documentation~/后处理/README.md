@@ -77,6 +77,12 @@
 
 `ScreenProcess` 必须早于 `ImageProcess`，因为前者负责需要场景语义的效果，后者负责最终图像风格叠加。
 
+### 预览一致性与发光阈值
+
+Scene View 自己的 URP 后处理开关，与 Ho Volume 的 `ShowInSceneView` 是两套开关。当前 Ho 栈可在前者关闭时继续运行，此时缺少 URP 曝光、色调映射与 Bloom，不能直接与开启完整后处理的 Game Camera 比效果。两组 Volume Inspector 会提示这个状态，并提供开启当前 Scene View 完整后处理的按钮；不修改场景 Volume 或 Game Camera。
+
+ImageProcess 的 `Glow` 在色调映射后按当前图像亮度提取发光。ACES/Neutral 下高于 1 的阈值可能提取不到亮部；新图层默认阈值 0.7、平滑 0.5，旧图层只提示，不自动改参数。Inspector 的显式按钮可将阈值调整为 0.7。需要按场景 HDR 亮度提取时使用 URP Bloom；ImageProcess 的星芒是图像域效果。
+
 ## 语义缓冲层
 
 屏幕效果真正吃的语义由三个 producer 加一个合成器提供（几何见下一节）：

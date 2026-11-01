@@ -98,6 +98,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             serializedObject.Update();
 
             PropertyField(showInSceneView, new GUIContent("Scene View"));
+            SceneViewPostProcessingNotice.Draw(showInSceneView.value.boolValue);
             EditorGUILayout.Space(4.0f);
             EnsureEffectBrowser();
             EffectBrowserView.Draw(effectBrowserCatalog, effectBrowserState, DrawLayerList);

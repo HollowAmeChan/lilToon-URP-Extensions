@@ -315,6 +315,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             CleanupLayersForUserOrder();
 
             PropertyField(showInSceneView, new GUIContent("场景视图"));
+            SceneViewPostProcessingNotice.Draw(showInSceneView.value.boolValue);
             EditorGUILayout.Space(4.0f);
             EnsureEffectBrowser();
             EffectBrowserView.Draw(effectBrowserCatalog, effectBrowserState, DrawLayerList);
@@ -1681,7 +1682,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.Glow:
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.white);
-                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.0f, 2.0f, 0.0f));
+                    SetVector4(element, "parameters0", new Vector4(0.7f, 0.5f, 2.0f, 0.0f));
                     SetVector4(element, "parameters1", new Vector4(0.2f, 0.0f, 0.0f, 1.0f));
                     SetVector4(element, "parameters2", new Vector4(3.0f, 180.0f, 0.0f, 0.0f));
                     break;
