@@ -463,6 +463,7 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
         }
         File.WriteAllText(Path.GetFullPath(request.output) + ".render.json", JsonUtility.ToJson(new CaptureReport {
             width = request.width, height = request.height, fps = request.fps, frames = count,
+            soundtrackTimeOffset = sequence != null ? sequence.SoundtrackTimeOffset : 0,
             warmupFrames = warmup, antialiasing = captureCameraData != null ? captureCameraData.antialiasing.ToString() : "",
             taaVerified = taaVerified, taaHistoryWidth = taaHistoryWidth, taaHistoryHeight = taaHistoryHeight,
             taaHistoryUpdates = taaHistoryUpdates, qualityPreset = request.qualityPreset, aspectPreset = request.aspectPreset,
@@ -484,6 +485,7 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
     [Serializable] sealed class CaptureReport
     {
         public int width, height, fps, frames, warmupFrames, taaHistoryWidth, taaHistoryHeight, taaHistoryUpdates;
+        public float soundtrackTimeOffset;
         public string antialiasing;
         public bool taaVerified;
         public string qualityPreset, aspectPreset, postStack, screenReason, imageReason;

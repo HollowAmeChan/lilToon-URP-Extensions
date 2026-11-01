@@ -76,12 +76,34 @@ def main():
             parser.error("mux requires --video and --output")
         audio = args.project / config["audio"]
         args.output.parent.mkdir(parents=True, exist_ok=True)
+        report_path = args.video.with_suffix(".render.json")
+        report = json.loads(report_path.read_text(encoding="utf-8-sig")) if report_path.exists() else {}
+        offset = float(report.get("soundtrackTimeOffset", config.get("soundtrackTimeOffset", 0)))
         # Inputs are argument-array elements; names never pass through a shell.
-        subprocess.run([str(args.ffmpeg), "-v", "error", "-n", "-i", str(args.video), "-i", str(audio),
-                        "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
-                        "-shortest", "-movflags", "+faststart", "-metadata", "artist=tencha.3d",
-                        "-metadata", "comment=Local WTD motion and Ho rendering test; see adjacent credits.",
-                        str(args.output)], check=True)
+        command = [str(args.ffmpeg), "-v", "error", "-n", "-i", str(args.video), "-i", str(audio),
+                   "-map", "0:v:0", "-map", "1:a:0", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k"]
+        if offset > 0:
+            command += ["-af", f"adelay={offset * 1000:.6f}:all=1,apad"]
+        elif offset < 0:
+            command += ["-af", f"atrim=start={-offset:.9f},asetpts=PTS-STARTPTS,apad"]
+        if offset:
+            if report.get("frames") and report.get("fps"):
+                duration = report["frames"] / report["fps"]
+            else:
+                probe = args.ffmpeg.with_name("ffprobe" + args.ffmpeg.suffix)
+                info = json.loads(subprocess.check_output(
+                    [str(probe), "-v", "error", "-show_entries", "format=duration",
+                     "-of", "json", str(args.video)], encoding="utf-8"))
+                duration = float(info["format"]["duration"])
+            # Copying B-frame video with -shortest can stop audio at the last
+            # DTS rather than the final displayed frame. Use the output timeline.
+            command += ["-t", f"{duration:.9f}"]
+        else:
+            command += ["-shortest"]
+        command += ["-movflags", "+faststart", "-metadata", "artist=tencha.3d",
+                    "-metadata", "comment=Local WTD motion and Ho rendering test; see adjacent credits.",
+                    str(args.output)]
+        subprocess.run(command, check=True)
         print(args.output)
         return
     if (work / "request.json").exists():
