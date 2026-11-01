@@ -1,0 +1,1881 @@
+{
+  "root": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶",
+  "status": "candidates_not_runtime_validated",
+  "recommendedOrder": [
+    "Minskirt",
+    "Cry_For_Me",
+    "Twilight_Twilight",
+    "愛くださいませ_Dance",
+    "お姫様の作り方",
+    "DISCOTHECUE"
+  ],
+  "initialPreview": {
+    "quality": "draft",
+    "width": 360,
+    "height": 640,
+    "fps": 30
+  },
+  "candidates": [
+    {
+      "id": "main/Minskirt",
+      "name": "Minskirt",
+      "folder": "Minskirt",
+      "status": "首批候选",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 17.433,
+      "readmes": [
+        "Minskirt/Minskirt/readme_en.txt",
+        "Minskirt/Minskirt/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [
+        "1451"
+      ],
+      "sizingPmx": [
+        "Minskirt/Minskirt/vmdsizing_bone.pmx"
+      ],
+      "bodyFiles": [
+        "Minskirt/Minskirt/MMDモーション/dance.vmd"
+      ],
+      "cameraFiles": [
+        "Minskirt/Minskirt/MMDモーション/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "え",
+        "お",
+        "まばたき",
+        "口横広げ",
+        "口角上げ"
+      ],
+      "media": [
+        {
+          "path": "Minskirt/Minskirt/Minskirt [Motion DL _ MMD]_256k.mp3",
+          "durationSeconds": 17.371429,
+          "hasAudio": true,
+          "kind": "audio",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "Minskirt/Minskirt/MMDモーション/camera.vmd",
+          "sha256": "492f8507af21d5b51012845cbeba63844397ddca4977f85f3bb639775272bf78",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 17.433,
+          "ikToggles": {}
+        },
+        {
+          "path": "Minskirt/Minskirt/MMDモーション/dance.vmd",
+          "sha256": "8a7029cf931c1cc0a8238d9082662cb0669f351553a962a1c4b466dd35c61d8e",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 17.3,
+          "dynamicBoneCount": 54,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "Minskirt/Minskirt/MMDモーション/facial.vmd",
+          "sha256": "98b9fb22eb025aad81ab7696f5e87f5fdf502a428c8d63617a8e1eec1bb79276",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 17.033,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "あ",
+            "い",
+            "え",
+            "お",
+            "口角上げ",
+            "口横広げ"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "Minskirt/Minskirt/修正前/motion.vmd",
+          "sha256": "3b24db54c39c7188ab34a57b568f13070f628d8577bd3550209303886cd78357",
+          "boneKind": "body",
+          "referenceOnly": true,
+          "boneEndSeconds": 17.3,
+          "dynamicBoneCount": 48,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/Cry_For_Me",
+      "name": "Cry_For_Me",
+      "folder": "Cry_For_Me",
+      "status": "首批候选",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 14.933,
+      "readmes": [
+        "Cry_For_Me/Cry_For_Me/readme_en.txt",
+        "Cry_For_Me/Cry_For_Me/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [
+        "1403"
+      ],
+      "sizingPmx": [
+        "Cry_For_Me/Cry_For_Me/vmdsizing_bone.pmx"
+      ],
+      "bodyFiles": [
+        "Cry_For_Me/Cry_For_Me/motion.vmd"
+      ],
+      "cameraFiles": [
+        "Cry_For_Me/Cry_For_Me/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "じと目",
+        "てへぺろ",
+        "にこり",
+        "にやり",
+        "まばたき",
+        "ウィンク２",
+        "上",
+        "下",
+        "口角上げ",
+        "口角下げ",
+        "困る",
+        "真面目",
+        "瞳小",
+        "ｳｨﾝｸ２右"
+      ],
+      "media": [
+        {
+          "path": "Cry_For_Me/Cry_For_Me/横屏参考.mp4",
+          "durationSeconds": 14.861,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        },
+        {
+          "path": "Cry_For_Me/Cry_For_Me/竖屏参考视频.mp4",
+          "durationSeconds": 14.815,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "Cry_For_Me/Cry_For_Me/camera.vmd",
+          "sha256": "f9d666dacb1e22ef906ec0ff940bdde22cbc3dbfc00e8d32c6142e52f6da5e2b",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 14.933,
+          "ikToggles": {}
+        },
+        {
+          "path": "Cry_For_Me/Cry_For_Me/facial.vmd",
+          "sha256": "3fc1ab2a5402aeff3761a80838afcda6abfd1d1fc7edb5eaf2a427aecc297599",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 14.533,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "ウィンク２",
+            "ｳｨﾝｸ２右",
+            "じと目",
+            "瞳小",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "にやり",
+            "てへぺろ",
+            "口角上げ",
+            "口角下げ",
+            "真面目",
+            "困る",
+            "にこり",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "Cry_For_Me/Cry_For_Me/motion.vmd",
+          "sha256": "98a946f8e1df7991ba01b3c700b5cf7f0d82e7396dc3b92c0f884fbb49633c24",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 14.7,
+          "dynamicBoneCount": 44,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "main/Twilight_Twilight",
+      "name": "Twilight_Twilight",
+      "folder": "Twilight_Twilight",
+      "status": "首批候选",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 28.833,
+      "readmes": [
+        "Twilight_Twilight/Twilight_Twilight/readme_en.txt",
+        "Twilight_Twilight/Twilight_Twilight/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "Twilight_Twilight/Twilight_Twilight/motion.vmd"
+      ],
+      "cameraFiles": [
+        "Twilight_Twilight/Twilight_Twilight/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "にこり",
+        "にやり",
+        "びっくり",
+        "まばたき",
+        "ウィンク",
+        "上",
+        "下",
+        "口角上げ",
+        "困る",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "Twilight_Twilight/Twilight_Twilight/Mizuki — 'Am I in a Dream_' 🦄🫧 _ Twilight Twilig..mp4",
+          "durationSeconds": 28.422,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "Twilight_Twilight/Twilight_Twilight/camera.vmd",
+          "sha256": "64f941d189131cfc20d9febe202713b89b4695cc11b134a6128f9edcc852b00d",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 28.333,
+          "ikToggles": {}
+        },
+        {
+          "path": "Twilight_Twilight/Twilight_Twilight/facial.vmd",
+          "sha256": "46c6586829e85b9b2a1289ccf01b9e4413fcff19698106e6f7de32594085f4a7",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 27.767,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "ウィンク",
+            "びっくり",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "にやり",
+            "口角上げ",
+            "困る",
+            "にこり",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "Twilight_Twilight/Twilight_Twilight/motion.vmd",
+          "sha256": "bfc210ff6128adfb03f64a0b7d32ba7d4648d6fc9e25212b37fab167c822d396",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 28.833,
+          "dynamicBoneCount": 51,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右髪ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左髪ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "Twilight_Twilight/Twilight_Twilight/QuickMagic/QM_motion.vmd",
+          "sha256": "e0938a394cba2f0e3589447d672ef078adabf0a6b0dbb4186097c262e1827f79",
+          "boneKind": "body",
+          "referenceOnly": true,
+          "boneEndSeconds": 29.233,
+          "dynamicBoneCount": 48,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/愛くださいませ_Dance",
+      "name": "愛くださいませ_Dance",
+      "folder": "愛くださいませ_Dance",
+      "status": "首批候选",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 30.933,
+      "readmes": [
+        "愛くださいませ_Dance/愛くださいませ_Dance/readme_en.txt",
+        "愛くださいませ_Dance/愛くださいませ_Dance/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "愛くださいませ_Dance/愛くださいませ_Dance/dance.vmd"
+      ],
+      "cameraFiles": [
+        "愛くださいませ_Dance/愛くださいませ_Dance/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "にこり",
+        "びっくり",
+        "まばたき",
+        "ウィンク",
+        "上",
+        "下",
+        "口横広げ",
+        "口角上げ",
+        "困る",
+        "怒り",
+        "瞳小",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "愛くださいませ_Dance/愛くださいませ_Dance/Chisa — 💘「愛くださいませ」💘 Dance Ver.  _ Wuthering Wave..mp4",
+          "durationSeconds": 30.744,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "愛くださいませ_Dance/愛くださいませ_Dance/camera.vmd",
+          "sha256": "a115c428b41c496e852c7340ca3185118d43c22a95d3ebb9984173c388441777",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 30.933,
+          "ikToggles": {}
+        },
+        {
+          "path": "愛くださいませ_Dance/愛くださいませ_Dance/dance.vmd",
+          "sha256": "99392cae19a4c7e36c3d05ae3bc13d6fdcf055882b98b5ba9b550128843f56eb",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 30.8,
+          "dynamicBoneCount": 50,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右髪ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左髪ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "愛くださいませ_Dance/愛くださいませ_Dance/facial.vmd",
+          "sha256": "1a33545ac0a9290344ea8b62237f7370c06483695e6775976d1a222cf9a3478e",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 30.633,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "ウィンク",
+            "びっくり",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "口角上げ",
+            "口横広げ",
+            "瞳小",
+            "困る",
+            "にこり",
+            "怒り",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "愛くださいませ_Dance/愛くださいませ_Dance/QuickMagic/QM_motion.vmd",
+          "sha256": "c242f7e9bce367a74cd19b49f6edc441a6917c3d571a5af1bc6be9873147ca0d",
+          "boneKind": "body",
+          "referenceOnly": true,
+          "boneEndSeconds": 34.8,
+          "dynamicBoneCount": 48,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/お姫様の作り方",
+      "name": "お姫様の作り方",
+      "folder": "お姫様の作り方",
+      "status": "首批候选",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 30.2,
+      "readmes": [
+        "お姫様の作り方/お姫様の作り方/readme_en.txt",
+        "お姫様の作り方/お姫様の作り方/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "お姫様の作り方/お姫様の作り方/dance.vmd"
+      ],
+      "cameraFiles": [
+        "お姫様の作り方/お姫様の作り方/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "にこり",
+        "びっくり",
+        "まばたき",
+        "上",
+        "下",
+        "口横狭め",
+        "口角上げ",
+        "困る",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "お姫様の作り方/お姫様の作り方/Chisa — How to Make a Princess 👑🫧「お姫様の作り方」 _ Wu.mp4",
+          "durationSeconds": 30.326,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "お姫様の作り方/お姫様の作り方/camera.vmd",
+          "sha256": "9f175c60db634923b5a173e7dbb585906f2d1c3ede15d4ef625ef7e97c098776",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 29.267,
+          "ikToggles": {}
+        },
+        {
+          "path": "お姫様の作り方/お姫様の作り方/dance.vmd",
+          "sha256": "4ef737a6c5328dfc40c8cd7092fb1b3dc4e8389d179aaffa118f06313f7e7f42",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 30.2,
+          "dynamicBoneCount": 54,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "お姫様の作り方/お姫様の作り方/facial.vmd",
+          "sha256": "3bbd3861c119403da49bcee44d9a87a04cd9c444fa437025ee20d977940b5342",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 29.467,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "びっくり",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "口角上げ",
+            "口横狭め",
+            "困る",
+            "にこり",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "お姫様の作り方/お姫様の作り方/QuickMagic/QM_motion.vmd",
+          "sha256": "cb79cc1171470bd652a8b374f2544e59720cf2dd4e8ce0e72ae03d2e2cd4dd9e",
+          "boneKind": "body",
+          "referenceOnly": true,
+          "boneEndSeconds": 30.2,
+          "dynamicBoneCount": 48,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/DISCOTHECUE",
+      "name": "DISCOTHECUE",
+      "folder": "DISCOTHECUE",
+      "status": "首批候选",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 25.0,
+      "readmes": [
+        "DISCOTHECUE/DISCOTHECUE/readme_en.txt",
+        "DISCOTHECUE/DISCOTHECUE/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "DISCOTHECUE/DISCOTHECUE/dance.vmd"
+      ],
+      "cameraFiles": [
+        "DISCOTHECUE/DISCOTHECUE/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "にやり２",
+        "びっくり",
+        "まばたき",
+        "ウィンク右",
+        "ウィンク２",
+        "上",
+        "下",
+        "下眼上",
+        "口横広げ",
+        "口角上げ",
+        "困る",
+        "怒り",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "DISCOTHECUE/DISCOTHECUE/Sunna — 踊ってみた！🕺✨「DISCOTHEQUE」 _ Zenless Zone Zer.mp4",
+          "durationSeconds": 25.101,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "DISCOTHECUE/DISCOTHECUE/camera.vmd",
+          "sha256": "6183e33817693b4b9dee58f8f7d70fd552401c245931650c565ffc6a80e6a4d6",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 24.733,
+          "ikToggles": {}
+        },
+        {
+          "path": "DISCOTHECUE/DISCOTHECUE/dance.vmd",
+          "sha256": "618bdc20cfce4fbb90f4615ce8aad9e83d3a948373e6f41f11234e9eb223254d",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 25.0,
+          "dynamicBoneCount": 50,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "DISCOTHECUE/DISCOTHECUE/facial.vmd",
+          "sha256": "779f3f8072226abe8ea8d7790a309dc5373bf8f0c7bb22b6d13748639ccdfa5f",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 24.567,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "ウィンク右",
+            "ウィンク２",
+            "びっくり",
+            "下眼上",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "にやり２",
+            "口角上げ",
+            "口横広げ",
+            "困る",
+            "怒り",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/クリームソーダとシャンデリア",
+      "name": "クリームソーダとシャンデリア",
+      "folder": "クリームソーダとシャンデリア",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 15.1,
+      "readmes": [
+        "クリームソーダとシャンデリア/クリームソーダとシャンデリア/readme_en.txt",
+        "クリームソーダとシャンデリア/クリームソーダとシャンデリア/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "クリームソーダとシャンデリア/クリームソーダとシャンデリア/motion.vmd"
+      ],
+      "cameraFiles": [
+        "クリームソーダとシャンデリア/クリームソーダとシャンデリア/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "にこり",
+        "まばたき",
+        "ウィンク２",
+        "上",
+        "下",
+        "口角上げ",
+        "困る",
+        "笑い",
+        "ｳｨﾝｸ２右"
+      ],
+      "media": [
+        {
+          "path": "クリームソーダとシャンデリア/クリームソーダとシャンデリア/クリームソーダとシャンデリア [Motion DL _ MMD]_Full-HD.mp4",
+          "durationSeconds": 15.186,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "クリームソーダとシャンデリア/クリームソーダとシャンデリア/camera.vmd",
+          "sha256": "35f515baf97895fa37dfb0461945c4710e14796f9e09e28f0c33895db8daa60e",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 14.133,
+          "ikToggles": {}
+        },
+        {
+          "path": "クリームソーダとシャンデリア/クリームソーダとシャンデリア/facial.vmd",
+          "sha256": "d338cfed3cce0e420e7468ab6c31bb013c379ebdc18eccbcab4e593e34cb381f",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 14.567,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "困る",
+            "にこり",
+            "上",
+            "下",
+            "まばたき",
+            "笑い",
+            "ウィンク２",
+            "ｳｨﾝｸ２右",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "口角上げ"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "クリームソーダとシャンデリア/クリームソーダとシャンデリア/motion.vmd",
+          "sha256": "b56d48788f1b62f5862b0caead1dfcafe75b58c2fe75db0819e5bf8c686d4469",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 15.1,
+          "dynamicBoneCount": 44,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "main/コンパクトミラー",
+      "name": "コンパクトミラー",
+      "folder": "コンパクトミラー",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 10.9,
+      "readmes": [
+        "コンパクトミラー/コンパクトミラー/readme_en.txt",
+        "コンパクトミラー/コンパクトミラー/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [
+        "コンパクトミラー/コンパクトミラー/vmdsizing_bone.pmx"
+      ],
+      "bodyFiles": [
+        "コンパクトミラー/コンパクトミラー/dance.vmd"
+      ],
+      "cameraFiles": [
+        "コンパクトミラー/コンパクトミラー/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "ω",
+        "あ",
+        "う",
+        "てへぺろ",
+        "にこり",
+        "にやり",
+        "びっくり",
+        "まばたき",
+        "上",
+        "下",
+        "口角上げ",
+        "困る",
+        "真面目",
+        "瞳小",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "コンパクトミラー/コンパクトミラー/コンパクトミラー [Motion DL _ MMD]_Full-HD.mp4",
+          "durationSeconds": 11.1,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "コンパクトミラー/コンパクトミラー/camera.vmd",
+          "sha256": "455f8da943e08236683d56d203b6563e55d4b623d4c8ef05ac5ed4c6f228c35a",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 7.367,
+          "ikToggles": {}
+        },
+        {
+          "path": "コンパクトミラー/コンパクトミラー/dance.vmd",
+          "sha256": "86b3bd99d620da652b8f2feaeb2d76017d7a4ae296231771d05a3304035776ed",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 10.9,
+          "dynamicBoneCount": 42,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "コンパクトミラー/コンパクトミラー/facial.vmd",
+          "sha256": "1f49eb076c498d15949d976b06e3c3dbbe94d68b15c8f41549217b40c9dea00d",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 10.7,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "びっくり",
+            "瞳小",
+            "あ",
+            "う",
+            "ω",
+            "にやり",
+            "てへぺろ",
+            "口角上げ",
+            "真面目",
+            "困る",
+            "にこり",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/キュートなキューたい",
+      "name": "キュートなキューたい",
+      "folder": "キュートなキューたい",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 15.5,
+      "readmes": [
+        "キュートなキューたい/キュートなキューたい/readme_en.txt",
+        "キュートなキューたい/キュートなキューたい/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "キュートなキューたい/キュートなキューたい/dance.vmd"
+      ],
+      "cameraFiles": [
+        "キュートなキューたい/キュートなキューたい/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "お",
+        "じと目",
+        "にこり",
+        "びっくり",
+        "まばたき",
+        "ウィンク",
+        "上",
+        "口下",
+        "困る",
+        "怒り",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "キュートなキューたい/キュートなキューたい/キュートなキューたい [Motion DL _ MMD]_Full-HD.mp4",
+          "durationSeconds": 15.581,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "キュートなキューたい/キュートなキューたい/camera.vmd",
+          "sha256": "70801aafd58061eef84057ea76ad3fcda5ef7cd3206040442639db104909e699",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 1.067,
+          "ikToggles": {}
+        },
+        {
+          "path": "キュートなキューたい/キュートなキューたい/dance.vmd",
+          "sha256": "cb6cf04c02baef0bef340a3a9a70e6b756a1ab7507a2db8c4c51f0e5c7460353",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 15.5,
+          "dynamicBoneCount": 51,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "キュートなキューたい/キュートなキューたい/facial.vmd",
+          "sha256": "f29fa2df285035a500538b27ee034a09b963c09d824a384d832a7252d0ac7aa0",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 13.667,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "ウィンク",
+            "びっくり",
+            "じと目",
+            "あ",
+            "い",
+            "う",
+            "お",
+            "口下",
+            "困る",
+            "怒り",
+            "にこり",
+            "上"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/劇薬中毒",
+      "name": "劇薬中毒",
+      "folder": "劇薬中毒",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 15.567,
+      "readmes": [
+        "劇薬中毒/劇薬中毒/readme_en.txt",
+        "劇薬中毒/劇薬中毒/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "劇薬中毒/劇薬中毒/dance.vmd"
+      ],
+      "cameraFiles": [
+        "劇薬中毒/劇薬中毒/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "じと目",
+        "にこり",
+        "まばたき",
+        "ウィンク２",
+        "上",
+        "下",
+        "口角上げ",
+        "困る",
+        "真面目",
+        "瞳小",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "劇薬中毒/劇薬中毒/Mizuki — 劇薬中毒 (=LOVE) 💊🩵 _ Genshin Impact MMD_F.mp4",
+          "durationSeconds": 15.117,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "劇薬中毒/劇薬中毒/camera.vmd",
+          "sha256": "f13c0e5f041e8dbaff54e715646ea43beea0344e3820e39cf33eb2ed62b92141",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 15.567,
+          "ikToggles": {}
+        },
+        {
+          "path": "劇薬中毒/劇薬中毒/dance.vmd",
+          "sha256": "44f07165059e0f31090934d840894886554cdcc266e9dcc9869d493430f9861d",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 15.5,
+          "dynamicBoneCount": 56,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "劇薬中毒/劇薬中毒/facial.vmd",
+          "sha256": "eb88d08eb6795b0cf51bd1cdbfeec491b05912c9cd25c474327abf645c9c24d9",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 14.733,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "真面目",
+            "困る",
+            "にこり",
+            "上",
+            "下",
+            "まばたき",
+            "笑い",
+            "ウィンク２",
+            "じと目",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "口角上げ",
+            "瞳小"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "劇薬中毒/劇薬中毒/QuickMagic/motion.vmd",
+          "sha256": "bd1bee8adc5ee4c414dc70221564fcfb34ddd733a7be3c782e917015b9a2830d",
+          "boneKind": "body",
+          "referenceOnly": true,
+          "boneEndSeconds": 34.133,
+          "dynamicBoneCount": 48,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/ゆめみるプリマドンナ",
+      "name": "ゆめみるプリマドンナ",
+      "folder": "ゆめみるプリマドンナ",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 16.333,
+      "readmes": [
+        "ゆめみるプリマドンナ/ゆめみるプリマドンナ/readme_en.txt",
+        "ゆめみるプリマドンナ/ゆめみるプリマドンナ/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [
+        "ゆめみるプリマドンナ/ゆめみるプリマドンナ/vmdsizing_bone.pmx"
+      ],
+      "bodyFiles": [
+        "ゆめみるプリマドンナ/ゆめみるプリマドンナ/MMDモーション/dance.vmd"
+      ],
+      "cameraFiles": [
+        "ゆめみるプリマドンナ/ゆめみるプリマドンナ/MMDモーション/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "にこり",
+        "にやり",
+        "びっくり",
+        "まばたき",
+        "ウィンク",
+        "ウィンク右",
+        "上",
+        "下",
+        "口角上げ",
+        "困る",
+        "真面目",
+        "瞳小",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "ゆめみるプリマドンナ/ゆめみるプリマドンナ/Chisa — I Want to Be Your Prima Donna ❤ “ゆめみるプリマド.mp4",
+          "durationSeconds": 16.417,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "ゆめみるプリマドンナ/ゆめみるプリマドンナ/MMDモーション/camera.vmd",
+          "sha256": "ae85208ea027fa0de27da79bbeb8354f1ab967f5dbac53ea2575ba5a2de4af3b",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 15.3,
+          "ikToggles": {}
+        },
+        {
+          "path": "ゆめみるプリマドンナ/ゆめみるプリマドンナ/MMDモーション/dance.vmd",
+          "sha256": "1d875b15b259d3ff9364c6a71dcec78d68475fa4025395d8a4bfd53cee137020",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 16.333,
+          "dynamicBoneCount": 55,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "ゆめみるプリマドンナ/ゆめみるプリマドンナ/MMDモーション/facial.vmd",
+          "sha256": "aefeed7ed943baf3df4edd3cf8df59f81b87ce63a4f53b64b63faf5db4ba132b",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 16.033,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "ウィンク",
+            "ウィンク右",
+            "びっくり",
+            "瞳小",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "にやり",
+            "口角上げ",
+            "真面目",
+            "困る",
+            "にこり",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "ゆめみるプリマドンナ/ゆめみるプリマドンナ/修正前/motion.vmd",
+          "sha256": "1dec148023deac3d12b0f82aa282e0e5d6e59401543c79eed9b52c131f9b26bf",
+          "boneKind": "body",
+          "referenceOnly": true,
+          "boneEndSeconds": 16.333,
+          "dynamicBoneCount": 48,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/Love_Options",
+      "name": "Love_Options",
+      "folder": "Love_Options",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 12.667,
+      "readmes": [
+        "Love_Options/Love_Options/readme_cn.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "Love_Options/Love_Options/dance.vmd"
+      ],
+      "cameraFiles": [
+        "Love_Options/Love_Options/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "う",
+        "え",
+        "お",
+        "じと目",
+        "にこり",
+        "びっくり",
+        "まばたき",
+        "ウィンク",
+        "上",
+        "下",
+        "口左",
+        "困る",
+        "怒り"
+      ],
+      "media": [
+        {
+          "path": "Love_Options/Love_Options/Love Options [Motion DL _ MMD]_HD..mp4",
+          "durationSeconds": 31.487,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "Love_Options/Love_Options/camera.vmd",
+          "sha256": "5fdca635a851770b537d245e7bd1e84a743b0c28501f23b51a8d4e77d48559b0",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 12.233,
+          "ikToggles": {}
+        },
+        {
+          "path": "Love_Options/Love_Options/dance.vmd",
+          "sha256": "4edca3f0afb4c3e3eb69c2ae68d63669af651ff8e727b3e96f0d87018a8970ef",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 12.667,
+          "dynamicBoneCount": 49,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "Love_Options/Love_Options/facial.vmd",
+          "sha256": "b71e6e60cdf957d0933cadbb1c0945e863c2e74df86e774e3a1438c1d75c131f",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 12.667,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "ウィンク",
+            "びっくり",
+            "じと目",
+            "あ",
+            "う",
+            "え",
+            "お",
+            "口左",
+            "困る",
+            "怒り",
+            "にこり",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/恋はじめました",
+      "name": "恋はじめました",
+      "folder": "恋はじめました",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 12.667,
+      "readmes": [
+        "恋はじめました/恋はじめました/readme_en.txt",
+        "恋はじめました/恋はじめました/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "恋はじめました/恋はじめました/dance.vmd"
+      ],
+      "cameraFiles": [
+        "恋はじめました/恋はじめました/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "∧",
+        "あ",
+        "あ２",
+        "い",
+        "う",
+        "え",
+        "お",
+        "じと目",
+        "にこり",
+        "びっくり",
+        "まばたき",
+        "ん",
+        "ウィンク",
+        "ウィンク右",
+        "ウィンク２",
+        "上",
+        "下",
+        "困る",
+        "怒り",
+        "瞳小",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "恋はじめました/恋はじめました/恋、はじめました。 [Motion DL _ MMD]_HD..mp4",
+          "durationSeconds": 32.857,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "恋はじめました/恋はじめました/camera.vmd",
+          "sha256": "3203ec3c614e99f9a23a1098935634b484efd3173776a4cd864f17644c0d9d92",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 12.133,
+          "ikToggles": {}
+        },
+        {
+          "path": "恋はじめました/恋はじめました/dance.vmd",
+          "sha256": "4f2bc2f9ebac7f8c96c2216c8ec76758dfe6ffc2e181eaaf2acaf3af5b597fd1",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 12.667,
+          "dynamicBoneCount": 52,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右髪ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左髪ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "恋はじめました/恋はじめました/facial.vmd",
+          "sha256": "f811d2e1c423543c5b078132181606d5f1bd3c202b34d5486a05e65665a5d757",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 12.233,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "ウィンク",
+            "ウィンク右",
+            "ウィンク２",
+            "びっくり",
+            "じと目",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "あ２",
+            "ん",
+            "∧",
+            "瞳小",
+            "困る",
+            "にこり",
+            "怒り",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "恋はじめました/恋はじめました/QuickMagic/QM_motion.vmd",
+          "sha256": "2edd4911318ee5352ae2c61d4067fe343004a47e1ef15175bb3de70b9066fed5",
+          "boneKind": "body",
+          "referenceOnly": true,
+          "boneEndSeconds": 12.667,
+          "dynamicBoneCount": 48,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/にんぎょひめのうた",
+      "name": "にんぎょひめのうた",
+      "folder": "にんぎょひめのうた",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 15.467,
+      "readmes": [
+        "にんぎょひめのうた/にんぎょひめのうた/readme_cn.txt",
+        "にんぎょひめのうた/にんぎょひめのうた/readme_en.txt",
+        "にんぎょひめのうた/にんぎょひめのうた/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "にんぎょひめのうた/にんぎょひめのうた/dance.vmd"
+      ],
+      "cameraFiles": [
+        "にんぎょひめのうた/にんぎょひめのうた/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "にこり",
+        "にやり",
+        "びっくり",
+        "まばたき",
+        "ウィンク",
+        "上",
+        "口角上げ",
+        "困る",
+        "怒り",
+        "照れ",
+        "瞳小",
+        "笑い"
+      ],
+      "media": [
+        {
+          "path": "にんぎょひめのうた/にんぎょひめのうた/にんぎょひめのうた [Motion DL _ MMD]_HD..mp4",
+          "durationSeconds": 37.686,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "にんぎょひめのうた/にんぎょひめのうた/camera.vmd",
+          "sha256": "25d7b24c271b1784895235cfbc5367a1814481c6494d2a5ad992eb65116c813a",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 15.433,
+          "ikToggles": {}
+        },
+        {
+          "path": "にんぎょひめのうた/にんぎょひめのうた/dance.vmd",
+          "sha256": "f6611fdebebeaa14ceb8f31d54639a1408e7521e3cc14383c8a096847b39d95e",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 15.467,
+          "dynamicBoneCount": 50,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右髪ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左髪ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        },
+        {
+          "path": "にんぎょひめのうた/にんぎょひめのうた/facial.vmd",
+          "sha256": "16ef8801b42d36bad24a2f1e393b344c6ed27f86274490570ec87ff40ef16a4c",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 15.0,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "笑い",
+            "ウィンク",
+            "びっくり",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "にやり",
+            "口角上げ",
+            "瞳小",
+            "照れ",
+            "困る",
+            "にこり",
+            "怒り",
+            "上"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "にんぎょひめのうた/にんぎょひめのうた/QuickMagic/QM_motion.vmd",
+          "sha256": "135f886ce031b8fdd410e48735ae9eeb374adabccb1498b47a432e88782e0521",
+          "boneKind": "body",
+          "referenceOnly": true,
+          "boneEndSeconds": 15.467,
+          "dynamicBoneCount": 48,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        }
+      ]
+    },
+    {
+      "id": "main/zurui",
+      "name": "zurui",
+      "folder": "zurui",
+      "status": "第二梯队",
+      "structure": "单人身体轨道",
+      "estimatedTrackEndSeconds": 23.133,
+      "readmes": [
+        "zurui/zurui/readme_cn.txt",
+        "zurui/zurui/readme_en.txt",
+        "zurui/zurui/readme_jp.txt"
+      ],
+      "readmeAlignmentFrames": [],
+      "sizingPmx": [],
+      "bodyFiles": [
+        "zurui/zurui/motion.vmd"
+      ],
+      "cameraFiles": [
+        "zurui/zurui/camera.vmd"
+      ],
+      "singleVersionFiles": [],
+      "activeMorphs": [
+        "M",
+        "あ",
+        "い",
+        "う",
+        "え",
+        "お",
+        "にこり",
+        "にやり",
+        "びっくり",
+        "まばたき",
+        "ウィンク",
+        "ウィンク右",
+        "ウィンク２",
+        "上",
+        "下",
+        "口右",
+        "口横狭め",
+        "口角上げ",
+        "口角下げ",
+        "困る",
+        "怒り"
+      ],
+      "media": [
+        {
+          "path": "zurui/zurui/zurui [Motion DL _ MMD]_HD..mp4",
+          "durationSeconds": 51.967,
+          "hasAudio": true,
+          "kind": "video",
+          "error": null
+        }
+      ],
+      "vmds": [
+        {
+          "path": "zurui/zurui/camera.vmd",
+          "sha256": "95885083889d42911c391bd0deb70c5fa678fb1ce0cb924618af96d271864907",
+          "boneKind": "none",
+          "referenceOnly": false,
+          "boneEndSeconds": null,
+          "dynamicBoneCount": 0,
+          "activeMorphs": [],
+          "cameraEndSeconds": 22.367,
+          "ikToggles": {}
+        },
+        {
+          "path": "zurui/zurui/facial.vmd",
+          "sha256": "e41c4b8a71b1499f6fb4395c512b96a58a0d451dfca6248b438ee7389515d2c8",
+          "boneKind": "faceOrAuxiliary",
+          "referenceOnly": false,
+          "boneEndSeconds": 22.6,
+          "dynamicBoneCount": 1,
+          "activeMorphs": [
+            "まばたき",
+            "ウィンク",
+            "ウィンク右",
+            "ウィンク２",
+            "びっくり",
+            "あ",
+            "い",
+            "う",
+            "え",
+            "お",
+            "M",
+            "にやり",
+            "口角上げ",
+            "口横狭め",
+            "口角下げ",
+            "口右",
+            "困る",
+            "怒り",
+            "にこり",
+            "上",
+            "下"
+          ],
+          "cameraEndSeconds": null,
+          "ikToggles": {}
+        },
+        {
+          "path": "zurui/zurui/motion.vmd",
+          "sha256": "fcc532915ef81deaf0f0e32d953bc3cfcf7cd7e846463459d30b560735b6a7ac",
+          "boneKind": "body",
+          "referenceOnly": false,
+          "boneEndSeconds": 23.133,
+          "dynamicBoneCount": 43,
+          "activeMorphs": [],
+          "cameraEndSeconds": null,
+          "ikToggles": {
+            "右足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "右つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左足ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            },
+            "左つま先ＩＫ": {
+              "onKeys": 1,
+              "offKeys": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

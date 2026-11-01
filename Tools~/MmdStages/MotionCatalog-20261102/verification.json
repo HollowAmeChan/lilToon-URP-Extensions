@@ -1,0 +1,19 @@
+{
+  "all61ZipEntriesPresent": true,
+  "sizeDifferences": [],
+  "recoveredVmdSha256Verified": 6,
+  "recoveredPreviewSha256Verified": 22,
+  "vmdParseErrors": 0,
+  "allVmdTailBytesZero": true,
+  "candidateFilesExist": true,
+  "summary": {
+    "workOrVersionFolders": 132,
+    "mainArchiveFolders": 60,
+    "oldCollectionFolders": 72,
+    "vmdFiles": 512,
+    "vmdParseErrors": 0,
+    "worksWithLocalAudioOrPvAudio": 69,
+    "worksWithoutBody": 1,
+    "mediaProbeErrors": 0
+  }
+}

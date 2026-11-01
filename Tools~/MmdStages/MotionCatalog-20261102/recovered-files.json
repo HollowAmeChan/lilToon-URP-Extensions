@@ -1,0 +1,201 @@
+{
+  "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\A甜茶旧合集动作包.zip",
+  "restored": [
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\A甜茶旧合集动作包\\甜茶合集动作\\ひたむきシンデレラ\\Full‑Body\\camera.vmd",
+      "archiveEntry": "甜茶合集动作/ひたむきシンデレラ/Full‑Body/camera.vmd",
+      "bytes": 379,
+      "sha256": "f5d4e541046ce8646654d9cfd6d2656a674a2f26d3edd9a1186d85660c71c6d7"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\A甜茶旧合集动作包\\甜茶合集动作\\ひたむきシンデレラ\\Full‑Body\\motion.vmd",
+      "archiveEntry": "甜茶合集动作/ひたむきシンデレラ/Full‑Body/motion.vmd",
+      "bytes": 443747,
+      "sha256": "e17eb6566980701f1d4e22472028c7269948191dca6e9693ed03e4aae2c0fe1d"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\A甜茶旧合集动作包\\甜茶合集动作\\ひたむきシンデレラ\\Upper‑Body\\camera.vmd",
+      "archiveEntry": "甜茶合集动作/ひたむきシンデレラ/Upper‑Body/camera.vmd",
+      "bytes": 257,
+      "sha256": "a9a977015e1ea9de0745f94085651f6afb37764a824fc8d0b988c1983488b4ea"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\A甜茶旧合集动作包\\甜茶合集动作\\ひたむきシンデレラ\\Upper‑Body\\motion.vmd",
+      "archiveEntry": "甜茶合集动作/ひたむきシンデレラ/Upper‑Body/motion.vmd",
+      "bytes": 427329,
+      "sha256": "fc4dc8c40beadd0157a576cc609324dc04b8d5ec900d26b9a8f575732b7865aa"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\A甜茶旧合集动作包\\甜茶合集动作\\コンプレックス♡プリンセス\\camera.vmd",
+      "archiveEntry": "甜茶合集动作/コンプレックス♡プリンセス/camera.vmd",
+      "bytes": 2209,
+      "sha256": "907ad20fe93a8652f9b3169621712ada61b113e958c9fe424e8b69578f5c8eb6"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\A甜茶旧合集动作包\\甜茶合集动作\\コンプレックス♡プリンセス\\motion.vmd",
+      "archiveEntry": "甜茶合集动作/コンプレックス♡プリンセス/motion.vmd",
+      "bytes": 439502,
+      "sha256": "841848e29f54b3f6eb62ebe5f2ca43a345899a5a747bea0d6339dca6ee389dca"
+    }
+  ],
+  "restoredReadmes": [
+    "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\A甜茶旧合集动作包\\甜茶合集动作\\コンプレックス♡プリンセス\\readme_en.txt",
+    "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\A甜茶旧合集动作包\\甜茶合集动作\\コンプレックス♡プリンセス\\readme_jp.txt"
+  ],
+  "restoredPreviews": [
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\Call_It_What_You_Like\\Call_It_What_You_Like\\ダーニャがTiktokトレンドに挑戦(((⑉•̆ ·̭ •⑉))) @鳴潮 @ダーニャ @MMD..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\Call_It_What_You_Like.zip",
+      "archiveEntry": "Call_It_What_You_Like/ダーニャがTiktokトレンドに挑戦(((⑉•̆ ·̭ •⑉))) @鳴潮 @ダーニャ @MMD..mp4",
+      "bytes": 6260808,
+      "sha256": "5bfa3085e30224efe40f9bc469975b59b5937822b509aa7f64d51f8fa2d1f65d"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\Catch_Catch\\Catch_Catch\\Aemeath — Trying Catch Catch Trend ❄️💟 _ Zenless.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\Catch_Catch.zip",
+      "archiveEntry": "Catch_Catch/Aemeath — Trying Catch Catch Trend ❄️💟 _ Zenless.mp4",
+      "bytes": 3989154,
+      "sha256": "f88c2465ab4fc8da354f1d51006b98dc0863c109eefd3f7b6fce79548e278bcc"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\DISCOTHECUE\\DISCOTHECUE\\Sunna — 踊ってみた！🕺✨「DISCOTHEQUE」 _ Zenless Zone Zer.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\DISCOTHECUE.zip",
+      "archiveEntry": "DISCOTHECUE/Sunna — 踊ってみた！🕺✨「DISCOTHEQUE」 _ Zenless Zone Zer.mp4",
+      "bytes": 13972056,
+      "sha256": "0fdfd65162825ecd97a81299e03aedc14450f5f7c2e5c10e8899e04c249db6f5"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\I'm_gonna_TOESA\\I'm_gonna_TOESA\\I'm gonna TOESA - 퇴사할게여 [Motion DL _ MMD]_HD..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\I'm_gonna_TOESA.zip",
+      "archiveEntry": "I'm_gonna_TOESA/I'm gonna TOESA - 퇴사할게여 [Motion DL _ MMD]_HD..mp4",
+      "bytes": 5187723,
+      "sha256": "3159a3756bfe403c6fac68a0cf959d44d51a46b45afe554257aab22e0741be63"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\KARAAGE\\KARAAGE\\鳴潮コンサートツアーの余韻に浸る🎶 @鳴潮 @MMD_Full-HD..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\KARAAGE.zip",
+      "archiveEntry": "KARAAGE/鳴潮コンサートツアーの余韻に浸る🎶 @鳴潮 @MMD_Full-HD..mp4",
+      "bytes": 9100920,
+      "sha256": "e3d4c68722a27d56652cabab64d606fb06bd3bc307f7e729457a95a09b72705b"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\LEMONADE\\LEMONADE\\千咲 & エイメス 『LEMONADE Challenge』 🤐🍋 @鳴潮  @MMD_Full..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\LEMONADE.zip",
+      "archiveEntry": "LEMONADE/千咲 & エイメス 『LEMONADE Challenge』 🤐🍋 @鳴潮  @MMD_Full..mp4",
+      "bytes": 5177203,
+      "sha256": "800cacecfe10953404973ebf4c002691d5688e16eca4411f917051e0a83c12e7"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\mosi_mosi\\mosi_mosi\\Chisa & Hiyuki — 「もしもし聞こえてる？」 mosi mosi_ 📞⚡ _ Wu.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\mosi_mosi.zip",
+      "archiveEntry": "mosi_mosi/Chisa & Hiyuki — 「もしもし聞こえてる？」 mosi mosi_ 📞⚡ _ Wu.mp4",
+      "bytes": 11318042,
+      "sha256": "36ab22a6e7da8c1b64a85fa453db0342e09697bc1900ab72a03e8ff8880bcd0a"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\otsukare\\otsukare\\Chisa (Peach Parfait) — 「あんま無理しなさんな♪」 otsukare 🌟..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\otsukare.zip",
+      "archiveEntry": "otsukare/Chisa (Peach Parfait) — 「あんま無理しなさんな♪」 otsukare 🌟..mp4",
+      "bytes": 6840044,
+      "sha256": "b197ce1a11ec39a16e5246f73673ad9d124c1d47d9ae735fc8c7891de978620b"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\pompom\\pompom\\폼폼 [Motion DL _ MMD]_HD..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\pompom.zip",
+      "archiveEntry": "pompom/폼폼 [Motion DL _ MMD]_HD..mp4",
+      "bytes": 6045120,
+      "sha256": "14c7c6848a707f29e65cd3fa3d1d5c9723cd2c7899a5bd924e7f78c14d0708a1"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\Twilight_Twilight\\Twilight_Twilight\\Mizuki — 'Am I in a Dream_' 🦄🫧 _ Twilight Twilig..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\Twilight_Twilight.zip",
+      "archiveEntry": "Twilight_Twilight/Mizuki — 'Am I in a Dream_' 🦄🫧 _ Twilight Twilig..mp4",
+      "bytes": 16664389,
+      "sha256": "5dedb013c29618db2dbd5fb559afcbbd55b3dba050dc7f08dfab699b25c536c9"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\いえ～い_おつかれSUMMER\\いえ～い_おつかれSUMMER\\秧秧の変化👀 @鳴潮 @秧秧 @秧秧玄翎 @MMD_Full-HD..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\いえ～い_おつかれSUMMER.zip",
+      "archiveEntry": "いえ～い_おつかれSUMMER/秧秧の変化👀 @鳴潮 @秧秧 @秧秧玄翎 @MMD_Full-HD..mp4",
+      "bytes": 8828251,
+      "sha256": "7f3a6c2e088098b8441f4a899baa15c4029a25b4dffefebd43cdfc38e2a8debf"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\お姫様の作り方\\お姫様の作り方\\Chisa — How to Make a Princess 👑🫧「お姫様の作り方」 _ Wu.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\お姫様の作り方.zip",
+      "archiveEntry": "お姫様の作り方/Chisa — How to Make a Princess 👑🫧「お姫様の作り方」 _ Wu.mp4",
+      "bytes": 13157349,
+      "sha256": "7b67544357fb83617007af1da874f2da92eb2d326475ee8e0668a95988165013"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\さよならいちごちゃん\\さよならいちごちゃん\\Denia Is Practicing Her Expressions 🍓 — さよならいちごち.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\さよならいちごちゃん.zip",
+      "archiveEntry": "さよならいちごちゃん/Denia Is Practicing Her Expressions 🍓 — さよならいちごち.mp4",
+      "bytes": 6775866,
+      "sha256": "f2222c7823723795b9a8e8145c0d13932769b2dc6d4dbfa0170e42aac865deb9"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\しおざきわんだーらんど\\しおざきわんだーらんど\\Encore & Buling — Enjoying Summer Break 🌺☀️ _ 「し..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\しおざきわんだーらんど.zip",
+      "archiveEntry": "しおざきわんだーらんど/Encore & Buling — Enjoying Summer Break 🌺☀️ _ 「し..mp4",
+      "bytes": 8669046,
+      "sha256": "a5eaa5ac85512b14794d74efdb9e54c3b25f42bdaddf29270b8273920953d189"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\ゆめみるプリマドンナ\\ゆめみるプリマドンナ\\Chisa — I Want to Be Your Prima Donna ❤ “ゆめみるプリマド.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\ゆめみるプリマドンナ.zip",
+      "archiveEntry": "ゆめみるプリマドンナ/Chisa — I Want to Be Your Prima Donna ❤ “ゆめみるプリマド.mp4",
+      "bytes": 8346555,
+      "sha256": "07b91a40bc79935504bdbbfb5d9e0eed1ac3bd0b5d42b8adf3e8723d684e256c"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\トンツカタンタン\\トンツカタンタン\\Mornye & Lynae’s School Life 💃息が詰まるこんな世の中で… “トンツ.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\トンツカタンタン.zip",
+      "archiveEntry": "トンツカタンタン/Mornye & Lynae’s School Life 💃息が詰まるこんな世の中で… “トンツ.mp4",
+      "bytes": 8103696,
+      "sha256": "7c3031e6b4efc4905af819f1e27c8514051bfa77423193fefe45d786a6d63df8"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\劇薬中毒\\劇薬中毒\\Mizuki — 劇薬中毒 (=LOVE) 💊🩵 _ Genshin Impact MMD_F.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\劇薬中毒.zip",
+      "archiveEntry": "劇薬中毒/Mizuki — 劇薬中毒 (=LOVE) 💊🩵 _ Genshin Impact MMD_F.mp4",
+      "bytes": 8053595,
+      "sha256": "d43bc563e6db5968597fd56533fcd91dd1beabb53baa8f4d023c008e9ddd4e29"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\好きish\\好きish\\妄想エンジェル『好きish』💘 @ゼンゼロ @MMD_Full-HD..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\好きish.zip",
+      "archiveEntry": "好きish/妄想エンジェル『好きish』💘 @ゼンゼロ @MMD_Full-HD..mp4",
+      "bytes": 15083378,
+      "sha256": "075576c6874738e34aee28a6a7f7a2dbf927b3e944d0ec1da3b307fb1f756ea2"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\心予報\\心予報\\The Black Shores — “心予報” 🩷🩵💙❤️ _ Wuthering Wav.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\心予報.zip",
+      "archiveEntry": "心予報/The Black Shores — “心予報” 🩷🩵💙❤️ _ Wuthering Wav.mp4",
+      "bytes": 6544819,
+      "sha256": "f32d380fb5a138204e53666ef5bc49a7a4e55789cede8b1965d1e5a22ba9b299"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\愛くださいませ\\愛くださいませ\\Phrolova — 💘「愛くださいませ」💘 @くださいませチャレンジ  _ Wutherin.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\愛くださいませ.zip",
+      "archiveEntry": "愛くださいませ/Phrolova — 💘「愛くださいませ」💘 @くださいませチャレンジ  _ Wutherin.mp4",
+      "bytes": 4422193,
+      "sha256": "53d5939ebdf9fdf637954eb8d563ec162a305b1931e71b940a5d7775ecce9654"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\愛くださいませ_Dance\\愛くださいませ_Dance\\Chisa — 💘「愛くださいませ」💘 Dance Ver.  _ Wuthering Wave..mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\愛くださいませ_Dance.zip",
+      "archiveEntry": "愛くださいませ_Dance/Chisa — 💘「愛くださいませ」💘 Dance Ver.  _ Wuthering Wave..mp4",
+      "bytes": 16778847,
+      "sha256": "30f885ad4448e78875ddffa71c3e66de004ad83d67929599d6f87b9ec40845c6"
+    },
+    {
+      "path": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶\\爆裂愛してる\\爆裂愛してる\\Luuk’s True Profession 🤭❓ “爆裂愛してる — M!LK” _ Wuth.mp4",
+      "archive": "E:\\BaiduSyncdisk\\大师\\_完整动作\\甜茶\\爆裂愛してる.zip",
+      "archiveEntry": "爆裂愛してる/Luuk’s True Profession 🤭❓ “爆裂愛してる — M!LK” _ Wuth.mp4",
+      "bytes": 16010541,
+      "sha256": "b126afc07e56742ab9ac8d44afc61df9d8993ef21e284e8e92c41a6b1c3a7f56"
+    }
+  ]
+}
