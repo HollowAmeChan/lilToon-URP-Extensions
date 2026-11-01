@@ -1,0 +1,273 @@
+{
+  "libraryRoot": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶",
+  "batchPurpose": "Next six solo performances plus two backups. BGM acquired for all eight; animation sync and WTD adaptation still require in-scene playback. No new scene build or rendering.",
+  "candidates": [
+    {
+      "id": "old/ハッピーミルフィーユ",
+      "title": "ハッピーミルフィーユ",
+      "folder": "A甜茶旧合集动作包/甜茶合集动作/ハッピーミルフィーユ",
+      "durationSeconds": 30.133333333333333,
+      "motion": "A甜茶旧合集动作包/甜茶合集动作/ハッピーミルフィーユ/motion.vmd",
+      "facial": "A甜茶旧合集动作包/甜茶合集动作/ハッピーミルフィーユ/motion.vmd",
+      "facialEmbeddedInBody": true,
+      "camera": "A甜茶旧合集动作包/甜茶合集动作/ハッピーミルフィーユ/camera_shorts.vmd",
+      "readme": "A甜茶旧合集动作包/甜茶合集动作/ハッピーミルフィーユ/readme_en.txt",
+      "previewUrls": [
+        "https://youtu.be/PkGnluWmYjM",
+        "https://youtu.be/gG59Bd5kQfg"
+      ],
+      "audioSourceUrls": [
+        "https://www.youtube.com/shorts/_18kLuT0WVI"
+      ],
+      "originalStartSeconds": null,
+      "missingMorphsEstimate": [
+        "怒りL",
+        "怒りR",
+        "ハ",
+        "口幅大",
+        "口幅小",
+        "口上",
+        "口角上げ右",
+        "ウインク2",
+        "ウインク右",
+        "ウインク",
+        "むふ",
+        "目尻上げ",
+        "目尻下げ",
+        "赤面"
+      ],
+      "status": "audio-prepared-sync-pending",
+      "endFrame": 904,
+      "bgm": "A甜茶旧合集动作包/甜茶合集动作/ハッピーミルフィーユ/BGM.wav",
+      "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/ハッピーミルフィーユ/BGM来源.json",
+      "sourceUrl": "https://www.bilibili.com/video/BV1qeFeemEda",
+      "referenceUrl": "https://www.bilibili.com/video/BV1JtwZeoEmq",
+      "preparedSourceStartSeconds": 51.051625,
+      "alignmentVerified": false,
+      "batchRole": "backup",
+      "recommendedBgmOffsetSeconds": 0
+    },
+    {
+      "id": "old/ラブソングに襲われる",
+      "title": "ラブソングに襲われる",
+      "folder": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる",
+      "durationSeconds": 43.7,
+      "motion": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/ラブソングに襲われる/dance.vmd",
+      "facial": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/ラブソングに襲われる/facial_risu.vmd",
+      "facialEmbeddedInBody": false,
+      "camera": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/ラブソングに襲われる/camera.vmd",
+      "readme": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/ラブソングに襲われる/readme_en.txt",
+      "previewUrls": [
+        "https://youtube.com/shorts/2tS1tkxYENg",
+        "https://youtube.com/shorts/FTzWtmK4DeA"
+      ],
+      "audioSourceUrls": [
+        "https://www.youtube.com/watch?v=_cf4UTe1qrY"
+      ],
+      "originalStartSeconds": 39.6,
+      "missingMorphsEstimate": [
+        "下まつ毛上げ",
+        "にこり口"
+      ],
+      "status": "audio-prepared-sync-pending",
+      "endFrame": 1311,
+      "bgm": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/BGM.wav",
+      "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/BGM来源.json",
+      "sourceUrl": "https://www.bilibili.com/video/BV1yoYNzsEaH",
+      "alignmentVerified": false,
+      "batchRole": "recommended",
+      "recommendedBgmOffsetSeconds": 0
+    },
+    {
+      "id": "old/好きすぎて滅",
+      "title": "好きすぎて滅",
+      "folder": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅",
+      "durationSeconds": 35.7,
+      "motion": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/好きすぎて滅/dance.vmd",
+      "facial": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/好きすぎて滅/facial_kinich.vmd",
+      "facialEmbeddedInBody": false,
+      "camera": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/好きすぎて滅/camera.vmd",
+      "readme": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/好きすぎて滅/readme_en.txt",
+      "previewUrls": [
+        "https://youtube.com/shorts/1GkA30JhB4E",
+        "https://youtube.com/shorts/DhDvNxofFmM"
+      ],
+      "audioSourceUrls": [
+        "https://www.youtube.com/watch?v=ZVUxJsPfoX8"
+      ],
+      "originalStartSeconds": 58.266666666666666,
+      "missingMorphsEstimate": [
+        "眼角下",
+        "下眼上",
+        "口横狭め"
+      ],
+      "status": "audio-prepared-sync-pending",
+      "endFrame": 1071,
+      "bgm": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/BGM.wav",
+      "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/BGM来源.json",
+      "sourceUrl": "https://www.bilibili.com/video/BV1MGCrBBEg1",
+      "alignmentVerified": false,
+      "batchRole": "recommended",
+      "recommendedBgmOffsetSeconds": 0
+    },
+    {
+      "id": "main/薄ら氷心中",
+      "title": "薄ら氷心中",
+      "folder": "薄ら氷心中",
+      "durationSeconds": 21.233333333333334,
+      "motion": "薄ら氷心中/薄ら氷心中/motion.vmd",
+      "facial": "薄ら氷心中/薄ら氷心中/facial_chiori.vmd",
+      "facialEmbeddedInBody": false,
+      "camera": "薄ら氷心中/薄ら氷心中/camera.vmd",
+      "readme": "薄ら氷心中/薄ら氷心中/readme_en.txt",
+      "previewUrls": [
+        "https://youtube.com/shorts/p4ljdUbL374",
+        "https://youtube.com/shorts/TrSfMCYGopk"
+      ],
+      "audioSourceUrls": [
+        "https://www.youtube.com/watch?v=hbckxFs-obM"
+      ],
+      "originalStartSeconds": 117.06666666666666,
+      "missingMorphsEstimate": [
+        "口横狭め",
+        "眼角上",
+        "下眼上",
+        "恥ずかしい",
+        "上左",
+        "上右",
+        "口上"
+      ],
+      "status": "audio-prepared-sync-pending",
+      "endFrame": 637,
+      "bgm": "薄ら氷心中/BGM.wav",
+      "audioProvenance": "薄ら氷心中/BGM来源.json",
+      "sourceUrl": "https://www.bilibili.com/video/BV1R3xp6WENj",
+      "alignmentVerified": false,
+      "batchRole": "backup",
+      "recommendedBgmOffsetSeconds": 0
+    },
+    {
+      "id": "main/The_5th",
+      "title": "The_5th",
+      "folder": "The_5th",
+      "durationSeconds": 24.066666666666666,
+      "motion": "The_5th/The_5th/dance.vmd",
+      "facial": "The_5th/The_5th/facial_fufu.vmd",
+      "facialEmbeddedInBody": false,
+      "camera": "The_5th/The_5th/camera.vmd",
+      "readme": "The_5th/The_5th/readme_en.txt",
+      "previewUrls": [
+        "https://youtube.com/shorts/bsyS48qB88Y",
+        "https://youtube.com/shorts/8qUBlJOqxSQ"
+      ],
+      "audioSourceUrls": [
+        "https://www.youtube.com/watch?v=Q1-yYjZqk7o"
+      ],
+      "originalStartSeconds": 258.0,
+      "missingMorphsEstimate": [
+        "眼角下",
+        "下眼上",
+        "口横狭め",
+        "口上"
+      ],
+      "status": "audio-prepared-sync-pending",
+      "endFrame": 722,
+      "bgm": "The_5th/BGM.wav",
+      "audioProvenance": "The_5th/BGM来源.json",
+      "sourceUrl": "https://www.bilibili.com/video/BV11h411x7nk",
+      "alignmentVerified": false,
+      "batchRole": "recommended",
+      "recommendedBgmOffsetSeconds": 0
+    },
+    {
+      "id": "main/Catch_Me_If_You_Can",
+      "title": "Catch_Me_If_You_Can",
+      "folder": "Catch_Me_If_You_Can",
+      "durationSeconds": 16.466666666666665,
+      "motion": "Catch_Me_If_You_Can/Catch_Me_If_You_Can/dance.vmd",
+      "facial": "Catch_Me_If_You_Can/Catch_Me_If_You_Can/facial.vmd",
+      "facialEmbeddedInBody": false,
+      "camera": "Catch_Me_If_You_Can/Catch_Me_If_You_Can/camera.vmd",
+      "readme": "Catch_Me_If_You_Can/Catch_Me_If_You_Can/readme_en.txt",
+      "previewUrls": [
+        "https://youtu.be/lr8pkatLc14",
+        "https://youtu.be/lPG5KJ-RrYQ"
+      ],
+      "audioSourceUrls": [
+        "https://www.youtube.com/watch?v=RYIyJoju8hc"
+      ],
+      "originalStartSeconds": 66.3,
+      "missingMorphsEstimate": [],
+      "status": "audio-prepared-sync-pending",
+      "endFrame": 494,
+      "bgm": "Catch_Me_If_You_Can/BGM.wav",
+      "audioProvenance": "Catch_Me_If_You_Can/BGM来源.json",
+      "sourceUrl": "https://www.bilibili.com/video/BV15fqZBUEqc",
+      "alignmentVerified": false,
+      "batchRole": "recommended",
+      "recommendedBgmOffsetSeconds": 0
+    },
+    {
+      "id": "old/にぎにぎにじたうん",
+      "title": "にぎにぎにじたうん",
+      "folder": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん",
+      "durationSeconds": 36.1,
+      "motion": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/dance.vmd",
+      "facial": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/facial_fufu.vmd",
+      "facialEmbeddedInBody": false,
+      "camera": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/camera.vmd",
+      "readme": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/readme_en.txt",
+      "previewUrls": [
+        "https://youtube.com/shorts/NNdkZdGHyyw",
+        "https://youtube.com/shorts/DuqVQU5_TA0"
+      ],
+      "audioSourceUrls": [
+        "https://www.youtube.com/shorts/Z9Ie3bEpH24"
+      ],
+      "originalStartSeconds": null,
+      "missingMorphsEstimate": [
+        "下眼上",
+        "口上"
+      ],
+      "status": "audio-prepared-sync-pending",
+      "endFrame": 1083,
+      "bgm": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/BGM.wav",
+      "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/BGM来源.json",
+      "sourceUrl": "https://www.bilibili.com/video/BV1HD4UzoEH5",
+      "referenceUrl": "https://www.bilibili.com/video/BV1HD4UzoEH5",
+      "preparedSourceStartSeconds": 0.0,
+      "alignmentVerified": false,
+      "batchRole": "recommended",
+      "recommendedBgmOffsetSeconds": 0
+    },
+    {
+      "id": "old/88888888",
+      "title": "88888888",
+      "folder": "A甜茶旧合集动作包/甜茶合集动作/88888888",
+      "durationSeconds": 28.6,
+      "motion": "A甜茶旧合集动作包/甜茶合集动作/88888888/motion.vmd",
+      "facial": "A甜茶旧合集动作包/甜茶合集动作/88888888/motion.vmd",
+      "facialEmbeddedInBody": true,
+      "camera": "A甜茶旧合集动作包/甜茶合集动作/88888888/camera.vmd",
+      "readme": "A甜茶旧合集动作包/甜茶合集动作/88888888/readme_en.txt",
+      "previewUrls": [
+        "https://youtube.com/shorts/a1dJt1_f2sg"
+      ],
+      "audioSourceUrls": [
+        "https://www.youtube.com/watch?v=YRidiwGaZHQ&list=RDYRidiwGaZHQ&start"
+      ],
+      "originalStartSeconds": 28.166666666666668,
+      "missingMorphsEstimate": [],
+      "status": "audio-prepared-sync-pending",
+      "endFrame": 858,
+      "bgm": "A甜茶旧合集动作包/甜茶合集动作/88888888/BGM.wav",
+      "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/88888888/BGM来源.json",
+      "sourceUrl": "https://www.bilibili.com/video/BV1JP4GzpEo5",
+      "alignmentVerified": false,
+      "batchRole": "recommended",
+      "recommendedBgmOffsetSeconds": 0
+    }
+  ],
+  "preparedDate": "2026-11-02",
+  "audioCount": 8
+}
