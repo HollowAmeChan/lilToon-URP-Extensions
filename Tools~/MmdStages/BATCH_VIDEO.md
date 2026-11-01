@@ -57,6 +57,31 @@ CLI 的 `clone-performance --config <新动作.json>` 对应“复制已有动�
 Unicode 规范化名称的一对多本地绑定，保存在组件内；不创建额外映射资产，也不按近似语义
 猜不存在的表情。`Library/HoMmdVideo/Variants/<动作>.json` 记录实际缺项和适配是否保留。
 
+### 固定机位改竖屏后的构图跟随
+
+角色横移或弯腰后出画时，可在演出相机的 `VMD Camera Player` 指定“构图跟随目标（可选）”，
+并调“跟随权重（横向 / 纵向）”与“跟随中心偏移（右 / 上）”。目标可为头部、骨盆或自建控制点；
+各轴 0 使用作者原构图、1 跟随该目标，中心偏移沿相机坐标轴，以世界米计。
+不设置目标时，原镜头行为保持不变。跟随会覆盖所选轴的构图，保留旋转、景别与关键帧时序，
+不是避障或全身自动取景，也不改变角色动画。
+
+`clone-performance` / `update-performance` 可选以下字段，例如《好きすぎて滅》的竖屏构图修订：
+
+```json
+{
+  "overrideFramingFollow": true,
+  "framingFollow": true,
+  "framingFollowBone": "Head",
+  "framingFollowWeight": { "x": 1, "y": 1 },
+  "framingFollowOffset": { "x": 0, "y": 0.05 }
+}
+```
+
+`framingFollowBone` 使用当前角色的 Humanoid 骨名，不依赖骨骼路径。
+仅横移有问题时可用 `Hips` 与 `(1, 0)`；弯腰幅度较大时应看头部/胸部构图是否仍有效。
+`overrideFramingFollow` 为 false / 省略时保留已有手工设置；显式 true 且 `framingFollow` 为 false 清除目标。
+默认不在所有影片中启用，避免覆盖作者有意的偏轴或扫出主体镜头。
+
 ## 批次渲染
 
 `render-video-batch.py` 读取批次 JSON，串行调用已有 `video-cli.py record` 和 `mux`。

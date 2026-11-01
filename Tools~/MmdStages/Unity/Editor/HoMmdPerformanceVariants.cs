@@ -50,6 +50,8 @@ public static class HoMmdPerformanceVariants
         public string scene, template, referenceRig, motion, facial, camera, audio;
         public float duration, soundtrackTimeOffset;
         public bool retargetCalibrationPreserved;
+        public string framingFollowTarget;
+        public Vector2 framingFollowWeight, framingFollowOffset;
         public HoVmdMorphAuditResult expressions;
         public Shapes[] shapes;
     }
@@ -102,6 +104,22 @@ public static class HoMmdPerformanceVariants
         sequence.Duration = request.durationSeconds;
         if (request.overrideCameraFov)
             sequence.CameraPlayer.minimumPerspectiveFov = Mathf.Clamp(request.minimumCameraFov, 0, 100);
+        if (request.overrideFramingFollow)
+        {
+            Transform follow = null;
+            if (request.framingFollow)
+            {
+                if (!Enum.TryParse(request.framingFollowBone, true, out HumanBodyBones bone) ||
+                    bone < 0 || bone >= HumanBodyBones.LastBone)
+                    throw new ArgumentException("Choose an explicit Humanoid framingFollowBone.");
+                follow = sequence.TargetAnimator.GetBoneTransform(bone);
+                if (follow == null) throw new InvalidOperationException("Framing bone not found: " + bone);
+            }
+            sequence.CameraPlayer.framingFollowTarget = follow;
+            sequence.CameraPlayer.framingFollowWeight = new Vector2(
+                Mathf.Clamp01(request.framingFollowWeight.x), Mathf.Clamp01(request.framingFollowWeight.y));
+            sequence.CameraPlayer.framingFollowOffset = request.framingFollowOffset;
+        }
         sequence.ApplySources();
         BindExactExpressions(sequence);
         sequence.Body.RebuildBindings();
@@ -129,6 +147,10 @@ public static class HoMmdPerformanceVariants
             motion = request.motion, facial = request.facial, camera = request.camera, audio = request.audio,
             duration = sequence.Duration, soundtrackTimeOffset = sequence.SoundtrackTimeOffset,
             retargetCalibrationPreserved = preserved, expressions = audit,
+            framingFollowTarget = sequence.CameraPlayer.framingFollowTarget != null
+                ? AnimationUtility.CalculateTransformPath(sequence.CameraPlayer.framingFollowTarget, sequence.TargetAnimator.transform) : "",
+            framingFollowWeight = sequence.CameraPlayer.framingFollowWeight,
+            framingFollowOffset = sequence.CameraPlayer.framingFollowOffset,
             shapes = sequence.TargetAnimator.GetComponentsInChildren<SkinnedMeshRenderer>(true)
                 .Where(x => x.sharedMesh != null && x.sharedMesh.blendShapeCount > 0)
                 .Select(x => new Shapes
