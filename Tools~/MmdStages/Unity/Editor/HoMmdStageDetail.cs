@@ -66,7 +66,7 @@ public static class HoMmdStageDetail
         {
             var names=Arg("-hoStages")?.Split(',')??HoMmdStageBuilder.Recipes().Select(x=>x.name).ToArray();
             foreach(var name in names)Apply(name);
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);AssetDatabase.SaveAssets();
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);AssetDatabase.SaveAssets();
             if(Arg("-hoApplyOnly")=="1")EditorApplication.Exit(0);else BeginCaptures(names);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}

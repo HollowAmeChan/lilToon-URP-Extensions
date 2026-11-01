@@ -371,7 +371,7 @@
   },
   "films": [
     {
-      "scene": "Assets/Hollow/MMD影片/甜茶_EX-HAPPY/Scenes/EX-HAPPY.unity",
+      "scene": "Assets/Editor/MMD制作验证/旧摄影棚/EX-HAPPY/Scenes/EX-HAPPY.unity",
       "sampledFrames": 101,
       "beforeSeekPositionMetres": 0.23000027239322662,
       "afterSeekPositionMetres": 0.0,
@@ -581,7 +581,7 @@
       "audioSeconds": 16.69997787475586
     },
     {
-      "scene": "Assets/Hollow/MMD影片/甜茶_NEMONEMO/Scenes/NEMONEMO.unity",
+      "scene": "Assets/Editor/MMD制作验证/旧摄影棚/NEMONEMO/Scenes/NEMONEMO.unity",
       "sampledFrames": 348,
       "beforeSeekPositionMetres": 0.23155231773853302,
       "afterSeekPositionMetres": 0.0,
@@ -634,7 +634,7 @@
       "audioSeconds": 31.11473846435547
     },
     {
-      "scene": "Assets/Hollow/MMD影片/甜茶_SWEET-STEP/Scenes/SWEET-STEP.unity",
+      "scene": "Assets/Editor/MMD制作验证/旧摄影棚/SWEET-STEP/Scenes/SWEET-STEP.unity",
       "sampledFrames": 119,
       "beforeSeekPositionMetres": 0.1013365089893341,
       "afterSeekPositionMetres": 0.0,
@@ -832,7 +832,7 @@
       "audioSeconds": 19.667301177978516
     },
     {
-      "scene": "Assets/Hollow/MMD影片/甜茶_しょ食事タイム/Scenes/しょ食事タイム.unity",
+      "scene": "Assets/Editor/MMD制作验证/旧摄影棚/しょ食事タイム/Scenes/しょ食事タイム.unity",
       "sampledFrames": 90,
       "beforeSeekPositionMetres": 0.006737634539604187,
       "afterSeekPositionMetres": 0.0,
@@ -866,7 +866,7 @@
       "audioSeconds": 14.883991241455078
     },
     {
-      "scene": "Assets/Hollow/MMD影片/甜茶_頑張りたい人へ/Scenes/頑張りたい人へ.unity",
+      "scene": "Assets/Editor/MMD制作验证/旧摄影棚/頑張りたい人へ/Scenes/頑張りたい人へ.unity",
       "sampledFrames": 80,
       "beforeSeekPositionMetres": 0.22774764895439148,
       "afterSeekPositionMetres": 0.0,

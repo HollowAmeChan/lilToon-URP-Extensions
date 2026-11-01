@@ -23,6 +23,7 @@ description: Build and adjust editable PMX stages in HoURP, assemble VMD perform
 - **新建、定点修改、只渲染分开执行。** 初始场景创建后，不为预览重跑旧配方，不把用户灯光、材质、相机和滤镜恢复成历史数值。
 - 默认只处理指定场景/参数。不每次检查全体 H2CU、固定效果清单/机位数或旧哈希；历史截图不是艺术要求。遇到实际故障才调用相关诊断。
 - 使用 Ho PMX importer 和魔改 Ho lilToon，抽出材质，保持 PMX 贴图相对路径。按场景整理 Source/Materials/Rendering/Renders。默认使用已有 PC_RPAsset/PC_Renderer，通过场景 Volume、灯光、材质调效果，不顺手重置共享 Feature。
+- 当前制作集合统一在 `Assets/00动画/`：`MMD场景` 放舞台源资源，`MMD动画场景` 按舞台共用文件夹放多个动作 Scene，`VMD动画` 放动作/运镜/BGM/作者说明，`角色` 只放已验证的 WTD 最终角色。不要每个动作复制灯光、Volume、材质或角色；特殊版本再复制 Scene 并做局部 override。制作验证与旧摄影棚归 `Assets/Editor/MMD制作验证/`，不混进角色成品。
 - 用户禁用 SSGI；需要 GI 时使用 RTGI，可配 RELAX。其他效果按需求选择，不要求每场景开满。
 - **图像效果全部优先使用 Ho。** ImageProcess 的「仅使用 Ho 后处理」默认开启；URP 内置曝光、ACES、Bloom、景深等会被执行层跳过，保留 AA / 升采样 / 显示编码。需要调色、发光、映射、颗粒等直接调整 Ho 图层，不再额外叠 URP 效果，也不为解决预览差异强行降低 Glow 阈值。新场景模板只建 Ho 滤镜。用户要求清理旧内置组件时，用 `strip-native-post` 定点清理当前场景的局部 Profile，核对 Ho 参数指纹不变，不顺手清其它场景；只有明确兼容旧链时才关闭接管。
 - 重点区域用真实光源塑形，后处理负责风格。多角度比较帮助调整，不是固定配方的通过/失败审查。

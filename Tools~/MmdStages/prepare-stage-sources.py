@@ -117,7 +117,7 @@ def main() -> None:
     parser.add_argument("--source-root", type=pathlib.Path,
                         default=pathlib.Path(r"E:\BaiduSyncdisk\大师\_完整场景\H2Cu阿相"))
     parser.add_argument("--target-root", type=pathlib.Path,
-                        default=pathlib.Path(r"D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\H2Cu阿相"))
+                        default=pathlib.Path(r"D:\Unity_Project\BREAK_URP\Assets\00动画\MMD场景\H2Cu阿相"))
     parser.add_argument("--evidence", type=pathlib.Path,
                         default=pathlib.Path(__file__).resolve().parents[2] / "Temp~" / "MmdStages" / "source-copy.json")
     args = parser.parse_args()

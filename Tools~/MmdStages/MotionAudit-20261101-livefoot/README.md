@@ -4,8 +4,8 @@
 
 ## 本次具体现场
 
-- 场景：`Assets/Hollow/MMD影片/花吐电気_EX-HAPPY/Scenes/花吐电気_EX-HAPPY.unity`。
-- 动作：`Assets/Hollow/VMD动画/甜茶/EX_HAPPY/EX_HAPPY/EX_HAPPY/motion.vmd`。
+- 场景：`Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/EX-HAPPY.unity`。
+- 动作：`Assets/00动画/VMD动画/甜茶/EX_HAPPY/EX_HAPPY/EX_HAPPY/motion.vmd`。
 - 主骨架：WTD `Armature-Swimsuit`，运行时已包含第二套服装合骨架结果。
 - Unity 帧 949，`Time.time=11.73602`；Sequence 时间 `10.75447 s`，VMD 帧约 `322.6341`。
 - 用户关心的是相邻帧跳变，单帧的大幅转折、姿势角度或四元数符号变化本身均不算故障。

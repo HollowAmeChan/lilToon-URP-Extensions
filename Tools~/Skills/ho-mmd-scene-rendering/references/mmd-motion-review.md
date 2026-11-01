@@ -25,11 +25,17 @@ WTD 驱动 `Armature-Swimsuit`；`Armature-Miko` 由既有合骨架流程处理�
 
 使用 Sequence Inspector 的“检查实际使用的表情”，先处理有非零关键帧的缺失项；只有零权重键的占位名称不必强配。嘴、眼、眉和左右方向不能仅靠相似名称猜映射。组件可一对多映射既有 BlendShape；没有对应形态键时明确记录缺口。
 
-确认 Sequence 的 BGM 字段与内部 AudioSource 都引用正确音频。后期给 MP4 合过音乐，不等于编辑器播放已经有音乐；离线录制与实时预览各测试一次。参考资料和许可与影片资源放在同一目录，片段/输出各自独立。
+确认 Sequence 的 BGM 字段与内部 AudioSource 都引用正确音频。需要人工卡点时，使用组件的 **BGM 时间偏移（秒）**：正值延后、负值提前，只移动音乐，不移动动作/表情/镜头。例如 NEMONEMO 音乐早约 1 秒，填 `1`，后续由用户按目测继续调，不自动估算节拍。自动时长容纳延后尾音；手动时长不变。实时播放与 CLI 合音共用此值，录制报告记录实际值，避免场景改动后拿新参数合旧片。
+
+后期给 MP4 合过音乐，不等于编辑器播放已经有音乐；离线录制与实时预览各测试一次。作者说明、许可、VMD、BGM 留在动作资源目录，影片场景引用它们，不为每个场景复制音频。
 
 ## 已适配角色放入已有舞台
 
 使用 `HoMmdStagePerformance` / `video-cli.py compose-stage --config ...` 做一次组合。配置指定 `stageScene`、已有可播放的 `animationScene`、独立输出 `scene` / `folder`，以及可选 `performancePosition` / `performanceYaw`。舞台副本保留已制作的灯光，局部复制并重连 Rendering、Materials 与 Volume 子资产；WTD 继续保留共享 Prefab 链接，原始环境网格/贴图及 VMD/BGM 继续共享。公共 PC Pipeline/Renderer 不复制。
+
+**同一舞台的多个动作共用一个影片文件夹**，例如 `Assets/00动画/MMD动画场景/花吐电気通用动画/`：`Scenes/` 放各动作 `.unity`，`舞台/` 放共享环境 Prefab，`Rendering/`、`Materials/`、`制作说明/`、`Renders/` 共用。每个场景只保留一个舞台实例和自己的 `20 演出` 根节点；角色仍引用 `Assets/00动画/角色/WTD/WTD-BUILD.prefab`。日常添加动作优先复制已有动作场景，替换 Sequence 素材并使用“更新素材（保留适配）”，不要每次 compose 复制整套舞台资源。
+
+统一灯光在共享舞台 Prefab 中修改，统一滤镜在共享 Profile 中修改；各动作 Scene 保存运镜、动作、音画偏移和演出位置。需要特殊版本时复制该动作 Scene，再用 Prefab override 调灯；需要独立滤镜或材质时显式复制对应资产并重连。舞台源资源仍在 `Assets/00动画/MMD场景/<作者>/<场景>/`，不改源舞台来满足单支影片的特殊效果。
 
 从原影片只转移 Sequence、共享角色实例及其演出相机/音源，不转移摄影棚地面、旧补光、旧 Volume 或多余主相机。角色、参考骨架与相机收在同一演出根节点下；不要分别修改三者坐标。组合不会重新生成适配、重置手指偏移或写回共享角色。
 

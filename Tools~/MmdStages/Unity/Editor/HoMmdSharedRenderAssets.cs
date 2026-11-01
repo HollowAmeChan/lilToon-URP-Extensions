@@ -55,7 +55,7 @@ public static class HoMmdSharedRenderAssets
             EnsureAssets();
             if (Arg("-hoMigrateScenes") == "1") MigrateScenes();
             AssetDatabase.SaveAssets();
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity", OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity", OpenSceneMode.Single);
             EditorApplication.Exit(0);
         }
         catch (Exception exception)

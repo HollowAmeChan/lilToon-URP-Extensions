@@ -27,7 +27,7 @@ public static class HoMmdPracticalLighting
                 .Where(x => File.Exists(x + "/" + System.IO.Path.GetFileName(x) + ".unity")).Select(System.IO.Path.GetFileName).OrderBy(x => x).ToArray();
             batchOperation = Arg("-hoOperation") ?? "before"; batchStage = 0; batchView = 0;
             if (args.Contains("-hoLightProbe")) RenderPipelineManager.endCameraRendering += Probe;
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity", OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity", OpenSceneMode.Single);
             EditorApplication.delayCall += BatchNext;
         }
         catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }

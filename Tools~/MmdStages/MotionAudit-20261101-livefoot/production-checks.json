@@ -29,7 +29,7 @@
   "missingVolumeComponents": 0,
   "nativeLeakDetectionMode": "EnabledWithStackTrace",
   "persistent8AllocationsStatus": "Unresolved: still reported on latest reload; earlier allocations have no captured stacks",
-  "scene": "Assets/Hollow/MMD影片/花吐电気_EX-HAPPY/Scenes/花吐电気_EX-HAPPY.unity",
+  "scene": "Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/EX-HAPPY.unity",
   "playing": false,
   "paused": false
 }

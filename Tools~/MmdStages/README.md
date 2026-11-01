@@ -4,10 +4,14 @@
 
 日常制作改用 [Ho PMX 场景制作 skill](../Skills/ho-mmd-scene-rendering/SKILL.md)：新 PMX 导入/抽材质、创建初始层级、定点调整灯光/Volume、只渲染多角度 review。手工场景是当前版本，不每次跑旧全场景审计或恢复配方。下文的固定批次验收和全量哈希是历史记录，不作为日常门槛。
 
+工程制作集合位于 `Assets/00动画/`，分为 `MMD场景`、`MMD动画场景`、`VMD动画`、`角色`。
+同一舞台的多个动作集中在一个“场景名通用动画”文件夹，共用舞台 Prefab 和渲染资产；
+操作见 [批量影片指南](BATCH_VIDEO.md)，不再为每个动作复制一套环境目录。
+
 ```powershell
-python Tools~/MmdStages/stage-cli.py create --folder "Assets/mmd场景测试/作者/新场景" --pmx "Assets/mmd场景测试/作者/新场景/Source/原始包/主体.pmx"
+python Tools~/MmdStages/stage-cli.py create --folder "Assets/00动画/MMD场景/作者/新场景" --pmx "Assets/00动画/MMD场景/作者/新场景/Source/原始包/主体.pmx"
 python Tools~/MmdStages/stage-cli.py logo --logo-y .1 --logo-size .3
-python Tools~/MmdStages/stage-cli.py review --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --warmup 32
+python Tools~/MmdStages/stage-cli.py review --scene "Assets/00动画/MMD场景/作者/新场景/新场景.unity" --warmup 32
 ```
 
 先将完整包保持相对贴图路径复制进 Source。create 不覆盖已有场景；review 不调用制作配方，默认把三机位 PNG 写入 Library/HoMmdStages/Review/<场景>/<时间>。单张使用 render --scene，Logo 默认 Y=.1、大小=.3。只保存目标 Logo Profile，不顺手保存用户场景。任意场景 review 入口不要求固定雾、GI、景深、灯数、天空或材质参数。
@@ -24,7 +28,7 @@ python Tools~/MmdStages/prepare-stage-sources.py
 
 默认源目录：`E:/BaiduSyncdisk/大师/_完整场景/H2Cu阿相`。
 
-默认目标目录：`D:/Unity_Project/BREAK_URP/Assets/mmd场景测试/H2Cu阿相`。
+默认目标目录：`D:/Unity_Project/BREAK_URP/Assets/00动画/MMD场景/H2Cu阿相`。
 
 每场景各自保存一套源资源。脚本复制后比较 SHA256 并检查源文件长度/修改时间未变，报告写到 `Temp~/MmdStages/source-copy.json`。再次运行时同内容复用，目标存在不同内容时明确拒绝覆盖，保留手工修改。
 
@@ -63,7 +67,7 @@ Ho lilToon 模型材质统一开启 ShadowCaster 和 AO 艺术增强，每场景
 
 ## Unity 制作工具
 
-Unity/ 是本机 Assets/mmd场景测试/_制作工具 的源码快照，不包含第三方模型或贴图：
+Unity/ 是本机 Assets/00动画/MMD场景/_制作工具 的源码快照，不包含第三方模型或贴图：
 
 - HoMmdStageDetail：本轮细节灯光制作与三个机位捕获。细节灯光基线.json 防止多次执行叠乘；细节灯光.json 保存可调取值。09 细节灯光是新增真实灯与遮片；10 观察机位保存两台关闭的辅助相机，原主相机继续启用。
 - HoMmdYueximeiComplete：补回月昔梅完整包的一次性装配，保留原场景 GUID 与团扇；Run 之后进入标准三机位细节灯光捕获，AuditBatch 核对四份模型、外置材质和相对贴图。

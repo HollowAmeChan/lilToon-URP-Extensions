@@ -2,18 +2,26 @@
 
 ## 场景搭建与渲染分开
 
-先为每个动作准备独立的影片目录和 `制作说明/制作配置.json`。
-`compose-stage` 的 `stageScene` 可以是已调好的舞台，也可以是已完成的影片场景。
-仅当目标场景尚不存在时，工具才会从影片模板中移除旧演出并转移新的已适配演出。
-已有演出场景始终拒绝重建，后续调灯和换装应直接编辑它。
+同一舞台集中放在一个目录，例如 `Assets/00动画/MMD动画场景/花吐电気通用动画/`。
+`Scenes/<动作>.unity` 与 `制作说明/<动作>.json` 按动作分开；舞台 Prefab、`Rendering/`、
+`Materials/` 和 `Renders/` 共用。角色只引用 `Assets/00动画/角色/WTD/WTD-BUILD.prefab`。
 
-使用影片模板时：
+同舞台添加动作时，优先复制一个已有动作 Scene，替换 Sequence 素材并点击“更新素材（保留适配）”。
+共用灯光改舞台 Prefab，共用滤镜改共享 Profile。特殊版本复制 Scene 后做 Prefab override；
+需要独立滤镜时再复制对应 Profile。演出根节点统一为 `20 演出`，让共享景深跟焦路径保持有效。
+
+首次为新舞台创建演出起点时才使用 `compose-stage`。其 `stageScene` 可以是已调好的舞台，
+也可以是已完成的影片模板。目标已有演出时拒绝重建，后续调灯和换装直接编辑 Scene。
+首次组合会：
 
 - 复制本地 `Rendering/`、`Materials/`，重连场景和 Volume 的引用。
 - 保留作者已经调好的景深参数，仅更新新演出头骨的跟焦路径。
 - 保留原动作的骨骼、表情、IK 和运镜适配，不重新生成映射。
 - `enableParts` / `disableParts` 可以在新场景中持久化衣装开关；录制 CLI 也支持临时覆盖。
 - 共享角色、环境网格、原始贴图、VMD 和现有 BGM，继续使用公共 PC 管线。
+
+人工卡点使用 Sequence 的 **BGM 时间偏移（秒）**，正值延后、负值提前，不移动动作和镜头。
+录制报告保存实际偏移，合音优先使用报告值，避免拿后来修改的组件参数去合旧视频。
 
 ## 批次渲染
 
@@ -24,7 +32,7 @@
 
 ```powershell
 python Tools~/MmdStages/render-video-batch.py `
-  --manifest "D:/Unity_Project/BREAK_URP/Assets/Hollow/MMD影片/花吐电気_巫女服中质量制作清单.json"
+  --manifest "D:/Unity_Project/BREAK_URP/Assets/00动画/MMD动画场景/花吐电気通用动画/制作说明/巫女服中质量制作清单.json"
 ```
 
 指定一支先检查：

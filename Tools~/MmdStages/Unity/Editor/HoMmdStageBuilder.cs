@@ -18,7 +18,7 @@ using Object=UnityEngine.Object;
 
 public static class HoMmdStageBuilder
 {
-    public const string Root="Assets/mmd场景测试/H2Cu阿相/";
+    public const string Root="Assets/00动画/MMD场景/H2Cu阿相/";
     public const string FixedPipelinePath="Assets/Settings/PC_RPAsset.asset";
     public const string FixedRendererPath="Assets/Settings/PC_Renderer.asset";
     public static UniversalRendererData ResolveRenderer(string folder)
@@ -32,7 +32,7 @@ public static class HoMmdStageBuilder
     }
     public static void BuildRemainingBatch()
     {
-        try{EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+        try{EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             Execute(new HoMmdStageWork.Request{action="buildRemaining"});EditorApplication.Exit(0);}
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
     }
@@ -40,7 +40,7 @@ public static class HoMmdStageBuilder
     {
         try
         {
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             foreach(var recipe in Recipes())Adjust(ReadRecipe(recipe.name));
             EditorApplication.Exit(0);
         }
@@ -53,7 +53,7 @@ public static class HoMmdStageBuilder
             string[] args=Environment.GetCommandLineArgs();
             int index=Array.IndexOf(args,"-hoStage");
             string stage=index>=0?args[index+1]:"花吐电気";
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             BeginRender(new HoMmdStageWork.Request{stage=stage,width=1280,height=720},path=>{
                 File.WriteAllText(Path.Combine(HoMmdStageWork.Work,"capture-"+stage+".json"),
                     "{\"status\":\"ok\",\"path\":\""+path.Replace("\\","/")+"\"}");
@@ -72,14 +72,14 @@ public static class HoMmdStageBuilder
     public static void RenderStagesBatch(IEnumerable<string> stages)
     {
         captureIndex=0;captured.Clear();captureStages=stages.ToArray();
-        EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+        EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
         EditorApplication.delayCall+=CaptureNext;
     }
     public static void RefineAndRenderAllBatch()
     {
         try
         {
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             foreach(var recipe in Recipes())Adjust(ReadRecipe(recipe.name));
             RenderAllBatch();
         }

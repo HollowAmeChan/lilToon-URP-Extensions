@@ -4,7 +4,7 @@
 
 ## 文件和导入
 
-推荐 `Assets/mmd场景测试/<作者>/<场景>/`，下设 Source、Materials、Rendering、Renders，场景文件放在根目录。作者/名称不依赖 H2CU 清单。
+推荐 `Assets/00动画/MMD场景/<作者>/<场景>/`，下设 Source、Materials、Rendering、Renders，场景文件放在根目录。作者/名称不依赖 H2CU 清单。
 
 复制完整原包到 Source，保留 PMX 到贴图的相对目录，不扁平化同名纹理，不复制其他 Unity 工程的 .meta。E 盘原包不需要改写。普通制作不要求反复比较全库哈希。
 
@@ -17,7 +17,7 @@ PMX/MME 预览中的灯光、粒子、镜头和天空不会自动变成完整 Un
 工程打开、队列脚本编译完成后：
 
 ```powershell
-python Tools~/MmdStages/stage-cli.py create --folder "Assets/mmd场景测试/作者/新场景" --pmx "Assets/mmd场景测试/作者/新场景/Source/原始包/主体.pmx"
+python Tools~/MmdStages/stage-cli.py create --folder "Assets/00动画/MMD场景/作者/新场景" --pmx "Assets/00动画/MMD场景/作者/新场景/Source/原始包/主体.pmx"
 ```
 
 重复 --pmx 可组合部件。可选 --logo "Assets/.../Hollow Logo.png" 会复制 Logo 到 Rendering，创建黑边/白 Logo，Y=.1、大小=.3。先复制完整包到 Source；创建入口不推断外部纹理依赖，也不覆盖已有 .unity。

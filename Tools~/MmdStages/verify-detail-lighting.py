@@ -6,7 +6,7 @@ import json
 import sys
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(r"D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\H2Cu阿相")
+ROOT = Path(r"D:\Unity_Project\BREAK_URP\Assets\00动画\MMD场景\H2Cu阿相")
 LIB = Path(r"D:\Unity_Project\BREAK_URP\Library\HoMmdStages")
 EVIDENCE = Path(__file__).resolve().parents[2] / "Temp~" / "MmdStages" / "DetailLighting-20261029"
 RECOVERY = EVIDENCE.parent / "YueximeiComplete-20261030"

@@ -131,7 +131,7 @@ public static class HoMmdVideoWorkshop
                 case "production-tests":
                     var type = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("VmdProductionValidation")).First(x => x != null);
                     result = (string)type.GetMethod("Run").Invoke(null, new object[] { request.motion, request.sourceRig,
-                        "Assets/Hollow/WTD-summer/WTD-BUILD.prefab", Path.Combine(Work, "production-tests.json") });
+                        "Assets/00\u52A8\u753B/\u89D2\u8272/WTD/WTD-BUILD.prefab", Path.Combine(Work, "production-tests.json") });
                     break;
                 case "aux-prefab": result = ConfigureAuxPrefab(request); break;
                 case "sampling-tests":
@@ -330,7 +330,7 @@ public static class HoMmdVideoWorkshop
 
     static string ConfigureAuxPrefab(Request request)
     {
-        string path = "Assets/Hollow/WTD-summer/WTD-BUILD.prefab";
+        string path = "Assets/00\u52A8\u753B/\u89D2\u8272/WTD/WTD-BUILD.prefab";
         var stage = PrefabStageUtility.GetCurrentPrefabStage();
         if (stage != null && stage.assetPath == path && stage.scene.isDirty)
             throw new InvalidOperationException("WTD Prefab has unsaved editor changes; leave them intact.");

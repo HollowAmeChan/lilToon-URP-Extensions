@@ -31,7 +31,7 @@ public static class HoMmdSceneWorkshop
             else if (request.action == "render") EditorApplication.delayCall += () => { try { RenderOne(request, done, fail); } catch (Exception e) { fail(e); } };
             else if (request.action == "create") done(Create(request));
             else if (request.action == "logo") done(HoMmdStageBranding.SetLogos(
-                string.IsNullOrEmpty(request.stageFolder) ? "Assets/mmd场景测试" : request.stageFolder, request.logoY, request.logoSize));
+                string.IsNullOrEmpty(request.stageFolder) ? "Assets/00动画/MMD场景" : request.stageFolder, request.logoY, request.logoSize));
             else throw new ArgumentException("Unsupported workshop action " + request.action);
         }
         catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }

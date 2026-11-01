@@ -4,7 +4,7 @@
 
 ## 工程打开：文件队列
 
-同步 Tools~/MmdStages/Unity/Editor 到项目 Assets/mmd场景测试/_制作工具/Editor。现有队列可以触发编译：
+同步 Tools~/MmdStages/Unity/Editor 到项目 Assets/00动画/MMD场景/_制作工具/Editor。现有队列可以触发编译：
 
 ```powershell
 python Tools~/MmdStages/stage-cli.py status
@@ -17,7 +17,7 @@ python Tools~/MmdStages/stage-cli.py refresh
 
 ```powershell
 python Tools~/MmdStages/stage-cli.py logo --logo-y .1 --logo-size .3
-python Tools~/MmdStages/stage-cli.py logo --folder "Assets/mmd场景测试/作者/新场景" --logo-y .1 --logo-size .3
+python Tools~/MmdStages/stage-cli.py logo --folder "Assets/00动画/MMD场景/作者/新场景" --logo-y .1 --logo-size .3
 ```
 
 只改找到的 Hollow 图层 Y/size；保留 X、颜色、贴图、启用状态与其他滤镜。不打开/重建场景，只保存目标 Volume。后续想变尺寸时显式运行，不在每次渲图时强制恢复。
@@ -25,9 +25,9 @@ python Tools~/MmdStages/stage-cli.py logo --folder "Assets/mmd场景测试/作�
 ## 只渲染当前效果
 
 ```powershell
-python Tools~/MmdStages/stage-cli.py render --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --width 1280 --height 720 --warmup 16
-python Tools~/MmdStages/stage-cli.py review --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --width 1280 --height 720 --warmup 32
-python Tools~/MmdStages/stage-cli.py review --scene "Assets/mmd场景测试/作者/新场景/新场景.unity" --motion "Assets/动作/动作.vmd" --motion-frame 240 --width 1280 --height 720 --warmup 32
+python Tools~/MmdStages/stage-cli.py render --scene "Assets/00动画/MMD场景/作者/新场景/新场景.unity" --width 1280 --height 720 --warmup 16
+python Tools~/MmdStages/stage-cli.py review --scene "Assets/00动画/MMD场景/作者/新场景/新场景.unity" --width 1280 --height 720 --warmup 32
+python Tools~/MmdStages/stage-cli.py review --scene "Assets/00动画/MMD场景/作者/新场景/新场景.unity" --motion "Assets/动作/动作.vmd" --motion-frame 240 --width 1280 --height 720 --warmup 32
 ```
 
 单张使用 MainCamera。review 使用主机位、左侧观察相机、右侧观察相机，先在 Unity 按空间摆好；starter 创建初始机位。输出默认 Library/HoMmdStages/Review/<场景>/<时间>/main.png,left.png,right.png，不覆盖正式渲图。单张 --output 传 PNG 文件，review --output 传目录。
@@ -47,7 +47,7 @@ review 按需求看主体照明、亮部层次、地板/远景可读性、阴影
 请求 JSON 示例：
 
 ```json
-{"action":"review","scenePath":"Assets/mmd场景测试/作者/新场景/新场景.unity","width":1280,"height":720,"warmup":32}
+{"action":"review","scenePath":"Assets/00动画/MMD场景/作者/新场景/新场景.unity","width":1280,"height":720,"warmup":32}
 ```
 
 ```powershell
@@ -62,3 +62,5 @@ Start-Process -FilePath $editor -WindowStyle Hidden -ArgumentList @('-batchmode'
 缺图/透明异常查单个 PMX report 与材质；反射异常才跑 PLR debug/on-off/mip；体积异常查对应 Source/Volume；怀疑底层依赖才看管线总览，不批量重置共享 Renderer。
 
 HoMmdStageAudit.RunBatch、verify-detail-lighting.py、旧 source/hash manifests 与固定机位数量属于早期批量制作的可选回归工具，不再是日常完成条件。只有明确复现旧批次、查回归、验证底层改动时才选用需要的部分。
+
+资源重排遇到 `Access denied` / `Moving file failed` 时先查文件占用；资源管理器打开的旧 `Renders/` 目录也会阻止父目录移动。保留 `.meta`，不反复触发原生重试窗口，不强退 Unity。迁移时还要确认目标实际文件存在，单独看到 GUID 已迁移不足以证明原文件移动完整；清理残留副本前只对该残留范围检查内容和引用。这些检查用于目录迁移，不作为日常调灯或渲染门槛。

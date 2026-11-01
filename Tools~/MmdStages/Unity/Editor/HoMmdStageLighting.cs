@@ -42,10 +42,10 @@ public static class HoMmdStageLighting
     {
         try
         {
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             string stage=Argument("-hoStage");
             foreach(var r in HoMmdStageBuilder.Recipes())if(stage==null||r.name==stage)Apply(r.name);
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             AssetDatabase.SaveAssets();EditorApplication.Exit(0);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
@@ -54,13 +54,13 @@ public static class HoMmdStageLighting
     {
         try
         {
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             string requested=Argument("-hoStages");
             string[] stages=requested!=null?requested.Split(','):HoMmdStageBuilder.Recipes().Select(x=>x.name).ToArray();
             foreach(string stage in stages)
             {if(!HoMmdStageBuilder.Recipes().Any(x=>x.name==stage))throw new ArgumentException("Unknown stage: "+stage);}
             foreach(string stage in stages)Apply(stage);
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             AssetDatabase.SaveAssets();HoMmdStageBuilder.RenderStagesBatch(stages);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}

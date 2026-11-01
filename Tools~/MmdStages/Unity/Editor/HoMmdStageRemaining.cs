@@ -16,7 +16,7 @@ using Object=UnityEngine.Object;
 // Catalog and scene-owned art direction for the remaining local packages.
 public static class HoMmdStageRemaining
 {
-    const string CatalogPath="Assets/mmd场景测试/_制作工具/Editor/H2CuRemaining.json";
+    const string CatalogPath="Assets/00动画/MMD场景/_制作工具/Editor/H2CuRemaining.json";
     [Serializable] public sealed class Spec
     {
         public HoMmdStageBuilder.Recipe recipe;
@@ -37,14 +37,14 @@ public static class HoMmdStageRemaining
     {
         try
         {
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             foreach(var spec in Specs())
             {
                 string name=spec.recipe.name,folder=HoMmdStageBuilder.Root+name;
                 if(!File.Exists(folder+"/"+name+".unity"))HoMmdStageBuilder.Build(spec.recipe);
                 Prepare(name);HoMmdStageLighting.Apply(name);Art(name);HoMmdStageAdvanced.Apply(name);
             }
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             HoMmdStageBuilder.RenderStagesBatch(Recipes().Select(x=>x.name));
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
@@ -55,13 +55,13 @@ public static class HoMmdStageRemaining
         {
             string[] args=Environment.GetCommandLineArgs();int i=Array.IndexOf(args,"-hoStages");
             var names=i>=0?args[i+1].Split(','):Recipes().Select(x=>x.name).ToArray();
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             foreach(string name in names)
             {
                 if(Specs().Any(x=>x.recipe.name==name)){Prepare(name);HoMmdStageLighting.Apply(name);}
                 Art(name);HoMmdStageAdvanced.Apply(name);
             }
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             HoMmdStageBuilder.RenderStagesBatch(names);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
@@ -74,13 +74,13 @@ public static class HoMmdStageRemaining
         {
             string[] args=Environment.GetCommandLineArgs();int i=Array.IndexOf(args,"-hoStages");
             var names=i>=0?args[i+1].Split(','):HoMmdStageBuilder.Recipes().Select(x=>x.name).ToArray();
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             foreach(string name in names)
             {
                 if(Specs().Any(x=>x.recipe.name==name)){Prepare(name);HoMmdStageLighting.Apply(name);Art(name);}
                 HoMmdStageAdvanced.Apply(name);
             }
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             AssetDatabase.SaveAssets();EditorApplication.Exit(0);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}

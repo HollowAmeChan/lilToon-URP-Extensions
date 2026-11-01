@@ -59,10 +59,10 @@ public static class HoMmdStageAdvanced
     {
         try
         {
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             string list=Arg("-hoStages");var names=list!=null?list.Split(','):HoMmdStageBuilder.Recipes().Select(x=>x.name).ToArray();
             foreach(var name in names){if(!HoMmdStageBuilder.Recipes().Any(x=>x.name==name))throw new ArgumentException(name);Apply(name);}
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             AssetDatabase.SaveAssets();HoMmdStageBuilder.RenderStagesBatch(names);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}

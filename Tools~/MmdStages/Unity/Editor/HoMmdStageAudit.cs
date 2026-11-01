@@ -43,7 +43,7 @@ public static class HoMmdStageAudit
                 string rendererPath=renderer!=null?AssetDatabase.GetAssetPath(renderer):string.Empty;
                 bool sharedRenderAssets=env.pipeline!=null&&AssetDatabase.GetAssetPath(env.pipeline)=="Assets/Settings/PC_RPAsset.asset"&&rendererPath=="Assets/Settings/PC_Renderer.asset";
                 var invalid=AssetDatabase.GetDependencies(path,true).Where(x=>
-                    (x.StartsWith("Assets/mmd场景测试/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/mmd场景测试/_制作工具/"))||
+                    (x.StartsWith("Assets/00动画/MMD场景/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/00动画/MMD场景/_制作工具/"))||
                     (x=="Assets/Settings/PC_Renderer.asset"||x=="Assets/Settings/PC_RPAsset.asset")&&!sharedRenderAssets).ToArray();
                 var modelRenderers=renderers.Where(x=>x.transform.parent.name!="04 环境与后处理").ToArray();
                 bool skySphere=renderers.Any(x=>x.name=="天空球"&&x.sharedMaterial!=null&&x.sharedMaterial.shader!=null&&x.sharedMaterial.shader.name=="Ho/MMD Stage Sky Sphere");
@@ -135,7 +135,7 @@ public static class HoMmdStageAudit
             }
             File.WriteAllText(Path.Combine(HoMmdStageWork.Work,"scene-audit.json"),JsonUtility.ToJson(new Report{
                 date=DateTime.UtcNow.ToString("O"),stages=results.ToArray(),errors=errors.ToArray()},true));
-            EditorSceneManager.OpenScene("Assets/Hollow/WTD-summer/WTD.unity",OpenSceneMode.Single);
+            EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity",OpenSceneMode.Single);
             EditorApplication.Exit(errors.Count==0?0:1);
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}

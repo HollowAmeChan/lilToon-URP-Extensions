@@ -12,7 +12,7 @@ public static class HoMmdStageBranding
     public const float DefaultY = .1f;
     public const float DefaultSize = .3f;
 
-    public static string SetLogos(string root = "Assets/mmd场景测试", float y = DefaultY, float size = DefaultSize)
+    public static string SetLogos(string root = "Assets/00动画/MMD场景", float y = DefaultY, float size = DefaultSize)
     {
         if (!AssetDatabase.IsValidFolder(root)) throw new ArgumentException("Asset folder not found: " + root);
         var changed = new List<string>();

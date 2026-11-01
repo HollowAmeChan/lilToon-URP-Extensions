@@ -75,7 +75,7 @@ public static class HoMmdStageWork
             if(command.action=="refresh"){AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);result="refreshed";}
             else if(command.action=="status")result=File.ReadAllText(Path.Combine(Work,"status.json"));
             else if(command.action=="logo")result=HoMmdStageBranding.SetLogos(
-                string.IsNullOrEmpty(command.stageFolder)?"Assets/mmd场景测试":command.stageFolder,command.logoY,command.logoSize);
+                string.IsNullOrEmpty(command.stageFolder)?"Assets/00动画/MMD场景":command.stageFolder,command.logoY,command.logoSize);
             else if(command.action=="create")result=HoMmdSceneWorkshop.Create(command);
             else if(command.action=="fixtures")result=HoMmdPracticalLighting.Inventory(
                 string.IsNullOrEmpty(command.scenePath)?HoMmdStageBuilder.Root+command.stage+"/"+command.stage+".unity":command.scenePath);

@@ -100,7 +100,9 @@ public static class HoMmdStagePerformance
         EditorSceneManager.CloseScene(animation, true);
         SceneManager.SetActiveScene(scene);
         Transform origin = sequence.transform;
-        origin.name = "20 演出 · " + Path.GetFileNameWithoutExtension(request.animationScene) + "（整体位置与朝向）";
+        // A stable actor root keeps one shared head-focus path valid across
+        // the motion scenes in a common stage folder.
+        origin.name = "20 演出";
         foreach (GameObject root in transfer.Where(x => x != origin.gameObject))
             root.transform.SetParent(origin, true);
         origin.position = request.performancePosition;
