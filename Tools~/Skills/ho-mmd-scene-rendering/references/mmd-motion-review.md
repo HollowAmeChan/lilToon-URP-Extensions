@@ -13,6 +13,14 @@ WTD 驱动 `Armature-Swimsuit`；`Armature-Miko` 由既有合骨架流程处理�
 - 反复跳到同一动作帧也要得到相同姿态。源与目标采用确定姿态时，目标 IK 不应再追随另一份交互式 Pole 平滑历史。直接拖动独立 IK 控制点仍可保留平滑。
 - 单轴膝盖大幅屈曲用带符号的四元数轴角检查；Unity 的等价 Euler 分解可在 X 超过 90° 后出现 Y/Z=180°，不能把这两个值钳回零后当作原来的膝角。
 
+### 2026-11-01：EX-HAPPY 实际暂停帧的跳变
+
+- 静态大角度、四元数符号翻转不是故障判据；检查相邻帧的最短旋转角、弯曲平面和最终蒙皮。现场为 EX-HAPPY 10.75447 秒，不能混作先前 NEMONEMO 的证据。
+- 不同角色上下腿比例不一致时，直接把源膝盖绝对点映射为目标 Pole，会让该点靠近并穿过目标髋—踝轴，造成弯曲平面翻解。应传递源腿弯曲方向，再根据目标链构造 Pole。
+- 检查**实际运行时** Mode 和执行顺序：本现场 Sequence 先设置 Pole / 解 IK，父级约束随后重写 Pole，目标 `LateUpdate` 再解一次，破坏已经恢复的脚掌朝向。Builder 代码设置过 Manual 不代表 Prefab 实例运行时仍是 Manual。需在外部明确求解后抑制本帧的额外自动求解；不能靠永久修改用户 Mode。
+- 隔离副本按 60 Hz 复现 9–12.5 秒：原目标右脚约 30° / 右腿约 169° 的相邻跳变，两个问题一起处理后降到约 0.82° / 2.1°。只去掉重复 IK 不会消除腿链翻解。原场景始终停在 Unity 帧 949，全部捕获 Transform 无变化。
+- 证据及修复历史见 `Tools~/MmdStages/MotionAudit-20261101-livefoot`。用户退出 Play 并确认后，**已安装到正式 HoUnityTools 包并在 BREAK_URP 编译加载**；既有 IK 24 项和 VMD 10 项检查通过。全部动作的最终视觉仍需正常播放复核，不能拿局部采样代替整片验收。
+
 ## 表情与音乐
 
 使用 Sequence Inspector 的“检查实际使用的表情”，先处理有非零关键帧的缺失项；只有零权重键的占位名称不必强配。嘴、眼、眉和左右方向不能仅靠相似名称猜映射。组件可一对多映射既有 BlendShape；没有对应形态键时明确记录缺口。
@@ -66,6 +74,8 @@ PC_Renderer 的两个旧显示名称分别仍映射正确的 ScreenProcess / Ima
 Ho 模式的栈初始输入为 HDR，「发光」阈值 7.5 可以有效，不应无条件改成 0.7；新图层默认阈值 1、平滑 0。要做映射，使用已有 Ho `ToonMap`（Neutral / ACES 等）并显式安排在发光之后；作者有意调整顺序时尊重其选择。Inspector 会根据前置 Ho 映射图层或旧混合模式提示高阈值问题。不自动迁移旧 URP 美术效果；用户要求删除内置滤镜时直接清理，不留重复的内置组件干扰操作。
 
 `strip-native-post --config ...` 只清理当前已加载场景引用的局部 VolumeProfile（含已实例化副本），拒绝修改影片目录以外的共享 Profile；删除 URP 命名空间的 `IPostProcessComponent`，保留 Ho 组件、灯光和相机 AA。只保存目标 Profile，不保存或重建场景；输出移除名单、剩余内置组件、清理前后 Ho 序列化参数的 SHA256 一致性。2026-11-01 花吐电気演出场景已按用户要求移除 Bloom、ColorAdjustments、Tonemapping、Vignette、SplitToning、FilmGrain、ChromaticAberration，共 7 项；10 个 Ho 组件及原发光阈值 7.5 保持不变。新建场景模板也已不再添加内置 Bloom/ColorAdjustments，改用 Ho 发光。
+
+临时 Profile 对照与删除组件也要管理 Inspector 生命周期：组件被销毁前，先定点释放 `Editor.targets` 引用该组件的子编辑器。否则 Inspector 在域重载时可能恢复一批目标已不存在的 Volume 编辑器，连续报 `SerializedObjectNotCreatableException`。`HoMmdRenderDiagnostics` 已在临时 Dispose、SetMode 删除、持久 Profile 清理三条路径加上释放；不要靠修改 URP 面板 OnEnable 吞异常，也不要误把旧 Editor 残留当成场景组件缺失。Persistent native allocation 提示是另一问题，须收集分配调用栈，不关闭检测掩盖。
 
 历史问题（2026-11-01、旧混合链）：花吐电気两边均执行 8 层 ImageProcess，但 Scene View 跳过了原生映射，Game 执行 ACES；阈值 7.5 在 Game 近乎无贡献，不能据此说作者参数错误。曾提供的降阈值和开启完整预览只是绕过现象，不是根因修复。只有明确关闭 Ho 接管回到旧混合链时，才需要排查这两套开关并使用 `enable-scene-post`。不同机位不能当成逐像素相机一致性测试。
 

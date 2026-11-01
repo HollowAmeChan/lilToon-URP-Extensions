@@ -1,0 +1,35 @@
+{
+  "loadedRuntimeAssembly": "D:\\Unity_Project\\BREAK_URP\\Library\\ScriptAssemblies\\HoUnityTools.Runtime.dll",
+  "runtimeCompiledUtc": "2026-11-01T03:32:22.0065605Z",
+  "productionIkFixLoaded": true,
+  "ikCases": 24,
+  "ikFailures": [],
+  "vmdPassed": [
+    "normal signed distance looks at center",
+    "pitch/yaw/roll match MMD view basis",
+    "FOV interpolates without integer stepping",
+    "independent camera XYZ Beziers",
+    "motion origin scales camera radius and center together",
+    "adjacent camera keys stay hard cuts at 60fps",
+    "bounded reference rig maps body and fingers",
+    "Humanoid feet receive automatic Ho IK when absent",
+    "rewind does not recapture animated rest pose",
+    "no external mapping profile assets"
+  ],
+  "editorLifetimePassed": [
+    "Bloom: releases only matching Editor; both profiles and unrelated Editor remain intact",
+    "Tonemapping: releases only matching Editor; both profiles and unrelated Editor remain intact",
+    "FilmGrain: releases only matching Editor; both profiles and unrelated Editor remain intact",
+    "ColorAdjustments: releases only matching Editor; both profiles and unrelated Editor remain intact",
+    "Vignette: releases only matching Editor; both profiles and unrelated Editor remain intact",
+    "ChromaticAberration: releases only matching Editor; both profiles and unrelated Editor remain intact",
+    "LensDistortion: releases only matching Editor; both profiles and unrelated Editor remain intact"
+  ],
+  "invalidEditorsRemaining": 0,
+  "missingVolumeComponents": 0,
+  "nativeLeakDetectionMode": "EnabledWithStackTrace",
+  "persistent8AllocationsStatus": "Unresolved: still reported on latest reload; earlier allocations have no captured stacks",
+  "scene": "Assets/Hollow/MMD影片/花吐电気_EX-HAPPY/Scenes/花吐电気_EX-HAPPY.unity",
+  "playing": false,
+  "paused": false
+}

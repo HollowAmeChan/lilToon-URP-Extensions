@@ -1,0 +1,330 @@
+{
+  "motion": "EX-HAPPY",
+  "windowSeconds": [
+    9,
+    12.5
+  ],
+  "sampleRate": 60,
+  "variants": {
+    "before": {
+      "liveEngineFrameBefore": 949,
+      "liveEngineFrameAfter": 949,
+      "livePositionDelta": 0,
+      "liveRotationDelta": 0,
+      "pausedBefore": true,
+      "pausedAfter": true,
+      "bones": {
+        "右足": {
+          "maxDegreesPerSample": 3.065513093359068,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.020634401793535
+        },
+        "右ひざ": {
+          "maxDegreesPerSample": 2.701761626825977,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.0121309948283495
+        },
+        "右足首": {
+          "maxDegreesPerSample": 0.8237859268449351,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12771764383717016
+        },
+        "左足": {
+          "maxDegreesPerSample": 4.172872632150112,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.3201337354660463
+        },
+        "左ひざ": {
+          "maxDegreesPerSample": 3.7226523712608657,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.1275810853084938
+        },
+        "左足首": {
+          "maxDegreesPerSample": 0.6947848298573062,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.122451078142516
+        },
+        "upper_leg.L": {
+          "maxDegreesPerSample": 48.034404335017115,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 6.6557484457474825
+        },
+        "lower_leg.L": {
+          "maxDegreesPerSample": 48.02982589319744,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 6.6676681981437085
+        },
+        "foot.L": {
+          "maxDegreesPerSample": 2.850254731484257,
+          "atSeconds": 11.516666666666667,
+          "maxDegreesNearPausedTime": 2.0995365875360634
+        },
+        "lower_leg_twist_02.L": {
+          "maxDegreesPerSample": 12.400381882840165,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.9185374459353883
+        },
+        "upper_leg.R": {
+          "maxDegreesPerSample": 168.83815180361992,
+          "atSeconds": 11.766666666666667,
+          "maxDegreesNearPausedTime": 0.842702053024007
+        },
+        "lower_leg.R": {
+          "maxDegreesPerSample": 168.838090584807,
+          "atSeconds": 11.766666666666667,
+          "maxDegreesNearPausedTime": 0.7001067917162473
+        },
+        "foot.R": {
+          "maxDegreesPerSample": 30.082683994865125,
+          "atSeconds": 11.766666666666667,
+          "maxDegreesNearPausedTime": 1.1319014234177678
+        },
+        "lower_leg_twist_02.R": {
+          "maxDegreesPerSample": 72.03461761755113,
+          "atSeconds": 11.716666666666667,
+          "maxDegreesNearPausedTime": 1.000497296424874
+        }
+      }
+    },
+    "owned": {
+      "liveEngineFrameBefore": 949,
+      "liveEngineFrameAfter": 949,
+      "livePositionDelta": 0,
+      "liveRotationDelta": 0,
+      "pausedBefore": true,
+      "pausedAfter": true,
+      "bones": {
+        "右足": {
+          "maxDegreesPerSample": 3.065513093359068,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.020634401793535
+        },
+        "右ひざ": {
+          "maxDegreesPerSample": 2.701761626825977,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.0121309948283495
+        },
+        "右足首": {
+          "maxDegreesPerSample": 0.8237859268449351,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12771764383717016
+        },
+        "左足": {
+          "maxDegreesPerSample": 4.172872632150112,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.3201337354660463
+        },
+        "左ひざ": {
+          "maxDegreesPerSample": 3.7226523712608657,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.1275810853084938
+        },
+        "左足首": {
+          "maxDegreesPerSample": 0.6947848298573062,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.122451078142516
+        },
+        "upper_leg.L": {
+          "maxDegreesPerSample": 48.03431303988447,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 6.64991870941459
+        },
+        "lower_leg.L": {
+          "maxDegreesPerSample": 48.02985301881879,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 6.6725031951328875
+        },
+        "foot.L": {
+          "maxDegreesPerSample": 0.6947880646348994,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12244806060752012
+        },
+        "lower_leg_twist_02.L": {
+          "maxDegreesPerSample": 12.393935678481732,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.7725617431848026
+        },
+        "upper_leg.R": {
+          "maxDegreesPerSample": 161.16302823519928,
+          "atSeconds": 11.766666666666667,
+          "maxDegreesNearPausedTime": 1.066749828612477
+        },
+        "lower_leg.R": {
+          "maxDegreesPerSample": 161.1627376859179,
+          "atSeconds": 11.766666666666667,
+          "maxDegreesNearPausedTime": 1.0170118837523208
+        },
+        "foot.R": {
+          "maxDegreesPerSample": 0.8237881482491065,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12772091168832156
+        },
+        "lower_leg_twist_02.R": {
+          "maxDegreesPerSample": 72.03549860810337,
+          "atSeconds": 11.716666666666667,
+          "maxDegreesNearPausedTime": 0.7141536406075945
+        }
+      }
+    },
+    "fixed": {
+      "liveEngineFrameBefore": 949,
+      "liveEngineFrameAfter": 949,
+      "livePositionDelta": 0,
+      "liveRotationDelta": 0,
+      "pausedBefore": true,
+      "pausedAfter": true,
+      "bones": {
+        "右足": {
+          "maxDegreesPerSample": 3.065513093359068,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.020634401793535
+        },
+        "右ひざ": {
+          "maxDegreesPerSample": 2.701761626825977,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.0121309948283495
+        },
+        "右足首": {
+          "maxDegreesPerSample": 0.8237859268449351,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12771764383717016
+        },
+        "左足": {
+          "maxDegreesPerSample": 4.172872632150112,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.3201337354660463
+        },
+        "左ひざ": {
+          "maxDegreesPerSample": 3.7226523712608657,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.1275810853084938
+        },
+        "左足首": {
+          "maxDegreesPerSample": 0.6947848298573062,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.122451078142516
+        },
+        "upper_leg.L": {
+          "maxDegreesPerSample": 2.184951531702021,
+          "atSeconds": 11.616666666666667,
+          "maxDegreesNearPausedTime": 1.0845653538727118
+        },
+        "lower_leg.L": {
+          "maxDegreesPerSample": 2.1475779543237112,
+          "atSeconds": 11.616666666666667,
+          "maxDegreesNearPausedTime": 0.9498134713213408
+        },
+        "foot.L": {
+          "maxDegreesPerSample": 0.6947844340168772,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12244295435331512
+        },
+        "lower_leg_twist_02.L": {
+          "maxDegreesPerSample": 0.9981615557852282,
+          "atSeconds": 9.016666666666667,
+          "maxDegreesNearPausedTime": 0.7285921905065328
+        },
+        "upper_leg.R": {
+          "maxDegreesPerSample": 2.105097945887955,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 0.9790778457121098
+        },
+        "lower_leg.R": {
+          "maxDegreesPerSample": 1.8386043875630225,
+          "atSeconds": 11.583333333333334,
+          "maxDegreesNearPausedTime": 0.9795952404529665
+        },
+        "foot.R": {
+          "maxDegreesPerSample": 0.8237863384324358,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12771839478555036
+        },
+        "lower_leg_twist_02.R": {
+          "maxDegreesPerSample": 1.6181381105444983,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 0.7060637962943658
+        }
+      }
+    },
+    "candidate": {
+      "liveEngineFrameBefore": 949,
+      "liveEngineFrameAfter": 949,
+      "livePositionDelta": 0,
+      "liveRotationDelta": 0,
+      "pausedBefore": true,
+      "pausedAfter": true,
+      "bones": {
+        "右足": {
+          "maxDegreesPerSample": 3.065513093359068,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.020634401793535
+        },
+        "右ひざ": {
+          "maxDegreesPerSample": 2.701761626825977,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.0121309948283495
+        },
+        "右足首": {
+          "maxDegreesPerSample": 0.8237859268449351,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12771764383717016
+        },
+        "左足": {
+          "maxDegreesPerSample": 4.172872632150112,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.3201337354660463
+        },
+        "左ひざ": {
+          "maxDegreesPerSample": 3.7226523712608657,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 1.1275810853084938
+        },
+        "左足首": {
+          "maxDegreesPerSample": 0.6947848298573062,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.122451078142516
+        },
+        "upper_leg.L": {
+          "maxDegreesPerSample": 2.184951531702021,
+          "atSeconds": 11.616666666666667,
+          "maxDegreesNearPausedTime": 1.0845653538727118
+        },
+        "lower_leg.L": {
+          "maxDegreesPerSample": 2.1475779543237112,
+          "atSeconds": 11.616666666666667,
+          "maxDegreesNearPausedTime": 0.9498134713213408
+        },
+        "foot.L": {
+          "maxDegreesPerSample": 0.6947844340168772,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12244574011799716
+        },
+        "lower_leg_twist_02.L": {
+          "maxDegreesPerSample": 0.9981615557852282,
+          "atSeconds": 9.016666666666667,
+          "maxDegreesNearPausedTime": 0.7285752960185257
+        },
+        "upper_leg.R": {
+          "maxDegreesPerSample": 2.105097945887955,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 0.9790693028948593
+        },
+        "lower_leg.R": {
+          "maxDegreesPerSample": 1.8385892856143666,
+          "atSeconds": 11.583333333333334,
+          "maxDegreesNearPausedTime": 0.9795889781050483
+        },
+        "foot.R": {
+          "maxDegreesPerSample": 0.8237833263788458,
+          "atSeconds": 11.75,
+          "maxDegreesNearPausedTime": 0.12772097374846764
+        },
+        "lower_leg_twist_02.R": {
+          "maxDegreesPerSample": 1.6181381105444983,
+          "atSeconds": 11.783333333333333,
+          "maxDegreesNearPausedTime": 0.7060425156820055
+        }
+      }
+    }
+  }
+}
