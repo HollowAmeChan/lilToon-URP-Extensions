@@ -1,0 +1,78 @@
+[
+  {
+    "name": "Minskirt",
+    "frames": 524,
+    "duration": 17.49,
+    "cameraRenderedFrames": 555,
+    "expectedFramesIncludingWarmup": 554,
+    "taaVerified": true,
+    "hoOnly": true,
+    "nativeLut": false,
+    "expressionsMissing": [],
+    "output": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第二批六动作-验证-20261102/Minskirt-巫女服-360x640-30fps.mp4"
+  },
+  {
+    "name": "Cry_For_Me",
+    "frames": 449,
+    "duration": 14.988,
+    "cameraRenderedFrames": 480,
+    "expectedFramesIncludingWarmup": 479,
+    "taaVerified": true,
+    "hoOnly": true,
+    "nativeLut": false,
+    "expressionsMissing": [],
+    "output": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第二批六动作-验证-20261102/Cry_For_Me-巫女服-360x640-30fps.mp4"
+  },
+  {
+    "name": "Twilight_Twilight",
+    "frames": 866,
+    "duration": 28.888,
+    "cameraRenderedFrames": 897,
+    "expectedFramesIncludingWarmup": 896,
+    "taaVerified": true,
+    "hoOnly": true,
+    "nativeLut": false,
+    "expressionsMissing": [],
+    "output": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第二批六动作-验证-20261102/Twilight_Twilight-巫女服-360x640-30fps.mp4"
+  },
+  {
+    "name": "愛くださいませ_Dance",
+    "frames": 929,
+    "duration": 30.988,
+    "cameraRenderedFrames": 960,
+    "expectedFramesIncludingWarmup": 959,
+    "taaVerified": true,
+    "hoOnly": true,
+    "nativeLut": false,
+    "expressionsMissing": [],
+    "output": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第二批六动作-验证-20261102/愛くださいませ_Dance-巫女服-室内镜头修订-360x640-30fps.mp4"
+  },
+  {
+    "name": "お姫様の作り方",
+    "frames": 910,
+    "duration": 30.355,
+    "cameraRenderedFrames": 941,
+    "expectedFramesIncludingWarmup": 940,
+    "taaVerified": true,
+    "hoOnly": true,
+    "nativeLut": false,
+    "expressionsMissing": [
+      "口横狭め"
+    ],
+    "output": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第二批六动作-验证-20261102/お姫様の作り方-巫女服-360x640-30fps.mp4"
+  },
+  {
+    "name": "DISCOTHECUE",
+    "frames": 754,
+    "duration": 25.155,
+    "cameraRenderedFrames": 785,
+    "expectedFramesIncludingWarmup": 784,
+    "taaVerified": true,
+    "hoOnly": true,
+    "nativeLut": false,
+    "expressionsMissing": [
+      "下眼上"
+    ],
+    "output": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第二批六动作-验证-20261102/DISCOTHECUE-巫女服-360x640-30fps.mp4"
+  }
+]

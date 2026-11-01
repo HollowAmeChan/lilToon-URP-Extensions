@@ -329,6 +329,9 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             }
             if (EditorApplication.timeSinceStartup - began > 5400) throw new TimeoutException("Video capture exceeded 90 minutes.");
             if (renderFailure != null) throw new InvalidOperationException(renderFailure);
+            if (started && tick > warmup + count + request.fps * 2 && controller.IsRecording())
+                throw new InvalidOperationException("Recorder frame interval did not finish while the simulation kept advancing. " +
+                    "The Game View may have stopped processing end-of-frame capture. Keep this partial take for diagnosis and retry.");
             foreach (var item in sequences)
                 item.ExternalTime = request.handStudy ? (tick - warmup < request.fps * 4 ? 0 : 4) :
                     Mathf.Max(0, tick - warmup) / (float)request.fps;
@@ -353,7 +356,7 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
     {
         if (finished || request == null || !request.handStudy || captureCamera == null) return;
         int stage = Mathf.Clamp((tick - warmup - 1) / request.fps, 0, 7);
-        bool wtd = stage % 2 == 0;
+        bool wtd = sequences.Length == 1 || stage % 2 == 0;
         Transform model = wtd ? sequence.Retargeter.TargetSpace :
             sequences.First(x => x != sequence).Body.ModelRoot;
         Animator animator = model.GetComponent<Animator>();

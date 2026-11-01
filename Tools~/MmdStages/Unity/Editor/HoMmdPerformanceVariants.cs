@@ -72,6 +72,8 @@ public static class HoMmdPerformanceVariants
         sequence.Soundtrack = audio;
         sequence.SoundtrackTimeOffset = request.soundtrackTimeOffset;
         sequence.Duration = request.durationSeconds;
+        if (request.overrideCameraFov)
+            sequence.CameraPlayer.minimumPerspectiveFov = Mathf.Clamp(request.minimumCameraFov, 0, 100);
         sequence.ApplySources();
         BindExactExpressions(sequence);
         sequence.Body.RebuildBindings();

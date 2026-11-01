@@ -124,6 +124,12 @@ def main():
             # An existing invalid intermediate is never silently overwritten.
             report = json.loads(report_path.read_text(encoding="utf-8-sig"))
             check_report(report, enable_parts, disable_parts)
+            # A canceled take can still have a report containing the requested
+            # frame count. Verify the encoded intermediate before publishing it.
+            silent_info = probe(silent_video)
+            silent_stream = next(stream for stream in silent_info["streams"] if stream["codec_type"] == "video")
+            if int(silent_stream.get("nb_frames", 0)) != report["frames"]:
+                raise RuntimeError("Incomplete silent capture; preserve or move this take before retrying: " + str(silent_video))
             film["status"] = "recorded"
             save()
             if not output.exists():

@@ -28,6 +28,8 @@ public static class HoMmdVideoWorkshop
         public float performanceYaw;
         public float seconds, distanceMultiplier = 1;
         public float durationSeconds, soundtrackTimeOffset;
+        public bool overrideCameraFov;
+        public float minimumCameraFov;
         public int width = 720, height = 1280, fps = 60;
         public bool fullBody, disableRtgi;
         public bool handStudy;
