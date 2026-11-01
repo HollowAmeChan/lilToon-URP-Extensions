@@ -19,7 +19,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Material material,
             HoAttributeCompositeRenderGraphResources acResources,
             TextureHandle destinationLowTexture,
-            TextureHandle destinationHighTexture)
+            TextureHandle destinationHighTexture,
+            Vector4 downsampleParams)
         {
             using (var builder = renderGraph.AddRasterRenderPass<ObjectSemanticPassData>(passName, out ObjectSemanticPassData passData, ProfilingSampler))
             {
@@ -27,6 +28,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.destinationLowTexture = destinationLowTexture;
                 passData.destinationHighTexture = destinationHighTexture;
                 passData.material = material;
+                passData.downsampleParams = downsampleParams;
 
                 for (int i = 0; i < acResources.selectionTextures.Length; i++)
                 {
@@ -42,6 +44,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (ObjectSemanticPassData data, RasterGraphContext context) =>
                 {
+                    context.cmd.SetGlobalVector(
+                        HoCharacterSpecializationShaderConstants.SemanticDownsampleParamsId,
+                        data.downsampleParams);
                     for (int i = 0; i < data.selectionTextures.Length; i++)
                     {
                         if (data.selectionTextures[i].IsValid())

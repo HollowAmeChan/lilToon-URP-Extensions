@@ -25,6 +25,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/ObjectSemantic"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
 
+            float4 _HoCharacterSemanticDownsampleParams;
+
             // 角色语义位平面：**从 AC 的 Selection 池转置而来**，不再自己解码 OB 的身份池与部件表。
             // AC 的池是 `(SemanticId, coverage)` 的固定 lane（每张 RGBA8 两条），这里是"每通道一个语义"的
             // 位平面 —— 因为下游（前发投影的半影滤波、眼透的羽化）要在同一张图上按 texel 抽很多次，
@@ -51,11 +53,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/ObjectSemantic"
                 return inImageId == _HoACLanes[laneIndex].semanticId ? coverage : 0.0;
             }
 
-            ObjectSemanticOutput Frag(Varyings input)
+            ObjectSemanticOutput SampleSemanticCoverage(float2 uv)
             {
-                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-
-                float2 uv = input.texcoord;
                 float4 packed01 = SAMPLE_TEXTURE2D_X(_HoACSelection0Texture, sampler_PointClamp, uv);
                 float4 packed23 = SAMPLE_TEXTURE2D_X(_HoACSelection1Texture, sampler_PointClamp, uv);
                 float4 packed45 = SAMPLE_TEXTURE2D_X(_HoACSelection2Texture, sampler_PointClamp, uv);
@@ -93,6 +92,40 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/ObjectSemantic"
                     LaneCoverage(5u, id5, cov5),
                     LaneCoverage(6u, id6, cov6),
                     LaneCoverage(7u, id7, cov7));
+                return output;
+            }
+
+            ObjectSemanticOutput Frag(Varyings input)
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                int scale = (int)clamp(round(_HoCharacterSemanticDownsampleParams.x), 1.0, 4.0);
+                if (scale == 1)
+                {
+                    return SampleSemanticCoverage(input.texcoord);
+                }
+
+                float2 sourceTexel = _HoCharacterSemanticDownsampleParams.yz;
+                float2 firstOffset = (0.5 - (float)scale * 0.5) * sourceTexel;
+                ObjectSemanticOutput output;
+                output.low = 0.0;
+                output.high = 0.0;
+                [loop]
+                for (int y = 0; y < scale; y++)
+                {
+                    [loop]
+                    for (int x = 0; x < scale; x++)
+                    {
+                        float2 sampleUv = input.texcoord + firstOffset + float2(x, y) * sourceTexel;
+                        ObjectSemanticOutput sample = SampleSemanticCoverage(sampleUv);
+                        output.low += sample.low;
+                        output.high += sample.high;
+                    }
+                }
+
+                float invSampleCount = rcp((float)(scale * scale));
+                output.low *= invSampleCount;
+                output.high *= invSampleCount;
                 return output;
             }
             ENDHLSL

@@ -14,6 +14,18 @@ Unity.exe -batchmode -projectPath <isolated-project> -executeMethod ResolutionSc
 关闭适配后的旧公式、非像素参数、运行时复制、序列化和无效参考高度。
 成功时输出 `[ResolutionScalingValidation] PASS`，返回 0。
 
+## AC 语义覆盖率降采样回归
+
+将 `SemanticCoverageDownsampleValidation.cs` 复制到隔离工程的 `Assets/Editor`，运行：
+
+```powershell
+Unity.exe -batchmode -projectPath <isolated-project> -executeMethod SemanticCoverageDownsampleValidation.Run -logFile <log-path>
+```
+
+使用生产 ObjectSemantic shader 消费合成的 AC Selection 池：输入含一列宽的发丝覆盖率，
+验证 Full 原样保留、Half 正确得到 0.5 覆盖率、Quarter 正确得到 0.25 覆盖率。
+成功时输出 `[SemanticCoverageDownsampleValidation] PASS`，返回 0。
+
 ## 轮廓场 GPU 回归
 
 在隔离的 Unity 6000.3 / URP 17.3 工程中引用 lilToon 和本包，将此目录的

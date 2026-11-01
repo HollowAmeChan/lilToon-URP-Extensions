@@ -12,6 +12,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public TextureHandle destinationLowTexture;
             public TextureHandle destinationHighTexture;
             public Material material;
+            public Vector4 downsampleParams;
         }
 
         private sealed class CompositePassData

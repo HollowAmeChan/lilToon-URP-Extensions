@@ -35,6 +35,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         /// 所以一份就够；**不由 Unity 自动填**（全局纹理没有 _TexelSize），由 C# 显式写。
         /// </summary>
         public const string ScreenTexelSizeName = "_lilHoCharacterScreenTexelSize";
+        public const string SemanticDownsampleParamsName = "_HoCharacterSemanticDownsampleParams";
 
         public static readonly ShaderTagId CaptureShaderTagId = new ShaderTagId(CapturePassName);
         public static readonly int CaptureModeId = Shader.PropertyToID("_HoCharacterCaptureMode");
@@ -43,6 +44,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         // DYNAMIC_SCALING_APPLY_SCALEBIAS -> DynamicScaling.hlsl:4），所以任何不用
         // Blitter.BlitTexture（它会自己 SetVector）而直接 DrawProcedural 的画法都必须自己设它。
         public static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
+        public static readonly int SemanticDownsampleParamsId = Shader.PropertyToID(SemanticDownsampleParamsName);
         public static readonly int EyeColorTextureId = Shader.PropertyToID(EyeColorTextureName);
         public static readonly int EyeDataTextureId = Shader.PropertyToID(EyeDataTextureName);
         public static readonly int EyeRevealParamsId = Shader.PropertyToID("_HoCharacterEyeRevealParams");

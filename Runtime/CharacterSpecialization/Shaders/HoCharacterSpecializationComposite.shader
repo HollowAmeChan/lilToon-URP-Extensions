@@ -115,9 +115,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return mask;
             }
 
-            // 位平面本身已经是连续场（覆盖率），这里的 box 只负责"把扩散/柔化摊开"：
-            // 步长按 texel 走，柔化像素越大摊得越宽。1/宽度 是这个尺度上能做到的最平滑的台阶，
-            // 想更硬的边就把柔化像素调小。
+            // AC 已经产出连续覆盖率；仅在投影源的显式柔化/扩散路径中再采样扩展。
             static const int LIL_HOCHARACTER_HAIR_MASK_MAX_TAPS = 8;
 
             float SampleSemanticBlur(float2 uv, float softnessPx, float spreadPx, int channel)
@@ -143,13 +141,9 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return saturate(sum / max((float)(taps * taps), 1.0));
             }
 
-            // 轮廓裁剪要的是**亚像素**而不是半影：所以固定读一个 1px 的 box，绝不用柔化半径
-            // （在这里加宽会让投影在到达源之前就淡掉，把接触区掏空）。
-            static const float LIL_HOCHARACTER_SEMANTIC_EDGE_PX = 1.0;
-
             float SampleSemanticEdge(float2 uv, int channel)
             {
-                return SampleSemanticBlur(uv, LIL_HOCHARACTER_SEMANTIC_EDGE_PX, 0.0, channel);
+                return SampleSemanticBit(uv, channel);
             }
 
             float SampleRevealArea(float2 uv)

@@ -458,6 +458,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     // 写两张 RGBA8 位平面。
                     captureColorIdentifiers[0] = renderTargets.ObjectSemanticLowTexture.nameID;
                     captureColorIdentifiers[1] = renderTargets.ObjectSemanticHighTexture.nameID;
+                    cmd.SetGlobalVector(
+                        HoCharacterSpecializationShaderConstants.SemanticDownsampleParamsId,
+                        GetSemanticDownsampleParams(renderingData.cameraData.cameraTargetDescriptor, settings));
                     cmd.SetRenderTarget(captureColorIdentifiers, renderTargets.CaptureDepthTexture.nameID);
                     Blitter.BlitTexture(cmd, tempTexture, new Vector4(1, 1, 0, 0), objectSemanticMaterial, 0);
                     cmd.SetGlobalVector(
@@ -667,7 +670,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     objectSemanticMaterial,
                     acResources,
                     objectSemanticLowTexture,
-                    objectSemanticHighTexture);
+                    objectSemanticHighTexture,
+                    GetSemanticDownsampleParams(cameraData.cameraTargetDescriptor, settings));
             }
             Vector4 screenTexelSize = GetScreenTexelSize(cameraData.cameraTargetDescriptor, settings);
 
@@ -1252,6 +1256,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             float width = Mathf.Max(1, cameraTextureDescriptor.width / divisor);
             float height = Mathf.Max(1, cameraTextureDescriptor.height / divisor);
             return new Vector4(1.0f / width, 1.0f / height, width, height);
+        }
+
+        private static Vector4 GetSemanticDownsampleParams(
+            RenderTextureDescriptor cameraTextureDescriptor,
+            HoCharacterSpecializationSettings settings)
+        {
+            return new Vector4(
+                Mathf.Clamp((int)settings.renderScale, 1, 4),
+                1.0f / Mathf.Max(1, cameraTextureDescriptor.width),
+                1.0f / Mathf.Max(1, cameraTextureDescriptor.height),
+                0.0f);
         }
 
         private static DrawingSettings CreateCharacterDrawingSettings(List<ShaderTagId> shaderTagIds, ref RenderingData renderingData, SortingCriteria sortingCriteria)
