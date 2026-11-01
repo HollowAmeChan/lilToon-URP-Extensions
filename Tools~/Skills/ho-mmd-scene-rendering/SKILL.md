@@ -1,11 +1,11 @@
 ---
 name: ho-mmd-scene-rendering
-description: Import a new static PMX stage into HoURP, extract Ho lilToon materials, build an editable scene, adjust lighting and Volume filters, and render selected cameras through CLI without reapplying authoring recipes.
+description: Build and adjust editable PMX stages in HoURP, assemble VMD performances, and render stills or videos with explicit quality presets through CLI while preserving authored lighting and Volume settings.
 ---
 
 # Ho PMX 场景制作与调整
 
-用于“新 PMX 从零搭建”“现有场景调灯、材质、滤镜”“后台多角度渲图 review”。默认工程 `D:/Unity_Project/BREAK_URP`。当前手工版本是工作起点，这是一套制作指南和动态经验库，不是固定场景验收标准。
+用于“新 PMX 从零搭建”“现有场景调灯、材质、滤镜”“后台多角度渲图 review”“VMD 影片分档录制”。默认工程 `D:/Unity_Project/BREAK_URP`。当前手工版本是工作起点，这是一套制作指南和动态经验库，不是固定场景验收标准。
 
 ## 置顶：影片播放倍率与调试接管
 
@@ -17,6 +17,9 @@ description: Import a new static PMX stage into HoURP, extract Ho lilToon materi
 
 ## 工作方式
 
+- **当前都是验证阶段。** 默认输出用验证档 `360p`、竖屏 `9:16`、`30 fps`；需要细查才显式升档。不默认输出 2160p，不称作最终渲染。脚 IK、表情仍在返工时不把一次预览当成动作验收。
+- **日常渲视频也必须明确质量档、比例、帧率。** 验证 360p / 预览 720p / 精查 1080p / 高分 2160p，横屏 16:9 / 竖屏 9:16 / 4:3 / 正方形，帧率 30 / 60；根据本次用途选档并报告实际像素尺寸，不能因旧输出为高分而沿用。
+- GUI 在 `HoUnityTools/快速渲染` 选档；MMD CLI 使用 `--quality`、`--aspect`、`--fps`。两者当前共用档位含义，**并未共用录制后端**；自动化不必强行调用 GUI，选择能正确推进动作、运镜、音乐与 AA 历史的入口。档位只调整输出大小，不偷偷关闭光照和滤镜。
 - **新建、定点修改、只渲染分开执行。** 初始场景创建后，不为预览重跑旧配方，不把用户灯光、材质、相机和滤镜恢复成历史数值。
 - 默认只处理指定场景/参数。不每次检查全体 H2CU、固定效果清单/机位数或旧哈希；历史截图不是艺术要求。遇到实际故障才调用相关诊断。
 - 使用 Ho PMX importer 和魔改 Ho lilToon，抽出材质，保持 PMX 贴图相对路径。按场景整理 Source/Materials/Rendering/Renders。默认使用已有 PC_RPAsset/PC_Renderer，通过场景 Volume、灯光、材质调效果，不顺手重置共享 Feature。
