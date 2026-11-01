@@ -25,6 +25,7 @@ public static class HoMmdSceneWorkshop
             var args = Environment.GetCommandLineArgs(); int index = Array.IndexOf(args, "-hoRequest");
             if (index < 0) throw new ArgumentException("Provide -hoRequest <JSON file>.");
             var request = JsonUtility.FromJson<HoMmdStageWork.Request>(File.ReadAllText(args[index + 1]));
+            if (args.Contains("-hoLightProbe")) HoMmdPracticalLighting.EnableLightProbe();
             Action<string> done = path => { Debug.Log("HO_WORKSHOP_RESULT=" + path); EditorApplication.Exit(0); };
             Action<Exception> fail = e => { Debug.LogException(e); EditorApplication.Exit(1); };
             if (request.action == "review") EditorApplication.delayCall += () => { try { Review(request, done, fail); } catch (Exception e) { fail(e); } };
@@ -32,6 +33,11 @@ public static class HoMmdSceneWorkshop
             else if (request.action == "create") done(Create(request));
             else if (request.action == "logo") done(HoMmdStageBranding.SetLogos(
                 string.IsNullOrEmpty(request.stageFolder) ? "Assets/00动画/MMD场景" : request.stageFolder, request.logoY, request.logoSize));
+            else if (request.action == "practicals") done(HoMmdPracticalLighting.Apply(AssetPath(request.scenePath)));
+            else if (request.action == "stage-survey") done(HoMmdPracticalLighting.Inventory(AssetPath(request.scenePath), true));
+            else if (request.action == "post-inventory" || request.action == "post-migrate" ||
+                     request.action == "post-tonemap" || request.action == "post-tune")
+                done(HoMmdHoPostReview.Execute(request));
             else throw new ArgumentException("Unsupported workshop action " + request.action);
         }
         catch (Exception e) { Debug.LogException(e); EditorApplication.Exit(1); }
@@ -160,7 +166,7 @@ public static class HoMmdSceneWorkshop
             try
             {
                 HoMmdStageCapture.Begin(scene, Path.Combine(output, current == 0 ? "main.png" : current == 1 ? "left.png" : "right.png"),
-                    request.width, request.height, _ => EditorApplication.delayCall += () => next(), failed,
+                    request.width, request.height, _ => NextEditorUpdate(next), failed,
                     camera =>
                     {
                         ApplyMotionAtFrame(request, camera);
@@ -176,6 +182,16 @@ public static class HoMmdSceneWorkshop
             catch (Exception e) { failed(e); }
         };
         next();
+    }
+
+    static void NextEditorUpdate(Action action)
+    {
+        // delayCall can wait for an Inspector update indefinitely when this
+        // Editor is unfocused or a capture restored an empty scene.
+        EditorApplication.CallbackFunction once = null;
+        once = () => { EditorApplication.update -= once; action(); };
+        EditorApplication.update += once;
+        EditorApplication.QueuePlayerLoopUpdate();
     }
 
     public static void RenderOne(HoMmdStageWork.Request request, Action<string> completed, Action<Exception> failed)

@@ -16,6 +16,7 @@ public static class HoMmdStageWork
     [Serializable] public sealed class Request
     {
         public string id, action, stage, scenePath, stageFolder, outputPath, logoPath, motionAsset;
+        public string settingsPath;
         public string[] pmxPaths;
         public int width=1280, height=720, view, warmup=16;
         public float motionFrame=-1.0f, motionRate=30.0f;
@@ -75,11 +76,13 @@ public static class HoMmdStageWork
             string result;
             if(command.action=="refresh"){AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);result="refreshed";}
             else if(command.action=="status")result=File.ReadAllText(Path.Combine(Work,"status.json"));
+            else if(command.action=="post-inventory" || command.action=="post-migrate" || command.action=="post-tonemap" || command.action=="post-tune")result=HoMmdHoPostReview.Execute(command);
             else if(command.action=="logo")result=HoMmdStageBranding.SetLogos(
                 string.IsNullOrEmpty(command.stageFolder)?"Assets/00动画/MMD场景":command.stageFolder,command.logoY,command.logoSize);
             else if(command.action=="create")result=HoMmdSceneWorkshop.Create(command);
             else if(command.action=="fixtures")result=HoMmdPracticalLighting.Inventory(
                 string.IsNullOrEmpty(command.scenePath)?HoMmdStageBuilder.Root+command.stage+"/"+command.stage+".unity":command.scenePath);
+            else if(command.action=="stage-survey")result=HoMmdPracticalLighting.Inventory(command.scenePath,true);
             else if(command.action=="practicals")result=HoMmdPracticalLighting.Apply(
                 string.IsNullOrEmpty(command.scenePath)?HoMmdStageBuilder.Root+command.stage+"/"+command.stage+".unity":command.scenePath);
             else

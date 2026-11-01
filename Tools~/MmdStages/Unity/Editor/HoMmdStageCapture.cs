@@ -283,8 +283,10 @@ public static class HoMmdStageCapture
                 if (target != null) { target.Release(); Object.DestroyImmediate(target); }
                 if (changedScene)
                 {
-                    if (captureScene.IsValid() && captureScene.isLoaded) EditorSceneManager.CloseScene(captureScene, true);
-                    if (previousSetup.Length != 0) EditorSceneManager.RestoreSceneManagerSetup(previousSetup);
+                    if (previousSetup.Any(x => x.isActive))
+                        EditorSceneManager.RestoreSceneManagerSetup(previousSetup);
+                    else
+                        EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
                 }
                 QualitySettings.renderPipeline = previousPipeline;
             }

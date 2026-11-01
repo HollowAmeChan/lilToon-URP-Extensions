@@ -17,6 +17,12 @@ using UnityEngine.Rendering.Universal;
 public static class HoMmdPracticalLighting
 {
     static string[] batchStages; static string batchOperation; static int batchStage, batchView, probeFrame;
+    public static void EnableLightProbe()
+    {
+        probeFrame = 0;
+        RenderPipelineManager.endCameraRendering -= Probe;
+        RenderPipelineManager.endCameraRendering += Probe;
+    }
     public static void RunBatch()
     {
         try
@@ -26,7 +32,7 @@ public static class HoMmdPracticalLighting
             batchStages = Arg("-hoStages")?.Split(',') ?? Directory.GetDirectories(HoMmdStageBuilder.Root)
                 .Where(x => File.Exists(x + "/" + System.IO.Path.GetFileName(x) + ".unity")).Select(System.IO.Path.GetFileName).OrderBy(x => x).ToArray();
             batchOperation = Arg("-hoOperation") ?? "before"; batchStage = 0; batchView = 0;
-            if (args.Contains("-hoLightProbe")) RenderPipelineManager.endCameraRendering += Probe;
+            if (args.Contains("-hoLightProbe")) EnableLightProbe();
             EditorSceneManager.OpenScene("Assets/Editor/MMD\u5236\u4F5C\u9A8C\u8BC1/WTD\u5236\u4F5C\u53C2\u8003/WTD\u9884\u89C8.unity", OpenSceneMode.Single);
             EditorApplication.delayCall += BatchNext;
         }
@@ -89,22 +95,38 @@ public static class HoMmdPracticalLighting
         public int vertexCount, componentCount;
         public Bounds bounds;
         public Part[] parts;
+        public Color baseColor, vertexColor;
+        public string mainTexture;
+        public bool reflection;
     }
     [Serializable] public sealed class ExistingLight
     { public string path, type; public Vector3 position, forward; public Color color; public float intensity, range, spotAngle; public bool shadows, enabled, volume; }
+    [Serializable] public sealed class SurveyCamera
+    { public string name; public Vector3 position, forward; public float fov; public bool main; }
+    [Serializable] public sealed class SurveyRegion
+    { public string name; public Vector3 position, size; public float density, volumeWeight; }
     [Serializable] public sealed class Survey
-    { public string scene; public string[] groups; public Surface[] surfaces; public ExistingLight[] lights; }
+    { public string scene; public string[] groups; public Surface[] surfaces; public ExistingLight[] lights;
+      public SurveyCamera[] cameras; public SurveyRegion[] regions; public float volumeMultiplier; }
     [Serializable] public sealed class Lamp
     {
         public string name, group, source;
         public Vector3 position, direction = Vector3.down;
         public Color color = Color.white;
-        public float power = .5f, range = 2, angle = 65, volume;
-        public bool spot, shadows;
+        public float power = .5f, range = 2, angle = 65, volume, shadowStrength = .85f;
+        public bool spot, shadows, setShadowStrength;
+        public bool highShadow;
+        public int volumeSteps = 48, volumeShadowResolution = 256;
+        public float volumeRadius = .18f, volumeSoftness = .35f;
     }
-    [Serializable] public sealed class MaterialEdit { public string path; public bool emission = true; public Color color; }
+    [Serializable] public sealed class MaterialEdit
+    { public string path; public bool emission = true, skipEmission, enableSpecular, smoothSpecular, setSmoothness; public float smoothness; public Color color; }
+    [Serializable] public sealed class RegionEdit
+    { public string name; public Vector3 position, size; }
     [Serializable] public sealed class Plan
-    { public string note; public Lamp[] lamps; public string[] disableLights; public MaterialEdit[] materials; public int volumeLimit = 4; }
+    { public string note; public Lamp[] lamps; public string[] disableLights, disableVolumeSources; public MaterialEdit[] materials;
+      public int volumeLimit = 4; public bool aimCameras, setVolumeIntensity; public Vector3 cameraTarget;
+      public float focusDistance, volumeDistance, volumeIntensity; public RegionEdit[] regions; }
 
     public static string Apply(string scenePath)
     {
@@ -120,11 +142,49 @@ public static class HoMmdPracticalLighting
             var roots = scene.GetRootGameObjects();
             var root = roots.First(x => x.GetComponentInChildren<Hollow.HoMmdStages.HoMmdStageEnvironment>(true) != null);
             var allTransforms = roots.SelectMany(x => x.GetComponentsInChildren<Transform>(true)).ToArray();
+            foreach(var edit in plan.regions ?? Array.Empty<RegionEdit>())
+            {
+                var region=roots.SelectMany(x=>x.GetComponentsInChildren<lilToon.URP.Extensions.Atmosphere.HoAtmosphereRegion>(true))
+                    .Single(x=>x.name==edit.name);
+                if(edit.size.x<=0||edit.size.y<=0||edit.size.z<=0)throw new ArgumentException("Atmosphere size must be positive.");
+                region.transform.position=edit.position;region.size=edit.size;
+            }
             foreach (string path in plan.disableLights ?? Array.Empty<string>())
             {
                 var old = allTransforms.FirstOrDefault(x => PathOf(x) == path)?.GetComponent<Light>();
                 if (old != null) old.enabled = false;
             }
+            foreach(string path in plan.disableVolumeSources ?? Array.Empty<string>())
+            {
+                var old=allTransforms.FirstOrDefault(x=>PathOf(x)==path)?.GetComponent<HoVolumeLightSource>();
+                if(old!=null)old.enabled=false;
+            }
+            if(plan.aimCameras)
+                foreach(var view in roots.SelectMany(x=>x.GetComponentsInChildren<Camera>(true)))
+                    if(view.CompareTag("MainCamera")||view.name=="左侧观察相机"||view.name=="右侧观察相机")
+                        view.transform.LookAt(plan.cameraTarget);
+            if(plan.focusDistance>0)
+                foreach(var volume in roots.SelectMany(x=>x.GetComponentsInChildren<Volume>(true)))
+                    if(volume.sharedProfile!=null&&volume.sharedProfile.TryGet<lilToon.URP.Extensions.PostProcessing.ScreenProcessStackVolume>(out var stack))
+                    {
+                        if(!AssetDatabase.GetAssetPath(volume.sharedProfile).StartsWith(folder+"/",StringComparison.Ordinal))
+                            throw new InvalidOperationException("Focus profile belongs to another stage.");
+                        foreach(var layer in stack.layers.value.Where(l=>l!=null&&l.effect==lilToon.URP.Extensions.PostProcessing.ScreenProcessEffect.DepthOfField))
+                        {var p=layer.parameters0;p.y=plan.focusDistance;layer.parameters0=p;}
+                        EditorUtility.SetDirty(stack);EditorUtility.SetDirty(volume.sharedProfile);
+                        AssetDatabase.SaveAssetIfDirty(volume.sharedProfile);
+                    }
+            if(plan.volumeDistance>0 || plan.setVolumeIntensity)
+                foreach(var volume in roots.SelectMany(x=>x.GetComponentsInChildren<Volume>(true)))
+                    if(volume.sharedProfile!=null&&volume.sharedProfile.TryGet<HoVolumeLightVolume>(out var lighting))
+                    {
+                        if(!AssetDatabase.GetAssetPath(volume.sharedProfile).StartsWith(folder+"/",StringComparison.Ordinal))
+                            throw new InvalidOperationException("Volume lighting profile belongs to another stage.");
+                        if(plan.volumeDistance>0)lighting.maxDistance.Override(plan.volumeDistance);
+                        if(plan.setVolumeIntensity)lighting.intensity.Override(Mathf.Max(0,plan.volumeIntensity));
+                        EditorUtility.SetDirty(lighting);EditorUtility.SetDirty(volume.sharedProfile);
+                        AssetDatabase.SaveAssetIfDirty(volume.sharedProfile);
+                    }
             var holder = root.transform.Find("11 实景灯具");
             if (holder == null && (plan.lamps?.Length ?? 0) > 0) holder = Child(root.transform, "11 实景灯具");
             if (holder != null && holder.childCount == 0 && (plan.lamps?.Length ?? 0) == 0)
@@ -149,19 +209,23 @@ public static class HoMmdPracticalLighting
                 light.color = lamp.color; light.intensity = lamp.power; light.range = lamp.range;
                 light.spotAngle = lamp.angle; light.innerSpotAngle = lamp.angle * .6f;
                 light.shadows = lamp.shadows ? LightShadows.Soft : LightShadows.None;
-                light.shadowStrength = .85f; light.shadowBias = .025f; light.shadowNormalBias = .08f; light.shadowNearPlane = .03f;
+                light.shadowStrength = lamp.setShadowStrength ? Mathf.Clamp01(lamp.shadowStrength) : .85f;
+                light.shadowBias = .025f; light.shadowNormalBias = .08f; light.shadowNearPlane = .03f;
                 var extra = light.GetUniversalAdditionalLightData(); extra.usePipelineSettings = false;
                 extra.renderingLayers = (RenderingLayerMask)1u;
                 var serializedExtra = new SerializedObject(extra);
-                serializedExtra.FindProperty("m_AdditionalLightsShadowResolutionTier").intValue = UniversalAdditionalLightData.AdditionalLightsShadowResolutionTierLow;
+                serializedExtra.FindProperty("m_AdditionalLightsShadowResolutionTier").intValue = lamp.highShadow ?
+                    UniversalAdditionalLightData.AdditionalLightsShadowResolutionTierHigh : UniversalAdditionalLightData.AdditionalLightsShadowResolutionTierLow;
                 serializedExtra.ApplyModifiedPropertiesWithoutUndo();
                 var source = node.GetComponent<HoVolumeLightSource>();
                 if (volumetric.Contains(lamp))
                 {
                     if (source == null) source = node.gameObject.AddComponent<HoVolumeLightSource>();
                     source.enabled = true; source.quality = HoVolumeLightQuality.HD;
-                    source.intensity = lamp.volume; source.tint = Color.white; source.stepCount = 48;
-                    source.shadowResolution = 256; source.sourceRadius = .18f; source.edgeSoftness = .35f;
+                    bool advanced=lamp.volumeSteps>0;
+                    source.intensity = lamp.volume; source.tint = Color.white; source.stepCount = advanced?lamp.volumeSteps:48;
+                    source.shadowResolution = lamp.volumeShadowResolution>0?lamp.volumeShadowResolution:256;
+                    source.sourceRadius = advanced?Mathf.Max(.01f,lamp.volumeRadius):.18f; source.edgeSoftness = advanced?lamp.volumeSoftness:.35f;
                 }
                 else if (source != null) source.enabled = false;
             }
@@ -170,9 +234,17 @@ public static class HoMmdPracticalLighting
                 if (!edit.path.StartsWith(folder + "/", StringComparison.Ordinal)) throw new ArgumentException("Material must belong to this stage: " + edit.path);
                 var mat = AssetDatabase.LoadAssetAtPath<Material>(edit.path);
                 if (mat == null) throw new IOException("Missing material " + edit.path);
-                if (mat.HasProperty("_UseEmission")) mat.SetFloat("_UseEmission", edit.emission ? 1 : 0);
-                if (mat.HasProperty("_EmissionColor")) mat.SetColor("_EmissionColor", edit.color);
-                if (mat.HasProperty("_EmissionBlend")) mat.SetFloat("_EmissionBlend", 1);
+                if(!edit.skipEmission)
+                {
+                    if (mat.HasProperty("_UseEmission")) mat.SetFloat("_UseEmission", edit.emission ? 1 : 0);
+                    if (mat.HasProperty("_EmissionColor")) mat.SetColor("_EmissionColor", edit.color);
+                    if (mat.HasProperty("_EmissionBlend")) mat.SetFloat("_EmissionBlend", 1);
+                }
+                if(edit.enableSpecular)
+                    foreach(string property in new[]{"_UseReflection","_ApplySpecular","_ApplySpecularFA"})
+                        if(mat.HasProperty(property))mat.SetFloat(property,1);
+                if(edit.smoothSpecular&&mat.HasProperty("_SpecularToon"))mat.SetFloat("_SpecularToon",0);
+                if(edit.setSmoothness&&mat.HasProperty("_Smoothness"))mat.SetFloat("_Smoothness",edit.smoothness);
                 EditorUtility.SetDirty(mat); AssetDatabase.SaveAssetIfDirty(mat);
             }
             // An unshadowed point inside a two-sided paper shade otherwise lights its
@@ -220,7 +292,7 @@ public static class HoMmdPracticalLighting
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(reportPath)); File.WriteAllText(reportPath, report);
             return report;
         }
-        finally { EditorSceneManager.RestoreSceneManagerSetup(setup); }
+        finally { if (setup.Any(x => x.isActive)) EditorSceneManager.RestoreSceneManagerSetup(setup); }
     }
     [Serializable] sealed class ApplyResult { public string scene; public int newLights, updatedLights, planLights, volumeSources, hierarchyLabels; }
     static Transform Child(Transform parent, string name) { var go = new GameObject(name).transform; go.SetParent(parent, false); return go; }
@@ -253,7 +325,7 @@ public static class HoMmdPracticalLighting
         EditorApplication.RepaintHierarchyWindow();
     }
 
-    public static string Inventory(string scenePath)
+    public static string Inventory(string scenePath, bool includeAll = false)
     {
         var setup = EditorSceneManager.GetSceneManagerSetup();
         RequireSavedScenes();
@@ -274,12 +346,16 @@ public static class HoMmdPracticalLighting
                     if (mat == null) continue;
                     bool named = IsFixture(mat.name + " " + renderer.name);
                     bool emission = mat.HasProperty("_UseEmission") && mat.GetFloat("_UseEmission") > .5f;
-                    if (!named && !emission) continue;
+                    if (!includeAll && !named && !emission) continue;
                     var parts = Components(mesh, renderer.transform, Mathf.Min(sub, mesh.subMeshCount - 1));
                     surfaces.Add(new Surface { path = PathOf(renderer.transform), material = mat.name,
                         asset = AssetDatabase.GetAssetPath(mat), fixtureName = named, emission = emission,
                         emissionColor = mat.HasProperty("_EmissionColor") ? mat.GetColor("_EmissionColor") : Color.black,
-                        bounds = renderer.bounds, vertexCount = mesh.vertexCount, componentCount = parts.Length, parts = parts });
+                        bounds = renderer.bounds, vertexCount = mesh.vertexCount, componentCount = parts.Length, parts = parts,
+                        baseColor=mat.HasProperty("_Color")?mat.GetColor("_Color"):Color.white,
+                        vertexColor=mesh.colors.Length>0?mesh.colors[0]:Color.white,
+                        mainTexture=AssetDatabase.GetAssetPath(mat.HasProperty("_MainTex")?mat.GetTexture("_MainTex"):null),
+                        reflection=mat.HasProperty("_UseReflection")&&mat.GetFloat("_UseReflection")>.5f });
                 }
             }
             var lights = roots.SelectMany(x => x.GetComponentsInChildren<Light>(true)).Select(x => new ExistingLight {
@@ -288,14 +364,23 @@ public static class HoMmdPracticalLighting
                 shadows = x.shadows != LightShadows.None, enabled = x.isActiveAndEnabled,
                 volume = x.GetComponent<lilToon.URP.Extensions.VolumeLight.HoVolumeLightSource>() != null }).ToArray();
             var survey = new Survey { scene = scenePath, surfaces = surfaces.ToArray(), lights = lights,
+                cameras=roots.SelectMany(x=>x.GetComponentsInChildren<Camera>(true)).Select(x=>new SurveyCamera {
+                    name=x.name,position=x.transform.position,forward=x.transform.forward,main=x.CompareTag("MainCamera"),fov=x.fieldOfView
+                }).ToArray(),
+                regions=roots.SelectMany(x=>x.GetComponentsInChildren<lilToon.URP.Extensions.Atmosphere.HoAtmosphereRegion>(true)).Select(x=>new SurveyRegion {
+                    name=x.name,position=x.transform.position,size=x.size,density=x.density,volumeWeight=x.volumeLightWeight
+                }).ToArray(),
                 groups = roots.SelectMany(x => x.GetComponentsInChildren<Transform>(true)).Where(x => x.GetComponent<Renderer>() == null &&
                     (x.parent == null || x.parent.parent == null)).Select(x => PathOf(x)).ToArray() };
+            foreach(var volume in roots.SelectMany(x=>x.GetComponentsInChildren<Volume>(true)))
+                if(volume.sharedProfile!=null&&volume.sharedProfile.TryGet<HoVolumeLightVolume>(out var vl))
+                    survey.volumeMultiplier=vl.intensity.value;
             string path = System.IO.Path.Combine(HoMmdStageWork.Work, "PracticalLighting", scene.name, "inventory.json");
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path));
             File.WriteAllText(path, JsonUtility.ToJson(survey, true));
             return path;
         }
-        finally { EditorSceneManager.RestoreSceneManagerSetup(setup); }
+        finally { if (setup.Any(x => x.isActive)) EditorSceneManager.RestoreSceneManagerSetup(setup); }
     }
 
     static bool IsFixture(string value) => new[] { "灯", "燈", "烛", "燭", "lamp", "bulb", "candle", "chandelier", "light" }
