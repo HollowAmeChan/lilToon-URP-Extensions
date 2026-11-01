@@ -71,6 +71,7 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
     RecorderController controller;
     RecorderControllerSettings controllerSettings;
     MovieRecorderSettings movieSettings;
+    EditorWindow recordingGameView;
     int tick, count, warmup;
     bool started, finished;
     float previousCaptureDelta;
@@ -133,7 +134,9 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
                         volume.profile.TryGet(out ScreenProcessStackVolume screen)) screen.Enable.Override(false);
                 }
             count = Mathf.CeilToInt((request.seconds > 0 ? request.seconds : sequence.Duration) * request.fps);
-            warmup = request.fps; // One real simulated second for armature merge, cloth and temporal history.
+            // Preparation is simulated but excluded from the encoded frame
+            // interval and soundtrack. Keep the established one-second minimum.
+            warmup = Mathf.Max(request.fps, Mathf.CeilToInt(sequences.Max(x => x.PreparationDuration) * request.fps));
             previousCaptureDelta = Time.captureDeltaTime;
             previousBackground = Application.runInBackground;
             Application.runInBackground = true;
@@ -231,9 +234,15 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             var gameViewType = typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView");
             if (gameViewType == null)
                 throw new InvalidOperationException("Unity Game View is unavailable for Recorder.");
-            var gameView = EditorWindow.GetWindow(gameViewType);
-            gameView.Show();
-            gameView.Focus();
+            // A docked Game View stops WaitForEndOfFrame when its tab is hidden
+            // by Scene View. Own a temporary visible view instead of repeatedly
+            // forcing the user's main tab back into focus.
+            recordingGameView = ScriptableObject.CreateInstance(gameViewType) as EditorWindow;
+            if (recordingGameView == null) throw new InvalidOperationException("Cannot create the recording Game View.");
+            recordingGameView.titleContent = new GUIContent("Ho MMD 录制");
+            recordingGameView.minSize = new Vector2(240, 240);
+            recordingGameView.ShowUtility();
+            recordingGameView.Focus();
             controller.PrepareRecording();
             if (!controller.StartRecording()) throw new InvalidOperationException("Unity Recorder did not start.");
             started = true;
@@ -270,7 +279,11 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
 
     void Pump()
     {
-        if (!finished) EditorApplication.QueuePlayerLoopUpdate();
+        if (!finished)
+        {
+            if (recordingGameView != null) recordingGameView.Repaint();
+            EditorApplication.QueuePlayerLoopUpdate();
+        }
     }
 
     void OnCameraRendered(ScriptableRenderContext context, Camera camera)
@@ -333,8 +346,8 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
                 throw new InvalidOperationException("Recorder frame interval did not finish while the simulation kept advancing. " +
                     "The Game View may have stopped processing end-of-frame capture. Keep this partial take for diagnosis and retry.");
             foreach (var item in sequences)
-                item.ExternalTime = request.handStudy ? (tick - warmup < request.fps * 4 ? 0 : 4) :
-                    Mathf.Max(0, tick - warmup) / (float)request.fps;
+                item.ExternalTime = request.handStudy && tick >= warmup ? (tick - warmup < request.fps * 4 ? 0 : 4) :
+                    (tick - warmup) / (float)request.fps;
             if (tick == warmup)
             {
                 lastStudyStage = -1;
@@ -449,6 +462,11 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             Time.captureDeltaTime = previousCaptureDelta;
             Application.runInBackground = previousBackground;
             EditorApplication.update -= Pump;
+            if (recordingGameView != null)
+            {
+                recordingGameView.Close();
+                recordingGameView = null;
+            }
             RenderPipelineManager.endCameraRendering -= OnCameraRendered;
             HoPlaySpeedControl.Release(this);
             if (captureCamera != null)
@@ -468,6 +486,8 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             width = request.width, height = request.height, fps = request.fps, frames = count,
             soundtrackTimeOffset = sequence != null ? sequence.SoundtrackTimeOffset : 0,
             warmupFrames = warmup, antialiasing = captureCameraData != null ? captureCameraData.antialiasing.ToString() : "",
+            poseTransitionSeconds = sequence != null ? sequence.InitialPoseTransitionSeconds : 0,
+            settleSeconds = sequence != null ? sequence.Preroll : 0,
             taaVerified = taaVerified, taaHistoryWidth = taaHistoryWidth, taaHistoryHeight = taaHistoryHeight,
             taaHistoryUpdates = taaHistoryUpdates, qualityPreset = request.qualityPreset, aspectPreset = request.aspectPreset,
             postStack = request.postStack, postProcessing = captureCameraData != null && captureCameraData.renderPostProcessing,
@@ -487,6 +507,7 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
     void OnDisable() { if (!finished && request != null) Finish(new OperationCanceledException("Play mode ended during recording.")); }
     [Serializable] sealed class CaptureReport
     {
+        public float poseTransitionSeconds, settleSeconds;
         public int width, height, fps, frames, warmupFrames, taaHistoryWidth, taaHistoryHeight, taaHistoryUpdates;
         public float soundtrackTimeOffset;
         public string antialiasing;

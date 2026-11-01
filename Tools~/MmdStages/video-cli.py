@@ -15,7 +15,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["status", "presets", "plan", "cancel", "create", "setup", "adjust", "record", "validate-rotation", "mux", "clone-performance", "update-performance", "production-tests",
+    parser.add_argument("action", choices=["status", "presets", "plan", "cancel", "create", "setup", "adjust", "record", "validate-rotation", "mux", "clone-performance", "update-performance", "configure-preparation", "production-tests",
                                          "compose-stage", "inspect-stage", "place-stage", "focus-stage", "render-performance",
                                          "diagnose-render", "configure-camera-post", "enable-scene-post",
                                          "test-render-presets", "proof-post", "proof-glow", "proof-ho-only", "strip-native-post",

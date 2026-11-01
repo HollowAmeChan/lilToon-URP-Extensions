@@ -61,9 +61,13 @@ CLI 可用 `video-cli.py clone-performance --config <新动作配置>` 完成这
 
 Scene View 的 AA 与演出 Camera 的 AA 独立。先检查实际相机，不将“没用 TAA”误报为“没有 AA”。`video-cli.py record --aa taa` 仅在本次 Play 的录制相机上启用 TAA Very High，关闭该相机的 MSAA/动态分辨率；省略 `--aa` 继承保存的相机设置，不改场景、灯光或 Volume。也可明确选择 `smaa`、`fxaa`、`none`。
 
-Recorder 现在先建立最终输出分辨率，再通过录制帧区间跳过一秒预热，避免先按小视图预热、开录时切大尺寸而丢失历史。TAA 录制会检查实际 `TaaHistory` 的纹理尺寸与版本是否推进，旁存 `.render.json`；只有请求选项不能证明 TAA 生效。帧数仍须由成片实际流验证。
+Recorder 现在先建立最终输出分辨率，再通过录制帧区间跳过场景的姿态过渡与稳定等待（至少一秒预热），避免开录时切尺寸丢失历史。TAA 录制会检查实际 `TaaHistory` 的纹理尺寸与版本是否推进，旁存 `.render.json`；只有请求选项不能证明 TAA 生效。帧数仍须由成片实际流验证。
+
+首帧抬腿造成衣物穿出时，只有“保持首帧预热”可能来不及让碰撞适应。可在 Sequence 中调“首帧姿态过渡”和“首帧稳定等待”，平滑推进主骨骼并让物理按原时序运行；不要为此重捕获源 bind pose 或给 VMD、BGM 补空白。当前 MMD CLI 会自动跳过这段准备，成片仍从原动作 0 秒开始。该项默认 0，不批量改其它场景；CLI 配置见 `Tools~/MmdStages/BATCH_VIDEO.md`。
 
 如果进度持续越过总帧数而 Recorder 仍未结束，不能把继续增长的模拟帧当作编码进度。当前桥会中止这种停滞，保留半成品以便排查；重试前隔离这次视频和报告，不让批次续跑复用坏片。六动作实测与局部手部复查记录见 `Tools~/MmdStages/MotionCatalog-20261102/production-review.md`，普通换动作不要求重跑该批历史检查。
+
+一次停滞中相机和 TAA 仍在推进，而 Recorder 的帧结束等待没有产出视频。Recorder 使用 `WaitForEndOfFrame`，主 Game 页签被隐藏会影响这条等待路径。CLI 现持有临时独立录制 Game View，结束自动关闭，避免依赖用户始终选中主 Game 页签。不要用反复强制焦点或把模拟帧数当作实际编码帧数来绕过。
 CLI 录制相机在本次 Play 中持有最终尺寸的离屏 RenderTexture，结束恢复原 target、启用状态与比例，不改变其他相机开关。Unity Recorder 的 Camera 输入本身只注册捕获回调，不能保证所选相机会渲染；当用户的 Game View 正在看其它 Display 时，只改 Game View 尺寸仍可能导致演出相机完全没渲染。先看 `.render.json.cameraRenders`，没有目标相机时不要误判成 TAA 算法错误。离屏目标保证该相机从预热起独立输出，当前 Game View 可继续看其它 Display。
 
 安装项目桥时，`HoMmdVideoCaptureDriver.cs` 放在 `_制作工具/` 根目录的可挂载程序集，不要整目录复制到带 Editor-only asmdef 的 `VideoRecorder/` 中，否则 Unity 不能添加该 MonoBehaviour。文件内的 Editor 依赖已有 `#if UNITY_EDITOR` 保护；编辑器队列类放在 `_制作工具/Editor/`。

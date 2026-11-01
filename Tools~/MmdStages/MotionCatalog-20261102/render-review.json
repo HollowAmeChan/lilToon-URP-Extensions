@@ -65,14 +65,17 @@
     "name": "DISCOTHECUE",
     "frames": 754,
     "duration": 25.155,
-    "cameraRenderedFrames": 785,
-    "expectedFramesIncludingWarmup": 784,
+    "cameraRenderedFrames": 815,
+    "expectedFramesIncludingWarmup": 814,
     "taaVerified": true,
     "hoOnly": true,
     "nativeLut": false,
     "expressionsMissing": [
       "下眼上"
     ],
-    "output": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第二批六动作-验证-20261102/DISCOTHECUE-巫女服-360x640-30fps.mp4"
+    "output": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第二批六动作-验证-20261102/DISCOTHECUE-巫女服-首帧过渡-360x640-30fps.mp4",
+    "poseTransitionSeconds": 1,
+    "settleSeconds": 1,
+    "warmupFrames": 60
   }
 ]

@@ -11,6 +11,34 @@ using UnityEngine.SceneManagement;
 /// <summary>Add an action to an authored stage without regenerating the actor or rendering assets.</summary>
 public static class HoMmdPerformanceVariants
 {
+    public static string ConfigurePreparation(HoMmdVideoWorkshop.Request request)
+    {
+        ValidateScene(request.scene);
+        Scene scene = SceneManager.GetActiveScene();
+        if (scene.path != request.scene)
+            scene = EditorSceneManager.OpenScene(request.scene, OpenSceneMode.Single);
+        var sequences = scene.GetRootGameObjects()
+            .SelectMany(x => x.GetComponentsInChildren<HoVmdSequencePlayer>(true)).ToArray();
+        if (sequences.Length != 1) throw new InvalidOperationException("Expected one VMD Sequence Player.");
+        var sequence = sequences[0];
+        sequence.InitialPoseTransitionSeconds = request.poseTransitionSeconds;
+        EditorUtility.SetDirty(sequence);
+        EditorSceneManager.MarkSceneDirty(scene);
+        if (!EditorSceneManager.SaveScene(scene)) throw new IOException("Could not save preparation setting.");
+        return JsonUtility.ToJson(new PreparationReport
+        {
+            scene = scene.path, transitionSeconds = sequence.InitialPoseTransitionSeconds,
+            settleSeconds = sequence.Preroll, totalSeconds = sequence.PreparationDuration,
+            motionDuration = sequence.Duration, soundtrackTimeOffset = sequence.SoundtrackTimeOffset
+        }, true);
+    }
+
+    [Serializable] sealed class PreparationReport
+    {
+        public string scene;
+        public float transitionSeconds, settleSeconds, totalSeconds, motionDuration, soundtrackTimeOffset;
+    }
+
     [Serializable] sealed class Shapes
     {
         public string renderer;

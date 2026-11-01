@@ -30,6 +30,7 @@ public static class HoMmdVideoWorkshop
         public float durationSeconds, soundtrackTimeOffset;
         public bool overrideCameraFov;
         public float minimumCameraFov;
+        public float poseTransitionSeconds;
         public int width = 720, height = 1280, fps = 60;
         public bool fullBody, disableRtgi;
         public bool handStudy;
@@ -128,6 +129,7 @@ public static class HoMmdVideoWorkshop
                 case "create": result = Create(request); break;
                 case "clone-performance": result = HoMmdPerformanceVariants.Clone(request); break;
                 case "update-performance": result = HoMmdPerformanceVariants.Update(request); break;
+                case "configure-preparation": result = HoMmdPerformanceVariants.ConfigurePreparation(request); break;
                 case "source-rig": result = InspectSourceRig(request); break;
                 case "setup": result = Setup(request); break;
                 case "sample": result = Sample(request); break;
