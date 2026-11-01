@@ -146,6 +146,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("捕获 RT 的分辨率。降低分辨率会省带宽，但会影响边缘质量。")]
         public HoCharacterRenderScale renderScale = HoCharacterRenderScale.Full;
 
+        [InspectorName("像素效果随分辨率缩放")]
+        [Tooltip("按实际渲染高度 / 参考高度缩放眼透羽化与扩张、前发投影以及扩散和描边半径，保持不同分辨率下的画面比例。")]
+        public bool scalePixelEffectsWithResolution = true;
+
+        [InspectorName("像素效果参考高度")]
+        [Tooltip("像素参数对应的基准画面高度。默认 1080：渲染到 2160 高度时半径加倍。若原来在其他分辨率下调参，可填入当时的画面高度。")]
+        [Min(1)]
+        public int pixelReferenceHeight = 1080;
+
         [InspectorName("合成 Shader")]
         [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/Composite。一般不需要改。")]
         public Shader compositeShader;
@@ -549,6 +558,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             maxRenderQueue = source.maxRenderQueue;
             passEvent = source.passEvent;
             renderScale = source.renderScale;
+            scalePixelEffectsWithResolution = source.scalePixelEffectsWithResolution;
+            pixelReferenceHeight = source.pixelReferenceHeight;
             compositeShader = source.compositeShader;
             faceHairDiffuseShader = source.faceHairDiffuseShader;
             subjectOutlineShader = source.subjectOutlineShader;

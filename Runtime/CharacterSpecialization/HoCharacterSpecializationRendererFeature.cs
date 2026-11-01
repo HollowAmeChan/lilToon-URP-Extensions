@@ -448,6 +448,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                 cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 0.0f);
 
+                Vector4 screenTexelSize = GetScreenTexelSize(renderingData.cameraData.cameraTargetDescriptor, settings);
                 bool objectSemanticReady = objectSemanticMaterial != null
                     && renderTargets.ObjectSemanticLowTexture != null
                     && renderTargets.ObjectSemanticHighTexture != null;
@@ -461,10 +462,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     Blitter.BlitTexture(cmd, tempTexture, new Vector4(1, 1, 0, 0), objectSemanticMaterial, 0);
                     cmd.SetGlobalVector(
                         HoCharacterSpecializationShaderConstants.ScreenTexelSizeId,
-                        GetScreenTexelSize(renderingData.cameraData.cameraTargetDescriptor, settings));
+                        screenTexelSize);
                 }
 
-                ApplyMaterialProperties(compositeMaterial, settings);
+                ApplyMaterialProperties(compositeMaterial, settings, GetEffectPixelScale(settings, (int)screenTexelSize.w));
                 cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.BufferId, referenceFrameBuffer.Capture());
                 cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.IdentityMapId, HoCharacterReferenceFrameBuffer.IdentityMapBuffer);
                 cmd.SetGlobalInt(HoCharacterReferenceFrameBuffer.FrameCountId, HoCharacterReferenceFrameBuffer.FrameCount);
@@ -963,6 +964,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.enhancedOutlineReady = enhancedOutlineReady;
                 FillMaterialVectors(
                     settings,
+                    GetEffectPixelScale(settings, (int)screenTexelSize.w),
                     faceHairDiffuseReady,
                     subjectOutlineReady,
                     enhancedOutlineReady,

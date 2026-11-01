@@ -1,5 +1,21 @@
 # 主体轮廓场 GPU 回归
 
+## 分辨率适配回归
+
+将 `ResolutionScalingValidation.cs` 复制到同一隔离工程的 `Assets/Editor`，运行：
+
+```powershell
+Unity.exe -batchmode -projectPath <isolated-project> -executeMethod ResolutionScalingValidation.Run -logFile <log-path>
+```
+
+脚本调用生产代码的材质参数生成、纹理尺寸和三条模糊参数路径，检查 720p/1080p/
+1440p/4K、竖屏、超宽屏、奇数尺寸与 1×1，分别覆盖 Full/Half/Quarter 捕获和
+720/1080/1440 三种参考高度。验证全部八个像素参数的归一化尺寸不变、
+关闭适配后的旧公式、非像素参数、运行时复制、序列化和无效参考高度。
+成功时输出 `[ResolutionScalingValidation] PASS`，返回 0。
+
+## 轮廓场 GPU 回归
+
 在隔离的 Unity 6000.3 / URP 17.3 工程中引用 lilToon 和本包，将此目录的
 `OutlineFieldValidation.cs`、`OutlineValidationUV.shader` 复制到 `Assets/Editor`。
 保留图形设备，运行：

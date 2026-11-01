@@ -4,10 +4,21 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     internal sealed partial class HoCharacterSpecializationPass
     {
-        private static void ApplyMaterialProperties(Material material, HoCharacterSpecializationSettings settings)
+        // Pixel sizes are authored at a reference height, then converted to the
+        // texture actually sampled. Camera Render Scale and capture downsampling
+        // must not change the effect's fraction of the screen.
+        private static float GetEffectPixelScale(HoCharacterSpecializationSettings settings, int targetHeight)
+        {
+            return settings.scalePixelEffectsWithResolution
+                ? Mathf.Max(1, targetHeight) / (float)Mathf.Max(1, settings.pixelReferenceHeight)
+                : 1.0f;
+        }
+
+        private static void ApplyMaterialProperties(Material material, HoCharacterSpecializationSettings settings, float pixelScale)
         {
             FillMaterialVectors(
                 settings,
+                pixelScale,
                 false,
                 false,
                 false,
@@ -114,6 +125,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         private static void FillMaterialVectors(
             HoCharacterSpecializationSettings settings,
+            float pixelScale,
             bool faceHairDiffuseTexturesReady,
             bool subjectOutlineTexturesReady,
             bool enhancedOutlineTexturesReady,
@@ -171,8 +183,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             eyeRevealParams = new Vector4(
                 Mathf.Clamp01(settings.eyeRevealStrength),
-                Mathf.Max(0.0f, settings.eyeRevealFeatherPixels),
-                Mathf.Max(0.0f, settings.eyeRevealDilationPixels),
+                Mathf.Max(0.0f, settings.eyeRevealFeatherPixels) * pixelScale,
+                Mathf.Max(0.0f, settings.eyeRevealDilationPixels) * pixelScale,
                 Mathf.Max(0.0f, settings.eyeRevealDepthBias));
             eyeAngleParams = new Vector4(
                 settings.eyeRevealAngleEnabled ? Mathf.Clamp01(settings.eyeRevealAngleStrength) : 0.0f,
@@ -181,11 +193,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 Mathf.Max(0.0f, settings.eyeRevealAngleSoftnessDegrees));
             hairShadowParams = new Vector4(
                 Mathf.Clamp01(settings.hairShadowOpacity),
-                Mathf.Max(0.0f, settings.hairShadowDistancePixels),
+                Mathf.Max(0.0f, settings.hairShadowDistancePixels) * pixelScale,
                 settings.hairShadowAngleDegrees,
-                Mathf.Max(0.0f, settings.hairShadowSoftnessPixels));
+                Mathf.Max(0.0f, settings.hairShadowSoftnessPixels) * pixelScale);
             hairShadowParams1 = new Vector4(
-                Mathf.Max(0.0f, settings.hairShadowSpreadPixels),
+                Mathf.Max(0.0f, settings.hairShadowSpreadPixels) * pixelScale,
                 (float)settings.hairShadowBlendMode,
                 settings.useEyeRevealArea ? 1.0f : 0.0f,
                 0.0f);
@@ -221,6 +233,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 out enhancedOutlineFogParams,
                 out enhancedOutlineHeightFadeParams,
                 out enhancedOutlineOptions);
+
+            faceHairDiffuseParams.y *= pixelScale;
+            subjectOutlineParams.y *= pixelScale;
+            enhancedOutlineParams.y *= pixelScale;
 
             options = CreateCharacterOptions(settings);
         }

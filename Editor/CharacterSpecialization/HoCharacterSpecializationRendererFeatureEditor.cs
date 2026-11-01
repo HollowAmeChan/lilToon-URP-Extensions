@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "这个 RendererFeature 负责把 HoCharacter 捕获/合成 pass 安装进当前 Renderer。效果参数只从场景或全局 Volume 的“Ho-CharacterSpecialization/角色特化”读取；这里仅保留捕获、高级资源和调试设置。",
+                "这个 RendererFeature 负责把 HoCharacter 捕获/合成 pass 安装进当前 Renderer。效果参数只从场景或全局 Volume 的“Ho-CharacterSpecialization/角色特化”读取；这里保留捕获、分辨率适配、高级资源和调试设置。",
                 MessageType.Info);
 
             if (settingsProperty == null)
@@ -63,6 +63,15 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(enabled, "启用");
                 DrawProperty("passEvent", "渲染时机");
                 DrawProperty("renderScale", "渲染缩放");
+                SerializedProperty scalePixelEffects = Find("scalePixelEffectsWithResolution");
+                DrawProperty(scalePixelEffects, "像素效果随分辨率缩放");
+                using (new EditorGUI.DisabledScope(scalePixelEffects != null && !scalePixelEffects.boolValue))
+                {
+                    DrawProperty("pixelReferenceHeight", "像素效果参考高度");
+                }
+                EditorGUILayout.HelpBox(
+                    "启用后，Volume 中的像素尺寸按参考高度解释，并随实际渲染分辨率缩放；默认以 1080p 为基准。全 / 半 / 四分之一捕获分辨率会自动换算，保持相同的画面比例。",
+                    MessageType.Info);
             }
         }
 

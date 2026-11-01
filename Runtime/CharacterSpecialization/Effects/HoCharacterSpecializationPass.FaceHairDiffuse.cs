@@ -79,14 +79,29 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             float radiusScale,
             int iterationIndex)
         {
-            float scale = blurTextureDesc.width > 0
-                ? blurTextureDesc.width / (float)Mathf.Max(1, cameraTextureDescriptor.width)
-                : 1.0f;
+            float scale = GetBlurPixelScale(settings, cameraTextureDescriptor, blurTextureDesc);
             return new Vector4(
                 Mathf.Max(0.0f, settings.faceHairDiffuseRadiusPixels) * Mathf.Max(scale, 0.0001f) * Mathf.Max(radiusScale, 0.0001f),
                 iterationIndex * 1.61803399f,
                 FaceHairDiffuseBlurIterationCount,
                 0.0f);
+        }
+
+        private static float GetBlurPixelScale(
+            HoCharacterSpecializationSettings settings,
+            RenderTextureDescriptor cameraTextureDescriptor,
+            TextureDesc blurTextureDesc)
+        {
+            if (settings.scalePixelEffectsWithResolution)
+            {
+                int height = blurTextureDesc.height > 0 ? blurTextureDesc.height : cameraTextureDescriptor.height;
+                return GetEffectPixelScale(settings, height);
+            }
+
+            // Preserve the original camera-pixel convention when adaptation is off.
+            return blurTextureDesc.width > 0
+                ? blurTextureDesc.width / (float)Mathf.Max(1, cameraTextureDescriptor.width)
+                : 1.0f;
         }
 
         private static void AddFaceHairDiffuseBlurPass(

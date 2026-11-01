@@ -2,6 +2,7 @@
 
 > 状态：**现行功能说明（2026 文档审核核对）**。语义来源是 **AC 的 `Face` lane 覆盖率**（源头是 OB 标签「脸」），接收区域是 OB 标签「前发」；`MetadataBuffer` 与它的 `SurfaceColor` 都不再参与这条链。
 > 相关：RDG 结构与逐趟清单见 `角色特化/Ho-CharacterSpecialization_RDG优化.md`；眼透见 `角色特化/CharacterSpecialization_EyeReveal.md`。
+> 模糊半径默认按 1080 高度随渲染分辨率缩放；设置与迁移见 `CharacterSpecialization_ResolutionScaling.md`。
 
 ## 目标
 

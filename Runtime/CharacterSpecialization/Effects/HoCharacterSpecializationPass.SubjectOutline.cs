@@ -153,6 +153,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             int iterationIndex)
         {
             return CreateOutlineBlurParams(
+                settings,
                 settings.subjectOutlineRadiusPixels,
                 cameraTextureDescriptor,
                 blurTextureDesc,
@@ -168,6 +169,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             int iterationIndex)
         {
             return CreateOutlineBlurParams(
+                settings,
                 settings.enhancedOutlineRadiusPixels,
                 cameraTextureDescriptor,
                 blurTextureDesc,
@@ -176,15 +178,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         }
 
         private static Vector4 CreateOutlineBlurParams(
+            HoCharacterSpecializationSettings settings,
             float radiusPixels,
             RenderTextureDescriptor cameraTextureDescriptor,
             TextureDesc blurTextureDesc,
             float radiusScale,
             int iterationIndex)
         {
-            float scale = blurTextureDesc.width > 0
-                ? blurTextureDesc.width / (float)Mathf.Max(1, cameraTextureDescriptor.width)
-                : 1.0f;
+            float scale = GetBlurPixelScale(settings, cameraTextureDescriptor, blurTextureDesc);
             return new Vector4(
                 Mathf.Max(0.0f, radiusPixels) * Mathf.Max(scale, 0.0001f) * Mathf.Max(radiusScale, 0.0001f),
                 iterationIndex * 1.61803399f,
