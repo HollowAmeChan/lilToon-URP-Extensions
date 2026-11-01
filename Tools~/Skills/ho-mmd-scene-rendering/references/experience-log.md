@@ -121,3 +121,10 @@ Use the date and a short subsystem heading. State the failed or surprising behav
 
 - Stage/subsystem: WTD / SweetTea video production. Five SweetTea/WTD clips were exported at 1080×1920, nominal 30 fps, H.264 with AAC audio. Full-file decode passed for all five. Container average bitrates range from 8.19 to 8.43 Mbps; this records the current files and does not establish whether fine detail loss comes from encoding or rendering. しょ食事タイム carries mono audio; the other four are stereo. The first-pass files are production outputs, but high-resolution offline sampling, temporal convergence independent of physics/animation time, and RTShadow precision remain unaudited. Keep those as a separate rendering investigation rather than treating this export as a quality benchmark.
 - Evidence: `BREAK_URP/Assets/Hollow/MMD影片/甜茶_*/Renders/*.mp4`. Confidence: confirmed.
+
+## 2026-11-02 — Ho-only 整理与远景球体轮廓
+
+- 27 份 H2Cu 源场景 Profile 移除 189 个 URP 原生后处理组件；连同共享动画 Profile，28 份均显式开启 Ho 接管，最终原生/缺失组件为 0。清理阶段保留既有 Ho 参数；之后的 ACES、景深与阶梯体积修改属于明确的艺术调整。乐园·墟实原本关闭的 ImageProcess 保持关闭。
+- 花吐电気、孔雀月令、共享动画场景的 GPU 压力对照确认：原生开关/曝光/Bloom 不参与 Ho-only 图像，AA 保留；显式退出接管才恢复原生 LUT。不是仅检查 Profile 勾选框。
+- 虫无/虫染的大球为真实网格，距主相机约77m，前景短程灯与旧70m体积远距够不到球后空气。扩大区域上边界与体积远距，使用球旁实光及朝后发射的 HD 宽 Spot，得到暗球配蓝/红光晕。前向背光曾形成盖住球面的光柱，不能只靠增加亮度。两版最终均拍过主/左/右三个机位。
+- Evidence: `Tools~/MmdStages/HoOnlyReview-20261101.md`；本机对照图、最终清单与 GPU 执行记录见 `Temp~/HoOnlyReview-20261101/`。Confidence: 场景已保存、实际 GPU 预览已检查；不代表完整复刻作者的全部 MME/粒子。

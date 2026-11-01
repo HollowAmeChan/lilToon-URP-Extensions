@@ -24,6 +24,8 @@
 
 雾蒙蒙时一起观察太阳光束、区域密度、height fog、SkyTyndall、Glow。先降低抢眼的全局散射，再补局部灯。乐园·墟实的废墟窗雾可以保留；花吐电気应保持明亮干净。
 
+远景光晕要同时覆盖三种范围：Light.range、HoVolumeLightVolume.maxDistance、HoAtmosphereRegion 的世界范围。虫无/虫染的大球距主机位约77m，旧体积远距70m且区域上边界只到42m；只加亮前景灯不能得到球后上方的空气。需要暗主体配亮轮廓时，可在主体周围布置朝后方空气发射的宽 Spot，另用实光塑形表面。背光直接穿过前侧空气容易变成盖住主体的光柱；先看朝向和遮挡，再调强度。sourceRadius 可压住光源附近的散射亮点，Light 强度和局部体积倍率可分开平衡墙面亮度与空气感。这是构图选择，不是所有场景都要套的参数。
+
 ## PLR 设置与按需排错
 
 接收 Renderer 加 HoPlanarReflectionSurface，指定反射平面 Transform，开 Scene View 预览。材质开 _UseReflection 和 _UsePlanarReflection，调 strength/smoothness/reflectance。不透明 Ho lilToon 直接吃每物件 source，通常不用特殊全屏合成。
@@ -49,6 +51,8 @@ CLI `video-cli.py diagnose-rtshadow --config ... --quality draft --camera-name .
 先辨认真正的灯芯/灯纸/发光晶体，别直接在整个材质 Renderer 的 bounds 中心放一个大 Point。PMX 常把整排灯合为一个网格：可用 HoMmdPracticalLighting.Inventory 拆出焊接后的连通几何，再核对哪些部件属于同一盏灯。例如炫光的同一个 LED 有上下两片薄面，要合为一个灯位；百鸟和月昔梅大量纸灯则确实是独立灯具。
 
 补灯计划保存在场景 Rendering/灯具补光.json，显式列出位置、颜色、强度、范围、来源、定向下照、投影与局部体积。Apply 只更新 11 实景灯具 下的灯、指定发光材质和列出的旧灯，不重新应用全局打灯/滤镜配方。实际摆好后可以直接在 Inspector 修改；只渲图不会恢复 JSON 数值。
+
+远景定点计划还可显式设置球材质直射高光（`skipEmission` 保持自发光不变）、局部体积远距/倍率、指定空气区域的 bounds、观察相机朝向和 Ho 景深焦距。不指定这些字段时不调整它们；已有计划的阴影强度保持旧默认，只有 `setShadowStrength` 才使用新值。`stage-survey` 是只读完整几何/灯光/相机调查，普通 `fixtures` 仍只关心灯具候选。
 
 小灯用短范围低强度实光，悬灯可配向下 Spot 在地面形成光池。少量重点灯承担 HD 体积/遮挡，先看光束中段是否在观察空间内，避免把预算全部给相机旁边、画外的灯。开 HD 独立遮挡还需要 Light 的 shadows 开启，源头要在开口外，避免灯壳把整个光束挡住。
 

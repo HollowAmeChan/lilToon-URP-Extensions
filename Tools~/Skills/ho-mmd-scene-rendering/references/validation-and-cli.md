@@ -57,6 +57,10 @@ Start-Process -FilePath $editor -WindowStyle Hidden -ArgumentList @('-batchmode'
 
 捕获不带 -quit 或 -nographics，异步任务完成后入口自行退出。D3D12 用于 RTGI/DXR。create、logo 也支持 JSON 入口。
 
+同一批处理入口也接受 `practicals`、`stage-survey`、`post-inventory`、`post-migrate`、`post-tonemap` 和 `post-tune`。保持定点修改与只渲染为独立请求。`post-*` 要给有效 `stageFolder`；`post-tune` 另给明确的 `settingsPath`。这些是用户要求清理旧 Profile 时的工具，不是每次渲图的前置检查。`-hoLightProbe` 可为批处理渲图记录实际局部体积源状态到 `Library/HoMmdStages/PracticalLighting/<场景>/light-state-view0.json`，用于确认光源是否与空气相交并真正取得 HD 遮挡。
+
+崩溃后 `status.json` 可能损坏或只有 NUL，不能据此认定 Editor 仍在运行；结合真实 Unity 进程和当前日志判断。独立批处理可能从零个已加载场景开始，清理时不恢复空的 SceneSetup，也不尝试直接卸载最后一个场景。
+
 ## 可选排错
 
 缺图/透明异常查单个 PMX report 与材质；反射异常才跑 PLR debug/on-off/mip；体积异常查对应 Source/Volume；怀疑底层依赖才看管线总览，不批量重置共享 Renderer。
