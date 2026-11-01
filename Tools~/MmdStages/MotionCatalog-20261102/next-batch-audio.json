@@ -1,6 +1,6 @@
 {
   "libraryRoot": "D:\\Unity_Project\\BREAK_URP\\Assets\\00动画\\VMD动画\\甜茶",
-  "batchPurpose": "Next six solo performances plus two backups. BGM acquired for all eight; animation sync and WTD adaptation still require in-scene playback. No new scene build or rendering.",
+  "batchPurpose": "Six selected solo performances assembled and fully rendered/reviewed at draft quality; two audio-ready backups remain. See third-batch-review.md.",
   "candidates": [
     {
       "id": "old/ハッピーミルフィーユ",
@@ -69,14 +69,24 @@
         "下まつ毛上げ",
         "にこり口"
       ],
-      "status": "audio-prepared-sync-pending",
+      "status": "draft-rendered",
       "endFrame": 1311,
       "bgm": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/BGM.wav",
       "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/BGM来源.json",
       "sourceUrl": "https://www.bilibili.com/video/BV1yoYNzsEaH",
       "alignmentVerified": false,
       "batchRole": "recommended",
-      "recommendedBgmOffsetSeconds": 0
+      "recommendedBgmOffsetSeconds": 0,
+      "scene": "Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/ラブソングに襲われる.unity",
+      "productionConfig": "Assets/00动画/MMD动画场景/花吐电気通用动画/制作说明/ラブソングに襲われる.json",
+      "renderOutput": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第三批六动作-验证-20261102/ラブソングに襲われる-巫女服-360x640-30fps.mp4",
+      "renderQuality": {
+        "width": 360,
+        "height": 640,
+        "fps": 30,
+        "outfit": "巫女服"
+      },
+      "productionFacial": "Assets/00动画/VMD动画/甜茶/A甜茶旧合集动作包/甜茶合集动作/ラブソングに襲われる/ラブソングに襲われる/facial_risu.vmd"
     },
     {
       "id": "old/好きすぎて滅",
@@ -101,14 +111,24 @@
         "下眼上",
         "口横狭め"
       ],
-      "status": "audio-prepared-sync-pending",
+      "status": "draft-rendered",
       "endFrame": 1071,
       "bgm": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/BGM.wav",
       "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/BGM来源.json",
       "sourceUrl": "https://www.bilibili.com/video/BV1MGCrBBEg1",
       "alignmentVerified": false,
       "batchRole": "recommended",
-      "recommendedBgmOffsetSeconds": 0
+      "recommendedBgmOffsetSeconds": 0,
+      "scene": "Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/好きすぎて滅.unity",
+      "productionConfig": "Assets/00动画/MMD动画场景/花吐电気通用动画/制作说明/好きすぎて滅.json",
+      "renderOutput": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第三批六动作-验证-20261102/好きすぎて滅-巫女服-构图修订-360x640-30fps.mp4",
+      "renderQuality": {
+        "width": 360,
+        "height": 640,
+        "fps": 30,
+        "outfit": "巫女服"
+      },
+      "productionFacial": "Assets/00动画/VMD动画/甜茶/A甜茶旧合集动作包/甜茶合集动作/好きすぎて滅/好きすぎて滅/facial_kinich.vmd"
     },
     {
       "id": "main/薄ら氷心中",
@@ -170,14 +190,24 @@
         "口横狭め",
         "口上"
       ],
-      "status": "audio-prepared-sync-pending",
+      "status": "draft-rendered",
       "endFrame": 722,
       "bgm": "The_5th/BGM.wav",
       "audioProvenance": "The_5th/BGM来源.json",
       "sourceUrl": "https://www.bilibili.com/video/BV11h411x7nk",
       "alignmentVerified": false,
       "batchRole": "recommended",
-      "recommendedBgmOffsetSeconds": 0
+      "recommendedBgmOffsetSeconds": 0,
+      "scene": "Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/The_5th.unity",
+      "productionConfig": "Assets/00动画/MMD动画场景/花吐电気通用动画/制作说明/The_5th.json",
+      "renderOutput": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第三批六动作-验证-20261102/The_5th-巫女服-360x640-30fps.mp4",
+      "renderQuality": {
+        "width": 360,
+        "height": 640,
+        "fps": 30,
+        "outfit": "巫女服"
+      },
+      "productionFacial": "Assets/00动画/VMD动画/甜茶/The_5th/The_5th/facial_fufu.vmd"
     },
     {
       "id": "main/Catch_Me_If_You_Can",
@@ -198,14 +228,24 @@
       ],
       "originalStartSeconds": 66.3,
       "missingMorphsEstimate": [],
-      "status": "audio-prepared-sync-pending",
+      "status": "draft-rendered",
       "endFrame": 494,
       "bgm": "Catch_Me_If_You_Can/BGM.wav",
       "audioProvenance": "Catch_Me_If_You_Can/BGM来源.json",
       "sourceUrl": "https://www.bilibili.com/video/BV15fqZBUEqc",
       "alignmentVerified": false,
       "batchRole": "recommended",
-      "recommendedBgmOffsetSeconds": 0
+      "recommendedBgmOffsetSeconds": 0,
+      "scene": "Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/Catch_Me_If_You_Can.unity",
+      "productionConfig": "Assets/00动画/MMD动画场景/花吐电気通用动画/制作说明/Catch_Me_If_You_Can.json",
+      "renderOutput": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第三批六动作-验证-20261102/Catch_Me_If_You_Can-巫女服-360x640-30fps.mp4",
+      "renderQuality": {
+        "width": 360,
+        "height": 640,
+        "fps": 30,
+        "outfit": "巫女服"
+      },
+      "productionFacial": "Assets/00动画/VMD动画/甜茶/Catch_Me_If_You_Can/Catch_Me_If_You_Can/facial.vmd"
     },
     {
       "id": "old/にぎにぎにじたうん",
@@ -229,7 +269,7 @@
         "下眼上",
         "口上"
       ],
-      "status": "audio-prepared-sync-pending",
+      "status": "draft-rendered",
       "endFrame": 1083,
       "bgm": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/BGM.wav",
       "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/BGM来源.json",
@@ -238,7 +278,17 @@
       "preparedSourceStartSeconds": 0.0,
       "alignmentVerified": false,
       "batchRole": "recommended",
-      "recommendedBgmOffsetSeconds": 0
+      "recommendedBgmOffsetSeconds": 0,
+      "scene": "Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/にぎにぎにじたうん.unity",
+      "productionConfig": "Assets/00动画/MMD动画场景/花吐电気通用动画/制作说明/にぎにぎにじたうん.json",
+      "renderOutput": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第三批六动作-验证-20261102/にぎにぎにじたうん-巫女服-360x640-30fps.mp4",
+      "renderQuality": {
+        "width": 360,
+        "height": 640,
+        "fps": 30,
+        "outfit": "巫女服"
+      },
+      "productionFacial": "Assets/00动画/VMD动画/甜茶/A甜茶旧合集动作包/甜茶合集动作/にぎにぎにじたうん/facial_fufu.vmd"
     },
     {
       "id": "old/88888888",
@@ -258,14 +308,24 @@
       ],
       "originalStartSeconds": 28.166666666666668,
       "missingMorphsEstimate": [],
-      "status": "audio-prepared-sync-pending",
+      "status": "draft-rendered",
       "endFrame": 858,
       "bgm": "A甜茶旧合集动作包/甜茶合集动作/88888888/BGM.wav",
       "audioProvenance": "A甜茶旧合集动作包/甜茶合集动作/88888888/BGM来源.json",
       "sourceUrl": "https://www.bilibili.com/video/BV1JP4GzpEo5",
       "alignmentVerified": false,
       "batchRole": "recommended",
-      "recommendedBgmOffsetSeconds": 0
+      "recommendedBgmOffsetSeconds": 0,
+      "scene": "Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/88888888.unity",
+      "productionConfig": "Assets/00动画/MMD动画场景/花吐电気通用动画/制作说明/88888888.json",
+      "renderOutput": "Assets/00动画/MMD动画场景/花吐电気通用动画/Renders/第三批六动作-验证-20261102/88888888-巫女服-360x640-30fps.mp4",
+      "renderQuality": {
+        "width": 360,
+        "height": 640,
+        "fps": 30,
+        "outfit": "巫女服"
+      },
+      "productionFacial": "Assets/00动画/VMD动画/甜茶/A甜茶旧合集动作包/甜茶合集动作/88888888/facial_derived.vmd"
     }
   ],
   "preparedDate": "2026-11-02",
