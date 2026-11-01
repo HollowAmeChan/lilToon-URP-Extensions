@@ -30,6 +30,13 @@
 批次明确声明 `qualityPreset`、`aspectPreset`、`width`、`height`、`fps`、
 `antialiasing`、`enableParts` 和 `disableParts`。
 
+同一清单可以混合衣装：每条影片可指定自己的 `enableParts` / `disableParts`，
+省略时才沿用批次全局值。条目名和输出路径必须唯一，例如 `EX-HAPPY_泳装`、
+`EX-HAPPY_巫女服`，因为中间静音视频也按条目名区分；不要让两版复用同一份中间文件。
+衣装只在录制 Play 期间切换，不写回 Scene 或共享角色 Prefab。
+
+批次会等待已有的舞台队列、播放或编译完成后再开录，不抢占正在执行的机位捕获。
+
 ```powershell
 python Tools~/MmdStages/render-video-batch.py `
   --manifest "D:/Unity_Project/BREAK_URP/Assets/00动画/MMD动画场景/花吐电気通用动画/制作说明/巫女服中质量制作清单.json"

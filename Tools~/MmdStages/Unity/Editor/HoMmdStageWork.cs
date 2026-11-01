@@ -48,7 +48,8 @@ public static class HoMmdStageWork
             playing=EditorApplication.isPlaying,activeScene=SceneManager.GetActiveScene().path,scenes=scenes,
             pipeline=AssetDatabase.GetAssetPath(GraphicsSettings.currentRenderPipeline),graphics=SystemInfo.graphicsDeviceType.ToString()},true));
         string request=Path.Combine(Work,"request.json");
-        if(!File.Exists(request)||EditorApplication.isCompiling||EditorApplication.isUpdating||EditorApplication.isPlaying)return;
+        if(!File.Exists(request)||EditorApplication.isCompiling||EditorApplication.isUpdating||EditorApplication.isPlayingOrWillChangePlaymode ||
+           File.Exists("Library/HoMmdVideo/request.json"))return;
         Request command=null;
         bool deferred=false;
         busy=true;

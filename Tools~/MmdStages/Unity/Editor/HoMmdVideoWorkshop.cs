@@ -77,7 +77,8 @@ public static class HoMmdVideoWorkshop
             return;
         }
         if (EditorApplication.timeSinceStartup < next || EditorApplication.isCompiling ||
-            EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode) return;
+            EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode ||
+            File.Exists("Library/HoMmdStages/running.json")) return;
         next = EditorApplication.timeSinceStartup + 1;
         string path = Path.Combine(Work, "request.json");
         if (!File.Exists(path)) return;

@@ -49,6 +49,8 @@ WTD 驱动 `Armature-Swimsuit`；`Armature-Miko` 由既有合骨架流程处理�
 
 日常视频与单帧都按用途选质量档，并在开录前说明实际尺寸、比例和帧率；这不是只用于排错的一次性选项。验证阶段不再默认录制整段 2160p，不将当前 IK、表情或画质视作最终完成。
 
+多个动作 × 多个衣装直接共用现有动作 Scene，用一个 `render-video-batch.py` 清单逐项指定 `enableParts` / `disableParts`，录制时临时切换。每项 `name` 与输出路径都必须唯一（如 `EX-HAPPY_泳装`、`EX-HAPPY_巫女服`），避免错误复用同一份静音中间文件。只渲染不需要复制 Scene、重建适配或回写角色 Prefab。用户明确指定高质量时，现有 `high` 档为 2160×3840 竖屏；帧率独立指定，不能把升分辨率自动当成升到 60 fps。
+
 人工入口为 `HoUnityTools/快速渲染` 主面板的质量 / 比例 / fps 行。自动化 MMD 视频仍使用 `video-cli.py record` → 项目录制桥 → Unity Recorder → ffmpeg 合音乐；快速渲染 GUI 使用另一套捕获后端。目前只是档位语义一致，不应宣称两者录制行为已经统一。选择后端以动作时钟、运镜、音频、AA 预热和可靠清理为准，不要求 CLI 操作 GUI。指定相机的视频支持应实测，不能仅因 GUI 有相机选项就认定整段录制可用。
 
 Scene View 的 AA 与演出 Camera 的 AA 独立。先检查实际相机，不将“没用 TAA”误报为“没有 AA”。`video-cli.py record --aa taa` 仅在本次 Play 的录制相机上启用 TAA Very High，关闭该相机的 MSAA/动态分辨率；省略 `--aa` 继承保存的相机设置，不改场景、灯光或 Volume。也可明确选择 `smaa`、`fxaa`、`none`。
