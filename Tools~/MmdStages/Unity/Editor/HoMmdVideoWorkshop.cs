@@ -20,6 +20,11 @@ public static class HoMmdVideoWorkshop
     [Serializable] public sealed class Request
     {
         public string id, action, sourceScene, scene, folder, output, sourceRig, motion, facial, camera, audio;
+        public string stageScene, animationScene;
+        public string antialiasing;
+        public string qualityPreset, aspectPreset, postStack, cameraName;
+        public Vector3 performancePosition;
+        public float performanceYaw;
         public float seconds, distanceMultiplier = 1;
         public int width = 720, height = 1280, fps = 60;
         public bool fullBody, disableRtgi;
@@ -80,11 +85,37 @@ public static class HoMmdVideoWorkshop
         {
             request = JsonUtility.FromJson<Request>(File.ReadAllText(path));
             File.Delete(path);
-            if (Enumerable.Range(0, SceneManager.sceneCount).Any(i => SceneManager.GetSceneAt(i).isDirty))
+            bool resumeComposition = (request.action == "resume-stage" || request.action == "focus-stage" ||
+                request.action == "diagnose-render" || request.action == "proof-post" || request.action == "proof-glow" ||
+                request.action == "enable-scene-post" || request.action == "proof-ho-only" ||
+                request.action == "strip-native-post") &&
+                Enumerable.Range(0, SceneManager.sceneCount).All(i =>
+                    !SceneManager.GetSceneAt(i).isDirty || SceneManager.GetSceneAt(i).path == request.scene);
+            if (!resumeComposition && Enumerable.Range(0, SceneManager.sceneCount).Any(i => SceneManager.GetSceneAt(i).isDirty))
                 throw new InvalidOperationException("A loaded scene has unsaved changes; the video queue leaves it intact.");
             string result;
             switch (request.action)
             {
+                case "compose-stage": result = HoMmdStagePerformance.Compose(request); break;
+                case "resume-stage": result = HoMmdStagePerformance.Compose(request); break;
+                case "inspect-stage": result = HoMmdStagePerformance.Inspect(request); break;
+                case "diagnose-render": result = HoMmdRenderDiagnostics.Inspect(request); break;
+                case "configure-camera-post": result = HoMmdRenderDiagnostics.ConfigureCameraPost(request); break;
+                case "enable-scene-post": result = HoMmdRenderDiagnostics.EnableScenePost(request); break;
+                case "test-render-presets": result = HoMmdRenderDiagnostics.ValidatePresets(); break;
+                case "proof-post": result = HoMmdRenderDiagnostics.Proof(request); break;
+                case "proof-glow": result = HoMmdRenderDiagnostics.Proof(request); break;
+                case "proof-ho-only": result = HoMmdRenderDiagnostics.Proof(request); break;
+                case "strip-native-post": result = HoMmdRenderDiagnostics.RemoveBuiltinFilters(request); break;
+                case "place-stage": result = HoMmdStagePerformance.Place(request); break;
+                case "focus-stage": result = HoMmdStagePerformance.Focus(request); break;
+                case "render-performance":
+                    HoMmdStagePerformance.Render(request,
+                        path => File.WriteAllText(Path.Combine(Work, "result.json"), JsonUtility.ToJson(
+                            new Response { id = request.id, status = "ok", result = path }, true)),
+                        error => File.WriteAllText(Path.Combine(Work, "result.json"), JsonUtility.ToJson(
+                            new Response { id = request.id, status = "error", result = error.ToString() }, true)));
+                    return;
                 case "inspect": result = Inspect(); break;
                 case "create": result = Create(request); break;
                 case "source-rig": result = InspectSourceRig(request); break;

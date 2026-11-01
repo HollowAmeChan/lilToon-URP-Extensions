@@ -104,10 +104,18 @@ public static class HoMmdSceneWorkshop
             AssetDatabase.CreateAsset(sky, folder + "/Rendering/天空.mat"); environment.skybox = sky;
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, folder + "/Rendering/后处理.asset");
-            Add<Bloom>(profile).intensity.Override(.15f);
-            Add<ColorAdjustments>(profile);
             Add<ScreenProcessStackVolume>(profile);
             var image = Add<ImageProcessStackVolume>(profile);
+            image.Enable.Override(true);
+            image.ReplaceBuiltinPostProcessing.Override(true);
+            image.layers.overrideState = true;
+            image.layers.value.Add(new ImageProcessLayer {
+                name = "Ho 发光 · 初始柔和", effect = ImageProcessEffect.Glow,
+                parameters0 = new Vector4(1, .5f, 2, 0),
+                parameters1 = new Vector4(.15f, 0, 0, 1),
+                parameters2 = new Vector4(3, 180, 0, 0)
+            });
+            EditorUtility.SetDirty(image);
             if (!string.IsNullOrEmpty(request.logoPath))
             {
                 string logoPath = folder + "/Rendering/Hollow Logo.png";

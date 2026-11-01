@@ -11,6 +11,9 @@ using UnityEditor.Recorder.Input;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
+using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.PostProcessing;
+using System.Collections.Generic;
 using lilToon.URP.Extensions.RTGI;
 using Object = UnityEngine.Object;
 
@@ -48,7 +51,8 @@ public static class HoMmdVideoCapture
 [Serializable]
 public sealed class HoMmdVideoCaptureRequest
 {
-    public string id, output;
+    public string id, output, antialiasing;
+    public string qualityPreset, aspectPreset, postStack;
     public float seconds;
     public int width = 720, height = 1280, fps = 60;
     public bool fullBody, disableRtgi;
@@ -73,6 +77,16 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
     double began;
     string work;
     Camera captureCamera;
+    RenderTexture previousCameraTarget, recordingTarget;
+    bool previousCameraEnabled;
+    float previousCameraAspect;
+    UniversalAdditionalCameraData captureCameraData;
+    bool taaVerified;
+    int taaHistoryWidth, taaHistoryHeight, taaHistoryUpdates, lastTaaVersion = -1;
+    string renderFailure;
+    int screenProcessFrames, imageProcessFrames, screenLayers, imageLayers;
+    string screenReason = "No current-camera ScreenProcess diagnostic.", imageReason = "No current-camera ImageProcess diagnostic.";
+    readonly Dictionary<int, CameraRenderCount> cameraRenders = new Dictionary<int, CameraRenderCount>();
     int lastStudyStage = -1;
     [Serializable] sealed class BoneAudit { public string name, source; public Vector3 position, expectedEuler, actualEuler; public float angularError; }
     [Serializable] sealed class DeformAudit { public string name, parent; public Vector3 position, euler; }
@@ -105,6 +119,16 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
                     if (volume.isActiveAndEnabled && volume.profile != null &&
                         volume.profile.TryGet(out HoRTGIVolume rtgi))
                         rtgi.enable.Override(false);
+            if (request.postStack == "image-off" || request.postStack == "screen-off")
+                foreach (var volume in SceneManager.GetActiveScene().GetRootGameObjects()
+                    .SelectMany(x => x.GetComponentsInChildren<Volume>(true)).Where(x => x.isActiveAndEnabled))
+                {
+                    // Volume.profile creates an unsaved runtime copy; never edit sharedProfile.
+                    if (request.postStack == "image-off" &&
+                        volume.profile.TryGet(out ImageProcessStackVolume image)) image.Enable.Override(false);
+                    if (request.postStack == "screen-off" &&
+                        volume.profile.TryGet(out ScreenProcessStackVolume screen)) screen.Enable.Override(false);
+                }
             count = Mathf.CeilToInt((request.seconds > 0 ? request.seconds : sequence.Duration) * request.fps);
             warmup = request.fps; // One real simulated second for armature merge, cloth and temporal history.
             previousCaptureDelta = Time.captureDeltaTime;
@@ -115,7 +139,41 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             EditorApplication.update += Pump;
             Camera camera = sequence.CameraPlayer.TargetCamera;
             captureCamera = camera;
+            previousCameraTarget = camera.targetTexture;
+            previousCameraEnabled = camera.enabled;
+            previousCameraAspect = camera.aspect;
+            // A CLI recording must render even when the visible Game View is
+            // showing another display. Own an offscreen target from warmup on;
+            // Recorder still captures this camera through its SRP capture hook.
+            recordingTarget = new RenderTexture(request.width, request.height, 24, RenderTextureFormat.ARGBHalf) {
+                name = "Ho MMD recording target", antiAliasing = 1, useDynamicScale = false,
+                hideFlags = HideFlags.HideAndDontSave
+            };
+            recordingTarget.Create();
+            camera.targetTexture = recordingTarget;
+            camera.enabled = true;
             camera.aspect = (float)request.width / request.height;
+            captureCameraData = camera.GetUniversalAdditionalCameraData();
+            switch ((request.antialiasing ?? "inherit").ToLowerInvariant())
+            {
+                case "inherit": case "": break;
+                case "taa":
+                    camera.allowMSAA = false;
+                    camera.allowDynamicResolution = false;
+                    captureCameraData.renderPostProcessing = true;
+                    captureCameraData.antialiasing = AntialiasingMode.TemporalAntiAliasing;
+                    captureCameraData.taaSettings.quality = TemporalAAQuality.VeryHigh;
+                    captureCameraData.resetHistory = true;
+                    break;
+                case "smaa":
+                    captureCameraData.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
+                    captureCameraData.antialiasingQuality = AntialiasingQuality.High;
+                    break;
+                case "fxaa": captureCameraData.antialiasing = AntialiasingMode.FastApproximateAntialiasing; break;
+                case "none": captureCameraData.antialiasing = AntialiasingMode.None; break;
+                default: throw new ArgumentException("Unknown recording AA: " + request.antialiasing);
+            }
+            RenderPipelineManager.endCameraRendering += OnCameraRendered;
             foreach (var listener in Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None)) listener.enabled = false;
             var videoListener = camera.GetComponent<AudioListener>();
             if (videoListener == null) videoListener = camera.gameObject.AddComponent<AudioListener>();
@@ -159,8 +217,14 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             controllerSettings.AddRecorderSettings(movieSettings);
             controllerSettings.FrameRate = request.fps;
             controllerSettings.CapFrameRate = false;
-            controllerSettings.SetRecordModeToFrameInterval(0, count - 1);
+            // Recorder establishes the final Game View size when recording starts.
+            // Skip encoding the warmup frames, but render them at the final size
+            // so TAA/RT history is not discarded on the first encoded frame.
+            controllerSettings.SetRecordModeToFrameInterval(warmup, warmup + count - 1);
             controller = new RecorderController(controllerSettings);
+            controller.PrepareRecording();
+            if (!controller.StartRecording()) throw new InvalidOperationException("Unity Recorder did not start.");
+            started = true;
         }
         catch (Exception e) { Finish(e); }
     }
@@ -168,6 +232,50 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
     void Pump()
     {
         if (!finished) EditorApplication.QueuePlayerLoopUpdate();
+    }
+
+    void OnCameraRendered(ScriptableRenderContext context, Camera camera)
+    {
+        if (finished || camera == null) return;
+        int id = camera.GetInstanceID();
+        if (!cameraRenders.TryGetValue(id, out CameraRenderCount countForCamera))
+            cameraRenders[id] = countForCamera = new CameraRenderCount {
+                name = camera.name, type = camera.cameraType.ToString(), componentEnabled = camera.enabled
+            };
+        ++countForCamera.renderedFrames;
+        if (camera != captureCamera || captureCameraData == null) return;
+        var screen = ScreenProcessRuntimeDiagnostics.CurrentSnapshot;
+        if (screen.IsValid && screen.FrameCount == Time.frameCount && screen.CameraName == camera.name)
+        {
+            if (screen.Ready) ++screenProcessFrames;
+            screenLayers = screen.WrittenLayerCount;
+            screenReason = screen.Reason;
+        }
+        var image = ImageProcessRuntimeDiagnostics.CurrentSnapshot;
+        if (image.IsValid && image.FrameCount == Time.frameCount && image.CameraName == camera.name)
+        {
+            if (image.Ready) ++imageProcessFrames;
+            imageLayers = image.WrittenLayerCount;
+            imageReason = image.Reason;
+        }
+        if (captureCameraData.antialiasing != AntialiasingMode.TemporalAntiAliasing) return;
+        try
+        {
+            var history = captureCameraData.history?.GetHistoryForRead<TaaHistory>();
+            var texture = history?.GetAccumulationTexture()?.rt;
+            if (texture == null) return;
+            taaHistoryWidth = texture.width;
+            taaHistoryHeight = texture.height;
+            int version = history.GetAccumulationVersion();
+            if (version >= 0 && version != lastTaaVersion)
+            {
+                lastTaaVersion = version;
+                ++taaHistoryUpdates;
+                if (taaHistoryWidth == request.width && taaHistoryHeight == request.height)
+                    taaVerified = true;
+            }
+        }
+        catch (Exception error) { renderFailure = error.ToString(); }
     }
 
     void Update()
@@ -181,16 +289,18 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
                 throw new OperationCanceledException("Recording canceled by CLI.");
             }
             if (EditorApplication.timeSinceStartup - began > 5400) throw new TimeoutException("Video capture exceeded 90 minutes.");
+            if (renderFailure != null) throw new InvalidOperationException(renderFailure);
             foreach (var item in sequences)
                 item.ExternalTime = request.handStudy ? (tick - warmup < request.fps * 4 ? 0 : 4) :
                     Mathf.Max(0, tick - warmup) / (float)request.fps;
             if (tick == warmup)
             {
                 lastStudyStage = -1;
-                controller.PrepareRecording();
-                if (!controller.StartRecording()) throw new InvalidOperationException("Unity Recorder did not start.");
-                started = true;
             }
+            if (tick > warmup + 2 && captureCameraData.antialiasing == AntialiasingMode.TemporalAntiAliasing &&
+                !taaVerified)
+                throw new InvalidOperationException("Requested TAA has no advancing history at the output resolution. " +
+                    "Check the camera stack, MSAA, render scale and motion-vector support.");
             if (started && tick > warmup + 2 && !controller.IsRecording()) { Finish(null); return; }
             if (tick % 30 == 0)
                 File.WriteAllText(Path.Combine(work, "progress.json"), "{\"frame\":" + Mathf.Max(0, tick - warmup) +
@@ -297,8 +407,32 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             Time.captureDeltaTime = previousCaptureDelta;
             Application.runInBackground = previousBackground;
             EditorApplication.update -= Pump;
+            RenderPipelineManager.endCameraRendering -= OnCameraRendered;
             HoPlaySpeedControl.Release(this);
+            if (captureCamera != null)
+            {
+                captureCamera.targetTexture = previousCameraTarget;
+                captureCamera.enabled = previousCameraEnabled;
+                captureCamera.aspect = previousCameraAspect;
+            }
+            if (recordingTarget != null)
+            {
+                recordingTarget.Release();
+                Object.Destroy(recordingTarget);
+                recordingTarget = null;
+            }
         }
+        File.WriteAllText(Path.GetFullPath(request.output) + ".render.json", JsonUtility.ToJson(new CaptureReport {
+            width = request.width, height = request.height, fps = request.fps, frames = count,
+            warmupFrames = warmup, antialiasing = captureCameraData != null ? captureCameraData.antialiasing.ToString() : "",
+            taaVerified = taaVerified, taaHistoryWidth = taaHistoryWidth, taaHistoryHeight = taaHistoryHeight,
+            taaHistoryUpdates = taaHistoryUpdates, qualityPreset = request.qualityPreset, aspectPreset = request.aspectPreset,
+            postStack = request.postStack, postProcessing = captureCameraData != null && captureCameraData.renderPostProcessing,
+            postExecution = HoPostProcessingDiagnostics.TryGet(captureCamera, out var postExecution) ? postExecution : default,
+            volumeMask = captureCameraData != null ? captureCameraData.volumeLayerMask.value : 0,
+            screenProcessFrames = screenProcessFrames, imageProcessFrames = imageProcessFrames,
+            screenLayers = screenLayers, imageLayers = imageLayers, screenReason = screenReason, imageReason = imageReason,
+            cameraRenders = cameraRenders.Values.ToArray() }, true));
         File.WriteAllText(Path.Combine(work, "result.json"), JsonUtility.ToJson(new HoMmdVideoCaptureResponse {
             id = request?.id, status = error == null ? "ok" : "error",
             result = error == null ? Path.GetFullPath(request.output) + ".mp4" : error.ToString() }, true));
@@ -306,5 +440,22 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
         EditorApplication.isPlaying = false;
     }
     void OnDisable() { if (!finished && request != null) Finish(new OperationCanceledException("Play mode ended during recording.")); }
+    [Serializable] sealed class CaptureReport
+    {
+        public int width, height, fps, frames, warmupFrames, taaHistoryWidth, taaHistoryHeight, taaHistoryUpdates;
+        public string antialiasing;
+        public bool taaVerified;
+        public string qualityPreset, aspectPreset, postStack, screenReason, imageReason;
+        public bool postProcessing;
+        public HoPostProcessingExecution postExecution;
+        public int volumeMask, screenProcessFrames, imageProcessFrames, screenLayers, imageLayers;
+        public CameraRenderCount[] cameraRenders;
+    }
+    [Serializable] sealed class CameraRenderCount
+    {
+        public string name, type;
+        public bool componentEnabled;
+        public int renderedFrames;
+    }
 }
 #endif

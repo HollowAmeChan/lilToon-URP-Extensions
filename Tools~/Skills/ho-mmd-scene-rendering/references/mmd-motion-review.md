@@ -41,7 +41,11 @@ Scene View 的 AA 与演出 Camera 的 AA 独立。先检查实际相机，不�
 
 Recorder 现在先建立最终输出分辨率，再通过录制帧区间跳过一秒预热，避免先按小视图预热、开录时切大尺寸而丢失历史。TAA 录制会检查实际 `TaaHistory` 的纹理尺寸与版本是否推进，旁存 `.render.json`；只有请求选项不能证明 TAA 生效。帧数仍须由成片实际流验证。
 
-本机 Ho ScreenProcess / ImageProcess 排在 URP 后处理之后，后加效果产生的新边缘不会回到前面的 TAA；这与“不支持后处理”不是一回事。TAA 需要后处理、运动矢量、单 Base Camera 和 MSAA=1。发丝、衣袖、运镜切换要看动态拖影与细节，不能只看静帧。开场预热不等于每输出帧增加 RT 收敛采样，也不启用 Recorder 仅供 HDRP 的 Accumulation。
+CLI 录制相机在本次 Play 中持有最终尺寸的离屏 RenderTexture，结束恢复原 target、启用状态与比例，不改变其他相机开关。Unity Recorder 的 Camera 输入本身只注册捕获回调，不能保证所选相机会渲染；当用户的 Game View 正在看其它 Display 时，只改 Game View 尺寸仍可能导致演出相机完全没渲染。先看 `.render.json.cameraRenders`，没有目标相机时不要误判成 TAA 算法错误。离屏目标保证该相机从预热起独立输出，当前 Game View 可继续看其它 Display。
+
+安装项目桥时，`HoMmdVideoCaptureDriver.cs` 放在 `_制作工具/` 根目录的可挂载程序集，不要整目录复制到带 Editor-only asmdef 的 `VideoRecorder/` 中，否则 Unity 不能添加该 MonoBehaviour。文件内的 Editor 依赖已有 `#if UNITY_EDITOR` 保护；编辑器队列类放在 `_制作工具/Editor/`。
+
+本机 Ho ScreenProcess / ImageProcess 排在 AA 处理之后，后加效果产生的新边缘不会回到前面的 TAA；这与“不支持后处理”不是一回事。Ho 接管模式保留 TAA 的基础设施，不需要为 TAA 打开 URP 图像效果；运动矢量、单 Base Camera、MSAA=1 等约束仍有效。发丝、衣袖、运镜切换要看动态拖影与细节，不能只看静帧。开场预热不等于每输出帧增加 RT 收敛采样，也不启用 Recorder 仅供 HDRP 的 Accumulation。
 
 ## 后处理与相机的定点排错
 
@@ -57,13 +61,19 @@ PC_Renderer 的两个旧显示名称分别仍映射正确的 ScreenProcess / Ima
 
 ### Scene View 与 Game View 的发光差异
 
-比较滤镜前，检查 **Scene View 自己的 URP 后处理开关**，不能只看 Ho Volume 的「场景视图」。目前 Ho ScreenProcess / ImageProcess 独立判断是否在 Scene View 运行，即使 Scene View 关闭内置后处理，Ho 栈仍可能继续执行，此时缺少 URP 曝光、ACES/Neutral、Bloom，图像亮度域与 Game View 不同。Volume Inspector 会提示此状态，并提供开启当前 Scene View 完整后处理的按钮；CLI `enable-scene-post` 只修改编辑器预览开关，不保存场景。
+当前默认开启 ImageProcess 的「仅使用 Ho 后处理」：曝光/色调/发光/颗粒等均由 Ho 图层控制，不叠 URP 内置效果。HoURP 在各相机更新 Volume 后通过 `IHoPostProcessingProvider` 判断接管，跳过原生图像 Pass 与调色 LUT，但保留 TAA/SMAA/FXAA、升采样与显示编码。Scene View 与 Game Camera 的原生后处理勾选框不再改变 Ho 输入域，也不会意外让 Ho 模式下请求的 TAA 失效。Ho 图层总开关关闭时，旧内置效果也不会自动复活。
 
-ImageProcess「发光」在 **URP 色调映射之后**提取当前图像的亮部，不是场景 HDR Bloom。开启 ACES/Neutral 后，阈值通常应从约 0.7 开始调整；阈值 7.5 不能因为在未色调映射的预览中有效就照搬到 Game View。需要按 HDR 亮度发光时使用 URP Bloom；需要星芒等 HDR 光学效果则应另行设计映射前的效果，不把图像域参数伪装成 HDR 参数。新建发光图层默认阈值 0.7、平滑 0.5；旧图层不自动迁移，Inspector 提供提示与显式调整按钮。
+Ho 模式的栈初始输入为 HDR，「发光」阈值 7.5 可以有效，不应无条件改成 0.7；新图层默认阈值 1、平滑 0。要做映射，使用已有 Ho `ToonMap`（Neutral / ACES 等）并显式安排在发光之后；作者有意调整顺序时尊重其选择。Inspector 会根据前置 Ho 映射图层或旧混合模式提示高阈值问题。不自动迁移旧 URP 美术效果；用户要求删除内置滤镜时直接清理，不留重复的内置组件干扰操作。
 
-本机 2026-11-01 花吐电気实测：两边同样运行 8 层 ImageProcess、读取同一 Volume，但 Scene View 内置后处理关、演出相机开，发光阈值为 7.5。游戏相机「发光开/关」平均像素差仅 0.013/255；仅在临时副本中改阈值至 0.65、平滑至 0.5 后为 17.23/255，证明图层执行了但原阈值几乎提取不到亮部。校正 Scene View 完整后处理后，旧阈值在该视图也近乎无效。不同机位不能直接当成逐像素相机一致性测试。
+`strip-native-post --config ...` 只清理当前已加载场景引用的局部 VolumeProfile（含已实例化副本），拒绝修改影片目录以外的共享 Profile；删除 URP 命名空间的 `IPostProcessComponent`，保留 Ho 组件、灯光和相机 AA。只保存目标 Profile，不保存或重建场景；输出移除名单、剩余内置组件、清理前后 Ho 序列化参数的 SHA256 一致性。2026-11-01 花吐电気演出场景已按用户要求移除 Bloom、ColorAdjustments、Tonemapping、Vignette、SplitToning、FilmGrain、ChromaticAberration，共 7 项；10 个 Ho 组件及原发光阈值 7.5 保持不变。新建场景模板也已不再添加内置 Bloom/ColorAdjustments，改用 Ho 发光。
 
-`proof-glow --config ... --quality draft --aspect portrait --output <新目录>` 单独比较原设置 / 发光关 / 临时低阈值；`--camera-name '$scene-view'` 使用实际 Scene View 相机。每组内部冻结同一姿态，恢复临时 Profile、阈值与相机设置，不保存作者参数。`diagnose-render` 同时报告 Scene View 与 Game Camera 的后处理开关、Mask、色调映射与发光参数；栈 Ready 或图层计数并不能证明某一层有视觉贡献。
+历史问题（2026-11-01、旧混合链）：花吐电気两边均执行 8 层 ImageProcess，但 Scene View 跳过了原生映射，Game 执行 ACES；阈值 7.5 在 Game 近乎无贡献，不能据此说作者参数错误。曾提供的降阈值和开启完整预览只是绕过现象，不是根因修复。只有明确关闭 Ho 接管回到旧混合链时，才需要排查这两套开关并使用 `enable-scene-post`。不同机位不能当成逐像素相机一致性测试。
+
+`proof-ho-only --config ... --quality draft --aspect portrait --output <新目录>` 测原设置 / 关闭原生勾选框 / 强烈原生滤镜 / Ho 图层关闭但原生参数仍很强 / 显式恢复旧混合链。默认前三项应仅有渲染噪声范围内差异；关 Ho 层不应出现原生滤镜，旧混合链应明显出现原生滤镜。`--camera-name '$scene-view'` 测实际 Scene View，`--aa fxaa` 可覆盖最终 AA 分支；所有临时参数、预览开关与 AA 设置结束后恢复，不保存场景。诊断记录每相机真正进入的后处理后端、Ho 所有权、原生 LUT、有效 AA。
+
+`proof-glow` 仍可比较原设置 / 发光关 / 临时低阈值；它是视觉贡献排错工具，不是建议修改作者阈值。静态 proof 以空间 AA 隔离差异，不声称验证 TAA 收敛；TAA 用短片及 `.render.json` 的历史尺寸、更新次数和 `postExecution` 验证。
+
+2026-11-01 接管实测：Game / Scene / FXAA 三组共 15 项原生 GPU 对照通过；关闭原生勾选框或极强原生滤镜仅产生 <0.1/255 的平均像素差，显式旧混合链出现 >99/255 的差异。360×640、30 fps、1 秒离屏短片得到 30 帧，TAA 历史同尺寸并推进 61 次；`postExecution.hoOnly=true`、`nativeColorLut=false`、`temporalAA=true`。本轮未用 NUnit runner 或切换工程的兼容渲染模式；对应回归 fixture 和兼容代码已补，不把源码覆盖宣称为运行覆盖。
 
 ## 只在需要时用专项审查
 

@@ -6,6 +6,8 @@ import subprocess
 import sys
 import time
 import uuid
+sys.dont_write_bytecode = True
+from render_presets import ASPECT_RATIOS, QUALITY_SHORT_EDGES, list_presets, resolve_output
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -13,20 +15,44 @@ if hasattr(sys.stdout, "reconfigure"):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["status", "cancel", "create", "setup", "adjust", "record", "validate-rotation", "mux"])
+    parser.add_argument("action", choices=["status", "presets", "plan", "cancel", "create", "setup", "adjust", "record", "validate-rotation", "mux",
+                                         "compose-stage", "inspect-stage", "place-stage", "focus-stage", "render-performance",
+                                         "diagnose-render", "configure-camera-post", "enable-scene-post",
+                                         "test-render-presets", "proof-post", "proof-glow", "proof-ho-only", "strip-native-post"])
     parser.add_argument("--project", type=pathlib.Path, default=pathlib.Path(r"D:\Unity_Project\BREAK_URP"))
     parser.add_argument("--config", type=pathlib.Path, help="One film's 制作配置.json")
     parser.add_argument("--output", type=pathlib.Path)
     parser.add_argument("--video", type=pathlib.Path, help="Silent Recorder MP4 for mux")
     parser.add_argument("--ffmpeg", type=pathlib.Path, default=pathlib.Path(r"D:\_SOFTWARE\ffmpeg-4.3.1-win64-static\bin\ffmpeg.exe"))
-    parser.add_argument("--width", type=int, default=1080)
-    parser.add_argument("--height", type=int, default=1920)
-    parser.add_argument("--fps", type=int, default=60)
+    parser.add_argument("--quality", choices=list(QUALITY_SHORT_EDGES), default="draft",
+                        help="Output size: draft=360p, preview=720p, review=1080p, high=2160p. Effects stay unchanged.")
+    parser.add_argument("--aspect", choices=list(ASPECT_RATIOS), default="portrait")
+    parser.add_argument("--width", type=int, help="Advanced override; provide both dimensions")
+    parser.add_argument("--height", type=int, help="Advanced override; provide both dimensions")
+    parser.add_argument("--fps", type=int, choices=[30, 60], default=30)
     parser.add_argument("--seconds", type=float, default=0)
+    parser.add_argument("--aa", choices=["inherit", "taa", "smaa", "fxaa", "none"],
+                        help="Recording-camera AA override for this play session; defaults to the saved camera setting")
+    parser.add_argument("--post-stack", choices=["authored", "image-off", "screen-off"], default="authored",
+                        help="Diagnostic A/B only; off variants use a temporary runtime Volume profile")
+    parser.add_argument("--position", type=float, nargs=3, metavar=("X", "Y", "Z"),
+                        help="Place the whole performance (character, source rig and VMD camera) together")
+    parser.add_argument("--yaw", type=float, help="Performance heading in degrees")
+    parser.add_argument("--camera-name", help="Explicit camera; proofs also accept '$scene-view' for the actual Scene View camera")
     parser.add_argument("--full-body", action="store_true", help="Diagnostic full-body camera; does not change the saved scene")
     parser.add_argument("--disable-rtgi", action="store_true", help="Capture diagnostic without RTGI; scene profile edits are transient")
     parser.add_argument("--timeout", type=int, default=3600)
     args = parser.parse_args()
+    if args.action == "presets":
+        print(json.dumps(list_presets(), ensure_ascii=False, indent=2))
+        return
+    try:
+        output_settings = resolve_output(args.quality, args.aspect, args.fps, args.width, args.height)
+    except ValueError as error:
+        parser.error(str(error))
+    if args.action == "plan":
+        print(json.dumps(output_settings, ensure_ascii=False, indent=2))
+        return
     work = args.project / "Library/HoMmdVideo"
     work.mkdir(parents=True, exist_ok=True)
     if args.action == "status":
@@ -60,18 +86,43 @@ def main():
         state = json.loads(status_path.read_text(encoding="utf-8-sig"))
         if state.get("playing") or state.get("compiling"):
             raise SystemExit("Unity is playing/compiling. Wait for completion or cancel this recording explicitly.")
-        if any(scene.get("dirty") for scene in state.get("scenes", [])):
+        dirty_scenes = [scene for scene in state.get("scenes", []) if scene.get("dirty")]
+        in_place_focus = (args.action in ("focus-stage", "diagnose-render", "proof-post", "proof-glow", "enable-scene-post", "proof-ho-only", "strip-native-post") and
+                          all(scene.get("path") == config.get("scene") for scene in dirty_scenes))
+        if dirty_scenes and not in_place_focus:
             raise SystemExit("A scene has unsaved edits; save it before a command that switches scenes.")
     request = dict(config)
     identifier = uuid.uuid4().hex
     request.update(id=identifier, action=args.action)
+    if args.camera_name is not None:
+        request["cameraName"] = args.camera_name
+    if args.aa is not None:
+        request["antialiasing"] = args.aa
+    if args.position is not None:
+        request["performancePosition"] = dict(zip(("x", "y", "z"), args.position))
+    if args.yaw is not None:
+        request["performanceYaw"] = args.yaw
+    if args.action == "render-performance":
+        if not args.output:
+            parser.error("render-performance requires --output (PNG path); --seconds selects the pose")
+        if args.output.exists():
+            raise SystemExit("Image exists; select a new output path.")
+        request.update(output_settings, output=str(args.output.resolve()), seconds=args.seconds)
+    if args.action in ("proof-post", "proof-glow", "proof-ho-only"):
+        request.update(output_settings)
+        if args.output is not None:
+            request["output"] = str(args.output.resolve())
     if args.action == "record":
         if not args.output:
             parser.error("record requires --output (MP4 stem, without extension)")
         if pathlib.Path(str(args.output) + ".mp4").exists():
             raise SystemExit("Recording exists; select a new output stem.")
-        request.update(output=str(args.output.resolve()), width=args.width, height=args.height,
-                       fps=args.fps, seconds=args.seconds, fullBody=args.full_body, disableRtgi=args.disable_rtgi)
+        request.update(output_settings, output=str(args.output.resolve()),
+                       seconds=args.seconds, fullBody=args.full_body, disableRtgi=args.disable_rtgi,
+                       postStack=args.post_stack)
+        if args.aa is not None:
+            request["antialiasing"] = args.aa
+        print("RENDER_PLAN " + json.dumps(output_settings, ensure_ascii=False), flush=True)
     temporary = work / (identifier + ".tmp")
     temporary.write_text(json.dumps(request, ensure_ascii=False), encoding="utf-8")
     temporary.replace(work / "request.json")
