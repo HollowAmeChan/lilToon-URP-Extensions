@@ -86,7 +86,9 @@ def main():
             command += ["-af", f"adelay={offset * 1000:.6f}:all=1,apad"]
         elif offset < 0:
             command += ["-af", f"atrim=start={-offset:.9f},asetpts=PTS-STARTPTS,apad"]
-        if offset:
+        elif report.get("frames") and report.get("fps"):
+            command += ["-af", "apad"]
+        if offset or (report.get("frames") and report.get("fps")):
             if report.get("frames") and report.get("fps"):
                 duration = report["frames"] / report["fps"]
             else:
