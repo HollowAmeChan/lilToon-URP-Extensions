@@ -126,6 +126,7 @@ public static class HoMmdRenderDiagnostics
             if (native.Length > 0)
             {
                 Undo.RegisterCompleteObjectUndo(profile, "移除 URP 内置后处理");
+                ReleaseComponentEditors(native);
                 foreach (var component in native)
                 {
                     profile.components.Remove(component);
@@ -154,6 +155,20 @@ public static class HoMmdRenderDiagnostics
             scene = scene.path, profiles = results.ToArray()
         }, true));
         return output;
+    }
+
+    // An open Volume inspector can create child Editors for a temporary profile.
+    // Destroy those Editors while their targets are still alive; otherwise they
+    // survive the profile and throw during the next assembly/domain reload.
+    static void ReleaseComponentEditors(System.Collections.Generic.IEnumerable<VolumeComponent> components)
+    {
+        var targets = new System.Collections.Generic.HashSet<Object>(components.Where(x => x != null));
+        if (targets.Count == 0) return;
+        foreach (var editor in Resources.FindObjectsOfTypeAll<UnityEditor.Editor>())
+        {
+            if (editor != null && editor.targets != null && editor.targets.Any(target => target != null && targets.Contains(target)))
+                Object.DestroyImmediate(editor);
+        }
     }
 
     static bool IsBuiltinFilter(VolumeComponent component) => component != null &&
@@ -333,7 +348,12 @@ public static class HoMmdRenderDiagnostics
                 if (component.GetType().Namespace != "UnityEngine.Rendering.Universal") continue;
                 var original = source.components.FirstOrDefault(x => x != null && x.GetType() == component.GetType());
                 if (original != null) EditorUtility.CopySerialized(original, component);
-                else { copy.components.Remove(component); Object.DestroyImmediate(component); }
+                else
+                {
+                    ReleaseComponentEditors(new[] { component });
+                    copy.components.Remove(component);
+                    Object.DestroyImmediate(component);
+                }
             }
             if (copy.TryGet(out ImageProcessStackVolume image) && source.TryGet(out ImageProcessStackVolume originalImage))
             {
@@ -396,6 +416,7 @@ public static class HoMmdRenderDiagnostics
         public void Dispose()
         {
             volume.profile = previous;
+            ReleaseComponentEditors(copy.components);
             foreach (var component in copy.components) Object.DestroyImmediate(component);
             Object.DestroyImmediate(copy);
         }
