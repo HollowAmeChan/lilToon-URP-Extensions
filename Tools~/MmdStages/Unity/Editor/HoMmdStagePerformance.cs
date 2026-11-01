@@ -116,6 +116,7 @@ public static class HoMmdStagePerformance
         PrefabUtility.RecordPrefabInstancePropertyModifications(sequence.TargetAnimator.transform);
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
+        HoMmdRTShadowDiagnostics.ConfigureStageReceivers(request);
         AssetDatabase.SaveAssets();
         return Report(scene, request.folder, "composition");
     }

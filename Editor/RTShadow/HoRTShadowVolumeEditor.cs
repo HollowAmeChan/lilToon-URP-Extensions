@@ -21,12 +21,13 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                 Draw("samplesPerPixel", "原始参考样本数"); Draw("singleFrameEstimates", "无历史同帧估计数"); Draw("samplingSeed", "采样种子");
                 EditorGUILayout.HelpBox("逐灯声明角度优先。Raw 只使用原始样本数；SIGMA 无历史只使用同帧估计数，次数增加会增加完整降噪成本；稳定预览每请求一次。点 / 聚光当前始终输出 delta 硬影。", MessageType.None);
             }
-            if (LilUrpEditorSectionGui.DrawSectionHeader(ref debug, "调试", "指定灯 / 六种视图", new Color(.86f, .62f, .38f)))
+            if (LilUrpEditorSectionGui.DrawSectionHeader(ref debug, "调试", "生产 / 实际 lilToon 接收", new Color(.86f, .62f, .38f)))
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 Draw("debugMode", "调试模式"); Draw("debugLight", "调试灯槽"); Draw("debugDistance", "距离显示上限（米）");
                 Draw("debugInSceneView", "Scene View 调试"); Draw("debugInGameView", "Game View 调试");
                 EditorGUILayout.HelpBox("灯槽从 0 开始，映射见 Feature 运行状态；无当前产品显示紫色。状态图：黑=未请求、绿=有效、红=无效表面、蓝=灯域外、橙=距离不足、紫=查询错误。Blocker 无命中为蓝色。多估计模式 Raw 是最后一个真实单样本，差值只用于观察重建改动。", MessageType.None);
+                EditorGUILayout.HelpBox("lilToon 接收状态检查实际标准 Forward 像素（主光，不使用灯槽）：绿=取样成功，蓝=没有 OB 身份，红=RT 产品未启用，青=身份不匹配，橙=深度不匹配，紫=原始像素未请求/无效，洋红=接收分支未编译。强制明暗只隔离主光 Cast，不是关闭全部照明；调试结束请切回关闭。", MessageType.Info);
             }
         }
         private void Draw(string name, string label)

@@ -133,6 +133,7 @@ public static class HoMmdSceneWorkshop
             main.clearFlags = CameraClearFlags.Skybox;
             environment.ApplyNow(); AssetDatabase.SaveAssetIfDirty(profile);
             EditorSceneManager.SaveScene(scene, scenePath);
+            HoMmdRTShadowDiagnostics.ConfigureStageReceivers(new HoMmdVideoWorkshop.Request { scene = scenePath, folder = folder });
             return scenePath;
         }
         finally

@@ -11,7 +11,7 @@
 | 天空/窗外气氛 | 环境 skybox、天空球/HDR 材质、室外灯与天空曝光 | 天空壳按需从 RTGI 射线排除 |
 | 地板/水面倒影 | HoPlanarReflectionSurface 平面位置/法线，材质 PLR 开关/强度、smoothness、reflectance | 地板和水面可能不同高度，先定平面再调粗糙度 |
 | 间接光/环境响应 | Ho-RTGI Volume、RELAX、天空/灯光、材质金属度和光滑度 | 禁用 SSGI，GI 是否开启按效果需求决定 |
-| 全图明暗、色调、辉光 | Color Adjustments/Bloom，ImageProcess 渐变/Glow/LensFlare/颗粒等图层 | 由弱到强调，观察亮部是否变大片死白 |
+| 全图明暗、色调、辉光 | Ho ImageProcess 调色/色调映射/渐变/Glow/LensFlare/颗粒等图层 | 由弱到强调，观察亮部是否变大片死白；不另叠 URP 内置效果 |
 | 景深与主体焦点 | ScreenProcess Depth of Field，相机位置/FOV/焦点参数 | 不同镜头可有不同焦距，留意运动遮挡边缘 |
 | 分区/渐变/中心调色 | IP/SP 对应层的颜色、遮罩、混合模式、强度 | 允许艺术化处理，主体基础受光尽量由世界灯光承担 |
 | Logo 与电影边框 | ImageProcess LogoOverlay、CinematicBars | Hollow 默认 X=.5、Y=.1、大小=.3，黑边白 Logo，白边黑 Logo |
@@ -31,6 +31,18 @@
 GB/OB/SB/AC 是特殊合成与材质调试输入；调试需要接收面 OB 身份，场景对象 tags=None。没有故障不每次检查。有 source 却没反射时再看材质开关和 mip，Ready=true 不能代替像素。
 
 HoMmdPlrValidation 的 on/off/debug 与 HoMmdPlrGpuCheck 用于管线排错，不是日常调灯换滤镜的必经流程。
+
+## RTShadow：生产与实际接收分开检查
+
+Renderer.receiveShadows 和材质 `_ShadowReceive=1` 并不完成 Ho RT 接收声明。不透明舞台也需要有效的 OB 组身份，并由 `HoRTShadowReceiver` 请求该组/部件；只有角色有 Receiver 时，舞台会保持未请求，不能因为 producer 有纹理就判断其已经接入。地板已有 PLR 身份组时复用它并补 Receiver，不覆盖现有部件或角色标签。新建/初次组合工具会为缺失的不透明 Ho 舞台补声明，普通渲染不重新配置。
+
+怀疑没消费时，用 Volume 的「lilToon 接收状态」查看**实际标准 Forward 像素**：绿色为取样成功（深绿为遮挡），蓝色无 OB 身份，红色无启用产品，青色身份不匹配，橙色深度不匹配，紫色原始像素未请求/无效，洋红表示未编译接收分支。这套颜色与 producer 的「像素状态」不同。强制主光无遮挡/全遮挡用于隔离原有 ramp，不代表关闭全部照明。
+
+CLI `video-cli.py diagnose-rtshadow --config ... --quality draft --camera-name ...` 在当前场景临时渲原设置、关 RT、真实接收状态、强制主光明暗，记录当前产品、有效 owner、拒绝原因和主表面状态；恢复临时参数且不保存。`configure-stage-rtshadow` 定点补当前舞台声明，只在进入时没有未保存修改时保存场景；不改灯光、材质和角色骨架。不要为 debug 重跑旧灯光配方，也不要对比不同 Scene View 位置的像素计数来宣称修复。
+
+关闭 RT 会回退普通主光/角色阴影，开关几乎无差异不能单独证明没消费。生产的有效 V=0 是真实全遮挡，不能改写成白色来“修好”。当前默认只请求主方向灯；请求额外灯的产品与 lilToon 的额外光消费是不同步骤，不要擅自用有限灯列表兼容取代另一个任务中的全灯架构。
+
+2026-11-01 花吐电気实测：原来只有角色 5 个接收身份；复用已有地板组并补 Receiver，再为 18 个舞台部件登记独立身份后，共 24 个请求身份。固定舞台相机 640×360 验证：198945 个有效主表面像素中，地板 owner=256 为 72082 个，其余舞台 owner=768 起有有效像素；实际 Forward 接收校验约 19.8 万绿色像素。保留角色 group=2、地板 group=1，舞台新增 group=3；材质、灯光、滤镜与角色层级未改。不要拿调试中途变化的 Scene View 位置做严格前后图对比。
 
 ## 逐盏灯具与层级标记
 

@@ -67,6 +67,7 @@ namespace lilToon.URP.Extensions.RTShadow
         [SerializeField] private Shader debugShader;
         private Material debugMaterial;
         private HoRTShadowDebugPass debugPass;
+        private ConsumerDebugPass consumerDebugPass;
         private HoRTShadowSettings lastEffective;
         public HoRTShadowSettings LastEffectiveSettings => lastEffective?.Copy();
         public Camera LastCamera => currentCamera;
@@ -138,6 +139,7 @@ namespace lilToon.URP.Extensions.RTShadow
             // Create can be called by a pass while the current graph is still
             // executing. Keep the diagnostic pass/material alive for that graph.
             debugPass ??= new HoRTShadowDebugPass();
+            consumerDebugPass ??= new ConsumerDebugPass();
             #if UNITY_EDITOR
             const string root = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/";
             if (shader == null) shader = UnityEditor.AssetDatabase.LoadAssetAtPath<RayTracingShader>(root + "RTShadow/Shaders/HoRTShadow.raytrace");
@@ -150,7 +152,7 @@ namespace lilToon.URP.Extensions.RTShadow
             if (!registered) { RenderPipelineManager.beginCameraRendering += ResetCamera; registered = true; }
         }
         private void ResetCamera(ScriptableRenderContext context, Camera camera)
-        { foreach (var pair in outputs) if (pair.Key.Item2 == camera) pair.Value.sigma?.CameraBegin(); LastOutput = null; scheduled.Clear(); rejected.Clear(); currentCamera=camera; Shader.SetGlobalFloat("_HoRTShadowActive", 0); Shader.SetGlobalTexture("_HoRTShadowRawTexture", Texture2D.blackTexture); Shader.SetGlobalTexture("_HoRTShadowVisibilityTexture", Texture2D.blackTexture); Shader.SetGlobalTexture("_HoRTShadowDepthTexture", Texture2D.blackTexture); }
+        { foreach (var pair in outputs) if (pair.Key.Item2 == camera) pair.Value.sigma?.CameraBegin(); LastOutput = null; scheduled.Clear(); rejected.Clear(); currentCamera=camera; Shader.SetGlobalFloat("_HoRTShadowActive", 0); Shader.SetGlobalFloat("_HoRTShadowConsumerDebugMode", 0); Shader.SetGlobalTexture("_HoRTShadowRawTexture", Texture2D.blackTexture); Shader.SetGlobalTexture("_HoRTShadowVisibilityTexture", Texture2D.blackTexture); Shader.SetGlobalTexture("_HoRTShadowDepthTexture", Texture2D.blackTexture); }
         private bool CameraSupported(CameraData data, HoRTShadowSettings effective) => settings.enabled && effective.enabled && data.renderType == CameraRenderType.Base
             && (data.camera.cameraType == CameraType.Game || (settings.inSceneView && data.camera.cameraType == CameraType.SceneView));
         private HoRTShadowSettings ResolveSettings(out int overrides)
@@ -184,14 +186,46 @@ namespace lilToon.URP.Extensions.RTShadow
                     : camera.cameraType == CameraType.Game && lastEffective.debugInGameView;
                 if (show && lastEffective.debugMode != HoRTShadowDebugMode.Off && data.cameraData.renderType == CameraRenderType.Base)
                 {
-                    if (debugMaterial == null && debugShader != null) debugMaterial = CoreUtils.CreateEngineMaterial(debugShader);
-                    if (debugMaterial != null)
+                    if (lastEffective.debugMode == HoRTShadowDebugMode.Consumption ||
+                        lastEffective.debugMode == HoRTShadowDebugMode.ForceLit ||
+                        lastEffective.debugMode == HoRTShadowDebugMode.ForceShadow)
                     {
-                        Output selected = scheduled.Find(item => item.slot == lastEffective.debugLight);
-                        debugPass.Setup(debugMaterial, lastEffective, selected);
-                        debugPass.Enqueue(renderer);
+                        consumerDebugPass.mode = (int)lastEffective.debugMode;
+                        renderer.EnqueuePass(consumerDebugPass);
+                    }
+                    else
+                    {
+                        if (debugMaterial == null && debugShader != null) debugMaterial = CoreUtils.CreateEngineMaterial(debugShader);
+                        if (debugMaterial != null)
+                        {
+                            Output selected = scheduled.Find(item => item.slot == lastEffective.debugLight);
+                            debugPass.Setup(debugMaterial, lastEffective, selected);
+                            debugPass.Enqueue(renderer);
+                        }
                     }
                 }
+            }
+        }
+        private sealed class ConsumerDebugPass : ScriptableRenderPass
+        {
+            internal int mode;
+            private sealed class Data { internal int mode; }
+            internal ConsumerDebugPass() { renderPassEvent = RenderPassEvent.BeforeRenderingOpaques; }
+            public override void RecordRenderGraph(RenderGraph graph, ContextContainer frame)
+            {
+                using var builder = graph.AddRasterRenderPass<Data>("Ho-RTShadow actual lilToon consumer debug", out var passData);
+                passData.mode = mode;
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (Data data, RasterGraphContext context) =>
+                    context.cmd.SetGlobalFloat("_HoRTShadowConsumerDebugMode", data.mode));
+            }
+            public override void Execute(ScriptableRenderContext context, ref RenderingData data)
+            {
+                var cmd = CommandBufferPool.Get("Ho-RTShadow consumer debug");
+                cmd.SetGlobalFloat("_HoRTShadowConsumerDebugMode", mode);
+                context.ExecuteCommandBuffer(cmd);
+                CommandBufferPool.Release(cmd);
             }
         }
         private void AddProductionPasses(ScriptableRenderer renderer, ref RenderingData data, HoRTShadowSettings settings)

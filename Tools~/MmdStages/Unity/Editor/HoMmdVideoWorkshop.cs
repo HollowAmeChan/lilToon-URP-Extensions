@@ -88,7 +88,8 @@ public static class HoMmdVideoWorkshop
             bool resumeComposition = (request.action == "resume-stage" || request.action == "focus-stage" ||
                 request.action == "diagnose-render" || request.action == "proof-post" || request.action == "proof-glow" ||
                 request.action == "enable-scene-post" || request.action == "proof-ho-only" ||
-                request.action == "strip-native-post") &&
+                request.action == "strip-native-post" || request.action == "diagnose-rtshadow" ||
+                request.action == "configure-stage-rtshadow") &&
                 Enumerable.Range(0, SceneManager.sceneCount).All(i =>
                     !SceneManager.GetSceneAt(i).isDirty || SceneManager.GetSceneAt(i).path == request.scene);
             if (!resumeComposition && Enumerable.Range(0, SceneManager.sceneCount).Any(i => SceneManager.GetSceneAt(i).isDirty))
@@ -107,6 +108,8 @@ public static class HoMmdVideoWorkshop
                 case "proof-glow": result = HoMmdRenderDiagnostics.Proof(request); break;
                 case "proof-ho-only": result = HoMmdRenderDiagnostics.Proof(request); break;
                 case "strip-native-post": result = HoMmdRenderDiagnostics.RemoveBuiltinFilters(request); break;
+                case "diagnose-rtshadow": result = HoMmdRTShadowDiagnostics.Run(request); break;
+                case "configure-stage-rtshadow": result = HoMmdRTShadowDiagnostics.ConfigureStageReceivers(request); break;
                 case "place-stage": result = HoMmdStagePerformance.Place(request); break;
                 case "focus-stage": result = HoMmdStagePerformance.Focus(request); break;
                 case "render-performance":

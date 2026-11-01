@@ -19,7 +19,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
         public override void OnInspectorGUI()
         {
             serializedObject.Update(); settings = serializedObject.FindProperty("settings");
-            EditorGUILayout.HelpBox("需要 Ho-RT、同分辨率单采样 GB / SB 与 D3D12。接收角色在 Ho-RTShadow Receiver 中声明；本处设默认值，Ho-RTShadow Volume 可逐相机覆盖质量及调试。", MessageType.Info);
+            EditorGUILayout.HelpBox("需要 Ho-RT、同分辨率单采样 GB / SB 与 D3D12。角色和场景接收面都须在 Ho-RTShadow Receiver 中声明有效 OB 身份；本处设默认值，Ho-RTShadow Volume 可逐相机覆盖质量及调试。", MessageType.Info);
             if (targets.Length == 1)
             {
                 var path = AssetDatabase.GetAssetPath(target);
@@ -52,6 +52,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                 Draw("debugMode", "调试模式"); Draw("debugLight", "调试灯槽"); Draw("debugDistance", "距离显示上限（米）");
                 Draw("debugInSceneView", "Scene View 调试"); Draw("debugInGameView", "Game View 调试");
                 EditorGUILayout.HelpBox("灯槽对应下面运行状态的当前生产列表；灯集合变化时会重排。紫色表示该槽没有当前产品。All 平铺六种视图，最终 AA 后显示。Raw 在多估计模式中是最后一个真实单样本，差值不是误差真值。", MessageType.None);
+                EditorGUILayout.HelpBox("lilToon 接收状态由实际标准 Forward 输出（主光）：绿=成功，蓝=无 OB 身份，红=RT 未启用，青=身份不匹配，橙=深度不匹配，紫=原始像素未请求/无效，洋红=未编译接收分支。强制明暗用于隔离原有主光 Cast 路径。", MessageType.Info);
             }
             if (Header(ref advanced, "高级", "射线 / Shader", AdvancedColor))
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))

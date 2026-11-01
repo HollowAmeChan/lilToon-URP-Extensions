@@ -18,7 +18,8 @@ def main():
     parser.add_argument("action", choices=["status", "presets", "plan", "cancel", "create", "setup", "adjust", "record", "validate-rotation", "mux",
                                          "compose-stage", "inspect-stage", "place-stage", "focus-stage", "render-performance",
                                          "diagnose-render", "configure-camera-post", "enable-scene-post",
-                                         "test-render-presets", "proof-post", "proof-glow", "proof-ho-only", "strip-native-post"])
+                                         "test-render-presets", "proof-post", "proof-glow", "proof-ho-only", "strip-native-post",
+                                         "diagnose-rtshadow", "configure-stage-rtshadow"])
     parser.add_argument("--project", type=pathlib.Path, default=pathlib.Path(r"D:\Unity_Project\BREAK_URP"))
     parser.add_argument("--config", type=pathlib.Path, help="One film's 制作配置.json")
     parser.add_argument("--output", type=pathlib.Path)
@@ -87,7 +88,7 @@ def main():
         if state.get("playing") or state.get("compiling"):
             raise SystemExit("Unity is playing/compiling. Wait for completion or cancel this recording explicitly.")
         dirty_scenes = [scene for scene in state.get("scenes", []) if scene.get("dirty")]
-        in_place_focus = (args.action in ("focus-stage", "diagnose-render", "proof-post", "proof-glow", "enable-scene-post", "proof-ho-only", "strip-native-post") and
+        in_place_focus = (args.action in ("focus-stage", "diagnose-render", "proof-post", "proof-glow", "enable-scene-post", "proof-ho-only", "strip-native-post", "diagnose-rtshadow", "configure-stage-rtshadow") and
                           all(scene.get("path") == config.get("scene") for scene in dirty_scenes))
         if dirty_scenes and not in_place_focus:
             raise SystemExit("A scene has unsaved edits; save it before a command that switches scenes.")
@@ -108,7 +109,7 @@ def main():
         if args.output.exists():
             raise SystemExit("Image exists; select a new output path.")
         request.update(output_settings, output=str(args.output.resolve()), seconds=args.seconds)
-    if args.action in ("proof-post", "proof-glow", "proof-ho-only"):
+    if args.action in ("proof-post", "proof-glow", "proof-ho-only", "diagnose-rtshadow"):
         request.update(output_settings)
         if args.output is not None:
             request["output"] = str(args.output.resolve())

@@ -14,6 +14,9 @@ namespace lilToon.URP.Extensions.RTShadow
         [InspectorName("最近遮挡距离")] BlockerDistance,
         [InspectorName("接收对象身份")] Receiver,
         [InspectorName("像素状态")] Status,
+        [InspectorName("lilToon 接收状态")] Consumption = 7,
+        [InspectorName("lilToon 主光强制无遮挡")] ForceLit = 8,
+        [InspectorName("lilToon 主光强制全遮挡")] ForceShadow = 9,
         [InspectorName("全部视图")] All = 255
     }
 
