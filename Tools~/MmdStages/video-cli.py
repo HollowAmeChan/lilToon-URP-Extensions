@@ -41,6 +41,10 @@ def main():
     parser.add_argument("--yaw", type=float, help="Performance heading in degrees")
     parser.add_argument("--camera-name", help="Explicit camera; proofs also accept '$scene-view' for the actual Scene View camera")
     parser.add_argument("--full-body", action="store_true", help="Diagnostic full-body camera; does not change the saved scene")
+    parser.add_argument("--enable-part", action="append", default=[],
+                        help="Enable a character Parts child only during recording; repeat for multiple parts")
+    parser.add_argument("--disable-part", action="append", default=[],
+                        help="Disable a character Parts child only during recording; repeat for multiple parts")
     parser.add_argument("--disable-rtgi", action="store_true", help="Capture diagnostic without RTGI; scene profile edits are transient")
     parser.add_argument("--timeout", type=int, default=3600)
     args = parser.parse_args()
@@ -120,7 +124,7 @@ def main():
             raise SystemExit("Recording exists; select a new output stem.")
         request.update(output_settings, output=str(args.output.resolve()),
                        seconds=args.seconds, fullBody=args.full_body, disableRtgi=args.disable_rtgi,
-                       postStack=args.post_stack)
+                       postStack=args.post_stack, enableParts=args.enable_part, disableParts=args.disable_part)
         if args.aa is not None:
             request["antialiasing"] = args.aa
         print("RENDER_PLAN " + json.dumps(output_settings, ensure_ascii=False), flush=True)

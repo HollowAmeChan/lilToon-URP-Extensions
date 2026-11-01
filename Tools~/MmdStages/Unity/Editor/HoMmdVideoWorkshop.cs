@@ -23,6 +23,7 @@ public static class HoMmdVideoWorkshop
         public string stageScene, animationScene;
         public string antialiasing;
         public string qualityPreset, aspectPreset, postStack, cameraName;
+        public string[] enableParts, disableParts;
         public Vector3 performancePosition;
         public float performanceYaw;
         public float seconds, distanceMultiplier = 1;

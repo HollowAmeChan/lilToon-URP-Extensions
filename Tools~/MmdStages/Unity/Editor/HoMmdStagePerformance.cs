@@ -17,12 +17,36 @@ public static class HoMmdStagePerformance
 {
     public static string Compose(HoMmdVideoWorkshop.Request request)
     {
+        bool newDestination = !File.Exists(request.scene);
         Validate(request);
         Scene scene = EditorSceneManager.OpenScene(request.scene, OpenSceneMode.Single);
-        if (All<HoVmdSequencePlayer>(scene).Any())
+        var templatePlayers = All<HoVmdSequencePlayer>(scene).ToArray();
+        bool performanceTemplate = templatePlayers.Length > 0;
+        if (performanceTemplate && !newDestination)
             throw new InvalidOperationException("The destination already has a performance; edit it directly.");
+        if (performanceTemplate)
+        {
+            // Only a newly copied template may have its old performance
+            // removed. Existing authored destinations are never rebuilt.
+            var roots = new HashSet<GameObject>();
+            foreach (var old in templatePlayers)
+            {
+                roots.Add(old.transform.root.gameObject);
+                if (old.TargetAnimator != null) roots.Add(old.TargetAnimator.transform.root.gameObject);
+                if (old.CameraPlayer != null) roots.Add(old.CameraPlayer.transform.root.gameObject);
+                if (old.Music != null) roots.Add(old.Music.transform.root.gameObject);
+            }
+            if (roots.Any(root => root.GetComponentsInChildren<Volume>(true).Length > 0))
+                throw new InvalidOperationException("The template performance shares a root with a stage Volume; separate it first.");
+            foreach (var root in roots) Object.DestroyImmediate(root);
+        }
 
         string sourceFolder = Path.GetDirectoryName(request.stageScene).Replace('\\', '/');
+        if (!AssetDatabase.IsValidFolder(sourceFolder + "/Rendering"))
+        {
+            string parent = Path.GetDirectoryName(sourceFolder).Replace('\\', '/');
+            if (AssetDatabase.IsValidFolder(parent + "/Rendering")) sourceFolder = parent;
+        }
         var copies = new Dictionary<Object, Object>();
         foreach (string folder in new[] { "Rendering", "Materials" })
             CopyAssets(sourceFolder + "/" + folder, request.folder + "/" + folder, copies);
@@ -76,7 +100,7 @@ public static class HoMmdStagePerformance
         EditorSceneManager.CloseScene(animation, true);
         SceneManager.SetActiveScene(scene);
         Transform origin = sequence.transform;
-        origin.name = "20 演出 · EX-HAPPY（整体位置与朝向）";
+        origin.name = "20 演出 · " + Path.GetFileNameWithoutExtension(request.animationScene) + "（整体位置与朝向）";
         foreach (GameObject root in transfer.Where(x => x != origin.gameObject))
             root.transform.SetParent(origin, true);
         origin.position = request.performancePosition;
@@ -105,7 +129,8 @@ public static class HoMmdStagePerformance
         serializedSequence.FindProperty("currentTime").floatValue = 0;
         serializedSequence.ApplyModifiedPropertiesWithoutUndo();
         sequence.ApplySources();
-        ConfigureFocus(scene, sequence);
+        ConfigureFocus(scene, sequence, performanceTemplate);
+        ConfigureParts(sequence, request);
 
         // Position only the camera for the saved edit-mode view. Never save a
         // sampled body pose or apply changes back to the shared character prefab.
@@ -150,7 +175,7 @@ public static class HoMmdStagePerformance
         return Report(scene, request.folder, "focus");
     }
 
-    static void ConfigureFocus(Scene scene, HoVmdSequencePlayer sequence)
+    static void ConfigureFocus(Scene scene, HoVmdSequencePlayer sequence, bool preserveSettings = false)
     {
         Transform head = sequence.TargetAnimator.GetBoneTransform(HumanBodyBones.Head);
         if (head == null) throw new InvalidOperationException("The character has no Humanoid head for focus.");
@@ -162,13 +187,38 @@ public static class HoMmdStagePerformance
         {
             foreach (var layer in screen.layers.value.Where(x => x.effect == ScreenProcessEffect.DepthOfField))
             {
-                layer.name = "演出 · 角色头部跟焦";
-                layer.parameters0 = new Vector4(2, 3.4f, 70, 5.6f);
+                if (!preserveSettings)
+                {
+                    layer.name = "演出 · 角色头部跟焦";
+                    layer.parameters0 = new Vector4(2, 3.4f, 70, 5.6f);
+                    layer.depthOfFieldFocusOffset = 0;
+                }
                 layer.depthOfFieldFocusTarget = null;
                 layer.depthOfFieldFocusTargetPath = path;
-                layer.depthOfFieldFocusOffset = 0;
             }
             EditorUtility.SetDirty(screen);
+        }
+    }
+
+    static void ConfigureParts(HoVmdSequencePlayer sequence, HoMmdVideoWorkshop.Request request)
+    {
+        if ((request.enableParts == null || request.enableParts.Length == 0) &&
+            (request.disableParts == null || request.disableParts.Length == 0)) return;
+        Transform parts = null;
+        for (Transform parent = sequence.TargetAnimator.transform; parent != null && parts == null; parent = parent.parent)
+            parts = parent.Find("Parts");
+        if (parts == null) throw new InvalidOperationException("The character has no Parts group.");
+        Set(request.disableParts, false);
+        Set(request.enableParts, true);
+        void Set(string[] names, bool active)
+        {
+            foreach (string name in names ?? Array.Empty<string>())
+            {
+                Transform part = parts.Find(name);
+                if (part == null) throw new InvalidOperationException("Character Parts child not found: " + name);
+                part.gameObject.SetActive(active);
+                PrefabUtility.RecordPrefabInstancePropertyModifications(part.gameObject);
+            }
         }
     }
 

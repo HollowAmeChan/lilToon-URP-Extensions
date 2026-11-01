@@ -53,6 +53,7 @@ public sealed class HoMmdVideoCaptureRequest
 {
     public string id, output, antialiasing;
     public string qualityPreset, aspectPreset, postStack;
+    public string[] enableParts, disableParts;
     public float seconds;
     public int width = 720, height = 1280, fps = 60;
     public bool fullBody, disableRtgi;
@@ -87,6 +88,7 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
     int screenProcessFrames, imageProcessFrames, screenLayers, imageLayers;
     string screenReason = "No current-camera ScreenProcess diagnostic.", imageReason = "No current-camera ImageProcess diagnostic.";
     readonly Dictionary<int, CameraRenderCount> cameraRenders = new Dictionary<int, CameraRenderCount>();
+    readonly List<GameObject> toggledParts = new List<GameObject>();
     int lastStudyStage = -1;
     [Serializable] sealed class BoneAudit { public string name, source; public Vector3 position, expectedEuler, actualEuler; public float angularError; }
     [Serializable] sealed class DeformAudit { public string name, parent; public Vector3 position, euler; }
@@ -106,6 +108,7 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             sequences = SceneManager.GetActiveScene().GetRootGameObjects()
                 .Select(x => x.GetComponent<HoVmdSequencePlayer>()).Where(x => x != null).ToArray();
             sequence = sequences.First(x => x.CameraPlayer != null);
+            ApplyPartToggles();
             foreach (var item in sequences)
             {
                 item.ExternallyDriven = true;
@@ -222,11 +225,47 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             // so TAA/RT history is not discarded on the first encoded frame.
             controllerSettings.SetRecordModeToFrameInterval(warmup, warmup + count - 1);
             controller = new RecorderController(controllerSettings);
+            // Recorder advances its frame clock through WaitForEndOfFrame.
+            // A hidden Game View stalls that coroutine while Update and the
+            // VMD clock keep running, even with an offscreen camera target.
+            var gameViewType = typeof(EditorWindow).Assembly.GetType("UnityEditor.GameView");
+            if (gameViewType == null)
+                throw new InvalidOperationException("Unity Game View is unavailable for Recorder.");
+            var gameView = EditorWindow.GetWindow(gameViewType);
+            gameView.Show();
+            gameView.Focus();
             controller.PrepareRecording();
             if (!controller.StartRecording()) throw new InvalidOperationException("Unity Recorder did not start.");
             started = true;
         }
         catch (Exception e) { Finish(e); }
+    }
+
+    void ApplyPartToggles()
+    {
+        if ((request.enableParts == null || request.enableParts.Length == 0) &&
+            (request.disableParts == null || request.disableParts.Length == 0)) return;
+        Transform root = sequence.Retargeter != null && sequence.Retargeter.TargetSpace != null
+            ? sequence.Retargeter.TargetSpace
+            : sequence.Body != null ? sequence.Body.ModelRoot : null;
+        Transform parts = null;
+        for (; root != null && parts == null; root = root.parent) parts = root.Find("Parts");
+        if (parts == null)
+            throw new InvalidOperationException("The recording character has no Parts group.");
+        Apply(request.disableParts, false);
+        Apply(request.enableParts, true);
+
+        void Apply(string[] names, bool active)
+        {
+            foreach (string name in names ?? Array.Empty<string>())
+            {
+                Transform part = parts.Find(name);
+                if (part == null)
+                    throw new InvalidOperationException("Character Parts child not found: " + name);
+                part.gameObject.SetActive(active);
+                if (!toggledParts.Contains(part.gameObject)) toggledParts.Add(part.gameObject);
+            }
+        }
     }
 
     void Pump()
@@ -432,7 +471,9 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
             volumeMask = captureCameraData != null ? captureCameraData.volumeLayerMask.value : 0,
             screenProcessFrames = screenProcessFrames, imageProcessFrames = imageProcessFrames,
             screenLayers = screenLayers, imageLayers = imageLayers, screenReason = screenReason, imageReason = imageReason,
-            cameraRenders = cameraRenders.Values.ToArray() }, true));
+            cameraRenders = cameraRenders.Values.ToArray(),
+            partStates = toggledParts.Where(x => x != null).Select(x =>
+                new PartState { name = x.name, active = x.activeSelf }).ToArray() }, true));
         File.WriteAllText(Path.Combine(work, "result.json"), JsonUtility.ToJson(new HoMmdVideoCaptureResponse {
             id = request?.id, status = error == null ? "ok" : "error",
             result = error == null ? Path.GetFullPath(request.output) + ".mp4" : error.ToString() }, true));
@@ -450,7 +491,9 @@ public sealed class HoMmdVideoCaptureDriver : MonoBehaviour
         public HoPostProcessingExecution postExecution;
         public int volumeMask, screenProcessFrames, imageProcessFrames, screenLayers, imageLayers;
         public CameraRenderCount[] cameraRenders;
+        public PartState[] partStates;
     }
+    [Serializable] sealed class PartState { public string name; public bool active; }
     [Serializable] sealed class CameraRenderCount
     {
         public string name, type;
