@@ -143,9 +143,19 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return "Scene View 渲染已关闭。";
             }
 
+            if (!volume.active)
+            {
+                return "ImageProcess Volume 组件已关闭。";
+            }
+
+            if (!volume.Enable.value)
+            {
+                return "ImageProcess 总开关已关闭。请在 Volume 中勾选“启用”的覆盖框并设为 On。";
+            }
+
             if (!volume.IsActive())
             {
-                return "ImageProcess Volume 未激活。";
+                return "ImageProcess 没有已启用且强度大于 0 的有效图层。";
             }
 
             return cameraType == CameraType.Game || cameraType == CameraType.SceneView

@@ -64,6 +64,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return values;
         }
 
+        private SerializedDataParameter enable;
         private SerializedDataParameter showInSceneView;
         private SerializedProperty layers;
         private SerializedProperty layerValues;
@@ -72,6 +73,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         public override void OnEnable()
         {
             PropertyFetcher<ScreenProcessStackVolume> fetcher = new PropertyFetcher<ScreenProcessStackVolume>(serializedObject);
+            enable = Unpack(fetcher.Find(x => x.Enable));
             showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
             layers = serializedObject.FindProperty("layers");
             layerValues = layers != null ? layers.FindPropertyRelative("m_Value") : null;
@@ -97,6 +99,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             serializedObject.Update();
 
+            PropertyField(enable, new GUIContent("启用"));
             PropertyField(showInSceneView, new GUIContent("Scene View"));
             SceneViewPostProcessingNotice.Draw(showInSceneView.value.boolValue);
             EditorGUILayout.Space(4.0f);

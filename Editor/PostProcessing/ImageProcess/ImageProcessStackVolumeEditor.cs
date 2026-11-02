@@ -279,6 +279,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         /// <summary>Accent bar drawn on the left edge of a highlighted row.</summary>
         private static readonly Color LayerHighlightAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
 
+        private SerializedDataParameter enable;
         private SerializedDataParameter showInSceneView;
         private SerializedDataParameter replaceBuiltinPostProcessing;
         private SerializedProperty layers;
@@ -288,6 +289,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         public override void OnEnable()
         {
             PropertyFetcher<ImageProcessStackVolume> fetcher = new PropertyFetcher<ImageProcessStackVolume>(serializedObject);
+            enable = Unpack(fetcher.Find(x => x.Enable));
             showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
             replaceBuiltinPostProcessing = Unpack(fetcher.Find(x => x.ReplaceBuiltinPostProcessing));
             layers = serializedObject.FindProperty("layers");
@@ -316,6 +318,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             serializedObject.Update();
             CleanupLayersForUserOrder();
 
+            PropertyField(enable, new GUIContent("启用"));
             PropertyField(replaceBuiltinPostProcessing, new GUIContent("仅使用 Ho 后处理"));
             PropertyField(showInSceneView, new GUIContent("场景视图"));
             if (replaceBuiltinPostProcessing.value.boolValue)
