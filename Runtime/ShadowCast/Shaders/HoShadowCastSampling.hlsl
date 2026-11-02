@@ -24,6 +24,7 @@ float4 _HoShadowCastLightData0[HO_SHADOW_CAST_ARRAY_LIGHTS];
 float4 _HoShadowCastLightData1[HO_SHADOW_CAST_ARRAY_LIGHTS];
 float4 _HoShadowCastLightData2[HO_SHADOW_CAST_ARRAY_LIGHTS];
 float4 _HoShadowCastLightAttenuation[HO_SHADOW_CAST_ARRAY_LIGHTS];
+// RGB is metadata. Alpha packs bit 0=soft, bit 1=also included in Main.
 float4 _HoShadowCastLightColor[HO_SHADOW_CAST_ARRAY_LIGHTS];
 float4 _HoShadowCastSliceData[HO_SHADOW_CAST_ARRAY_SLICES];
 float4 _HoShadowCastPcssParams;
@@ -350,7 +351,7 @@ float HoShadowCastSampleSecondDirectionalSlice(int sliceIndex, float3 positionWS
     return HoShadowCastSampleSecondDirectionalAtlas(shadowCoord.xyz, sliceData, softShadows);
 }
 
-float HoShadowCastSecondDirectionalAttenuation(float3 positionWS)
+float HoShadowCastSecondDirectionalAttenuation(float3 positionWS, bool mainOnly)
 {
     if (_HoShadowCastSecondDirectionalParams.x < 0.5)
     {
@@ -371,10 +372,12 @@ float HoShadowCastSecondDirectionalAttenuation(float3 positionWS)
     for (int lightIndex = 0; lightIndex < lightCount; lightIndex++)
     {
         float4 lightData = _HoShadowCastSecondDirectionalLightData[lightIndex];
+        uint receiverFlags = (uint)round(lightData.w);
+        if (mainOnly && (receiverFlags & 2u) == 0u) continue;
         int firstSlice = (int)round(lightData.x);
         int lightCascadeCount = min((int)round(lightData.y), cascadeCount);
         float shadowStrength = saturate(lightData.z);
-        bool softShadows = lightData.w > 0.5;
+        bool softShadows = (receiverFlags & 1u) != 0u;
         int cascadeIndex = max(lightCascadeCount - 1, 0);
         [unroll]
         for (int i = 0; i < HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES; i++)
@@ -411,7 +414,7 @@ float HoShadowCastLightShadowAttenuation(int lightIndex, float3 positionWS)
     float lightType = lightData0.x;
     int sliceCount = min((int)round(lightData0.z), 6);
     float shadowStrength = saturate(lightData0.w * influence);
-    bool softShadows = _HoShadowCastLightColor[lightIndex].a > 0.5;
+    bool softShadows = ((uint)round(_HoShadowCastLightColor[lightIndex].a) & 1u) != 0u;
     float lightShadow = 1.0;
 
     if (lightType == HO_SHADOW_CAST_LIGHT_POINT && sliceCount >= 6)
@@ -437,7 +440,7 @@ float HoShadowCastLightShadowAttenuation(int lightIndex, float3 positionWS)
     return lerp(1.0, lightShadow, shadowStrength);
 }
 
-float HoShadowCastDirectionalAttenuation(float3 positionWS)
+float HoShadowCastDirectionalAttenuation(float3 positionWS, bool mainOnly)
 {
     if (_HoShadowCastActive < 0.5 || _HoShadowCastLightCount <= 0 || _HoShadowCastSliceCount <= 0)
     {
@@ -449,6 +452,7 @@ float HoShadowCastDirectionalAttenuation(float3 positionWS)
     [loop]
     for (int lightIndex = 0; lightIndex < lightCount; lightIndex++)
     {
+        if (mainOnly && ((uint)round(_HoShadowCastLightColor[lightIndex].a) & 2u) == 0u) continue;
         if (_HoShadowCastLightData0[lightIndex].x != HO_SHADOW_CAST_LIGHT_DIRECTIONAL)
         {
             continue;
@@ -460,7 +464,7 @@ float HoShadowCastDirectionalAttenuation(float3 positionWS)
     return saturate(attenuation);
 }
 
-float HoShadowCastPunctualAttenuation(float3 positionWS)
+float HoShadowCastPunctualAttenuation(float3 positionWS, bool mainOnly)
 {
     if (_HoShadowCastActive < 0.5 || _HoShadowCastLightCount <= 0 || _HoShadowCastSliceCount <= 0)
     {
@@ -472,6 +476,7 @@ float HoShadowCastPunctualAttenuation(float3 positionWS)
     [loop]
     for (int lightIndex = 0; lightIndex < lightCount; lightIndex++)
     {
+        if (mainOnly && ((uint)round(_HoShadowCastLightColor[lightIndex].a) & 2u) == 0u) continue;
         if (_HoShadowCastLightData0[lightIndex].x == HO_SHADOW_CAST_LIGHT_DIRECTIONAL)
         {
             continue;
@@ -485,8 +490,21 @@ float HoShadowCastPunctualAttenuation(float3 positionWS)
 
 float HoShadowCastAttenuation(float3 positionWS)
 {
-    float attenuation = HoShadowCastDirectionalAttenuation(positionWS) * HoShadowCastPunctualAttenuation(positionWS) * HoShadowCastSecondDirectionalAttenuation(positionWS);
+    float attenuation = HoShadowCastDirectionalAttenuation(positionWS, false) * HoShadowCastPunctualAttenuation(positionWS, false) * HoShadowCastSecondDirectionalAttenuation(positionWS, false);
     return max(attenuation, HO_SHADOW_CAST_MIN_RECEIVER_ATTENUATION);
 }
+
+float HoShadowCastAttenuation(float3 positionWS, float receptionMode)
+{
+    // Full is a superset of Main. Legacy/missing zero values resolve to Main.
+    if (receptionMode >= 1.5) return HoShadowCastAttenuation(positionWS);
+    float attenuation = HoShadowCastDirectionalAttenuation(positionWS, true) * HoShadowCastPunctualAttenuation(positionWS, true) * HoShadowCastSecondDirectionalAttenuation(positionWS, true);
+    return max(attenuation, HO_SHADOW_CAST_MIN_RECEIVER_ATTENUATION);
+}
+
+// Preserve existing full-pool callers outside the lilToon material mode path.
+float HoShadowCastDirectionalAttenuation(float3 positionWS) { return HoShadowCastDirectionalAttenuation(positionWS, false); }
+float HoShadowCastPunctualAttenuation(float3 positionWS) { return HoShadowCastPunctualAttenuation(positionWS, false); }
+float HoShadowCastSecondDirectionalAttenuation(float3 positionWS) { return HoShadowCastSecondDirectionalAttenuation(positionWS, false); }
 
 #endif

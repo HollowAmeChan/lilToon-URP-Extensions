@@ -244,6 +244,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     }
 
                     slice.renderingLayerMask = renderingLayerMask;
+                    slice.casterLayerMask = light.cullingMask;
                     target.slices[target.sliceCount] = slice;
                     target.worldToShadow[target.sliceCount] = slice.worldToShadow;
                     target.sliceData[target.sliceCount] = slice.sliceData;
@@ -261,7 +262,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 int lightIndex = target.lightCount++;
                 target.sourceLights[lightIndex] = light;
                 target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength,
-                    light.shadows == LightShadows.Soft ? 1.0f : 0.0f);
+                    GetReceiverFlags(light));
                 diagnostics?.AddAccepted(
                     light,
                     "SecondDirectional",
@@ -601,6 +602,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 }
 
                 slice.renderingLayerMask = renderingLayerMask;
+                slice.casterLayerMask = light.cullingMask;
                 target.slices[target.sliceCount++] = slice;
                 writtenSlices++;
             }
@@ -625,10 +627,10 @@ namespace lilToon.URP.Extensions.ShadowCast
             target.lightData1[lightIndex] = new Vector4(position.x, position.y, position.z, light.range);
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
             target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, config.punctualShadowFadeSpeed);
-            // The RGB channels remain available as light metadata. Alpha carries the per-light
-            // hard/soft selection used by the shadow sampler; it does not alter URP light color.
+            // Alpha: bit 0 = soft shadow, bit 1 = included in the artistic Main pool.
+            // RGB remains light metadata; none of these fields modifies URP light color.
             target.lightColor[lightIndex] = new Vector4(finalColor.r, finalColor.g, finalColor.b,
-                light.shadows == LightShadows.Soft ? 1.0f : 0.0f);
+                GetReceiverFlags(light));
             diagnostics?.AddAccepted(light, "Punctual", requiredType, firstSlice, writtenSlices, resolution);
         }
 
@@ -950,8 +952,13 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             float texelSize = resolution > 0 ? frustumSize / resolution : 0.0f;
-            float depthBias = -light.shadowBias * texelSize;
-            float normalBias = lightType == LightType.Point ? 0.0f : -light.shadowNormalBias * texelSize;
+            var extra = light.GetComponent<UniversalAdditionalLightData>();
+            var pipeline = GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset;
+            bool usePipelineBias = pipeline != null && (extra == null || extra.usePipelineSettings);
+            float requestedDepthBias = usePipelineBias ? pipeline.shadowDepthBias : light.shadowBias;
+            float requestedNormalBias = usePipelineBias ? pipeline.shadowNormalBias : light.shadowNormalBias;
+            float depthBias = -requestedDepthBias * texelSize;
+            float normalBias = lightType == LightType.Point ? 0.0f : -requestedNormalBias * texelSize;
             return new Vector4(depthBias, normalBias, (float)lightType, 0.0f);
         }
 
@@ -1034,15 +1041,18 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return true;
             }
 
-            uint lightMask = (uint)light.renderingLayerMask;
+            var extra = light.GetComponent<UniversalAdditionalLightData>();
+            uint lightMask = extra != null ? (uint)extra.renderingLayers : (uint)light.renderingLayerMask;
             return (lightMask & GetConfigLightRenderingLayerMask(config)) != 0u
-                && (lightMask & GetConfigCasterRenderingLayerMask(config)) != 0u;
+                && GetShadowCasterRenderingLayerMask(light, config) != 0u;
         }
 
         private static uint GetShadowCasterRenderingLayerMask(Light light, HoShadowCastFrameConfig config)
         {
-            uint lightMask = light != null ? (uint)light.renderingLayerMask : uint.MaxValue;
-            return lightMask & GetConfigCasterRenderingLayerMask(config);
+            uint shadowMask = light != null ? (uint)light.renderingLayerMask : uint.MaxValue;
+            if (light != null && light.TryGetComponent<UniversalAdditionalLightData>(out var extra) && extra.customShadowLayers)
+                shadowMask = (uint)extra.shadowRenderingLayers;
+            return shadowMask & GetConfigCasterRenderingLayerMask(config);
         }
 
         private static uint GetConfigLightRenderingLayerMask(HoShadowCastFrameConfig config)
@@ -1109,6 +1119,14 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             return "not eligible";
+        }
+
+        private static float GetReceiverFlags(Light light)
+        {
+            int flags = light.shadows == LightShadows.Soft ? 1 : 0;
+            if (light.TryGetComponent<HoShadowCastLight>(out var declaration) &&
+                declaration.isActiveAndEnabled && declaration.includeInMainShadow) flags |= 2;
+            return flags;
         }
 
         private static string GetShadowIneligibilityReason(Light light)
