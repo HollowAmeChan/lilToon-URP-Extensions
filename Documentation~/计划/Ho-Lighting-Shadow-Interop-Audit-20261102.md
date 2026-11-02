@@ -277,3 +277,58 @@ https://docs.unity3d.com/6000.3/Documentation/Manual/LightMode-Mixed-Shadowmask.
 https://docs.unity.com/en-us/engine/6000.3/manual/lighting-overview/lighting/rendering-layers
 https://raw.githubusercontent.com/lilxyzw/lilToon/master/Assets/lilToon/Shader/Includes/lil_common_macro.hlsl
 ```
+
+## 10. 后续讨论：聚合归属、烘焙与 Ho ShadowCast 退役候选
+
+本节回应用户进一步提出的“静态尽量烘焙、少量艺术灯动态投影、考虑删除 Ho ShadowCast”。**这是定位建议，没有执行删除、禁用或资产迁移。** 对 §7.2 的保留候选进一步收敛：更倾向停止扩展现有独立全灯 atlas Feature，将其列为 Legacy 退役候选，不再建设“每盏灯挂一个组件就获得额外投影预算”的第二套通用系统。
+
+### 10.1 谁聚合：灯光求值阶段，不是 atlas 打包阶段
+
+不同灯的深度图处于不同光空间，不能直接混合深度纹理得到通用遮挡。接收位置确定后，才能查对应灯的可见度并按其贡献聚合。
+
+| 路径 | 聚合工作的归属 |
+| --- | --- |
+| 原生 Forward+ | 先建立空间 cluster 的灯列表，材质片元只遍历影响当前 cluster 的候选灯 |
+| Ho NPR 聚合产品 | 独立 GPU lighting pass 根据表面/身份/灯层计算颜色与方向统计；材质取统计后处理自己的 ramp |
+| 未来大量灯 RT | GPU compute / ray tracing pass 做选灯、重要性权重、遮挡查询、重建和聚合，输出 SunCast / OtherLights 产品 |
+| 静态 Lightmap | 烘焙阶段积分静态接收面的照明，运行时采样结果 |
+
+GPU 中的少量局部灯循环很常见，Forward+ 的作用正是缩小逐像素候选集合。把同一个全灯循环搬到 Compute 本身不会消除复杂度；大量灯方案还需要空间剔除、重要性采样和可能的时空重用。
+
+RT 计算仍由 GPU shader 程序执行。需要避免的是让每份 lilToon 材质都精确枚举世界所有灯、逐灯发射大量射线。固定采样预算估计的是加权聚合量；灯表维护、候选构建、重用校正、噪声与收敛仍有成本。
+
+对于现有 NPR 模型，聚合可保留 `C0 / ΔC` 与对应方向矩，材质用自身接收权重重组后执行 ramp。它不能从少量统计量恢复任意逐灯 BRDF、任意每灯每层独立权重。既有无限灯研究 §6–8 已说明该边界，不把普通 PBR RTDI 的最终颜色直接拿来替代这些 NPR 输入。
+
+### 10.2 “烘焙进池子”需要区分的数据
+
+**普通 Lightmap / Probe / APV：** 主要缓存照明信息。静态房间烘好了，移动角色可以从探针等取得环境照明；普通 Lightmap 本身不提供任意空间位置的高清逐灯遮挡。Mixed Shadowmask 可为动态物体提供部分静态遮挡，但探针采样和有限重叠通道不能等同于完整高清逐灯深度图。
+
+**静态 caster 的逐灯深度缓存：** 灯与静态遮挡物不变时，可以不重画这些深度；移动接收面仍可投影到缓存图查询。但灯/几何变化需要失效更新，移动角色的自阴影、互相投影和向地面投影仍需动态几何层或 RT。接收端的逐灯取样/聚合成本也保留。
+
+因此“灯 Mode=Baked”不会自动把每灯高精度深度放入当前公共池。现有 Ho ShadowCast 按帧创建 atlas 并绘制，没有这样的持久缓存合同。若以后确有需求，应作为统一公共阴影后端的能力，而不是另开不受总预算约束的灯挂件。
+
+Shadow map 可以做到高质量，缓存也有实际价值；HDRP 的 cached shadow 是可参考的机制。对本管线的取舍依据是收益、数据维护和预算，不是认定光栅阴影天然达不到高质量。RT 和烘焙同样需要分辨率/采样与正确接收，不自动保证成片最好。
+
+### 10.3 更建议的生产分工
+
+- **静态环境基础照明：** Lightmap / Probe / APV 等烘焙方案，按场景组织数据；先核对 PMX 的 lightmap UV、材质烘焙与 lilToon 接收，不能仅改变灯 Mode 就视为完成。
+- **角色主光与重要动态照明：** 现有主光 RT / 角色 CS / 少量原生实时阴影按明确支持域选择，保留动态自阴影与相互遮挡。
+- **艺术动态投影：** 少量显式声明、统一预算与优先级；只有选入者影响艺术主 Cast，普通补光默认不加入。
+- **大量其他动态灯：** 未来需要时通过统一 RT 聚合产品扩展，不要求当前先为每灯维护一张额外高分辨率实时图。
+- **体积光：** 保留空气采样所需的空间遮挡路径。退役 Ho ShadowCast 不会自动替代太阳体积所读的原生图或局部体积独立深度。
+
+预算在渲染器/场景层集中控制；逐灯设置表达优先级和相对质量需求，不能无限追加独立预算。烘焙数据按受影响的灯/几何变化更新，避免给敏捷制作流程增加不必要的全场重烘焙。
+
+建议的退役范围是现有 Ho ShadowCast 的自动全灯收集、独立全灯 atlas 和全局相乘接收。PCSS 工具函数、角色 CS、局部体积深度、少量原生动态阴影各自评估，不因共用了“shadow map”概念就整套删除。
+
+真正删除前，先解除 lilToon 对该 Feature 的采样依赖、迁移旧场景/Renderer 资产及必要艺术灯路由，关闭时保证明确的中性 fallback。之后再删除实现与旧序列化入口；本节没有提前执行这些动作。
+
+补充主要资料：
+
+```text
+https://docs.unity3d.com/6000.3/Documentation/Manual/urp/rendering/forward-plus-rendering-path.html
+https://docs.unity3d.com/6000.3/Documentation/Manual/LightMode-Baked.html
+https://docs.unity3d.com/6000.3/Documentation/Manual/LightMode-Mixed-Shadowmask.html
+https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition%4017.3/manual/Shadows-in-HDRP.html
+https://developer.nvidia.com/rtxdi
+```
