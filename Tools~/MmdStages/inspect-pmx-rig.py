@@ -77,15 +77,22 @@ def parse(path):
                 if link['angleLimits']: link['min']=r.vec3();link['max']=r.vec3()
                 b['ikLinks'].append(link)
         bones.append(b)
-    foot_names={'左足','左ひざ','左足首','左つま先','右足','右ひざ','右足首','右つま先'}
-    foot_weight_type_counts={}
+    bone_weight_type_counts=[
+        {name:0 for name in weight_type_names.values()} for _ in bones
+    ]
+    for _,wt,indices,weights in vertex_influences:
+        for index,weight in zip(indices,weights):
+            if 0<=index<len(bones) and weight>1e-5:
+                bone_weight_type_counts[index][weight_type_names[wt]]+=1
+    weighted_bone_types={}
     for index,bone in enumerate(bones):
-        if bone['name'] not in foot_names: continue
-        counts={name:0 for name in weight_type_names.values()}
-        for _,wt,indices,weights in vertex_influences:
-            if any(i==index and w>1e-5 for i,w in zip(indices,weights)):
-                counts[weight_type_names[wt]]+=1
-        foot_weight_type_counts[bone['name']]=counts
+        if any(bone_weight_type_counts[index].values()):
+            weighted_bone_types[bone['name']]=bone_weight_type_counts[index]
+    foot_tokens=('足','ひざ','膝','つま先','足先','足首')
+    foot_weight_type_counts={
+        name:counts for name,counts in weighted_bone_types.items()
+        if any(token in name for token in foot_tokens)
+    }
     morph_types={0:'group',1:'vertex',2:'bone',3:'uv',4:'additionalUv1',5:'additionalUv2',6:'additionalUv3',7:'additionalUv4',8:'material',9:'flip',10:'impulse'}
     if debug_sections: print('DEBUG afterBones',r.o,'next',r.d[r.o:r.o+8],file=sys.stderr)
     morphs=[]; moc=r.i32()
@@ -99,7 +106,7 @@ def parse(path):
             if 'ikTarget' in b:b['ikTargetName']=index_to_name.get(b['ikTarget'],'<missing>')
         names={b['name'] for b in bones}
         standard=['センター','全ての親','上半身','上半身2','下半身','左足','右足','左ひざ','右ひざ','左足首','右足首','左つま先','右つま先','左足ＩＫ','右足ＩＫ','左つま先ＩＫ','右つま先ＩＫ','左腕','右腕','左ひじ','右ひじ','左手首','右手首','頭','首','両目']
-        return {'path':str(path),'modelName':model_name,'englishName':english_name,'version':version,'vertexCount':vx,'textureCount':len(textures),'materialCount':mc,'boneCount':bc,'morphCount':moc,'bones':bones,'morphs':[],'ikBones':[b['name'] for b in bones if 'ikLinks' in b],'standardBones':{n:n in names for n in standard},'morphTypeCounts':{},'vertexSkinWeightTypes':weight_type_counts,'footBoneVertexWeightTypes':foot_weight_type_counts}
+        return {'path':str(path),'modelName':model_name,'englishName':english_name,'version':version,'vertexCount':vx,'textureCount':len(textures),'materialCount':mc,'boneCount':bc,'morphCount':moc,'bones':bones,'morphs':[],'ikBones':[b['name'] for b in bones if 'ikLinks' in b],'standardBones':{n:n in names for n in standard},'morphTypeCounts':{},'vertexSkinWeightTypes':weight_type_counts,'weightedBoneVertexTypes':weighted_bone_types,'footBoneVertexWeightTypes':foot_weight_type_counts}
     if debug_sections: print('DEBUG morphCount',moc,'offset',r.o,file=sys.stderr)
     for _ in range(max(0,moc)):
         n=r.text()
@@ -123,7 +130,7 @@ def parse(path):
         if 'ikTarget' in b:b['ikTargetName']=index_to_name.get(b['ikTarget'],'<missing>')
     standard=['センター','全ての親','上半身','上半身2','下半身','左足','右足','左ひざ','右ひざ','左足首','右足首','左つま先','右つま先','左足ＩＫ','右足ＩＫ','左つま先ＩＫ','右つま先ＩＫ','左腕','右腕','左ひじ','右ひじ','左手首','右手首','頭','首','両目']
     names={b['name'] for b in bones}
-    return {'path':str(path),'modelName':model_name,'englishName':english_name,'version':version,'vertexCount':vx,'textureCount':len(textures),'materialCount':mc,'boneCount':bc,'morphCount':moc,'bones':bones,'morphs':morphs,'ikBones':[b['name'] for b in bones if 'ikLinks' in b],'standardBones':{n:n in names for n in standard},'morphTypeCounts':{k:sum(1 for m in morphs if m['type']==k) for k in set(m['type'] for m in morphs)},'vertexSkinWeightTypes':weight_type_counts,'footBoneVertexWeightTypes':foot_weight_type_counts}
+    return {'path':str(path),'modelName':model_name,'englishName':english_name,'version':version,'vertexCount':vx,'textureCount':len(textures),'materialCount':mc,'boneCount':bc,'morphCount':moc,'bones':bones,'morphs':morphs,'ikBones':[b['name'] for b in bones if 'ikLinks' in b],'standardBones':{n:n in names for n in standard},'morphTypeCounts':{k:sum(1 for m in morphs if m['type']==k) for k in set(m['type'] for m in morphs)},'vertexSkinWeightTypes':weight_type_counts,'weightedBoneVertexTypes':weighted_bone_types,'footBoneVertexWeightTypes':foot_weight_type_counts}
 
 if __name__=='__main__':
     output=[]
