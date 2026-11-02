@@ -18,6 +18,8 @@
 
 共享 PC_Renderer 负责 Feature 存在和底层执行。日常场景差异优先用 Volume、灯光、材质；只有任务需要底层改动时才改共享 Feature，不顺手开启用户关掉的项。
 
+遇到“Light 关闭阴影仍压暗角色”，先看[灯光与 Cast 契约审计](../../../../Documentation~/计划/Ho-Lighting-Shadow-Interop-Audit-20261102.md)。截至该审计，Ho ShadowCast 会收集 `shadows=None` 的灯，并把额外 Cast 相乘到主接收；它不是遵循原生逐灯语义的透明替换。当前 URP 基础附光聚合强度固定 1，`_MultiLightIntensity=0` 只关闭额外 HDR 加亮，`_VertexLightStrength=0` 不能当附灯总开关；`_MultiLightCastShadowStrength` 的 HDR 接收尚未接实。用 `lighting-audit` 读当前状态，或显式 `lighting-audit-render` 拍一个小诊断帧获得实际收集灯列表。统一契约尚未实施，不把文档建议当作已经修复，也不为掩盖问题批量改用户材质或 Renderer。
+
 ## 体积与雾
 
 重要 Point/Spot 可加 HoVolumeLightSource HD。96–256 steps、Spot 深度 512–1024、Point 每面 256–512 可作起点，再按质量/性能调。独立 LightDepth 需要几何投影；source radius/soft edge 缓和硬边。

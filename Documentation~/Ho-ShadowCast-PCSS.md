@@ -3,6 +3,8 @@
 > 状态：**现行栅格化 ShadowCast 实现说明**，2026-10-28。角色 CS 的现行参数和采样见 [Ho-CharacterShadow](Ho-CharacterShadow.md)。
 > 依据：URP17 **没有内置 PCSS**（源码 0 处命中，只有 PCF 软档 `_SHADOWS_SOFT_LOW/MEDIUM/HIGH`），所以 PCSS 是自研的；`Ho-ShadowCast` 的附加灯 atlas 与第二方向光级联都走它。
 > 本页的边界仅适用于 Ho-ShadowCast；下一轮 RT 公共底座与 RTShadow 设计见 [Ho-RT](Ho-RT.md)。
+>
+> **2026-11-02 灯光互操作审计**：当前采集不遵循 Light 的 None / 逐灯 Strength / Mode，接收是附光 Cast 的全局相乘，不是原生逐灯阴影的透明替换。实际场景复现和统一契约建议见[灯光与 Cast 审计](计划/Ho-Lighting-Shadow-Interop-Audit-20261102.md)。该问题尚未通过本次文档更新修复。
 
 ## 1. 形态
 

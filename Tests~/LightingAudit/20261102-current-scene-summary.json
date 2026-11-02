@@ -1,0 +1,418 @@
+{
+  "schema": "ho-lighting-audit-1",
+  "createdUtc": "2026-11-02T00:14:53.8938520Z",
+  "scene": {
+    "path": "Assets/00动画/MMD动画场景/花吐电気通用动画/Scenes/頑張りたい人へ.unity",
+    "dirty": false
+  },
+  "evidence": "Actual 320x180 StandardRequest scheduling and source inspection; not final-pixel per-light A/B or quality validation.",
+  "camera": "演出相机 · VMD",
+  "snapshotValid": true,
+  "accepted": [
+    {
+      "name": "室内天光反弹",
+      "stage": "Punctual",
+      "type": "Spot",
+      "resolution": 1024,
+      "slices": 1
+    },
+    {
+      "name": "桌椅柔光",
+      "stage": "Punctual",
+      "type": "Spot",
+      "resolution": 1024,
+      "slices": 1
+    },
+    {
+      "name": "窗外晴日 · 后庭",
+      "stage": "Punctual",
+      "type": "Spot",
+      "resolution": 1024,
+      "slices": 1
+    },
+    {
+      "name": "桌边花灯 001 · 柔光",
+      "stage": "Punctual",
+      "type": "Point",
+      "resolution": 512,
+      "slices": 6
+    },
+    {
+      "name": "环境补光",
+      "stage": "SecondDirectional",
+      "type": "Directional",
+      "resolution": 2048,
+      "slices": 4
+    }
+  ],
+  "activeLights": [
+    {
+      "path": "花吐电気舞台/花吐电気 · H2CU阿相/11 实景灯具/桌边花灯/桌边花灯 001 · 柔光",
+      "type": "Point",
+      "mode": "Realtime",
+      "shadows": "None",
+      "intensity": 0.2800000011920929,
+      "shadowStrength": 0.8500000238418579,
+      "lightingLayers": 1,
+      "shadowLayers": 1,
+      "lightShadowLayers": 1,
+      "customShadowLayers": false,
+      "nativeResolutionTier": 0,
+      "acceptedByName": true
+    },
+    {
+      "path": "花吐电気舞台/花吐电気 · H2CU阿相/06 摄影灯光/窗外晴日 · 后庭",
+      "type": "Spot",
+      "mode": "Realtime",
+      "shadows": "Soft",
+      "intensity": 360.0,
+      "shadowStrength": 0.8999999761581421,
+      "lightingLayers": 2,
+      "shadowLayers": 4294967295,
+      "lightShadowLayers": 4294967295,
+      "customShadowLayers": true,
+      "nativeResolutionTier": 2,
+      "acceptedByName": true
+    },
+    {
+      "path": "花吐电気舞台/花吐电気 · H2CU阿相/06 摄影灯光/桌椅柔光",
+      "type": "Spot",
+      "mode": "Realtime",
+      "shadows": "Soft",
+      "intensity": 1.2999999523162842,
+      "shadowStrength": 0.8999999761581421,
+      "lightingLayers": 129,
+      "shadowLayers": 1,
+      "lightShadowLayers": 129,
+      "customShadowLayers": false,
+      "nativeResolutionTier": 2,
+      "acceptedByName": true
+    },
+    {
+      "path": "花吐电気舞台/花吐电気 · H2CU阿相/06 摄影灯光/室内天光反弹",
+      "type": "Spot",
+      "mode": "Mixed",
+      "shadows": "Soft",
+      "intensity": 35.0,
+      "shadowStrength": 0.8999999761581421,
+      "lightingLayers": 129,
+      "shadowLayers": 1,
+      "lightShadowLayers": 129,
+      "customShadowLayers": false,
+      "nativeResolutionTier": 2,
+      "acceptedByName": true
+    },
+    {
+      "path": "花吐电気舞台/花吐电気 · H2CU阿相/02 灯光/环境补光",
+      "type": "Directional",
+      "mode": "Realtime",
+      "shadows": "None",
+      "intensity": 0.054999999701976776,
+      "shadowStrength": 1.0,
+      "lightingLayers": 129,
+      "shadowLayers": 1,
+      "lightShadowLayers": 129,
+      "customShadowLayers": false,
+      "nativeResolutionTier": 2,
+      "acceptedByName": true
+    },
+    {
+      "path": "花吐电気舞台/花吐电気 · H2CU阿相/02 灯光/主光 · 花吐电気",
+      "type": "Directional",
+      "mode": "Realtime",
+      "shadows": "Soft",
+      "intensity": 3.2300000190734863,
+      "shadowStrength": 1.0,
+      "lightingLayers": 129,
+      "shadowLayers": 1,
+      "lightShadowLayers": 129,
+      "customShadowLayers": false,
+      "nativeResolutionTier": 2,
+      "acceptedByName": false
+    }
+  ],
+  "selectedMaterials": [
+    {
+      "path": "Assets/00动画/角色/WTD/Mat/WTD_s_M_Body.mat",
+      "name": "WTD_s_M_Body",
+      "shader": "Hidden/lilToonOutline",
+      "properties": [
+        {
+          "name": "_UseShadow",
+          "value": 1.0
+        },
+        {
+          "name": "_ShadowReceive",
+          "value": 1.0
+        },
+        {
+          "name": "_Shadow2ndReceive",
+          "value": 1.0
+        },
+        {
+          "name": "_Shadow3rdReceive",
+          "value": 1.0
+        },
+        {
+          "name": "_MultiLightIntensity",
+          "value": 0.0
+        },
+        {
+          "name": "_MultiLightCastShadowStrength",
+          "value": 0.0
+        },
+        {
+          "name": "_VertexLightStrength",
+          "value": 0.0
+        },
+        {
+          "name": "_LightMinLimit",
+          "value": 0.05000000074505806
+        },
+        {
+          "name": "_LightMaxLimit",
+          "value": 1.0
+        },
+        {
+          "name": "_AsUnlit",
+          "value": 0.0
+        },
+        {
+          "name": "_MonochromeLighting",
+          "value": 0.0
+        },
+        {
+          "name": "_ShadowEnvStrength",
+          "value": 0.0
+        },
+        {
+          "name": "_ApplySpecularFA",
+          "value": 1.0
+        }
+      ],
+      "renderers": [
+        "20 演出/WTD-BUILD/Body1 | cast=On receive=True renderingLayers=1 gameObjectLayer=0"
+      ]
+    },
+    {
+      "path": "Assets/00动画/角色/WTD/Mat/WTD_s_M_HairFront.mat",
+      "name": "WTD_s_M_HairFront",
+      "shader": "Hidden/lilToonOutline",
+      "properties": [
+        {
+          "name": "_UseShadow",
+          "value": 1.0
+        },
+        {
+          "name": "_ShadowReceive",
+          "value": 1.0
+        },
+        {
+          "name": "_Shadow2ndReceive",
+          "value": 1.0
+        },
+        {
+          "name": "_Shadow3rdReceive",
+          "value": 1.0
+        },
+        {
+          "name": "_MultiLightIntensity",
+          "value": 0.0
+        },
+        {
+          "name": "_MultiLightCastShadowStrength",
+          "value": 0.0
+        },
+        {
+          "name": "_VertexLightStrength",
+          "value": 0.0
+        },
+        {
+          "name": "_LightMinLimit",
+          "value": 0.05000000074505806
+        },
+        {
+          "name": "_LightMaxLimit",
+          "value": 1.0
+        },
+        {
+          "name": "_AsUnlit",
+          "value": 0.0
+        },
+        {
+          "name": "_MonochromeLighting",
+          "value": 0.0
+        },
+        {
+          "name": "_ShadowEnvStrength",
+          "value": 0.0
+        },
+        {
+          "name": "_ApplySpecularFA",
+          "value": 1.0
+        }
+      ],
+      "renderers": [
+        "20 演出/WTD-BUILD/头发-前内 | cast=On receive=True renderingLayers=1 gameObjectLayer=0",
+        "20 演出/WTD-BUILD/头发-前发 | cast=On receive=True renderingLayers=1 gameObjectLayer=0",
+        "20 演出/WTD-BUILD/头发-呆毛 | cast=On receive=True renderingLayers=1 gameObjectLayer=0",
+        "20 演出/WTD-BUILD/头发-前杂 | cast=On receive=True renderingLayers=1 gameObjectLayer=0",
+        "20 演出/WTD-BUILD/头发-前外侧 | cast=On receive=True renderingLayers=1 gameObjectLayer=0"
+      ]
+    }
+  ],
+  "features": [
+    {
+      "asset": "Assets/Settings/PC_Renderer.asset",
+      "name": "HoCharacterShadowRendererFeature",
+      "type": "lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowRendererFeature",
+      "settings": {
+        "enabled": true,
+        "resolution": 4096,
+        "maxCharacters": 16,
+        "maxAtlasSize": 16384,
+        "softnessRadius": 9.999999747378752e-05,
+        "depthBias": 1.0,
+        "normalBias": 1.0,
+        "pcssEnabled": true,
+        "pcssQuality": 3,
+        "pcssSoftness": 0.10000000149011612,
+        "pcssBlockerSearchRadius": 0.10999999940395355,
+        "pcssMaxPenumbraRadius": 0.07599999755620956,
+        "pcssDepthBias": 0.0,
+        "debugMode": 0,
+        "debugCharacter": 0,
+        "debugInSceneView": true,
+        "debugInGameView": false,
+        "debugShader": {
+          "instanceID": 1170
+        }
+      },
+      "status": "",
+      "active": true
+    },
+    {
+      "asset": "Assets/Settings/PC_Renderer.asset",
+      "name": "HoShadowCastRendererFeature",
+      "type": "lilToon.URP.Extensions.ShadowCast.HoShadowCastRendererFeature",
+      "settings": {
+        "enabled": true,
+        "passEvent": 50,
+        "collectVisibleLights": true,
+        "casterLayerMask": {
+          "serializedVersion": "2",
+          "m_Bits": 4294967295
+        },
+        "lightLayerMask": {
+          "serializedVersion": "2",
+          "m_Bits": 4294967295
+        },
+        "lightRenderingLayerMask": {
+          "serializedVersion": "0",
+          "m_Bits": 4294967295
+        },
+        "casterRenderingLayerMask": {
+          "serializedVersion": "0",
+          "m_Bits": 4294967295
+        },
+        "shadowStrength": 1.0,
+        "punctualShadowStrength": 1.0,
+        "punctualShadowFadeSpeed": 0.3499999940395355,
+        "lightCapacity": 1,
+        "pcssEnabled": true,
+        "pcssQuality": 2,
+        "punctualPcssSoftness": 0.8500000238418579,
+        "secondDirectionalPcssSoftness": 3.1600000858306885,
+        "pcssBlockerSearchRadius": 3.180000066757202,
+        "pcssMaxPenumbraRadius": 32.0,
+        "pcssDepthBias": 0.0,
+        "secondDirectionalShadowStrength": 0.30000001192092896,
+        "secondDirectionalAtlasSize": 4096,
+        "secondDirectionalCascadeCount": 4,
+        "secondDirectionalMaxDistance": 80.0,
+        "secondDirectionalShadowDepth": 80.0,
+        "secondDirectionalCascadeSplits": {
+          "x": 0.07999999821186066,
+          "y": 0.2199999988079071,
+          "z": 0.5
+        },
+        "atlasSize": 8192,
+        "directionalResolution": 1024,
+        "spotResolution": 1024,
+        "pointFaceResolution": 512,
+        "directionalNearPlane": 0.10000000149011612,
+        "directionalShadowSize": 20.0,
+        "directionalShadowDepth": 40.0,
+        "debugMode": 0
+      },
+      "status": "",
+      "active": true
+    },
+    {
+      "asset": "Assets/Settings/PC_Renderer.asset",
+      "name": "HoRTShadowRendererFeature",
+      "type": "lilToon.URP.Extensions.RTShadow.HoRTShadowRendererFeature",
+      "settings": {
+        "enabled": true,
+        "inSceneView": true,
+        "lightSelection": 0,
+        "lightLayers": {
+          "serializedVersion": "2",
+          "m_Bits": 4294967295
+        },
+        "geometryLayers": {
+          "serializedVersion": "2",
+          "m_Bits": 4294967295
+        },
+        "excludedRayMaterials": [],
+        "rayBias": 9.999999747378752e-05,
+        "maxDistance": 10000.0,
+        "angularDiameter": 0.0,
+        "samplesPerPixel": 1,
+        "samplingSeed": 0,
+        "reconstruction": 0,
+        "singleFrameEstimates": 1,
+        "debugMode": 0,
+        "debugLight": 0,
+        "debugDistance": 1.0,
+        "debugInSceneView": true,
+        "debugInGameView": false
+      },
+      "status": "请求 1 灯 / 生产 1 / 不可用 0",
+      "active": true
+    },
+    {
+      "asset": "Assets/Settings/PC_Renderer.asset",
+      "name": "HoVolumeLightRendererFeature",
+      "type": "lilToon.URP.Extensions.VolumeLight.HoVolumeLightRendererFeature",
+      "settings": {
+        "enabled": true,
+        "intensity": 1.0,
+        "maxDistance": 100.0,
+        "stepCount": 48,
+        "antialiasing": 2,
+        "overrideAnisotropy": false,
+        "anisotropy": 0.30000001192092896,
+        "shader": {
+          "instanceID": 0
+        }
+      },
+      "status": "太阳 HD 可用",
+      "active": true
+    }
+  ],
+  "sourceHashes": [
+    {
+      "path": "Runtime/ShadowCast/HoShadowCastFrameCollector.cs",
+      "sha256": "b1223537fdffb137f30460a89669aacd6a4317c58cefe9afffafe9520904f3bb"
+    },
+    {
+      "path": "Runtime/ShadowCast/Shaders/HoShadowCastSampling.hlsl",
+      "sha256": "a846861f13f52a27e3bfc578108dd64aa8d235f4ccc2dd9427499c4a8eb05493"
+    },
+    {
+      "path": "D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_macro.hlsl",
+      "sha256": "4b6fc589f9e3670a9e10d1633580fd065b806e555eb88c75704c8d18a6403114"
+    }
+  ]
+}

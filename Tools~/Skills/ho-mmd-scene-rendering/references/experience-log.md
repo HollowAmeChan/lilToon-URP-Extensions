@@ -128,3 +128,9 @@ Use the date and a short subsystem heading. State the failed or surprising behav
 - 花吐电気、孔雀月令、共享动画场景的 GPU 压力对照确认：原生开关/曝光/Bloom 不参与 Ho-only 图像，AA 保留；显式退出接管才恢复原生 LUT。不是仅检查 Profile 勾选框。
 - 虫无/虫染的大球为真实网格，距主相机约77m，前景短程灯与旧70m体积远距够不到球后空气。扩大区域上边界与体积远距，使用球旁实光及朝后发射的 HD 宽 Spot，得到暗球配蓝/红光晕。前向背光曾形成盖住球面的光柱，不能只靠增加亮度。两版最终均拍过主/左/右三个机位。
 - Evidence: `Tools~/MmdStages/HoOnlyReview-20261101.md`；本机对照图、最终清单与 GPU 执行记录见 `Temp~/HoOnlyReview-20261101/`。Confidence: 场景已保存、实际 GPU 预览已检查；不代表完整复刻作者的全部 MME/粒子。
+
+## 2026-11-02 — Light 阴影开关与 Ho Cast 的互操作缺口
+
+- 頑張りたい人へ保存场景的 MainCamera 小诊断帧确认：`shadows=None` 的桌边点光仍获 Ho 512×6，环境方向补光仍获 Ho 2048×4；场景保持 `dirty=false`。后庭灯 Lighting Layers=2，角色身体/头发=1，Ho 全局 Cast 接收没有相应逐灯过滤。
+- 当前 lilToon 基础附光聚合强度固定 1；`_MultiLightIntensity=0` 仅关闭末尾 HDR 加亮，不能把它解释为禁止全部附光。`minShadow` 未写入使当前 HDR 路径的 `_MultiLightCastShadowStrength` 无效。
+- Evidence: `Documentation~/计划/Ho-Lighting-Shadow-Interop-Audit-20261102.md` 与 `Tests~/LightingAudit/20261102-current-scene-summary.json`。Confidence: 灯收集/接线的源码及实际渲染调度已确认；没有做最终阴影像素的逐灯归因 A/B。Runtime 修复与统一契约仍是后续工作。
