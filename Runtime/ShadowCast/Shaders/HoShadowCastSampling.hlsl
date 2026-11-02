@@ -190,7 +190,7 @@ float HoShadowCastSampleManualPcf(float3 sliceCoord, float4 sliceData, float4 at
     return result * (1.0 / 9.0);
 }
 
-float HoShadowCastSamplePcss(float3 sliceCoord, float4 sliceData, float4 atlasSize, float4 pcssParams, float4 pcssParams2, bool secondDirectional, float radiusScale)
+float HoShadowCastSamplePcss(float3 sliceCoord, float4 sliceData, float4 atlasSize, float4 pcssParams, float4 pcssParams2, bool secondDirectional, float radiusScale, bool softShadows)
 {
     float2 texelSize = atlasSize.zw;
     float2 atlasMin = sliceData.xy + texelSize * 0.5;
@@ -201,6 +201,11 @@ float HoShadowCastSamplePcss(float3 sliceCoord, float4 sliceData, float4 atlasSi
     }
 
     float2 atlasUv = sliceData.xy + sliceCoord.xy * sliceData.z;
+    if (!softShadows)
+    {
+        return HoShadowCastCompareDepth(HoShadowCastSampleRawDepth(atlasUv, secondDirectional), sliceCoord.z, pcssParams2.x);
+    }
+
 #if UNITY_REVERSED_Z
     float nearDepthFactor = 1.0 - sliceCoord.z;
 #else
@@ -274,22 +279,22 @@ float HoShadowCastSamplePcss(float3 sliceCoord, float4 sliceData, float4 atlasSi
     return result / (float)filterSampleCount;
 }
 
-float HoShadowCastSampleAtlas(float3 sliceCoord, float4 sliceData)
+float HoShadowCastSampleAtlas(float3 sliceCoord, float4 sliceData, bool softShadows)
 {
-    return HoShadowCastSamplePcss(sliceCoord, sliceData, _HoShadowCastAtlasSize, _HoShadowCastPcssParams, _HoShadowCastPcssParams2, false, 1.0);
+    return HoShadowCastSamplePcss(sliceCoord, sliceData, _HoShadowCastAtlasSize, _HoShadowCastPcssParams, _HoShadowCastPcssParams2, false, 1.0, softShadows);
 }
 
-float HoShadowCastSampleAtlasScaled(float3 sliceCoord, float4 sliceData, float radiusScale)
+float HoShadowCastSampleAtlasScaled(float3 sliceCoord, float4 sliceData, float radiusScale, bool softShadows)
 {
-    return HoShadowCastSamplePcss(sliceCoord, sliceData, _HoShadowCastAtlasSize, _HoShadowCastPcssParams, _HoShadowCastPcssParams2, false, radiusScale);
+    return HoShadowCastSamplePcss(sliceCoord, sliceData, _HoShadowCastAtlasSize, _HoShadowCastPcssParams, _HoShadowCastPcssParams2, false, radiusScale, softShadows);
 }
 
-float HoShadowCastSampleSecondDirectionalAtlas(float3 sliceCoord, float4 sliceData)
+float HoShadowCastSampleSecondDirectionalAtlas(float3 sliceCoord, float4 sliceData, bool softShadows)
 {
-    return HoShadowCastSamplePcss(sliceCoord, sliceData, _HoShadowCastSecondDirectionalAtlasSize, _HoShadowCastSecondDirectionalPcssParams, _HoShadowCastPcssParams2, true, 1.0);
+    return HoShadowCastSamplePcss(sliceCoord, sliceData, _HoShadowCastSecondDirectionalAtlasSize, _HoShadowCastSecondDirectionalPcssParams, _HoShadowCastPcssParams2, true, 1.0, softShadows);
 }
 
-float HoShadowCastSampleSliceScaled(int sliceIndex, float3 positionWS, float radiusScale)
+float HoShadowCastSampleSliceScaled(int sliceIndex, float3 positionWS, float radiusScale, bool softShadows)
 {
     if (sliceIndex < 0 || sliceIndex >= _HoShadowCastSliceCount || sliceIndex >= HO_SHADOW_CAST_ARRAY_SLICES)
     {
@@ -310,15 +315,15 @@ float HoShadowCastSampleSliceScaled(int sliceIndex, float3 positionWS, float rad
     }
 
     float4 sliceData = _HoShadowCastSliceData[sliceIndex];
-    return HoShadowCastSampleAtlasScaled(shadowCoord.xyz, sliceData, radiusScale);
+    return HoShadowCastSampleAtlasScaled(shadowCoord.xyz, sliceData, radiusScale, softShadows);
 }
 
-float HoShadowCastSampleSlice(int sliceIndex, float3 positionWS)
+float HoShadowCastSampleSlice(int sliceIndex, float3 positionWS, bool softShadows)
 {
-    return HoShadowCastSampleSliceScaled(sliceIndex, positionWS, 1.0);
+    return HoShadowCastSampleSliceScaled(sliceIndex, positionWS, 1.0, softShadows);
 }
 
-float HoShadowCastSampleSecondDirectionalSlice(int sliceIndex, float3 positionWS)
+float HoShadowCastSampleSecondDirectionalSlice(int sliceIndex, float3 positionWS, bool softShadows)
 {
     int lightCount = min((int)round(_HoShadowCastSecondDirectionalParams.y), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS);
     int cascadeCount = min((int)round(_HoShadowCastSecondDirectionalParams.z), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES);
@@ -342,7 +347,7 @@ float HoShadowCastSampleSecondDirectionalSlice(int sliceIndex, float3 positionWS
     }
 
     float4 sliceData = _HoShadowCastSecondDirectionalSliceData[sliceIndex];
-    return HoShadowCastSampleSecondDirectionalAtlas(shadowCoord.xyz, sliceData);
+    return HoShadowCastSampleSecondDirectionalAtlas(shadowCoord.xyz, sliceData, softShadows);
 }
 
 float HoShadowCastSecondDirectionalAttenuation(float3 positionWS)
@@ -369,6 +374,7 @@ float HoShadowCastSecondDirectionalAttenuation(float3 positionWS)
         int firstSlice = (int)round(lightData.x);
         int lightCascadeCount = min((int)round(lightData.y), cascadeCount);
         float shadowStrength = saturate(lightData.z);
+        bool softShadows = lightData.w > 0.5;
         int cascadeIndex = max(lightCascadeCount - 1, 0);
         [unroll]
         for (int i = 0; i < HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES; i++)
@@ -385,7 +391,7 @@ float HoShadowCastSecondDirectionalAttenuation(float3 positionWS)
             }
         }
 
-        float lightShadow = max(HoShadowCastSampleSecondDirectionalSlice(firstSlice + cascadeIndex, positionWS), HO_SHADOW_CAST_MIN_ATTENUATION);
+        float lightShadow = max(HoShadowCastSampleSecondDirectionalSlice(firstSlice + cascadeIndex, positionWS, softShadows), HO_SHADOW_CAST_MIN_ATTENUATION);
         attenuation *= lerp(1.0, lightShadow, shadowStrength);
     }
 
@@ -405,6 +411,7 @@ float HoShadowCastLightShadowAttenuation(int lightIndex, float3 positionWS)
     float lightType = lightData0.x;
     int sliceCount = min((int)round(lightData0.z), 6);
     float shadowStrength = saturate(lightData0.w * influence);
+    bool softShadows = _HoShadowCastLightColor[lightIndex].a > 0.5;
     float lightShadow = 1.0;
 
     if (lightType == HO_SHADOW_CAST_LIGHT_POINT && sliceCount >= 6)
@@ -415,14 +422,14 @@ float HoShadowCastLightShadowAttenuation(int lightIndex, float3 positionWS)
         float pointDistance = length(lightToReceiver);
         float pointNearRadiusScale = smoothstep(0.10, 0.35, pointDistance / lightRange);
         int faceIndex = HoShadowCastPointFaceIndex(lightToReceiver);
-        lightShadow = HoShadowCastSampleSliceScaled(firstSlice + faceIndex, positionWS, pointNearRadiusScale);
+        lightShadow = HoShadowCastSampleSliceScaled(firstSlice + faceIndex, positionWS, pointNearRadiusScale, softShadows);
     }
     else
     {
         [loop]
         for (int sliceOffset = 0; sliceOffset < sliceCount; sliceOffset++)
         {
-            lightShadow = min(lightShadow, HoShadowCastSampleSlice(firstSlice + sliceOffset, positionWS));
+            lightShadow = min(lightShadow, HoShadowCastSampleSlice(firstSlice + sliceOffset, positionWS, softShadows));
         }
     }
 

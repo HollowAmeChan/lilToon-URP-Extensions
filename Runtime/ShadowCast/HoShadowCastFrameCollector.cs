@@ -213,7 +213,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     continue;
                 }
 
-                float shadowStrength = Mathf.Clamp01(config.shadowStrength * config.secondDirectionalShadowStrength);
+                float shadowStrength = Mathf.Clamp01(config.shadowStrength * config.secondDirectionalShadowStrength * light.shadowStrength);
                 float previousDistance = nearDistance;
                 bool completed = true;
                 for (int cascadeIndex = 0; cascadeIndex < cascadeCount; cascadeIndex++)
@@ -260,7 +260,8 @@ namespace lilToon.URP.Extensions.ShadowCast
 
                 int lightIndex = target.lightCount++;
                 target.sourceLights[lightIndex] = light;
-                target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength, 0.0f);
+                target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength,
+                    light.shadows == LightShadows.Soft ? 1.0f : 0.0f);
                 diagnostics?.AddAccepted(
                     light,
                     "SecondDirectional",
@@ -617,14 +618,17 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 position = light.transform.position;
             Vector3 direction = light.transform.forward;
             Color finalColor = light.color * light.intensity;
-            float configuredStrength = requiredType == LightType.Directional
+            float configuredStrength = (requiredType == LightType.Directional
                 ? config.shadowStrength
-                : config.shadowStrength * config.punctualShadowStrength;
+                : config.shadowStrength * config.punctualShadowStrength) * light.shadowStrength;
             target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(configuredStrength));
             target.lightData1[lightIndex] = new Vector4(position.x, position.y, position.z, light.range);
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
             target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, config.punctualShadowFadeSpeed);
-            target.lightColor[lightIndex] = new Vector4(finalColor.r, finalColor.g, finalColor.b, 1.0f);
+            // The RGB channels remain available as light metadata. Alpha carries the per-light
+            // hard/soft selection used by the shadow sampler; it does not alter URP light color.
+            target.lightColor[lightIndex] = new Vector4(finalColor.r, finalColor.g, finalColor.b,
+                light.shadows == LightShadows.Soft ? 1.0f : 0.0f);
             diagnostics?.AddAccepted(light, "Punctual", requiredType, firstSlice, writtenSlices, resolution);
         }
 
@@ -994,6 +998,11 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return false;
             }
 
+            if (GetShadowIneligibilityReason(light) != null)
+            {
+                return false;
+            }
+
             if (!IsLightLayerAllowed(light, config))
             {
                 return false;
@@ -1078,6 +1087,12 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return "light disabled";
             }
 
+            string shadowIneligibilityReason = GetShadowIneligibilityReason(light);
+            if (shadowIneligibilityReason != null)
+            {
+                return shadowIneligibilityReason;
+            }
+
             if (!IsLightLayerAllowed(light, config))
             {
                 return "light layer excluded";
@@ -1094,6 +1109,26 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             return "not eligible";
+        }
+
+        private static string GetShadowIneligibilityReason(Light light)
+        {
+            if (light.shadows == LightShadows.None)
+            {
+                return "URP light shadows are disabled";
+            }
+
+            if (light.shadowStrength <= 0.0f)
+            {
+                return "URP light shadow strength is zero";
+            }
+
+            if (light.lightmapBakeType == LightmapBakeType.Baked)
+            {
+                return "Baked lights do not produce realtime HoShadowCast";
+            }
+
+            return null;
         }
 
         /// <summary>
