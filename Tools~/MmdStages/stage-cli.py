@@ -4,7 +4,7 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
 parser = argparse.ArgumentParser(description=__doc__)
-parser.add_argument("action", choices=["status", "refresh", "catalog", "create", "logo", "review", "fixtures", "practicals", "build", "render", "audit", "adjust", "post-inventory", "post-migrate", "post-tonemap", "post-tune", "stage-survey"])
+parser.add_argument("action", choices=["status", "refresh", "catalog", "create", "logo", "review", "fixtures", "practicals", "build", "render", "audit", "adjust", "post-inventory", "post-migrate", "post-tonemap", "post-tune", "stage-survey", "lighting-audit", "lighting-audit-render"])
 parser.add_argument("stage", nargs="?", default="花吐电気")
 parser.add_argument("--width", type=int, default=1280)
 parser.add_argument("--height", type=int, default=720)

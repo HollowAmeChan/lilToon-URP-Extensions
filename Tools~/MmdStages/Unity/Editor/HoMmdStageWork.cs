@@ -76,6 +76,8 @@ public static class HoMmdStageWork
             string result;
             if(command.action=="refresh"){AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);result="refreshed";}
             else if(command.action=="status")result=File.ReadAllText(Path.Combine(Work,"status.json"));
+            else if(command.action=="lighting-audit")result=HoLightingAudit.Capture();
+            else if(command.action=="lighting-audit-render")result=HoLightingAudit.CaptureRenderedCamera();
             else if(command.action=="post-inventory" || command.action=="post-migrate" || command.action=="post-tonemap" || command.action=="post-tune")result=HoMmdHoPostReview.Execute(command);
             else if(command.action=="logo")result=HoMmdStageBranding.SetLogos(
                 string.IsNullOrEmpty(command.stageFolder)?"Assets/00动画/MMD场景":command.stageFolder,command.logoY,command.logoSize);
