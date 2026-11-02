@@ -497,8 +497,10 @@ float HoShadowCastAttenuation(float3 positionWS)
 float HoShadowCastAttenuation(float3 positionWS, float receptionMode)
 {
     // Full is a superset of Main. Legacy/missing zero values resolve to Main.
-    if (receptionMode >= 1.5) return HoShadowCastAttenuation(positionWS);
-    float attenuation = HoShadowCastDirectionalAttenuation(positionWS, true) * HoShadowCastPunctualAttenuation(positionWS, true) * HoShadowCastSecondDirectionalAttenuation(positionWS, true);
+    // Keep one sampling call graph: branching around two complete PCSS paths duplicates
+    // the inlined shader and makes the D3D compiler much slower.
+    bool mainOnly = !(receptionMode >= 1.5);
+    float attenuation = HoShadowCastDirectionalAttenuation(positionWS, mainOnly) * HoShadowCastPunctualAttenuation(positionWS, mainOnly) * HoShadowCastSecondDirectionalAttenuation(positionWS, mainOnly);
     return max(attenuation, HO_SHADOW_CAST_MIN_RECEIVER_ATTENUATION);
 }
 

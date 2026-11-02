@@ -32,12 +32,16 @@ namespace lilToon.URP.Extensions.Tests
             Assert.Greater(checkedCount, 0, "No lilToon shaders were tested.");
         }
 
+        [TestCase(0, 0, 1f)]
+        [TestCase(0, 2, .35f)]
         [TestCase(1, 0, 1f)]
         [TestCase(1, 1, 1f)]
         [TestCase(2, 0, .35f)]
         [TestCase(2, 1, .35f)]
         [TestCase(1, 2, .35f)]
         [TestCase(1, 3, .35f)]
+        [TestCase(2, 2, .35f)]
+        [TestCase(2, 3, .35f)]
         public void GPUReceiverModeFiltersOnlyTheRequestedPool(int mode, int lightFlags, float expected)
         {
             if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) Assert.Ignore("Requires a graphics device.");
@@ -103,6 +107,11 @@ namespace lilToon.URP.Extensions.Tests
                 result.ReadPixels(new Rect(0, 0, 2, 2), 0, 0);
                 result.Apply();
                 Assert.That(result.GetPixel(0, 0).r, Is.EqualTo(expected).Within(.005f));
+                var diagnostics = ShaderUtil.GetShaderMessages(shader)
+                    .Where(message => message.severity.ToString() == "Warning" ||
+                                      message.severity.ToString() == "Error")
+                    .Select(message => message.message);
+                Assert.IsEmpty(diagnostics, "Receiver shader must compile without warnings or errors.");
             }
             finally
             {
