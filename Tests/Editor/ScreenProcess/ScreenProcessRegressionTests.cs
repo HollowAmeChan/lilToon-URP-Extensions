@@ -247,6 +247,176 @@ namespace lilToon.URP.Extensions.Tests
             for (int i = 0; i < colors.Length; ++i) Assert.That(actual[i].r,Is.EqualTo(colors[i].r).Within(LeakTolerance));
         }
 
+        Material BokehZoom()
+        {
+            var material = Material("BokehZoomBlur");
+            material.SetFloat("_LayerBlendMode", (float)ScreenProcessBlendMode.Add);
+            material.SetColor("_LayerColor", Color.white);
+            material.SetVector("_LayerParams0", new Vector4(0,3,50,5.6f));
+            material.SetVector("_LayerParams1", new Vector4(.6f,.1f,0,1));
+            material.SetVector("_LayerParams2", new Vector4(-1,0,1,1));
+            material.SetVector("_LayerParams3", new Vector4(3,1,1,1));
+            material.SetVector("_LayerParams4", new Vector4(6,1,0,0));
+            material.SetVector("_LayerParams5", new Vector4(1,0,0,0));
+            return material;
+        }
+
+        [TestCase(0f), TestCase(.6f)]
+        public void BokehZoomProtectsFocusedOutlineAtEveryColorContributor(float dispersion)
+        {
+            Inputs(.6f,out var colors,out var depth,out var outline);
+            var material = BokehZoom(); material.SetVector("_LayerParams4",new Vector4(6,1,0,dispersion));
+            foreach (float coverage in new[] { .25f,.5f,1f })
+                AssertNoLeak(colors,Draw(material,Texture(colors),depth,outline,
+                    Solid(new Color(coverage,coverage,0,1)),coverageValid:true));
+        }
+
+        [TestCase(1f,1f,true), TestCase(0f,1f,true), TestCase(1f,0f,false)]
+        public void BokehZoomBackgroundResponseCanBeDisabled(float foreground, float background, bool expectEffect)
+        {
+            var material = BokehZoom();
+            material.SetVector("_LayerParams3",new Vector4(3,foreground,background,1));
+            Color source = new Color(4,2,1,.7f);
+            var actual = Draw(material,Solid(source),Solid(new Color(.5f,.5f,1,40)),
+                Texture2D.blackTexture,Texture2D.blackTexture,outlineValid:false);
+            foreach (var pixel in actual)
+            {
+                Assert.That(pixel.r, expectEffect ? Is.GreaterThan(4.5f) : Is.EqualTo(4).Within(.001f));
+                Assert.That(pixel.a,Is.EqualTo(.7f).Within(.001f));
+            }
+        }
+
+        [Test]
+        public void BokehZoomFocusAndMissingDepthKeepTheOriginal()
+        {
+            var material = BokehZoom();
+            Color source = new Color(4,2,1,1);
+            foreach (bool geometry in new[] { true,false })
+            {
+                var actual = Draw(material,Solid(source),Solid(new Color(.5f,.5f,1,3)),
+                    Texture2D.blackTexture,Texture2D.blackTexture,geometry:geometry,outlineValid:false);
+                foreach (var pixel in actual) Assert.That(pixel.r,Is.EqualTo(4).Within(.001f));
+            }
+        }
+
+        [Test]
+        public void BokehZoomFocusTargetDoesNotReadDepthOfFieldConfiguration()
+        {
+            var target = GameObject("Zoom focus target").transform;
+            target.position = camera.transform.position + camera.transform.forward * 7;
+            var other = GameObject("Unrelated DoF target").transform; other.position = Vector3.one * 100;
+            var layer = new ScreenProcessLayer { effect=ScreenProcessEffect.BokehZoomBlur,
+                parameters0=new Vector4(1,12,50,5.6f),bokehZoomFocusTarget=target,bokehZoomFocusOffset=2,
+                depthOfFieldFocusTarget=other,depthOfFieldFocusOffset=1000 };
+            var pass = typeof(ScreenProcessRendererFeature).Assembly.GetType("lilToon.URP.Extensions.PostProcessing.ScreenProcessPass");
+            var resolve = pass.GetMethod("ResolveLayerFocusDistance",System.Reflection.BindingFlags.Static|System.Reflection.BindingFlags.NonPublic);
+            Assert.That((float)resolve.Invoke(null,new object[]{layer,camera}),Is.EqualTo(9).Within(.001f));
+            layer.bokehZoomFocusTarget = null;
+            Assert.That((float)resolve.Invoke(null,new object[]{layer,camera}),Is.EqualTo(-1),"Missing target must keep the layer's fallback distance.");
+            layer.bokehZoomFocusTarget = target; layer.parameters0 = new Vector4(0,12,50,5.6f);
+            Assert.That((float)resolve.Invoke(null,new object[]{layer,camera}),Is.EqualTo(-1),"Fixed focus must not read a target.");
+        }
+
+        [Test]
+        public void BokehZoomStreaksOnlyDefocusedHighlights()
+        {
+            var colors = new Color[Width * Height]; Array.Fill(colors,Color.black);
+            for (int y=58;y<69;y++) for (int x=60;x<66;x++) colors[x+y*Width]=Color.white*4;
+            var material = BokehZoom();
+            var far = Draw(material,Texture(colors),Solid(new Color(.5f,.5f,1,40)),
+                Texture2D.blackTexture,Texture2D.blackTexture,outlineValid:false);
+            var focused = Draw(material,Texture(colors),Solid(new Color(.5f,.5f,1,3)),
+                Texture2D.blackTexture,Texture2D.blackTexture,outlineValid:false);
+            int streak = 0;
+            for (int i=0;i<colors.Length;i++)
+            {
+                if (colors[i].r == 0 && far[i].r > .01f) streak++;
+                Assert.That(focused[i].r,Is.EqualTo(colors[i].r).Within(.001f));
+            }
+            Assert.That(streak,Is.GreaterThan(8),"A defocused highlight must generate an actual radial streak.");
+        }
+
+        [TestCase(1f,0f,2f,12f), TestCase(1f,10f,2f,4f)]
+        [TestCase(1f,0f,0f,4f), TestCase(0f,0f,2f,4f)]
+        public void DofApertureBokehThresholdGainAndDisable(float enabled, float threshold, float gain, float expected)
+        {
+            var material = Material("DepthOfField");
+            material.SetColor("_LayerColor",Color.white);
+            material.SetVector("_LayerParams2",new Vector4(6,1,0,(float)ScreenProcessBlendMode.Add));
+            material.SetVector("_LayerParams4",new Vector4(enabled,threshold,0,gain));
+            material.SetVector("_LayerParams5",new Vector4(1,.75f,0,0));
+            var actual = Draw(material,Solid(new Color(4,4,4,.7f)),Solid(new Color(.5f,.5f,1,40)),
+                Texture2D.blackTexture,Texture2D.blackTexture,outlineValid:false);
+            foreach(var pixel in actual)
+            {
+                Assert.That(pixel.r,Is.EqualTo(expected).Within(.01f));
+                Assert.That(pixel.a,Is.EqualTo(.7f).Within(.001f));
+            }
+        }
+
+        [TestCase(0f), TestCase(.7f)]
+        public void DofApertureBokehKeepsFocusedOutlineOutOfHighlights(float dispersion)
+        {
+            Inputs(.6f,out var colors,out var depth,out var outline);
+            var material = Material("DepthOfField");
+            material.SetColor("_LayerColor",Color.white);
+            material.SetVector("_LayerParams2",new Vector4(6,1,0,(float)ScreenProcessBlendMode.Add));
+            material.SetVector("_LayerParams4",new Vector4(1,.1f,0,4));
+            material.SetVector("_LayerParams5",new Vector4(1,.75f,dispersion,0));
+            foreach(float coverage in new[]{.25f,.5f,1f})
+                AssertNoLeak(colors,Draw(material,Texture(colors),depth,outline,
+                    Solid(new Color(coverage,coverage,0,1)),coverageValid:true));
+        }
+
+        [Test]
+        public void DofApertureBokehDoesNotEnhanceFocusedOrDarkColors()
+        {
+            var material = Material("DepthOfField");
+            material.SetColor("_LayerColor",Color.white);
+            material.SetVector("_LayerParams2",new Vector4(6,1,0,(float)ScreenProcessBlendMode.Add));
+            material.SetVector("_LayerParams4",new Vector4(1,1,0,4));
+            material.SetVector("_LayerParams5",new Vector4(1,.75f,0,0));
+            foreach(bool focused in new[]{true,false})
+            {
+                var source = focused ? new Color(4,4,4,1) : new Color(.1f,.1f,.1f,1);
+                var actual = Draw(material,Solid(source),Solid(new Color(.5f,.5f,1,focused ? 3 : 40)),
+                    Texture2D.blackTexture,Texture2D.blackTexture,outlineValid:false);
+                foreach(var pixel in actual) Assert.That(pixel.r,Is.EqualTo(source.r).Within(.002f));
+            }
+        }
+
+        [TestCase(false,false,false), TestCase(true,false,false)]
+        [TestCase(false,true,false), TestCase(true,true,false)]
+        [TestCase(false,false,true), TestCase(true,false,true)]
+        [TestCase(false,true,true), TestCase(true,true,true)]
+        public void LensEffectsDeclareDepthAndCompositeInBothRenderPaths(bool compatibility, bool geometry, bool aperture)
+        {
+            var rd=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+            if(geometry) rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>()));
+            rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
+            SetPipeline(rd);
+            GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode=compatibility;
+            camera.clearFlags=CameraClearFlags.SolidColor; camera.backgroundColor=new Color(2,2,2,1);
+            var baseline=Render();
+            var volume=GameObject("Independent lens volume").AddComponent<Volume>(); volume.isGlobal=true;
+            var profile=Keep(ScriptableObject.CreateInstance<VolumeProfile>()); volume.sharedProfile=profile;
+            var stack=profile.Add<ScreenProcessStackVolume>(true); stack.Enable.Override(true);
+            var layer=new ScreenProcessLayer { effect=aperture ? ScreenProcessEffect.DepthOfField : ScreenProcessEffect.BokehZoomBlur,
+                blendMode=ScreenProcessBlendMode.Add,parameters0=new Vector4(aperture ? 1 : 0,3,50,5.6f),
+                parameters1=aperture ? new Vector4(4,18,18,1) : new Vector4(.3f,0,0,1),
+                parameters2=aperture ? new Vector4(6,1,0,(float)ScreenProcessBlendMode.Add) : new Vector4(0,0,1,1),
+                parameters3=new Vector4(3,1,1,1),
+                parameters4=aperture ? new Vector4(1,0,0,1) : new Vector4(6,1,0,0),
+                parameters5=aperture ? new Vector4(1,.75f,0,0) : new Vector4(1,0,0,0) };
+            stack.layers.value.Add(layer);
+            var actual=Render();
+            int center=Width/2+Height/2*Width;
+            Assert.That(actual[center].r,Is.GreaterThan(baseline[center].r+.1f),
+                "Lens effect did not receive its declared depth or failed to composite.");
+            layer.enabled=false; var disabled=Render();
+            Assert.That(disabled[center].r,Is.EqualTo(baseline[center].r).Within(.01f));
+        }
+
         [Test]
         public void HeightFogUsesScreenUvExactlyOnce()
         {

@@ -202,9 +202,10 @@ namespace lilToon.URP.Extensions.PostProcessing
                 }
                 else if (layer.effect == ScreenProcessEffect.EdgeLight || layer.effect == ScreenProcessEffect.DropShadow || layer.effect == ScreenProcessEffect.PostLighting)
                     queries.Add(HoACQueryDescriptor.Resolve(HoACQueryKind.TotalCoverage, null, 0, HoACMaskDomain.Screen));
-                if (layer.effect == ScreenProcessEffect.Outline || layer.effect == ScreenProcessEffect.DepthOfField) resources |= HoACDemandResources.Outline;
+                if (layer.effect == ScreenProcessEffect.Outline || layer.effect == ScreenProcessEffect.DepthOfField ||
+                    layer.effect == ScreenProcessEffect.BokehZoomBlur) resources |= HoACDemandResources.Outline;
                 if (layer.effect == ScreenProcessEffect.EdgeLight || layer.effect == ScreenProcessEffect.DropShadow ||
-                    layer.effect == ScreenProcessEffect.Outline || layer.effect == ScreenProcessEffect.DepthOfField ||
+                    layer.effect == ScreenProcessEffect.Outline || layer.effect == ScreenProcessEffect.DepthOfField || layer.effect == ScreenProcessEffect.BokehZoomBlur ||
                     layer.effect == ScreenProcessEffect.PostLighting || layer.effect == ScreenProcessEffect.DepthFog || layer.effect == ScreenProcessEffect.SkyTyndall)
                     resources |= HoACDemandResources.Geometry;
             }
@@ -528,6 +529,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             public bool isDropShadow;
             public bool isOutline;
             public bool isDepthOfField;
+            public bool isBokehZoomBlur;
             public bool isPostLighting;
             public bool isSkyTyndall;
             public bool isDepthFog;
@@ -678,11 +680,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                     if (runtimeLayer.settings.debugMask && capturedDebugMask) continue;
                     capturedDebugMask |= runtimeLayer.settings.debugMask;
                     RTHandle destination = runtimeLayer.settings.debugMask ? DebugTarget : (writeToA ? tempTextureA : tempTextureB);
-                    float dynamicFocusDistance = ResolveDepthOfFieldFocusDistance(runtimeLayer.settings, renderingData.cameraData.camera);
+                    float dynamicFocusDistance = ResolveLayerFocusDistance(runtimeLayer.settings, renderingData.cameraData.camera);
                     ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material, dynamicFocusDistance);
                     var geometry = HoGeometryBufferPass.CompatibilityTargets;
                     bool hasGeometry = geometry != null && geometry.NormalDepthTexture != null;
-                    bool dof = runtimeLayer.settings.effect == ScreenProcessEffect.DepthOfField;
+                    bool dof = runtimeLayer.settings.effect == ScreenProcessEffect.DepthOfField ||
+                        runtimeLayer.settings.effect == ScreenProcessEffect.BokehZoomBlur;
                     bool hasOutline = dof && hasGeometry && geometry.OutlineNormalDepthTexture != null;
                     bool hasOutlineCoverage = hasOutline && geometry.UseMsaaResolve;
                     cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, hasGeometry ? 1 : 0);
@@ -919,11 +922,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.layer = runtimeLayer.settings;
                     passData.material = runtimeLayer.material;
                     passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
-                    passData.dynamicFocusDistance = ResolveDepthOfFieldFocusDistance(runtimeLayer.settings, cameraData.camera);
+                    passData.dynamicFocusDistance = ResolveLayerFocusDistance(runtimeLayer.settings, cameraData.camera);
                     passData.isEdgeLight = runtimeLayer.settings.effect == ScreenProcessEffect.EdgeLight;
                     passData.isDropShadow = runtimeLayer.settings.effect == ScreenProcessEffect.DropShadow;
                     passData.isOutline = runtimeLayer.settings.effect == ScreenProcessEffect.Outline;
                     passData.isDepthOfField = runtimeLayer.settings.effect == ScreenProcessEffect.DepthOfField;
+                    passData.isBokehZoomBlur = runtimeLayer.settings.effect == ScreenProcessEffect.BokehZoomBlur;
                     passData.isPostLighting = runtimeLayer.settings.effect == ScreenProcessEffect.PostLighting;
                     passData.isSkyTyndall = runtimeLayer.settings.effect == ScreenProcessEffect.SkyTyndall;
                     passData.isDepthFog = runtimeLayer.settings.effect == ScreenProcessEffect.DepthFog;
@@ -940,13 +944,13 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.useMaskTexture = needsMask && (optionalMask ? queryError == null : acResources.published && acResources.HasIdentityPool);
                     if (needsMask && (!passData.useMaskTexture ||
                         (passData.intrinsicCoverage && !acResources.HasIdentityPool))) maskInputsAvailable = false;
-                    passData.useNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall || passData.isOutline || passData.isDepthOfField || passData.isDepthFog) && geometryResources.normalDepthTexture.IsValid();
+                    passData.useNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall || passData.isOutline || passData.isDepthOfField || passData.isBokehZoomBlur || passData.isDepthFog) && geometryResources.normalDepthTexture.IsValid();
                     passData.useSkyTexture = passData.isSkyTyndall && geometryResources.skyTexture.IsValid();
                     passData.useSubjectMask = passData.isDropShadow && useSubjectMask;
-                    passData.useOutlineNormalDepth = passData.isDepthOfField && geometryResources.outlineNormalDepthTexture.IsValid();
+                    passData.useOutlineNormalDepth = (passData.isDepthOfField || passData.isBokehZoomBlur) && geometryResources.outlineNormalDepthTexture.IsValid();
                     passData.useOutlineCoverage = passData.useOutlineNormalDepth && passData.outlineCoverageTexture.IsValid();
                     bool needsCameraDepth = !passData.layer.debugMask &&
-                        (((passData.isDepthOfField || passData.isOutline) && !passData.useNormalDepth) ||
+                        (((passData.isDepthOfField || passData.isBokehZoomBlur || passData.isOutline) && !passData.useNormalDepth) ||
                         (passData.isDepthFog && (!passData.useNormalDepth || cameraData.camera.orthographic)));
                     bool needsCameraNormals = !passData.layer.debugMask && passData.isOutline && !passData.useNormalDepth;
                     passData.cameraDepthTexture = needsCameraDepth ? resourceData.cameraDepthTexture : TextureHandle.nullHandle;
@@ -1138,7 +1142,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 }
 
                 ScreenProcessEffect effect = runtimeLayer.settings.effect;
-                if (effect == ScreenProcessEffect.Outline || effect == ScreenProcessEffect.DepthOfField ||
+                if (effect == ScreenProcessEffect.Outline || effect == ScreenProcessEffect.DepthOfField || effect == ScreenProcessEffect.BokehZoomBlur ||
                     effect == ScreenProcessEffect.DepthFog || EffectRequiresSubjectMask(effect))
                 {
                     return true;
@@ -1281,6 +1285,31 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 material.SetTexture(ScreenProcessShaderConstants.LayerTextureId, layer.texture);
             }
+        }
+
+        private static float ResolveLayerFocusDistance(ScreenProcessLayer layer, Camera camera)
+        {
+            return layer != null && layer.effect == ScreenProcessEffect.BokehZoomBlur
+                ? ResolveBokehZoomFocusDistance(layer, camera)
+                : ResolveDepthOfFieldFocusDistance(layer, camera);
+        }
+
+        // Keep this effect's configuration independent until the planned common lens input exists.
+        private static float ResolveBokehZoomFocusDistance(ScreenProcessLayer layer, Camera camera)
+        {
+            if (layer == null || camera == null || Mathf.RoundToInt(layer.parameters0.x) != 1)
+                return -1.0f;
+            Transform target = layer.bokehZoomFocusTarget;
+            if (target == null && !string.IsNullOrEmpty(layer.bokehZoomFocusTargetPath))
+            {
+                GameObject found = GameObject.Find(layer.bokehZoomFocusTargetPath);
+                if (found != null) target = found.transform;
+            }
+            if (target == null) return -1.0f; // Keep this layer's own fallback distance.
+            Renderer renderer = target.GetComponentInChildren<Renderer>();
+            Vector3 position = renderer != null ? renderer.bounds.center : target.position;
+            return Mathf.Max(0.001f, Vector3.Dot(position - camera.transform.position, camera.transform.forward)
+                + layer.bokehZoomFocusOffset);
         }
 
         private static float ResolveDepthOfFieldFocusDistance(ScreenProcessLayer layer, Camera camera)

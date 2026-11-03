@@ -140,6 +140,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "风格/沙漠热霾", ApplyScreenProcessDesertHeatHazeDepthFogPreset);
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "风格/天空染色", ApplyScreenProcessSkyTintDepthFogPreset);
                     break;
+                case ScreenProcessEffect.BokehZoomBlur:
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "远景光斑拉伸", ApplyScreenProcessFarBokehZoomPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "目标跟焦光斑", ApplyScreenProcessTargetBokehZoomPreset);
+                    break;
                 case ScreenProcessEffect.DepthOfField:
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "Gaussian 远景虚化", ApplyScreenProcessGaussianDepthOfFieldPreset);
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "Bokeh 人像虚化", ApplyScreenProcessBokehDepthOfFieldPreset);
@@ -235,6 +239,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Multiply);
             SetVector4(element, "parameters0", new Vector4(0.6f, -38.0f, 0.75f, 14.0f));
             SetVector4(element, "parameters1", new Vector4(2.5f, 0.0f, 0.0f, 1.0f));
+        }
+
+        private static void ApplyScreenProcessFarBokehZoomPreset(SerializedProperty element, ScreenProcessEffect effect)
+        {
+            ApplyScreenProcessDefaultPreset(element, effect);
+            SetVector4(element, "parameters3", new Vector4(3.0f, 0.0f, 1.5f, 1.0f));
+        }
+
+        private static void ApplyScreenProcessTargetBokehZoomPreset(SerializedProperty element, ScreenProcessEffect effect)
+        {
+            ApplyScreenProcessDefaultPreset(element, effect);
+            SetVector4(element, "parameters0", new Vector4(1.0f, 6.0f, 70.0f, 2.8f));
         }
 
         private static void ApplyScreenProcessGaussianDepthOfFieldPreset(SerializedProperty element, ScreenProcessEffect effect)

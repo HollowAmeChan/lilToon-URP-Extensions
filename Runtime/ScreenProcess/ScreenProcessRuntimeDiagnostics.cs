@@ -141,6 +141,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     bool isDropShadow = layer.effect == ScreenProcessEffect.DropShadow;
                     bool isOutline = layer.effect == ScreenProcessEffect.Outline;
                     bool isDepthOfField = layer.effect == ScreenProcessEffect.DepthOfField;
+                    bool isBokehZoomBlur = layer.effect == ScreenProcessEffect.BokehZoomBlur;
                     bool isPostLighting = layer.effect == ScreenProcessEffect.PostLighting;
                     bool isSkyTyndall = layer.effect == ScreenProcessEffect.SkyTyndall;
                     bool needsMask = isEdgeLight || isDropShadow || isPostLighting || layer.useMask || layer.debugMask;
@@ -149,9 +150,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                         requiresCoverage = true;
                     }
                     if (layer.debugMask) continue; // Selection preview does not require the effect's physical inputs.
-                    requiresOutlineDepth |= isDepthOfField;
+                    requiresOutlineDepth |= isDepthOfField || isBokehZoomBlur;
 
-                    if (isEdgeLight || isOutline || isDepthOfField || isPostLighting || isSkyTyndall || layer.effect == ScreenProcessEffect.DepthFog)
+                    if (isEdgeLight || isOutline || isDepthOfField || isBokehZoomBlur || isPostLighting || isSkyTyndall || layer.effect == ScreenProcessEffect.DepthFog)
                     {
                         requiresNormalDepth = true;
                     }

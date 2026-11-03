@@ -37,6 +37,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ScreenProcessEffect.SkyTyndall, "天光丁达尔", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DepthOfField, "景深", "icon_Effects_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.BokehZoomBlur, "光斑变焦", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DepthFog, "深度雾", "icon_Weather_v1"),
             new EffectToggleEntry(ScreenProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
         };
@@ -339,6 +340,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ScreenProcessEffect.DepthOfField:
                     DrawDepthOfFieldProperties(rect, ref y, element);
                     break;
+                case ScreenProcessEffect.BokehZoomBlur:
+                    DrawBokehZoomProperties(rect, ref y, element);
+                    break;
                 case ScreenProcessEffect.PostLighting:
                     DrawPostLightingProperties(rect, ref y, element);
                     break;
@@ -368,6 +372,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 11;
                 case ScreenProcessEffect.DepthOfField:
                     return GetDepthOfFieldLineCount(element);
+                case ScreenProcessEffect.BokehZoomBlur:
+                    return GetBokehZoomLineCount(element);
                 case ScreenProcessEffect.PostLighting:
                     return GetPostLightingLineCount(element);
                 case ScreenProcessEffect.SkyTyndall:
@@ -639,6 +645,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 45;
                 case ScreenProcessEffect.DepthOfField:
                     return 50;
+                case ScreenProcessEffect.BokehZoomBlur:
+                    return 55;
                 case ScreenProcessEffect.CustomMaterial:
                 default:
                     return 100;
@@ -734,6 +742,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return "投影";
                 case ScreenProcessEffect.DepthOfField:
                     return "景深";
+                case ScreenProcessEffect.BokehZoomBlur:
+                    return "光斑变焦";
                 case ScreenProcessEffect.DepthFog:
                     return "深度雾";
                 case ScreenProcessEffect.CustomMaterial:
@@ -763,6 +773,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetObjectReference(element, "depthOfFieldFocusTarget", null);
             SetString(element, "depthOfFieldFocusTargetPath", string.Empty);
             SetFloat(element, "depthOfFieldFocusOffset", 0.0f);
+            SetObjectReference(element, "bokehZoomFocusTarget", null);
+            SetString(element, "bokehZoomFocusTargetPath", string.Empty);
+            SetFloat(element, "bokehZoomFocusOffset", 0.0f);
             SetBool(element, "useMask", false);
             SetBool(element, "invertMask", false);
             SetBool(element, "debugMask", false);
@@ -805,6 +818,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters3", new Vector4((float)ScreenProcessFogHeightMode.WindowBelow, (float)ScreenProcessFogHeightReference.World, 0.0f, 12.0f));
                     SetVector4(element, "parameters4", new Vector4(1.0f, 0.5f, 0.85f, 0.88f));
                     SetVector4(element, "parameters5", new Vector4(0.92f, (float)ScreenProcessFogSkyMode.Skip, 0.4f, 0.5f));
+                    break;
+                case ScreenProcessEffect.BokehZoomBlur:
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 10.0f, 50.0f, 5.6f));
+                    SetVector4(element, "parameters1", new Vector4(0.2f, 1.0f, 0.25f, 1.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.0f, 0.0f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters3", new Vector4(3.0f, 1.0f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters4", new Vector4(6.0f, 1.0f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters5", new Vector4(1.0f, 0.0f, 0.25f, 0.0f));
                     break;
                 case ScreenProcessEffect.DepthOfField:
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);

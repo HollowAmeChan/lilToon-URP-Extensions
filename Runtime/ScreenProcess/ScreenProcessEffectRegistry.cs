@@ -14,6 +14,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return ScreenProcessShaderConstants.DropShadowShaderName;
                 case ScreenProcessEffect.DepthOfField:
                     return ScreenProcessShaderConstants.DepthOfFieldShaderName;
+                case ScreenProcessEffect.BokehZoomBlur:
+                    return ScreenProcessShaderConstants.BokehZoomBlurShaderName;
                 case ScreenProcessEffect.PostLighting:
                     return ScreenProcessShaderConstants.PostLightingShaderName;
                 case ScreenProcessEffect.SkyTyndall:

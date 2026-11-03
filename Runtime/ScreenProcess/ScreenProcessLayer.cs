@@ -55,6 +55,15 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("Additional camera-space distance offset added to the Depth Of Field focus target.")]
         public float depthOfFieldFocusOffset;
 
+        [Tooltip("Independent focus target for Bokeh Zoom Blur; does not read a Depth Of Field layer.")]
+        public Transform bokehZoomFocusTarget;
+
+        [Tooltip("Fallback scene hierarchy path for the Bokeh Zoom Blur focus target.")]
+        public string bokehZoomFocusTargetPath;
+
+        [Tooltip("Camera-space distance offset added to the Bokeh Zoom Blur focus target.")]
+        public float bokehZoomFocusOffset;
+
         [Tooltip("Use the character coverage mask (AC total coverage, from OB) as this layer mask.")]
         // The retired field name is split into literals on purpose: the serialized data still needs it,
         // but the old identifier must not reappear in a plain-text search of the tree.

@@ -25,12 +25,17 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessDepthInputs.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             float _Intensity;
+            float4 _LayerColor;
             float4 _LayerParams0; // x mode 0 Gaussian 1 Bokeh 2 Target Bokeh, y focus distance, z focal length, w aperture
             float4 _LayerParams1; // x gaussian start, y gaussian end, z max radius px, w high quality
             float4 _LayerParams2; // x blade count, y blade curvature, z blade rotation
             float4 _LayerParams3; // x coc gain, y foreground boost, z background boost, w coc curve
+            float4 _LayerParams4; // x aperture bokeh enabled, y highlight threshold, z soft knee, w gain
+            float4 _LayerParams5; // x highlight exposure, y aperture hardness, z chromatic dispersion, w bokeh only
+            // parameters2.w is the highlight layer blend mode (shared SP/IP numbering).
 
             // Tap layout: golden-angle spiral, r = sqrt((i + 0.5) / N).
             // sqrt() is what makes the taps uniform per unit AREA instead of per unit radius, so the
@@ -234,12 +239,49 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             // sharper than the distance it sits at, letting it in is what smears an in-focus subject
             // over an out-of-focus background (and vice versa). The margin keeps that cut-off from
             // being a hard edge in the weighting.
-            half4 SampleBlur(float2 uv, float radiusPx, float maxRadiusPx, float marginPx)
+            bool HasApertureBokeh()
+            {
+                return _LayerParams0.x >= 1.0 && _LayerParams4.x > 0.5;
+            }
+
+            float3 PrefilterBokeh(float3 weightedColor, float weight)
+            {
+                if (weight <= 0.0001) return 0.0;
+                float3 color = max(weightedColor / weight * max(_LayerParams5.x, 0.0), 0.0);
+                float luma = dot(color, float3(0.2126, 0.7152, 0.0722));
+                float threshold = max(_LayerParams4.y, 0.0);
+                float knee = max(_LayerParams4.z, 0.0);
+                float highlight = knee <= 0.0001 ? step(threshold, luma)
+                    : smoothstep(max(threshold - knee, 0.0), threshold + knee, luma);
+                return color * highlight * weight;
+            }
+
+            // Use the SAME reach-tested footprints as the blur. Focused colors must never become
+            // a separate full-screen highlight signal that can leak across the depth boundary.
+            float3 SampleBokehFootprint(float2 uv, float2 offsetPx, float maxRadiusPx, float marginPx,
+                half4 color, float weight)
+            {
+                float3 bokeh = PrefilterBokeh(color.rgb, weight);
+                float dispersion = saturate(_LayerParams5.z);
+                if (dispersion <= 0.0001) return bokeh;
+                float2 shiftPx = offsetPx * dispersion * 0.08;
+                float redWeight, blueWeight;
+                half4 red = SampleWeightedFootprint(uv - shiftPx * _BlitTexture_TexelSize.xy,
+                    length(offsetPx - shiftPx), maxRadiusPx, marginPx, redWeight);
+                half4 blue = SampleWeightedFootprint(uv + shiftPx * _BlitTexture_TexelSize.xy,
+                    length(offsetPx + shiftPx), maxRadiusPx, marginPx, blueWeight);
+                return float3(PrefilterBokeh(red.rgb, redWeight).r, bokeh.g, PrefilterBokeh(blue.rgb, blueWeight).b);
+            }
+
+            half4 SampleBlur(float2 uv, float radiusPx, float maxRadiusPx, float marginPx, out float3 bokeh)
             {
                 float2 texel = _BlitTexture_TexelSize.xy;
                 half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv) * ScreenProcessDofCenterWeight;
                 float weight = ScreenProcessDofCenterWeight;
                 float highQuality = step(0.5, _LayerParams1.w);
+                bool apertureBokeh = HasApertureBokeh();
+                bokeh = apertureBokeh ? PrefilterBokeh(color.rgb, weight) : 0.0;
+                float bokehWeight = ScreenProcessDofCenterWeight;
 
                 #define ADD_DOF_SAMPLE(dir) \
                     { \
@@ -247,8 +289,15 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                         float2 sampleUv = uv + offsetPx * texel; \
                         float distPx = length(offsetPx); \
                         float tapWeight; \
-                        color += SampleWeightedFootprint(sampleUv, distPx, maxRadiusPx, marginPx, tapWeight); \
+                        half4 tapColor = SampleWeightedFootprint(sampleUv, distPx, maxRadiusPx, marginPx, tapWeight); \
+                        color += tapColor; \
                         weight += tapWeight; \
+                        if (apertureBokeh) \
+                        { \
+                            float apertureWeight = 1.0 - smoothstep(lerp(0.72, 0.98, saturate(_LayerParams5.y)), 1.0, length(dir)); \
+                            bokeh += SampleBokehFootprint(sampleUv, offsetPx, maxRadiusPx, marginPx, tapColor, tapWeight) * apertureWeight; \
+                            bokehWeight += tapWeight * apertureWeight; \
+                        } \
                     }
 
                 if (highQuality > 0.5)
@@ -269,6 +318,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 }
 
                 #undef ADD_DOF_SAMPLE
+                bokeh /= max(bokehWeight, 0.0001);
                 return color / max(weight, 0.0001);
             }
 
@@ -295,14 +345,23 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 // must not scale with the CoC as well - doing that kept partially defocused
                 // pixels mostly sharp and turned them into a ghost of the sharp image.
                 float amount = saturate(_Intensity) * LilScreenProcessResolveLayerMask(uv);
+                bool bokehOnly = HasApertureBokeh() && _LayerParams5.w > 0.5;
                 if (radiusPx <= 0.0001 || amount <= 0.0001)
                 {
-                    return source;
+                    return bokehOnly ? half4(0, 0, 0, source.a) : source;
                 }
 
                 float marginPx = max(radiusPx * ScreenProcessDofReachMargin, ScreenProcessDofReachMarginMinPx);
-                half4 blurred = SampleBlur(uv, radiusPx, maxRadiusPx, marginPx);
-                return half4(lerp(source.rgb, blurred.rgb, amount), source.a);
+                float3 bokeh;
+                half4 blurred = SampleBlur(uv, radiusPx, maxRadiusPx, marginPx, bokeh);
+                float3 result = lerp(source.rgb, blurred.rgb, amount);
+                if (HasApertureBokeh())
+                {
+                    bokeh *= max(_LayerParams4.w, 0.0) * _LayerColor.rgb;
+                    result = bokehOnly ? bokeh * amount
+                        : lerp(result, ApplyLayerBlendHdr(result, bokeh, _LayerParams2.w), amount);
+                }
+                return half4(result, source.a);
             }
             ENDHLSL
         }

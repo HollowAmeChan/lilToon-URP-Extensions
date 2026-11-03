@@ -9,6 +9,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public const string OutlineShaderName = "Hidden/lilToon/URP/ScreenProcess/Outline";
         public const string DropShadowShaderName = "Hidden/lilToon/URP/ScreenProcess/DropShadow";
         public const string DepthOfFieldShaderName = "Hidden/lilToon/URP/ScreenProcess/DepthOfField";
+        public const string BokehZoomBlurShaderName = "Hidden/lilToon/URP/ScreenProcess/BokehZoomBlur";
         public const string PostLightingShaderName = "Hidden/lilToon/URP/ScreenProcess/PostLighting";
         public const string SkyTyndallShaderName = "Hidden/lilToon/URP/ScreenProcess/SkyTyndall";
         public const string DepthFogShaderName = "Hidden/lilToon/URP/ScreenProcess/DepthFog";

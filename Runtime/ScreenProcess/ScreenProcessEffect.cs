@@ -11,7 +11,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         DepthOfField = 4,
         PostLighting = 5,
         SkyTyndall = 6,
-        DepthFog = 7
+        DepthFog = 7,
+        BokehZoomBlur = 8
     }
 
     /// <summary>

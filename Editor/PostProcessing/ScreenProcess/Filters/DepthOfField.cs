@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.PostProcessing;
 using UnityEditor;
 using UnityEngine;
 
@@ -23,7 +24,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return 8;
             }
 
-            return mode == 2 ? 19 : 14;
+            bool apertureBokeh = element.FindPropertyRelative("parameters4").vector4Value.x > 0.5f;
+            return (mode == 2 ? 19 : 14) + (apertureBokeh ? 10 : 1);
         }
 
         private static void DrawDepthOfFieldProperties(Rect rect, ref float y, SerializedProperty element)
@@ -147,12 +149,49 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 y += LineHeight + LineSpacing;
                 p2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "叶片旋转", p2.z, -180.0f, 180.0f);
                 y += LineHeight + LineSpacing;
+                DrawDepthOfFieldApertureBokeh(rect, ref y, element, ref p2);
             }
 
             parameters0.vector4Value = p0;
             parameters1.vector4Value = p1;
             parameters2.vector4Value = p2;
             parameters3.vector4Value = p3;
+        }
+
+        private static readonly string[] DofBokehBlendNames = { "相加", "滤色", "叠加", "替换" };
+        private static readonly int[] DofBokehBlendValues = { 1, 3, 9, 0 };
+
+        private static void DrawDepthOfFieldApertureBokeh(Rect rect, ref float y, SerializedProperty element, ref Vector4 p2)
+        {
+            var p4Property = element.FindPropertyRelative("parameters4");
+            var p5Property = element.FindPropertyRelative("parameters5");
+            Vector4 p4 = p4Property.vector4Value, p5 = p5Property.vector4Value;
+            bool wasEnabled = p4.x > 0.5f;
+            bool enabled = EditorGUI.Toggle(BokehZoomRow(rect, ref y), "光圈散景增强", wasEnabled);
+            if (enabled && !wasEnabled && p4 == Vector4.zero && p5 == Vector4.zero)
+            {
+                p4 = new Vector4(1.0f, 1.0f, 0.25f, 1.0f);
+                p5 = new Vector4(1.0f, 0.75f, 0.0f, 0.0f);
+                p2.w = (int)ScreenProcessBlendMode.Add;
+            }
+            p4.x = enabled ? 1.0f : 0.0f;
+            if (enabled)
+            {
+                p4.y = EditorGUI.Slider(BokehZoomRow(rect, ref y), "亮部阈值", p4.y, 0.0f, 8.0f);
+                p4.z = EditorGUI.Slider(BokehZoomRow(rect, ref y), "阈值柔化", p4.z, 0.0f, 4.0f);
+                p4.w = EditorGUI.Slider(BokehZoomRow(rect, ref y), "光斑增益", p4.w, 0.0f, 8.0f);
+                p5.x = EditorGUI.Slider(BokehZoomRow(rect, ref y), "光斑曝光", p5.x, 0.0f, 4.0f);
+                p5.y = EditorGUI.Slider(BokehZoomRow(rect, ref y), "光斑硬度", p5.y, 0.0f, 1.0f);
+                p5.z = EditorGUI.Slider(BokehZoomRow(rect, ref y), "光斑色散", p5.z, 0.0f, 1.0f);
+                var color = element.FindPropertyRelative("color");
+                color.colorValue = EditorGUI.ColorField(BokehZoomRow(rect, ref y), new GUIContent("光斑染色"), color.colorValue, true, true, true);
+                int blend = System.Array.IndexOf(DofBokehBlendValues, Mathf.RoundToInt(p2.w));
+                blend = EditorGUI.Popup(BokehZoomRow(rect, ref y), "光斑叠加", Mathf.Max(blend, 0), DofBokehBlendNames);
+                p2.w = DofBokehBlendValues[blend];
+                p5.w = EditorGUI.Toggle(BokehZoomRow(rect, ref y), "只显示光斑层", p5.w > 0.5f) ? 1.0f : 0.0f;
+            }
+            p4Property.vector4Value = p4;
+            p5Property.vector4Value = p5;
         }
 
         private static void DrawDepthOfFieldFocusTargetStatus(

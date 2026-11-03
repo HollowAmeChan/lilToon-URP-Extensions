@@ -86,6 +86,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             bool changed = false;
             switch (GetEffect(element))
             {
+                case ScreenProcessEffect.BokehZoomBlur:
+                    changed = HandleScreenProcessBokehZoomViewControl(viewRect, evt, target, element);
+                    break;
                 case ScreenProcessEffect.PostLighting:
                     changed = HandleScreenProcessPostLightingCenterViewControl(viewRect, evt, target, element);
                     break;
@@ -137,6 +140,28 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(target);
             }
+        }
+
+        private static bool HandleScreenProcessBokehZoomViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
+        {
+            var radiusProperty = element.FindPropertyRelative("parameters1");
+            var centerProperty = element.FindPropertyRelative("parameters2");
+            Vector4 p1 = radiusProperty.vector4Value, p2 = centerProperty.vector4Value;
+            Vector2 center = new Vector2(p2.x * 0.5f + 0.5f, p2.y * 0.5f + 0.5f);
+            float radius = p1.x;
+            bool changed = PostProcessScreenSpaceControlTemplates.HandleCenterRadius(
+                viewRect, evt, target, "Adjust ScreenProcess Bokeh Zoom In View",
+                ref ScreenProcessCenterRadiusViewControl.ActiveHandle, ref center, ref radius,
+                0.0f, 1.0f, "光斑变焦  C 中心  R 拉伸  Esc 退出");
+            if (changed)
+            {
+                p1.x = radius;
+                p2.x = Mathf.Clamp(center.x * 2.0f - 1.0f, -1.0f, 1.0f);
+                p2.y = Mathf.Clamp(center.y * 2.0f - 1.0f, -1.0f, 1.0f);
+                radiusProperty.vector4Value = p1;
+                centerProperty.vector4Value = p2;
+            }
+            return changed;
         }
 
         private static bool HandleScreenProcessEdgeLightViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
