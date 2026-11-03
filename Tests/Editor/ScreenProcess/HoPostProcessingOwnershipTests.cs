@@ -8,6 +8,37 @@ namespace lilToon.URP.Extensions.Tests
 {
     public sealed class HoPostProcessingOwnershipTests
     {
+        RenderPipelineAsset previousGraphics, previousQuality;
+        UniversalRendererData temporaryRenderer;
+        UniversalRenderPipelineAsset temporaryPipeline;
+        bool initializedManager;
+
+        [SetUp]
+        public void InitializeVolumeManagerInAnEmptyTestProject()
+        {
+            initializedManager = false;
+            if (VolumeManager.instance.isInitialized) return;
+            previousGraphics = GraphicsSettings.defaultRenderPipeline;
+            previousQuality = QualitySettings.renderPipeline;
+            temporaryRenderer = ScriptableObject.CreateInstance<UniversalRendererData>();
+            temporaryPipeline = UniversalRenderPipelineAsset.Create(temporaryRenderer);
+            GraphicsSettings.defaultRenderPipeline = temporaryPipeline;
+            QualitySettings.renderPipeline = temporaryPipeline;
+            VolumeManager.instance.Initialize();
+            initializedManager = true;
+        }
+
+        [TearDown]
+        public void RestoreEmptyProjectState()
+        {
+            if (!initializedManager) return;
+            VolumeManager.instance.Deinitialize();
+            GraphicsSettings.defaultRenderPipeline = previousGraphics;
+            QualitySettings.renderPipeline = previousQuality;
+            Object.DestroyImmediate(temporaryPipeline);
+            Object.DestroyImmediate(temporaryRenderer);
+        }
+
         [Test]
         public void DisabledLayersDoNotResurrectNativeEffects_AndLegacyModeIsExplicit()
         {

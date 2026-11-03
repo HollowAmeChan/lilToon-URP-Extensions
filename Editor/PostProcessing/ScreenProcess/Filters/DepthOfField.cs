@@ -21,11 +21,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             int mode = parameters0 != null ? Mathf.Clamp(Mathf.RoundToInt(parameters0.vector4Value.x), 0, DepthOfFieldModes.Length - 1) : 1;
             if (mode == 0)
             {
-                return 8;
+                return 9; // Foldout + mask + seven Gaussian controls.
             }
 
             bool apertureBokeh = element.FindPropertyRelative("parameters4").vector4Value.x > 0.5f;
-            return (mode == 2 ? 19 : 14) + (apertureBokeh ? 10 : 1);
+            return (mode == 2 ? 19 : 15) + (apertureBokeh ? 10 : 1);
         }
 
         private static void DrawDepthOfFieldProperties(Rect rect, ref float y, SerializedProperty element)

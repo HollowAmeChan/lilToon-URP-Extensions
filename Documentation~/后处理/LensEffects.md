@@ -1,5 +1,7 @@
 # ScreenProcess 镜头效果
 
+双图形 API、两条渲染路径、迁移与故障负对照的结果见 `LensEffects-Validation-20261103.md`。
+
 ## 光斑变焦
 
 在 Ho-ScreenProcess 的效果浏览器添加「光斑变焦」。它是独立效果，不要求存在或开启景深层，也不读取 Camera.main 或 Camera 的物理镜头参数。

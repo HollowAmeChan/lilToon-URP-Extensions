@@ -334,6 +334,42 @@ namespace lilToon.URP.Extensions.Tests
                 Assert.That(focused[i].r,Is.EqualTo(colors[i].r).Within(.001f));
             }
             Assert.That(streak,Is.GreaterThan(8),"A defocused highlight must generate an actual radial streak.");
+            WriteLensPreview("zoom-source.png",colors);
+            WriteLensPreview("zoom-defocused.png",far);
+            WriteLensPreview("zoom-focused.png",focused);
+        }
+
+        void WriteLensPreview(string name, Color[] pixels)
+        {
+            string directory=System.Environment.GetEnvironmentVariable("HO_SP_LENS_PREVIEW_DIR");
+            if(string.IsNullOrEmpty(directory)) return;
+            var display=new Color[pixels.Length];
+            for(int i=0;i<pixels.Length;i++)
+            {
+                Color c=pixels[i];
+                display[i]=new Color(c.r/(1+c.r),c.g/(1+c.g),c.b/(1+c.b),1).gamma;
+            }
+            System.IO.Directory.CreateDirectory(directory);
+            System.IO.File.WriteAllBytes(System.IO.Path.Combine(directory,name),Texture(display).EncodeToPNG());
+        }
+
+        [Test]
+        public void DofApertureBokehSpreadsDefocusedHighlightsWithTheLensShape()
+        {
+            var colors=new Color[Width*Height]; Array.Fill(colors,Color.black);
+            for(int y=60;y<67;y++) for(int x=92;x<99;x++) colors[x+y*Width]=Color.white*8;
+            var material=Material("DepthOfField");
+            material.SetColor("_LayerColor",Color.white);
+            material.SetVector("_LayerParams1",new Vector4(4,18,30,1));
+            material.SetVector("_LayerParams2",new Vector4(6,.25f,15,(float)ScreenProcessBlendMode.Add));
+            material.SetVector("_LayerParams4",new Vector4(1,1,0,4));
+            material.SetVector("_LayerParams5",new Vector4(1,1,0,1));
+            var actual=Draw(material,Texture(colors),Solid(new Color(.5f,.5f,1,40)),
+                Texture2D.blackTexture,Texture2D.blackTexture,outlineValid:false);
+            int spread=0; for(int i=0;i<colors.Length;i++) if(colors[i].r==0 && actual[i].r>.01f) spread++;
+            Assert.That(spread,Is.GreaterThan(50));
+            WriteLensPreview("aperture-source.png",colors);
+            WriteLensPreview("aperture-bokeh.png",actual);
         }
 
         [TestCase(1f,0f,2f,12f), TestCase(1f,10f,2f,4f)]
