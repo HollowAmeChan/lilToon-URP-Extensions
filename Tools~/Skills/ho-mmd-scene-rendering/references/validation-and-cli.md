@@ -63,6 +63,15 @@ Start-Process -FilePath $editor -WindowStyle Hidden -ArgumentList @('-batchmode'
 
 ## 可选排错
 
+材质光照检查与定点修改不需要打开/保存 Scene：
+
+```powershell
+python Tools~/MmdStages/stage-cli.py material-lighting-audit --folder "Assets/00动画/MMD场景/作者/场景"
+python Tools~/MmdStages/stage-cli.py material-lighting-patch --folder "Assets/00动画/MMD场景/作者/场景" --settings "D:/Requests/materials.json" --output "D:/Requests/material-result.json"
+```
+
+计划格式为 `{"changes":[{"material":"Assets/.../Materials/地板.mat","properties":[{"name":"_HoRPShadowMode","value":2},{"name":"_HoAdditionalLightIntensity","value":1.5}]}]}`。只写列出的受支持光照字段，批次预检路径/字段，拒绝覆盖 Unity 中未保存的材质，报告实际前后值与字段是否已显式保存，并在报告旁保存变更材质备份。**当前不要用批量计划设置 `_HoRPShadowMode=2`**：Full 的 HOSC 接收尚未逐灯化。新强度不要从旧 HDR 字段自动换算；只渲图不会重放计划。
+
 缺图/透明异常查单个 PMX report 与材质；反射异常才跑 PLR debug/on-off/mip；体积异常查对应 Source/Volume；怀疑底层依赖才看管线总览，不批量重置共享 Renderer。
 
 HoMmdStageAudit.RunBatch、verify-detail-lighting.py、旧 source/hash manifests 与固定机位数量属于早期批量制作的可选回归工具，不再是日常完成条件。只有明确复现旧批次、查回归、验证底层改动时才选用需要的部分。

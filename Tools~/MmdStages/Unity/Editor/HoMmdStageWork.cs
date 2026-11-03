@@ -58,6 +58,12 @@ public static class HoMmdStageWork
         {
             command=JsonUtility.FromJson<Request>(File.ReadAllText(request));
             File.Move(request,Path.Combine(Work,"running.json"));
+            if(command.action=="material-lighting-probe")
+            {
+                HoMmdMaterialLighting.Probe(command,path=>Complete(command,"ok",path,null),
+                    error=>Complete(command,"error",null,error.ToString()));
+                deferred=true;return;
+            }
             if(command.action=="render")
             {
                 if(!string.IsNullOrEmpty(command.scenePath))
@@ -79,6 +85,8 @@ public static class HoMmdStageWork
             else if(command.action=="lighting-audit")result=HoLightingAudit.Capture();
             else if(command.action=="lighting-audit-render")result=HoLightingAudit.CaptureRenderedCamera();
             else if(command.action=="lighting-bake-export")result=HoLightingBakeExport.ExportDependencies(command.outputPath);
+            else if(command.action=="material-lighting-audit" || command.action=="material-lighting-patch")
+                result=HoMmdMaterialLighting.Execute(command);
             else if(command.action=="post-inventory" || command.action=="post-migrate" || command.action=="post-tonemap" || command.action=="post-tune")result=HoMmdHoPostReview.Execute(command);
             else if(command.action=="logo")result=HoMmdStageBranding.SetLogos(
                 string.IsNullOrEmpty(command.stageFolder)?"Assets/00动画/MMD场景":command.stageFolder,command.logoY,command.logoSize);

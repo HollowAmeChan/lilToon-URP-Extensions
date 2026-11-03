@@ -30,11 +30,15 @@ public static class HoMmdSceneWorkshop
             Action<Exception> fail = e => { Debug.LogException(e); EditorApplication.Exit(1); };
             if (request.action == "review") EditorApplication.delayCall += () => { try { Review(request, done, fail); } catch (Exception e) { fail(e); } };
             else if (request.action == "render") EditorApplication.delayCall += () => { try { RenderOne(request, done, fail); } catch (Exception e) { fail(e); } };
+            else if (request.action == "material-lighting-probe") EditorApplication.delayCall += () => {
+                try { HoMmdMaterialLighting.Probe(request, done, fail); } catch (Exception e) { fail(e); } };
             else if (request.action == "create") done(Create(request));
             else if (request.action == "logo") done(HoMmdStageBranding.SetLogos(
                 string.IsNullOrEmpty(request.stageFolder) ? "Assets/00动画/MMD场景" : request.stageFolder, request.logoY, request.logoSize));
             else if (request.action == "practicals") done(HoMmdPracticalLighting.Apply(AssetPath(request.scenePath)));
             else if (request.action == "stage-survey") done(HoMmdPracticalLighting.Inventory(AssetPath(request.scenePath), true));
+            else if (request.action == "material-lighting-audit" || request.action == "material-lighting-patch")
+                done(HoMmdMaterialLighting.Execute(request));
             else if (request.action == "post-inventory" || request.action == "post-migrate" ||
                      request.action == "post-tonemap" || request.action == "post-tune")
                 done(HoMmdHoPostReview.Execute(request));
@@ -64,6 +68,14 @@ public static class HoMmdSceneWorkshop
             if (importer == null) throw new InvalidOperationException("Ho PMX importer unavailable: " + path);
             if (importer.generateOutline) { importer.generateOutline = false; importer.SaveAndReimport(); }
             HoPmxMaterialExtraction.Extract(path, folder + "/Materials");
+        }
+        foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { folder + "/Materials" }))
+        {
+            var material = AssetDatabase.LoadAssetAtPath<Material>(AssetDatabase.GUIDToAssetPath(guid));
+            if (material == null || !material.HasProperty("_HoRPShadowMode")) continue;
+            HoMmdMaterialLighting.InitializeStageMaterial(material);
+            EditorUtility.SetDirty(material);
+            AssetDatabase.SaveAssetIfDirty(material);
         }
         var previous = SceneManager.GetActiveScene();
         var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);

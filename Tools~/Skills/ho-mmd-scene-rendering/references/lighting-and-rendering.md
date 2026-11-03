@@ -18,7 +18,27 @@
 
 共享 PC_Renderer 负责 Feature 存在和底层执行。日常场景差异优先用 Volume、灯光、材质；只有任务需要底层改动时才改共享 Feature，不顺手开启用户关掉的项。
 
-遇到“Light 关闭阴影仍压暗角色”，先看[灯光与 Cast 契约审计](../../../../Documentation~/计划/Ho-Lighting-Shadow-Interop-Audit-20261102.md)。截至该审计，Ho ShadowCast 会收集 `shadows=None` 的灯，并把额外 Cast 相乘到主接收；它不是遵循原生逐灯语义的透明替换。当前 URP 基础附光聚合强度固定 1，`_MultiLightIntensity=0` 只关闭额外 HDR 加亮，`_VertexLightStrength=0` 不能当附灯总开关；`_MultiLightCastShadowStrength` 的 HDR 接收尚未接实。用 `lighting-audit` 读当前状态，或显式 `lighting-audit-render` 拍一个小诊断帧获得实际收集灯列表。统一契约尚未实施，不把文档建议当作已经修复，也不为掩盖问题批量改用户材质或 Renderer。
+## 材质光照契约与旧场景调整
+
+2026-11-03 光照改动后，以下设置用于当前 Ho lilToon。历史[灯光与 Cast 审计](../../../../Documentation~/计划/Ho-Lighting-Shadow-Interop-Audit-20261102.md)是缺陷记录，不能再按其中的旧参数说明制作新材质；仍需以当前 Shader 和实际渲染为准。
+
+| 材质入口 | 当前制作约定 |
+| --- | --- |
+| **HoRP阴影模式** `_HoRPShadowMode` | **目标：舞台建筑、地面、道具使用 Full=2；角色一般 Main=1。当前暂不应用 Full。** 当前 Full 路径把整个 Ho ShadowCast 灯池合成一个 attenuation，再乘进主光 Toon 衰减；缺少与 URP 附加灯的逐灯身份映射，会让某盏灯的遮挡影响其他光照。逐灯接收与回归完成前，Shader/新建舞台保持 Main=1，旧舞台不批量改写。`Renderer.receiveShadows` 与 Toon 层 `_ShadowReceive` 仍需检查；特效、天空等专用材质保留其用途。 |
+| **附加光强度** `_HoAdditionalLightIntensity` | 0 不贡献实时附加光，1 正常一次，>1 是艺术增强；主光和环境独立。旧 `_MultiLightIntensity` 是重复 HDR 补加的倍率，旧 0 仍受附光，不能按同名概念迁移，也不统一做 `1+旧值`。 |
+| **附加光阴影** `_HoAdditionalLightShadowStrength` | 0 忽略附光的原生阴影可见度，1 正常接收；不是 Light 的投影开关，不改变灯的颜色和距离衰减。Full/Main、native/Ho/RT 的实际来源要分清，不能因为有 Full 字段便推断每种提供者都已逐灯替代。 |
+| 亮度下限 / 上限、单色照明 | 使用 `_LightMinLimit` / `_LightMaxLimit` / `_MonochromeLighting`。附光不再从旧独立 HDR 支路绕过最终 diffuse 限幅；上限太低会令补灯增强不明显。提高上限是放宽受光上限，不能替代正确的 Light 位置和范围。 |
+| AO 艺术加强 | `_AOContrast`、`_AODarkStrength` 与实时/离线 AO 输入分别控制，按地板、植被、建筑等用途调；不要为了补光弱就统一关闭接触感。 |
+
+不再写已移除的 `_AsUnlit`、`_VertexLightStrength`、`_BeforeExposureLimit`、`_lilDirectionalLightStrength`、`_AlphaBoostFA` 或旧多光源字段。不要把旧 Unlit 旋钮改称环境光强度，也不要重新加回照明页的默认/半单色预设。
+
+旧场景先只渲当前版本留作对照，再审查外置材质的显式值；**逐灯 Ho ShadowCast 接收修复前，不把材质批量切到 Full**。BREAK_URP 的 27 个 H2CU 舞台只读审计到 879 个 lilToon 材质，当前 `_HoRPShadowMode`、附加光强度和附加光阴影强度均为显式 `1`。万象天文（11 盏活动灯、9 个 HOSC source、39 slices）的 960×540 / 48 帧临时探针中，Main/1x 平均亮度为 28.81，Full/1x 为 26.15（约低 9%）；附加光 0x/1x/2x 分别为 20.06 / 26.15 / 30.02。冷色古堂（105 盏活动灯、23 个 HOSC source、73 slices）同机位 Main/1x 与 Full/1x 为 16.12 / 16.14，差异很小；Full/2x 为 19.59。结果说明 Full 的合成影响依赖 scene 的 Main-shadow 标记和可见遮挡，不能用统一 multiplier 修正；两场景也都证明 Forward+ 附加光循环实际工作。探针仅替换内存材质副本，没有修改场景或 `.mat`。逐灯修复后，再按场景实测决定 Full 默认与亮度调整；不以全图曝光、中心提亮或减少阴影强度掩盖问题。
+
+当前 BREAK_URP 使用 URP 17.3 Forward+。`GetAdditionalLightsCount()` 在 Cluster 模式返回 0，但 `LIGHT_LOOP_BEGIN` 会改用 ClusterIterator，且 URP Core 在 `_CLUSTER_LIGHT_LOOP` 下定义 `_ADDITIONAL_LIGHTS`；因此不能仅凭 Frame Debugger 中 `_ADDITIONAL_LIGHTS` 的 keyword 状态判断附加光循环被裁掉。当前额外光强度对照也证实其循环执行。
+
+Mixed/Lightmap Shadowmask 与 APV 尚未实测。当前附加光循环构造零初始化的 `InputData`，仅填 `positionWS` 和屏幕 UV 后传入 `CalculateShadowMask`；URP 17.3 在 `LIGHTMAP_ON + SHADOWS_SHADOWMASK` 或 APV 分支会读取 `inputData.shadowMask`。H2Cu 这 27 个旧舞台的灯光均为 Realtime，因此本轮探针不覆盖该路径；不要据此宣称 Mixed/APV 已适配。
+
+`lighting-audit` / `lighting-audit-render` 可查当前 Light 模式、阴影和层、材质新字段与实际提供者。Light 的 None/Hard/Soft、Realtime/Mixed/Baked 是生产端设置；Full 只决定材质消费范围，不会凭空补出未生产的阴影，也不替代烘焙。捕获脚本只读，不重跑历史配方。
 
 ## 体积与雾
 
