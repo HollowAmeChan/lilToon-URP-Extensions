@@ -101,9 +101,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.IrisBlur:
                     changed = HandleImageProcessIrisBlurViewControl(viewRect, evt, target, element);
                     break;
-                case ImageProcessEffect.BokehZoomBlur:
-                    changed = HandleImageProcessBokehZoomBlurViewControl(viewRect, evt, target, element);
-                    break;
                 case ImageProcessEffect.PrismFracture:
                     changed = HandleImageProcessPrismFractureViewControl(viewRect, evt, target, element);
                     break;
@@ -238,41 +235,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 p2.y = center.y;
                 p2.z = radius;
                 parameters2.vector4Value = p2;
-            }
-
-            return changed;
-        }
-
-        private static bool HandleImageProcessBokehZoomBlurViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
-        {
-            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
-            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
-            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
-            SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
-            SerializedProperty color = element.FindPropertyRelative("color");
-            EnsureBokehZoomBlurDefaults(parameters0, parameters1, parameters2, parameters3, color);
-            Vector4 p0 = parameters0.vector4Value;
-            Vector4 p1 = parameters1.vector4Value;
-            Vector2 center = new Vector2(0.5f + p1.x * 0.5f, 0.5f + p1.y * 0.5f);
-            float radius = p0.x;
-            bool changed = PostProcessScreenSpaceControlTemplates.HandleCenterRadius(
-                viewRect,
-                evt,
-                target,
-                "Adjust ImageProcess Bokeh Zoom Blur In View",
-                ref ImageProcessCenterRadiusViewControl.ActiveHandle,
-                ref center,
-                ref radius,
-                0.0f,
-                1.0f,
-                "\u5149\u6591\u53d8\u7126  C \u4e2d\u5fc3  R \u534a\u5f84  Esc \u9000\u51fa");
-            if (changed)
-            {
-                p0.x = radius;
-                p1.x = Mathf.Clamp((center.x - 0.5f) * 2.0f, -1.0f, 1.0f);
-                p1.y = Mathf.Clamp((center.y - 0.5f) * 2.0f, -1.0f, 1.0f);
-                parameters0.vector4Value = p0;
-                parameters1.vector4Value = p1;
             }
 
             return changed;

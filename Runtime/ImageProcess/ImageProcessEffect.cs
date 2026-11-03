@@ -48,8 +48,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         CameraFlash,
         ToonMap,
         Kuwahara,
-        BokehZoomBlur,
-        ApertureBokeh,
+        // Vacant IDs keep the remaining image effects' serialized numbers stable.
+        RemovedEffectSlot46,
+        RemovedEffectSlot47,
         LensFlare,
         CinematicBars,
         GlitchArt,

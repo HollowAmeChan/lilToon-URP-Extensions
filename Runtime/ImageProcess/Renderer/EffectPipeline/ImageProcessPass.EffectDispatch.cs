@@ -155,12 +155,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             RegisterSinglePassEffect(executors, ImageProcessEffect.CameraFlash, ApplyCameraFlashLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordCameraFlashLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterSinglePassEffect(executors, ImageProcessEffect.ToonMap, ApplyToonMapLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordToonMapLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterSinglePassEffect(executors, ImageProcessEffect.Kuwahara, ApplyKuwaharaLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordKuwaharaLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ImageProcessEffect.BokehZoomBlur, ApplyBokehZoomBlurLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordBokehZoomBlurLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
-            RegisterEffect(
-                executors,
-                ImageProcessEffect.ApertureBokeh,
-                (pass, cmd, cameraDescriptor, camera, source, destination, runtimeLayer) => pass.ApplyApertureBokehLayer(cmd, cameraDescriptor, source, destination, runtimeLayer),
-                (pass, renderGraph, source, destination, runtimeLayer, layerIndex, frameData) => pass.RecordApertureBokehLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterSinglePassEffect(executors, ImageProcessEffect.LensFlare, ApplyLensFlareLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordLensFlareLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterSinglePassEffect(executors, ImageProcessEffect.CinematicBars, ApplyCinematicBarsLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordCinematicBarsLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterSinglePassEffect(executors, ImageProcessEffect.GlitchArt, ApplyGlitchArtLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordGlitchArtLayer(renderGraph, source, destination, runtimeLayer, layerIndex));

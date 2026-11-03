@@ -24,8 +24,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle rgbBlurTextureB;
         private RTHandle glowTextureA;
         private RTHandle glowTextureB;
-        private RTHandle apertureBokehTextureA;
-        private RTHandle apertureBokehTextureB;
         private bool warnedBackBuffer;
         private readonly Dictionary<int, ChangeFrameRateState> changeFrameRateStates = new Dictionary<int, ChangeFrameRateState>();
 
@@ -96,9 +94,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 || rgbBlurTextureA != null
                 || rgbBlurTextureB != null
                 || glowTextureA != null
-                || glowTextureB != null
-                || apertureBokehTextureA != null
-                || apertureBokehTextureB != null;
+                || glowTextureB != null;
 
             ReleaseRTHandle(ref tempTextureA);
             ReleaseRTHandle(ref tempTextureB);
@@ -108,8 +104,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             ReleaseRTHandle(ref rgbBlurTextureB);
             ReleaseRTHandle(ref glowTextureA);
             ReleaseRTHandle(ref glowTextureB);
-            ReleaseRTHandle(ref apertureBokehTextureA);
-            ReleaseRTHandle(ref apertureBokehTextureB);
             if (forceResetGlobalTextures || hadCompatibilityResources)
             {
                 ResetCompatibilityGlobalTextures();

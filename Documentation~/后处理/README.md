@@ -107,7 +107,7 @@ Ho 栈的初始颜色为 HDR，ImageProcess `Glow` 可以直接提取 HDR 亮部
 
 ## ScreenProcess
 
-镜头效果：独立 `BokehZoomBlur` 使用本层镜头/跟焦参数和视觉深度；`DepthOfField` 的 Bokeh 模式可开启光圈散景增强。ImageProcess 的两个旧入口已收口，旧图层保留兼容执行并提供显式迁移，见 `LensEffects.md`。公共镜头层只列入规划，本次不实施。
+镜头效果：独立 `BokehZoomBlur` 使用本层镜头/跟焦参数和视觉深度；`DepthOfField` 的 Bokeh 模式可开启光圈散景增强。用户已完成配置转移，ImageProcess 的旧实现与迁移工具已删除，见 `LensEffects.md`。公共镜头层只列入规划，本次不实施。
 
 `ScreenProcess` 是语义屏幕效果栈，入口文件为：
 
@@ -166,7 +166,7 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 效果执行分类来自 `ImageProcessEffectDescriptor`：
 
 - `SinglePass`：普通 fullscreen blit，例如 ColorGrading、Vignette、Pixelize、Kuwahara、CinematicBars。
-- `MultiPass`：需要局部 ping-pong 或模糊链，例如 IrisBlur、RGBBlurV2、Glow、ApertureBokeh。
+- `MultiPass`：需要局部 ping-pong 或模糊链，例如 IrisBlur、RGBBlurV2、Glow。
 - `Stateful`：需要跨帧状态，例如 ChangeFrameRate。
 - `Removed`：保留旧序列化槽位，不再执行。
 

@@ -4,9 +4,9 @@
 
 Unity 6000.3 的测试项目需要在 Player Settings / Scripting Define Symbols 启用 `URP_COMPATIBILITY_MODE`，才能编译和测试既有 RG/Compatibility 切换用例。不要只忽略 setter 的 obsolete 报错而跳过兼容路径。
 
-镜头回归同时覆盖独立光斑变焦的焦点/跟焦、前后景禁用、HDR/alpha、真实径向拖影与合焦描边保护，以及景深散景的阈值/增益/关闭、暗部和合焦保护、开启色散后的描边边界。`LensMigrationTests` 验证旧图层迁移的字段映射、保留其他图层和已有焦点、禁用状态与重复执行。
+镜头回归同时覆盖独立光斑变焦的焦点/跟焦、前后景禁用、HDR/alpha、真实径向拖影与合焦描边保护，以及景深散景的阈值/增益/关闭、暗部和合焦保护、开启色散后的描边边界。旧镜头兼容与迁移测试已于 2026-11-04 随实现删除。
 
-迁移回归还验证 Undo 与 Profile 子资产持久化。可给测试进程设置 `HO_SP_LENS_PREVIEW_DIR` 导出实际 GPU 结果 PNG；不设置时不写预览文件。2026-11-03 的双 API 与负对照记录见 `Documentation~/后处理/LensEffects-Validation-20261103.md`。
+可给测试进程设置 `HO_SP_LENS_PREVIEW_DIR` 导出实际 GPU 结果 PNG；不设置时不写预览文件。2026-11-03 的双 API 与负对照记录见 `Documentation~/后处理/LensEffects-Validation-20261103.md`，其中迁移用例属于删除前的历史验证。
 
 在安装本包、URP 和 Unity Test Framework 的测试项目中，将本包加入 `Packages/manifest.json` 的 `testables`：
 

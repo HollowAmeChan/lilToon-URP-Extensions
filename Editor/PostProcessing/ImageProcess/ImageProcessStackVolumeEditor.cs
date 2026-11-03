@@ -323,40 +323,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 EditorGUILayout.HelpBox("Ho 接管图像效果：URP 内置调色、Bloom、景深等不执行。" +
                     "抗锯齿、升采样和显示编码保留；色调映射由 Ho 图层按列表顺序控制。", MessageType.Info);
             SceneViewPostProcessingNotice.Draw(showInSceneView.value.boolValue, replaceBuiltinPostProcessing.value.boolValue);
-            if (DrawLegacyLensMigrationNotice()) return;
             EditorGUILayout.Space(4.0f);
             EnsureEffectBrowser();
             EffectBrowserView.Draw(effectBrowserCatalog, effectBrowserState, DrawLayerList);
             serializedObject.ApplyModifiedProperties();
-        }
-
-        private bool DrawLegacyLensMigrationNotice()
-        {
-            var source = serializedObject.targetObject as ImageProcessStackVolume;
-            if (ScreenProcessLensMigration.CountMigratable(source) == 0) return false;
-            EditorGUILayout.HelpBox("光斑变焦已移至 ScreenProcess，光圈散景已并入景深。旧图层暂时按原方式运行。" +
-                "迁移后将使用独立对焦参数，画面不保证与原全屏效果一致；已有景深图层不会被覆盖。", MessageType.Info);
-            string path = AssetDatabase.GetAssetPath(source);
-            UnityEngine.Rendering.VolumeProfile profile = null;
-            if (!string.IsNullOrEmpty(path))
-                foreach (var asset in AssetDatabase.LoadAllAssetsAtPath(path))
-                    if (asset is UnityEngine.Rendering.VolumeProfile candidate && candidate.components.Contains(source))
-                    {
-                        profile = candidate;
-                        break;
-                    }
-            using (new EditorGUI.DisabledScope(profile == null))
-            {
-                if (GUILayout.Button("迁移旧镜头效果到同一 Profile 的 ScreenProcess"))
-                {
-                    serializedObject.ApplyModifiedProperties();
-                    ScreenProcessLensMigration.Migrate(profile);
-                    AssetDatabase.SaveAssetIfDirty(profile);
-                    serializedObject.Update();
-                    return true;
-                }
-            }
-            return false;
         }
 
         // ------------------------------------------------------------------ effect browser
@@ -578,18 +548,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             if (GetEffect(element) == ImageProcessEffect.IrisBlur)
             {
                 DrawIrisBlurElement(rect, element);
-                return;
-            }
-
-            if (GetEffect(element) == ImageProcessEffect.BokehZoomBlur)
-            {
-                DrawBokehZoomBlurElement(rect, element);
-                return;
-            }
-
-            if (GetEffect(element) == ImageProcessEffect.ApertureBokeh)
-            {
-                DrawApertureBokehElement(rect, element);
                 return;
             }
 
@@ -837,14 +795,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.IrisBlur:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 6;
-                    break;
-                case ImageProcessEffect.BokehZoomBlur:
-                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 17;
-                    break;
-                case ImageProcessEffect.ApertureBokeh:
-                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 15;
                     break;
                 case ImageProcessEffect.LensFlare:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1192,8 +1142,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static string GetEffectDisplayName(ImageProcessEffect effect)
         {
-            if (effect == ImageProcessEffect.BokehZoomBlur) return "光斑变焦（旧版）";
-            if (effect == ImageProcessEffect.ApertureBokeh) return "光圈散景（旧版）";
             int index = (int)effect;
             if (index >= 0 && index < EffectDisplayNames.Length)
             {
@@ -1230,7 +1178,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return effectIndex == (int)ImageProcessEffect.RemovedEffectSlot13 ||
                    effectIndex == (int)ImageProcessEffect.RemovedEffectSlot30 ||
                    effectIndex == (int)ImageProcessEffect.RemovedEffectSlot31 ||
-                   effectIndex == (int)ImageProcessEffect.RemovedEffectSlot32;
+                   effectIndex == (int)ImageProcessEffect.RemovedEffectSlot32 ||
+                   effectIndex == (int)ImageProcessEffect.RemovedEffectSlot46 ||
+                   effectIndex == (int)ImageProcessEffect.RemovedEffectSlot47;
         }
 
         private void DrawSimpleLayerElement(Rect rect, SerializedProperty element)
@@ -1740,22 +1690,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetColor(element, "color", Color.black);
                     SetVector4(element, "parameters0", new Vector4(3.0f, 1.0f, 0.0f, 0.1f));
                     SetVector4(element, "parameters1", new Vector4(0.25f, 0.05f, 0.0f, 0.0f));
-                    break;
-                case ImageProcessEffect.BokehZoomBlur:
-                    SetFloat(element, "intensity", 1.0f);
-                    SetColor(element, "color", Color.white);
-                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
-                    SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 4.0f, 2.0f));
-                    SetVector4(element, "parameters2", new Vector4(0.0f, 1.0f, 0.0f, 1.0f));
-                    SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 0.5f, 0.0f));
-                    break;
-                case ImageProcessEffect.ApertureBokeh:
-                    SetFloat(element, "intensity", 1.0f);
-                    SetColor(element, "color", Color.white);
-                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.4f, 0.2f, 1.0f));
-                    SetVector4(element, "parameters1", new Vector4(0.35f, 1.0f, 0.0f, 2.0f));
-                    SetVector4(element, "parameters2", new Vector4(0.0f, 1.0f, 0.0f, 0.35f));
-                    SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 4.0f, 0.0f));
                     break;
                 case ImageProcessEffect.LensFlare:
                     SetFloat(element, "intensity", 1.0f);

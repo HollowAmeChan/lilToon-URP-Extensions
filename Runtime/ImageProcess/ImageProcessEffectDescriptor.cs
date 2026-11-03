@@ -107,13 +107,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             Add(catalog, SinglePass(ImageProcessEffect.CameraFlash));
             Add(catalog, SinglePass(ImageProcessEffect.ToonMap));
             Add(catalog, SinglePass(ImageProcessEffect.Kuwahara));
-            Add(catalog, SinglePass(
-                ImageProcessEffect.BokehZoomBlur,
-                Request(ImageProcessResourceKind.OriginalSource, "radial blur composite samples the original image")));
-            Add(catalog, MultiPass(
-                ImageProcessEffect.ApertureBokeh,
-                Request(ImageProcessResourceKind.LocalPingPong, "downscaled bokeh blur chain"),
-                Request(ImageProcessResourceKind.OriginalSource, "final composite blends original image with bokeh texture")));
+            Add(catalog, Removed(ImageProcessEffect.RemovedEffectSlot46));
+            Add(catalog, Removed(ImageProcessEffect.RemovedEffectSlot47));
             Add(catalog, SinglePass(
                 ImageProcessEffect.LensFlare,
                 Request(ImageProcessResourceKind.ExternalTexture, "layer-supplied flare texture")));

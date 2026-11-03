@@ -234,14 +234,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "红通道", ApplyImageProcessRedChannelPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "蓝通道", ApplyImageProcessBlueChannelPreset);
                     break;
-                case ImageProcessEffect.BokehZoomBlur:
-                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "柔和光斑", ApplyImageProcessSoftBokehZoomPreset);
-                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "强光拖影", ApplyImageProcessStrongBokehZoomPreset);
-                    break;
-                case ImageProcessEffect.ApertureBokeh:
-                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "柔和散景", ApplyImageProcessSoftAperturePreset);
-                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "硬质光斑", ApplyImageProcessHardAperturePreset);
-                    break;
                 case ImageProcessEffect.LensFlare:
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "明亮太阳", ApplyImageProcessBrightSunLensFlarePreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "电影横光", ApplyImageProcessCinematicLensFlarePreset);
@@ -829,40 +821,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             ApplyImageProcessDefaultPreset(element, effect);
             SetVector4(element, "parameters0", new Vector4(3.0f, 0.0f, 0.0f, 0.0f));
-        }
-
-        private static void ApplyImageProcessSoftBokehZoomPreset(SerializedProperty element, ImageProcessEffect effect)
-        {
-            ApplyImageProcessDefaultPreset(element, effect);
-            SetVector4(element, "parameters0", new Vector4(0.45f, 0.3f, 0.25f, 1.0f));
-            SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 3.0f, 1.0f));
-            SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 1.2f, 0.0f));
-        }
-
-        private static void ApplyImageProcessStrongBokehZoomPreset(SerializedProperty element, ImageProcessEffect effect)
-        {
-            ApplyImageProcessDefaultPreset(element, effect);
-            SetVector4(element, "parameters0", new Vector4(1.0f, 0.0f, 0.15f, 1.25f));
-            SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 4.0f, 2.0f));
-            SetVector4(element, "parameters2", new Vector4(6.0f, 0.85f, 20.0f, 0.75f));
-            SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 3.5f, 0.0f));
-        }
-
-        private static void ApplyImageProcessSoftAperturePreset(SerializedProperty element, ImageProcessEffect effect)
-        {
-            ApplyImageProcessDefaultPreset(element, effect);
-            SetVector4(element, "parameters0", new Vector4(0.55f, 0.45f, 0.35f, 1.0f));
-            SetVector4(element, "parameters1", new Vector4(0.25f, 0.7f, 0.0f, 1.0f));
-            SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 1.8f, 0.0f));
-        }
-
-        private static void ApplyImageProcessHardAperturePreset(SerializedProperty element, ImageProcessEffect effect)
-        {
-            ApplyImageProcessDefaultPreset(element, effect);
-            SetVector4(element, "parameters0", new Vector4(0.8f, 0.35f, 0.15f, 1.0f));
-            SetVector4(element, "parameters1", new Vector4(0.45f, 1.0f, 0.0f, 2.0f));
-            SetVector4(element, "parameters2", new Vector4(6.0f, 0.75f, 12.0f, 0.45f));
-            SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 4.5f, 0.0f));
         }
 
         private static void ApplyImageProcessBrightSunLensFlarePreset(SerializedProperty element, ImageProcessEffect effect)
