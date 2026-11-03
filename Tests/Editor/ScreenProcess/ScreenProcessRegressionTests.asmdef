@@ -2,6 +2,7 @@
   "name": "lilToon.URP.Extensions.ScreenProcess.Tests",
   "references": [
     "jp.lilxyzw.liltoon.urp.extensions.Runtime",
+    "jp.lilxyzw.liltoon.urp.extensions.Editor",
     "Unity.RenderPipelines.Core.Runtime",
     "Unity.RenderPipelines.Universal.Runtime"
   ],

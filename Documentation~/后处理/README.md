@@ -10,7 +10,7 @@
 已落地的运行时模块：
 
 - `ImageProcess`：Volume 驱动的图像域后处理栈，支持 RenderGraph 和兼容路径，当前效果枚举覆盖 50 个以上图像效果，其中 `RemovedEffectSlot*` 只作为旧序列化槽位保留。
-- `ScreenProcess`：Volume 驱动的语义屏幕效果栈，当前效果为 `CustomMaterial`、`EdgeLight`、`Outline`、`DropShadow`、`DepthOfField`、`PostLighting`、`SkyTyndall`、`DepthFog`。它的遮罩读角色覆盖率（AC 总覆盖率 / OB 身份池），其余输入是 SB 的材质数值、GeometryBuffer 与可选 Sky buffer。`DepthFog`（深度雾/高度雾，家族 C）是**一个效果里的两个槽**（各带开关，可同时开），见 `DepthFog.md`。
+- `ScreenProcess`：Volume 驱动的语义屏幕效果栈，当前效果为 `CustomMaterial`、`EdgeLight`、`Outline`、`DropShadow`、`DepthOfField`、`BokehZoomBlur`、`PostLighting`、`SkyTyndall`、`DepthFog`。它的遮罩读角色覆盖率（AC 总覆盖率 / OB 身份池），其余输入是 SB 的材质数值、GeometryBuffer 与可选 Sky buffer。`DepthFog`（深度雾/高度雾，家族 C）是**一个效果里的两个槽**（各带开关，可同时开），见 `DepthFog.md`。
 - `ObjectBuffer`：逐样本身份池（16 bit `(组, 槽位)`）→ 自己 resolve 出最多 4 层身份 + 每层覆盖率；对象侧用 `Ho-ObjectBuffer Group` 组件写身份与标签。
 - `SurfaceBuffer`：五张表面数值图（Color / Normal / Material / Reflection / Classification）+ internal owner，由材质侧 `HO_SURFACE_BUFFER` pass 一趟写全。
 - `AttributeComposite`：语义遮罩与合成属性的唯一逻辑入口 —— 读 OB + SB，按 `HoSemanticSchema` 解压出 Selection 池（每张两条 `(SemanticId, coverage)`）供消费者查询。
@@ -106,6 +106,8 @@ Ho 栈的初始颜色为 HDR，ImageProcess `Glow` 可以直接提取 HDR 亮部
 需要天空体积光或天空射线类效果时，必须启用 `HoGeometryBufferSettings.enableSkyBuffer`，否则 `SkyTyndall` 会因为缺少 `_HoGeometryBufferSkyTexture` 而只返回原图。
 
 ## ScreenProcess
+
+镜头效果：独立 `BokehZoomBlur` 使用本层镜头/跟焦参数和视觉深度；`DepthOfField` 的 Bokeh 模式可开启光圈散景增强。ImageProcess 的两个旧入口已收口，旧图层保留兼容执行并提供显式迁移，见 `LensEffects.md`。公共镜头层只列入规划，本次不实施。
 
 `ScreenProcess` 是语义屏幕效果栈，入口文件为：
 
