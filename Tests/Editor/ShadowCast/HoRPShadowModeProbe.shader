@@ -1,6 +1,10 @@
 Shader "Hidden/HoRP/Tests/ShadowModeProbe"
 {
-    Properties { _HoRPShadowMode ("Mode", Float) = 1 }
+    Properties
+    {
+        _HoRPShadowMode ("Mode", Float) = 1
+        _AuditAdditionalLightIndex ("Additional light index", Float) = -1
+    }
     SubShader
     {
         Pass
@@ -12,7 +16,7 @@ Shader "Hidden/HoRP/Tests/ShadowModeProbe"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include_with_pragmas "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastSampling.hlsl"
-            float _HoRPShadowMode;
+            float _HoRPShadowMode, _AuditAdditionalLightIndex;
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings { float4 positionCS : SV_POSITION; };
             Varyings vert(Attributes input)
@@ -23,6 +27,14 @@ Shader "Hidden/HoRP/Tests/ShadowModeProbe"
             }
             float4 frag(Varyings input) : SV_Target
             {
+                if (_AuditAdditionalLightIndex >= 0.0)
+                {
+                    float attenuation;
+                    bool matched = HoShadowCastTryGetAdditionalLightAttenuation(
+                        (uint)_AuditAdditionalLightIndex, float3(0, 0, 0), attenuation);
+                    return float4(attenuation, matched ? 1.0 : 0.0, 0.0, 1.0);
+                }
+
                 return float4(HoShadowCastAttenuation(float3(0, 0, 0), _HoRPShadowMode).xxx, 1);
             }
             ENDHLSL

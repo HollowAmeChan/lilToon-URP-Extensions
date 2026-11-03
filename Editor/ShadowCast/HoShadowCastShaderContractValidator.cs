@@ -102,6 +102,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         {
             CheckValue(defines, "HO_SHADOW_CAST_ARRAY_LIGHTS", HoShadowCastShaderContract.ArrayLights, errors);
             CheckValue(defines, "HO_SHADOW_CAST_ARRAY_SLICES", HoShadowCastShaderContract.ArraySlices, errors);
+            CheckValue(defines, "HO_SHADOW_CAST_ARRAY_ADDITIONAL_LIGHT_MAP", HoShadowCastShaderContract.AdditionalLightMapSize, errors);
             CheckValue(defines, "HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS", HoShadowCastShaderContract.SecondDirectionalLights, errors);
             CheckValue(defines, "HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES", HoShadowCastShaderContract.SecondDirectionalCascades, errors);
             CheckValue(defines, "HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_SLICES", HoShadowCastShaderContract.SecondDirectionalSlices, errors);

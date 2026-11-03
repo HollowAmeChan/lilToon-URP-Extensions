@@ -200,7 +200,8 @@ public static class HoLightingAudit
     {
         string[] properties = { "_UseShadow", "_ShadowReceive", "_Shadow2ndReceive", "_Shadow3rdReceive",
             "_HoRPShadowMode", "_HoAdditionalLightIntensity", "_HoAdditionalLightShadowStrength", "_LightMinLimit",
-            "_LightMaxLimit", "_MonochromeLighting", "_ShadowEnvStrength", "_ApplySpecularFA" };
+            "_LightMaxLimit", "_MonochromeLighting", "_ShadowEnvStrength", "_ApplySpecularFA",
+            "_UseReflection", "_UsePlanarReflection", "_Reflectance", "_Smoothness" };
         var usage = new Dictionary<Material, List<string>>();
         foreach (var renderer in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {

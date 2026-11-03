@@ -19,7 +19,7 @@ namespace lilToon.URP.Extensions.Tests
             foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { "Packages/jp.lilxyzw.liltoon/Shader" }))
             {
                 var shader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(guid));
-                if (shader == null || shader.FindPropertyIndex("_MultiLightIntensity") < 0) continue;
+                if (shader == null || shader.FindPropertyIndex("_HoAdditionalLightIntensity") < 0) continue;
                 var material = new Material(shader);
                 try
                 {
@@ -112,6 +112,114 @@ namespace lilToon.URP.Extensions.Tests
                                       message.severity.ToString() == "Error")
                     .Select(message => message.message);
                 Assert.IsEmpty(diagnostics, "Receiver shader must compile without warnings or errors.");
+            }
+            finally
+            {
+                RenderTexture.active = previousTarget;
+                foreach (var action in restore) action();
+                Shader.SetGlobalTexture("_HoShadowCastAtlas", previousDepth);
+                Object.DestroyImmediate(material);
+                Object.DestroyImmediate(depth);
+                target.Release();
+                Object.DestroyImmediate(target);
+                Object.DestroyImmediate(result);
+            }
+        }
+
+        [Test]
+        public void FullAdditionalCastIsMatchedOnlyToItsUrpLightIndex()
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) Assert.Ignore("Requires a graphics device.");
+            var shader = Shader.Find("Hidden/HoRP/Tests/ShadowModeProbe");
+            Assert.IsNotNull(shader);
+            var material = new Material(shader);
+            var depth = new Texture2D(2, 2, TextureFormat.RFloat, false, true);
+            var target = new RenderTexture(2, 2, 0, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
+            var result = new Texture2D(2, 2, TextureFormat.RGBAFloat, false, true);
+            var restore = new List<Action>();
+            var previousTarget = RenderTexture.active;
+
+            void Float(string name, float value)
+            {
+                float old = Shader.GetGlobalFloat(name);
+                restore.Add(() => Shader.SetGlobalFloat(name, old));
+                Shader.SetGlobalFloat(name, value);
+            }
+            void Int(string name, int value)
+            {
+                int old = Shader.GetGlobalInt(name);
+                restore.Add(() => Shader.SetGlobalInt(name, old));
+                Shader.SetGlobalInt(name, value);
+            }
+            void Vector(string name, Vector4 value)
+            {
+                Vector4 old = Shader.GetGlobalVector(name);
+                restore.Add(() => Shader.SetGlobalVector(name, old));
+                Shader.SetGlobalVector(name, value);
+            }
+            void Array(string name, Vector4[] values)
+            {
+                var old = Shader.GetGlobalVectorArray(name) ?? System.Array.Empty<Vector4>();
+                var restoreValues = new Vector4[Math.Max(values.Length, old.Length)];
+                System.Array.Copy(old, restoreValues, old.Length);
+                restore.Add(() => Shader.SetGlobalVectorArray(name,
+                    old.Length > 0 ? restoreValues : new Vector4[restoreValues.Length]));
+                Shader.SetGlobalVectorArray(name, values);
+            }
+
+            Texture previousDepth = Shader.GetGlobalTexture("_HoShadowCastAtlas");
+            try
+            {
+                float occluder = SystemInfo.usesReversedZBuffer ? .75f : .25f;
+                depth.SetPixels(Enumerable.Repeat(new Color(occluder, 0, 0, 1), 4).ToArray());
+                depth.Apply();
+                Shader.SetGlobalTexture("_HoShadowCastAtlas", depth);
+                Float("_HoShadowCastActive", 1);
+                Int("_HoShadowCastLightCount", 1);
+                Int("_HoShadowCastSliceCount", 1);
+                Vector("_HoShadowCastSecondDirectionalParams", Vector4.zero);
+                Vector("_HoShadowCastAtlasSize", new Vector4(2, 2, .5f, .5f));
+                Vector("_HoShadowCastPcssParams", Vector4.zero);
+                Vector("_HoShadowCastPcssParams2", Vector4.zero);
+                var lightData0 = new Vector4[HoShadowCastShaderContract.ArrayLights];
+                lightData0[0] = new Vector4(0, 0, 1, 1);
+                Array("_HoShadowCastLightData0", lightData0);
+                var lightColor = new Vector4[HoShadowCastShaderContract.ArrayLights];
+                lightColor[0] = new Vector4(1, 1, 1, 0);
+                Array("_HoShadowCastLightColor", lightColor);
+                var additionalMap = new Vector4[HoShadowCastShaderContract.AdditionalLightMapSize];
+                additionalMap[5] = new Vector4(1, 0, 0, 0);
+                Array("_HoShadowCastAdditionalLightMap", additionalMap);
+                var sliceData = new Vector4[HoShadowCastShaderContract.ArraySlices];
+                sliceData[0] = new Vector4(0, 0, 1, 0);
+                Array("_HoShadowCastSliceData", sliceData);
+                var row0 = new Vector4[HoShadowCastShaderContract.ArraySlices];
+                var row1 = new Vector4[HoShadowCastShaderContract.ArraySlices];
+                var row2 = new Vector4[HoShadowCastShaderContract.ArraySlices];
+                var row3 = new Vector4[HoShadowCastShaderContract.ArraySlices];
+                row0[0] = new Vector4(0, 0, 0, .5f);
+                row1[0] = new Vector4(0, 0, 0, .5f);
+                row2[0] = new Vector4(0, 0, 0, .5f);
+                row3[0] = new Vector4(0, 0, 0, 1);
+                Array("_HoShadowCastWorldToShadowRow0", row0);
+                Array("_HoShadowCastWorldToShadowRow1", row1);
+                Array("_HoShadowCastWorldToShadowRow2", row2);
+                Array("_HoShadowCastWorldToShadowRow3", row3);
+                material.SetFloat("_AuditAdditionalLightIndex", 5);
+                Graphics.Blit(Texture2D.whiteTexture, target, material);
+                RenderTexture.active = target;
+                result.ReadPixels(new Rect(0, 0, 2, 2), 0, 0);
+                result.Apply();
+                Assert.That(result.GetPixel(0, 0).r, Is.EqualTo(.35f).Within(.02f));
+                Assert.That(result.GetPixel(0, 0).g, Is.EqualTo(1.0f).Within(.01f));
+
+                material.SetFloat("_AuditAdditionalLightIndex", 6);
+                Graphics.Blit(Texture2D.whiteTexture, target, material);
+                RenderTexture.active = target;
+                result.ReadPixels(new Rect(0, 0, 2, 2), 0, 0);
+                result.Apply();
+                Assert.That(result.GetPixel(0, 0).r, Is.EqualTo(1.0f).Within(.01f));
+                Assert.That(result.GetPixel(0, 0).g, Is.EqualTo(0.0f).Within(.01f));
             }
             finally
             {

@@ -134,3 +134,15 @@ Use the date and a short subsystem heading. State the failed or surprising behav
 - 頑張りたい人へ保存场景的 MainCamera 小诊断帧确认：`shadows=None` 的桌边点光仍获 Ho 512×6，环境方向补光仍获 Ho 2048×4；场景保持 `dirty=false`。后庭灯 Lighting Layers=2，角色身体/头发=1，Ho 全局 Cast 接收没有相应逐灯过滤。
 - 当前 lilToon 基础附光聚合强度固定 1；`_MultiLightIntensity=0` 仅关闭末尾 HDR 加亮，不能把它解释为禁止全部附光。`minShadow` 未写入使当前 HDR 路径的 `_MultiLightCastShadowStrength` 无效。
 - Evidence: `Documentation~/计划/Ho-Lighting-Shadow-Interop-Audit-20261102.md` 与 `Tests~/LightingAudit/20261102-current-scene-summary.json`。Confidence: 灯收集/接线的源码及实际渲染调度已确认；没有做最终阴影像素的逐灯归因 A/B。Runtime 修复与统一契约仍是后续工作。
+
+## 2026-11-03 — Full 附加光逐灯接收复核
+
+- lilToon 的 Main 阴影通道现在只消费显式加入 Main 的 Ho Cast 来源。Full 按 URP 附加灯 buffer 索引查 HoShadowCast 槽位，命中时使用 Ho 可见度替代同一灯的 native 衰减；没有槽位或投影不覆盖时回退 native。固定 256 项索引表覆盖 URP 17.3 当前的最大附加灯索引；超界来源走 native fallback。
+- 在 BREAK_URP 主工程、Unity 6000.3.15f1 / URP 17.3 Forward+ / D3D12，万象天文与冷色古堂各运行 960×540、48 帧 Main/Full 和 0/1/2 倍率探针。Full/1x 与 Main 的平均亮度分别为 28.874 / 28.862、16.186 / 16.195；万象天文修复前 Full/1x 曾为 26.147。两场景 `.unity` / `.mat` 哈希保持基线。
+- Realtime 场景渲染与 C# 编译已通过；Shadowmask/APV、Mixed 灯光及专门的“遮挡灯 A 不影响可见灯 B”GPU 单测仍需独立执行，不把本次场景平均亮度相近当作这几项已验证。
+
+## 2026-11-03 — 冷色古堂平面受光 A/B 尚未隔离
+
+- 冷色古堂保存材质 `000_地板.mat` 同时启用 `_UsePlanarReflection=1` 与 `_UseReflection=1`；场景此前的 beauty 输出还叠有 Bloom/曝光。前一轮用整帧 PNG 均值比较附光倍率，无法区分 direct diffuse、Bloom 与镜面反射，撤回“已证明 `_LightMaxLimit` 是根因”的结论。Shader 的共享受光 clamp 仅是待检变量。
+- 已扩展主工程 `material-lighting-probe`：新增 direct diffuse 成对图，临时关闭 URP/Ho 后处理、PLR、RTGI、VolumeLight，并在内存材质副本禁用 cubemap/PLR 反射；附光阴影固定 0，对比原 `_LightMaxLimit` 下附光 0x/1x，再对比同为临时上限 32 的 0x/1x。不会写回 Scene 或 `.mat`。只在检查原始平面像素差后，才能判断多光源是否真的进入该平面的 diffuse。
+- Evidence: 冷色古堂材质属性 `Assets/00动画/MMD场景/H2Cu阿相/冷色古堂/Materials/000_地板.mat`；隔离探针尚未成功渲染。BREAK_URP 主 Editor 的 WTD 场景当前 dirty，捕获器正确拒绝场景切换，未保存、重载或丢弃。Confidence: 反射/后处理为旧对照的重要混淆项已确认；点光对平面的原始 diffuse 贡献仍未确认。

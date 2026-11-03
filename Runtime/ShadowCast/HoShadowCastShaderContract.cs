@@ -58,6 +58,9 @@ namespace lilToon.URP.Extensions.ShadowCast
         /// </remarks>
         public const int ArrayLights = HighLights;
 
+        /// <summary>Fixed URP additional-light-index map uploaded for each atlas.</summary>
+        public const int AdditionalLightMapSize = 256;
+
         /// <summary>
         /// Global array length for the punctual slice arrays. See <see cref="ArrayLights"/>.
         /// </summary>

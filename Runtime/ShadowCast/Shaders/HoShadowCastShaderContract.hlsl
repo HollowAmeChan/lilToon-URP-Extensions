@@ -24,6 +24,7 @@
 // ---------------------------------------------------------------------------------------------
 #define HO_SHADOW_CAST_ARRAY_LIGHTS 48
 #define HO_SHADOW_CAST_ARRAY_SLICES 128
+#define HO_SHADOW_CAST_ARRAY_ADDITIONAL_LIGHT_MAP 256
 
 // Capacity tiers: how many additional lights may be sampled at once. This is the per-pixel cost knob;
 // the sampling loops are bounded by the resolved value.

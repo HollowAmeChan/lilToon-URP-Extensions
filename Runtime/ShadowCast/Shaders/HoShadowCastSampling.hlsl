@@ -27,6 +27,7 @@ float4 _HoShadowCastLightAttenuation[HO_SHADOW_CAST_ARRAY_LIGHTS];
 // RGB is metadata. Alpha packs bit 0=soft, bit 1=also included in Main.
 float4 _HoShadowCastLightColor[HO_SHADOW_CAST_ARRAY_LIGHTS];
 float4 _HoShadowCastSliceData[HO_SHADOW_CAST_ARRAY_SLICES];
+float4 _HoShadowCastAdditionalLightMap[HO_SHADOW_CAST_ARRAY_ADDITIONAL_LIGHT_MAP];
 float4 _HoShadowCastPcssParams;
 float4 _HoShadowCastPcssParams2;
 float4 _HoShadowCastSecondDirectionalParams;
@@ -61,6 +62,48 @@ float4 HoShadowCastTransformWorldToSecondDirectionalShadow(int sliceIndex, float
         dot(_HoShadowCastSecondDirectionalWorldToShadowRow1[sliceIndex], position),
         dot(_HoShadowCastSecondDirectionalWorldToShadowRow2[sliceIndex], position),
         dot(_HoShadowCastSecondDirectionalWorldToShadowRow3[sliceIndex], position));
+}
+
+bool HoShadowCastIsInsidePunctualSlice(int sliceIndex, float3 positionWS)
+{
+    if (sliceIndex < 0 || sliceIndex >= _HoShadowCastSliceCount || sliceIndex >= HO_SHADOW_CAST_ARRAY_SLICES)
+    {
+        return false;
+    }
+
+    float4 shadowCoord = HoShadowCastTransformWorldToShadow(sliceIndex, positionWS);
+    if (abs(shadowCoord.w) <= 0.00001)
+    {
+        return false;
+    }
+
+    shadowCoord.xyz /= shadowCoord.w;
+    float4 sliceData = _HoShadowCastSliceData[sliceIndex];
+    float2 sliceMax = sliceData.xy + sliceData.zz;
+    return shadowCoord.z > 0.0 && shadowCoord.z < 1.0 &&
+        all(shadowCoord.xy >= sliceData.xy) && all(shadowCoord.xy <= sliceMax);
+}
+
+bool HoShadowCastIsInsideSecondDirectionalSlice(int sliceIndex, float3 positionWS)
+{
+    int sliceCount = min((int)round(_HoShadowCastSecondDirectionalParams.y) *
+        (int)round(_HoShadowCastSecondDirectionalParams.z), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_SLICES);
+    if (sliceIndex < 0 || sliceIndex >= sliceCount)
+    {
+        return false;
+    }
+
+    float4 shadowCoord = HoShadowCastTransformWorldToSecondDirectionalShadow(sliceIndex, positionWS);
+    if (abs(shadowCoord.w) <= 0.00001)
+    {
+        return false;
+    }
+
+    shadowCoord.xyz /= shadowCoord.w;
+    float4 sliceData = _HoShadowCastSecondDirectionalSliceData[sliceIndex];
+    float2 sliceMax = sliceData.xy + sliceData.zz;
+    return shadowCoord.z > 0.0 && shadowCoord.z < 1.0 &&
+        all(shadowCoord.xy >= sliceData.xy) && all(shadowCoord.xy <= sliceMax);
 }
 
 float HoShadowCastLightInfluence(int lightIndex, float3 positionWS)
@@ -351,6 +394,79 @@ float HoShadowCastSampleSecondDirectionalSlice(int sliceIndex, float3 positionWS
     return HoShadowCastSampleSecondDirectionalAtlas(shadowCoord.xyz, sliceData, softShadows);
 }
 
+bool HoShadowCastTrySecondDirectionalLightAttenuation(
+    int lightIndex,
+    float3 positionWS,
+    out float attenuation)
+{
+    attenuation = 1.0;
+    if (_HoShadowCastSecondDirectionalParams.x < 0.5)
+    {
+        return false;
+    }
+
+    int lightCount = min((int)round(_HoShadowCastSecondDirectionalParams.y), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS);
+    int cascadeCount = min((int)round(_HoShadowCastSecondDirectionalParams.z), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES);
+    if (lightIndex < 0 || lightIndex >= lightCount || cascadeCount <= 0)
+    {
+        return false;
+    }
+
+    float3 cameraToReceiver = positionWS - _HoShadowCastSecondDirectionalCameraPosition.xyz;
+    float distanceSqr = dot(cameraToReceiver, cameraToReceiver);
+    float4 lightData = _HoShadowCastSecondDirectionalLightData[lightIndex];
+    int firstSlice = (int)round(lightData.x);
+    int lightCascadeCount = min((int)round(lightData.y), cascadeCount);
+    if (lightCascadeCount <= 0)
+    {
+        return false;
+    }
+
+    int cascadeIndex = -1;
+    [unroll]
+    for (int i = 0; i < HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES; i++)
+    {
+        if (i >= lightCascadeCount)
+        {
+            break;
+        }
+
+        if (distanceSqr <= _HoShadowCastSecondDirectionalSliceData[firstSlice + i].w)
+        {
+            cascadeIndex = i;
+            break;
+        }
+    }
+
+    if (cascadeIndex < 0)
+    {
+        return false;
+    }
+
+    int sliceIndex = firstSlice + cascadeIndex;
+    if (!HoShadowCastIsInsideSecondDirectionalSlice(sliceIndex, positionWS))
+    {
+        return false;
+    }
+
+    uint receiverFlags = (uint)round(lightData.w);
+    float shadowStrength = saturate(lightData.z);
+    bool softShadows = (receiverFlags & 1u) != 0u;
+    float lightShadow = max(
+        HoShadowCastSampleSecondDirectionalSlice(sliceIndex, positionWS, softShadows),
+        HO_SHADOW_CAST_MIN_ATTENUATION);
+    attenuation = lerp(1.0, lightShadow, shadowStrength);
+    return true;
+}
+
+float HoShadowCastSecondDirectionalLightShadowAttenuation(int lightIndex, float3 positionWS)
+{
+    float attenuation;
+    return HoShadowCastTrySecondDirectionalLightAttenuation(lightIndex, positionWS, attenuation)
+        ? attenuation
+        : 1.0;
+}
+
 float HoShadowCastSecondDirectionalAttenuation(float3 positionWS, bool mainOnly)
 {
     if (_HoShadowCastSecondDirectionalParams.x < 0.5)
@@ -359,59 +475,30 @@ float HoShadowCastSecondDirectionalAttenuation(float3 positionWS, bool mainOnly)
     }
 
     int lightCount = min((int)round(_HoShadowCastSecondDirectionalParams.y), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS);
-    int cascadeCount = min((int)round(_HoShadowCastSecondDirectionalParams.z), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES);
-    if (lightCount <= 0 || cascadeCount <= 0)
-    {
-        return 1.0;
-    }
-
-    float3 cameraToReceiver = positionWS - _HoShadowCastSecondDirectionalCameraPosition.xyz;
-    float distanceSqr = dot(cameraToReceiver, cameraToReceiver);
     float attenuation = 1.0;
     [loop]
     for (int lightIndex = 0; lightIndex < lightCount; lightIndex++)
     {
-        float4 lightData = _HoShadowCastSecondDirectionalLightData[lightIndex];
-        uint receiverFlags = (uint)round(lightData.w);
+        uint receiverFlags = (uint)round(_HoShadowCastSecondDirectionalLightData[lightIndex].w);
         if (mainOnly && (receiverFlags & 2u) == 0u) continue;
-        int firstSlice = (int)round(lightData.x);
-        int lightCascadeCount = min((int)round(lightData.y), cascadeCount);
-        float shadowStrength = saturate(lightData.z);
-        bool softShadows = (receiverFlags & 1u) != 0u;
-        int cascadeIndex = max(lightCascadeCount - 1, 0);
-        [unroll]
-        for (int i = 0; i < HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES; i++)
-        {
-            if (i >= lightCascadeCount)
-            {
-                break;
-            }
-
-            if (distanceSqr <= _HoShadowCastSecondDirectionalSliceData[firstSlice + i].w)
-            {
-                cascadeIndex = i;
-                break;
-            }
-        }
-
-        float lightShadow = max(HoShadowCastSampleSecondDirectionalSlice(firstSlice + cascadeIndex, positionWS, softShadows), HO_SHADOW_CAST_MIN_ATTENUATION);
-        attenuation *= lerp(1.0, lightShadow, shadowStrength);
+        attenuation *= HoShadowCastSecondDirectionalLightShadowAttenuation(lightIndex, positionWS);
     }
 
     return saturate(attenuation);
 }
 
-float HoShadowCastLightShadowAttenuation(int lightIndex, float3 positionWS)
+bool HoShadowCastTryLightShadowAttenuation(int lightIndex, float3 positionWS, out float attenuation)
 {
+    attenuation = 1.0;
     float influence = HoShadowCastLightInfluence(lightIndex, positionWS);
-    if (influence <= 0.0)
+    float4 lightData0 = _HoShadowCastLightData0[lightIndex];
+    float lightType = lightData0.x;
+    if (lightType != HO_SHADOW_CAST_LIGHT_DIRECTIONAL && influence <= 0.0)
     {
-        return 1.0;
+        return false;
     }
 
-    float4 lightData0 = _HoShadowCastLightData0[lightIndex];
     int firstSlice = (int)round(lightData0.y);
-    float lightType = lightData0.x;
     int sliceCount = min((int)round(lightData0.z), 6);
     float shadowStrength = saturate(lightData0.w * influence);
     bool softShadows = ((uint)round(_HoShadowCastLightColor[lightIndex].a) & 1u) != 0u;
@@ -425,19 +512,80 @@ float HoShadowCastLightShadowAttenuation(int lightIndex, float3 positionWS)
         float pointDistance = length(lightToReceiver);
         float pointNearRadiusScale = smoothstep(0.10, 0.35, pointDistance / lightRange);
         int faceIndex = HoShadowCastPointFaceIndex(lightToReceiver);
-        lightShadow = HoShadowCastSampleSliceScaled(firstSlice + faceIndex, positionWS, pointNearRadiusScale, softShadows);
+        int sliceIndex = firstSlice + faceIndex;
+        if (!HoShadowCastIsInsidePunctualSlice(sliceIndex, positionWS))
+        {
+            return false;
+        }
+
+        lightShadow = HoShadowCastSampleSliceScaled(sliceIndex, positionWS, pointNearRadiusScale, softShadows);
     }
     else
     {
+        bool covered = false;
         [loop]
         for (int sliceOffset = 0; sliceOffset < sliceCount; sliceOffset++)
         {
-            lightShadow = min(lightShadow, HoShadowCastSampleSlice(firstSlice + sliceOffset, positionWS, softShadows));
+            int sliceIndex = firstSlice + sliceOffset;
+            if (!HoShadowCastIsInsidePunctualSlice(sliceIndex, positionWS))
+            {
+                continue;
+            }
+
+            covered = true;
+            lightShadow = min(lightShadow, HoShadowCastSampleSlice(sliceIndex, positionWS, softShadows));
+        }
+
+        if (!covered)
+        {
+            return false;
         }
     }
 
     lightShadow = max(lightShadow, HO_SHADOW_CAST_MIN_ATTENUATION);
-    return lerp(1.0, lightShadow, shadowStrength);
+    attenuation = lerp(1.0, lightShadow, shadowStrength);
+    return true;
+}
+
+float HoShadowCastLightShadowAttenuation(int lightIndex, float3 positionWS)
+{
+    float attenuation;
+    return HoShadowCastTryLightShadowAttenuation(lightIndex, positionWS, attenuation)
+        ? attenuation
+        : 1.0;
+}
+
+bool HoShadowCastTryGetAdditionalLightAttenuation(uint additionalLightIndex, float3 positionWS, out float attenuation)
+{
+    attenuation = 1.0;
+    if (additionalLightIndex >= HO_SHADOW_CAST_ARRAY_ADDITIONAL_LIGHT_MAP)
+    {
+        return false;
+    }
+
+    if (_HoShadowCastActive >= 0.5 && _HoShadowCastLightCount > 0 && _HoShadowCastSliceCount > 0)
+    {
+        int lightIndex = (int)round(_HoShadowCastAdditionalLightMap[additionalLightIndex].x) - 1;
+        int lightCount = min(_HoShadowCastLightCount, HO_SHADOW_CAST_CAPACITY_LIGHTS);
+        if (lightIndex >= 0 && lightIndex < lightCount &&
+            HoShadowCastTryLightShadowAttenuation(lightIndex, positionWS, attenuation))
+        {
+            return true;
+        }
+    }
+
+    if (_HoShadowCastSecondDirectionalParams.x >= 0.5)
+    {
+        int lightIndex = (int)round(_HoShadowCastAdditionalLightMap[additionalLightIndex].y) - 1;
+        int lightCount = min((int)round(_HoShadowCastSecondDirectionalParams.y), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS);
+        if (lightIndex >= 0 && lightIndex < lightCount &&
+            HoShadowCastTrySecondDirectionalLightAttenuation(lightIndex, positionWS, attenuation))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 float HoShadowCastDirectionalAttenuation(float3 positionWS, bool mainOnly)
@@ -491,6 +639,14 @@ float HoShadowCastPunctualAttenuation(float3 positionWS, bool mainOnly)
 float HoShadowCastAttenuation(float3 positionWS)
 {
     float attenuation = HoShadowCastDirectionalAttenuation(positionWS, false) * HoShadowCastPunctualAttenuation(positionWS, false) * HoShadowCastSecondDirectionalAttenuation(positionWS, false);
+    return max(attenuation, HO_SHADOW_CAST_MIN_RECEIVER_ATTENUATION);
+}
+
+float HoShadowCastMainAttenuation(float3 positionWS)
+{
+    float attenuation = HoShadowCastDirectionalAttenuation(positionWS, true) *
+        HoShadowCastPunctualAttenuation(positionWS, true) *
+        HoShadowCastSecondDirectionalAttenuation(positionWS, true);
     return max(attenuation, HO_SHADOW_CAST_MIN_RECEIVER_ATTENUATION);
 }
 

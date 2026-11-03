@@ -13,11 +13,13 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public const string AtlasTextureName = "_HoShadowCastAtlas";
         public const string SecondDirectionalAtlasTextureName = "_HoShadowCastSecondDirectionalAtlas";
+        public const string AdditionalLightMapName = "_HoShadowCastAdditionalLightMap";
         public const string DebugShaderName = "Hidden/lilToon-HoShadowCast/URP/DebugView";
         public const string CastingPunctualKeywordName = "_CASTING_PUNCTUAL_LIGHT_SHADOW";
 
         public static readonly int AtlasTextureId = Shader.PropertyToID(AtlasTextureName);
         public static readonly int SecondDirectionalAtlasTextureId = Shader.PropertyToID(SecondDirectionalAtlasTextureName);
+        public static readonly int AdditionalLightMapId = Shader.PropertyToID(AdditionalLightMapName);
         public static readonly int ActiveId = Shader.PropertyToID("_HoShadowCastActive");
         public static readonly int LightCountId = Shader.PropertyToID("_HoShadowCastLightCount");
         public static readonly int SliceCountId = Shader.PropertyToID("_HoShadowCastSliceCount");

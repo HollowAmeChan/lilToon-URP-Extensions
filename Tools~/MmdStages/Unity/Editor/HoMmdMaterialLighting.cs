@@ -2,13 +2,112 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 /// <summary>Explicit external-material edits; never reapply a stage recipe or change a scene.</summary>
 public static class HoMmdMaterialLighting
 {
+    static readonly PropertyInfo RendererFeaturesProperty = typeof(ScriptableRenderer).GetProperty(
+        "rendererFeatures", BindingFlags.Instance | BindingFlags.NonPublic);
+
+    sealed class IsolationState
+    {
+        readonly List<Action> restore = new List<Action>();
+        Camera camera;
+        bool previousPostProcessing;
+        bool active;
+
+        public bool imageProcess, planarReflection, rtgi, volumeLight;
+        public bool urpPostProcessingDisabled => active;
+
+        public void Apply(Camera target)
+        {
+            active = true;
+            try
+            {
+                camera = target;
+                var cameraData = camera.GetUniversalAdditionalCameraData();
+                previousPostProcessing = cameraData.renderPostProcessing;
+                cameraData.renderPostProcessing = false;
+                restore.Add(() => {
+                    if (camera != null) camera.GetUniversalAdditionalCameraData().renderPostProcessing = previousPostProcessing;
+                });
+
+                var renderer = cameraData.scriptableRenderer;
+                var features = RendererFeaturesProperty?.GetValue(renderer) as List<ScriptableRendererFeature>;
+                if (features == null) throw new InvalidOperationException("Cannot inspect the active renderer's features.");
+                foreach (var feature in features)
+                {
+                    if (feature is lilToon.URP.Extensions.PostProcessing.ImageProcessRendererFeature image)
+                    {
+                        bool previous = image.UseVolumes;
+                        image.UseVolumes = false;
+                        restore.Add(() => image.UseVolumes = previous);
+                        imageProcess = true;
+                    }
+                    else if (feature is lilToon.URP.Extensions.PlanarReflection.HoPlanarReflectionRendererFeature reflection)
+                    {
+                        bool previousActive = reflection.isActive;
+                        reflection.SetActive(false);
+                        restore.Add(() => reflection.SetActive(previousActive));
+                        bool previous = reflection.FeatureSettings.enabled;
+                        reflection.FeatureSettings.enabled = false;
+                        restore.Add(() => reflection.FeatureSettings.enabled = previous);
+                        planarReflection = true;
+                    }
+                    else if (feature is lilToon.URP.Extensions.RTGI.HoRTGIRendererFeature gi)
+                    {
+                        bool previous = gi.Settings.enabled;
+                        gi.Settings.enabled = false;
+                        restore.Add(() => gi.Settings.enabled = previous);
+                        rtgi = true;
+                    }
+                    else if (feature is lilToon.URP.Extensions.VolumeLight.HoVolumeLightRendererFeature volumeLightFeature)
+                    {
+                        bool previous = volumeLightFeature.FeatureSettings.enabled;
+                        volumeLightFeature.FeatureSettings.enabled = false;
+                        restore.Add(() => volumeLightFeature.FeatureSettings.enabled = previous);
+                        volumeLight = true;
+                    }
+                }
+                if (!imageProcess || !planarReflection || !rtgi || !volumeLight)
+                    throw new InvalidOperationException(
+                        $"Direct-light isolation incomplete: ImageProcess={imageProcess}, PLR={planarReflection}, RTGI={rtgi}, VolumeLight={volumeLight}.");
+            }
+            catch
+            {
+                Restore();
+                throw;
+            }
+        }
+
+        public void Restore()
+        {
+            if (!active) return;
+            active = false;
+            for (int i = restore.Count - 1; i >= 0; i--)
+            {
+                try { restore[i](); }
+                catch (Exception error) { Debug.LogException(error); }
+            }
+            restore.Clear();
+            camera = null;
+        }
+    }
+
+    [Serializable]
+    sealed class IsolationReport
+    {
+        public string variant;
+        public bool imageProcessDisabled, planarReflectionDisabled, rtgiDisabled, volumeLightDisabled, urpPostProcessingDisabled;
+        public bool materialReflectionDisabled;
+        public float additionalLightIntensity, additionalLightShadowStrength, lightMaxLimit;
+    }
+
     public static void Probe(HoMmdStageWork.Request request, Action<string> completed, Action<Exception> failed)
     {
         if (string.IsNullOrEmpty(request.scenePath) || string.IsNullOrEmpty(request.stageFolder) ||
@@ -16,7 +115,7 @@ public static class HoMmdMaterialLighting
             throw new ArgumentException("Provide a scene and its explicit stage folder.");
         string output = Path.GetFullPath(request.outputPath);
         Directory.CreateDirectory(output);
-        string[] names = { "authored", "full-neutral", "full-2x", "full-no-additional", "full-unshadowed-additional", "full-2x-headroom" };
+        string[] names = { "authored", "full-neutral", "full-2x", "full-no-additional", "full-unshadowed-additional", "full-2x-headroom", "full-1x-headroom", "full-no-additional-headroom", "full-1x-limit-12", "full-1x-limit-16", "full-1x-limit-24", "full-no-additional-limit-12", "full-no-additional-limit-16", "full-no-additional-limit-24", "direct-diffuse-0x", "direct-diffuse-1x", "direct-diffuse-0x-headroom", "direct-diffuse-1x-headroom" };
         int variant = 0;
         Action next = null;
         next = () =>
@@ -24,10 +123,12 @@ public static class HoMmdMaterialLighting
             if (variant == names.Length) { completed(output); return; }
             int current = variant++;
             var clones = new List<Material>();
+            var isolation = new IsolationState();
             Action<ScriptableRenderContext, Camera> observer = null;
             int frames = 0;
             Action cleanup = () => {
                 if (observer != null) RenderPipelineManager.endCameraRendering -= observer;
+                isolation.Restore();
                 foreach (var clone in clones) if (clone != null) UnityEngine.Object.DestroyImmediate(clone);
             };
             try
@@ -56,25 +157,59 @@ public static class HoMmdMaterialLighting
                                     sourceToClone.Add(original, clone); clones.Add(clone);
                                     if (current > 0)
                                     {
-                                        clone.SetFloat("_HoRPShadowMode", 2);
-                                        clone.SetFloat("_HoAdditionalLightIntensity", current == 3 ? 0 : current == 2 || current == 5 ? 2 : 1);
-                                        clone.SetFloat("_HoAdditionalLightShadowStrength", current == 4 ? 0 : 1);
-                                        if (current == 5) clone.SetFloat("_LightMaxLimit", 32);
+                                        if (current < 14)
+                                        {
+                                            clone.SetFloat("_HoRPShadowMode", 2);
+                                            clone.SetFloat("_HoAdditionalLightIntensity", current == 3 || current == 7 || current >= 11 ? 0 : current == 2 || current == 5 ? 2 : 1);
+                                            clone.SetFloat("_HoAdditionalLightShadowStrength", current == 4 ? 0 : 1);
+                                            if (current >= 5) clone.SetFloat("_LightMaxLimit", 32);
+                                            if (current == 8 || current == 11) clone.SetFloat("_LightMaxLimit", 12);
+                                            if (current == 9 || current == 12) clone.SetFloat("_LightMaxLimit", 16);
+                                            if (current == 10 || current == 13) clone.SetFloat("_LightMaxLimit", 24);
+                                        }
+                                        else
+                                        {
+                                            bool headroom = current >= 16;
+                                            clone.SetFloat("_HoAdditionalLightIntensity", current == 14 || current == 16 ? 0 : 1);
+                                            clone.SetFloat("_HoAdditionalLightShadowStrength", 0);
+                                            if (headroom) clone.SetFloat("_LightMaxLimit", 32);
+                                            SetIfSupported(clone, "_UseReflection", 0);
+                                            SetIfSupported(clone, "_UsePlanarReflection", 0);
+                                        }
                                     }
                                 }
                                 assigned[i] = clone;
                             }
                             renderer.sharedMaterials = assigned;
                         }
+                        if (current >= 14) isolation.Apply(camera);
                         File.WriteAllText(Path.Combine(output, names[current] + "-materials.json"),
                             JsonUtility.ToJson(new Report { action = "temporary-probe", folder = request.stageFolder,
                                 materials = sourceToClone.Select(pair => new MaterialRow { material = AssetDatabase.GetAssetPath(pair.Key),
                                     shader = pair.Key.shader.name, before = Read(pair.Key), after = Read(pair.Value) }).ToArray() }, true));
+                        if (current >= 14)
+                        {
+                            var sample = sourceToClone
+                                .FirstOrDefault(pair => AssetDatabase.GetAssetPath(pair.Key).EndsWith(
+                                    "/Materials/000_地板.mat", StringComparison.Ordinal)).Value
+                                ?? sourceToClone.Values.FirstOrDefault();
+                            File.WriteAllText(Path.Combine(output, names[current] + "-isolation.json"),
+                                JsonUtility.ToJson(new IsolationReport {
+                                    variant = names[current], imageProcessDisabled = isolation.imageProcess,
+                                    planarReflectionDisabled = isolation.planarReflection, rtgiDisabled = isolation.rtgi,
+                                    volumeLightDisabled = isolation.volumeLight, urpPostProcessingDisabled = isolation.urpPostProcessingDisabled,
+                                    materialReflectionDisabled = true,
+                                    additionalLightIntensity = sample != null ? sample.GetFloat("_HoAdditionalLightIntensity") : 0,
+                                    additionalLightShadowStrength = sample != null ? sample.GetFloat("_HoAdditionalLightShadowStrength") : 0,
+                                    lightMaxLimit = sample != null ? sample.GetFloat("_LightMaxLimit") : 0
+                                }, true));
+                        }
                         observer = (context, rendered) => {
-                            if (rendered != camera || ++frames < Math.Max(1, request.warmup - 1)) return;
+                            if (rendered != camera || ++frames < Math.Max(1, request.warmup)) return;
                             RenderPipelineManager.endCameraRendering -= observer;
                             string audit = HoLightingAudit.Capture();
                             File.Copy(audit, Path.Combine(output, names[current] + "-lighting.json"), true);
+                            isolation.Restore();
                         };
                         RenderPipelineManager.endCameraRendering += observer;
                     }, request.warmup);
@@ -113,7 +248,7 @@ public static class HoMmdMaterialLighting
     };
     static readonly HashSet<string> EditableInputs = new HashSet<string>(Inputs, StringComparer.Ordinal);
 
-    // Full waits for per-light Ho ShadowCast matching; the current receiver aggregates the pool.
+    // Keep imported stage materials conservative; Full is an explicit per-light receiver opt-in.
     public static void InitializeStageMaterial(Material material)
     {
         SetIfSupported(material, "_HoRPShadowMode", 1);

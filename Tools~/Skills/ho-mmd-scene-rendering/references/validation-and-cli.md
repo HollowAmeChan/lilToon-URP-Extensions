@@ -70,7 +70,9 @@ python Tools~/MmdStages/stage-cli.py material-lighting-audit --folder "Assets/00
 python Tools~/MmdStages/stage-cli.py material-lighting-patch --folder "Assets/00动画/MMD场景/作者/场景" --settings "D:/Requests/materials.json" --output "D:/Requests/material-result.json"
 ```
 
-计划格式为 `{"changes":[{"material":"Assets/.../Materials/地板.mat","properties":[{"name":"_HoRPShadowMode","value":2},{"name":"_HoAdditionalLightIntensity","value":1.5}]}]}`。只写列出的受支持光照字段，批次预检路径/字段，拒绝覆盖 Unity 中未保存的材质，报告实际前后值与字段是否已显式保存，并在报告旁保存变更材质备份。**当前不要用批量计划设置 `_HoRPShadowMode=2`**：Full 的 HOSC 接收尚未逐灯化。新强度不要从旧 HDR 字段自动换算；只渲图不会重放计划。
+计划格式为 `{"changes":[{"material":"Assets/.../Materials/地板.mat","properties":[{"name":"_HoRPShadowMode","value":2},{"name":"_HoAdditionalLightIntensity","value":1.5}]}]}`。只写列出的受支持光照字段；批次预检路径/字段，拒绝覆盖 Unity 中未保存的材质，报告实际前后值与字段是否已显式保存，并在报告旁保存变更材质备份。Full 现已逐灯匹配 realtime HoShadowCast；只对经过画面审查的指定材质做定点计划，不对旧舞台全量切换。新强度不要从旧 HDR 字段自动换算；Mixed/Shadowmask/APV 尚未验证，只渲图不会重放计划。
+
+点光强度上调却看不出平面增亮时，先核对 Light 的 enabled、range、color、culling/rendering layers 与目标 Renderer 的 mask。整帧 beauty 同时包含 Bloom、PLR、cubemap reflection 和 GI，不能单独归因直射。`material-lighting-probe` 的 `direct-diffuse-0x/1x` 会临时关闭 URP/Ho 后处理、PLR、RTGI、VolumeLight 与材质反射，固定附光阴影强度为 0，只比较原上限下附光关闭/开启；`direct-diffuse-0x/1x-headroom` 在两张图中都把 `_LightMaxLimit` 设为 32，用来检查共享上限是否遮挡差分。32 也会放开主光，不能把 0x headroom 和 beauty 的整帧差异说成点光贡献。所有覆盖只作用于内存状态和材质副本，失败时恢复。若任一已加载 Scene dirty，探针会拒绝运行；不要为诊断保存、重载或丢弃用户场景。
 
 缺图/透明异常查单个 PMX report 与材质；反射异常才跑 PLR debug/on-off/mip；体积异常查对应 Source/Volume；怀疑底层依赖才看管线总览，不批量重置共享 Renderer。
 

@@ -14,6 +14,23 @@ namespace lilToon.URP.Extensions.Tests
             .GetMethod("IsLightCollectable", BindingFlags.NonPublic | BindingFlags.Static);
         static readonly MethodInfo GetReceiverFlags = IsLightCollectable.DeclaringType
             .GetMethod("GetReceiverFlags", BindingFlags.NonPublic | BindingFlags.Static);
+        static readonly MethodInfo GetAdditionalLightBufferIndex = IsLightCollectable.DeclaringType
+            .GetMethod("GetAdditionalLightBufferIndex", BindingFlags.NonPublic | BindingFlags.Static);
+
+        [TestCase(0, 2, 0)]
+        [TestCase(1, 2, 1)]
+        [TestCase(3, 2, 2)]
+        [TestCase(2, 2, -1)]
+        [TestCase(3, -1, 3)]
+        [TestCase(-1, 2, -1)]
+        public void AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(
+            int visibleLightIndex,
+            int mainLightIndex,
+            int expected)
+        {
+            Assert.AreEqual(expected, (int)GetAdditionalLightBufferIndex.Invoke(
+                null, new object[] { visibleLightIndex, mainLightIndex }));
+        }
 
         [Test]
         public void CustomShadowLayersAreIndependentFromLightingLayers()

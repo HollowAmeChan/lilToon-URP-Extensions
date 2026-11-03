@@ -71,6 +71,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Vector4 pcssParams;
         public Vector4 pcssParams2;
         public readonly Light[] sourceLights = new Light[HoShadowCastShaderContract.ArrayLights];
+        public readonly int[] additionalLightIndices = new int[HoShadowCastShaderContract.ArrayLights];
         public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderContract.ArraySlices];
         public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderContract.ArraySlices];
         public readonly Vector4[] lightData0 = new Vector4[HoShadowCastShaderContract.ArrayLights];
@@ -94,6 +95,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             for (int i = 0; i < sourceLights.Length; i++)
             {
                 sourceLights[i] = null;
+                additionalLightIndices[i] = -1;
                 lightData0[i] = Vector4.zero;
                 lightData1[i] = Vector4.zero;
                 lightData2[i] = Vector4.zero;
@@ -150,6 +152,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Vector4 pcssParams;
         public Vector4 pcssParams2;
         public readonly Light[] sourceLights = new Light[HoShadowCastShaderContract.SecondDirectionalLights];
+        public readonly int[] additionalLightIndices = new int[HoShadowCastShaderContract.SecondDirectionalLights];
         public readonly Vector4[] lightData = new Vector4[HoShadowCastShaderContract.SecondDirectionalLights];
         public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderContract.SecondDirectionalSlices];
         public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderContract.SecondDirectionalSlices];
@@ -169,6 +172,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             for (int i = 0; i < sourceLights.Length; i++)
             {
                 sourceLights[i] = null;
+                additionalLightIndices[i] = -1;
                 lightData[i] = Vector4.zero;
             }
 

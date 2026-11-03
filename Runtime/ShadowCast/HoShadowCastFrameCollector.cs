@@ -261,6 +261,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
                 int lightIndex = target.lightCount++;
                 target.sourceLights[lightIndex] = light;
+                target.additionalLightIndices[lightIndex] = GetAdditionalLightBufferIndex(visibleLightIndex, mainLightIndex);
                 target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength,
                     GetReceiverFlags(light));
                 diagnostics?.AddAccepted(
@@ -617,6 +618,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             int lightIndex = target.lightCount++;
             target.sourceLights[lightIndex] = light;
+            target.additionalLightIndices[lightIndex] = GetAdditionalLightBufferIndex(visibleLightIndex, mainLightIndex);
             Vector3 position = light.transform.position;
             Vector3 direction = light.transform.forward;
             Color finalColor = light.color * light.intensity;
@@ -1127,6 +1129,16 @@ namespace lilToon.URP.Extensions.ShadowCast
             if (light.TryGetComponent<HoShadowCastLight>(out var declaration) &&
                 declaration.isActiveAndEnabled && declaration.includeInMainShadow) flags |= 2;
             return flags;
+        }
+
+        private static int GetAdditionalLightBufferIndex(int visibleLightIndex, int mainLightIndex)
+        {
+            if (visibleLightIndex < 0 || visibleLightIndex == mainLightIndex)
+            {
+                return -1;
+            }
+
+            return visibleLightIndex - (mainLightIndex >= 0 && visibleLightIndex > mainLightIndex ? 1 : 0);
         }
 
         private static string GetShadowIneligibilityReason(Light light)

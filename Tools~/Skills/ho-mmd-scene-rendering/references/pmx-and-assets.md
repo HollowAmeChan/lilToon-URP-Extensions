@@ -10,7 +10,7 @@
 
 PMX Inspector 使用 Ho PMX importer：本工程常用缩放 0.08，静态舞台通常关闭自动描边，按需读取 Ray 材质。检查缺图与 alpha 分类，再抽出可编辑材质到 Materials。程序入口为 HoPmxMaterialExtraction.Extract。外置材质承担后续编辑，PMX 不需要回写。
 
-当前抽出的**场景材质**暂以 `_HoRPShadowMode=1`（Main）、`_HoAdditionalLightIntensity=1`、`_HoAdditionalLightShadowStrength=1` 为起点。舞台最终目标是 Full=2，但当前 Full 会把整池 ShadowCast 遮挡并入主光衰减；在逐灯接收修复前不要对新旧舞台批量应用 Full。通用 `create` 暂时使用 Main；修复并通过逐灯回归后，再更新该默认。角色保持 Main，不全局修改 lilToon Shader 默认值。详见[材质光照契约](lighting-and-rendering.md#材质光照契约与旧场景调整)。
+当前抽出的**场景材质**以 `_HoRPShadowMode=1`（Main）、`_HoAdditionalLightIntensity=1`、`_HoAdditionalLightShadowStrength=1` 为保守起点。Full=2 现按附加灯索引逐灯接收 HoShadowCast，适合需要额外局部 Cast 的舞台表面；未匹配来源/覆盖范围会回退 URP native，不再整体压暗主光。通用 `create` 仍默认 Main，场景审查后用显式计划对选定建筑、地面或道具设 Full；不批量翻转旧舞台材质。角色通常保持 Main，也不全局修改 lilToon Shader 默认值。Mixed/Shadowmask/APV 尚未验证。详见[材质光照契约](lighting-and-rendering.md#材质光照契约与旧场景调整)。
 
 PMX/MME 预览中的灯光、粒子、镜头和天空不会自动变成完整 Unity 效果，按用途重建。导入信息只在出现缺失/转换疑问时查。
 
