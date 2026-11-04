@@ -291,7 +291,7 @@ After opaque: consume RTDI/RTGI products into camera color at an explicit compos
 
 ## 10. 当前阶段评价与下一步
 
-**本轮完成：** 源码/文档基线已核对；现有 GTAO 对材质的 ramp 与全局压暗两种输出已确认；RTDI/RTGI producer 只读 buffer/world inputs，而 camera color 由独立 consumer 消费；A1 的 ScreenProcess RT-light typed contract、RenderGraph handle 发布、compatibility registry 和等价合成 shader 已落地；A2 已将两个 producer 的默认事件前移到 `BeforeRenderingOpaques`。Unity 6000.3.15 已生成 Runtime/Editor 扩展程序集。
+**本轮完成：** 源码/文档基线已核对；现有 GTAO 对材质的 ramp 与全局压暗两种输出已确认；RTDI/RTGI producer 只读 buffer/world inputs，而 camera color 由独立 consumer 消费；A1 的 ScreenProcess RT-light typed contract、RenderGraph handle 发布、compatibility registry 和等价合成 shader 已落地；A2 已将两个 producer 的默认事件前移到 `BeforeRenderingOpaques`。Unity 6000.3.15 已生成 Runtime/Editor 扩展程序集；在不含用户未跟踪 Editor benchmark 的干净 package 副本中，`RTLightingContractTests` 3/3 通过。
 
 **尚未完成：** 邻近审计的原始 GPU capture 未在本轮取得；reference project copy 当前不在记录的 checkout 路径；A1/A2 的 RenderGraph/compat 实际画面与资源生命周期仍待隔离夹具；HoShader RT 材质族、AO/GI shared primary-ray estimator、denoiser profile 和正式性能目标均待后续阶段。`ScreenProcessRegressionTests` 的 Unity 6000.3 compatibility setter 已按 `URP_COMPATIBILITY_MODE` 修复；当前全量 Editor 编译被工作区用户未跟踪的 `Editor/HoActiveFeatureBenchmark.cs` 重复成员阻断。D3D11 全量 ScreenProcess 回归另有既存 shader OOM/forced-unroll 失败，不能归因于本轮 RT contract。
 
