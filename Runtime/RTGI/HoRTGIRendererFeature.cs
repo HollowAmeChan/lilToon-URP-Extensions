@@ -4,6 +4,7 @@ using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI.NRD;
+using lilToon.URP.Extensions.PostProcessing;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -19,7 +20,6 @@ namespace lilToon.URP.Extensions.RTGI
         [SerializeField] private ComputeShader shader;
         [SerializeField] private RayTracingShader rayShader;
         [SerializeField] private Shader secondaryMaterialShader;
-        [SerializeField] private Shader compositeShader;
         [SerializeField] private ComputeShader[] nrdShaders;
         private object sceneProfileKey;
         private System.Func<IHoRTMaterialProfile> createSceneProfile;
@@ -30,8 +30,6 @@ namespace lilToon.URP.Extensions.RTGI
         private HoRTGIPass pass;
         private HoRTGIDebugPass debugPass;
         private Material debugMaterial;
-        private HoRTGICompositePass compositePass;
-        private Material compositeMaterial;
         private bool registered;
         public HoRTGISettings Settings => settings;
         public string Status { get; private set; } = "未生产";
@@ -47,18 +45,18 @@ namespace lilToon.URP.Extensions.RTGI
             if(shader==null)shader=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(root+"HoRTGI.compute");
             if(rayShader==null)rayShader=UnityEditor.AssetDatabase.LoadAssetAtPath<RayTracingShader>(root+"HoRTGI.raytrace");
             if(secondaryMaterialShader==null)secondaryMaterialShader=UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(root+"HoRTGISecondaryMaterial.shader");
-            if(compositeShader==null)compositeShader=UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(root+"HoRTGIComposite.shader");
             if(nrdShaders==null||nrdShaders.Length!=HoRTGINrdManifest.Identifiers.Length)nrdShaders=new ComputeShader[HoRTGINrdManifest.Identifiers.Length];
             for(int i=0;i<nrdShaders.Length;i++)if(nrdShaders[i]==null)nrdShaders[i]=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(root+"NRD/HoRTGINrd"+i.ToString("D2")+".compute");
             #endif
             sceneProfileKey=new object();
             var materialShader=secondaryMaterialShader;
             createSceneProfile=materialShader!=null?()=>new HoRTGISecondaryMaterials(materialShader):null;
-            pass=new HoRTGIPass();debugPass=new HoRTGIDebugPass();compositePass=new HoRTGICompositePass();
+            pass=new HoRTGIPass();debugPass=new HoRTGIDebugPass();
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
         private void ResetCamera(ScriptableRenderContext context,Camera camera)
         {
+            ScreenProcessRTLightingCompatibility.Reset(camera);
             Shader.SetGlobalFloat("_HoRTGIActive",0);Shader.SetGlobalTexture("_HoRTGIDiffuseTexture",Texture2D.blackTexture);
             Shader.SetGlobalTexture("_HoRTGIRawDiffuseTexture",Texture2D.blackTexture);
             if(!isActive||!settings.enabled)foreach(var item in contexts.Values){item.historyValid=false;if(item.nrd!=null)item.nrd.historyValid=false;}
@@ -107,12 +105,17 @@ namespace lilToon.URP.Extensions.RTGI
             foreach(var key in dead){contexts[key].Dispose();contexts.Remove(key);sceneViews.Remove(key);sceneLifetimes.Remove(key);}
             sceneViews[camera]=sceneView;
             var lights=CollectLights(active.lightLayers,out int excluded,out int signature);
-            var captured=new PassSettings(active);
+            var descriptor=data.cameraData.cameraTargetDescriptor;
+            bool compositeRequested=volume!=null&&volume.composite.overrideState?volume.composite.value:settings.composite;
+            float amount=volume!=null&&volume.intensity.overrideState?volume.intensity.value:settings.intensity;
+            amount=float.IsFinite(amount)?Mathf.Max(0,amount):0;
+            bool composite=compositeRequested&&amount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
+                &&!data.cameraData.xr.enabled&&camera.rect==new Rect(0,0,1,1);
+            var captured=new PassSettings(active,composite,amount);
             unchecked {signature=(signature*397^materials.Signature)*397^captured.signature;}
             if(!contexts.TryGetValue(camera,out var context)){context=new HoRTGIContext();contexts.Add(camera,context);}
             if(!sceneLifetimes.TryGetValue(camera,out long lifetime)||lifetime!=scene.Lifetime)
             {context.historyValid=false;if(context.nrd!=null)context.nrd.historyValid=false;sceneLifetimes[camera]=scene.Lifetime;}
-            var descriptor=data.cameraData.cameraTargetDescriptor;
             context.Prepare(descriptor.width,descriptor.height,lights.Count,format);LastContext=context;
             context.PrepareEnvironment(captured.useEnvironment&&captured.secondaryEnvironmentSamples>0);
             bool denoise=volume!=null&&volume.denoise.overrideState?volume.denoise.value:settings.denoise;
@@ -121,20 +124,20 @@ namespace lilToon.URP.Extensions.RTGI
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTGI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             if(materials.TimeVarying)context.historyValid=false;
             pass.Setup(context,sceneView,shader,rayShader,captured,lights.Count>0?lights.ToArray():new HoRTAnalyticLight[1],lights.Count,signature);
-            bool compositeRequested=volume!=null&&volume.composite.overrideState?volume.composite.value:settings.composite;
-            float amount=volume!=null&&volume.intensity.overrideState?volume.intensity.value:settings.intensity;
-            amount=float.IsFinite(amount)?Mathf.Max(0,amount):0;
-            bool composite=compositeRequested&&amount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
-                &&!data.cameraData.xr.enabled&&camera.rect==new Rect(0,0,1,1);
-            if(composite&&compositeMaterial==null&&compositeShader!=null)compositeMaterial=CoreUtils.CreateEngineMaterial(compositeShader);
-            composite&=compositeMaterial!=null;
-            pass.renderPassEvent=composite?RenderPassEvent.BeforeRenderingTransparents:RenderPassEvent.BeforeRenderingPostProcessing;
+            // GI is now a typed producer. ScreenProcess owns the later
+            // camera-color consumer, so GI always runs after GB/SB and before
+            // opaque Forward regardless of whether composition is requested.
+            pass.renderPassEvent=RenderPassEvent.BeforeRenderingOpaques;
             renderer.EnqueuePass(pass);
             Status=$"一跳 diffuse GI：{lights.Count} 灯 / {scene.InstanceCount} RT submesh / 排除 {excluded} 灯、{materials.Rejections.Count} 命中材质、{scene.Rejections.Count} 几何项";
             if(denoise)Status+=" / "+context.nrdStatus;
             if(scene.CutoutCount>0)Status+=" / 基础裁切 "+scene.CutoutCount;
-            if(composite){compositePass.Setup(compositeMaterial,context,amount);renderer.EnqueuePass(compositePass);Status+=" / GI 加法合成";}
-            else if(compositeRequested&&amount>0)Status+=" / 合成需要完整Shader、全视口Mono单采样输入";
+            if(composite)
+            {
+                ScreenProcessRTLightingCompatibility.PublishIndirect(camera,context.PublishedDiffuse,amount);
+                Status+=" / ScreenProcess GI 加法合成";
+            }
+            else if(compositeRequested&&amount>0)Status+=" / 合成未发布（需要全视口 Mono 单采样输入）";
             if(volume!=null&&volume.debugMode.value!=HoRTGIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
                 if(debugMaterial==null){var found=Shader.Find("Hidden/lilToon/URP/RTGI/Debug");if(found!=null)debugMaterial=CoreUtils.CreateEngineMaterial(found);}
@@ -172,7 +175,6 @@ namespace lilToon.URP.Extensions.RTGI
             HoAttributeCompositeConsumerRegistry.Remove(this);
             foreach(var context in contexts.Values)context.Dispose();contexts.Clear();sceneViews.Clear();sceneLifetimes.Clear();createSceneProfile=null;sceneProfileKey=null;
             debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;
-            compositePass?.Dispose();compositePass=null;CoreUtils.Destroy(compositeMaterial);compositeMaterial=null;
         }
         protected override void Dispose(bool disposing)
         {if(registered)RenderPipelineManager.beginCameraRendering-=ResetCamera;registered=false;ResetCamera(default,null);DisposeResources();}
@@ -181,12 +183,14 @@ namespace lilToon.URP.Extensions.RTGI
         // Recording a graph must not retain the mutable inspector settings object.
         internal readonly struct PassSettings
         {
-            internal readonly bool temporal,spatial,useEnvironment,includeDirectEnvironment;
+            internal readonly bool temporal,spatial,useEnvironment,includeDirectEnvironment,composite;
             internal readonly int secondaryLightSamples,secondaryEnvironmentSamples,spatialSamples,maxHistory,signature;
-            internal readonly float spatialRadius,rayBias,maxDistance;
-            internal PassSettings(HoRTGISettings source)
+            internal readonly float spatialRadius,rayBias,maxDistance,compositeIntensity;
+            internal PassSettings(HoRTGISettings source,bool composite,float compositeIntensity)
             {
                 temporal=source.temporal;spatial=source.spatial;useEnvironment=source.useEnvironment;includeDirectEnvironment=source.includeDirectEnvironment;
+                this.composite=composite;
+                this.compositeIntensity=float.IsFinite(compositeIntensity)?Mathf.Max(0,compositeIntensity):0;
                 secondaryLightSamples=Mathf.Clamp(source.secondaryLightSamples,1,32);secondaryEnvironmentSamples=Mathf.Clamp(source.secondaryEnvironmentSamples,0,32);
                 spatialSamples=Mathf.Clamp(source.spatialSamples,1,16);maxHistory=Mathf.Clamp(source.maxHistory,1,32);
                 spatialRadius=Mathf.Clamp(Finite(source.spatialRadius,16),1,32);rayBias=Mathf.Max(.00001f,Finite(source.rayBias,.001f));
@@ -206,7 +210,7 @@ namespace lilToon.URP.Extensions.RTGI
             private PassSettings settings;private HoRTAnalyticLight[] lights;private int lightCount,signature;
             private double renderTime;
             private static readonly string[] Stages={"BuildEnvironmentPdf","PresampleEnvironment","ShadeSecondary","Temporal","Spatial","Final"};
-            internal HoRTGIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
+            internal HoRTGIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingOpaques;}
             internal void Setup(HoRTGIContext context,HoRTView sceneView,ComputeShader shader,RayTracingShader rayShader,PassSettings settings,HoRTAnalyticLight[] lights,int lightCount,int signature)
             {
                 this.context=context;this.sceneView=sceneView;this.shader=shader;this.rayShader=rayShader;this.settings=settings;this.lights=lights;this.lightCount=lightCount;this.signature=signature;
@@ -258,6 +262,8 @@ namespace lilToon.URP.Extensions.RTGI
                     builder.SetGlobalTextureAfterPass(data.diffuse,Shader.PropertyToID("_HoRTGIDiffuseTexture"));
                     builder.SetGlobalTextureAfterPass(data.rawDiffuse,Shader.PropertyToID("_HoRTGIRawDiffuseTexture"));
                     var output=frame.GetOrCreate<HoRTGIRenderGraphResources>();output.diffuse=data.diffuse;output.rawDiffuse=data.rawDiffuse;
+                     if(data.settings.composite && data.settings.compositeIntensity>0)
+                         frame.GetOrCreate<ScreenProcessRTLightingResources>().PublishIndirect(data.diffuse,data.settings.compositeIntensity);
                     builder.SetRenderFunc(static(Data d,UnsafeGraphContext ctx)=>
                     {
                         var cmd=CommandBufferHelpers.GetNativeCommandBuffer(ctx.cmd);var raster=CommandBufferHelpers.GetRasterCommandBuffer(cmd);
@@ -377,6 +383,11 @@ namespace lilToon.URP.Extensions.RTGI
             public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)
             {
                 var d=Snapshot(data.cameraData.camera,data.cameraData.GetViewMatrix(),data.cameraData.GetProjectionMatrix());
+                if(d.settings.composite && d.settings.compositeIntensity>0)
+                    ScreenProcessRTLightingCompatibility.PublishIndirect(
+                        data.cameraData.camera,
+                        context.PublishedDiffuse,
+                        d.settings.compositeIntensity);
                 var cmd=CommandBufferPool.Get("Ho-RTGI reference GI passes");
                 HoRTPrimarySurfaceInputs.BindCompatibility(cmd,data.cameraData);
                 if(settings.useEnvironment&&HoAtmosphereBindings.compatibilityTexture!=null)

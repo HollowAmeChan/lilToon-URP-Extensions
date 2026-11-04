@@ -28,6 +28,11 @@ namespace lilToon.URP.Extensions.PostProcessing
         private Shader subjectMaskShader;
         private bool warnedMissingSubjectMaskShader;
         private ScreenProcessPass pass;
+        [SerializeField]
+        private Shader rtLightingShader;
+        private Material rtLightingMaterial;
+        private Shader cachedRTLightingShader;
+        private ScreenProcessRTLightingPass rtLightingPass;
         private ScreenProcessSemanticBufferReleasePass semanticBufferReleasePass;
 
         [Tooltip("The renderer feature installs the pass, and Volume profiles provide the active ScreenProcess stack.")]
@@ -42,11 +47,16 @@ namespace lilToon.URP.Extensions.PostProcessing
             HoAttributeCompositeConsumerRegistry.EnsureInitialized();
             IsUseVolumes = UseVolumes;
             pass = new ScreenProcessPass("Ho-ScreenProcess AfterURP BeforeImageProcess");
+            rtLightingPass = new ScreenProcessRTLightingPass();
             semanticBufferReleasePass = new ScreenProcessSemanticBufferReleasePass();
+            EnsureRTLightingMaterial();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
+            EnsureRTLightingMaterial();
+            rtLightingPass?.Setup(rtLightingMaterial, renderer.cameraColorTargetHandle);
+
             ScreenProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
@@ -62,6 +72,13 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            if (rtLightingPass != null && rtLightingMaterial != null)
+            {
+                // Product validity is resolved at the pass event. This
+                // remains independent from the late ScreenProcess volume.
+                renderer.EnqueuePass(rtLightingPass);
+            }
+
             ScreenProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
@@ -92,6 +109,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             HoAttributeCompositeConsumerRegistry.Remove(this);
             pass?.Dispose();
             pass = null;
+            rtLightingPass?.Dispose();
+            rtLightingPass = null;
             semanticBufferReleasePass = null;
 
             foreach (Material material in materialCache.Values)
@@ -102,6 +121,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             CoreUtils.Destroy(subjectMaskMaterial);
             subjectMaskMaterial = null;
             subjectMaskShader = null;
+            CoreUtils.Destroy(rtLightingMaterial);
+            rtLightingMaterial = null;
+            cachedRTLightingShader = null;
             materialCache.Clear();
             runtimeLayers.Clear();
             warnedMissingShaders.Clear();
@@ -374,6 +396,39 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             Debug.LogWarning($"ScreenProcess effect '{layer.effect}' was skipped because shader '{shaderName}' could not be found.");
+        }
+
+        private void EnsureRTLightingMaterial()
+        {
+            Shader shader = rtLightingShader != null
+                ? rtLightingShader
+                : Shader.Find(ScreenProcessShaderConstants.RTLightingShaderName);
+
+            #if UNITY_EDITOR
+            if (shader == null)
+            {
+                shader = UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(
+                    "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/RTLighting.shader");
+                if (shader != null && rtLightingShader == null)
+                {
+                    rtLightingShader = shader;
+                    UnityEditor.EditorUtility.SetDirty(this);
+                }
+            }
+            #endif
+
+            if (rtLightingMaterial != null && cachedRTLightingShader == shader)
+            {
+                return;
+            }
+
+            CoreUtils.Destroy(rtLightingMaterial);
+            rtLightingMaterial = null;
+            cachedRTLightingShader = shader;
+            if (shader != null)
+            {
+                rtLightingMaterial = CoreUtils.CreateEngineMaterial(shader);
+            }
         }
     }
 

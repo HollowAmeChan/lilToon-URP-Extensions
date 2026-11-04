@@ -13,6 +13,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public const string PostLightingShaderName = "Hidden/lilToon/URP/ScreenProcess/PostLighting";
         public const string SkyTyndallShaderName = "Hidden/lilToon/URP/ScreenProcess/SkyTyndall";
         public const string DepthFogShaderName = "Hidden/lilToon/URP/ScreenProcess/DepthFog";
+        public const string RTLightingShaderName = "Hidden/lilToon/URP/ScreenProcess/RTLighting";
         public const string SubjectMaskShaderName = "Hidden/lilToon/URP/ScreenProcess/SubjectMask";
         public const string TempTextureAName = "_lilScreenProcessTempA";
         public const string TempTextureBName = "_lilScreenProcessTempB";
