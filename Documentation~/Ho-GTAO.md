@@ -27,32 +27,34 @@
 
 ### 3.1 算法与流水线
 
-`深度金字塔（4 级 R32，2×2 最近深度归约）→ Bitmask ray march（32-bin，按 `log2(length(sampleOffset))-3` 选 LOD）→ temporal（重投影 + 累积 + 校验）→ spatial（Disk / Box）→ 上采样 → 发布`。
+`深度金字塔（4 级 R32，2×2 最近深度归约）→ Bitmask ray march（32-bin，按 log2(length(sampleOffset))-3 选 LOD）→ temporal（重投影 + 累积 + 校验）→ spatial（Disk / Box）→ 发布`。
 
 - 只实现 **VisibilityBitmasks**（复用 HTrace 的 32-bin `UpdateBitmask`、线性厚度、距离衰减、平方步进、蓝噪声抖动、逐帧 slice rotation），**没有 HorizonSearch 连续 arc 分支**。
 - 逐片输出 `1 − countbits(mask)/26`。
 - temporal：4 tap 历史 + 深度/法线/previous-plane 校验 + sampleCount 累积 + rejection；对象 Motion Mask/Delta（GB 深度上生产）+ 相机 MV（复用 URP motion vector pass）。
 - spatial：**Disk**（半径随对比度自适应，边缘保护更好）或 **Box**（Poisson 偏移、可叠 pass，便宜稳定）——两者都是双边式。
-- 上采样：真降分辨率 RT（divisor 1/2/4）+ 深度/法线引导，**不是** HTrace 的棋盘压缩寻址。
+- 当前 AO 计算固定 **Full**；Half/Quarter 仅保留配置值，尚未接入降分辨率和几何引导上采样。
 
-### 3.2 质量档（`HoGTAOQuality`）
+### 3.2 一次性填写预设（`HoGTAOQuality`）
 
-| 档 | 算法 | 去噪 | 分辨率 | Slice×Step |
+Volume Inspector 的 Low/Medium/High 按钮只填写以下六项具体参数，不修改任何 Override 勾选，也不修改半径、厚度或调试参数。用户手动启用所需 Override，填完后可自由调整。运行时没有质量档字段或自动套用预设的分支，只读取具体参数；不提供旧质量字段兼容或迁移。
+
+| 预设 | 算法 | 去噪 | 分辨率配置（实际均 Full） | Slice×Step |
 | --- | --- | --- | --- | --- |
-| Low | Bitmask | 仅空间滤波 | Quarter | 8 步 |
-| Medium | Bitmask | 简单时间累积（4 帧）+ 双层 Box | Half | 12 步 |
-| **High（默认）** | Bitmask | SpatioTemporal + Box×3 | Full | 4×32 |
+| Low | Bitmask | 0 帧累积 + Box×1 | Quarter | 2×8 |
+| Medium | Bitmask | 4 帧累积 + Box×2 | Half | 2×12 |
+| High | Bitmask | 12 帧累积 + Box×3 | Full | 4×32 |
 
 ### 3.3 公开参数（默认值）
 
-`worldSpaceRadius = 3.0`、`screenSpaceRadius = 30`、`thickness = 0.6`（Linear 档：`max(T/10·linDepth, T)`）、`sliceCount = 4`、`stepCount = 32`、`temporalFrameCount = 8`、`temporalRejection = 0.7`、`spatialFilter = Disk`、`filterRadius = 0.4`、`filterAdaptivity = 0.1`、`boxPassCount = 2`、`useAttenuation = 开`、`useLinearThickness = 开`、`passEvent = BeforeRenderingOpaques`。
+Renderer Feature 默认：`worldSpaceRadius = 3.0`、`screenSpaceRadius = 30`、`thickness = 0.6`（Linear 档：`max(T/10·linDepth, T)`）、`sliceCount = 4`、`stepCount = 32`、`temporalFrameCount = 12`、`temporalRejection = 0.7`、`spatialFilter = Box`、`filterRadius = 0.4`、`filterAdaptivity = 0.1`、`boxPassCount = 3`、`useAttenuation = 开`、`useLinearThickness = 开`、`passEvent = BeforeRenderingOpaques`。
 
 调试模式：`Off / AO / Depth / Normal / Motion / Temporal Disocclusion`（**序列化值 5 保留给历史资产**，不要重排）。`debugIntensity` 默认 3.672（HTrace 对照值），只影响调试显示。
 
 ### 3.4 不带进 Ho 的 HTrace 参数（及原因）
 
 - `TracingMode=HorizonSearch`（只保留最高档 Bitmask）；
-- `Denoising=None/SpatialOnly/TemporalOnly`（内部由质量档处理，不独立暴露）；
+- `Denoising=None/SpatialOnly/TemporalOnly`（由具体累积帧数和空间滤波参数控制）；
 - `DepthFormat`（HTrace 只 R16 一档；Ho 侧不受该枚举约束）；
 - `ExcludedIntensity`（用材质 AO 掩码替代，不引入新通道）；
 - `Intensity`（契约 0..1，强度归材质）；

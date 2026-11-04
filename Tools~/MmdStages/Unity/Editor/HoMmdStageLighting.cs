@@ -160,7 +160,7 @@ public static class HoMmdStageLighting
         var vignette=Component<Vignette>();vignette.intensity.Override(look.vignette);vignette.smoothness.Override(.68f);
         var grain=Component<FilmGrain>();grain.type.Override(FilmGrainLookup.Thin1);grain.intensity.Override(.045f);grain.response.Override(.85f);
         var chromatic=Component<ChromaticAberration>();chromatic.intensity.Override(.025f);
-        var ao=Component<HoGTAOVolume>();ao.worldSpaceRadius.Override(.7f);ao.debugIntensity.Override(1.6f);ao.quality.Override(HoGTAOQuality.High);
+        var ao=Component<HoGTAOVolume>();ao.worldSpaceRadius.Override(.7f);ao.debugIntensity.Override(1.6f);HoGTAOQualityPresets.Apply(HoGTAOQuality.High,ao);
         var atmosphere=Component<HoAtmosphereVolume>();atmosphere.intensity.Override(look.ambientAir);
         var vl=Component<HoVolumeLightVolume>();vl.enable.Override(true);vl.intensity.Override(look.shafts);vl.stepCount.Override(96);
         vl.maxDistance.Override(70);vl.antialiasing.Override(HoVolumeLightAntialiasing.Temporal);vl.anisotropy.Override(.36f);

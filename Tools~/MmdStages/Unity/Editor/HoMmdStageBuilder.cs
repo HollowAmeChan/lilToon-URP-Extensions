@@ -406,7 +406,7 @@ public static class HoMmdStageBuilder
         var color=Add<ColorAdjustments>();color.postExposure.Override(r.exposure);color.contrast.Override(8);color.saturation.Override(-4);
         var tone=Add<Tonemapping>();tone.mode.Override(TonemappingMode.ACES);
         var vignette=Add<Vignette>();vignette.intensity.Override(.15f);vignette.smoothness.Override(.5f);
-        var ao=Add<HoGTAOVolume>();ao.enable.Override(true);ao.quality.Override(HoGTAOQuality.Medium);ao.worldSpaceRadius.Override(.55f);
+        var ao=Add<HoGTAOVolume>();ao.enable.Override(true);HoGTAOQualityPresets.Apply(HoGTAOQuality.Medium,ao);ao.worldSpaceRadius.Override(.55f);
         var vl=Add<HoVolumeLightVolume>();vl.enable.Override(true);vl.intensity.Override(r.volume);vl.stepCount.Override(32);vl.antialiasing.Override(HoVolumeLightAntialiasing.Spatial);
         var atmos=Add<HoAtmosphereVolume>();atmos.enable.Override(true);atmos.intensity.Override(.6f);
         var planar=Add<HoPlanarReflectionVolume>();

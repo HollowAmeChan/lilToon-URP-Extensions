@@ -7,11 +7,11 @@ namespace lilToon.URP.Extensions.GTAO
 {
     public enum HoGTAOQuality
     {
-        [InspectorName("Low"), Tooltip("低档（参数保守）：Quarter 分辨率 + 8 步 + 仅空间滤波。")]
+        [InspectorName("Low"), Tooltip("填写低档 Volume 参数：Quarter 配置 + 2 切片/8 步 + 仅空间滤波。")]
         Low = 0,
-        [InspectorName("Medium"), Tooltip("中档：Half 分辨率 + 12 步 + 简单时间累积（4 帧）+ 双层 Box。")]
+        [InspectorName("Medium"), Tooltip("填写中档 Volume 参数：Half 配置 + 2 切片/12 步 + 4 帧累积 + Box x2。")]
         Medium = 1,
-        [InspectorName("High"), Tooltip("高档（默认）：Visibility Bitmasks + Full + 4 切片/32 步 + 12 帧累积 + Box x3。")]
+        [InspectorName("High"), Tooltip("填写高档 Volume 参数：Full + 4 切片/32 步 + 12 帧累积 + Box x3。")]
         High = 2,
     }
 
@@ -19,9 +19,9 @@ namespace lilToon.URP.Extensions.GTAO
     {
         [InspectorName("Full"), Tooltip("全分辨率计算。质量最高，最贵。")]
         Full = 0,
-        [InspectorName("Half"), Tooltip("半分辨率计算，输出后按深度/法线引导上采样。")]
+        [InspectorName("Half"), Tooltip("半分辨率配置。当前渲染路径仍固定全分辨率。")]
         Half = 1,
-        [InspectorName("Quarter"), Tooltip("四分之一分辨率计算。最便宜，细节有损。")]
+        [InspectorName("Quarter"), Tooltip("四分之一分辨率配置。当前渲染路径仍固定全分辨率。")]
         Quarter = 2,
     }
 
@@ -63,7 +63,6 @@ namespace lilToon.URP.Extensions.GTAO
         // （GeometryBuffer 在前、Ho-GTAO 紧随其后）；序列化默认值仅用于兼容旧资产。
         public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingOpaques;
 
-        public HoGTAOQuality quality = HoGTAOQuality.High;
         public HoGTAOResolution resolution = HoGTAOResolution.Full;
 
         public int sliceCount = 4;
@@ -77,12 +76,12 @@ namespace lilToon.URP.Extensions.GTAO
         public bool useLinearThickness = true;
 
         // 去噪参数（High 档）
-        public int temporalFrameCount = 8;
+        public int temporalFrameCount = 12;
         public float temporalRejection = 0.7f;
-        public HoGTAOSpatialFilter spatialFilter = HoGTAOSpatialFilter.Disk;
+        public HoGTAOSpatialFilter spatialFilter = HoGTAOSpatialFilter.Box;
         public float filterRadius = 0.4f;
         public float filterAdaptivity = 0.1f;
-        public int boxPassCount = 2;
+        public int boxPassCount = 3;
 
         // 调试
         public HoGTAODebugMode debugMode = HoGTAODebugMode.Off;

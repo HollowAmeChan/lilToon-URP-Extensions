@@ -45,10 +45,8 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         private void DrawRuntime()
         {
             SerializedProperty enabled = Find("enabled");
-            SerializedProperty quality = Find("quality");
             SerializedProperty resolution = Find("resolution");
             string summary = LilUrpEditorSectionGui.BoolSummary(enabled)
-                + " / " + LilUrpEditorSectionGui.EnumName(quality)
                 + " / " + LilUrpEditorSectionGui.EnumName(resolution);
 
             if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
@@ -59,7 +57,6 @@ namespace lilToon.URP.Extensions.Editor.GTAO
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("enabled");
-                DrawProperty("quality");
                 DrawProperty("resolution");
                 DrawProperty("sliceCount");
                 DrawProperty("stepCount");

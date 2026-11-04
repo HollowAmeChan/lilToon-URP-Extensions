@@ -26,7 +26,6 @@ namespace lilToon.URP.Extensions.GTAO
         private Material debugMaterial;
         private Shader debugShader;
         private readonly Dictionary<int, HoGTAOHistory> cameraHistories = new Dictionary<int, HoGTAOHistory>();
-        private HoGTAOQuality lastAppliedQuality = (HoGTAOQuality)(-1);
         private bool resetRegistered;
 
         public HoGTAOSettings Settings => settings;
@@ -57,12 +56,6 @@ namespace lilToon.URP.Extensions.GTAO
             if (cameraType != CameraType.Game && cameraType != CameraType.SceneView)
             {
                 return;
-            }
-
-            if (settings.quality != lastAppliedQuality)
-            {
-                HoGTAOQualityPresets.Apply(settings.quality, settings);
-                lastAppliedQuality = settings.quality;
             }
 
             Shader currentShader = settings.shader != null ? settings.shader : Shader.Find(HoGTAOShaderConstants.ShaderName);
@@ -162,12 +155,6 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             if (volume.enable.overrideState) settings.enabled = volume.enable.value;
-            if (volume.quality.overrideState)
-            {
-                settings.quality = volume.quality.value;
-                HoGTAOQualityPresets.Apply(volume.quality.value, settings);
-                lastAppliedQuality = volume.quality.value;
-            }
             if (volume.resolution.overrideState) settings.resolution = volume.resolution.value;
             if (volume.worldSpaceRadius.overrideState) settings.worldSpaceRadius = volume.worldSpaceRadius.value;
             if (volume.screenSpaceRadius.overrideState) settings.screenSpaceRadius = volume.screenSpaceRadius.value;
@@ -879,9 +866,9 @@ namespace lilToon.URP.Extensions.GTAO
                 data.useMotionVectors = motionVectors.IsValid();
                 data.useCameraMotion = !data.useMotionVectors && cameraData.cameraType == CameraType.SceneView;
                 data.debugDisocclusion = debugTemporal || settings.debugMode == HoGTAODebugMode.All;
-                // HTrace's SampleCountTemporal=8 gates motion-vector work but
-                // accumulates up to g_HTemporalSamplecountAO*2 = 12 frames.
-                data.maxFrames = settings.temporalFrameCount > 0 ? 12 : 1;
+                // One frame disables history blending; otherwise honor the
+                // explicit Volume limit, including the Medium preset's 4.
+                data.maxFrames = Mathf.Clamp(settings.temporalFrameCount, 1, 12);
                 data.rejection = settings.temporalRejection;
                 float temporalBaselineSpread = 2.0f * Mathf.Tan(60.0f * Mathf.Deg2Rad * 0.5f) / 1080.0f;
                 float temporalActualSpread = 2.0f * Mathf.Tan(cameraData.camera.fieldOfView * Mathf.Deg2Rad * 0.5f)

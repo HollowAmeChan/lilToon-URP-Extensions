@@ -6,20 +6,6 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.GTAO
 {
     [Serializable]
-    public sealed class HoGTAOQualityParameter : VolumeParameter<HoGTAOQuality>
-    {
-        public HoGTAOQualityParameter(HoGTAOQuality value, bool overrideState = false)
-            : base(value, overrideState)
-        {
-        }
-
-        public override void Interp(HoGTAOQuality from, HoGTAOQuality to, float t)
-        {
-            value = t > 0.0f ? to : from;
-        }
-    }
-
-    [Serializable]
     public sealed class HoGTAOResolutionParameter : VolumeParameter<HoGTAOResolution>
     {
         public HoGTAOResolutionParameter(HoGTAOResolution value, bool overrideState = false)
@@ -76,10 +62,7 @@ namespace lilToon.URP.Extensions.GTAO
 
         [Header("质量")]
 
-        [InspectorName("质量档"), Tooltip("Low/Medium/High 三档预设。High 使用 Visibility Bitmasks + Full + 4x32 + 12 帧 + Box x3。")]
-        public HoGTAOQualityParameter quality = new HoGTAOQualityParameter(HoGTAOQuality.High);
-
-        [InspectorName("计算分辨率"), Tooltip("AO 计算分辨率。Half 输出后按深度/法线引导上采样。")]
+        [InspectorName("计算分辨率"), Tooltip("分辨率配置。当前渲染路径固定全分辨率，Half/Quarter 暂不改变实际计算尺寸。")]
         public HoGTAOResolutionParameter resolution = new HoGTAOResolutionParameter(HoGTAOResolution.Full);
 
         [Header("追踪")]

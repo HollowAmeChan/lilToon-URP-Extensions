@@ -22,7 +22,6 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         private SerializedDataParameter enable;
         private SerializedDataParameter debugInSceneView;
         private SerializedDataParameter debugInGameView;
-        private SerializedDataParameter quality;
         private SerializedDataParameter resolution;
         private SerializedDataParameter worldSpaceRadius;
         private SerializedDataParameter screenSpaceRadius;
@@ -46,7 +45,6 @@ namespace lilToon.URP.Extensions.Editor.GTAO
             enable = Unpack(fetcher.Find(x => x.enable));
             debugInSceneView = Unpack(fetcher.Find(x => x.debugInSceneView));
             debugInGameView = Unpack(fetcher.Find(x => x.debugInGameView));
-            quality = Unpack(fetcher.Find(x => x.quality));
             resolution = Unpack(fetcher.Find(x => x.resolution));
             worldSpaceRadius = Unpack(fetcher.Find(x => x.worldSpaceRadius));
             screenSpaceRadius = Unpack(fetcher.Find(x => x.screenSpaceRadius));
@@ -80,7 +78,6 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         private void DrawRuntime()
         {
             string summary = LilUrpEditorSectionGui.BoolSummary(enable)
-                + " / " + LilUrpEditorSectionGui.EnumSummary(quality)
                 + " / " + LilUrpEditorSectionGui.EnumSummary(resolution);
             if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
                 return;
@@ -88,11 +85,35 @@ namespace lilToon.URP.Extensions.Editor.GTAO
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawParameter(enable, "启用");
-                DrawParameter(quality, "质量档");
+                DrawPresets();
                 DrawParameter(resolution, "计算分辨率");
                 EditorGUILayout.Space(3.0f);
-                EditorGUILayout.HelpBox("High 档使用 Full + Visibility Bitmasks。质量档只写入密度和去噪预设，追踪半径与厚度仍可单独覆盖。", MessageType.None);
+                EditorGUILayout.HelpBox("预设只填写密度和去噪参数，不改 Override 勾选、半径或厚度。请手动勾选需要覆盖的参数，填入后可继续调整。", MessageType.None);
+                EditorGUILayout.HelpBox("当前 AO 计算固定为 Full；Half/Quarter 配置暂不改变实际计算分辨率。", MessageType.None);
             }
+        }
+
+        private void DrawPresets()
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PrefixLabel("填入质量预设");
+                if (GUILayout.Button("Low")) ApplyPreset(HoGTAOQuality.Low);
+                if (GUILayout.Button("Medium")) ApplyPreset(HoGTAOQuality.Medium);
+                if (GUILayout.Button("High")) ApplyPreset(HoGTAOQuality.High);
+            }
+        }
+
+        private void ApplyPreset(HoGTAOQuality preset)
+        {
+            serializedObject.ApplyModifiedProperties();
+            Undo.RecordObjects(serializedObject.targetObjects, "Fill GTAO Volume Preset");
+            foreach (Object targetObject in serializedObject.targetObjects)
+            {
+                HoGTAOQualityPresets.Apply(preset, (HoGTAOVolume)targetObject);
+                EditorUtility.SetDirty(targetObject);
+            }
+            serializedObject.Update();
         }
 
         private void DrawTracing()
