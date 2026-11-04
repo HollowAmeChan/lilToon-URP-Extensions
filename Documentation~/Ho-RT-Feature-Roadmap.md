@@ -293,7 +293,7 @@ After opaque: consume RTDI/RTGI products into camera color at an explicit compos
 
 **本轮完成：** 源码/文档基线已核对；现有 GTAO 对材质的 ramp 与全局压暗两种输出已确认；RTDI/RTGI producer 只读 buffer/world inputs，而 camera color 由独立 consumer 消费；A1 的 ScreenProcess RT-light typed contract、RenderGraph handle 发布、compatibility registry 和等价合成 shader 已落地；A2 已将两个 producer 的默认事件前移到 `BeforeRenderingOpaques`。Unity 6000.3.15 已生成 Runtime/Editor 扩展程序集。
 
-**尚未完成：** 邻近审计的原始 GPU capture 未在本轮取得；reference project copy 当前不在记录的 checkout 路径；A1/A2 的 RenderGraph/compat 实际画面与资源生命周期仍待隔离夹具；HoShader RT 材质族、AO/GI shared primary-ray estimator、denoiser profile 和正式性能目标均待后续阶段。当前 Unity 全项目测试编译仍被仓库已有的 `ScreenProcessRegressionTests.cs` compatibility-mode setter 错误阻断，不能视为本次 Runtime 代码失败。
+**尚未完成：** 邻近审计的原始 GPU capture 未在本轮取得；reference project copy 当前不在记录的 checkout 路径；A1/A2 的 RenderGraph/compat 实际画面与资源生命周期仍待隔离夹具；HoShader RT 材质族、AO/GI shared primary-ray estimator、denoiser profile 和正式性能目标均待后续阶段。`ScreenProcessRegressionTests` 的 Unity 6000.3 compatibility setter 已按 `URP_COMPATIBILITY_MODE` 修复；当前全量 Editor 编译被工作区用户未跟踪的 `Editor/HoActiveFeatureBenchmark.cs` 重复成员阻断。D3D11 全量 ScreenProcess 回归另有既存 shader OOM/forced-unroll 失败，不能归因于本轮 RT contract。
 
 **下一步 A0/A1/A2 验证：** 从邻近 GTAO/RTDI/RTGI 审计取回实际配置与 raw GPU marker 报告；在隔离 ScreenProcess/RTDI/RTGI 夹具中验证同帧 product、关闭/重启/多相机清理、透明前合成和 RenderGraph/compat 对等；记录 GB/SB/Forward/RT producer/consumer 的真实顺序及数据依赖。A1/A2 验证通过前不删除旧 Composite 源文件，也不开始 AO product Runtime。
 
