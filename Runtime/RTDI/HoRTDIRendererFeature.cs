@@ -159,10 +159,10 @@ namespace lilToon.URP.Extensions.RTDI
             context.PrepareDenoiser(viewSettings.denoise,nrdShaders);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             var lightData=lightList.Count>0?lightList.ToArray():new HoRTAnalyticLight[1];
-            pass.Setup(context,sceneView,shader,finalVisibilityShader,settings,viewSettings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
             float compositeAmount=viewSettings.compositeAmount;
             bool composite=viewSettings.composite&&compositeAmount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
                 &&!data.cameraData.xr.enabled&&camera.rect==new Rect(0,0,1,1);
+            pass.Setup(context,sceneView,shader,finalVisibilityShader,settings,viewSettings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature,composite);
             // RTDI is a producer of typed lighting products. It no longer owns
             // camera-color composition, so its producer always runs after the
             // surface buffers and before opaque Forward.
@@ -206,10 +206,10 @@ namespace lilToon.URP.Extensions.RTDI
                 internal readonly HoRTDICompositeMode compositeMode;
                 internal readonly int environmentSamples,environmentBrdfSamples,initialSamples,maxHistory,spatialSamples;
                 internal readonly float spatialRadius,rayBias,environmentIntensity,compositeAmount;
-                internal PassSettings(HoRTDISettings source,HoRTDIViewSettings view)
+                internal PassSettings(HoRTDISettings source,HoRTDIViewSettings view,bool compositeEnabled)
                 {
                     useEnvironment=view.useEnvironment;temporal=view.temporal;spatial=view.spatial;
-                    composite=view.composite;compositeMode=view.compositeMode;compositeAmount=view.compositeAmount;
+                    composite=compositeEnabled;compositeMode=view.compositeMode;compositeAmount=view.compositeAmount;
                     environmentSamples=view.environmentSamples;environmentBrdfSamples=view.environmentBrdfSamples;initialSamples=view.initialSamples;maxHistory=view.maxHistory;spatialSamples=view.spatialSamples;
                     spatialRadius=view.spatialRadius;rayBias=source.rayBias;environmentIntensity=view.environmentIntensity;
                 }
@@ -220,9 +220,9 @@ namespace lilToon.URP.Extensions.RTDI
             private HoRTAnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             private int requestedFinalSamples;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingOpaques;}
-            internal void Setup(HoRTDIContext context,HoRTView sceneView,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,HoRTDIViewSettings view,HoRTAnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
+            internal void Setup(HoRTDIContext context,HoRTView sceneView,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,HoRTDIViewSettings view,HoRTAnalyticLight[] lights,Light[] keys,int count,int localCount,int signature,bool compositeEnabled)
             {
-                this.context=context;this.sceneView=sceneView;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings,view);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
+                this.context=context;this.sceneView=sceneView;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings,view,compositeEnabled);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
                 requestedFinalSamples=view.finalSampling==HoRTDIFinalSampling.TripleAnalytic?3:1;
                 #if UNITY_EDITOR
                 ConfigureInput(context.nrd?.ValidationMotionCapture!=null?ScriptableRenderPassInput.Motion:ScriptableRenderPassInput.None);

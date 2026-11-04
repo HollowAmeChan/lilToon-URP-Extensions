@@ -28,6 +28,7 @@ namespace lilToon.URP.Extensions.Tests
             StringAssert.Contains("ScreenProcessRTLightingResources", gi);
             StringAssert.Contains("PublishDirect", di);
             StringAssert.Contains("PublishIndirect", gi);
+            StringAssert.Contains("compositeEnabled", di);
             StringAssert.DoesNotContain("compositePass", di);
             StringAssert.DoesNotContain("compositeShader", di);
             StringAssert.DoesNotContain("compositePass", gi);
