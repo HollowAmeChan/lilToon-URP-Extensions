@@ -277,7 +277,7 @@ SSGI 与 RTDI 的具体信号、候选和滤波预算不同，不能仅凭同用
 
 ## 9. 调度、资源与性能口径
 
-DI 四阶段在一个 graphics-queue unsafe pass 内顺序执行，默认位于 `BeforeRenderingPostProcessing`，有效合成模式移到 `BeforeRenderingTransparents`，显式声明主表面、AS、灯和输出依赖。Initial 写 reservoir1，Temporal 写2，Spatial 回写1，Shade 保存历史0。Power 额外执行 PDF build / mip / presample，Cutout 增加原生最终可见性，NRD 开启时执行其信号准备、confidence、固定核心返回的 dispatch 与恢复。
+DI 四阶段在一个 graphics-queue unsafe pass 内顺序执行，producer 固定位于 `BeforeRenderingOpaques`，显式声明主表面、AS、灯和输出依赖；camera-color consumer 由 Ho-ScreenProcess 在 `BeforeRenderingTransparents` 执行。Initial 写 reservoir1，Temporal 写2，Spatial 回写1，Shade 保存历史0。Power 额外执行 PDF build / mip / presample，Cutout 增加原生最终可见性，NRD 开启时执行其信号准备、confidence、固定核心返回的 dispatch 与恢复。
 
 当前不复制另一套主表面 GBuffer。SB 在 RT 消费需求下请求高精度 normal；current / previous 共用2×16-bit oct 法线编码。DI / GI 的20-byte主表面历史含 depth、shading/mesh normal、diffuse/validity、F0/roughness，各自逐相机拥有。
 

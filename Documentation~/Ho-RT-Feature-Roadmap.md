@@ -26,7 +26,7 @@ Ho-RT CPU scene snapshot / AS lifetime
     -> transparents / ScreenProcess / ImageProcess as ordered by contract
 ```
 
-这是一种 **buffer-fed hybrid forward** / 前置 RT producer 架构，不等于把每种效果拆成逐层屏幕图，也不要求 RTDI/RTGI 先等 Forward camera color。现有 RTDI 与 RTGI 在无合成模式下虽然被安排在 `BeforeRenderingPostProcessing`，其 producer 实际读取的是 Ho-RT view、SB primary、灯光/环境及各自历史；读取 `activeColorTexture` 的是独立 composite pass。因而当前晚时序首先是实现打包/接入选择，不能据此推导 producer 必须晚于材质。
+这是一种 **buffer-fed hybrid forward** / 前置 RT producer 架构，不等于把每种效果拆成逐层屏幕图，也不要求 RTDI/RTGI 先等 Forward camera color。A1/A2 后，RTDI 与 RTGI producer 固定在 `BeforeRenderingOpaques`，实际读取 Ho-RT view、SB primary、灯光/环境及各自历史；读取 `activeColorTexture` 的是 `BeforeRenderingTransparents` ScreenProcess RT-light consumer。因此 producer 的前置时序与 camera-color 消费已经明确分离。
 
 职责边界：
 
@@ -80,7 +80,7 @@ HoShader 新材质若要让 RT lighting 参与 NPR response，应在其自有完
 | GTAO 计算分辨率 | `HoGTAOResolution` 有 Full/Half/Quarter 选项，但目前 RenderGraph 按 camera target 全分辨率分配和计算 | 先建立配对基线；实际低分辨率 GTAO 是必须的对照，而非仅看 Volume 选项 |
 | lilToon AO 用途 | 同一 `fd.aoVis` 同时推动 toon ramp 偏移，并在主光照着色后对 `fd.col.rgb` 作 AOColor/AODarkStrength 整体压暗；ShadowBorderMask 与 AO Mask 也参与组合 | 保持两个输出和现有材质参数；算法输出不得预乘艺术强度 |
 | RT 场景 | Ho-RT 按 Renderer/Camera 管理 domain、共享几何/蒙皮快照和 fence；view 可因 hit-material / 求交规则不同而分开 | 复用 host 与 pose cache，不预设每个消费者共用同一 AS |
-| RTGI 采样 | 当前每个有效主表面生成一条 cosine-hemisphere 次级方向，绕 `shadingNormalWS` 建基；其生产 pass 目前在不合成时位于 `BeforeRenderingPostProcessing` | 有潜在同方向样本复用，但需解决 opaque 前 AO 时序、法线域与距离域匹配 |
+| RTGI 采样 | 当前每个有效主表面生成一条 cosine-hemisphere 次级方向，绕 `shadingNormalWS` 建基；A2 producer 位于 `BeforeRenderingOpaques`，ScreenProcess consumer 仍在透明前 | 有潜在同方向样本复用，但需解决 opaque 前 AO 时序、法线域与距离域匹配 |
 | RTDI / RTGI producer 输入与时序 | RenderGraph producer 直接读 Ho-RT view、`HoRTPrimarySurfaceInputs`/SB 与灯光/环境；正常相机颜色只由后置 composite 消费 | 前移 producer 是可评估的调度重构，不是 GBuffer 缺少完整 Forward color 的材质依赖 |
 | RTDI 遮挡 | RTDI 对最终选中的解析灯/环境样本做方向相关的 visibility；它不是通用半球可见度 | 不把标量 AO 乘到已包含 visibility 的 direct-light 输出 |
 | 性能报告 | 邻近审计报告 GTAO 超过 200 ms，并称 RTDI/RTGI 约低一个数量级；当前消息未附同一相机、分辨率、GPU marker 与原始报告 | 暂记为用户提供的观察/性能目标。导入原始 capture 后再冻结基线，不能据不同测试尺寸和场景宣布算法胜负 |
