@@ -24,8 +24,9 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private const string DebugShaderFileName = "HoShadowCastDebug.shader";
         private const string LogPrefix = "[lilToon URP Extensions] ShadowCast shader contract: ";
 
+        // Multiline '$' stops before LF but leaves CR in Windows line endings.
         private static readonly Regex DefinePattern = new Regex(
-            @"^[ \t]*#define[ \t]+([A-Za-z_][A-Za-z0-9_]*)[ \t]+([^\s/]+)[ \t]*(?://.*)?$",
+            @"^[ \t]*#define[ \t]+([A-Za-z_][A-Za-z0-9_]*)[ \t]+([^\s/]+)[ \t]*(?://.*)?\r?$",
             RegexOptions.Multiline);
 
         private static readonly Regex WhitespacePattern = new Regex(@"\s+");
