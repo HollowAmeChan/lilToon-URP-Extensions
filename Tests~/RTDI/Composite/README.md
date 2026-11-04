@@ -1,18 +1,26 @@
-# Normal-camera RTDI composition
+# Historical normal-camera RTDI composition
+
+> This directory preserves qualification for the pre-A1 RTDI-owned
+> `HoRTDICompositePass` implementation. It is historical evidence, not proof
+> of the current ScreenProcess RT-light consumer. Current production code
+> publishes typed RTDI products from `HoRTDIRendererFeature` and lets
+> `Ho-ScreenProcess` consume them before transparents; a new paired A/B
+> capture is still required before deleting the legacy source files.
 
 This folder preserves the original replacement-mode qualification at `da52a0f`.
 The current Inspector calls the switch **合成到画面** and also offers additive
 blending; current formulas, captures and qualification are in [Blend](Blend/README.md).
 The original reports below are not retroactively treated as additive tests.
 
-The production Feature now has an optional **合成到画面（参考 PBR）** setting.
-It defaults to false. With weight 1, valid opaque receivers get published
-diffuse + specular + SB emission in the normal camera target. Old receiver
-lighting is replaced, not added a second time. Debug remains Off.
+The historical production Feature had an optional **合成到画面（参考 PBR）**
+setting. It defaulted to false. With weight 1, valid opaque receivers got
+published diffuse + specular + SB emission in the normal camera target. Old
+receiver lighting was replaced, not added a second time. Debug remained Off.
 
-The producer and composite run, in that order, at
-`BeforeRenderingTransparents`. Transparent rendering and postprocessing then use
-the new camera colour. Disabled composition keeps the original producer timing.
+The historical producer and composite ran, in that order, at
+`BeforeRenderingTransparents`. The current producer runs at
+`BeforeRenderingOpaques`; composition is owned by ScreenProcess at the named
+consumer event.
 The material response is the existing Lambert/GGX reference; this is not a new
 NPR ramp/SSS/MatCap or RTGI integration.
 

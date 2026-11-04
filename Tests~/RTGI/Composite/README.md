@@ -1,10 +1,16 @@
-# Ho-RTGI normal-camera composition, step004
+# Historical Ho-RTGI normal-camera composition, step004
 
-2026-10-19. GI can now add its published diffuse contribution to normal camera
-color before transparents. Feature defaults remain opt-in (`composite=false`,
-`intensity=.25`); Ho-RTGI Volume supplies per-camera overrides. Unchecked values
-fall back to the Feature without mutating it. Intensity affects appearance only,
-not GI samples or reservoir history.
+> This directory preserves qualification for the pre-A1 RTGI-owned composite
+> path. Its reports remain useful as historical camera-color oracles, but they
+> do not validate the current ScreenProcess RT-light consumer. Current RTGI
+> publishes a typed product from its pre-opaque producer; a new paired
+> RenderGraph/compat capture is still required.
+
+2026-10-19 historical implementation: GI added its published diffuse
+contribution to normal camera color before transparents. Feature defaults were
+opt-in (`composite=false`, `intensity=.25`); Ho-RTGI Volume supplied per-camera
+overrides. Unchecked values fell back to the Feature without mutating it.
+Intensity affected appearance only, not GI samples or reservoir history.
 
 The shader consumes linear HDR GI with receiver BRDF/albedo already applied.
 It does not multiply albedo or add primary emission again. Gamma source color
