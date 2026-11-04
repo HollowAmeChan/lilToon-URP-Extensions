@@ -113,7 +113,7 @@ RenderGraph 消费者必须读取同轮资源并声明读依赖；不能依赖�
 
 ### 正常画面的混合模式
 
-合成开关打开且当前模式的有效强度大于0时，生产 DI / NRD 的 pass 移到 `BeforeRenderingTransparents`，紧接着在同一命名事件中按入队顺序执行合成；关闭时生产端保留原 `BeforeRenderingPostProcessing` 时序。此处没有隐藏的事件数值偏移。
+合成开关打开且当前模式的有效强度大于0时，RTDI producer 固定在 `BeforeRenderingOpaques` 发布 typed diffuse/specular products；camera-color 合成由 Ho-ScreenProcess 的 RT-light consumer 在 `BeforeRenderingTransparents` 执行。关闭合成只是不发布给该 consumer，producer 仍可作为前置 RT product 使用。RTDI Feature 不再 enqueue 自己的 CompositePass。
 
 **加法叠加** 的线性形式为 `original + additiveIntensity * (diffuse + specular) * fogTransmission`。原画面自发光、原雾色和原NPR受光已经存在，不能再加入SB自发光或重复雾色。Gamma项目先解码原颜色到线性空间，再相加并编码回去。原alpha不变。叠加强度可以超过1；负值或非有限值按0处理。它不能把原来过亮的像素压暗，也不能用RTDI阴影清除原来的未遮挡直接光。原场景阴影可继续使用；RTDI遮挡在加法中表示该处不再增加对应光照。
 
@@ -125,7 +125,7 @@ RenderGraph 消费者必须读取同轮资源并声明读依赖；不能依赖�
 
 合成还要求当前 GB/SB 主表面有效、DI 两路alpha有效，且SB深度与实际不透明相机深度一致。背景、无SB面、位于接收面之前的普通Unlit物体、sample-domain不匹配均保留原像素；透明物在合成后绘制，不被整屏替换覆盖。域限定全视口Mono、单采样2D；XR/MSAA/部分视口不启用该合成并显示状态。
 
-RenderGraph 读取本轮DI、主表面、相机颜色及深度，写一个新颜色附件并更新 `cameraColor`；compatibility 使用一个持久scratch和两次blit。不复制一整套主表面，不请求额外opaque color拷贝。兼容SB的数值MRT现显式登记给URP，避免中间颜色目标启用后后续opaque绘制覆盖SB附件。
+ScreenProcess RT-light consumer 在 RenderGraph 读取本轮 DI handles、主表面、相机颜色及深度，写一个新颜色附件并更新 `cameraColor`；compatibility 使用一个持久scratch和两次blit。不复制一整套主表面，不请求额外opaque color拷贝。兼容SB的数值MRT现显式登记给URP，避免中间颜色目标启用后后续opaque绘制覆盖SB附件。
 
 原 NPR ramp、影色、MatCap、SSS、原探针与原材质内部照明会被该像素替换，不能称作原风格接收已完成。该模式适合检查世界直接光实际进入场景的效果；没有加入GI填充，遮挡区域可能很暗。后续透明、后处理和独立屏幕效果仍按原事件顺序消费新颜色。
 

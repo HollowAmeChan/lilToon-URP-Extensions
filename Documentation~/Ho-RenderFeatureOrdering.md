@@ -31,6 +31,12 @@ HoUrp 的 `ScriptableRenderer` 在每帧开始清空 active pass queue，并给�
 
 如果消费者在生产者之前入队，资源句柄可能在 `RecordRenderGraph` 时无效；应修正 Renderer Feature 列表顺序，而不是把消费者改到下一个事件。
 
+### RT producer / ScreenProcess consumer
+
+RTDI 与 RTGI 的 producer 固定在 `BeforeRenderingOpaques`，要求 GB/SB/Ho-RT 的输入在同一帧先发布；它们不再 enqueue 自己的 camera-color CompositePass。ScreenProcess 的 RT-light consumer 固定在 `BeforeRenderingTransparents`，读取 producer 发布的 typed RenderGraph handles，或在 compatibility 路径读取同相机的 borrowed RTHandles。普通 ScreenProcess layer stack 仍在 `AfterRenderingPostProcessing`。
+
+这个边界不要求 ScreenProcess Feature 在 RTDI/RTGI Feature 列表中排在后面：不同 `RenderPassEvent` 会先按事件排序；RenderGraph consumer 只会在 producer 事件之后记录。若未来把二者改到同一事件，必须恢复显式列表顺序并检查 ContextItem 是否已创建。
+
 ### Feature-local Debug
 
 模块的调试显示不应和生产 pass 共用同一个注入事件。生产 pass 可以在 opaque 前生成语义资源；调试显示 pass 应放到 `AfterRenderingPostProcessing`，读取该资源并替换 `cameraColor`。否则 opaque 或后处理会覆盖调试结果，表现为“Frame Debugger 中 pass 有输出、画面却看不到”。

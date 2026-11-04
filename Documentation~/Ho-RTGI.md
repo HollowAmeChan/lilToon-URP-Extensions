@@ -71,7 +71,7 @@ GenerateSecondary 使用参考 BrdfRayTracing 的 diffuse 分支、SDK RNG 与 D
 
 显式启用的天空miss沿参考distant-sample表示进入GI reservoir，读取Ho-Atmosphere全方向原始HDR辐射。次级天空使用与DI相同的128²等立体角PDF mip和固定SDK RIS预采样，但拥有私有资源与shader-local绑定。SDK原算法/许可/provenance保留；不为GI引入通用PT、DLSS或ReGIR。
 
-求交、环境准备与GI重采样/Final在一个graphics-queue unsafe pass内顺序执行。未合成时保留BeforeRenderingPostProcessing；启用合成时，生产与合成均放在BeforeRenderingTransparents，按入队顺序先生产后消费。直接借用GB/SB，不复制当前主表面GBuffer；显式声明AS metadata、buffer、输出与天空依赖。Ho-Atmosphere先生产环境，GI使用shader-local绑定，关闭GI天空不清掉其他消费者输入。
+求交、环境准备与GI重采样/Final在一个graphics-queue unsafe pass内顺序执行。GI producer 固定在 `BeforeRenderingOpaques`，直接借用GB/SB，不复制当前主表面GBuffer；Ho-ScreenProcess 的 RT-light consumer 在 `BeforeRenderingTransparents` 读取已发布 GI product 并执行加法合成。显式声明AS metadata、buffer、输出与天空依赖。Ho-Atmosphere先生产环境，GI使用shader-local绑定，关闭GI天空不清掉其他消费者输入。
 
 兼容路径由 Ho-Atmosphere 环境 pass 发布借用快照，GI 在执行时读取；每相机开始和生产端销毁时清空快照。RenderGraph pass data 会由池复用，因此每次记录都显式清空缺失天空的 handle/参数/revision，避免沿用旧输入。
 

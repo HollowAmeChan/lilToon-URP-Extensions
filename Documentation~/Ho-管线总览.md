@@ -71,7 +71,8 @@
 [6.5] Ho-GTAO（独立 feature）                               → ao / aointent   ★ 必须在 opaque 之前
         ── URP opaque / cutout 常规绘制 ──────────────────────────────
 [7]  Ho-SSGI（独立 feature，读 gisexclude）                  → gi              ★ 需要 opaque 后的颜色
-[7.5] Ho-RTDI / Ho-RTGI（可选）                           → 独立直接 / 间接光；正常合成在透明前，纯产品可在后处理前
+[7.5] Ho-RTDI / Ho-RTGI producer（可选）                  → 独立直接 / 间接光；固定在 opaque 前发布 typed products
+[7.6] Ho-ScreenProcess RT-light consumer                   → 透明前消费 RTDI/GI；普通 ScreenProcess stack 仍在后处理域
 [8]  AC 资源由 after-opaque 消费者直接读，不在这里重做一趟合成
 [9]  Ho-SubsurfaceScattering                                 → sss
 [10] Ho-WeightedOIT（透明合成）
@@ -138,13 +139,13 @@ strength 归零，`_UsePlanarReflection` 只能在总开关打开时生效；`ro
 | 11 | Ho-AttributeComposite | `BeforeRenderingOpaques` | GB / OB / SB 后，GTAO、Forward 与后续语义消费者前 |
 | 12 | Ho-GTAO | 固定 pre-opaque `BeforeRenderingOpaques` | AC 后，Forward 接收 AO 前 |
 | 13 | Ho-SSGI | 生产默认 `AfterRenderingOpaques`；合成默认 `BeforeRenderingPostProcessing` | 生产要 opaque color 和已就绪 AC；不要把“生产在 SSS 前”误写成“最终合成也一定在 SSS 前” |
-| 14 | Ho-RTDI | 正常合成启用时生产 / 合成为 `BeforeRenderingTransparents`；纯产品模式生产为 `BeforeRenderingPostProcessing` | Ho-RT + GB / SB，天空按需借 Atmosphere；若消费其产品，必须检查所选模式的实际生产时机 |
-| 15 | Ho-RTGI | 时机同上，拥有独立算法与历史 | 建议在 DI 后叠加；使用 DI 替换模式时，GI 加法应在替换之后，避免被后续替换擦掉 |
+| 14 | Ho-RTDI | producer 固定 `BeforeRenderingOpaques`；camera-color consumer 由 Ho-ScreenProcess 在 `BeforeRenderingTransparents` 统一执行 | Ho-RT + GB / SB，天空按需借 Atmosphere；DI product 与 GI product 独立发布 |
+| 15 | Ho-RTGI | producer 固定 `BeforeRenderingOpaques`；camera-color consumer 由 Ho-ScreenProcess 在 `BeforeRenderingTransparents` 统一执行 | 拥有独立算法与历史；ScreenProcess consumer 按 DI 替换后再叠 GI，避免替换擦掉 GI |
 | 16 | Ho-SubsurfaceScattering | composite 默认 `BeforeRenderingTransparents` | AC / SB 与要处理的当前 camera color 先就绪 |
 | 17 | Ho-VolumeLight | 体积光和 dust 默认 `BeforeRenderingTransparents` | 太阳 / 天空参数、相机深度先就绪；若希望 OIT 使用含体积光的 opaque copy，放在其 copy pass 之前并核实际事件 |
 | 18 | WeightedOIT | opaque copy 在 accumulation 前；accumulation 默认 `BeforeRenderingTransparents`、composite 默认 `AfterRenderingTransparents` | 阴影、材质与 opaque 输入先就绪；composite 在角色特化前。opaque copy 默认事件 449，前一行仅调整列表不能让事件 450 的体积光进入该副本 |
 | 19 | Ho-CharacterSpecialization | 默认 `AfterRenderingTransparents` | AC / GB / 身份和透明合成先就绪；同事件放在 OIT 下方 |
-| 20 | Ho-ScreenProcess | 固定 `AfterRenderingPostProcessing` | 读取已完成语义与正常场景颜色，在最终图像链之前 |
+| 20 | Ho-ScreenProcess | RT-light consumer `BeforeRenderingTransparents`；普通 stack 固定 `AfterRenderingPostProcessing` | RT consumer 读 typed products 与 opaque camera color；普通 stack 读取完成语义与正常场景颜色 |
 | 21 | Ho-ImageProcess | 固定 `AfterRenderingPostProcessing + 1` | ScreenProcess 之后执行最终图像链；自定义后处理也须声明与其先后关系 |
 | 最终显示 | 模块 debug / Ho-DebugTile | debug 捕获默认 `AfterRenderingPostProcessing`，统一 presenter 为 `AfterRendering + 4` | 诊断绕开正常颜色合成，在最终 AA / blit 后呈现；多个模块同时开启按公共确定性规则选择，列表排序不是调试选择器 |
 | 按导出需求 | AOV / export 消费者（可选） | 在所需产品完成后、句柄释放前；最终 beauty 则在图像链后读取 | 必须逐输出说明采样时机；不能凭 Feature 名称统一放到一个事件 |
