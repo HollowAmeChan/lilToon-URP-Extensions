@@ -64,11 +64,21 @@ namespace lilToon.URP.Extensions.Tests
             GraphicsSettings.defaultRenderPipeline = pipeline; QualitySettings.renderPipeline = pipeline;
         }
 
+        static void SetCompatibilityMode(bool compatibility)
+        {
+            #if URP_COMPATIBILITY_MODE
+            var graphSettings = GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>();
+            if (graphSettings != null) graphSettings.enableRenderCompatibilityMode = compatibility;
+            #else
+            if (compatibility) Assert.Ignore("Compatibility mode requires the URP_COMPATIBILITY_MODE define.");
+            #endif
+        }
+
         [TearDown]
         public void TearDown()
         {
             var graphSettings = GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>();
-            if (graphSettings != null) graphSettings.enableRenderCompatibilityMode = oldCompatibility;
+            SetCompatibilityMode(oldCompatibility);
             GraphicsSettings.defaultRenderPipeline = oldGraphics; QualitySettings.renderPipeline = oldQuality;
             ShaderUtil.allowAsyncCompilation = oldAsync;
             for (int i = owned.Count - 1; i >= 0; --i) if (owned[i] != null) Object.DestroyImmediate(owned[i]);
@@ -431,7 +441,7 @@ namespace lilToon.URP.Extensions.Tests
             if(geometry) rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
             SetPipeline(rd);
-            GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode=compatibility;
+            SetCompatibilityMode(compatibility);
             camera.clearFlags=CameraClearFlags.SolidColor; camera.backgroundColor=new Color(2,2,2,1);
             var baseline=Render();
             var volume=GameObject("Independent lens volume").AddComponent<Volume>(); volume.isGlobal=true;
@@ -503,7 +513,7 @@ namespace lilToon.URP.Extensions.Tests
             rd.rendererFeatures.Add(ob); rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
-            SetPipeline(rd,cameraSamples); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            SetPipeline(rd,cameraSamples); SetCompatibilityMode(compatibility);
             output.Release(); output.antiAliasing = cameraSamples; output.Create();
             var actor = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Quad)); actor.layer = TestLayer;
             SceneManager.MoveGameObjectToScene(actor,testScene); actor.transform.localScale = Vector3.one * 4;
@@ -594,7 +604,7 @@ namespace lilToon.URP.Extensions.Tests
             var ob = Keep(ScriptableObject.CreateInstance<HoObjectBufferRendererFeature>()); ob.Settings.useFallbackMaterial = false;
             rd.rendererFeatures.Add(ob); rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
-            SetPipeline(rd,samples); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            SetPipeline(rd,samples); SetCompatibilityMode(compatibility);
             output.Release(); output.antiAliasing = samples; output.Create();
             var group = GameObject("AC color group").AddComponent<HoObjectBufferGroup>();
             var actors = new Renderer[2];
@@ -662,7 +672,7 @@ namespace lilToon.URP.Extensions.Tests
             rd.rendererFeatures.Add(ob);
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
-            SetPipeline(rd,samples); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            SetPipeline(rd,samples); SetCompatibilityMode(compatibility);
             var group = GameObject("Selection GPU group").AddComponent<HoObjectBufferGroup>();
             var actors = new Renderer[2];
             for (int j = 0; j < 2; j++)
@@ -711,7 +721,7 @@ namespace lilToon.URP.Extensions.Tests
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
-            SetPipeline(rd,samples); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            SetPipeline(rd,samples); SetCompatibilityMode(compatibility);
             output.Release(); output.antiAliasing = samples; output.Create();
             var actor = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere)); actor.layer = TestLayer;
             SceneManager.MoveGameObjectToScene(actor,testScene); actor.transform.localScale = Vector3.one * 1.25f;
@@ -765,7 +775,7 @@ namespace lilToon.URP.Extensions.Tests
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
-            SetPipeline(rd); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            SetPipeline(rd); SetCompatibilityMode(compatibility);
             HoObjectBufferGroup Actor(string name, Vector3 position, Color color, HoObjectBufferPartTags tags)
             {
                 var actor = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere)); actor.layer = TestLayer;
@@ -811,7 +821,7 @@ namespace lilToon.URP.Extensions.Tests
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
-            SetPipeline(rd,samples); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            SetPipeline(rd,samples); SetCompatibilityMode(compatibility);
             output.Release(); output.antiAliasing = samples; output.Create();
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.blue;
             var actor = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere)); actor.layer = TestLayer;
@@ -866,7 +876,7 @@ namespace lilToon.URP.Extensions.Tests
             var gb = Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());
             var ac = Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>());
             rd.rendererFeatures.Add(gb); rd.rendererFeatures.Add(ac); rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
-            SetPipeline(rd,samples); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            SetPipeline(rd,samples); SetCompatibilityMode(compatibility);
             output.Release(); output.antiAliasing = samples; output.Create();
             var actor = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Quad)); actor.layer = TestLayer;
             SceneManager.MoveGameObjectToScene(actor,testScene); actor.transform.localScale = Vector3.one * 4;
