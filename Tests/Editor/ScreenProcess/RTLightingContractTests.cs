@@ -50,6 +50,7 @@ namespace lilToon.URP.Extensions.Tests
             StringAssert.Contains("resourceData.cameraColor = destination", pass);
             StringAssert.Contains("ContextItem", resources);
             StringAssert.Contains("ScreenProcessRTLightingCompatibility", resources);
+            StringAssert.Contains("internal static void Clear()", resources);
         }
 
         [Test]

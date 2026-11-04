@@ -91,6 +91,11 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
         }
 
+        internal static void Clear()
+        {
+            Frames.Clear();
+        }
+
         internal static void PublishDirect(
             Camera camera,
             RTHandle diffuse,

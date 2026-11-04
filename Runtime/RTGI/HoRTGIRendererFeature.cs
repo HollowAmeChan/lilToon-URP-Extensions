@@ -173,6 +173,7 @@ namespace lilToon.URP.Extensions.RTGI
         private void DisposeResources()
         {
             HoAttributeCompositeConsumerRegistry.Remove(this);
+            ScreenProcessRTLightingCompatibility.Clear();
             foreach(var context in contexts.Values)context.Dispose();contexts.Clear();sceneViews.Clear();sceneLifetimes.Clear();createSceneProfile=null;sceneProfileKey=null;
             debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;
         }

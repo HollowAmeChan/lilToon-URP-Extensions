@@ -107,6 +107,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         protected override void Dispose(bool disposing)
         {
             HoAttributeCompositeConsumerRegistry.Remove(this);
+            ScreenProcessRTLightingCompatibility.Clear();
             pass?.Dispose();
             pass = null;
             rtLightingPass?.Dispose();
