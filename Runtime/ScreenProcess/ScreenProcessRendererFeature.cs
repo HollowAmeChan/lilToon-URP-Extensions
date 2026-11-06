@@ -91,14 +91,17 @@ namespace lilToon.URP.Extensions.PostProcessing
                 pass?.ClearRuntimeLayers();
                 runtimeRTLightingLayers.Clear();
                 pass?.ReleaseCompatibilityResources();
-                rtLightingPass?.Setup(rtLightingMaterial, renderer.cameraColorTargetHandle, default);
+                rtLightingPass?.SetMaterialAndConsumerSettings(rtLightingMaterial, default);
                 return;
             }
 
             BuildRuntimeLayers(volume, renderingData.cameraData.camera);
             ScreenProcessRTLightingConsumerSettings rtSettings =
                 ScreenProcessRTLightingConsumerSettings.FromLayers(runtimeRTLightingLayers);
-            rtLightingPass?.Setup(rtLightingMaterial, renderer.cameraColorTargetHandle, rtSettings);
+            // Targets are bound in SetupRenderPasses. AddRenderPasses only
+            // refreshes the frame-local layer snapshot and must not clear the
+            // already-bound Compatibility camera target.
+            rtLightingPass?.SetMaterialAndConsumerSettings(rtLightingMaterial, rtSettings);
             if (rtLightingPass != null && rtLightingMaterial != null && rtSettings.HasAny)
             {
                 renderer.EnqueuePass(rtLightingPass);

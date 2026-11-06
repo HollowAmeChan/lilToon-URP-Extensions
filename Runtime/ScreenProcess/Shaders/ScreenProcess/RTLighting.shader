@@ -31,9 +31,10 @@ Shader "Hidden/lilToon/URP/ScreenProcess/RTLighting"
             TEXTURE2D_X(_HoSPRTIndirectDiffuse);
             TEXTURE2D_FLOAT(_CameraDepthTexture);
 
-            float _HoSPRTDirectWeight;
-            float _HoSPRTDirectMode;
-            float _HoSPRTIndirectIntensity;
+            float4 _HoSPRTBlend; // mode, opacity, exposure*gain, indirect
+            float4 _HoSPRTComponents; // diffuse, specular, retained emission, receiver
+            float4 _HoSPRTTint;
+            float4 _HoSPRTDepthRange;
 
             half4 Frag(Varyings input) : SV_Target
             {
@@ -74,60 +75,53 @@ Shader "Hidden/lilToon/URP/ScreenProcess/RTLighting"
                     sampler_PointClamp,
                     uv);
 
-                bool directValid = _HoSPRTDirectWeight > 0.0 &&
+                bool directValid = _HoSPRTBlend.w < 0.5 &&
                     directDiffuse.a >= 0.5 &&
                     directSpecular.a >= 0.5;
-                bool indirectValid = _HoSPRTIndirectIntensity > 0.0 &&
+                bool indirectValid = _HoSPRTBlend.w >= 0.5 &&
                     indirectDiffuse.a >= 0.5;
                 if (!directValid && !indirectValid)
                     return original;
 
+                float receive = 1;
+                if (_HoSPRTComponents.w > 1.5) receive = saturate(surface.metallic);
+                else if (_HoSPRTComponents.w > 0.5) receive = 1 - saturate(surface.metallic);
+                if (_HoSPRTDepthRange.y > _HoSPRTDepthRange.x)
+                    receive *= step(_HoSPRTDepthRange.x, surface.eyeDepth) * step(surface.eyeDepth, _HoSPRTDepthRange.y);
+                float opacity = saturate(_HoSPRTBlend.y) * receive;
+                if (opacity <= 0) return original;
+                // Products already contain the receiver BRDF, albedo and ray visibility.
+                float3 light = indirectValid ? indirectDiffuse.rgb * _HoSPRTComponents.x :
+                    directDiffuse.rgb * _HoSPRTComponents.x + directSpecular.rgb * _HoSPRTComponents.y;
+                light *= _HoSPRTTint.rgb * _HoSPRTBlend.z;
+                if (!HoRTPrimaryFinite3(light)) return original;
+                light = max(light, 0);
                 float fog = InitializeInputDataFog(float4(surface.positionWS, 1), 0);
-                float3 result = original.rgb;
-
-                if (directValid)
-                {
-                    if (_HoSPRTDirectMode > 0.5)
-                    {
-                        float3 extra = MixFogColor(
-                            (directDiffuse.rgb + directSpecular.rgb) * _HoSPRTDirectWeight,
-                            float3(0, 0, 0),
-                            fog);
-                        #if defined(UNITY_COLORSPACE_GAMMA)
-                            result = LinearToSRGB(SRGBToLinear(result) + extra);
-                        #else
-                            result += extra;
-                        #endif
-                    }
-                    else
-                    {
-                        float3 replacement = directDiffuse.rgb +
-                            directSpecular.rgb +
-                            surface.emission;
-                        #if defined(UNITY_COLORSPACE_GAMMA)
-                            replacement = LinearToSRGB(replacement);
-                        #endif
-                        replacement = MixFog(replacement, fog);
-                        result = lerp(
-                            result,
-                            replacement,
-                            saturate(_HoSPRTDirectWeight));
-                    }
-                }
-
-                if (indirectValid)
-                {
-                    float3 extra = MixFogColor(
-                        indirectDiffuse.rgb * _HoSPRTIndirectIntensity,
-                        float3(0, 0, 0),
-                        fog);
-                    #if defined(UNITY_COLORSPACE_GAMMA)
-                        result = LinearToSRGB(SRGBToLinear(result) + extra);
-                    #else
-                        result += extra;
-                    #endif
-                }
-
+                float3 scene = original.rgb;
+                #if defined(UNITY_COLORSPACE_GAMMA)
+                    scene = SRGBToLinear(scene);
+                #endif
+                float3 extra = MixFogColor(light, float3(0, 0, 0), fog);
+                float3 fogColor = unity_FogColor.rgb;
+                #if defined(UNITY_COLORSPACE_GAMMA)
+                    fogColor = SRGBToLinear(fogColor);
+                #endif
+                float3 target;
+                if (_HoSPRTBlend.x < 0.5) // Replace: preserve primary emission exactly once.
+                    target = MixFogColor(light + surface.emission * _HoSPRTComponents.z, fogColor, fog);
+                else if (_HoSPRTBlend.x < 1.5)
+                    target = scene + extra;
+                else if (_HoSPRTBlend.x < 2.5)
+                    target = max(scene, extra);
+                else if (_HoSPRTBlend.x < 3.5)
+                    // Fog affects the new modulation only; fogged pixels approach identity.
+                    target = scene * MixFogColor(light, float3(1, 1, 1), fog);
+                else
+                    target = scene + extra / (1 + dot(extra, float3(0.2126, 0.7152, 0.0722)));
+                float3 result = lerp(scene, target, opacity);
+                #if defined(UNITY_COLORSPACE_GAMMA)
+                    result = LinearToSRGB(result);
+                #endif
                 return float4(result, original.a);
             }
             ENDHLSL

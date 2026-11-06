@@ -12,8 +12,22 @@ namespace lilToon.URP.Extensions.PostProcessing
     }
 
     [Serializable]
-    public sealed class ScreenProcessLayer
+    public sealed class ScreenProcessLayer : ISerializationCallbackReceiver
     {
+        [SerializeField, HideInInspector] private int rtLightingVersion = 1;
+
+        public void OnBeforeSerialize() { }
+        public void OnAfterDeserialize()
+        {
+            if (rtLightingVersion != 0) return;
+            // Some Unity deserialization paths zero missing fields instead of
+            // running initializers. Upgrade only the new consumer fields.
+            rtIndirectMode = ScreenProcessRTLightingMode.Additive;
+            rtGain = rtDiffuseWeight = rtSpecularWeight = rtEmissionWeight = 1;
+            rtExposure = 0; rtTint = Color.white;
+            rtReceiver = ScreenProcessRTReceiver.All; rtDepthRange = Vector2.zero;
+            rtLightingVersion = 1;
+        }
         [Tooltip("Display name in the ScreenProcess stack.")]
         public string name = "ScreenProcess Layer";
 
@@ -33,8 +47,21 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Min(0)]
         public int passIndex;
 
-        [Tooltip("RTDI only: choose whether the typed direct-light product replaces the raster response or is added to it. RTGI always uses additive radiance.")]
+        [Tooltip("RTDI camera-color blend. Replace retains primary emission; products already contain receiver BRDF and visibility.")]
         public ScreenProcessRTLightingMode rtLightingMode = ScreenProcessRTLightingMode.Replace;
+
+        // Separate default preserves old GI assets whose ignored rtLightingMode was Replace.
+        public ScreenProcessRTLightingMode rtIndirectMode = ScreenProcessRTLightingMode.Additive;
+        [Min(0)] public float rtGain = 1;
+        [Range(-16, 16)] public float rtExposure;
+        [ColorUsage(false, true)] public Color rtTint = Color.white;
+        [Min(0)] public float rtDiffuseWeight = 1;
+        [Min(0)] public float rtSpecularWeight = 1;
+        [Tooltip("Primary emission retained by Replace only; other modes operate on the existing camera color.")]
+        [Min(0)] public float rtEmissionWeight = 1;
+        public ScreenProcessRTReceiver rtReceiver = ScreenProcessRTReceiver.All;
+        [Tooltip("Eye-depth receiving range. Far <= near disables the optional range gate.")]
+        public Vector2 rtDepthRange = Vector2.zero;
 
         [Tooltip("Spatial sample spacing used by the expensive ScreenProcess filters. Higher spacing evaluates fewer taps while covering the configured radius.")]
         public ScreenProcessBlurResolution blurResolution = ScreenProcessBlurResolution.Half;

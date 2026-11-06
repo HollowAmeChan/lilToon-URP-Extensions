@@ -22,7 +22,20 @@ namespace lilToon.URP.Extensions.PostProcessing
         [InspectorName("参考 PBR 替换")]
         Replace,
         [InspectorName("加法")]
-        Additive
+        Additive,
+        [InspectorName("变亮（HDR 最大值）")]
+        Lighten,
+        [InspectorName("正片叠底（线性光照倍率）")]
+        Multiply,
+        [InspectorName("柔和加法（压缩新增光）")]
+        SoftAdd
+    }
+
+    public enum ScreenProcessRTReceiver
+    {
+        [InspectorName("全部有效接收面")] All,
+        [InspectorName("非金属（按 1−metallic）")] NonMetallic,
+        [InspectorName("金属（按 metallic）")] Metallic
     }
 
     /// <summary>

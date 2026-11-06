@@ -7,37 +7,37 @@ namespace lilToon.URP.Extensions.PostProcessing
 {
     internal readonly struct ScreenProcessRTLightingConsumerSettings
     {
-        internal readonly bool directEnabled;
-        internal readonly bool directAdditive;
-        internal readonly float directWeight;
-        internal readonly bool indirectEnabled;
-        internal readonly float indirectIntensity;
-
-        internal bool HasAny => directEnabled || indirectEnabled;
-
-        internal ScreenProcessRTLightingConsumerSettings(
-            bool directEnabled,
-            bool directAdditive,
-            float directWeight,
-            bool indirectEnabled,
-            float indirectIntensity)
+        // Value snapshots: Volume edits and subsequent cameras cannot mutate recorded passes.
+        internal readonly struct Layer
         {
-            this.directEnabled = directEnabled;
-            this.directAdditive = directAdditive;
-            this.directWeight = float.IsFinite(directWeight) ? Mathf.Max(0.0f, directWeight) : 0.0f;
-            this.indirectEnabled = indirectEnabled;
-            this.indirectIntensity = float.IsFinite(indirectIntensity) ? Mathf.Max(0.0f, indirectIntensity) : 0.0f;
+            internal readonly bool indirect;
+            internal readonly Vector4 blend, components, tint, depthRange;
+            internal Layer(ScreenProcessLayer layer)
+            {
+                indirect = layer.effect == ScreenProcessEffect.RTGI;
+                var mode = indirect ? layer.rtIndirectMode : layer.rtLightingMode;
+                if (!System.Enum.IsDefined(typeof(ScreenProcessRTLightingMode), mode))
+                    mode = indirect ? ScreenProcessRTLightingMode.Additive : ScreenProcessRTLightingMode.Replace;
+                float gain = Mathf.Min(Safe(layer.rtGain), 65536) * Mathf.Pow(2, Mathf.Clamp(Finite(layer.rtExposure), -16, 16));
+                blend = new Vector4((int)mode, Mathf.Clamp01(Safe(layer.intensity)), gain, indirect ? 1 : 0);
+                components = new Vector4(Safe(layer.rtDiffuseWeight), Safe(layer.rtSpecularWeight),
+                    Safe(layer.rtEmissionWeight), System.Enum.IsDefined(typeof(ScreenProcessRTReceiver), layer.rtReceiver) ? (int)layer.rtReceiver : 0);
+                // Color fields use Unity's usual authored sRGB convention.
+                Color color = layer.rtTint.linear;
+                tint = new Vector4(Safe(color.r), Safe(color.g), Safe(color.b), 1);
+                depthRange = new Vector4(Safe(layer.rtDepthRange.x), Safe(layer.rtDepthRange.y), 0, 0);
+            }
+            private static float Finite(float value) => float.IsFinite(value) ? value : 0;
+            private static float Safe(float value) => Mathf.Max(0, Finite(value));
         }
+        internal readonly Layer[] layers;
+        internal bool HasAny => layers != null && layers.Length > 0;
+        private ScreenProcessRTLightingConsumerSettings(Layer[] layers) { this.layers = layers; }
 
         internal static ScreenProcessRTLightingConsumerSettings FromLayers(
             IList<ScreenProcessLayer> layers)
         {
-            bool directEnabled = false;
-            bool directAdditive = false;
-            float directWeight = 0.0f;
-            bool indirectEnabled = false;
-            float indirectIntensity = 0.0f;
-
+            var snapshots = new List<Layer>();
             if (layers != null)
             {
                 for (int i = 0; i < layers.Count; i++)
@@ -48,26 +48,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                         continue;
                     }
 
-                    if (layer.effect == ScreenProcessEffect.RTDI)
-                    {
-                        directEnabled = true;
-                        directAdditive = layer.rtLightingMode == ScreenProcessRTLightingMode.Additive;
-                        directWeight = layer.intensity;
-                    }
-                    else if (layer.effect == ScreenProcessEffect.RTGI)
-                    {
-                        indirectEnabled = true;
-                        indirectIntensity = layer.intensity;
-                    }
+                    if (ScreenProcessEffectRegistry.IsRTLightingEffect(layer.effect))
+                        snapshots.Add(new Layer(layer));
                 }
             }
 
-            return new ScreenProcessRTLightingConsumerSettings(
-                directEnabled,
-                directAdditive,
-                directWeight,
-                indirectEnabled,
-                indirectIntensity);
+            return new ScreenProcessRTLightingConsumerSettings(snapshots.ToArray());
         }
     }
 

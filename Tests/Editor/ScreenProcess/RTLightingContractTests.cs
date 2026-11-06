@@ -1,12 +1,71 @@
 using System.IO;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor.PackageManager;
+using UnityEngine;
 using lilToon.URP.Extensions.PostProcessing;
 
 namespace lilToon.URP.Extensions.Tests
 {
     public sealed class RTLightingContractTests
     {
+        private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic;
+        private static Array Snapshot(params ScreenProcessLayer[] layers)
+        {
+            Type type = typeof(ScreenProcessRendererFeature).Assembly.GetType(
+                "lilToon.URP.Extensions.PostProcessing.ScreenProcessRTLightingConsumerSettings", true);
+            object value = type.GetMethod("FromLayers", Hidden).Invoke(null, new object[] { new List<ScreenProcessLayer>(layers) });
+            return (Array)type.GetField("layers", Hidden).GetValue(value);
+        }
+        private static T Field<T>(object value, string field) =>
+            (T)value.GetType().GetField(field, Hidden).GetValue(value);
+
+        [Test]
+        public void ConsumerSnapshotsPreserveOrderDuplicatesAndDoNotFollowVolumeMutations()
+        {
+            var gi = new ScreenProcessLayer { effect = ScreenProcessEffect.RTGI, intensity = .25f };
+            var di = new ScreenProcessLayer { effect = ScreenProcessEffect.RTDI, intensity = .6f };
+            Array snapshot = Snapshot(gi, di, gi, null, new ScreenProcessLayer { enabled = false });
+            Assert.That(snapshot.Length, Is.EqualTo(3));
+            Assert.That(Field<bool>(snapshot.GetValue(0), "indirect"), Is.True);
+            Assert.That(Field<bool>(snapshot.GetValue(1), "indirect"), Is.False);
+            Assert.That(Field<bool>(snapshot.GetValue(2), "indirect"), Is.True);
+            gi.intensity = 1; gi.rtGain = 10;
+            Assert.That(Field<Vector4>(snapshot.GetValue(0), "blend").y, Is.EqualTo(.25f));
+            Assert.That(Field<Vector4>(snapshot.GetValue(0), "blend").z, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void LegacyGiAssetsRemainAdditiveAndNewFieldsHaveNeutralDefaults()
+        {
+            var legacy = JsonUtility.FromJson<ScreenProcessLayer>(
+                "{\"effect\":10,\"rtLightingMode\":0,\"intensity\":0.25}");
+            Assert.That(legacy.rtGain, Is.EqualTo(1));
+            Assert.That(legacy.rtTint, Is.EqualTo(Color.white));
+            Assert.That(legacy.rtIndirectMode, Is.EqualTo(ScreenProcessRTLightingMode.Additive));
+            Vector4 blend = Field<Vector4>(Snapshot(legacy).GetValue(0), "blend");
+            Assert.That(blend.x, Is.EqualTo(1));
+            Assert.That(blend.y, Is.EqualTo(.25f));
+        }
+
+        [Test]
+        public void ConsumerSanitizesInvalidSettingsAndAppliesExposureOutsideOpacity()
+        {
+            var layer = new ScreenProcessLayer
+            {
+                effect = ScreenProcessEffect.RTDI, intensity = .5f, rtGain = 2, rtExposure = 2,
+                rtDiffuseWeight = float.NaN, rtSpecularWeight = -1,
+                rtLightingMode = (ScreenProcessRTLightingMode)99
+            };
+            object snapshot = Snapshot(layer).GetValue(0);
+            Assert.That(Field<Vector4>(snapshot, "blend"), Is.EqualTo(new Vector4(0, .5f, 8, 0)));
+            Assert.That(Field<Vector4>(snapshot, "components").x, Is.Zero);
+            Assert.That(Field<Vector4>(snapshot, "components").y, Is.Zero);
+            Assert.That(Snapshot(new ScreenProcessLayer { intensity = float.NaN }).Length, Is.Zero);
+        }
         private static string ReadPackageFile(string relativePath)
         {
             PackageInfo package = PackageInfo.FindForAssembly(typeof(ScreenProcessRendererFeature).Assembly);

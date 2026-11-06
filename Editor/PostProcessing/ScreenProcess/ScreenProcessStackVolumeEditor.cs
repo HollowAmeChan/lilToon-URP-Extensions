@@ -419,9 +419,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ScreenProcessEffect.CustomMaterial:
                     return 7;
                 case ScreenProcessEffect.RTDI:
-                    return 2;
+                    return 10;
                 case ScreenProcessEffect.RTGI:
-                    return 1;
+                    return 9;
                 case ScreenProcessEffect.DropShadow:
                 default:
                     return 9;
@@ -510,10 +510,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty element,
             ScreenProcessEffect effect)
         {
+            DrawPropertyLine(rect, ref y, element, effect == ScreenProcessEffect.RTDI ? "rtLightingMode" : "rtIndirectMode", "消费模式");
+            DrawPropertyLine(rect, ref y, element, "rtGain", "光照增益");
+            DrawPropertyLine(rect, ref y, element, "rtExposure", "曝光（EV）");
+            DrawPropertyLine(rect, ref y, element, "rtTint", "光照颜色（HDR）");
+            DrawPropertyLine(rect, ref y, element, "rtDiffuseWeight", "Diffuse 权重");
             if (effect == ScreenProcessEffect.RTDI)
-            {
-                DrawPropertyLine(rect, ref y, element, "rtLightingMode", "消费模式");
-            }
+                DrawPropertyLine(rect, ref y, element, "rtSpecularWeight", "Specular 权重");
+            DrawPropertyLine(rect, ref y, element, "rtEmissionWeight", "替换时保留自发光");
+            DrawPropertyLine(rect, ref y, element, "rtReceiver", "材质接收范围");
+            DrawPropertyLine(rect, ref y, element, "rtDepthRange", "接收深度范围（0=关闭）");
         }
 
         private const float MaskToggleWidth = 62.0f;
@@ -821,6 +827,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetObjectReference(element, "texture", null);
             SetInt(element, "passIndex", 0);
             SetEnum(element, "rtLightingMode", (int)ScreenProcessRTLightingMode.Replace);
+            SetEnum(element, "rtIndirectMode", (int)ScreenProcessRTLightingMode.Additive);
+            SetFloat(element, "rtGain", 1.0f);
+            SetFloat(element, "rtExposure", 0.0f);
+            SetColor(element, "rtTint", Color.white);
+            SetFloat(element, "rtDiffuseWeight", 1.0f);
+            SetFloat(element, "rtSpecularWeight", 1.0f);
+            SetFloat(element, "rtEmissionWeight", 1.0f);
+            SetEnum(element, "rtReceiver", (int)ScreenProcessRTReceiver.All);
+            element.FindPropertyRelative("rtDepthRange").vector2Value = Vector2.zero;
             SetFloat(element, "intensity", 1.0f);
             SetColor(element, "color", Color.white);
             SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
