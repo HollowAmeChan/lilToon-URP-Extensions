@@ -1,6 +1,6 @@
 # Ho-RTGI：一跳 diffuse GI
 
-已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳diffuse GI输出及可选的场景加法合成。SDK GI reservoir与时间/空间重采样复用固定原文件；应用bridge适配Ho生产端。最终NPR影色/ramp映射或材质内接收未纳入本阶段。
+已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳 diffuse GI product。camera color 消费由 Ho-ScreenProcess 的 `RTGI 间接光` layer 负责。SDK GI reservoir 与时间/空间重采样复用固定原文件；应用 bridge 适配 Ho 生产端。最终 NPR 影色/ramp 映射或材质内接收未纳入本阶段。
 
 > 状态：**现行功能总文档**，更新于 2026-10-29。场景所有权已改为公共 Ho-RT host，组合与 Player、独立 RTShadow / SIGMA 阴影链的有界验收看 [Ho-RT](Ho-RT.md) §8.5。GI 保持自己的光照算法与历史，原质量 / 复杂动态 / AS 增长及整帧预算缺口不因此注销。
 
@@ -12,11 +12,11 @@ Renderer 显式添加 **Ho-RT** 并排列在消费者之前，**Ho-RTGI** 放在
 
 高级设置「不参与求交的材质」可排除合并模型内的天空壳子网格。`excludedRayMaterials`默认空，按Material对象身份匹配，忽略null/重复项；同名不同对象不会一起排除。使用同一材质引用的所有实例都会受影响，光线会穿过它们。该列表仅影响GI世界求交，不改源mesh、sharedMaterials、raster或GB/SB主表面；与DI的列表相互独立，需要分别配置。排除/恢复改变场景revision并清GI/NRD历史，等价列表不重置。
 
-合成默认关闭。Volume按「运行」「画面合成」「调试」分组，提供「合成到场景」及「间接光强度」，可逐相机覆盖Feature高级设置中的未覆盖默认值（强度默认.25）。Feature按「基础」「采样质量」「天空照明」「高级」分组；当前采样与天空参数仍在Feature。GI启用未覆盖时沿用Feature，和DI要求显式Volume启用覆盖的规则不同。启用合成后在透明物之前，把GI加到有效opaque接收面；强度0保留原画面，强度变化不重置采样历史。只支持全视口、Mono、单采样合成，其他情况保留独立生产与原画面。
+Ho-RTGI Volume 不再承担 camera color 合成。它只负责 GI feature 的启用、降噪和其它生产参数覆盖；在 **Ho-ScreenProcess Volume → Process Stack** 添加 **RTGI 间接光** layer 后，ScreenProcess 才会消费 GI product。RTGI layer 的强度控制间接光消费倍率，透明前执行，其他相机域不支持时安全 no-op。
 
-输出已含接收BRDF/albedo，合成不再乘主色、不再添加primary emission；Gamma工程先将原画面转线性相加，再转回显示空间。雾只衰减新增GI，保留原画面雾色；透明物在其后绘制。与DI同时合成时按Feature顺序消费当前camera color，通常将DI放在GI前。已有烘焙/SSGI等间接光仍由原路径负责，需要按场景决定叠加份额，GI不会自动改写它们。
+输出已含接收BRDF/albedo，ScreenProcess 不再乘主色、不再添加 primary emission；Gamma 工程先将原画面转线性相加，再转回显示空间。雾只衰减新增 GI，保留原画面雾色；透明物在其后绘制。与 RTDI 同时使用时，ScreenProcess 按 RTDI layer 后再消费 RTGI layer。已有烘焙/SSGI 等间接光仍由原路径负责，需要按场景决定叠加份额，GI 不会自动改写它们。
 
-Diffuse / Receiver / RawDiffuse / All调试显示独立输出；Receiver绿为有效接收面、红为输入无效。Diffuse与正常合成消费当前发布结果；RawDiffuse始终显示未降噪贡献。调试与正常画面合成是两项独立控制。
+Diffuse / Receiver / RawDiffuse / All 调试显示独立输出；Receiver 绿为有效接收面、红为输入无效。Diffuse 与正常 camera color 消费读取当前发布结果；RawDiffuse 始终显示未降噪贡献。调试与正常消费是两项独立控制。
 
 RenderGraph 消费 `HoRTGIRenderGraphResources.diffuse` 并声明读依赖；兼容全局为 `_HoRTGIDiffuseTexture` 与 `_HoRTGIActive`。RGB 为线性 HDR，**已包含参考 Lambert 接收 BRDF 与 diffuse albedo**；A 为 receiver validity。有效暗处可以 RGB=0、A=1，主表面缺失或 GB/SB 域不匹配为 A=0。
 

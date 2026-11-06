@@ -4,6 +4,13 @@ using lilToon.URP.Extensions.AttributeComposite;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
+    public enum ScreenProcessBlurResolution
+    {
+        Half,
+        Quarter,
+        Full
+    }
+
     [Serializable]
     public sealed class ScreenProcessLayer
     {
@@ -25,6 +32,12 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("Shader pass index used by this layer.")]
         [Min(0)]
         public int passIndex;
+
+        [Tooltip("RTDI only: choose whether the typed direct-light product replaces the raster response or is added to it. RTGI always uses additive radiance.")]
+        public ScreenProcessRTLightingMode rtLightingMode = ScreenProcessRTLightingMode.Replace;
+
+        [Tooltip("Spatial sample spacing used by the expensive ScreenProcess filters. Higher spacing evaluates fewer taps while covering the configured radius.")]
+        public ScreenProcessBlurResolution blurResolution = ScreenProcessBlurResolution.Half;
 
         [Tooltip("Layer intensity. The shader reads _Intensity.")]
         [Range(0.0f, 1.0f)]

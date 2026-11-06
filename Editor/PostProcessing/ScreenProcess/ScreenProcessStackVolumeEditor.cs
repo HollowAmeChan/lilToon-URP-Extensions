@@ -14,6 +14,28 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
+        private static readonly string[] BlurResolutionOptions =
+        {
+            "半密度采样（跳过1个）",
+            "四分之一密度（跳过3个）",
+            "完整采样"
+        };
+
+        private static void DrawBlurResolution(Rect rect, ref float y, SerializedProperty element)
+        {
+            SerializedProperty resolution = element.FindPropertyRelative("blurResolution");
+            if (resolution == null)
+            {
+                return;
+            }
+
+            resolution.enumValueIndex = EditorGUI.Popup(
+                new Rect(rect.x, y, rect.width, LineHeight),
+                "滤波分辨率",
+                Mathf.Clamp(resolution.enumValueIndex, 0, BlurResolutionOptions.Length - 1),
+                BlurResolutionOptions);
+            y += LineHeight + LineSpacing;
+        }
 
         private readonly struct EffectToggleEntry
         {
@@ -33,6 +55,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             new EffectToggleEntry(ScreenProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
             new EffectToggleEntry(ScreenProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.RTDI, "RTDI 直接光", "icon_RimLight_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.RTGI, "RTGI 间接光", "icon_Effects_v1"),
             new EffectToggleEntry(ScreenProcessEffect.PostLighting, "后期打光", "icon_RimLight_v1"),
             new EffectToggleEntry(ScreenProcessEffect.SkyTyndall, "天光丁达尔", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
@@ -316,15 +340,23 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             EditorGUI.indentLevel++;
             ScreenProcessEffect effect = GetEffect(element);
+            bool rtLighting = ScreenProcessEffectRegistry.IsRTLightingEffect(effect);
             DrawCoreFields(
                 rect,
                 ref y,
                 element,
-                includeColorBlend: effect != ScreenProcessEffect.DepthOfField,
+                includeColorBlend: !rtLighting && effect != ScreenProcessEffect.DepthOfField,
                 includeTexture: effect == ScreenProcessEffect.CustomMaterial,
                 includePassIndex: effect == ScreenProcessEffect.CustomMaterial,
                 includeMaterialOverride: effect == ScreenProcessEffect.CustomMaterial);
-            DrawMaskProperties(rect, ref y, element);
+            if (rtLighting)
+            {
+                DrawRTLightingProperties(rect, ref y, element, effect);
+            }
+            else
+            {
+                DrawMaskProperties(rect, ref y, element);
+            }
 
             switch (effect)
             {
@@ -359,7 +391,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static int GetElementLineCount(SerializedProperty element)
         {
-            return GetEffectLineCount(element) + GetMaskExtraLineCount(element);
+            ScreenProcessEffect effect = GetEffect(element);
+            return ScreenProcessEffectRegistry.IsRTLightingEffect(effect)
+                ? GetEffectLineCount(element)
+                : GetEffectLineCount(element) + GetMaskExtraLineCount(element);
         }
 
         private static int GetEffectLineCount(SerializedProperty element)
@@ -383,6 +418,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 4 + GetDepthFogLineCount(element);
                 case ScreenProcessEffect.CustomMaterial:
                     return 7;
+                case ScreenProcessEffect.RTDI:
+                    return 2;
+                case ScreenProcessEffect.RTGI:
+                    return 1;
                 case ScreenProcessEffect.DropShadow:
                 default:
                     return 9;
@@ -462,6 +501,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             if (includePassIndex)
             {
                 DrawPropertyLine(rect, ref y, element, "passIndex", "Pass 索引");
+            }
+        }
+
+        private static void DrawRTLightingProperties(
+            Rect rect,
+            ref float y,
+            SerializedProperty element,
+            ScreenProcessEffect effect)
+        {
+            if (effect == ScreenProcessEffect.RTDI)
+            {
+                DrawPropertyLine(rect, ref y, element, "rtLightingMode", "消费模式");
             }
         }
 
@@ -635,6 +686,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 10;
                 case ScreenProcessEffect.Outline:
                     return 20;
+                case ScreenProcessEffect.RTDI:
+                    return 25;
+                case ScreenProcessEffect.RTGI:
+                    return 26;
                 case ScreenProcessEffect.PostLighting:
                     return 30;
                 case ScreenProcessEffect.SkyTyndall:
@@ -732,6 +787,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 case ScreenProcessEffect.PostLighting:
                     return "后期打光";
+                case ScreenProcessEffect.RTDI:
+                    return "RTDI 直接光";
+                case ScreenProcessEffect.RTGI:
+                    return "RTGI 间接光";
                 case ScreenProcessEffect.SkyTyndall:
                     return "天光丁达尔";
                 case ScreenProcessEffect.EdgeLight:
@@ -761,6 +820,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetObjectReference(element, "shaderOverride", null);
             SetObjectReference(element, "texture", null);
             SetInt(element, "passIndex", 0);
+            SetEnum(element, "rtLightingMode", (int)ScreenProcessRTLightingMode.Replace);
             SetFloat(element, "intensity", 1.0f);
             SetColor(element, "color", Color.white);
             SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
@@ -792,6 +852,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(0.45f, 2.0f, 0.35f, 1.0f));
                     SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
                     SetVector4(element, "parameters2", new Vector4(1.0f, 0.65f, 0.45f, 1.0f));
+                    break;
+                case ScreenProcessEffect.RTDI:
+                    SetString(element, "name", "RTDI 直接光");
+                    SetEnum(element, "rtLightingMode", (int)ScreenProcessRTLightingMode.Replace);
+                    SetFloat(element, "intensity", 1.0f);
+                    break;
+                case ScreenProcessEffect.RTGI:
+                    SetString(element, "name", "RTGI 间接光");
+                    SetFloat(element, "intensity", 0.25f);
                     break;
                 case ScreenProcessEffect.Outline:
                     SetColor(element, "color", Color.black);

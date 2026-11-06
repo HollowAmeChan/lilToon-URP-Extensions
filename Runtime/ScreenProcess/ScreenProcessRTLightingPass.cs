@@ -28,6 +28,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private Material material;
         private RTHandle cameraColorTarget;
         private RTHandle scratch;
+        private ScreenProcessRTLightingConsumerSettings consumerSettings;
 
         private sealed class PassData
         {
@@ -50,10 +51,14 @@ namespace lilToon.URP.Extensions.PostProcessing
             requiresIntermediateTexture = true;
         }
 
-        internal void Setup(Material material, RTHandle cameraColorTarget)
+        internal void Setup(
+            Material material,
+            RTHandle cameraColorTarget,
+            ScreenProcessRTLightingConsumerSettings consumerSettings)
         {
             this.material = material;
             this.cameraColorTarget = cameraColorTarget;
+            this.consumerSettings = consumerSettings;
             renderPassEvent = ScreenProcessRenderPassEvents.RTLightingComposite;
             ConfigureInput(ScriptableRenderPassInput.Depth);
             requiresIntermediateTexture = true;
@@ -83,6 +88,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (material == null ||
                 cameraColorTarget == null ||
                 scratch == null ||
+                !consumerSettings.HasAny ||
                 !ScreenProcessRTLightingCompatibility.TryGet(
                     renderingData.cameraData.camera,
                     out ScreenProcessRTLightingCompatibilityFrame products))
@@ -92,7 +98,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             CommandBuffer cmd = CommandBufferPool.Get("Ho-ScreenProcess RT lighting");
             HoRTPrimarySurfaceInputs.BindCompatibility(cmd, renderingData.cameraData);
-            BindCompatibilityProducts(cmd, products);
+            BindCompatibilityProducts(cmd, products, consumerSettings);
             Blitter.BlitCameraTexture(cmd, cameraColorTarget, scratch, material, 0);
             Blitter.BlitCameraTexture(cmd, scratch, cameraColorTarget);
             context.ExecuteCommandBuffer(cmd);
@@ -112,7 +118,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             ScreenProcessRTLightingResources products =
                 frameData.GetOrCreate<ScreenProcessRTLightingResources>();
-            if (!products.HasAnyProduct)
+            if (!consumerSettings.HasAny || !products.HasAnyProduct)
             {
                 return;
             }
@@ -143,9 +149,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                     : renderGraph.defaultResources.blackTexture;
                 data.cameraDepth = resourceData.cameraDepthTexture;
                 data.primary = HoRTPrimarySurfaceInputs.Read(renderGraph, frameData, builder);
-                data.directWeight = products.directWeight;
-                data.directMode = products.directAdditive ? 1.0f : 0.0f;
-                data.indirectIntensity = products.indirectIntensity;
+                data.directWeight = consumerSettings.directEnabled ? consumerSettings.directWeight : 0.0f;
+                data.directMode = consumerSettings.directEnabled && consumerSettings.directAdditive ? 1.0f : 0.0f;
+                data.indirectIntensity = consumerSettings.indirectEnabled ? consumerSettings.indirectIntensity : 0.0f;
 
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.cameraDepth, AccessFlags.Read);
@@ -188,7 +194,8 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private static void BindCompatibilityProducts(
             CommandBuffer cmd,
-            ScreenProcessRTLightingCompatibilityFrame products)
+            ScreenProcessRTLightingCompatibilityFrame products,
+            ScreenProcessRTLightingConsumerSettings consumerSettings)
         {
             cmd.SetGlobalTexture(DirectDiffuseId, Texture2D.blackTexture);
             cmd.SetGlobalTexture(DirectSpecularId, Texture2D.blackTexture);
@@ -204,11 +211,17 @@ namespace lilToon.URP.Extensions.PostProcessing
                 cmd.SetGlobalTexture(IndirectDiffuseId, products.indirectDiffuse.nameID);
             }
 
-            cmd.SetGlobalFloat(DirectWeightId, products.directEnabled ? products.directWeight : 0.0f);
-            cmd.SetGlobalFloat(DirectModeId, products.directEnabled && products.directAdditive ? 1.0f : 0.0f);
+            cmd.SetGlobalFloat(
+                DirectWeightId,
+                products.directEnabled && consumerSettings.directEnabled ? consumerSettings.directWeight : 0.0f);
+            cmd.SetGlobalFloat(
+                DirectModeId,
+                products.directEnabled && consumerSettings.directEnabled && consumerSettings.directAdditive ? 1.0f : 0.0f);
             cmd.SetGlobalFloat(
                 IndirectIntensityId,
-                products.indirectEnabled ? products.indirectIntensity : 0.0f);
+                products.indirectEnabled && consumerSettings.indirectEnabled
+                    ? consumerSettings.indirectIntensity
+                    : 0.0f);
         }
     }
 }

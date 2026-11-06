@@ -2,6 +2,11 @@ namespace lilToon.URP.Extensions.PostProcessing
 {
     public static class ScreenProcessEffectRegistry
     {
+        public static bool IsRTLightingEffect(ScreenProcessEffect effect)
+        {
+            return effect == ScreenProcessEffect.RTDI || effect == ScreenProcessEffect.RTGI;
+        }
+
         public static string GetDefaultShaderName(ScreenProcessEffect effect)
         {
             switch (effect)

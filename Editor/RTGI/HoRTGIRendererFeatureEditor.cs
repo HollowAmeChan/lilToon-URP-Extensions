@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public override void OnInspectorGUI()
         {
             serializedObject.Update();var settings=serializedObject.FindProperty("settings");
-            EditorGUILayout.HelpBox("需要同分辨率单采样 GB/SB 与 D3D12。启用、降噪和画面合成可在 Ho-RTGI Volume 覆盖；采样质量与天空照明在此调节。",MessageType.Info);
+            EditorGUILayout.HelpBox("需要同分辨率单采样 GB/SB 与 D3D12。启用与降噪可在 Ho-RTGI Volume 覆盖；camera color 消费由 Ho-ScreenProcess 的 RTGI layer 控制。",MessageType.Info);
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"基础","ReSTIR GI",RuntimeColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
@@ -39,9 +39,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 Draw(settings,"excludedRayMaterials","不参与求交的材质");
                 EditorGUILayout.LabelField("Volume 未覆盖时的默认值",EditorStyles.boldLabel);
                 Draw(settings,"denoise","NRD RELAX 降噪");
-                Draw(settings,"composite","未覆盖时合成到场景");Draw(settings,"intensity","未覆盖时间接光强度");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("shader"),new GUIContent("Compute Shader"));EditorGUILayout.PropertyField(serializedObject.FindProperty("rayShader"),new GUIContent("Ray Tracing Shader"));EditorGUILayout.PropertyField(serializedObject.FindProperty("secondaryMaterialShader"),new GUIContent("命中材质 Shader"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("compositeShader"),new GUIContent("合成 Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("nrdShaders"),new GUIContent("GI NRD Shaders"));
             }
             serializedObject.ApplyModifiedProperties();EditorGUILayout.LabelField("运行状态",((HoRTGIRendererFeature)target).Status);

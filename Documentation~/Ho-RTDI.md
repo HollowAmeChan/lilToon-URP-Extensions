@@ -2,7 +2,7 @@
 
 > 状态：**现行功能总文档**，更新于 2026-10-29。场景所有权已迁入 Ho-RT 公共宿主，DI/GI 接入及独立 RTShadow / SIGMA / NPR 接收的有界验收见 [Ho-RT §8.5](Ho-RT.md)；RTShadow 的 NPR 接收不等于 RTDI 已驱动原 ramp。静止收敛基线 `f537c26` 之后的合成与模式见 [Composite](../Tests~/RTDI/Composite/README.md)，原质量 / 动态 / 性能限制保留。[专题与证据目录](RTDI/README.md)保存详细合同和历史实验。
 
-Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天空、真实世界遮挡、基础 lilToon Cutout，以及可选 NRD RELAX 降噪。**“合成到画面”支持参考 PBR 替换和加法叠加两种模式**，不必打开调试。替换模式以直接光＋SB 自发光替换旧照明；加法模式保留现有外观，只增加可调强度的 RTDI 直接光。两种模式均保留天空与无效面，透明物随后正常绘制。合成默认关闭，旧资产的模式仍为替换，升级不会自动切换外观。
+Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天空、真实世界遮挡、基础 lilToon Cutout，以及可选 NRD RELAX 降噪。RTDI Feature/Volume 只负责生产与质量参数；它发布 typed direct-light product。camera color 的参考 PBR 替换或加法消费统一由 Ho-ScreenProcess 的 `RTDI 直接光` layer 控制，透明物随后正常绘制。
 
 开启 NRD 后，已验证静止夹具的时间噪声方差约降至旧版的1/19。当前画面接入使用已有 Lambert＋GGX 响应，**尚未把 RTDI 改造成原 lilToon NPR ramp / 影色的受光源**；混合天空镜面偏差、严格遮挡阶跃、正常应用帧物体运动输入、复杂场景完整画质和有效 GPU 预算仍未完成。
 
@@ -31,7 +31,7 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 1. 使用支持 D3D12 inline ray tracing 的环境。已验证 Unity `6000.3.15f1`、Windows x64 Mono、RTX 4060；D3D11 应保持 inactive。使用同分辨率、单采样 GB / SB，且 SB 已包含当前网格法线布局。
 2. Renderer 上显式添加并启用 `Ho-RT`，排列在 RT 消费者之前；`Ho-RTDI` 放在 GB / SB 之后。缺少宿主时明确报告缺失并停止生产，不再隐藏创建私有场景。再在 **Ho-RTDI Volume → 运行 → 启用** 勾选左侧覆盖并打开。**只有 Feature 开启不会运行 RTDI**；没有参与当前相机的有效 Volume、组件关闭、启用未覆盖或关闭、Volume 权重为零时均停止生产。若需要天空输入，前置启用 [Ho-Atmosphere](Ho-Atmosphere.md)；没有有效 HDR 输入时只运行解析灯。迁移不会自动修改用户 Renderer 资产，需按此配置宿主。
 3. 在 **Ho-RTDI Volume → 运行** 勾选覆盖并开启 **NRD RELAX 降噪**。该开关默认关闭；Raw 调试始终保留随机样本，不能用 Raw 是否还有噪点判断 NRD 是否收敛。
-4. 在 **Ho-RTDI Volume → 画面合成** 勾选覆盖并开启 **“合成到画面”**，调试模式保持 **Off**。**混合模式 → 加法叠加** 适合快速接入现有场景，叠加强度默认.25；**参考 PBR 替换** 用于完整替换或检查RTDI照明，过渡权重1完全替换、0恢复原画面。两个模式各自保存强度，切换本身不重置DI/NRD历史。
+4. 在 **Ho-ScreenProcess Volume → Process Stack** 添加 **RTDI 直接光** layer。layer 的强度控制 product 消费权重，RTDI layer 的「消费模式」选择参考 PBR 替换或加法；这才是 camera color 消费入口。
 5. 排查时可临时在 Volume 选择 Diffuse / Specular / Combined 或 RawDiffuse / RawSpecular。调试在最终后处理后显示，All为网格；它与正常画面的合成是两条独立路径。
 6. Receiver 中绿色是有效接收面，红色是无效输入。有效阴影允许 RGB=0、A=1；输入缺失或域不匹配为 A=0。先检查接收有效性，再比较噪声与能量。
 7. 保持相机、几何与光源稳定至少半秒后，NRD 漫反射进入长历史；持续运动会保留响应优先的短历史。观察固定区域的跨帧变化，避免把材质纹理、空间渐变或高光形状当作时间噪声。
@@ -40,21 +40,19 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 
 后续现场复核补齐了**快速历史**：仅保住主历史仍不足以解决流动，低帧率会把快速历史降至0，使 RELAX 用当前随机样本的邻域裁剪已累积的颜色，产生大块波动和严重压暗。静止 Scene View 现在两路至少使用 **主30 / 快速6**，Inspector同时显示两种预算。当前地毯固定64²区域中，96帧预热后再观察96帧，漫反射大块的归一化时间方差下降约98%，镜面约95%，最终相机输出约98%；两组 raw 统计相同，观察期没有历史重置。亮度也从原先明显偏低恢复到接近该窗口 raw 均值。亮度恢复会改变归一化分母，这些百分比不等于绝对噪声降低幅度。该结果只覆盖此区域，不代表全场景无噪声或解析能量验收，也没有重测实际收敛秒数。代码和证据见[快速历史修复](../Tests~/RTDI/SceneView/FastHistory/README.md)。普通 Game / Player 的时间策略保持原合同。
 
-旧 renderer 若缺少 compute/debug/grid-label/composite 引用，`Create` 或打开 Feature Inspector 会补齐空位并标记待保存；保存 renderer asset 后再构建。既有 override 会保留。未实现构建时全工程批量资源迁移。部署步骤见 [Player 验证说明](../Tests~/Player/RTDI/README.md)。
+旧 renderer 若缺少 compute/debug/grid-label 引用，`Create` 或打开 Feature Inspector 会补齐空位并标记待保存；保存 renderer asset 后再构建。camera color 消费不再由 RTDI Feature 持有，而由 ScreenProcess layer 配置。既有 override 会保留。未实现构建时全工程批量资源迁移。部署步骤见 [Player 验证说明](../Tests~/Player/RTDI/README.md)。
 
 ### 默认设置及其含义
 
-**画面与采样质量统一在 Volume，基础配置留在 Feature。** Volume 提供启用、降噪、合成开关/模式、叠加强度、替换权重、天空开关/强度和调试；新增“采样质量”包含局部灯采样、初始候选数、时间重采样、ReSTIR历史上限、空间重采样、邻域样本数/半径、最终可见性样本、天空候选数和BRDF天空候选。数值使用标准有界滑条，枚举使用下拉选项。
+**生产参数在 Ho-RTDI Volume，camera color 消费在 Ho-ScreenProcess layer。** Ho-RTDI Volume 只提供启用、降噪、天空和采样质量覆盖；ScreenProcess 的 RTDI layer 提供 product 消费权重与替换/加法模式。
 
-Feature 只显示生产总开关、Scene View开关，以及默认折叠的几何/灯筛选、排除材质、射线偏移和Shader配置。旧Feature外观/采样字段保留序列化/API但不再重复显示。**启用必须由Volume显式覆盖并开启**；其它参数未覆盖时沿用旧Renderer数值，保留已开启场景的调校。运行时逐相机解析Volume，不把结果写回共享Feature；局部Volume权重按URP规则混合。Feature总开关仍可统一停用。当前迁移与验证见 [启用及采样控制](../Tests~/RTDI/VolumeControls/OptInQuality/README.md)，此前外观迁移证据见 [VolumeControls](../Tests~/RTDI/VolumeControls/README.md)。
+Feature 只显示生产总开关、Scene View开关，以及默认折叠的几何/灯筛选、排除材质、射线偏移和Shader配置。旧Feature外观/采样字段保留序列化/API但不再重复显示；旧 Volume 合成字段也仅作为隐藏迁移字段保留。**启用必须由Volume显式覆盖并开启**；其它参数未覆盖时沿用旧Renderer数值，保留已开启场景的调校。运行时逐相机解析Volume，不把结果写回共享Feature；局部Volume权重按URP规则混合。Feature总开关仍可统一停用。
 
 | 设置 | 当前默认 | 含义与取舍 |
 | --- | --- | --- |
 | Feature `enabled` / `inSceneView` | true / true | 生产总开关与 SceneView 支持，仍受平台和输入有效性限制 |
 | Volume `enable` | **false，未覆盖** | 当前相机必须有有效启用覆盖；不能绕过Feature生产总开关 |
-| `composite` / `compositeMode` | false / Replace | 正常相机合成开关及模式；旧资产保持替换模式 |
-| `compositeWeight` | 1 | 仅替换模式：原画面与参考PBR的0～1过渡权重 |
-| `additiveIntensity` | .25 | Volume 0～8滑条，仅加法模式：新增RTDI直接光倍率；0保留原画面，不重复添加自发光 |
+| ScreenProcess `RTDI 直接光` layer | 未添加 | camera color 的唯一 RTDI 消费入口；强度和消费模式在 layer 中设置 |
 | `denoise` | **false** | 关闭时发布 raw；打开时发布 RELAX 恢复材质后的结果，另保留 raw |
 | `useEnvironment` | true | 仅消费前置有效天空 HDR；不是另一套天空生产器 |
 | `environmentIntensity` | 1 | Volume 0～8滑条，RTDI独立天空照明倍率；0关闭天空采样，.25为四分之一，2为两倍；不改变可见天空、共享Atmosphere或解析灯，调整时失效相关历史 |
@@ -109,13 +107,13 @@ Feature 只显示生产总开关、Scene View开关，以及默认折叠的几�
 
 RenderGraph 消费者必须读取同轮资源并声明读依赖；不能依赖上一相机遗留全局。有效阴影可有零 RGB 和非零 alpha，无效输入则 alpha 为零。
 
-当前 `diffuse` 已乘 diffuse albedo，`specular` 已含参考 GGX / Fresnel；正常合成直接相加，不再乘一次材质因子。若要改为 NPR 受光，仍须建立不同的接收信号合同。
+当前 `diffuse` 已乘 diffuse albedo，`specular` 已含参考 GGX / Fresnel；ScreenProcess 消费时直接相加，不再乘一次材质因子。若要改为 NPR 受光，仍须建立不同的接收信号合同。
 
-### 正常画面的混合模式
+### ScreenProcess camera color 消费
 
-合成开关打开且当前模式的有效强度大于0时，RTDI producer 固定在 `BeforeRenderingOpaques` 发布 typed diffuse/specular products；camera-color 合成由 Ho-ScreenProcess 的 RT-light consumer 在 `BeforeRenderingTransparents` 执行。关闭合成只是不发布给该 consumer，producer 仍可作为前置 RT product 使用。RTDI Feature 不再 enqueue 自己的 CompositePass。
+RTDI producer 固定在 `BeforeRenderingOpaques` 发布 typed diffuse/specular products；是否消费这些 products 由 Ho-ScreenProcess 的 `RTDI 直接光` layer 决定，consumer 在 `BeforeRenderingTransparents` 执行。没有 RTDI layer 时，producer 仍可为其它 RT consumer 提供前置 product。RTDI Feature 不再 enqueue 自己的 CompositePass。
 
-**加法叠加** 的线性形式为 `original + additiveIntensity * (diffuse + specular) * fogTransmission`。原画面自发光、原雾色和原NPR受光已经存在，不能再加入SB自发光或重复雾色。Gamma项目先解码原颜色到线性空间，再相加并编码回去。原alpha不变。叠加强度可以超过1；负值或非有限值按0处理。它不能把原来过亮的像素压暗，也不能用RTDI阴影清除原来的未遮挡直接光。原场景阴影可继续使用；RTDI遮挡在加法中表示该处不再增加对应光照。
+**加法叠加** 的线性形式为 `original + layerIntensity * (diffuse + specular) * fogTransmission`。原画面自发光、原雾色和原NPR受光已经存在，不能再加入SB自发光或重复雾色。Gamma项目先解码原颜色到线性空间，再相加并编码回去。原alpha不变。当前 ScreenProcess RTDI layer 的强度沿用 layer 的有界消费参数；负值或非有限值按0处理。它不能把原来过亮的像素压暗，也不能用RTDI阴影清除原来的未遮挡直接光。原场景阴影可继续使用；RTDI遮挡在加法中表示该处不再增加对应光照。
 
 接入现有场景建议先选择加法、叠加强度.25，按需要降低独立天空照明强度；这两个控制分别管理总新增量和天空占比。此模式明确允许与原直接光重复计光，属于外观可控的艺术混合，不是能量守恒的直接光替换。Screen/SoftLight等显示颜色混合不在本次模式中，避免让HDR贡献随原像素亮度非线性改变。实际关闭／替换／加法三组画面对照与验证见 [Blend](../Tests~/RTDI/Composite/Blend/README.md)。
 
@@ -123,7 +121,7 @@ RenderGraph 消费者必须读取同轮资源并声明读依赖；不能依赖�
 
 有效像素的线性目标为 `diffuse.rgb + specular.rgb + SBEmission.rgb`，Gamma 项目先按 shader 的 sRGB 曲线编码，再施加一次 URP 相机雾。输出 RGB 为原相机颜色与该目标的权重插值，alpha保持原值。权重1替换旧照明，权重0跳过合成；不会将零光照误判无效，有效阴影可正确变黑，自发光仍保留。
 
-合成还要求当前 GB/SB 主表面有效、DI 两路alpha有效，且SB深度与实际不透明相机深度一致。背景、无SB面、位于接收面之前的普通Unlit物体、sample-domain不匹配均保留原像素；透明物在合成后绘制，不被整屏替换覆盖。域限定全视口Mono、单采样2D；XR/MSAA/部分视口不启用该合成并显示状态。
+消费还要求当前 GB/SB 主表面有效、DI 两路alpha有效，且SB深度与实际不透明相机深度一致。背景、无SB面、位于接收面之前的普通Unlit物体、sample-domain不匹配均保留原像素；透明物在消费后绘制，不被整屏替换覆盖。域限定全视口Mono、单采样2D；XR/MSAA/部分视口不启用该消费并显示状态。
 
 ScreenProcess RT-light consumer 在 RenderGraph 读取本轮 DI handles、主表面、相机颜色及深度，写一个新颜色附件并更新 `cameraColor`；compatibility 使用一个持久scratch和两次blit。不复制一整套主表面，不请求额外opaque color拷贝。兼容SB的数值MRT现显式登记给URP，避免中间颜色目标启用后后续opaque绘制覆盖SB附件。
 
@@ -131,11 +129,11 @@ ScreenProcess RT-light consumer 在 RenderGraph 读取本轮 DI handles、主表
 
 以下是调试Off时的真实正常相机目标，同一场景、同一显示映射（Reinhard＋sRGB），不是DI调试图：
 
-关闭合成：
+历史验证：未启用 ScreenProcess RTDI layer：
 
 ![关闭参考PBR合成](../Tests~/RTDI/Composite/images/before.png)
 
-开启合成：
+历史验证：启用 ScreenProcess RTDI layer：
 
 ![开启参考PBR合成](../Tests~/RTDI/Composite/images/after.png)
 

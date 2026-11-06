@@ -35,12 +35,12 @@ namespace lilToon.URP.Extensions.RTDI
     {
         [Tooltip("必须勾选此项覆盖并开启，当前相机才运行 RTDI；仅添加 Renderer Feature 不会自动启用。")]
         [InspectorName("启用")] public BoolParameter enable=new BoolParameter(false);
-        [InspectorName("合成到画面")] public BoolParameter composite=new BoolParameter(false);
-        [InspectorName("混合模式")] public HoRTDICompositeModeParameter compositeMode=new HoRTDICompositeModeParameter(HoRTDICompositeMode.Replace);
-        [Tooltip("参考 PBR 替换模式：原画面与 RTDI 照明的过渡权重。")]
-        public ClampedFloatParameter compositeWeight=new ClampedFloatParameter(1,0,1);
-        [Tooltip("加法模式：新增直接光的倍率，不重复添加自发光。")]
-        public ClampedFloatParameter additiveIntensity=new ClampedFloatParameter(.25f,0,8);
+        // Legacy serialized fields retained for old Volume assets. Camera-color
+        // ownership now belongs to ScreenProcess RTDI layers.
+        [HideInInspector] public BoolParameter composite=new BoolParameter(false);
+        [HideInInspector] public HoRTDICompositeModeParameter compositeMode=new HoRTDICompositeModeParameter(HoRTDICompositeMode.Replace);
+        [HideInInspector] public ClampedFloatParameter compositeWeight=new ClampedFloatParameter(1,0,1);
+        [HideInInspector] public ClampedFloatParameter additiveIntensity=new ClampedFloatParameter(.25f,0,8);
         [InspectorName("天空环境光")] public BoolParameter useEnvironment=new BoolParameter(true);
         [Tooltip("仅调整 RTDI 天空照明；0关闭天空采样，不改变可见天空或解析灯。")]
         public ClampedFloatParameter environmentIntensity=new ClampedFloatParameter(1,0,8);

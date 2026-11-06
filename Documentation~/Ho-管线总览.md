@@ -72,7 +72,7 @@
         ── URP opaque / cutout 常规绘制 ──────────────────────────────
 [7]  Ho-SSGI（独立 feature，读 gisexclude）                  → gi              ★ 需要 opaque 后的颜色
 [7.5] Ho-RTDI / Ho-RTGI producer（可选）                  → 独立直接 / 间接光；固定在 opaque 前发布 typed products
-[7.6] Ho-ScreenProcess RT-light consumer                   → 透明前消费 RTDI/GI；普通 ScreenProcess stack 仍在后处理域
+[7.6] Ho-ScreenProcess RTDI/RTGI layers                     → 透明前消费 RTDI/GI；普通 ScreenProcess stack 仍在后处理域
 [8]  AC 资源由 after-opaque 消费者直接读，不在这里重做一趟合成
 [9]  Ho-SubsurfaceScattering                                 → sss
 [10] Ho-WeightedOIT（透明合成）
@@ -145,7 +145,7 @@ strength 归零，`_UsePlanarReflection` 只能在总开关打开时生效；`ro
 | 17 | Ho-VolumeLight | 体积光和 dust 默认 `BeforeRenderingTransparents` | 太阳 / 天空参数、相机深度先就绪；若希望 OIT 使用含体积光的 opaque copy，放在其 copy pass 之前并核实际事件 |
 | 18 | WeightedOIT | opaque copy 在 accumulation 前；accumulation 默认 `BeforeRenderingTransparents`、composite 默认 `AfterRenderingTransparents` | 阴影、材质与 opaque 输入先就绪；composite 在角色特化前。opaque copy 默认事件 449，前一行仅调整列表不能让事件 450 的体积光进入该副本 |
 | 19 | Ho-CharacterSpecialization | 默认 `AfterRenderingTransparents` | AC / GB / 身份和透明合成先就绪；同事件放在 OIT 下方 |
-| 20 | Ho-ScreenProcess | RT-light consumer `BeforeRenderingTransparents`；普通 stack 固定 `AfterRenderingPostProcessing` | RT consumer 读 typed products 与 opaque camera color；普通 stack 读取完成语义与正常场景颜色 |
+| 20 | Ho-ScreenProcess | `RTDI 直接光` / `RTGI 间接光` consumer `BeforeRenderingTransparents`；普通 stack 固定 `AfterRenderingPostProcessing` | RT layers 读 typed products 与 opaque camera color；RTDI 模式/强度和 RTGI 强度由 layer 控制 |
 | 21 | Ho-ImageProcess | 固定 `AfterRenderingPostProcessing + 1` | ScreenProcess 之后执行最终图像链；自定义后处理也须声明与其先后关系 |
 | 最终显示 | 模块 debug / Ho-DebugTile | debug 捕获默认 `AfterRenderingPostProcessing`，统一 presenter 为 `AfterRendering + 4` | 诊断绕开正常颜色合成，在最终 AA / blit 后呈现；多个模块同时开启按公共确定性规则选择，列表排序不是调试选择器 |
 | 按导出需求 | AOV / export 消费者（可选） | 在所需产品完成后、句柄释放前；最终 beauty 则在图像链后读取 | 必须逐输出说明采样时机；不能凭 Feature 名称统一放到一个事件 |
@@ -266,8 +266,8 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 18 | Ho-VolumeLight | ✅ 独立体积太阳光与 dust，借已有天空 / 深度 |
 | 19 | Ho-RT | ✅ 公共 RT 资源宿主、请求 epoch、共享姿态及 fence 寿命 |
 | 20 | Ho-RTShadow | 已撤回曲面修正并恢复此前逐灯 / SIGMA 功能基线；旧有界测试不代表真实角色终止线质量通过，见 Ho-RT §8.8–9 |
-| 21 | Ho-RTDI | ✅ 独立直接光输出及参考 PBR 替换 / 加法合成；自身历史 |
-| 22 | Ho-RTGI | ✅ 独立一跳间接光输出及加法合成；自身历史 |
+| 21 | Ho-RTDI | ✅ 独立直接光 product、历史与 NRD；camera color 由 ScreenProcess RTDI layer 消费 |
+| 22 | Ho-RTGI | ✅ 独立一跳间接光 product、历史与 NRD；camera color 由 ScreenProcess RTGI layer 消费 |
 
 **场景基线**（朱木古堂 / `New Scene.unity`）：40 盏灯 = 1×Directional（软阴影）+ 39×Point（全无阴影），
 是多光 + ShadowCast 收集的用例场景；Volume Profile 走当前新栈无 Missing；舞台 55 个材质与角色共用 lilToon 变体家族；

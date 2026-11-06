@@ -5,10 +5,76 @@ using UnityEngine.Rendering.RenderGraphModule;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
+    internal readonly struct ScreenProcessRTLightingConsumerSettings
+    {
+        internal readonly bool directEnabled;
+        internal readonly bool directAdditive;
+        internal readonly float directWeight;
+        internal readonly bool indirectEnabled;
+        internal readonly float indirectIntensity;
+
+        internal bool HasAny => directEnabled || indirectEnabled;
+
+        internal ScreenProcessRTLightingConsumerSettings(
+            bool directEnabled,
+            bool directAdditive,
+            float directWeight,
+            bool indirectEnabled,
+            float indirectIntensity)
+        {
+            this.directEnabled = directEnabled;
+            this.directAdditive = directAdditive;
+            this.directWeight = float.IsFinite(directWeight) ? Mathf.Max(0.0f, directWeight) : 0.0f;
+            this.indirectEnabled = indirectEnabled;
+            this.indirectIntensity = float.IsFinite(indirectIntensity) ? Mathf.Max(0.0f, indirectIntensity) : 0.0f;
+        }
+
+        internal static ScreenProcessRTLightingConsumerSettings FromLayers(
+            IList<ScreenProcessLayer> layers)
+        {
+            bool directEnabled = false;
+            bool directAdditive = false;
+            float directWeight = 0.0f;
+            bool indirectEnabled = false;
+            float indirectIntensity = 0.0f;
+
+            if (layers != null)
+            {
+                for (int i = 0; i < layers.Count; i++)
+                {
+                    ScreenProcessLayer layer = layers[i];
+                    if (layer == null || !layer.IsActive)
+                    {
+                        continue;
+                    }
+
+                    if (layer.effect == ScreenProcessEffect.RTDI)
+                    {
+                        directEnabled = true;
+                        directAdditive = layer.rtLightingMode == ScreenProcessRTLightingMode.Additive;
+                        directWeight = layer.intensity;
+                    }
+                    else if (layer.effect == ScreenProcessEffect.RTGI)
+                    {
+                        indirectEnabled = true;
+                        indirectIntensity = layer.intensity;
+                    }
+                }
+            }
+
+            return new ScreenProcessRTLightingConsumerSettings(
+                directEnabled,
+                directAdditive,
+                directWeight,
+                indirectEnabled,
+                indirectIntensity);
+        }
+    }
+
     /// <summary>
     /// Frame-local publication contract between RT lighting producers and the
     /// ScreenProcess RT consumer. Products remain owned by their producer;
-    /// this item only borrows their RenderGraph handles and composition intent.
+    /// this item only borrows their RenderGraph handles.
     /// </summary>
     internal sealed class ScreenProcessRTLightingResources : ContextItem
     {
@@ -16,29 +82,19 @@ namespace lilToon.URP.Extensions.PostProcessing
         internal TextureHandle directSpecular = TextureHandle.nullHandle;
         internal TextureHandle indirectDiffuse = TextureHandle.nullHandle;
         internal bool directEnabled;
-        internal bool directAdditive;
-        internal float directWeight;
         internal bool indirectEnabled;
-        internal float indirectIntensity;
 
-        internal void PublishDirect(
-            TextureHandle diffuse,
-            TextureHandle specular,
-            float weight,
-            bool additive)
+        internal void PublishDirectProduct(TextureHandle diffuse, TextureHandle specular)
         {
             directDiffuse = diffuse;
             directSpecular = specular;
-            directWeight = float.IsFinite(weight) ? Mathf.Max(0.0f, weight) : 0.0f;
-            directAdditive = additive;
-            directEnabled = directDiffuse.IsValid() && directSpecular.IsValid() && directWeight > 0.0f;
+            directEnabled = directDiffuse.IsValid() && directSpecular.IsValid();
         }
 
-        internal void PublishIndirect(TextureHandle diffuse, float intensity)
+        internal void PublishIndirectProduct(TextureHandle diffuse)
         {
             indirectDiffuse = diffuse;
-            indirectIntensity = float.IsFinite(intensity) ? Mathf.Max(0.0f, intensity) : 0.0f;
-            indirectEnabled = indirectDiffuse.IsValid() && indirectIntensity > 0.0f;
+            indirectEnabled = indirectDiffuse.IsValid();
         }
 
         internal bool HasAnyProduct =>
@@ -51,10 +107,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             directSpecular = TextureHandle.nullHandle;
             indirectDiffuse = TextureHandle.nullHandle;
             directEnabled = false;
-            directAdditive = false;
-            directWeight = 0.0f;
             indirectEnabled = false;
-            indirectIntensity = 0.0f;
         }
     }
 
@@ -69,10 +122,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         internal RTHandle directSpecular;
         internal RTHandle indirectDiffuse;
         internal bool directEnabled;
-        internal bool directAdditive;
-        internal float directWeight;
         internal bool indirectEnabled;
-        internal float indirectIntensity;
 
         internal bool HasAnyProduct =>
             (directEnabled && directDiffuse != null && directSpecular != null) ||
@@ -96,12 +146,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             Frames.Clear();
         }
 
-        internal static void PublishDirect(
-            Camera camera,
-            RTHandle diffuse,
-            RTHandle specular,
-            float weight,
-            bool additive)
+        internal static void PublishDirectProduct(Camera camera, RTHandle diffuse, RTHandle specular)
         {
             if (camera == null)
             {
@@ -111,12 +156,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             ScreenProcessRTLightingCompatibilityFrame frame = GetOrCreate(camera);
             frame.directDiffuse = diffuse;
             frame.directSpecular = specular;
-            frame.directWeight = float.IsFinite(weight) ? Mathf.Max(0.0f, weight) : 0.0f;
-            frame.directAdditive = additive;
-            frame.directEnabled = diffuse != null && specular != null && frame.directWeight > 0.0f;
+            frame.directEnabled = diffuse != null && specular != null;
         }
 
-        internal static void PublishIndirect(Camera camera, RTHandle diffuse, float intensity)
+        internal static void PublishIndirectProduct(Camera camera, RTHandle diffuse)
         {
             if (camera == null)
             {
@@ -125,8 +168,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             ScreenProcessRTLightingCompatibilityFrame frame = GetOrCreate(camera);
             frame.indirectDiffuse = diffuse;
-            frame.indirectIntensity = float.IsFinite(intensity) ? Mathf.Max(0.0f, intensity) : 0.0f;
-            frame.indirectEnabled = diffuse != null && frame.indirectIntensity > 0.0f;
+            frame.indirectEnabled = diffuse != null;
         }
 
         internal static bool TryGet(Camera camera, out ScreenProcessRTLightingCompatibilityFrame frame)

@@ -4,13 +4,15 @@ using UnityEngine.Rendering;
 namespace lilToon.URP.Extensions.RTDI
 {
     // Resolve once for this camera, without writing Volume values back into the
-    // shared renderer asset. Enable is opt-in; other unchecked parameters retain
-    // serialized legacy defaults so existing explicitly enabled scenes keep tuning.
+    // shared renderer asset. Enable is opt-in; the Volume only overrides producer
+    // parameters. Legacy camera-color fields remain serialized for asset migration
+    // but are intentionally not resolved into this runtime snapshot.
     internal readonly struct HoRTDIViewSettings
     {
+        // Kept only for legacy Editor validation source compatibility. The
+        // producer never resolves or consumes the old Volume composition flag.
         internal readonly bool enabled,composite,denoise,useEnvironment;
-        internal readonly HoRTDICompositeMode compositeMode;
-        internal readonly float compositeAmount,environmentIntensity;
+        internal readonly float environmentIntensity;
         internal readonly bool temporal,spatial;
         internal readonly HoRTDILocalSampling localSampling;
         internal readonly HoRTDIFinalSampling finalSampling;
@@ -19,14 +21,9 @@ namespace lilToon.URP.Extensions.RTDI
         internal HoRTDIViewSettings(HoRTDISettings source,HoRTDIVolume volume)
         {
             enabled=source.enabled&&volume!=null&&volume.IsActive();
-            composite=Select(volume?.composite,source.composite);
-            compositeMode=Select(volume?.compositeMode,source.compositeMode);
+            composite=false;
             denoise=Select(volume?.denoise,source.denoise);
             useEnvironment=Select(volume?.useEnvironment,source.useEnvironment);
-            float amount=compositeMode==HoRTDICompositeMode.Additive
-                ?Select(volume?.additiveIntensity,source.additiveIntensity):Select(volume?.compositeWeight,source.compositeWeight);
-            compositeAmount=SafeGain(amount);
-            if(compositeMode!=HoRTDICompositeMode.Additive)compositeAmount=Mathf.Min(1,compositeAmount);
             environmentIntensity=SafeGain(Select(volume?.environmentIntensity,source.environmentIntensity));
             localSampling=Select(volume?.localSampling,source.localSampling);
             finalSampling=Select(volume?.finalSampling,source.finalSampling);

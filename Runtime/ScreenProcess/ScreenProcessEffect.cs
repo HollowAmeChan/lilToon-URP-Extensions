@@ -12,7 +12,17 @@ namespace lilToon.URP.Extensions.PostProcessing
         PostLighting = 5,
         SkyTyndall = 6,
         DepthFog = 7,
-        BokehZoomBlur = 8
+        BokehZoomBlur = 8,
+        RTDI = 9,
+        RTGI = 10
+    }
+
+    public enum ScreenProcessRTLightingMode
+    {
+        [InspectorName("参考 PBR 替换")]
+        Replace,
+        [InspectorName("加法")]
+        Additive
     }
 
     /// <summary>

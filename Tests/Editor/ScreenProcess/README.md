@@ -8,6 +8,8 @@ Unity 6000.3 的测试项目需要在 Player Settings / Scripting Define Symbols
 
 可给测试进程设置 `HO_SP_LENS_PREVIEW_DIR` 导出实际 GPU 结果 PNG；不设置时不写预览文件。2026-11-03 的双 API 与负对照记录见 `Documentation~/后处理/LensEffects-Validation-20261103.md`，其中迁移用例属于删除前的历史验证。
 
+`ScreenProcessSamplingStrideTests` 覆盖 Full / Half / Quarter 的 shader 实际采样路径、焦点描边泄漏和天空射线能量。Full 模式可通过 reference capture 对比原始 RGBA32 输出；若要导出 buffer，显式设置 `HO_SP_SAMPLING_CAPTURE_DIR`，不设置时不写文件。
+
 在安装本包、URP 和 Unity Test Framework 的测试项目中，将本包加入 `Packages/manifest.json` 的 `testables`：
 
 ```json

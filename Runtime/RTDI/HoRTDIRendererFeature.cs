@@ -159,28 +159,17 @@ namespace lilToon.URP.Extensions.RTDI
             context.PrepareDenoiser(viewSettings.denoise,nrdShaders);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             var lightData=lightList.Count>0?lightList.ToArray():new HoRTAnalyticLight[1];
-            float compositeAmount=viewSettings.compositeAmount;
-            bool composite=viewSettings.composite&&compositeAmount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
-                &&!data.cameraData.xr.enabled&&camera.rect==new Rect(0,0,1,1);
-            pass.Setup(context,sceneView,shader,finalVisibilityShader,settings,viewSettings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature,composite);
+            pass.Setup(context,sceneView,shader,finalVisibilityShader,settings,viewSettings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
             // RTDI is a producer of typed lighting products. It no longer owns
             // camera-color composition, so its producer always runs after the
             // surface buffers and before opaque Forward.
             pass.renderPassEvent=RenderPassEvent.BeforeRenderingOpaques;
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
-            if(composite)
-            {
-                ScreenProcessRTLightingCompatibility.PublishDirect(
-                    camera,
-                    context.PublishedDiffuse,
-                    context.PublishedSpecular,
-                    compositeAmount,
-                    viewSettings.compositeMode==HoRTDICompositeMode.Additive);
-                Status+=viewSettings.compositeMode==HoRTDICompositeMode.Additive
-                    ?" / ScreenProcess 加法叠加"
-                    :" / ScreenProcess 参考 PBR 合成";
-            }
-            else if(viewSettings.composite)Status+=" / 合成未发布（需要全视口 Mono 单采样输入及非零权重）";
+            ScreenProcessRTLightingCompatibility.PublishDirectProduct(
+                camera,
+                context.PublishedDiffuse,
+                context.PublishedSpecular);
+            Status+=" / RTDI product";
             if(viewSettings.finalSampling==HoRTDIFinalSampling.TripleAnalytic)Status+=" / 三最终样本";
             if(viewSettings.denoise)Status+=" / "+context.nrdStatus;
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
@@ -202,14 +191,12 @@ namespace lilToon.URP.Extensions.RTDI
             // by the collector before this snapshot is constructed.
             private readonly struct PassSettings
             {
-                internal readonly bool useEnvironment,temporal,spatial,composite;
-                internal readonly HoRTDICompositeMode compositeMode;
+                internal readonly bool useEnvironment,temporal,spatial;
                 internal readonly int environmentSamples,environmentBrdfSamples,initialSamples,maxHistory,spatialSamples;
-                internal readonly float spatialRadius,rayBias,environmentIntensity,compositeAmount;
-                internal PassSettings(HoRTDISettings source,HoRTDIViewSettings view,bool compositeEnabled)
+                internal readonly float spatialRadius,rayBias,environmentIntensity;
+                internal PassSettings(HoRTDISettings source,HoRTDIViewSettings view)
                 {
                     useEnvironment=view.useEnvironment;temporal=view.temporal;spatial=view.spatial;
-                    composite=compositeEnabled;compositeMode=view.compositeMode;compositeAmount=view.compositeAmount;
                     environmentSamples=view.environmentSamples;environmentBrdfSamples=view.environmentBrdfSamples;initialSamples=view.initialSamples;maxHistory=view.maxHistory;spatialSamples=view.spatialSamples;
                     spatialRadius=view.spatialRadius;rayBias=source.rayBias;environmentIntensity=view.environmentIntensity;
                 }
@@ -220,9 +207,9 @@ namespace lilToon.URP.Extensions.RTDI
             private HoRTAnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             private int requestedFinalSamples;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingOpaques;}
-            internal void Setup(HoRTDIContext context,HoRTView sceneView,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,HoRTDIViewSettings view,HoRTAnalyticLight[] lights,Light[] keys,int count,int localCount,int signature,bool compositeEnabled)
+            internal void Setup(HoRTDIContext context,HoRTView sceneView,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,HoRTDIViewSettings view,HoRTAnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
             {
-                this.context=context;this.sceneView=sceneView;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings,view,compositeEnabled);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
+                this.context=context;this.sceneView=sceneView;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings,view);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
                 requestedFinalSamples=view.finalSampling==HoRTDIFinalSampling.TripleAnalytic?3:1;
                 #if UNITY_EDITOR
                 ConfigureInput(context.nrd?.ValidationMotionCapture!=null?ScriptableRenderPassInput.Motion:ScriptableRenderPassInput.None);
@@ -321,14 +308,9 @@ namespace lilToon.URP.Extensions.RTDI
                     }
                     builder.SetGlobalTextureAfterPass(data.diffuse,Shader.PropertyToID("_HoRTDIDiffuseTexture"));builder.SetGlobalTextureAfterPass(data.specular,Shader.PropertyToID("_HoRTDISpecularTexture"));
                     output.diffuse=data.diffuse;output.specular=data.specular;
-                    if(data.settings.composite && data.settings.compositeAmount>0)
-                    {
-                        frame.GetOrCreate<ScreenProcessRTLightingResources>().PublishDirect(
-                            data.diffuse,
-                            data.specular,
-                            data.settings.compositeAmount,
-                            data.settings.compositeMode==HoRTDICompositeMode.Additive);
-                    }
+                    frame.GetOrCreate<ScreenProcessRTLightingResources>().PublishDirectProduct(
+                        data.diffuse,
+                        data.specular);
                     builder.SetRenderFunc(static(Data d,UnsafeGraphContext ctx)=>Dispatch(CommandBufferHelpers.GetNativeCommandBuffer(ctx.cmd),d,false,default));
                 }
             }
@@ -613,15 +595,10 @@ namespace lilToon.URP.Extensions.RTDI
             public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)
             {
                 var d=Snapshot(data.cameraData.camera,data.cameraData.GetViewMatrix(),data.cameraData.GetProjectionMatrix());
-                if(d.settings.composite && d.settings.compositeAmount>0)
-                {
-                    ScreenProcessRTLightingCompatibility.PublishDirect(
-                        data.cameraData.camera,
-                        context.PublishedDiffuse,
-                        context.PublishedSpecular,
-                        d.settings.compositeAmount,
-                        d.settings.compositeMode==HoRTDICompositeMode.Additive);
-                }
+                ScreenProcessRTLightingCompatibility.PublishDirectProduct(
+                    data.cameraData.camera,
+                    context.PublishedDiffuse,
+                    context.PublishedSpecular);
                 context.PrepareEnvironment(settings.useEnvironment&&settings.environmentIntensity>0&&HoAtmosphereBindings.compatibilityTexture!=null&&HoAtmosphereBindings.compatibilityParameters.w>.5f);
                 if(context.environmentSampling)
                 {

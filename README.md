@@ -5,15 +5,15 @@ Ho 渲染体系的 URP 功能扩展包，配合 lilToon 与 HoURP，提供光照
 ## 功能
 
 - **基础数据与语义遮罩**：几何数据、法线与深度、逐物体身份、表面材质数据，以及统一的属性与语义遮罩合成。
-- **世界空间直接光 RTDI**：解析灯、HDR 天空、射线遮挡、基础 Cutout、可选 NRD 降噪，以及参考 PBR 替换 / 加法叠加；常用参数由 Volume 控制。
-- **世界空间间接光 RTGI**：独立一跳漫反射 GI，支持离屏几何、自发光、独立 NRD 和画面加法合成；受限支持域已接通，完整画质、动态与高清预算仍待验收，见 [RTGI](Documentation~/Ho-RTGI.md)。
+- **世界空间直接光 RTDI**：解析灯、HDR 天空、射线遮挡、基础 Cutout、可选 NRD 降噪，并发布 typed direct-light product；camera color 由 ScreenProcess 的 RTDI layer 消费。
+- **世界空间间接光 RTGI**：独立一跳漫反射 GI，支持离屏几何、自发光、独立 NRD，并发布 typed indirect-light product；camera color 由 ScreenProcess 的 RTGI layer 消费，见 [RTGI](Documentation~/Ho-RTGI.md)。
 - **屏幕空间光照**：GTAO、SSGI 与次表面散射 SSS。
 - **阴影与环境**：独立多灯 ShadowCast / PCSS、角色局部阴影、共享大气与太阳体积光。
 - **反射与透明**：平面反射、Weighted Blended OIT 透明合成。
 - **角色特化**：眼睛透过、前发投影、脸色扩散与角色捕获。
 - **后处理与调试**：语义屏幕图层、图像效果栈、渐变映射、网点、调色预设和缓冲调试视图。
 
-详细说明见 [文档索引](Documentation~/文档索引.md)。当前角色栅格投影见 [Ho-CharacterShadow](Documentation~/Ho-CharacterShadow.md)；下一轮公共 RT 底座、RTShadow 与 SIGMA 的未实现设计统一见 [Ho-RT](Documentation~/Ho-RT.md)。
+详细说明见 [文档索引](Documentation~/文档索引.md)。当前角色栅格投影见 [Ho-CharacterShadow](Documentation~/Ho-CharacterShadow.md)；Ho-RT 底座与 RTShadow 的现状见 [Ho-RT](Documentation~/Ho-RT.md)，RTAO、反射/折射与整套 RT 优化的未实现路线见 [Ho-RT 功能路线图](Documentation~/Ho-RT-Feature-Roadmap.md)。
 
 ## Ho 渲染体系相关仓库
 

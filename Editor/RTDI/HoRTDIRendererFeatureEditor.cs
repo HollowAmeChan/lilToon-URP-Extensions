@@ -13,7 +13,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public override void OnInspectorGUI()
         {
             serializedObject.Update();var settings=serializedObject.FindProperty("settings");
-            EditorGUILayout.HelpBox("此 Feature 只提供生产能力，还需在 Ho-RTDI Volume 勾选启用覆盖并开启。画面、降噪及采样质量均在 Volume 调节；此处保留资源、筛选与射线偏移。需要同分辨率单采样 GB/SB 与 D3D12。",MessageType.Info);
+            EditorGUILayout.HelpBox("此 Feature 只提供生产能力，还需在 Ho-RTDI Volume 勾选启用覆盖并开启。生产参数、降噪及采样质量由 Volume 覆盖；camera color 消费由 Ho-ScreenProcess 的 RTDI layer 控制。此处保留资源、筛选与射线偏移。需要同分辨率单采样 GB/SB 与 D3D12。",MessageType.Info);
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"基础","RTXDI DI",RuntimeColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
@@ -27,7 +27,6 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("shader"),new GUIContent("Compute Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("nrdShaders"),new GUIContent("NRD Shader Library"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("debugShader"),new GUIContent("Debug Shader"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("compositeShader"),new GUIContent("Composite Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("debugOverlayShader"),new GUIContent("Debug Grid Shader"));
             }
             serializedObject.ApplyModifiedProperties();EditorGUILayout.LabelField("运行状态",((HoRTDIRendererFeature)target).Status);

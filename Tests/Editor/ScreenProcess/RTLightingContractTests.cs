@@ -28,7 +28,8 @@ namespace lilToon.URP.Extensions.Tests
             StringAssert.Contains("ScreenProcessRTLightingResources", gi);
             StringAssert.Contains("PublishDirect", di);
             StringAssert.Contains("PublishIndirect", gi);
-            StringAssert.Contains("compositeEnabled", di);
+            StringAssert.Contains("PublishDirectProduct", di);
+            StringAssert.Contains("PublishIndirectProduct", gi);
             StringAssert.DoesNotContain("compositePass", di);
             StringAssert.DoesNotContain("compositeShader", di);
             StringAssert.DoesNotContain("compositePass", gi);
@@ -65,6 +66,31 @@ namespace lilToon.URP.Extensions.Tests
             StringAssert.Contains("_CameraDepthTexture", shader);
             StringAssert.Contains("MixFogColor", shader);
             StringAssert.Contains("UNITY_COLORSPACE_GAMMA", shader);
+        }
+
+        [Test]
+        public void ScreenProcessOwnsRTLayerNamesAndRTVolumesDoNotExposeCompositionUi()
+        {
+            string effects = ReadPackageFile("Runtime/ScreenProcess/ScreenProcessEffect.cs");
+            string layer = ReadPackageFile("Runtime/ScreenProcess/ScreenProcessLayer.cs");
+            string renderer = ReadPackageFile("Runtime/ScreenProcess/ScreenProcessRendererFeature.cs");
+            string stackEditor = ReadPackageFile("Editor/PostProcessing/ScreenProcess/ScreenProcessStackVolumeEditor.cs");
+            string volume = ReadPackageFile("Runtime/RTDI/HoRTDIVolume.cs");
+            string giVolume = ReadPackageFile("Runtime/RTGI/HoRTGIVolume.cs");
+            string diEditor = ReadPackageFile("Editor/RTDI/HoRTDIVolumeEditor.cs");
+            string giEditor = ReadPackageFile("Editor/RTGI/HoRTGIVolumeEditor.cs");
+
+            StringAssert.Contains("RTDI = 9", effects);
+            StringAssert.Contains("RTGI = 10", effects);
+            StringAssert.Contains("rtLightingMode", layer);
+            StringAssert.Contains("RTDI 直接光", stackEditor);
+            StringAssert.Contains("RTGI 间接光", stackEditor);
+            StringAssert.Contains("runtimeRTLightingLayers.Clear()", renderer);
+            StringAssert.Contains("runtimeLayers.Count == 0 && !rtSettings.HasAny", renderer);
+            StringAssert.DoesNotContain("合成到画面", diEditor);
+            StringAssert.DoesNotContain("合成到场景", giEditor);
+            StringAssert.Contains("[HideInInspector]", volume);
+            StringAssert.Contains("[HideInInspector]", giVolume);
         }
     }
 }

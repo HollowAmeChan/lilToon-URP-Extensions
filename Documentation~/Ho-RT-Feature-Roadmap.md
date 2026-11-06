@@ -38,7 +38,7 @@ Ho-RT CPU scene snapshot / AS lifetime
 - **HoShader RT-aware 材质族** 是拟新增的独立材质/Shader 包与 consumer，专门消费 Ho-RT typed products，并在自身完整 Forward/NPR evaluation 中决定 direct / indirect / AO / reflection 怎样进入该材质响应。它是新的一类，不假设当前 HoShader 的 Skin、Fur 或其它包已经具备 RT 能力；也不拆成 ramp、影色等 fullscreen effects。
 - **late consumer/composite** 是可选 consumer，仅把明确约定为 radiance contribution 的 RT product 组合进 camera color。它不拥有 ray generation 或 GI/DI estimator；若输出需驱动 NPR ramp，应由 RT-aware material consumer 在材质着色内读取合适输入，而非晚期合成已着色 RGB。
 
-ScreenProcess 现在拥有一个独立的 **RT-light consumer pass**，不把同帧 RT product 塞进静态 `ScreenProcessLayer.texture`。该 pass 在 `BeforeRenderingTransparents` 消费 RenderGraph `ContextItem` / compatibility registry 发布的 typed handles，仍处于线性 HDR 场景域；普通 ScreenProcess layer stack 继续固定在 `AfterRenderingPostProcessing`。因此 RTDI/RTGI 的 producer 与 camera-color consumer 已经解耦，但透明、fog、HDR blend 和深度 gate 的语义仍由这个专用 consumer 明确承担。
+ScreenProcess 现在拥有正式的 `RTDI 直接光` 与 `RTGI 间接光` layer，不把同帧 RT product 塞进静态 `ScreenProcessLayer.texture`。Volume 的 RTDI/RTGI 组件只负责 feature 生产参数覆盖；layer 负责 camera color 消费强度与 RTDI 替换/加法模式。该 pass 在 `BeforeRenderingTransparents` 消费 RenderGraph `ContextItem` / compatibility registry 发布的 typed handles，仍处于线性 HDR 场景域；普通 ScreenProcess layer stack 继续固定在 `AfterRenderingPostProcessing`。
 
 HoShader 当前已有独立 URP UPM 材质包和各自的 shader/Editor 结构，但没有 RT-aware 材质类别。本路线提出新增材质类别，不表示既有 Skin/Fur 实现已经接入 RT。是否单独拆成新的 Git 仓库或作为 HoShader 下的新 UPM 包，在该新类别正式启动时决定。
 
@@ -291,7 +291,7 @@ After opaque: consume RTDI/RTGI products into camera color at an explicit compos
 
 ## 10. 当前阶段评价与下一步
 
-**本轮完成：** 源码/文档基线已核对；现有 GTAO 对材质的 ramp 与全局压暗两种输出已确认；RTDI/RTGI producer 只读 buffer/world inputs，而 camera color 由独立 consumer 消费；A1 的 ScreenProcess RT-light typed contract、RenderGraph handle 发布、compatibility registry 和等价合成 shader 已落地；A2 已将两个 producer 的默认事件前移到 `BeforeRenderingOpaques`。Unity 6000.3.15 已生成 Runtime/Editor 扩展程序集；在不含用户未跟踪 Editor benchmark 的干净 package 副本中，`RTLightingContractTests` 3/3 通过。
+**本轮完成：** 源码/文档基线已核对；现有 GTAO 对材质的 ramp 与全局压暗两种输出已确认；RTDI/RTGI producer 只读 buffer/world inputs，而 camera color 由独立 consumer 消费；A1 的 ScreenProcess RT-light typed contract、RenderGraph handle 发布、compatibility registry 和等价消费 shader 已落地；A2 已将两个 producer 的默认事件前移到 `BeforeRenderingOpaques`。Unity 6000.3.15 已生成 Runtime/Editor 扩展程序集；在不含用户未跟踪 Editor benchmark 的干净 package 副本中，`RTLightingContractTests` 4/4 通过，覆盖 RT layer 注册、Volume 隐藏旧合成字段和 RT-only stack 不误报跳过。
 
 **尚未完成：** 邻近审计的原始 GPU capture 未在本轮取得；reference project copy 当前不在记录的 checkout 路径；A1/A2 的 RenderGraph/compat 实际画面与资源生命周期仍待隔离夹具；HoShader RT 材质族、AO/GI shared primary-ray estimator、denoiser profile 和正式性能目标均待后续阶段。`ScreenProcessRegressionTests` 的 Unity 6000.3 compatibility setter 已按 `URP_COMPATIBILITY_MODE` 修复；当前全量 Editor 编译被工作区用户未跟踪的 `Editor/HoActiveFeatureBenchmark.cs` 重复成员阻断。D3D11 全量 ScreenProcess 回归另有既存 shader OOM/forced-unroll 失败，不能归因于本轮 RT contract。
 

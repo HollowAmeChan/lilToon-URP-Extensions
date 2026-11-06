@@ -23,8 +23,10 @@ namespace lilToon.URP.Extensions.RTGI
     public sealed class HoRTGIVolume : VolumeComponent,IPostProcessComponent
     {
         [InspectorName("启用")] public BoolParameter enable=new BoolParameter(true);
-        [InspectorName("合成到场景")] public BoolParameter composite=new BoolParameter(false);
-        [InspectorName("间接光强度")] public MinFloatParameter intensity=new MinFloatParameter(.25f,0);
+        // Legacy serialized fields retained for old Volume assets. Camera-color
+        // ownership now belongs to ScreenProcess RTGI layers.
+        [HideInInspector] public BoolParameter composite=new BoolParameter(false);
+        [HideInInspector] public MinFloatParameter intensity=new MinFloatParameter(.25f,0);
         [InspectorName("降噪")] public BoolParameter denoise=new BoolParameter(false);
         [InspectorName("排除 Ray 材质")]
         [Tooltip("通常填入本场景天空球材质，避免天空壳参与 RTGI 求交。")]

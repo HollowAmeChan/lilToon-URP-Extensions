@@ -38,6 +38,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerMaskInvertId = Shader.PropertyToID("_LayerMaskInvert");
         public static readonly int LayerMaskDebugOutputId = Shader.PropertyToID("_LayerMaskDebugOutput");
         public static readonly int SubjectMaskTextureId = Shader.PropertyToID(SubjectMaskTextureName);
+        public static readonly int BlurSampleStrideId = Shader.PropertyToID("_HoSPBlurSampleStride");
         public static readonly int SubjectMaskValidId = Shader.PropertyToID("_SubjectMaskValid");
         public static readonly int MaskValidId = Shader.PropertyToID(MaskValidName);
         public static readonly int MaskQueryId = Shader.PropertyToID("_LayerMaskQuery");
