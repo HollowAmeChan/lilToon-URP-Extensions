@@ -132,7 +132,7 @@ namespace lilToon.URP.Extensions.RTGI
             if(volume!=null&&volume.debugMode.value!=HoRTGIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
                 if(debugMaterial==null){var found=Shader.Find("Hidden/lilToon/URP/RTGI/Debug");if(found!=null)debugMaterial=CoreUtils.CreateEngineMaterial(found);}
-                if(debugMaterial!=null){debugPass.Setup(volume.debugMode.value,debugMaterial,context);debugPass.Enqueue(renderer);}
+                if(debugMaterial!=null){debugPass.Setup(volume.debugMode.value,debugMaterial,context,volume.debugExposure.value,volume.debugTonemap.value);debugPass.Enqueue(renderer);}
             }
         }
         // Identical analytic-light adaptation to Ho-RTDI; no dependency on DI being enabled.

@@ -71,7 +71,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var sample=entry.sample;sample.begin=data.begin;sample.end=data.end;sample.frequency=data.frequency;sample.targetFence=data.targetFence;sample.completedFence=data.completedFence;sample.milliseconds=1000.0*(data.end-data.begin)/data.frequency;samples.Add(sample);Marshal.FreeHGlobal(entry.packet);pending.RemoveAt(i);
             }
         }
-        internal Summary[] Summarize(int minimumFrames)
+        internal Summary[] Summarize(int minimumFrames,bool requireComposite=true)
         {
             Collect();if(pending.Count!=0)throw new Exception("GPU queries still lack completed fence");
             var groups=samples.GroupBy(x=>x.name).Select(g=>
@@ -79,7 +79,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var values=g.Select(x=>x.milliseconds).OrderBy(x=>x).ToArray();if(values.Length<(g.Key=="GI.BuildEnvironmentPdf"?1:minimumFrames))throw new Exception("Insufficient GPU samples for "+g.Key+": "+values.Length);
                 return new Summary{name=g.Key,count=values.Length,mean=values.Average(),median=values[values.Length/2],p95=values[Math.Min(values.Length-1,(int)(values.Length*.95))]};
             }).ToArray();
-            foreach(string required in new[]{"GI.Total","GI.Composite"})if(!groups.Any(x=>x.name==required&&x.median>0))throw new Exception("No positive completed GPU interval for "+required);
+            foreach(string required in requireComposite?new[]{"GI.Total","GI.Composite"}:new[]{"GI.Total"})if(!groups.Any(x=>x.name==required&&x.median>0))throw new Exception("No positive completed GPU interval for "+required);
             return groups;
         }
         public void Dispose()

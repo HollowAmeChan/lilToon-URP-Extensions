@@ -2,6 +2,21 @@
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳 diffuse GI product。camera color 消费由 Ho-ScreenProcess 的 `RTGI 间接光` layer 负责。SDK GI reservoir 与时间/空间重采样复用固定原文件；应用 bridge 适配 Ho 生产端。最终 NPR 影色/ramp 映射或材质内接收未纳入本阶段。
 
+## 2026-11-06 稳定性与调试记录
+
+RTGI producer 在 opaque Forward 前发布 typed product；ScreenProcess 的 RTGI layer 负责 camera-color 消费。RTGI Volume 只覆盖 producer/debug 参数，不再描述画面合成。Debug View 新增 EV 曝光与可选 Reinhard 映射，避免把弱线性 HDR 当作空 product。
+
+独立 D3D12 静止矩阵在 160x90 记录的 raw 均值为：古典机械剧场 `(0.0002594, 0.00000760, 0.000000108)`、圣诞万花镜 `(0.005552, 0.002393, 0.001543)`、孔雀月令 `(0.000694, 0.000999, 0.001136)`；三者测量段均为 0 次 NRD history reset。数值说明场景能量域不同，不代表显示端无需曝光或色调映射。
+
+GI NRD signal input 改为 RGBA32F，normal/view-Z 仍为独立 guide resource。弱信号对照证明 `/64` 编码后直接存 RGBA16F 会在 RELAX 前丢失弱通道；GI color pool 的既有 RGBA32F 策略保持不变。
+
+材质适配器不再因关闭的 Emission 组残留动画参数而让历史失效；启用组的 UV 滚动、闪烁和渐变仍会标记为动态。原控制会每帧 reset，修正后测量段为 0 次 reset。
+
+同一 D3D12 主机上的独立 GPU timestamp fixture 记录了 32 个稳态
+`GI.Total` producer 样本：mean `0.20067 ms`、median `0.19866 ms`、
+p95 `0.21504 ms`，分辨率为 96x96。该数据只代表 producer fixture，
+不代表复杂目标场景的完整帧预算。
+
 > 状态：**现行功能总文档**，更新于 2026-10-29。场景所有权已改为公共 Ho-RT host，组合与 Player、独立 RTShadow / SIGMA 阴影链的有界验收看 [Ho-RT](Ho-RT.md) §8.5。GI 保持自己的光照算法与历史，原质量 / 复杂动态 / AS 增长及整帧预算缺口不因此注销。
 
 次级天空、正常相机加法合成和独立RELAX_DIFFUSE已有实测；Linear D3D12 Mono Player两路径已完成真实自动相机和512²默认屏幕呈现验证，见[屏幕证据](../Tests~/RTGI/Backbuffer/README.md)。完整画质、复杂动态、AS实例增长与稳定1080预算仍未验收；旧研究下一项不再自动启动。历史参考、失败与逐步交接见[RTGI入口](RTGI/README.md)。

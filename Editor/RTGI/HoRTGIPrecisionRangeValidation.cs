@@ -27,7 +27,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             var state=DescribePools(context.core,label);
             Require(state.rgba32Count==4&&state.rgba16Count==0,"GI-only four color pools are actually RGBA32F: "+label);
-            Require(context.AppliedSignalScale==64&&context.signal.rt.graphicsFormat==GraphicsFormat.R16G16B16A16_SFloat&&context.output.rt.graphicsFormat==GraphicsFormat.R32G32B32A32_SFloat,"Precision policy retains units/input and uses float32 output: "+label);
+            Require(context.AppliedSignalScale==64&&context.signal.rt.graphicsFormat==GraphicsFormat.R32G32B32A32_SFloat&&context.normal.rt.graphicsFormat==GraphicsFormat.R16G16B16A16_SFloat&&context.output.rt.graphicsFormat==GraphicsFormat.R32G32B32A32_SFloat,"Precision policy retains units/half normals and uses float32 input/output: "+label);
             precisionPoolStates.Add(state);
         }
         static PoolState DescribePools(HoNrdContext core,string label)

@@ -52,8 +52,12 @@ namespace lilToon.URP.Extensions.RTGI.NRD
         internal void Prepare(int w,int h)
         {
             if(w!=width||h!=height){historyValid=false;width=w;height=h;}
-            var desc=new RenderTextureDescriptor(w,h){graphicsFormat=GraphicsFormat.R16G16B16A16_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
+            // The /64 unit conversion precedes storage. A half input can lose
+            // weak channels before the already-float32 RELAX pools see them;
+            // this target also receives the remodulated public result.
+            var desc=new RenderTextureDescriptor(w,h){graphicsFormat=GraphicsFormat.R32G32B32A32_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
             RenderingUtils.ReAllocateIfNeeded(ref signal,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI NRD radiance/hit distance");
+            desc.graphicsFormat=GraphicsFormat.R16G16B16A16_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref normal,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI NRD normal/roughness");
             // PrePass and the final denoised signal share this external target.
             // Keep low diffuse radiance out of repeated half-precision rounding.
@@ -62,7 +66,7 @@ namespace lilToon.URP.Extensions.RTGI.NRD
             #if UNITY_EDITOR
             if(ValidationCaptureSignal)
             {
-                desc.graphicsFormat=GraphicsFormat.R16G16B16A16_SFloat;
+                desc.graphicsFormat=signal.rt.graphicsFormat;
                 RenderingUtils.ReAllocateIfNeeded(ref validationSignal,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI validation input snapshot");
             }
             else{validationSignal?.Release();validationSignal=null;}

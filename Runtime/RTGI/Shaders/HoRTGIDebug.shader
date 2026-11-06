@@ -14,12 +14,18 @@ Shader "Hidden/lilToon/URP/RTGI/Debug"
             TEXTURE2D(_HoRTGIDiffuseTexture);
             TEXTURE2D(_HoRTGIRawDiffuseTexture);
             float _HoRTGIDebugMode;
+            float4 _HoRTGIDebugDisplay; // EV (zero remains identity), Reinhard enabled
+            float3 DisplayRadiance(float3 value)
+            {
+                value = max(0, value * exp2(_HoRTGIDebugDisplay.x));
+                return _HoRTGIDebugDisplay.y > .5 ? value / (1 + value) : value;
+            }
             float4 Frag(Varyings input):SV_Target
             {
                 float4 diffuse=SAMPLE_TEXTURE2D(_HoRTGIDiffuseTexture,sampler_PointClamp,input.texcoord);
-                if(_HoRTGIDebugMode>2.5)return float4(SAMPLE_TEXTURE2D(_HoRTGIRawDiffuseTexture,sampler_PointClamp,input.texcoord).rgb,1);
+                if(_HoRTGIDebugMode>2.5)return float4(DisplayRadiance(SAMPLE_TEXTURE2D(_HoRTGIRawDiffuseTexture,sampler_PointClamp,input.texcoord).rgb),1);
                 if(_HoRTGIDebugMode>1.5)return diffuse.a>.5?float4(0,1,0,1):float4(1,0,0,1);
-                float3 d=diffuse.rgb;
+                float3 d=DisplayRadiance(diffuse.rgb);
                 return float4(d,1);
             }
             ENDHLSL

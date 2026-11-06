@@ -96,12 +96,25 @@ namespace lilToon.URP.Extensions.RTGI
         }
         private static bool Animated(Material material)
         {
-            foreach (string name in new[] { "_MainTex_ScrollRotate", "_EmissionMap_ScrollRotate", "_EmissionBlendMask_ScrollRotate", "_Emission2ndMap_ScrollRotate", "_Emission2ndBlendMask_ScrollRotate" })
-                if (material.HasProperty(name)) { var v = material.GetVector(name); if (v.x != 0 || v.y != 0 || v.w != 0) return true; }
-            foreach (string name in new[] { "_EmissionBlink", "_Emission2ndBlink" })
-                if (material.HasProperty(name) && material.GetVector(name).x != 0) return true;
-            return Enabled(material, "_EmissionUseGrad") || Enabled(material, "_Emission2ndUseGrad");
+            // Disabled emission groups do not execute in the hit shader.
+            // Dormant animation settings must not reset every camera's GI/NRD
+            // history on an otherwise static material.
+            return Scrolls(material, "_MainTex_ScrollRotate")
+                || (Enabled(material, "_UseEmission") &&
+                    (Scrolls(material, "_EmissionMap_ScrollRotate") || Scrolls(material, "_EmissionBlendMask_ScrollRotate")
+                     || Blinks(material, "_EmissionBlink") || Enabled(material, "_EmissionUseGrad")))
+                || (Enabled(material, "_UseEmission2nd") &&
+                    (Scrolls(material, "_Emission2ndMap_ScrollRotate") || Scrolls(material, "_Emission2ndBlendMask_ScrollRotate")
+                     || Blinks(material, "_Emission2ndBlink") || Enabled(material, "_Emission2ndUseGrad")));
         }
+        private static bool Scrolls(Material material, string name)
+        {
+            if (!material.HasProperty(name)) return false;
+            var value = material.GetVector(name);
+            return value.x != 0 || value.y != 0 || value.w != 0;
+        }
+        private static bool Blinks(Material material, string name) =>
+            material.HasProperty(name) && material.GetVector(name).x != 0;
 
         // Call after the scene registry has removed its obsolete instances.
         internal void EndFrame()
