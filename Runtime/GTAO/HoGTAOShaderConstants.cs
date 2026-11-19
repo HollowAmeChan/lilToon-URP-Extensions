@@ -14,6 +14,7 @@ namespace lilToon.URP.Extensions.GTAO
         public const string AOTextureName = "_HoAOTexture";
 
         public static readonly int AOTextureId = UnityEngine.Shader.PropertyToID(AOTextureName);
+        public static readonly int AOAvailableId = UnityEngine.Shader.PropertyToID("_HoAOAvailable");
         public static readonly int DebugParamsId = UnityEngine.Shader.PropertyToID("_HoGTAODebugParams");
         public static readonly int PrevViewProjId = UnityEngine.Shader.PropertyToID("_HoGTAOPrevViewProj");
         public static readonly int GeometryNormalDepthId = UnityEngine.Shader.PropertyToID("_HoGeometryBufferNormalDepthTexture");

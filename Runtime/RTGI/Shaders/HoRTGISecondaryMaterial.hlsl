@@ -8,22 +8,15 @@
 #define LIL_URP
 #define LIL_RENDER 0
 #define LIL_FEATURE_EMISSION_1ST
-#define LIL_FEATURE_EMISSION_2ND
 #define LIL_FEATURE_EmissionMap
 #define LIL_FEATURE_EmissionBlendMask
 #define LIL_FEATURE_EmissionGradTex
-#define LIL_FEATURE_Emission2ndMap
-#define LIL_FEATURE_Emission2ndBlendMask
-#define LIL_FEATURE_Emission2ndGradTex
 #define LIL_FEATURE_EMISSION_GRADATION
 #define LIL_FEATURE_ANIMATE_EMISSION_UV
 #define LIL_FEATURE_ANIMATE_EMISSION_MASK_UV
 #define LIL_FEATURE_AlphaMask
 #define LIL_FEATURE_NORMAL_1ST
-#define LIL_FEATURE_NORMAL_2ND
 #define LIL_FEATURE_BumpMap
-#define LIL_FEATURE_Bump2ndMap
-#define LIL_FEATURE_Bump2ndScaleMask
 #define LIL_FEATURE_SmoothnessTex
 #define LIL_FEATURE_MetallicGlossMap
 #include "Packages/jp.lilxyzw.liltoon/Shader/Includes/lil_common_macro.hlsl"
@@ -114,17 +107,15 @@ void HoRTGIClosestHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
         LIL_GET_PARALLAX_DATA(unused,fd);
         float3 normalmap=float3(0,0,1);
         OVERRIDE_NORMAL_1ST
-        OVERRIDE_NORMAL_2ND
         fd.N=normalize(mul(normalmap,fd.TBN));
     }
     fd.albedo=fd.col.rgb;fd.invLighting=1;
     fd.nvabs=abs(dot(fd.N,fd.V));fd.uvRim=fd.nvabs.xx;
-    float4 first=lilEmissionComponent(fd LIL_SAMP_IN(sampler_MainTex));
-    float4 second=lilEmission2ndComponent(fd LIL_SAMP_IN(sampler_MainTex));
+    float4 emission=lilEmissionComponent(fd LIL_SAMP_IN(sampler_MainTex));
     float smoothness=_Smoothness*LIL_SAMPLE_2D(_SmoothnessTex,sampler_MainTex,fd.uvMain).r;
     float metallic=_Metallic*LIL_SAMPLE_2D(_MetallicGlossMap,sampler_MainTex,fd.uvMain).r;
     payload.status=1;payload.normalWS=fd.N;payload.geometricNormalWS=geo;
     payload.baseColor=fd.col.rgb;payload.perceptualRoughness=saturate(1-smoothness);
     payload.metallic=saturate(metallic);payload.reflectance=saturate(_Reflectance);
-    payload.emission=max(0,first.rgb*first.a+second.rgb*second.a);
+    payload.emission=max(0,emission.rgb*emission.a);
 }

@@ -99,12 +99,9 @@ namespace lilToon.URP.Extensions.RTGI
             // Disabled emission groups do not execute in the hit shader.
             // Dormant animation settings must not reset every camera's GI/NRD
             // history on an otherwise static material.
-            return (Enabled(material, "_UseEmission") &&
+            return Enabled(material, "_UseEmission") &&
                     (Scrolls(material, "_EmissionMap_ScrollRotate") || Scrolls(material, "_EmissionBlendMask_ScrollRotate")
-                     || Blinks(material, "_EmissionBlink") || Enabled(material, "_EmissionUseGrad")))
-                || (Enabled(material, "_UseEmission2nd") &&
-                    (Scrolls(material, "_Emission2ndMap_ScrollRotate") || Scrolls(material, "_Emission2ndBlendMask_ScrollRotate")
-                     || Blinks(material, "_Emission2ndBlink") || Enabled(material, "_Emission2ndUseGrad")));
+                     || Blinks(material, "_EmissionBlink") || Enabled(material, "_EmissionUseGrad"));
         }
         private static bool Scrolls(Material material, string name)
         {

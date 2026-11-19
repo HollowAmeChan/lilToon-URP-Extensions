@@ -63,12 +63,12 @@ RELAX参数采用固定头文件的原版默认值，累计预算按观测到的
 
 GI 提供 `HoRTGISecondaryMaterials` 适配策略，由 Ho-RT host 拥有副本及相应 scene view；复制原材质属性，不修改源材质、Forward、CS 或 ShadowCast。消费者 pre-cull 声明用途和筛选，host 按请求准备 / 同步，GI 借当前有效 view 记录 Build / Dispatch；scene / adapter / 共享姿态按 host fence 退休，GI 不再私有创建和释放场景。GI 的光照输出、重采样与 NRD 历史仍由 GI 自己持有。
 
-Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndComponent`，求和 RGB × 各组权重。保留两组的启用、颜色、贴图/alpha、UV 选择、ST/动画、mask、渐变、blink 与 main-strength；与 SB 相同，fluorescence 使用中性 lighting gate。不会把主色、matcap、rim、旧 Forward 明亮部分当作发光来源。
+Emission 直接调用 lilToon 的 `lilEmissionComponent`，读取唯一自发光组的颜色、贴图/alpha、UV 选择、ST/动画、mask、渐变、blink 与 main-strength，并乘以组分权重；与 SB 相同，fluorescence 使用中性 lighting gate。不会把主色、matcap、rim、旧 Forward 明亮部分当作发光来源。
 
 ## 首版支持域
 
 - 刚性MeshRenderer与SkinnedMeshRenderer的opaque/基础lilToon Cutout已有GI命中/可见性验证，支持屏幕外、变换更新和非均匀/镜像变换。骨骼snapshot的UV/法线/法线贴图、BlendShape、实际遮挡与emission反弹已有独立证据；动态接收稳定性、复杂角色仍待验。透明混合、任意shader顶点变形、static batching或additional vertex streams不在本阶段支持域。
-- 当前命中材质接收标准 `lilToon` opaque，第一主色链、两组 normal map、两组专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
+- 当前命中材质接收标准 `lilToon` opaque，第一主色链、单层 normal map、唯一专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
 - 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
 - 基础Cutout沿DI的有界域：`Hidden/lilToonCutout*`、TransparentCutout tag、非透明队列、静态UV0、Main alpha/Color alpha与AlphaMask0～4，支持静态ST。主贴图坐标与lilToon前向路径统一。dissolve、distance fade、dither、多主色/视差、MPB等不在该域；共享registry要求UV0和无MPB。Unsupported Cutout会有几何拒绝记录，不作为已支持alpha遮挡物。
 - Unsupported opaque 材质仍有真实命中，status=2，保持遮挡；不能把它转成环境 miss。status=0 才表示 miss，status=1 表示已求值的材质。

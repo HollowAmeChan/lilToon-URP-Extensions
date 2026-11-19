@@ -54,7 +54,7 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
                 case HoSurfaceBufferDebugMode.Color:
                     return "写入的着色色：lilToon 的最终颜色，未过后处理。";
                 case HoSurfaceBufferDebugMode.Emission:
-                    return "独立自发光组分：第一/第二层的线性 HDR 贡献，不含其他发亮效果；未经过曝光、Bloom 或色调映射。";
+                    return "独立自发光组分：单层线性 HDR 贡献，不含其他发亮效果；未经过曝光、Bloom 或色调映射。";
                 case HoSurfaceBufferDebugMode.Depth:
                     return "SB 自己的线性眼空间深度，按 depth/(1+depth) 显示；暗红为无 writer。";
                 case HoSurfaceBufferDebugMode.GeometryAssociation:

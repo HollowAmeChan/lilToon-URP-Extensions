@@ -90,17 +90,11 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 material.SetColor("_Color", Color.white);
                 material.SetFloat("_Cull", 0);
                 material.SetFloat("_UseEmission", 1);
-                material.SetFloat("_UseEmission2nd", 1);
                 material.SetColor("_EmissionColor", new Color(4, 2, 1, 1));
-                material.SetColor("_Emission2ndColor", new Color(1, 4, 2, 1));
                 material.SetFloat("_EmissionBlend", 0.5f);
-                material.SetFloat("_Emission2ndBlend", 0.25f);
                 material.SetFloat("_EmissionMainStrength", 0);
-                material.SetFloat("_Emission2ndMainStrength", 0);
                 material.SetFloat("_EmissionFluorescence", 0);
-                material.SetFloat("_Emission2ndFluorescence", 0);
                 material.SetVector("_EmissionBlink", Vector4.zero);
-                material.SetVector("_Emission2ndBlink", Vector4.zero);
                 EditorApplication.update += Tick;
             }
             catch (Exception error) { Finish(error); }
@@ -112,13 +106,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             {
                 if (++frame < 3) { Render(); return; }
                 var firstResult = Render();
-                Near(DrawDirect(), new Color(2.25f, 2, 1, 1), "direct seven-MRT shader output");
-                Near(firstResult, new Color(2.25f, 2, 1, 1), "two-layer HDR sum");
-                Near(Read(target), new Color(2.25f, 2, 1, 1), "emission debug output");
-                Near(DrawModuleDebug(), new Color(2.25f, 2, 1, 1), "emission module debug output");
+                Near(DrawDirect(), new Color(2, 1, 0.5f, 1), "direct seven-MRT shader output");
+                Near(firstResult, new Color(2, 1, 0.5f, 1), "single HDR emission");
+                Near(Read(target), new Color(2, 1, 0.5f, 1), "emission debug output");
+                Near(DrawModuleDebug(), new Color(2, 1, 0.5f, 1), "emission module debug output");
                 volumeSettings.debugMode.value = HoSurfaceBufferDebugMode.All;
                 Render();
-                Near(Read(target, 24, 24), new Color(2.25f, 2, 1, 1), "emission in module All grid");
+                Near(Read(target, 24, 24), new Color(2, 1, 0.5f, 1), "emission in module All grid");
                 volumeSettings.debugMode.value = HoSurfaceBufferDebugMode.Emission;
                 Render();
                 var emission = capture.rt;
@@ -127,8 +121,6 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 Require(raw.a > 0.99f, "unregistered surface needs writer alpha");
 
                 material.SetFloat("_UseEmission", 0);
-                Near(Render(), new Color(0.25f, 1, 0.5f, 1), "second layer alone");
-                material.SetFloat("_UseEmission2nd", 0);
                 Near(Render(), Color.black, "emission disabled");
                 Require(Read(capture.rt).a > 0.99f,
                     "zero emission is a valid written surface");
@@ -156,7 +148,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 feature.Dispose();
                 Require(Shader.GetGlobalFloat("_HoSurfaceBufferActive") == 0, "disposed feature retained active flag");
                 Near(Read(Shader.GetGlobalTexture("_HoSurfaceBufferEmissionTexture")), Color.black, "disposed feature black binding");
-                Debug.Log("[HoSBEmissionValidation] PASS: HDR layers, mask, blend separation, unregistered/zero writer, cutout, reset; API=" + SystemInfo.graphicsDeviceType + "; compatibility=" + compatibility);
+                Debug.Log("[HoSBEmissionValidation] PASS: HDR emission, mask, blend separation, unregistered/zero writer, cutout, reset; API=" + SystemInfo.graphicsDeviceType + "; compatibility=" + compatibility);
                 Finish(null);
             }
             catch (Exception error) { Finish(error); }

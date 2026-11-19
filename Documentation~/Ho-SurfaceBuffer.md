@@ -13,7 +13,7 @@
 
 > **2026-10-07 数值面更新**：独立 Emission 已接入第 7 个 MRT（旧 0..5 索引不变），现为六张数值图 + owner。下文 R3 等执行记录中的“五张图 / 6 MRT”是旧实现记录，以本段与字段表为当前事实。Emission 可直接供 RT 消费，不要求经过 AC；SSS 本轮不扩展。
 >
-> 已在 Unity 6000.3.15f1 的 D3D12/11 RenderGraph 与 D3D11 compatibility 验证两层 HDR、mask、组分混色分离、未登记/零发光 writer、cutout、全屏/平铺调试及开关/销毁。入口为 `HoSurfaceBufferEmissionValidation.Run` / `RunCompatibility`（后者需隔离工程定义 `URP_COMPATIBILITY_MODE`）。
+> 当前自发光契约为单层。Unity 6000.3.15f1 D3D12 RenderGraph GPU 验证覆盖 HDR、mask、组分混色分离、未登记/零发光 writer、cutout、全屏/平铺调试及开关/销毁。入口为 `HoSurfaceBufferEmissionValidation.Run`；`RunCompatibility` 需隔离工程定义 `URP_COMPATIBILITY_MODE`。
 
 > **2026-10-08 深度与主表面关联**：SB 开始发布已有单采样深度附件，供 RT 等消费者验证 GB/SB 深度关联；不增加 MRT、不复制深度、不让 SB 生产端读取 GB。新增 `Depth` / `Geometry Association` 调试，规则见 §1.3。此决议替代旧记录中的“不发布深度”。
 
@@ -94,12 +94,12 @@
 | | `b` | `transmittanceHint` | | | SSS |
 | | `a` | `materialClassIdByte` | | | ScreenProcess / 其他分类消费者（经 AC） |
 | `SurfaceSemantic` | 成对 | 每 lane `(SemanticId,value)`，两 lane / RGBA8；另有 owner（16-bit IdentityId 两字节） | RGBA8 ×4 + RGBA8 owner（单采样） | 材质 | 只给 AC semantic resolve |
-| `Emission` | `rgb` / `a` | 第一/第二层专用自发光的线性 HDR 加权贡献 / surface writer（写入=1，清屏=0） | RGBA16F（可回退 RGBA32F，不能 UNORM） | 材质 | RT 输入准备、独立调试 |
+| `Emission` | `rgb` / `a` | 材质自发光的线性 HDR 加权贡献 / surface writer（写入=1，清屏=0） | RGBA16F（可回退 RGBA32F，不能 UNORM） | 材质 | RT 输入准备、独立调试 |
 | `DepthTexture` | `r` | SB 本次绘制的 raw device depth，借用已有附件，不是线性深度或独立 MRT | 原有单采样 depth-stencil | SB 深度测试 | 主表面关联、位置重建前的验证 |
 
 - SurfaceSemantic 承接材质逐像素的具名 SemanticId/value，不做导出源；SB 只使用 `HoSemanticSchema` 声明的 ID/lane。AC 在 sample 级合成后才产生对外 Selection coverage。
 - SB `Normal.rg` 是着色法线，`Normal.ba` 是无 normal map 的插值网格法线；均按材质现有 `_FlipNormal` / facing 约定翻转。GB 的 lilToon `RGB` 也经过 normal map/Tesion，fallback 则输出无贴图的网格法线，不能统一作为 RT 的无扰动法线。
-- `Emission.rgb` 为两层各自 `sampledColor * blendWeight` 的和，保留大于 1 的 HDR 值；不包含 Rim、MatCap、高光或溶解边缘。`_EmissionBlendMode` 仍用于 forward 的最终混色，不用于把底色混入独立输出。
+- `Emission.rgb` 为唯一自发光组分的 `sampledColor * blendWeight`，保留大于 1 的 HDR 值；不包含 Rim、MatCap、高光或溶解边缘。`_EmissionBlendMode` 仍用于 forward 的最终混色，不用于把底色混入独立输出。
 - SB 在光照前输出材质组分：主色混合使用当前 SB 主色，荧光的入射光门控固定为中性 1；原 forward 继续使用原来的 `fd.invLighting`，显示行为不变。Emission 不宣称是完整最终画面的差值。
 - `Emission.a` 是本次表面 pass 确实写入的标记，与 OB 身份无关；未登记对象也可为 1，黑色且 A=1 是合法零发光。不是透明覆盖率。现有 AC 的 owner 对齐规则没有改变。
 

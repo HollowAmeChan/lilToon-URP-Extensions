@@ -35,8 +35,11 @@ namespace lilToon.URP.Extensions.GTAO
             pass = new HoGTAOPass();
             debugPass?.ReleaseDebugResources();
             debugPass = new HoGTAODebugPass();
-            RenderPipelineManager.beginCameraRendering += ResetGlobalState;
-            resetRegistered = true;
+            if (!resetRegistered)
+            {
+                RenderPipelineManager.beginCameraRendering += ResetGlobalState;
+                resetRegistered = true;
+            }
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -119,6 +122,7 @@ namespace lilToon.URP.Extensions.GTAO
             {
                 RenderPipelineManager.beginCameraRendering -= ResetGlobalState;
                 resetRegistered = false;
+                ResetGlobalState(default, null);
             }
 
             CoreUtils.Destroy(material);
@@ -143,6 +147,7 @@ namespace lilToon.URP.Extensions.GTAO
         private static void ResetGlobalState(ScriptableRenderContext context, Camera camera)
         {
             Shader.SetGlobalTexture(HoGTAOShaderConstants.AOTextureId, Texture2D.whiteTexture);
+            Shader.SetGlobalFloat(HoGTAOShaderConstants.AOAvailableId, 0f);
         }
 
         private void ResolveVolume()
@@ -521,6 +526,7 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle source;
             public TextureHandle destination;
             public int passIndex;
+            public bool publishAO;
         }
 
         private sealed class SpatialData
@@ -1350,6 +1356,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.source = source;
                 data.destination = destination;
                 data.passIndex = isDebug ? 0 : 4;
+                data.publishAO = !isDebug;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                 if (!isDebug)
@@ -1361,6 +1368,7 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.SetRenderFunc(static (BlitData passData, RasterGraphContext context) =>
                 {
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, passData.passIndex);
+                    if (passData.publishAO) context.cmd.SetGlobalFloat(HoGTAOShaderConstants.AOAvailableId, 1f);
                 });
             }
 

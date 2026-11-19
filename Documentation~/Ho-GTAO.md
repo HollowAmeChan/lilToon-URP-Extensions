@@ -6,9 +6,9 @@
 
 ## 1. 目标与立场
 
-1. 用独立 `Ho-GTAO` RendererFeature **替换 HTrace AO 生产端**；材质（`_UseRealtimeAO` / `_SSAO*`）与场景**零改动**。
-2. 输出全局纹理 **`_HoAOTexture`**（语义名，不含算法名），lilToon 在 shade-time 采样、AOV `ao` 通道导出、DebugTile 直出。
-3. **可回退**：关掉 feature = 无 AO（white 兜底）且不崩。
+1. 独立的 `Ho-GTAO` RendererFeature 生产实时 AO。
+2. 发布全局纹理 `_HoAOTexture`。lilToon 在着色时采样，AOV 和 DebugTile 也可读取 AO。
+3. `_HoAOAvailable` 在每台相机开始渲染时归零，仅在该相机实际发布纹理时置一。实时来源不可用时，材质的实时项为中性值，混合模式继续使用烘焙 AO。
 4. **架构立场（强硬版）**：GeometryBuffer 是**屏幕几何的唯一生产者**（全分辨率、不动 renderScale），GTAO 是它的**消费者**，降分辨率只是消费者自己的计算分辨率。这与 HTrace“自画 PrePass + 用深度重建法线”的隔离路线相反——**只用一个屏幕几何，谁用谁降采样**：
    - 消除 HTrace 的三笔代价：多画一遍深度、重建法线 ≠ 真实渲染法线（toon 法线贴图下 AO 错位/网格感的来源）、两套深度/法线语义并存。
 5. **唯一结构性时序改动**：GeometryBuffer 与 Ho-GTAO 同在 `BeforeRenderingOpaques`，**先后由 Renderer Feature 列表顺序保证**（GB 在前、GTAO 紧随）。HoTrace 时代 GB 在 opaque 之后（300），而材质采样模式要求 AO 在 opaque 绘制前就绪。
@@ -16,7 +16,7 @@
 
 ## 2. 契约与语义
 
-- **`_HoAOTexture` = 0..1 visibility**（1 = 无遮挡）；**生产端不烘焙强度**——强度归材质（`_RealtimeAOStrength` / remap / contrast / mask）。HTrace 的 `Intensity=3.06` 属“生产端折叠强度”，移植时靠材质参数对齐观感。
+- `_HoAOTexture` 存储 0～1 的可见度，1 表示无遮挡。材质在「表面定义 → AO」选择关闭、烘焙、实时或混合，并设置实时权重、调整和遮罩。阴影和 AO 压暗各自控制对这份 AO 的响应。
 - **必须显式单采样**：`msaaSamples = None`、`bindTextureMS = false`、`filterMode = Bilinear`——发布给材质的全局纹理**不能继承相机颜色的 MSAA 描述**（4x + bindTextureMS 会让正经 `Texture2D` 采样的材质读未定义行为）。
 - **公共输出极性**：中间缓冲存“AO 量”（1−visibility），最终输出存“visibility 乘数”（1 = 无 AO）。fragment 版必须沿用这个极性约定。
 - `aointent`（意图模式）：**未做**（契约占位保留）。

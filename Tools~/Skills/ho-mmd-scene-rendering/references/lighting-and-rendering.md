@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | 主体暗、远处细节不清 | Light 位置/朝向、颜色、强度、range、spot angle，低位和远景补光 | 曝光会一起推高亮部，先让灯照到需要的几何 |
 | 二次元强对比、斑驳阴影 | Ho lilToon 阴影/受光参数、Light shadow strength、ShadowCaster、窗框/树叶/阴影遮片 | 侧视确认投影落在真实表面，不每次重写所有 caster |
-| 接触太平或 AO 太脏 | 材质 _UseRealtimeAO、_AOContrast、_AODarkStrength，以及 GTAO Volume | 逐类材质调，太重会压黑地板和角落 |
+| 接触太平或 AO 太脏 | 材质 `_AOSource`、实时 AO 权重、`_UseAODarkening`、`_AODarkStrength`，以及 GTAO Volume | 区分阴影参与与整体压暗；太重会压黑地板和角落 |
 | 局部体积光柱 | Point/Spot 的 HoVolumeLightSource、Atmosphere Region 密度/颜色、Volume Light Volume | 灯提供表面亮度，体积提供空气可见性，一起摆 |
 | 天空/窗外气氛 | 环境 skybox、天空球/HDR 材质、室外灯与天空曝光 | 天空壳按需从 RTGI 射线排除 |
 | 地板/水面倒影 | HoPlanarReflectionSurface 平面位置/法线，材质 PLR 开关/强度、smoothness、reflectance | 地板和水面可能不同高度，先定平面再调粗糙度 |

@@ -58,9 +58,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 source.SetColor("_Color", new Color(.2f,.4f,.6f,1)); source.SetTexture("_MainTex", Texture2D.whiteTexture);
                 source.SetFloat("_Smoothness", .7f); source.SetFloat("_Metallic", .3f); source.SetFloat("_Reflectance", .08f);
                 source.SetFloat("_UseEmission", 1); source.SetFloat("_EmissionBlend", .5f); source.SetColor("_EmissionColor", new Color(2,1,.5f,1));
-                source.SetFloat("_UseEmission2nd", 1); source.SetFloat("_Emission2ndBlend", .25f); source.SetColor("_Emission2ndColor", new Color(.4f,.6f,.8f,1));
-                source.SetTexture("_EmissionMap",Texture2D.whiteTexture); source.SetTexture("_Emission2ndMap",Texture2D.whiteTexture);
-                source.SetTexture("_EmissionBlendMask",Texture2D.whiteTexture); source.SetTexture("_Emission2ndBlendMask",Texture2D.whiteTexture);
+                source.SetTexture("_EmissionMap",Texture2D.whiteTexture);
+                source.SetTexture("_EmissionBlendMask",Texture2D.whiteTexture);
                 rays = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 2, Marshal.SizeOf<Ray>());
                 hits = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 2, Marshal.SizeOf<Hit>());
                 rays.SetData(new[] { new Ray { originMin=new Vector4(2.2f,.3f,-1,.001f),directionMax=new Vector4(0,0,1,10) }, new Ray { originMin=new Vector4(-2,0,-1,.001f),directionMax=new Vector4(0,0,1,10) } });
@@ -97,13 +96,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var baseColor=source.GetColor("_Color");
                 if(QualitySettings.activeColorSpace==ColorSpace.Linear)baseColor=baseColor.linear;
                 Near3(hit.baseColor, new Vector3(baseColor.r,baseColor.g,baseColor.b), "linear material base");
-                Near3(hit.emission, new Vector3(1.1f,.65f,.45f), "dedicated two-group HDR emission");
+                Near3(hit.emission, new Vector3(1f,.5f,.25f), "dedicated HDR emission");
                 Near3(hit.normal, Vector3.back, "interpolated normal"); Near3(hit.geometricNormal, Vector3.back, "triangle normal");
                 bool linear=QualitySettings.activeColorSpace==ColorSpace.Linear;
                 Near(hit.roughness,.3f,"roughness");
                 Near(hit.metallic,linear?Mathf.GammaToLinearSpace(.3f):.3f,"Gamma-tagged metallic");
                 Near(hit.reflectance,linear?Mathf.GammaToLinearSpace(.08f):.08f,"Gamma-tagged reflectance");
-                source.SetFloat("_EmissionMainStrength",1); source.SetFloat("_UseEmission2nd",0);
+                source.SetFloat("_EmissionMainStrength",1);
                 hit=Trace(); Near3(hit.emission,new Vector3(baseColor.r,baseColor.g*.5f,baseColor.b*.25f),"emission main-strength component");
                 source.SetFloat("_EmissionMainStrength",0);
                 var map=Keep(new Texture2D(2,2,TextureFormat.RGBAFloat,false,true));
@@ -126,7 +125,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 Require(hit.status==1,"Mirrored, nonuniform world transform lost hit"); Near3(hit.geometricNormal,Vector3.back,"mirrored triangle normal");
                 foreach(var message in ShaderUtil.GetShaderMessages(Shader.Find("Hidden/lilToon/URP/RTGI/SecondaryMaterial")))
                     if(message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error || message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning)throw new Exception(message.message);
-                Debug.Log("[HoRTGISecondaryValidation] PASS real DXR secondary hits, source material preserved, dedicated emission groups, fallback occlusion, mirrored transform");
+                Debug.Log("[HoRTGISecondaryValidation] PASS real DXR secondary hits, source material preserved, dedicated emission, fallback occlusion, mirrored transform");
                 Finish(null);
             }
             catch(Exception error) { Finish(error); }
