@@ -6,7 +6,7 @@ namespace lilToon.URP.Extensions.RT
     // Shared bounded alpha domain; shading adapters remain owned by their channels.
     internal static class HoRTCutoutSupport
     {
-        private static readonly string[] Scalars = { "_Cutoff", "_AlphaMaskMode", "_AlphaMaskScale", "_AlphaMaskValue", "_ShiftBackfaceUV" };
+        private static readonly string[] Scalars = { "_Cutoff", "_AlphaMaskMode", "_AlphaMaskScale", "_AlphaMaskValue" };
         internal static bool Supports(Material material)
         {
             if (material == null || material.shader == null || material.renderQueue >= (int)RenderQueue.Transparent
@@ -14,13 +14,12 @@ namespace lilToon.URP.Extensions.RT
                 || !material.shader.name.StartsWith("Hidden/lilToonCutout", StringComparison.Ordinal)) return false;
             if (Enabled(material, "_UseMain2ndTex") || Enabled(material, "_UseMain3rdTex")
                 || Enabled(material, "_UseParallax") || Enabled(material, "_UseDither")) return false;
-            var animation = Vector(material, "_MainTex_ScrollRotate");
-            if (animation.x != 0 || animation.y != 0 || animation.w != 0 || Vector(material, "_DissolveParams").x != 0
+            if (Vector(material, "_DissolveParams").x != 0
                 || Vector(material, "_DistanceFade").z != 0) return false;
             float mode = Float(material, "_AlphaMaskMode");
             if (mode < 0 || mode > 4 || mode != Mathf.Floor(mode)) return false;
             foreach (string name in Scalars) if (!Finite(Float(material, name))) return false;
-            if (!Finite(material.GetColor("_Color").a) || !Finite(animation.z)) return false;
+            if (!Finite(material.GetColor("_Color").a)) return false;
             foreach (string name in new[] { "_MainTex", "_AlphaMask" })
             {
                 var texture = material.HasProperty(name) ? material.GetTexture(name) : null;

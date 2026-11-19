@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.RT
         private readonly Dictionary<Material, Material> adapters = new(References.Instance);
         private readonly HashSet<Material> seen = new(References.Instance);
         private readonly List<Material> removed = new();
-        private static readonly string[] Scalars = { "_Cutoff", "_AlphaMaskMode", "_AlphaMaskScale", "_AlphaMaskValue", "_ShiftBackfaceUV" };
+        private static readonly string[] Scalars = { "_Cutoff", "_AlphaMaskMode", "_AlphaMaskScale", "_AlphaMaskValue" };
         internal int Signature { get; private set; }
         int IHoRTMaterialProfile.Signature => Signature;
         void IHoRTMaterialProfile.BeginPrepare() => BeginFrame();
@@ -39,7 +39,6 @@ namespace lilToon.URP.Extensions.RT
         internal void BeginFrame() { seen.Clear(); Signature = 0; }
 
         private static float Float(Material m, string p) => m.HasProperty(p) ? m.GetFloat(p) : 0;
-        private static Vector4 Vector(Material m, string p) => m.HasProperty(p) ? m.GetVector(p) : Vector4.zero;
 
         internal Material Resolve(Material source)
         {
@@ -56,7 +55,6 @@ namespace lilToon.URP.Extensions.RT
             {
                 int hash = source.GetInstanceID();
                 hash = hash * 397 ^ source.GetColor("_Color").a.GetHashCode();
-                hash = hash * 397 ^ Vector(source, "_MainTex_ScrollRotate").GetHashCode();
                 foreach (string name in Scalars) hash = hash * 397 ^ Float(source, name).GetHashCode();
                 foreach (string name in new[] { "_MainTex", "_AlphaMask" })
                 {

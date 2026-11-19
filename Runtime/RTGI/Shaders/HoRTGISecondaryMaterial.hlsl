@@ -18,7 +18,6 @@
 #define LIL_FEATURE_EMISSION_GRADATION
 #define LIL_FEATURE_ANIMATE_EMISSION_UV
 #define LIL_FEATURE_ANIMATE_EMISSION_MASK_UV
-#define LIL_FEATURE_ANIMATE_MAIN_UV
 #define LIL_FEATURE_AlphaMask
 #define LIL_FEATURE_NORMAL_1ST
 #define LIL_FEATURE_NORMAL_2ND
@@ -67,7 +66,7 @@ void HoRTGIAlphaHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
     uint3 tri=UnityRayTracingFetchTriangleIndices(PrimitiveIndex());
     float3 weights=float3(1-attributes.barycentrics.x-attributes.barycentrics.y,attributes.barycentrics);
     float2 uv=HoGIUV(tri,weights,kVertexAttributeTexCoord0);
-    if(HoRTEvaluateCutoutAlpha(uv,HitKind()==HIT_KIND_TRIANGLE_BACK_FACE)<_Cutoff)IgnoreHit();
+    if(HoRTEvaluateCutoutAlpha(uv)<_Cutoff)IgnoreHit();
 }
 
 [shader("closesthit")]
@@ -104,9 +103,7 @@ void HoRTGIClosestHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
     fd.uv1=HoGIUV(tri,weights,kVertexAttributeTexCoord1);
     fd.uv2=HoGIUV(tri,weights,kVertexAttributeTexCoord2);
     fd.uv3=HoGIUV(tri,weights,kVertexAttributeTexCoord3);
-    float2 mainUV=fd.uv0;
-    if(_HoRTGICutout>.5&&HitKind()==HIT_KIND_TRIANGLE_BACK_FACE&&_ShiftBackfaceUV>0)mainUV.x+=1;
-    fd.uvMain=lilCalcUV(mainUV,_MainTex_ST,_MainTex_ScrollRotate);
+    fd.uvMain=lilCalcUV(fd.uv0,_MainTex_ST);
     // Same main chain as the opaque SB producer; no ramp/shadow/matcap/rim lighting.
     OVERRIDE_MAIN
     if(dot(tangent.xyz,tangent.xyz)>1e-10)

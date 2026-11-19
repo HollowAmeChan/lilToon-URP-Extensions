@@ -70,7 +70,7 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 - 刚性MeshRenderer与SkinnedMeshRenderer的opaque/基础lilToon Cutout已有GI命中/可见性验证，支持屏幕外、变换更新和非均匀/镜像变换。骨骼snapshot的UV/法线/法线贴图、BlendShape、实际遮挡与emission反弹已有独立证据；动态接收稳定性、复杂角色仍待验。透明混合、任意shader顶点变形、static batching或additional vertex streams不在本阶段支持域。
 - 当前命中材质接收标准 `lilToon` opaque，第一主色链、两组 normal map、两组专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
 - 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
-- 基础Cutout沿DI的有界域：`Hidden/lilToonCutout*`、TransparentCutout tag、非透明队列、静态UV0、Main alpha/Color alpha与AlphaMask0～4，支持静态ST/旋转/背面UV。动画主UV、dissolve、distance fade、dither、多主色/视差、MPB等不在该域；共享registry要求UV0和无MPB。Unsupported Cutout会有几何拒绝记录，不作为已支持alpha遮挡物。
+- 基础Cutout沿DI的有界域：`Hidden/lilToonCutout*`、TransparentCutout tag、非透明队列、静态UV0、Main alpha/Color alpha与AlphaMask0～4，支持静态ST。主贴图坐标与lilToon前向路径统一。dissolve、distance fade、dither、多主色/视差、MPB等不在该域；共享registry要求UV0和无MPB。Unsupported Cutout会有几何拒绝记录，不作为已支持alpha遮挡物。
 - Unsupported opaque 材质仍有真实命中，status=2，保持遮挡；不能把它转成环境 miss。status=0 才表示 miss，status=1 表示已求值的材质。
 - 纹理采样显式LOD0，尚未实现ray-cone过滤与GSAA。发光视角组分使用二次射线的观察方向。已有加法场景合成及独立GI降噪；SSS、最终NPR ramp/材质内接收及完整Player/场景验收仍未交付。
 - 二次命中点支持 point / spot / directional 解析灯，限制与 Ho-RTDI 相同：cookie、非全局 cullingMask、baked-only、其他灯型排除；Rendering Layer / 艺术灯光链接未接入。RT 可见性独立于 raster Light.shadows。

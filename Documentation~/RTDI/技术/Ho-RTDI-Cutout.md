@@ -17,13 +17,17 @@ Unity 原生 Mesh attribute fetch 与 Material hit group 提供纹理/UV 输入�
 
 ## 支持与成本
 
-接受 `Hidden/lilToonCutout` 系列、TransparentCutout tag、低于 Transparent 的队列、有效 UV0；源 MainTex/AlphaMask 可为 Texture2D 或默认空纹理。支持主纹理 tiling/offset、静态旋转、背面 UV 移动、纹理自身过滤/包裹、Color.a、cutoff，以及 AlphaMask 的替换/乘/加/减、scale/value。AlphaMask 使用 MainTex sampler，匹配本地 lil_common_frag.hlsl。射线显式 LOD 0，尚无 ray-cone/mip 覆盖过滤，AlphaToMask 的 MSAA 覆盖不作为物理透射。
+接受 `Hidden/lilToonCutout` 系列、TransparentCutout tag、低于 Transparent 的队列、有效 UV0；源 MainTex/AlphaMask 可为 Texture2D 或默认空纹理。支持主纹理 tiling/offset、纹理自身过滤/包裹、Color.a、cutoff，以及 AlphaMask 的替换/乘/加/减、scale/value。AlphaMask 使用 MainTex sampler，匹配本地 lil_common_frag.hlsl。射线显式 LOD 0，尚无 ray-cone/mip 覆盖过滤，AlphaToMask 的 MSAA 覆盖不作为物理透射。
 
-不支持第二/第三主纹理、视差、dissolve、dither、distance-fade alpha、动态 UV 动画、RenderTexture alpha 输入、材质 property block 和任意自定义 vertex/alpha shader。未知情况明确排除，不做 opaque 近似。GI 尚未接入 Cutout secondary shading；其原生 FORCE_OPAQUE 路径只登记原有 opaque 几何，共享 inline flag 的回归另行验证。
+2026-11-19 随 lilToon 主 UV 精简，前向、可见性查询与 GI 次级命中统一采用静态平铺和偏移。主纹理旋转、滚动和背面 UV 偏移相关属性、适配器与历史失效判定已移除。
+
+不支持第二/第三主纹理、视差、dissolve、dither、distance-fade alpha、动态 UV 动画、RenderTexture alpha 输入、材质 property block 和任意自定义 vertex/alpha shader。未知情况明确排除，不做 opaque 近似。GI 通过共享分类器和原生 any-hit 处理同一静态裁切域，次级材质的着色支持范围单独判定。
 
 只有存在已接受的 Cutout 且平台/序列化原生 shader 可用时，逐相机分配一张 R8_UNorm 最终 visibility（不支持 LoadStore 时 R32_SFloat）：R8 的 720p/1080p 载荷约 0.879/1.978 MiB，R32 回退为四倍。该阶段替代原 Shade 的 inline 最终查询，每个有效已选样本最多一条原生最终射线；新增全屏 dispatch、材质 anyhit/SBT、更多 AS submesh 的成本仍需实际 GPU 测量。无 Cutout 时释放该纹理并沿原路径执行；源纹理不复制。动态 skin 仍使用前步 CPU 快照并清历史。
 
 ## 验证
+
+以下记录包含主 UV 精简前的支持域与采样结果。精简后的原生命中验证见文末。
 
 独立 64² 场景避免血月古堡天空球/合并网格干扰：两条路径验证 alpha 0/1、Color.a、cutoff 相等、四种 mask 及 scale/value、纹理 updateCount、骨骼移动/归位与条件资源释放。独立 CPU ray/triangle+纹理采样参考验证 8 组 Point/Bilinear 与混合 U/V Repeat/Clamp/Mirror/MirrorOnce、负 tiling/offset/rotation：4835 遮挡、1335 透光像素通过，102 个 alpha/采样边界像素明确跳过。首次失败来自 float CPU 参考同时漏掉共边三角形；临时 GPU 诊断确认主位置/UV/alpha 正确，修正参考的共边容差后通过，生产诊断 payload/buffer 已全部移除。
 
@@ -40,3 +44,21 @@ Unity 原生 Mesh attribute fetch 与 Material hit group 提供纹理/UV 输入�
 审计不渲染实际古堡完整画面，也不是性能/漏光验收。自有当前姿态 Mesh 仍约 28.54 MiB，因为合并网格没有拆开；最终接收、艺术阴影控制和 GI 归属继续延期。下一项应在可控场景检查 Cutout 局部边缘、运动与 GPU 成本，结合古堡隔离区域的实际结果再决定优化，不用天空壳或合并布局造成的现象调整采样/降噪参数。
 
 提交前源hash复核发现源场景层级顺序与Volume Profile已有外部更新（新增DI/GI Volume及debug设置），其余复制清单中的模型/材质/纹理/metadata一致。验证保留本轮开始前的隔离快照，不将旧快照回写或覆盖这些源工程更新；不宣称整个源清单仍逐字一致。
+
+## 2026-11-19 主 UV 精简验证
+
+配合 lilToon `59a4d4e` 的 UV 属性移除，同步清理 RT 可见性、DI 与 GI
+材质适配器，以及历史失效签名。验证采用 Unity 6000.3.15f1、HoURP 17.3、
+D3D12、Gamma 色彩空间的物理隔离包。
+
+- GI 原生 Cutout 命中通过 46 项检查，覆盖静态平铺／偏移、背面采样、
+  AlphaMask、cutoff 和 visibility-only payload。Shader 与 C# 诊断为零。
+- DI 原生 Cutout 的 RenderGraph 路径通过 Alpha、遮罩、骨骼移动、
+  历史更新、条件资源与降噪检查。独立 CPU 采样参考覆盖 Point／Bilinear
+  和四种混合 U／V 包裹模式，通过 4,346 个遮挡像素与 1,811 个透光像素，
+  跳过 115 个采样边界像素。
+
+DI 首次冷启动时，旧夹具在读取尚未建立的上下文时失败。隔离副本增加上下文诊断后，
+针对性复测通过。原始日志与 GI JSON 保存在
+`D:/Temp/liltoon-inspector-a9fcae14/CleanupStep4-RTCutout.log`、
+`CleanupStep4-RTCutout.json` 和 `CleanupStep4-RTDI-Diagnostic.log`。

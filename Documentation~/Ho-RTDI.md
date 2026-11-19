@@ -83,7 +83,7 @@ Feature 只显示生产总开关、Scene View开关，以及默认折叠的几�
 
 世界遮挡支持 MeshRenderer 与 SkinnedMeshRenderer 的 opaque 当前姿态；蒙皮更新有 CPU 快照/自有网格成本。基础 lilToon Cutout 通过 Unity 材质射线 any-hit 读取原纹理与三角形 UV，透明 texel `IgnoreHit`，无需 CPU 纹理读取、UV atlas 或原纹理副本。
 
-支持 MainTex tiling/offset、静态旋转、背面 UV 移动、Color.a、cutoff 和基础 AlphaMask 运算，纹理过滤/包裹跟随已支持路径。射线显式 LOD 0，尚无 ray-cone/mip 覆盖过滤；MSAA AlphaToMask 不当作物理透射。第二/第三主纹理、视差、dissolve、dither、distance-fade、动态 UV、RenderTexture alpha、property block 和任意自定义 vertex/alpha shader 不在支持域，未知情况明确排除。完整边界见 [Cutout](RTDI/技术/Ho-RTDI-Cutout.md)。
+支持 MainTex tiling/offset、Color.a、cutoff 和基础 AlphaMask 运算，纹理过滤/包裹跟随已支持路径。主贴图 UV 与 lilToon 前向路径统一采用静态平铺和偏移。射线显式 LOD 0，尚无 ray-cone/mip 覆盖过滤；MSAA AlphaToMask 不当作物理透射。第二/第三主纹理、视差、dissolve、dither、distance-fade、RenderTexture alpha、property block 和任意自定义 vertex/alpha shader 不在支持域，未知情况明确排除。完整边界见 [Cutout](RTDI/技术/Ho-RTDI-Cutout.md)。
 
 在存在 Cutout 的最终可见性路径，pose / transform 变化可保留 NRD 历史，并用同一个旧采样的真实最终可见性变化生成 confidence；ReSTIR 仍按完整 world revision 拒绝旧可见性历史。实例/材质/掩码、源 mesh 替换等结构变化硬重置，opaque-only 几何变化仍保守重置。这个能力处理遮挡变化，不能等同于动态接收面的运动向量重投影。见 [可见性 confidence](RTDI/技术/Ho-RTDI-VisibilityConfidence.md)。
 

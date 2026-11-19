@@ -47,7 +47,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             skinBlockerBone.localPosition=Vector3.right*100;Near(Render().r,reference,"cutout bone moved away",.015f);
             skinBlockerBone.localPosition=Vector3.zero;Near(Render().r,0,"cutout bone returned",.002f);
             ValidateCutoutPattern();
-            AlphaFill(alphaTexture,1);cutoutMaterial.SetTextureScale("_MainTex",Vector2.one);cutoutMaterial.SetTextureOffset("_MainTex",Vector2.zero);cutoutMaterial.SetVector("_MainTex_ScrollRotate",Vector4.zero);
+            AlphaFill(alphaTexture,1);cutoutMaterial.SetTextureScale("_MainTex",Vector2.one);cutoutMaterial.SetTextureOffset("_MainTex",Vector2.zero);
             feature.Settings.denoise=true;for(int i=0;i<96;i++)RenderCamera();Near(Read(feature.LastContext.filteredDiffuse.rt).r,0,"NRD solid cutout shadow",.004f);
             AlphaFill(alphaTexture,0);for(int i=0;i<96;i++)RenderCamera();Near(Read(feature.LastContext.filteredDiffuse.rt).r,reference,"NRD transparent cutout",reference*.05f);
             feature.Settings.denoise=false;
@@ -115,7 +115,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             {
                 alphaTexture.filterMode=filter;alphaTexture.wrapModeU=wraps[mode];alphaTexture.wrapModeV=wraps[(mode+1)%4];
                 cutoutMaterial.SetTextureScale("_MainTex",new Vector2(2,-1));cutoutMaterial.SetTextureOffset("_MainTex",new Vector2(.17f,-.22f));
-                cutoutMaterial.SetVector("_MainTex_ScrollRotate",new Vector4(0,0,.7f,0));RenderCamera();ReadImage(feature.LastContext.diffuse.rt,image);
+                RenderCamera();ReadImage(feature.LastContext.diffuse.rt,image);
                 for(int y=18;y<46;y++)for(int x=18;x<46;x++)
                 {
                     var view=camera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var p=view.origin+view.direction*(-view.origin.z/view.direction.z);
@@ -129,21 +129,19 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                         // otherwise reject both triangles at an exactly diagonal-edge hit.
                         float distance=Vector3.Dot(e2,q)/determinant;if(u< -1e-6f||v< -1e-6f||u+v>1+1e-6f||distance<=.001f||distance>=max-.001f)continue;
                         var uv=uvs[indices[i]]*(1-u-v)+uvs[indices[i+1]]*u+uvs[indices[i+2]]*v;
-                        if(determinant<0&&cutoutMaterial.GetFloat("_ShiftBackfaceUV")>0)uv.x+=1;
-                        uv=Vector2.Scale(uv,new Vector2(2,-1))+new Vector2(.17f,-.22f)-Vector2.one*.5f;
-                        uv=new Vector2(uv.x*Mathf.Cos(.7f)-uv.y*Mathf.Sin(.7f),uv.x*Mathf.Sin(.7f)+uv.y*Mathf.Cos(.7f))+Vector2.one*.5f;
+                        uv=Vector2.Scale(uv,new Vector2(2,-1))+new Vector2(.17f,-.22f);
                         float alpha=CutoutCpuSample(alphaTexture,uv);
                         boundary|=Mathf.Abs(alpha-.5f)<.003f;
                         if(filter==FilterMode.Point)boundary|=Mathf.Abs(uv.x*16-Mathf.Round(uv.x*16))<.003f||Mathf.Abs(uv.y*16-Mathf.Round(uv.y*16))<.003f;
                         occluded|=alpha>=.5f;
                     }
                     if(boundary){skipped++;continue;}
-                    float expected=occluded?0:Expected(light,x,y);Near(image.GetPixel(x,y).r,expected,$"native alpha oracle filter={filter} wraps={alphaTexture.wrapModeU}/{alphaTexture.wrapModeV} pixel={x},{y} backUV={cutoutMaterial.GetFloat("_ShiftBackfaceUV")}",.003f);
+                    float expected=occluded?0:Expected(light,x,y);Near(image.GetPixel(x,y).r,expected,$"native alpha oracle filter={filter} wraps={alphaTexture.wrapModeU}/{alphaTexture.wrapModeV} pixel={x},{y}",.003f);
                     if(occluded)blocked++;else open++;
                 }
             }
             Require(blocked>50&&open>50,"pattern must exercise both outcomes");
-            Debug.Log($"[HoRTDIValidation] CUTOUT_PATTERN blocked={blocked} open={open} boundarySkipped={skipped} transforms/rotation/point+bilinear/mixed U/V wraps");
+            Debug.Log($"[HoRTDIValidation] CUTOUT_PATTERN blocked={blocked} open={open} boundarySkipped={skipped} transforms/point+bilinear/mixed U/V wraps");
         }
         private static float CutoutCpuSample(Texture2D texture,Vector2 uv)
         {
