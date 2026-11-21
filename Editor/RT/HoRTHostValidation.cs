@@ -18,7 +18,7 @@ namespace lilToon.URP.Extensions.RT
     {
         [Serializable] private sealed class Report
         {
-            public bool pass, compatibility, unsupported, retirement;
+            public bool pass, compatibility, unsupported, retirement, volumeControls;
             public string api, failure;
             public int checks, renderRequests, createdProfiles, disposedProfiles;
             public uint bakeCount;
@@ -29,12 +29,15 @@ namespace lilToon.URP.Extensions.RT
 
         private const int TestLayer = 29;
         private static readonly List<Object> objects = new();
-        private static bool compatibility, unsupported, previousAsync, retirement;
+        private static bool compatibility, unsupported, previousAsync, retirement, volumeControls;
         private static RenderPipelineAsset previousDefault, previousQuality;
         private static UniversalRendererData rendererData;
         private static HoRTRendererFeature host;
         private static HoRTHostProbeFeature first, second;
         private static Camera cameraA, cameraB;
+        private static Volume volumeHolder;
+        private static HoRTVolume volume;
+        private static int disabledProfiles, disabledGeneration;
         private static Transform bone;
         private static SkinnedMeshRenderer skin;
         private static Mesh sourceMesh, sharedPose;
@@ -53,6 +56,8 @@ namespace lilToon.URP.Extensions.RT
         public static void RunUnsupported() { unsupported = true; Run(); }
         public static void RunRetirement() { retirement = true; Run(); }
         public static void RunRetirementCompatibility() { compatibility = true; RunRetirement(); }
+        public static void RunVolume() { volumeControls = true; Run(); }
+        public static void RunVolumeCompatibility() { compatibility = true; RunVolume(); }
         public static void Run()
         {
             try
@@ -66,7 +71,7 @@ namespace lilToon.URP.Extensions.RT
                 previousAsync = ShaderUtil.allowAsyncCompilation;
                 ShaderUtil.allowAsyncCompilation = false;
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-                report = new Report { compatibility = compatibility, unsupported = unsupported, retirement = retirement, api = SystemInfo.graphicsDeviceType.ToString() };
+                report = new Report { compatibility = compatibility, unsupported = unsupported, retirement = retirement, volumeControls = volumeControls, api = SystemInfo.graphicsDeviceType.ToString() };
                 bool rejectedProfileKey = false;
                 try { _ = new HoRTViewRequest(-1, createProfile: () => new CountingProfile()); }
                 catch (ArgumentException) { rejectedProfileKey = true; }
@@ -87,6 +92,16 @@ namespace lilToon.URP.Extensions.RT
                 Check(!compatibility, "Compatibility support is compiled in the validation project");
                 #endif
                 cameraA = Camera("RT host camera A"); cameraB = Camera("RT host camera B");
+                if (volumeControls)
+                {
+                    volumeHolder = Keep(new GameObject("RT host override")).AddComponent<Volume>();
+                    volumeHolder.gameObject.layer = 28; volumeHolder.isGlobal = true; volumeHolder.priority = 100;
+                    volumeHolder.sharedProfile = Keep(ScriptableObject.CreateInstance<VolumeProfile>());
+                    volume = volumeHolder.sharedProfile.Add<HoRTVolume>(false);
+                    volume.enable.value = false;
+                    cameraA.GetUniversalAdditionalCameraData().volumeLayerMask = 1 << 28;
+                    cameraB.GetUniversalAdditionalCameraData().volumeLayerMask = 0;
+                }
                 target = Keep(new RenderTexture(32, 32, 24)); target.Create();
                 if (!unsupported)
                 {
@@ -158,6 +173,7 @@ namespace lilToon.URP.Extensions.RT
                     Check(CreatedProfiles == 0, "Unsupported path does not create hit-material adapters");
                     Complete(); return;
                 }
+                if (volumeControls) { TickVolume(); return; }
                 switch (step++)
                 {
                     case 0: case 1: Render(cameraA); break;
@@ -242,9 +258,70 @@ namespace lilToon.URP.Extensions.RT
             catch (Exception error) { Finish(error); }
         }
 
+        private static void TickVolume()
+        {
+            switch (step++)
+            {
+                case 0: case 1: Render(cameraA); break;
+                case 2:
+                    Render(cameraA); BothHit(3);
+                    Check(host.ActiveDomainCount == 1 && host.ViewCount == 2, "Uncovered false value preserves enabled host and both clients");
+                    var editor = UnityEditor.Editor.CreateEditor(volume);
+                    try { Check(editor.GetType().Name == "HoRTVolumeEditor", "Host Volume has its basic override inspector"); }
+                    finally { Object.DestroyImmediate(editor); }
+                    oldView = first.view; disabledProfiles = CreatedProfiles; disabledGeneration = first.generation;
+                    volume.enable.Override(false);
+                    break;
+                case 3:
+                    Render(cameraA);
+                    Check(!first.declared && !second.declared && !first.acquired && !second.acquired, "Volume off rejects both pre-cull declarations and acquisition");
+                    Check(!oldView.IsValid, "Volume off immediately invalidates the old borrowed view");
+                    Check(host.ActiveDomainCount == 0 && host.ViewCount == 0 && host.BakeCount == 0, "Volume off detaches the camera scene and pose cache");
+                    Check(host.LastPrepareWaitMilliseconds == 0 && host.Status.Contains("Volume"), "Disabled host reports Volume state without a blocking prepare wait");
+                    bone.localPosition = Vector3.forward * .25f;
+                    break;
+                case 4:
+                    Render(cameraA);
+                    Check(CreatedProfiles == disabledProfiles && first.generation == disabledGeneration && host.ActiveDomainCount == 0, "Repeated disabled requests create no profiles, domains or trace work");
+                    HoRTRendererFeature.CollectRetired();
+                    Check(DisposedProfiles == CreatedProfiles && HoRTRendererFeature.RetiredDomainCount == 0, "Disabled camera resources retire after GPU completion");
+                    Render(cameraB); BothHit(3.25f);
+                    Check(host.ActiveDomainCount == 1, "Camera Volume layer mask excludes the disabled override");
+                    oldView = first.view;
+                    break;
+                case 5:
+                    Render(cameraA);
+                    Check(!first.acquired && host.ActiveDomainCount == 1 && oldView.IsValid, "Disabling one camera preserves another camera's scene domain");
+                    volume.active = false; Render(cameraA); BothHit(3.25f);
+                    Check(first.view.IsValid, "Inactive Volume component restores Feature fallback");
+                    volume.active = true; volume.enable.overrideState = false;
+                    Render(cameraA); BothHit(3.25f);
+                    Check(host.isActive && !volume.enable.value, "Removing override restores production without changing Feature or saved false value");
+                    break;
+                case 6:
+                    volume.enable.Override(true); host.SetActive(false); Render(cameraA);
+                    Check(!first.declared && !first.acquired && !second.acquired, "Volume enable cannot bypass disabled Feature");
+                    host.SetActive(true); Render(cameraA); BothHit(3.25f);
+                    volume.enable.Override(false); volumeHolder.weight = 0;
+                    Render(cameraA); BothHit(3.25f);
+                    Check(first.view.IsValid, "Zero-weight Volume does not disable the host");
+                    volumeHolder.weight = 1;
+                    break;
+                case 7:
+                    Render(cameraA); Check(!first.acquired && !second.acquired, "Restoring Volume weight applies the disable override again");
+                    volume.enable.Override(true); Render(cameraA); BothHit(3.25f);
+                    Check(first.view.IsValid, "Re-enabling prepares valid current-pose scene views");
+                    report.bakeCount = host.BakeCount; host.Create(); retireTicks = 1;
+                    break;
+                default: throw new Exception("Unexpected host Volume validation step");
+            }
+        }
+
         private static void Render(Camera camera)
         {
             report.renderRequests++;
+            // SingleCameraRequest leaves Volume updates to its caller.
+            if (volumeControls) VolumeManager.instance.Update(camera.transform, camera.GetUniversalAdditionalCameraData().volumeLayerMask);
             RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = target });
         }
         private static void BothHit(float distance) { Hit(first, distance); Hit(second, distance); }
@@ -296,7 +373,7 @@ namespace lilToon.URP.Extensions.RT
                 foreach (var message in ShaderUtil.GetComputeShaderMessages(shader))
                     Check(message.severity != UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error && message.severity != UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning, message.message);
             report.pass = true;
-            Debug.Log("[HoRTHostValidation] PASS: real callbacks, shared pose/two views, epochs/cameras, explicit failures, profile and GPU lifetime; compatibility=" + compatibility + "; unsupported=" + unsupported + "; retirement=" + retirement);
+            Debug.Log("[HoRTHostValidation] PASS: real callbacks, shared pose/two views, epochs/cameras, explicit failures, profile and GPU lifetime; compatibility=" + compatibility + "; unsupported=" + unsupported + "; retirement=" + retirement + "; volume=" + volumeControls);
             Finish(null);
         }
         private static void Finish(Exception error)
@@ -312,7 +389,7 @@ namespace lilToon.URP.Extensions.RT
                 var package = UnityEditor.PackageManager.PackageInfo.FindForAssetPath("Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RT/HoRTHostValidation.cs");
                 if (package != null) packageRoot = package.resolvedPath;
                 string folder = Path.Combine(packageRoot, "Tests~/RT/R2"); Directory.CreateDirectory(folder);
-                string reportName = unsupported ? "report-unsupported.json" : retirement
+                string reportName = volumeControls ? compatibility ? "report-volume-compat.json" : "report-volume-rg.json" : unsupported ? "report-unsupported.json" : retirement
                     ? compatibility ? "report-retirement-compat.json" : "report-retirement-rg.json"
                     : compatibility ? "report-compat.json" : "report-rg.json";
                 File.WriteAllText(Path.Combine(folder, reportName), JsonUtility.ToJson(report, true));

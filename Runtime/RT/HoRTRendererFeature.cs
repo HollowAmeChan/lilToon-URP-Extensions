@@ -184,6 +184,7 @@ namespace lilToon.URP.Extensions.RT
         public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
         {
             CollectRetired();
+            if (!CheckVolumeEnabled(renderer, cameraData.camera)) return;
             if (!HoRTScene.IsSupported || !SystemInfo.supportsGraphicsFence)
             { Status = "需要 D3D12 inline RT 与 GraphicsFence"; return; }
             var key = (renderer, cameraData.camera);
@@ -194,6 +195,22 @@ namespace lilToon.URP.Extensions.RT
             { LastPrepareWaitMilliseconds = wait.Elapsed.TotalMilliseconds; active.Remove(key); Status = "当前相机上一帧场景仍在使用，拒绝修改"; return; }
             LastPrepareWaitMilliseconds = wait.Elapsed.TotalMilliseconds;
             domain.Begin(cameraData.camera); active[key] = domain;
+        }
+
+        private bool CheckVolumeEnabled(ScriptableRenderer renderer, Camera camera)
+        {
+            var volume = VolumeManager.instance.stack?.GetComponent<HoRTVolume>();
+            if (volume == null || !volume.active || !volume.enable.overrideState || volume.enable.value) return true;
+
+            var key = (renderer, camera);
+            if (domains.TryGetValue(key, out var domain))
+            {
+                QueueRetirement(key, domain); domains.Remove(key);
+                CollectRetired(); EnsureRetirementHook();
+            }
+            LastPrepareWaitMilliseconds = 0;
+            Status = "Volume 已关闭当前相机的 RT";
+            return false;
         }
 
         internal static bool Declare(ScriptableRenderer renderer, Camera camera, Object client, HoRTViewRequest request, out string reason)
@@ -222,6 +239,7 @@ namespace lilToon.URP.Extensions.RT
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            if (!CheckVolumeEnabled(renderer, renderingData.cameraData.camera)) return;
             if (!Find(renderer, renderingData.cameraData.camera, out var domain) || domain.owner != this) return;
             domain.Prepare();
             if (domain.requests.Count == 0) { Status = "没有 RT 请求"; return; }
@@ -230,14 +248,15 @@ namespace lilToon.URP.Extensions.RT
             Status = $"views={domain.views.Count}, epoch={domain.epoch}, bakes={domain.geometry.BakeCount}, wait={LastPrepareWaitMilliseconds:F2}ms";
         }
 
+        private static void QueueRetirement((ScriptableRenderer renderer, Camera camera) key, Domain domain)
+        {
+            domain.retired = true;
+            if (active.TryGetValue(key, out var current) && ReferenceEquals(current, domain)) active.Remove(key);
+            retiring.Add(domain);
+        }
         private void RetireDomains()
         {
-            foreach (var pair in domains)
-            {
-                pair.Value.retired = true;
-                if (active.TryGetValue(pair.Key, out var current) && ReferenceEquals(current, pair.Value)) active.Remove(pair.Key);
-                retiring.Add(pair.Value);
-            }
+            foreach (var pair in domains) QueueRetirement(pair.Key, pair.Value);
             domains.Clear(); CollectRetired();
             EnsureRetirementHook();
         }

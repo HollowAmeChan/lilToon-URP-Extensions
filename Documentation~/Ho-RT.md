@@ -478,7 +478,11 @@ Volume / UI / 调试步骤证据见 [Controls review](../Tests~/RT/Controls/revi
 
 ### 8.6 当前配置与调试入口
 
-Renderer 的顺序为 Ho-RT、GB / SB、Ho-RTShadow；接收角色根节点添加 `Ho-RTShadow Receiver` 并指定 OB 组，整组 / 部件和逐灯接收在这里选择。声明灯在 Unity Light 上添加 `Ho-RTShadow Light`，逐方向灯角直径优先于 Feature 和 Volume 的默认值。Ho-RT 只显示资源宿主状态，没有独立质量 Volume；质量属于消费者。
+Renderer 的顺序为 Ho-RT、GB / SB、Ho-RTShadow；接收角色根节点添加 `Ho-RTShadow Receiver` 并指定 OB 组，整组 / 部件和逐灯接收在这里选择。声明灯在 Unity Light 上添加 `Ho-RTShadow Light`，逐方向灯角直径优先于 Feature 和 Volume 的默认值。
+
+`Add Override → Post-processing → Ho-RT → 光追公共底座` 提供公共宿主的逐相机启用覆盖。勾选左侧覆盖并关闭「启用」，会在 pre-cull 场景准备前停止该相机的几何扫描、蒙皮 Bake 和加速结构同步，RTDI / RTGI / RTShadow 随之无法取得场景。已有场景资源通过 GPU fence 安全退休；再次开启会准备新的场景，不复用关闭前的借用 view。未覆盖、组件 inactive 或相机 Volume layer mask 排除该 Volume 时沿用 Feature 启用状态，Volume 不能开启停用的 Feature。宿主运行状态在 Feature，图像调试与质量覆盖在各消费者的 Volume。
+
+宿主开关回归入口为 `Tests~/RT/run_validation.ps1 -Stage HostVolume`，包含 RenderGraph / compatibility 的 Volume 关闭、重复关闭、重新开启、相机隔离及 GPU 资源退休检查。
 
 全管线推荐顺序与新 Feature 位置声明统一维护在 [管线总览 §2.1 / §7.1](Ho-管线总览.md)。GB / SB 与 RTShadow 默认同为 `BeforeRenderingOpaques`，所以列表上 GB / SB 必须在 RTShadow 上方；否则即使“生产 1”也只是已调度，raw 仍可能全为无效表面。Inspector 会指出缺失 / 停用生产者、GB 非 Full、Ho-RT pre-cull 列表错误，以及 GB / SB 的同事件排反或事件过晚。独立输入排序专项见 [InputOrder](../Tests~/RT/InputOrder/review.json)，双路径真实重现全红，并在把 SB 放到 RTShadow 前后恢复有效阴影。此前进程无终态的未完成 run 原样保留，不当作通过证据；没有修改用户 Renderer 资产。
 

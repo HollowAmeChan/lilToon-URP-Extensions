@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('R1','R2','R3DI','R3GI','R4Query','R4','R5Sigma','R5Cast','R5Npr','R5Export','R5Thin','R6','Controls','Spatial','InputOrder','Self')][string]$Stage = 'R1',
+    [ValidateSet('R1','R2','HostVolume','R3DI','R3GI','R4Query','R4','R5Sigma','R5Cast','R5Npr','R5Export','R5Thin','R6','Controls','Spatial','InputOrder','Self')][string]$Stage = 'R1',
     [string]$Case = '',
     [string]$ProjectName = 'RTValidation',
     [string]$Unity = 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe',
@@ -44,6 +44,14 @@ if ($Stage -eq 'R2') {
         @{ name='skinned-compat'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTSceneValidation.RunSkinnedCompatibility'; marker='[HoRTSceneValidation] PASS' },
         @{ name='di-cutout-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTDI.HoRTDIValidation.RunCutout'; marker='[HoRTDIValidation] PASS native cutout:' },
         @{ name='gi-secondary-rg'; api='d3d12'; entry='lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.RunCutout'; marker='[HoGICutoutHit] PASS' }
+    )
+}
+if ($Stage -eq 'HostVolume') {
+    $taskCases = @(
+        @{ name='host-volume-rg'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunVolume'; marker='[HoRTHostValidation] PASS' },
+        @{ name='host-volume-compat'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunVolumeCompatibility'; marker='[HoRTHostValidation] PASS' },
+        @{ name='host-retirement-rg'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunRetirement'; marker='[HoRTHostValidation] PASS' },
+        @{ name='host-retirement-compat'; api='d3d12'; entry='lilToon.URP.Extensions.RT.HoRTHostValidation.RunRetirementCompatibility'; marker='[HoRTHostValidation] PASS' }
     )
 }
 if ($Stage -eq 'R3DI') {

@@ -12,6 +12,7 @@ namespace lilToon.URP.Extensions.Editor.RT
         {
             var feature = (HoRTRendererFeature)target;
             EditorGUILayout.HelpBox("RT 公共资源宿主，放在 RTDI / RTGI / RTShadow 前。消费者声明所需场景，本模块共享姿态并管理 AS / 材质资源寿命；质量、输出和调试在对应消费者配置。没有消费者时不主动追踪。", MessageType.Info);
+            EditorGUILayout.HelpBox("逐相机开关：Volume → Post-processing → Ho-RT → 光追公共底座。覆盖并关闭启用后停止公共场景准备，同时阻止 RTDI / RTGI / RTShadow 取得场景。", MessageType.None);
             if (LilUrpEditorSectionGui.DrawSectionHeader(ref status, "运行状态", feature.Status, new Color(.46f, .64f, .92f)))
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
