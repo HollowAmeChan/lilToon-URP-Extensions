@@ -1029,6 +1029,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 AddLayer(effect);
             }
+
+            // Context-menu callbacks run after the inspector's normal apply pass; persist the
+            // mutation here as well as for the immediate left-click path.
+            ApplyLayerListChanges();
         }
 
         private void CleanupLayersForUserOrder()

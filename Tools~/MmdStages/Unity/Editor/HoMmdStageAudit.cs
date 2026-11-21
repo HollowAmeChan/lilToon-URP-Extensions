@@ -99,7 +99,7 @@ public static class HoMmdStageAudit
                     lowFillPoints=lowPoints,exteriorLights=exterior.Length,exteriorLayerIsolation=layerIsolation,
                     giMode=rtgi!=null?"RTGI":"Off",advancedImageLayers=image.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),
                     ssgiFeatures=ssgiFeatures,ssgiFeatureAssets=ssgiFeatureAssets,ssgiVolumes=ssgiVolumes,
-                    aoEligibleMaterials=eligible.Length,aoArtMaterials=eligible.Count(x=>x.HasProperty("_UseRealtimeAO")&&x.GetFloat("_UseRealtimeAO")>.5f&&x.GetFloat("_AOContrast")>=1.5f),plrSurfaces=plrSurfaces.Length,
+                    aoEligibleMaterials=eligible.Length,aoArtMaterials=eligible.Count(x=>x.HasProperty("_AOSource")&&x.GetFloat("_AOSource")>=2f&&x.GetFloat("_AOContrast")>=1.5f),plrSurfaces=plrSurfaces.Length,
                     advancedScreenLayers=screen.layers.value.Count(x=>x.name.StartsWith("进阶 · ")),reflectionResolution=reflectionResolution,
                     hasCamera=camera!=null,postProcessing=camera!=null&&camera.GetUniversalAdditionalCameraData().renderPostProcessing,
                     features=renderer.rendererFeatures.Where(x=>x.isActive).Select(x=>x.GetType().Name).ToArray(),

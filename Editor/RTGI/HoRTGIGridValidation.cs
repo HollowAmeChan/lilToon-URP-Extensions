@@ -136,7 +136,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 Transform Quad(string name,Vector3 position,Vector3 rotation,Vector3 scale)
                 {
                     var obj=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));obj.name=name;obj.transform.SetPositionAndRotation(position,Quaternion.Euler(rotation));obj.transform.localScale=scale;
-                    var material=Keep(new Material(Shader.Find("lilToon")));material.EnableKeyword("UNITY_UI_ALPHACLIP");material.SetFloat("_Cull",0);material.SetColor("_Color",Color.white);material.SetTexture("_MainTex",Texture2D.whiteTexture);material.SetFloat("_UseEmission",0);material.SetFloat("_UseEmission2nd",0);obj.GetComponent<Renderer>().sharedMaterial=material;return obj.transform;
+                    var material=Keep(new Material(Shader.Find("lilToon")));material.EnableKeyword("UNITY_UI_ALPHACLIP");material.SetFloat("_Cull",0);material.SetColor("_Color",Color.white);material.SetTexture("_MainTex",Texture2D.whiteTexture);material.SetFloat("_UseEmission",0);obj.GetComponent<Renderer>().sharedMaterial=material;return obj.transform;
                 }
                 bool NearRasterEdge(Transform plane,Vector2 uv,int width,int height)
                 {

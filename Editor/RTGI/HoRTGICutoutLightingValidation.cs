@@ -22,7 +22,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             gi.Settings.temporal=gi.Settings.spatial=gi.Settings.denoise=false;
             skyBaseline=Mean(32);
             var screen=Quad("World-only Cutout",-.5f,4000,1);var material=Keep(new Material(Shader.Find("Hidden/lilToonCutout")));
-            material.SetOverrideTag("RenderType","TransparentCutout");material.renderQueue=2450;material.SetFloat("_Cull",0);material.SetFloat("_Cutoff",.5f);material.SetFloat("_Reflectance",0);material.SetFloat("_Metallic",0);material.SetFloat("_Smoothness",0);material.SetFloat("_UseEmission",0);material.SetFloat("_UseEmission2nd",0);material.SetFloat("_AlphaMaskMode",0);material.SetTexture("_MainTex",Texture2D.whiteTexture);material.SetColor("_Color",new Color(0,0,0,0));screen.GetComponent<Renderer>().sharedMaterial=material;
+            material.SetOverrideTag("RenderType","TransparentCutout");material.renderQueue=2450;material.SetFloat("_Cull",0);material.SetFloat("_Cutoff",.5f);material.SetFloat("_Reflectance",0);material.SetFloat("_Metallic",0);material.SetFloat("_Smoothness",0);material.SetFloat("_UseEmission",0);material.SetFloat("_AlphaMaskMode",0);material.SetTexture("_MainTex",Texture2D.whiteTexture);material.SetColor("_Color",new Color(0,0,0,0));screen.GetComponent<Renderer>().sharedMaterial=material;
             skyHole=Mean(32);var context=gi.LastContext;var registry=(HoRTScene)Field(gi,"scene");
             Require(registry.CutoutCount==1&&context.alphaVisibility&&context.finalVisibility.count==Size*Size,"Cutout enables actual native secondary/reuse/final buffers");
             Relative(skyHole,skyBaseline,"Transparent Cutout initial/lighting/final matches opaque-only sky baseline");

@@ -25,7 +25,7 @@ description: Build and adjust editable PMX stages in HoURP, assemble VMD perform
 - 使用 Ho PMX importer 和魔改 Ho lilToon，抽出材质，保持 PMX 贴图相对路径。按场景整理 Source/Materials/Rendering/Renders。默认使用已有 PC_RPAsset/PC_Renderer，通过场景 Volume、灯光、材质调效果，不顺手重置共享 Feature。
 - **舞台材质可按用途选 `HoRP阴影模式 = Full（2）`，角色通常从 Main（1）开始。** Full 已按 URP 附加灯索引逐灯接收 HoShadowCast：匹配来源时替代该灯的 native 可见度；未收录或图集投影不覆盖时回退 native，不再把 ShadowCast 整池合成值乘进主光 Toon 衰减。显式加入 Main 的 Cast 仍只影响共享 Toon 阴影。新建舞台工具保守默认 Main=1；旧材质保持现状，按材质用途审查后再定点切 Full，不批量迁移。附加光使用 `_HoAdditionalLightIntensity`（0 关闭实时附光、1 正常一次）与 `_HoAdditionalLightShadowStrength`（0 忽略附加光阴影、1 正常接收）；旧 `_MultiLightIntensity` 的额外 HDR 增益不再适用，不能直接复制数值。点光不提亮平面时，整帧截图会被 Bloom 和镜面反射污染；先做无后处理/无反射的附光 0/1 对照。`_LightMaxLimit` 是需检验的共享受光上限候选，提高它也会放开主光。Mixed/Shadowmask/APV 尚未验证。详见[材质光照调整](references/lighting-and-rendering.md#材质光照契约与旧场景调整)。
 - 当前制作集合统一在 `Assets/00动画/`：`MMD场景` 放舞台源资源，`MMD动画场景` 按舞台共用文件夹放多个动作 Scene，`VMD动画` 放动作/运镜/BGM/作者说明，`角色` 只放已验证的 WTD 最终角色。不要每个动作复制灯光、Volume、材质或角色；特殊版本再复制 Scene 并做局部 override。制作验证与旧摄影棚归 `Assets/Editor/MMD制作验证/`，不混进角色成品。
-- 用户禁用 SSGI；需要 GI 时使用 RTGI，可配 RELAX。其他效果按需求选择，不要求每场景开满。
+- 用户禁用 SSGI。**使用本 skill 搭建或配置动画角色视频场景时，不启用 RTGI / RTDI**：花吐电気 WTD 动画观察到 RTGI 逐帧闪烁亮点，两种 RT GI 的动画时域支持都待后续改造。静态环境帧可按明确需求单独做开关对照；快速渲染的质量档不会自动关闭 GI。详见[影片 GI 限制](references/mmd-motion-review.md#影片-aa-与预热)。
 - **图像效果全部优先使用 Ho。** ImageProcess 的「仅使用 Ho 后处理」默认开启；URP 内置曝光、ACES、Bloom、景深等会被执行层跳过，保留 AA / 升采样 / 显示编码。需要调色、发光、映射、颗粒等直接调整 Ho 图层，不再额外叠 URP 效果，也不为解决预览差异强行降低 Glow 阈值。新场景模板只建 Ho 滤镜。用户要求清理旧内置组件时，用 `strip-native-post` 定点清理当前场景的局部 Profile，核对 Ho 参数指纹不变，不顺手清其它场景；只有明确兼容旧链时才关闭接管。
 - 重点区域用真实光源塑形，后处理负责风格。多角度比较帮助调整，不是固定配方的通过/失败审查。
 - CLI 优先。打开的工程用文件队列；不启动第二个同项目 Editor，不丢弃未保存内容。Logo 等资产定点修改不需要切换或保存场景。

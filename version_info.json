@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "version": "dev",
+  "release_tag": "dev",
+  "release_name": "lilToon-URP-Extensions development build",
+  "repository": "HollowAmeChan/lilToon-URP-Extensions",
+  "channel": "dev",
+  "package_name": "jp.lilxyzw.liltoon.urp.extensions",
+  "package_version": "0.1.0"
+}

@@ -38,7 +38,7 @@
 
 HIRO 现场复测排除了 TAA 和 CharacterSpecialization 的额外描边开关；描边深度来源正确，Signed CoC 在壳层出现近/远侧值。用户最终确认材质启用了 lilToon 的描边 Z 偏移，用来修复轮廓；该偏移使描边 mesh 离开主体焦平面，残留的局部模糊来自壳层真实深度。不会通过覆盖 CoC 或强制描边保持锐利来隐藏这个材质设置；永久测试 `OutlineDepthOffsetCanDefocusAnOtherwiseFocusedOwner` 验证这一行为。临时的 SignedCoC / DepthSource 调试 UI 和输出已移除。
 
-逐邻点 reach 需要四组深度判断；权重相同时仍用一次硬件双线性颜色读取，边界权重不同时才分别读取四个颜色邻点。16/48 tap 数和 CoC 参数保持不变。shader 使用循环避免四组判断完全展开时超过 D3D shader 编译器限制。
+逐邻点 reach 需要四组深度判断；权重相同时仍用一次硬件双线性颜色读取，边界权重不同时才分别读取四个颜色邻点。Full 保留原 16/48 tap 顺序与权重；Half / Quarter 在同一全分辨率 CoC 支持域内均匀抽取 tap，并按保留比例缩放 tap 权重。描边 coverage、逐邻点视觉深度与输出分辨率不变。较低密度是显式质量/性能取舍；Full 的滤波输出与原实现相同。shader 使用循环避免四组判断完全展开时超过 D3D shader 编译器限制。
 
 本修复不是近场/远场分层景深，也不为 TAA 历史颜色重建深度；前景扩散强度仍受单趟 gather 的限制。降采样 GB、TAA、复杂材质的实际轮廓对齐仍需场景验收，不把受控输入的零污染结论泛化为所有历史颜色都无误差。
 

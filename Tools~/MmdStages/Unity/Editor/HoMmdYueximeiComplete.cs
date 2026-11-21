@@ -115,7 +115,7 @@ public static class HoMmdYueximeiComplete
             var m=mesh.sharedMaterial;F(m,"_AsUnlit",0);F(m,"_LightMinLimit",.025f);F(m,"_LightMaxLimit",4);
             F(m,"_MultiLightIntensity",1);F(m,"_UseShadow",1);F(m,"_ShadowReceive",1);F(m,"_ShadowStrength",.9f);
             F(m,"_UseReflection",1);F(m,"_ApplyReflection",0);F(m,"_Smoothness",.42f);
-            F(m,"_UseRealtimeAO",1);F(m,"_AOStrength",1);F(m,"_AOContrast",1.7f);
+            F(m,"_AOSource",3);F(m,"_AOStrength",1);F(m,"_AOContrast",1.7f);
             if(m.name.Contains("灯笼纸")||m.name.Contains("光球"))
             {F(m,"_UseEmission",1);m.SetTexture("_EmissionMap",m.GetTexture("_MainTex"));m.SetColor("_EmissionColor",new Color(1,.78f,.4f,1)*.6f);}
             if(m.name.Contains("大月牙"))

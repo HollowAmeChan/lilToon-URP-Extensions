@@ -28,3 +28,12 @@
 # Crash reports and generated diagnostics.
 sysinfo.txt
 *.stacktrace
+# Local release installers
+/_dist/
+
+# Local native diagnostic linker outputs and Unity-created import folder metadata.
+/EndfieldD3D11*Probe.exp
+/EndfieldD3D11*Probe.exp.meta
+/EndfieldD3D11*Probe.lib
+/EndfieldD3D11*Probe.lib.meta
+/ZMD_viewer.meta

@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             var uv1=new Vector2[mesh.vertexCount];for(int i=0;i<mesh.vertexCount;i++)uv1[i]=Vector2.one-mesh.uv[i];mesh.uv2=uv1;
             var skin=holder.AddComponent<SkinnedMeshRenderer>();skin.sharedMesh=mesh;skin.sharedMaterial=source;skin.bones=new[]{bone0,bone1};skin.rootBone=bone0;skin.updateWhenOffscreen=false;renderer=skin;
             var map=Keep(new Texture2D(2,2,TextureFormat.RGBAFloat,false,true));map.filterMode=FilterMode.Point;map.wrapMode=TextureWrapMode.Repeat;map.SetPixels(new[]{Color.red,Color.green,Color.blue,new Color(.25f,.5f,.75f,1)});map.Apply();
-            source.SetColor("_Color",Color.white);source.SetTexture("_MainTex",map);source.SetFloat("_UseEmission",1);source.SetFloat("_UseEmission2nd",0);source.SetFloat("_EmissionBlend",1);source.SetColor("_EmissionColor",Color.white);source.SetFloat("_EmissionMainStrength",0);source.SetTexture("_EmissionMap",map);source.SetFloat("_EmissionMap_UVMode",1);
+            source.SetColor("_Color",Color.white);source.SetTexture("_MainTex",map);source.SetFloat("_UseEmission",1);source.SetFloat("_EmissionBlend",1);source.SetColor("_EmissionColor",Color.white);source.SetFloat("_EmissionMainStrength",0);source.SetTexture("_EmissionMap",map);source.SetFloat("_EmissionMap_UVMode",1);
             Vector3 target=new Vector3(.2f,.3f,0),normal=Vector3.back;
             bool mapped=false;
             Check(Matrix4x4.identity,target,normal,"Initial skin");Require(scene.SkinnedMeshCount==1&&scene.SkinnedBakeCount==1,"GI hit uses one owned current-pose snapshot");

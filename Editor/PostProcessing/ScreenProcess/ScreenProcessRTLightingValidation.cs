@@ -67,7 +67,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 mat.EnableKeyword("UNITY_UI_ALPHACLIP"); mat.SetFloat("_Cull", 0); mat.SetFloat("_AsUnlit", 1);
                 mat.SetColor("_Color", new Color(.6f, .4f, .2f, 1)); mat.SetTexture("_MainTex", Texture2D.whiteTexture);
                 mat.SetFloat("_Metallic", 0); mat.SetFloat("_Reflectance", 0);
-                mat.SetFloat("_UseEmission", 0); mat.SetFloat("_UseEmission2nd", 0);
+                mat.SetFloat("_UseEmission", 0);
                 quad.GetComponent<Renderer>().sharedMaterial = mat;
                 var holder = Keep(new GameObject("RT consumer Volume")).AddComponent<Volume>(); holder.isGlobal = true;
                 holder.sharedProfile = Keep(ScriptableObject.CreateInstance<VolumeProfile>());

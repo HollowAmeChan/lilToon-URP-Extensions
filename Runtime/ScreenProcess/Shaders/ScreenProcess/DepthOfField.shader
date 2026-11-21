@@ -35,6 +35,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             float4 _LayerParams3; // x coc gain, y foreground boost, z background boost, w coc curve
             float4 _LayerParams4; // x aperture bokeh enabled, y highlight threshold, z soft knee, w gain
             float4 _LayerParams5; // x highlight exposure, y aperture hardness, z chromatic dispersion, w bokeh only
+            float _HoSPBlurSampleStride;
             // parameters2.w is the highlight layer blend mode (shared SP/IP numbering).
 
             // Tap layout: golden-angle spiral, r = sqrt((i + 0.5) / N).
@@ -279,17 +280,19 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv) * ScreenProcessDofCenterWeight;
                 float weight = ScreenProcessDofCenterWeight;
                 float highQuality = step(0.5, _LayerParams1.w);
+                int sampleStride = clamp((int)round(_HoSPBlurSampleStride), 1, 4);
                 bool apertureBokeh = HasApertureBokeh();
                 bokeh = apertureBokeh ? PrefilterBokeh(color.rgb, weight) : 0.0;
                 float bokehWeight = ScreenProcessDofCenterWeight;
 
-                #define ADD_DOF_SAMPLE(dir) \
+                #define ADD_DOF_SAMPLE(dir, scale) \
                     { \
                         float2 offsetPx = ResolveBokehOffset(dir) * radiusPx; \
                         float2 sampleUv = uv + offsetPx * texel; \
                         float distPx = length(offsetPx); \
                         float tapWeight; \
                         half4 tapColor = SampleWeightedFootprint(sampleUv, distPx, maxRadiusPx, marginPx, tapWeight); \
+                        if (scale != 1.0) { tapColor *= scale; tapWeight *= scale; } \
                         color += tapColor; \
                         weight += tapWeight; \
                         if (apertureBokeh) \
@@ -300,20 +303,47 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                         } \
                     }
 
-                if (highQuality > 0.5)
+                if (sampleStride == 1)
                 {
-                    [loop]
-                    for (int i = 0; i < ScreenProcessDofKernelHqCount; i++)
+                    if (highQuality > 0.5)
                     {
-                        ADD_DOF_SAMPLE(ScreenProcessDofKernelHq[i])
+                        [loop]
+                        for (int i = 0; i < ScreenProcessDofKernelHqCount; i++)
+                        {
+                            ADD_DOF_SAMPLE(ScreenProcessDofKernelHq[i], 1.0)
+                        }
+                    }
+                    else
+                    {
+                        [loop]
+                        for (int i = 0; i < ScreenProcessDofKernelLqCount; i++)
+                        {
+                            ADD_DOF_SAMPLE(ScreenProcessDofKernelLq[i], 1.0)
+                        }
+                    }
+                }
+                else if (highQuality > 0.5)
+                {
+                    int tapCount = (ScreenProcessDofKernelHqCount + sampleStride - 1) / sampleStride;
+                    float sampleWeightScale = (float)ScreenProcessDofKernelHqCount / tapCount;
+                    [loop]
+                    for (int tap = 0; tap < tapCount; tap++)
+                    {
+                        int i = tapCount <= 1 ? ScreenProcessDofKernelHqCount - 1 :
+                            (int)round(tap * (ScreenProcessDofKernelHqCount - 1.0) / (tapCount - 1));
+                        ADD_DOF_SAMPLE(ScreenProcessDofKernelHq[i], sampleWeightScale)
                     }
                 }
                 else
                 {
+                    int tapCount = (ScreenProcessDofKernelLqCount + sampleStride - 1) / sampleStride;
+                    float sampleWeightScale = (float)ScreenProcessDofKernelLqCount / tapCount;
                     [loop]
-                    for (int i = 0; i < ScreenProcessDofKernelLqCount; i++)
+                    for (int tap = 0; tap < tapCount; tap++)
                     {
-                        ADD_DOF_SAMPLE(ScreenProcessDofKernelLq[i])
+                        int i = tapCount <= 1 ? ScreenProcessDofKernelLqCount - 1 :
+                            (int)round(tap * (ScreenProcessDofKernelLqCount - 1.0) / (tapCount - 1));
+                        ADD_DOF_SAMPLE(ScreenProcessDofKernelLq[i], sampleWeightScale)
                     }
                 }
 

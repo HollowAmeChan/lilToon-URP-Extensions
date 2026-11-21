@@ -74,7 +74,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             var obj=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));obj.name=name;obj.layer=layer;obj.transform.position=new Vector3(0,0,z);obj.transform.localScale=new Vector3(size,size,1);
             var mat=Keep(new Material(Shader.Find("lilToon")));mat.EnableKeyword("UNITY_UI_ALPHACLIP");mat.SetFloat("_Cull",0);mat.SetFloat("_AsUnlit",1);mat.SetColor("_Color",Color.white);mat.SetTexture("_MainTex",Texture2D.whiteTexture);
-            mat.SetFloat("_Metallic",0);mat.SetFloat("_Reflectance",0);mat.SetFloat("_Smoothness",0);mat.SetFloat("_UseEmission",0);mat.SetFloat("_UseEmission2nd",0);obj.GetComponent<Renderer>().sharedMaterial=mat;return obj;
+            mat.SetFloat("_Metallic",0);mat.SetFloat("_Reflectance",0);mat.SetFloat("_Smoothness",0);mat.SetFloat("_UseEmission",0);obj.GetComponent<Renderer>().sharedMaterial=mat;return obj;
         }
         static void OnLog(string message,string stack,LogType type){if(type==LogType.Error||type==LogType.Exception||type==LogType.Assert)failure=message;}
         static void Render()

@@ -85,7 +85,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         private static void PrepareMaterial(Material material,Color color)
         {
             material.EnableKeyword("UNITY_UI_ALPHACLIP");material.SetFloat("_Cull",0);material.SetColor("_Color",color);material.SetTexture("_MainTex",Texture2D.whiteTexture);
-            material.SetFloat("_Metallic",0);material.SetFloat("_Reflectance",0);material.SetFloat("_Smoothness",.5f);material.SetFloat("_UseEmission",0);material.SetFloat("_UseEmission2nd",0);
+            material.SetFloat("_Metallic",0);material.SetFloat("_Reflectance",0);material.SetFloat("_Smoothness",.5f);material.SetFloat("_UseEmission",0);
         }
         private static void Tick()
         {

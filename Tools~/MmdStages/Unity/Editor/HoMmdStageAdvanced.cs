@@ -115,7 +115,7 @@ public static class HoMmdStageAdvanced
             float aoDark=spec!=null?spec.aoDarkStrength:(day?.75f:.85f);
             foreach(var m in modelRoot.GetComponentsInChildren<MeshRenderer>().Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct())
             {
-                F(m,"_UseRealtimeAO",1);F(m,"_AOStrength",1);F(m,"_AOLevel",aoLevel);
+                F(m,"_AOSource",3);F(m,"_AOStrength",1);F(m,"_AOLevel",aoLevel);
                 F(m,"_AOContrast",aoContrast);F(m,"_AODarkStrength",aoDark);
                 if(m.HasProperty("_AOColor"))m.SetColor("_AOColor",day?C(.13f,.16f,.2f):C(.06f,.07f,.14f));
                 EditorUtility.SetDirty(m);

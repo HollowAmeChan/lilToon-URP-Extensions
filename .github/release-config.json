@@ -1,0 +1,8 @@
+{
+  "repository": "HollowAmeChan/lilToon-URP-Extensions",
+  "packages": [
+    {
+      "path": "."
+    }
+  ]
+}

@@ -107,7 +107,7 @@ public static class HoMmdStageRemaining
         foreach(var m in meshes.Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct())
         {
             string n=Name(m);
-            F(m,"_UseRealtimeAO",1);F(m,"_AOStrength",1);F(m,"_AOLevel",spec?.aoLevel??.1f);
+            F(m,"_AOSource",3);F(m,"_AOStrength",1);F(m,"_AOLevel",spec?.aoLevel??.1f);
             F(m,"_AOContrast",spec?.aoContrast??1.6f);F(m,"_AODarkStrength",spec?.aoDarkStrength??.8f);
             if(m.HasProperty("_AOColor"))m.SetColor("_AOColor",day?C(.13f,.16f,.2f):C(.06f,.07f,.14f));
             F(m,"_ShadowReceive",1);F(m,"_ShadowStrength",spec?.shadowStrength??.95f);F(m,"_ShadowBlur",.2f);

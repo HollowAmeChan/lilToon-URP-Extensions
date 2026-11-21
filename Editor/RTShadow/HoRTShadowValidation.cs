@@ -65,7 +65,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
                 toon.SetFloat("_UseShadow",1);toon.SetFloat("_ShadowReceive",1);toon.SetFloat("_ShadowStrength",1);toon.SetFloat("_LightMinLimit",0);toon.SetColor("_ShadowColor",Color.black);
                 // Cast/ramp oracle has no AO producer. The material's default
                 // realtime AO otherwise samples a fallback grey and masks Cast.
-                if(!rawOnly||nprIntegration)toon.SetFloat("_UseRealtimeAO",0);
+                if(!rawOnly||nprIntegration)toon.SetFloat("_AOSource",0);
                 group=Keep(new GameObject("RTShadow generic receiver group")).AddComponent<HoObjectBufferGroup>();
                 group.parts=new List<HoObjectBufferPartEntry>{new(){name="body",renderers=new Object[]{body}},new(){name="detail",renderers=new Object[]{detail}}};group.Apply();
                 bodyId=HoObjectBufferRegistry.GetPartId(group.groupId,"body");detailId=HoObjectBufferRegistry.GetPartId(group.groupId,"detail");Check(bodyId!=0&&detailId!=0&&bodyId!=detailId,"Stable distinct receiver identities");

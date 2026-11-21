@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static int GetBokehZoomLineCount(SerializedProperty element)
         {
             bool target = Mathf.RoundToInt(element.FindPropertyRelative("parameters0").vector4Value.x) == 1;
-            return target ? 32 : 28; // Includes foldout, color, blend and the mask switch.
+            return target ? 33 : 29; // Includes the resolution selector.
         }
 
         private static Rect BokehZoomRow(Rect rect, ref float y)
@@ -48,16 +48,17 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 var offset = element.FindPropertyRelative("bokehZoomFocusOffset");
                 offset.floatValue = EditorGUI.FloatField(BokehZoomRow(rect, ref y), "跟焦偏移", offset.floatValue);
             }
-            p0.z = EditorGUI.Slider(BokehZoomRow(rect, ref y), "焦距", p0.z, 1.0f, 300.0f);
+            p0.z = EditorGUI.Slider(BokehZoomRow(rect, ref y), "焦距", p0.z, 1.0f, 180.0f);
             p0.w = EditorGUI.Slider(BokehZoomRow(rect, ref y), "光圈", p0.w, 1.0f, 32.0f);
-            p3.x = EditorGUI.Slider(BokehZoomRow(rect, ref y), "失焦响应", p3.x, 0.0f, 12.0f);
-            p3.y = EditorGUI.Slider(BokehZoomRow(rect, ref y), "前景作用", p3.y, 0.0f, 4.0f);
-            p3.z = EditorGUI.Slider(BokehZoomRow(rect, ref y), "远景作用", p3.z, 0.0f, 4.0f);
+            p3.x = EditorGUI.Slider(BokehZoomRow(rect, ref y), "失焦响应", p3.x, 0.0f, 8.0f);
+            p3.y = EditorGUI.Slider(BokehZoomRow(rect, ref y), "前景作用", p3.y, 0.0f, 2.0f);
+            p3.z = EditorGUI.Slider(BokehZoomRow(rect, ref y), "远景作用", p3.z, 0.0f, 2.0f);
             p3.w = EditorGUI.Slider(BokehZoomRow(rect, ref y), "失焦曲线", p3.w, 0.25f, 4.0f);
             p5.z = Mathf.Max(0.0f, EditorGUI.FloatField(BokehZoomRow(rect, ref y), "合焦范围（±米）", p5.z));
-            p1.x = EditorGUI.Slider(BokehZoomRow(rect, ref y), "变焦拉伸", p1.x, 0.0f, 1.0f);
+            p1.x = EditorGUI.Slider(BokehZoomRow(rect, ref y), "变焦拉伸", p1.x, 0.0f, 0.65f);
             p2.z = EditorGUI.Slider(BokehZoomRow(rect, ref y), "亮度衰减", p2.z, 0.0f, 4.0f);
             p2.w = EditorGUI.Popup(BokehZoomRow(rect, ref y), "质量", Mathf.Clamp(Mathf.RoundToInt(p2.w), 0, 2), BokehZoomQuality);
+            DrawBlurResolution(rect, ref y, element);
             p2.x = EditorGUI.Slider(BokehZoomRow(rect, ref y), "中心位置 X", p2.x, -1.0f, 1.0f);
             p2.y = EditorGUI.Slider(BokehZoomRow(rect, ref y), "中心位置 Y", p2.y, -1.0f, 1.0f);
             p1.y = EditorGUI.Slider(BokehZoomRow(rect, ref y), "亮部阈值", p1.y, 0.0f, 8.0f);
@@ -67,7 +68,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             p4.x = EditorGUI.IntSlider(BokehZoomRow(rect, ref y), "叶片数量", Mathf.RoundToInt(p4.x), 0, 12);
             p4.y = EditorGUI.Slider(BokehZoomRow(rect, ref y), "叶片曲率", p4.y, 0.0f, 1.0f);
             p4.z = EditorGUI.Slider(BokehZoomRow(rect, ref y), "叶片旋转", p4.z, -180.0f, 180.0f);
-            p4.w = EditorGUI.Slider(BokehZoomRow(rect, ref y), "色散", p4.w, 0.0f, 1.0f);
+            p4.w = EditorGUI.Slider(BokehZoomRow(rect, ref y), "色散", p4.w, 0.0f, 0.5f);
             p5.y = EditorGUI.Toggle(BokehZoomRow(rect, ref y), "只显示光斑层", p5.y > 0.5f) ? 1.0f : 0.0f;
             p0Property.vector4Value = p0; p1Property.vector4Value = p1; p2Property.vector4Value = p2;
             p3Property.vector4Value = p3; p4Property.vector4Value = p4; p5Property.vector4Value = p5;

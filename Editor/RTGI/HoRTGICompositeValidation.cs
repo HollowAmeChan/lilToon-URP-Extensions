@@ -69,7 +69,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 receiver=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));receiver.transform.localScale=new Vector3(2,2,1);
                 receiverMaterial=Mat("lilToon");receiverMaterial.EnableKeyword("UNITY_UI_ALPHACLIP");receiverMaterial.SetFloat("_Cull",0);receiverMaterial.SetFloat("_AsUnlit",1);
                 receiverMaterial.SetColor("_Color",new Color(.2f,.4f,.6f,1));receiverMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);receiverMaterial.SetFloat("_Reflectance",0);receiverMaterial.SetFloat("_Metallic",0);
-                receiverMaterial.SetFloat("_UseEmission",0);receiverMaterial.SetFloat("_UseEmission2nd",0);receiver.GetComponent<Renderer>().sharedMaterial=receiverMaterial;
+                receiverMaterial.SetFloat("_UseEmission",0);receiver.GetComponent<Renderer>().sharedMaterial=receiverMaterial;
                 Application.logMessageReceived+=OnLog;EditorApplication.update+=Tick;
             }
             catch(Exception error){Finish(error);}

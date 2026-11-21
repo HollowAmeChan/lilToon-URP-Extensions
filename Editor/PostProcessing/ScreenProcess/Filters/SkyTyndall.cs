@@ -7,9 +7,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private static readonly string[] SkyTyndallQualities =
         {
-            "低",
-            "中",
-            "高"
+            "低（12）",
+            "中（24）",
+            "高（40）"
         };
 
         private static readonly string[] SkyTyndallDitherModes =
@@ -24,7 +24,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty parameters4 = element.FindPropertyRelative("parameters4");
             Vector4 p4 = parameters4 != null ? parameters4.vector4Value : Vector4.zero;
             bool fixedDirection = p4.w > 0.5f;
-            return fixedDirection ? 19 : 20;
+            return fixedDirection ? 20 : 21;
         }
 
         private void DrawSkyTyndallProperties(Rect rect, ref float y, SerializedProperty element)
@@ -77,10 +77,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y += LineHeight + LineSpacing;
             p1.w = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "质量", Mathf.Clamp(Mathf.RoundToInt(p1.w), 0, SkyTyndallQualities.Length - 1), SkyTyndallQualities);
             y += LineHeight + LineSpacing;
+            DrawBlurResolution(rect, ref y, element);
 
-            p5.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "权重", p5.x, 0.001f, 0.15f);
+            p5.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "权重", p5.x, 0.001f, 0.1f);
             y += LineHeight + LineSpacing;
-            p5.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "采样模糊", p5.y, 0.0f, 3.0f);
+            p5.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "采样模糊", p5.y, 0.0f, 1.5f);
             y += LineHeight + LineSpacing;
             p5.z = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "抖动模式", Mathf.Clamp(Mathf.RoundToInt(p5.z), 0, SkyTyndallDitherModes.Length - 1), SkyTyndallDitherModes);
             y += LineHeight + LineSpacing;

@@ -13,7 +13,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "目标跟焦 Bokeh"
         };
 
-        private const float DepthOfFieldMaxRadiusLimit = 96.0f;
+        private const float DepthOfFieldMaxRadiusLimit = 48.0f;
 
         private static int GetDepthOfFieldLineCount(SerializedProperty element)
         {
@@ -21,11 +21,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             int mode = parameters0 != null ? Mathf.Clamp(Mathf.RoundToInt(parameters0.vector4Value.x), 0, DepthOfFieldModes.Length - 1) : 1;
             if (mode == 0)
             {
-                return 9; // Foldout + mask + seven Gaussian controls.
+                return 10; // Foldout + mask + Gaussian controls + resolution.
             }
 
             bool apertureBokeh = element.FindPropertyRelative("parameters4").vector4Value.x > 0.5f;
-            return (mode == 2 ? 19 : 15) + (apertureBokeh ? 10 : 1);
+            return (mode == 2 ? 19 : 15) + (apertureBokeh ? 10 : 1) + 1;
         }
 
         private static void DrawDepthOfFieldProperties(Rect rect, ref float y, SerializedProperty element)
@@ -127,19 +127,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     y += LineHeight + LineSpacing;
                 }
 
-                p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "焦距", p0.z, 1.0f, 300.0f);
+                p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "焦距", p0.z, 1.0f, 180.0f);
                 y += LineHeight + LineSpacing;
-                p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "光圈", p0.w, 1.0f, 32.0f);
+                p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "光圈", p0.w, 1.0f, 24.0f);
                 y += LineHeight + LineSpacing;
                 p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "最大半径", p1.z, 0.0f, DepthOfFieldMaxRadiusLimit);
                 y += LineHeight + LineSpacing;
                 p1.w = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "高质量采样", p1.w > 0.5f) ? 1.0f : 0.0f;
                 y += LineHeight + LineSpacing;
-                p3.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "景深强度", Mathf.Clamp(p3.x, 0.1f, 12.0f), 0.1f, 12.0f);
+                p3.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "景深强度", Mathf.Clamp(p3.x, 0.1f, 8.0f), 0.1f, 8.0f);
                 y += LineHeight + LineSpacing;
-                p3.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "前景虚化", Mathf.Clamp(p3.y, 0.1f, 4.0f), 0.1f, 4.0f);
+                p3.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "前景虚化", Mathf.Clamp(p3.y, 0.1f, 2.0f), 0.1f, 2.0f);
                 y += LineHeight + LineSpacing;
-                p3.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "远景虚化", Mathf.Clamp(p3.z, 0.1f, 4.0f), 0.1f, 4.0f);
+                p3.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "远景虚化", Mathf.Clamp(p3.z, 0.1f, 2.0f), 0.1f, 2.0f);
                 y += LineHeight + LineSpacing;
                 p3.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "虚化曲线", Mathf.Clamp(p3.w, 0.25f, 4.0f), 0.25f, 4.0f);
                 y += LineHeight + LineSpacing;
@@ -152,6 +152,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 DrawDepthOfFieldApertureBokeh(rect, ref y, element, ref p2);
             }
 
+            DrawBlurResolution(rect, ref y, element);
             parameters0.vector4Value = p0;
             parameters1.vector4Value = p1;
             parameters2.vector4Value = p2;

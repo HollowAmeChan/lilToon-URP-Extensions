@@ -31,6 +31,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
 
             float _Intensity;
             float _LayerBlendMode;
+            float _HoSPBlurSampleStride;
             float4 _LayerColor;
             float4 _LayerParams0; // x radius, y threshold, z soft knee, w exposure
             float4 _LayerParams1; // x center x, y center y, z decay, w quality
@@ -323,29 +324,57 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 float blurPixels = missingFilterDefaults ? 1.25 : max(_LayerParams5.y, 0.0);
                 int quality = clamp((int)round(_LayerParams1.w), 0, 2);
                 int sampleCount = quality == 0 ? 12 : (quality == 1 ? 24 : 40);
+                int sampleStride = clamp((int)round(_HoSPBlurSampleStride), 1, 4);
 
                 float2 direction = ResolveRayDirection(uv, center);
                 float2 pixel = floor(uv * _ScreenParams.xy);
                 float jitter = (ResolveDitherValue(pixel) - 0.5) * jitterAmount * ResolveJitterStrength();
-                float2 sampleUV = uv;
                 float2 deltaUV = ResolveRayStep(uv, center, direction, radius, sampleCount);
-                float illuminationDecay = 1.0;
                 float sum = 0.0;
                 float centerCoreFade = ResolveCenterCoreFade(uv, center);
 
-                [loop]
-                for (int i = 0; i < MaxSkyTyndallSamples; i++)
+                if (sampleStride == 1)
                 {
-                    if (i >= sampleCount)
+                    float2 sampleUV = uv;
+                    float illuminationDecay = 1.0;
+                    [loop]
+                    for (int i = 0; i < MaxSkyTyndallSamples; i++)
                     {
-                        break;
-                    }
+                        if (i >= sampleCount)
+                            break;
 
-                    sampleUV -= deltaUV * (i == 0 ? 0.5 : 1.0);
-                    float2 jitterUV = sampleUV - deltaUV * jitter;
-                    float signal = SampleFilteredSkySignal(jitterUV, direction, threshold, softKnee, exposure, alphaPower, blurPixels);
-                    sum += signal * illuminationDecay * sampleWeight;
-                    illuminationDecay *= decay;
+                        sampleUV -= deltaUV * (i == 0 ? 0.5 : 1.0);
+                        float2 jitterUV = sampleUV - deltaUV * jitter;
+                        float signal = SampleFilteredSkySignal(jitterUV, direction, threshold, softKnee, exposure, alphaPower, blurPixels);
+                        sum += signal * illuminationDecay * sampleWeight;
+                        illuminationDecay *= decay;
+                    }
+                }
+                else
+                {
+                    int tapCount = (sampleCount + sampleStride - 1) / sampleStride;
+                    float2 sampleUV = uv;
+                    float illuminationDecay = 1.0;
+                    float previousStepSize = 0.0;
+                    [loop]
+                    for (int tap = 0; tap < MaxSkyTyndallSamples; tap++)
+                    {
+                        if (tap >= tapCount)
+                            break;
+
+                        int sampleIndex = tap * sampleStride;
+                        float stepSize = min((float)sampleStride, sampleCount - sampleIndex);
+                        float centerOffset = tap == 0 ? stepSize * 0.5 : (previousStepSize + stepSize) * 0.5;
+                        sampleUV -= deltaUV * centerOffset;
+                        float2 jitterUV = sampleUV - deltaUV * jitter;
+                        float signal = SampleFilteredSkySignal(jitterUV, direction, threshold, softKnee, exposure, alphaPower, blurPixels);
+                        float blockWeight = abs(1.0 - decay) <= 0.0001
+                            ? stepSize
+                            : (1.0 - pow(decay, stepSize)) / (1.0 - decay);
+                        sum += signal * illuminationDecay * sampleWeight * blockWeight;
+                        illuminationDecay *= pow(decay, stepSize);
+                        previousStepSize = stepSize;
+                    }
                 }
 
                 return sum * skyGain * centerCoreFade * _LayerColor.rgb;

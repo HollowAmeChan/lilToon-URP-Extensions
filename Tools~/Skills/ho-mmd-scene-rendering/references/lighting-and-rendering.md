@@ -10,7 +10,7 @@
 | 局部体积光柱 | Point/Spot 的 HoVolumeLightSource、Atmosphere Region 密度/颜色、Volume Light Volume | 灯提供表面亮度，体积提供空气可见性，一起摆 |
 | 天空/窗外气氛 | 环境 skybox、天空球/HDR 材质、室外灯与天空曝光 | 天空壳按需从 RTGI 射线排除 |
 | 地板/水面倒影 | HoPlanarReflectionSurface 平面位置/法线，材质 PLR 开关/强度、smoothness、reflectance | 地板和水面可能不同高度，先定平面再调粗糙度 |
-| 间接光/环境响应 | Ho-RTGI Volume、RELAX、天空/灯光、材质金属度和光滑度 | 禁用 SSGI，GI 是否开启按效果需求决定 |
+| 间接光/环境响应 | 静帧按需使用 RTGI / RTDI、天空/灯光、材质金属度和光滑度 | SSGI 禁用。使用本 skill 搭建动画角色视频场景时不启用 RTGI/RTDI；已观察到 RTGI 逐帧闪烁亮点，角色动画的两种 RT GI 时域支持尚待改造。 |
 | 全图明暗、色调、辉光 | Ho ImageProcess 调色/色调映射/渐变/Glow/LensFlare/颗粒等图层 | 由弱到强调，观察亮部是否变大片死白；不另叠 URP 内置效果 |
 | 景深与主体焦点 | ScreenProcess Depth of Field，相机位置/FOV/焦点参数 | 不同镜头可有不同焦距，留意运动遮挡边缘 |
 | 分区/渐变/中心调色 | IP/SP 对应层的颜色、遮罩、混合模式、强度 | 允许艺术化处理，主体基础受光尽量由世界灯光承担 |

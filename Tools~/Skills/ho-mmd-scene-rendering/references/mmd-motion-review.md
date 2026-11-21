@@ -65,6 +65,8 @@ CLI 可用 `video-cli.py clone-performance --config <新动作配置>` 完成这
 
 当前迭代默认使用 `--quality draft --aspect portrait --fps 30`，实际输出 360×640；`preview` / `review` / `high` 对应短边 720 / 1080 / 2160。比例可选 `landscape`、`portrait`、`4:3`、`square`，帧率仅 30 / 60。`video-cli.py plan` 不进入 Unity，只打印本次尺寸；`presets` 列出组合。保留 `--width` 与 `--height` 成对提供的高级兼容接口。所有档位只改尺寸，不关闭作者的 RTGI、灯光、材质、Volume。
 
+**动画角色视频的当前 GI 限制：**花吐电気 WTD 角色片观察到 RTGI 会带来逐帧闪烁的亮点；RTGI 与 RTDI 的动画角色时域支持都待后续改造。使用本 skill 搭建或配置动画角色视频场景时，不启用 RTGI / RTDI；静态环境帧可按明确需求单独做 GI 开关对照。
+
 日常视频与单帧都按用途选质量档，并在开录前说明实际尺寸、比例和帧率；这不是只用于排错的一次性选项。验证阶段不再默认录制整段 2160p，不将当前 IK、表情或画质视作最终完成。
 
 多个动作 × 多个衣装直接共用现有动作 Scene，用一个 `render-video-batch.py` 清单逐项指定 `enableParts` / `disableParts`，录制时临时切换。每项 `name` 与输出路径都必须唯一（如 `EX-HAPPY_泳装`、`EX-HAPPY_巫女服`），避免错误复用同一份静音中间文件。只渲染不需要复制 Scene、重建适配或回写角色 Prefab。用户明确指定高质量时，现有 `high` 档为 2160×3840 竖屏；帧率独立指定，不能把升分辨率自动当成升到 60 fps。

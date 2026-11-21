@@ -21,6 +21,8 @@
 
 跟焦字段为 `bokehZoomFocusTarget` / `bokehZoomFocusTargetPath` / `bokehZoomFocusOffset`，与景深字段互不关联。变焦中心不随跟焦目标移动，并支持 Game View 中心/拉伸手柄。
 
+天空散射、光斑变焦和景深都提供 Full / Half / Quarter 采样密度。该设置只调节全分辨率采样 kernel 的 tap 间距，不创建低分辨率 RT，不改模糊半径、深度、描边 coverage、图层遮罩或合成分辨率。Full 保留原样本序列与结果；Half / Quarter 跨越相同完整支持域抽取更少样本，是明确的平滑度/性能取舍。DepthOfField 的光圈散景增强也使用该密度控制，但所有被选中的 tap 仍通过原有 CoC reach 检查。Inspector 限制新输入；运行时对所有采样密度均钳制旧 Profile 中超出上限的数值。
+
 使用 `ScreenProcessDepthInputs.hlsl` 的主体、描边视觉深度与 URP camera depth 回退。输出像素按本身失焦量控制作用；每个颜色双线性邻点再单独检查源深度，避免把合焦人物/描边拉进远景光斑。色散各通道也走同一检查。
 
 使用共享 SP/IP 混合表，默认相加；层遮罩与调试沿用 SP 行为，保留原图 alpha。缺失所有深度输入时保留原图。只显示光斑层时，有效深度中的合焦位置输出黑色。

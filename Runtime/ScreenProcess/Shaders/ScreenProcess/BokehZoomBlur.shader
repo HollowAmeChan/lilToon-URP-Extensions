@@ -29,6 +29,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/BokehZoomBlur"
             float4 _LayerParams3; // defocus gain, foreground multiplier, background multiplier, curve
             float4 _LayerParams4; // blade count, curvature, rotation degrees, chromatic dispersion
             float4 _LayerParams5; // bokeh gain, bokeh only, in-focus half range in metres, reserved
+            float _HoSPBlurSampleStride;
 
             float Defocus(float depth)
             {
@@ -110,20 +111,43 @@ Shader "Hidden/lilToon/URP/ScreenProcess/BokehZoomBlur"
                 float radius = saturate(_LayerParams1.x) * defocus * Aperture(direction * float2(aspect, 1.0));
                 int quality = clamp((int)round(_LayerParams2.w), 0, 2);
                 int count = quality == 0 ? 8 : (quality == 1 ? 16 : 32);
+                int stride = clamp((int)round(_HoSPBlurSampleStride), 1, 4);
                 float3 sum = 0.0;
                 float total = 0.0;
-                [loop]
-                for (int i = 0; i < 32; ++i)
+
+                if (stride == 1)
                 {
-                    if (i >= count) break;
-                    float t = ((float)i + 0.5) / count;
-                    float2 offset = direction * radius * t;
-                    float4 sampleColor = SampleChromatic(uv - offset, offset);
-                    if (sampleColor.a <= 0.0001) continue;
-                    float highlight = Highlight(sampleColor.rgb / sampleColor.a);
-                    float weight = pow(saturate(1.0 - t), max(_LayerParams2.z, 0.0)) * highlight;
-                    sum += sampleColor.rgb * max(_LayerParams1.w, 0.0) * weight;
-                    total += sampleColor.a * weight;
+                    [loop]
+                    for (int i = 0; i < 32; ++i)
+                    {
+                        if (i >= count) break;
+                        float t = ((float)i + 0.5) / count;
+                        float2 offset = direction * radius * t;
+                        float4 sampleColor = SampleChromatic(uv - offset, offset);
+                        if (sampleColor.a <= 0.0001) continue;
+                        float highlight = Highlight(sampleColor.rgb / sampleColor.a);
+                        float weight = pow(saturate(1.0 - t), max(_LayerParams2.z, 0.0)) * highlight;
+                        sum += sampleColor.rgb * max(_LayerParams1.w, 0.0) * weight;
+                        total += sampleColor.a * weight;
+                    }
+                }
+                else
+                {
+                    int tapCount = (count + stride - 1) / stride;
+                    [loop]
+                    for (int tap = 0; tap < 32; ++tap)
+                    {
+                        if (tap >= tapCount) break;
+                        int i = tapCount <= 1 ? count - 1 : (int)round(tap * (count - 1.0) / (tapCount - 1));
+                        float t = ((float)i + 0.5) / count;
+                        float2 offset = direction * radius * t;
+                        float4 sampleColor = SampleChromatic(uv - offset, offset);
+                        if (sampleColor.a <= 0.0001) continue;
+                        float highlight = Highlight(sampleColor.rgb / sampleColor.a);
+                        float weight = pow(saturate(1.0 - t), max(_LayerParams2.z, 0.0)) * highlight;
+                        sum += sampleColor.rgb * max(_LayerParams1.w, 0.0) * weight;
+                        total += sampleColor.a * weight;
+                    }
                 }
                 return total > 0.0001 ? sum / total * max(_LayerParams5.x, 0.0) * _LayerColor.rgb : 0.0;
             }

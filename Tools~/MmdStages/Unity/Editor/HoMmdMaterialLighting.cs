@@ -244,7 +244,7 @@ public static class HoMmdMaterialLighting
         "_HoRPShadowMode", "_HoAdditionalLightIntensity", "_HoAdditionalLightShadowStrength",
         "_LightMinLimit", "_LightMaxLimit", "_MonochromeLighting", "_ShadowEnvStrength",
         "_UseShadow", "_ShadowStrength", "_ShadowReceive", "_Shadow2ndReceive",
-        "_UseRealtimeAO", "_AOContrast", "_AODarkStrength"
+        "_AOSource", "_AOContrast", "_AODarkStrength"
     };
     static readonly HashSet<string> EditableInputs = new HashSet<string>(Inputs, StringComparer.Ordinal);
 
