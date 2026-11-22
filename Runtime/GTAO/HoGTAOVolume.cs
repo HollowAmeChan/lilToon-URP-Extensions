@@ -62,7 +62,7 @@ namespace lilToon.URP.Extensions.GTAO
 
         [Header("质量")]
 
-        [InspectorName("计算分辨率"), Tooltip("分辨率配置。当前渲染路径固定全分辨率，Half/Quarter 暂不改变实际计算尺寸。")]
+        [InspectorName("计算分辨率"), Tooltip("GTAO 追踪和去噪的计算分辨率。最终 AO 会放大到相机分辨率。")]
         public HoGTAOResolutionParameter resolution = new HoGTAOResolutionParameter(HoGTAOResolution.Full);
 
         [Header("追踪")]

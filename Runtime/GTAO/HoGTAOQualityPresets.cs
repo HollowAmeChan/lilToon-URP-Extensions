@@ -1,7 +1,7 @@
 namespace lilToon.URP.Extensions.GTAO
 {
     /// <summary>
-    /// 一次性填写 Volume 的密度/去噪参数，不改变 Override、半径或厚度。
+    /// 一次性填写 Volume 的分辨率、密度和去噪参数，不改变 Override、半径或厚度。
     /// 参考：LILTOON_HTRACE_GTAO_QUALITY_REFERENCE.md §8。
     /// </summary>
     public static class HoGTAOQualityPresets

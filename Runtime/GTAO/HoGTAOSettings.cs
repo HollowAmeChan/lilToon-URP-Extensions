@@ -19,9 +19,9 @@ namespace lilToon.URP.Extensions.GTAO
     {
         [InspectorName("Full"), Tooltip("全分辨率计算。质量最高，最贵。")]
         Full = 0,
-        [InspectorName("Half"), Tooltip("半分辨率配置。当前渲染路径仍固定全分辨率。")]
+        [InspectorName("Half"), Tooltip("半分辨率计算，并在输出前做双线性放大。")]
         Half = 1,
-        [InspectorName("Quarter"), Tooltip("四分之一分辨率配置。当前渲染路径仍固定全分辨率。")]
+        [InspectorName("Quarter"), Tooltip("四分之一分辨率计算，并在输出前做双线性放大。")]
         Quarter = 2,
     }
 

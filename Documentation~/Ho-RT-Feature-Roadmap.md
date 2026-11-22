@@ -77,7 +77,7 @@ HoShader 新材质若要让 RT lighting 参与 NPR response，应在其自有完
 | 项目 | 仓库当前事实 | 路线图处理 |
 | --- | --- | --- |
 | GTAO 输出 | `Ho-GTAO` 发布 `_HoAOTexture`，语义为 0..1 visibility，1 表示无遮挡；材质端不依赖算法名 | RTAO 沿用该消费者合同，不复制或改写 lilToon AO 逻辑 |
-| GTAO 计算分辨率 | `HoGTAOResolution` 有 Full/Half/Quarter 选项，但目前 RenderGraph 按 camera target 全分辨率分配和计算 | 先建立配对基线；实际低分辨率 GTAO 是必须的对照，而非仅看 Volume 选项 |
+| GTAO 计算分辨率 | `HoGTAOResolution` 控制追踪、历史和空间滤波的 Full/Half/Quarter 计算尺寸，发布前放大到相机分辨率 | 继续用同一场景对比低分辨率的误差和 GPU 时间 |
 | lilToon AO 用途 | 同一 `fd.aoVis` 同时推动 toon ramp 偏移，并在主光照着色后对 `fd.col.rgb` 作 AOColor/AODarkStrength 整体压暗；ShadowBorderMask 与 AO Mask 也参与组合 | 保持两个输出和现有材质参数；算法输出不得预乘艺术强度 |
 | RT 场景 | Ho-RT 按 Renderer/Camera 管理 domain、共享几何/蒙皮快照和 fence；view 可因 hit-material / 求交规则不同而分开 | 复用 host 与 pose cache，不预设每个消费者共用同一 AS |
 | RTGI 采样 | 当前每个有效主表面生成一条 cosine-hemisphere 次级方向，绕 `shadingNormalWS` 建基；A2 producer 位于 `BeforeRenderingOpaques`，ScreenProcess consumer 仍在透明前 | 有潜在同方向样本复用，但需解决 opaque 前 AO 时序、法线域与距离域匹配 |

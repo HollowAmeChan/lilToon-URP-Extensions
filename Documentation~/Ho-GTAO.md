@@ -27,21 +27,22 @@
 
 ### 3.1 算法与流水线
 
-`深度金字塔（4 级 R32，2×2 最近深度归约）→ Bitmask ray march（32-bin，按 log2(length(sampleOffset))-3 选 LOD）→ temporal（重投影 + 累积 + 校验）→ spatial（Disk / Box）→ 发布`。
+`深度金字塔（4 级 R32，2×2 最近深度归约）→ Bitmask ray march（32-bin，按 log2(length(sampleOffset))-3 选 LOD）→ temporal（可选，重投影 + 累积 + 校验）→ spatial（Disk / Box）→ 全分辨率发布`。
 
 - 只实现 **VisibilityBitmasks**（复用 HTrace 的 32-bin `UpdateBitmask`、线性厚度、距离衰减、平方步进、蓝噪声抖动、逐帧 slice rotation），**没有 HorizonSearch 连续 arc 分支**。
 - 逐片输出 `1 − countbits(mask)/26`。
 - temporal：4 tap 历史 + 深度/法线/previous-plane 校验 + sampleCount 累积 + rejection；对象 Motion Mask/Delta（GB 深度上生产）+ 相机 MV（复用 URP motion vector pass）。
 - spatial：**Disk**（半径随对比度自适应，边缘保护更好）或 **Box**（Poisson 偏移、可叠 pass，便宜稳定）——两者都是双边式。
-- 当前 AO 计算固定 **Full**；Half/Quarter 仅保留配置值，尚未接入降分辨率和几何引导上采样。
+- `temporalFrameCount = 0` 时跳过历史、历史深度和运动矢量路径，空间滤波直接消费当前帧追踪结果。
+- GTAO 的追踪、历史和空间滤波按 `Full / Half / Quarter` 分辨率执行，最终 `_HoAOTexture` 在发布前放大到相机分辨率。Half/Quarter 复用全分辨率 GeometryBuffer 和深度金字塔，避免重复绘制几何。
 
 ### 3.2 一次性填写预设（`HoGTAOQuality`）
 
 Volume Inspector 的 Low/Medium/High 按钮只填写以下六项具体参数，不修改任何 Override 勾选，也不修改半径、厚度或调试参数。用户手动启用所需 Override，填完后可自由调整。运行时没有质量档字段或自动套用预设的分支，只读取具体参数；不提供旧质量字段兼容或迁移。
 
-| 预设 | 算法 | 去噪 | 分辨率配置（实际均 Full） | Slice×Step |
+| 预设 | 算法 | 去噪 | 计算分辨率 | Slice×Step |
 | --- | --- | --- | --- | --- |
-| Low | Bitmask | 0 帧累积 + Box×1 | Quarter | 2×8 |
+| Low | Bitmask | 无时间累积 + Box×1 | Quarter | 2×8 |
 | Medium | Bitmask | 4 帧累积 + Box×2 | Half | 2×12 |
 | High | Bitmask | 12 帧累积 + Box×3 | Full | 4×32 |
 

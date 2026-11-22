@@ -89,7 +89,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
                 DrawParameter(resolution, "计算分辨率");
                 EditorGUILayout.Space(3.0f);
                 EditorGUILayout.HelpBox("预设只填写密度和去噪参数，不改 Override 勾选、半径或厚度。请手动勾选需要覆盖的参数，填入后可继续调整。", MessageType.None);
-                EditorGUILayout.HelpBox("当前 AO 计算固定为 Full；Half/Quarter 配置暂不改变实际计算分辨率。", MessageType.None);
+                EditorGUILayout.HelpBox("Half/Quarter 会降低 GTAO 追踪和去噪的计算分辨率，最终 AO 仍输出到相机分辨率。", MessageType.None);
             }
         }
 

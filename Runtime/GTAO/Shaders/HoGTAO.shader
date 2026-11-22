@@ -66,6 +66,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float _HoGTAOSpatialFilter;
         float _HoGTAOSpatialStep;
         float _HoGTAOPixelSpreadMultiplier;
+        float4 _HoGTAOScreenSize;
+        float4 _HoGTAOComputeSize;
+        float _HoGTAOSpatialUseGeometryNormal;
 
         static const float HoGTAOSliceRotations[6] = { 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 };
         static const float HoGTAONoiseOffsets[4] = { 0.0, 0.5, 0.25, 0.75 };
@@ -329,7 +332,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float3 viewDirection = normalize(-positionVS);
             positionVS *= lerp(0.996, 1.0, abs(dot(normalVS, viewDirection)));
 
-            float radiusScale = 2.0 / max(abs(_HoGTAOProjMatrix[0][0]), 1.0e-5) / max(_ScreenParams.x, 1.0);
+            float radiusScale = 2.0 / max(abs(_HoGTAOProjMatrix[0][0]), 1.0e-5) / max(_HoGTAOScreenSize.x, 1.0);
             float screenRadius = max(_HoGTAOWorldSpaceRadius / max(linearDepth * radiusScale, 1.0e-5), _HoGTAOScreenSpaceRadius);
             float worldRadius = max(screenRadius * linearDepth * radiusScale, 1.0e-4);
             float falloff = rcp(worldRadius);
@@ -339,9 +342,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // makes distant slices disproportionately camera-facing.
             float minStep = 1.3 / max(screenRadius, 1.0e-4);
             int frameIndex = (int)_HoGTAOFrameIndex;
-            float2 pixelCoord = floor(uv * _ScreenParams.xy);
+            float2 pixelCoord = floor(uv * _HoGTAOComputeSize.xy);
             float noiseX = HoGTAOInterleavedGradientNoise(pixelCoord, 0);
-            float noiseY = frac(HoGTAOInterleavedGradientNoise((_ScreenParams.xy - pixelCoord.yx), 6 - (frameIndex % 6))
+            float noiseY = frac(HoGTAOInterleavedGradientNoise((_HoGTAOComputeSize.xy - pixelCoord.yx), 6 - (frameIndex % 6))
                 + HoGTAONoiseOffsets[(frameIndex / 3) % 4]);
             float thickness = _HoGTAOUseLinearThickness > 0.5
                 ? max(_HoGTAOThickness * 0.1 * linearDepth, _HoGTAOThickness)
@@ -381,7 +384,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 for (int step = 0; step < steps; step++)
                 {
                     float stride = pow((step + noiseY) / steps, 2.0) + minStep;
-                    float2 offset = round(stride * samplingDirection) * rcp(_ScreenParams.xy);
+                    float2 offset = round(stride * samplingDirection) * _HoGTAOScreenSize.zw;
                     float3 samplePosition;
                     float3 sampleNormal;
                     // HTrace passes a fractional LOD; hard flooring here
@@ -693,7 +696,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         half4 OutputAO(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-            half ao = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
+            half ao = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord).r;
             half visibility = 1.0h - ao;
             return half4(visibility, visibility, visibility, 1.0h);
         }
@@ -711,11 +714,13 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 return half4(0.0h, 0.0h, 0.0h, 1.0h);
             }
 
-            float2 texel = rcp(_ScreenParams.xy) * max(_HoGTAOSpatialResolution, 1.0)
+            float2 texel = _HoGTAOComputeSize.zw * max(_HoGTAOSpatialResolution, 1.0)
                 * (_HoGTAOSpatialFilter > 0.5 ? max(_HoGTAOSpatialStep, 1.0) : max(_HoGTAOSpatialRadius, 0.5));
             // Spatial ping-pong stores AO amount in R and the filtered world
             // normal in GBA, matching HTrace's OcclusionNormal buffer.
-            float3 centerNormal = normalize((float3)centerAOData.gba * 2.0 - 1.0);
+            float3 centerNormal = _HoGTAOSpatialUseGeometryNormal > 0.5
+                ? normalize((float3)centerND.rgb * 2.0 - 1.0)
+                : normalize((float3)centerAOData.gba * 2.0 - 1.0);
             float centerDepth = LinearEyeDepth(centerRawDepth, _ZBufferParams);
             float3 centerPositionVS = HoGTAOViewPosition(uv, centerDepth);
             float3 centerNormalVS = normalize(mul((float3x3)_HoGTAOViewMatrix, centerNormal));
@@ -743,7 +748,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float sampleDepth = LinearEyeDepth(sampleRawDepth, _ZBufferParams);
                 float depthDelta = abs(sampleDepth - centerDepth) / max(centerDepth, 0.05);
                 half4 sampleAOData = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, sampleUV);
-                float3 sampleNormal = normalize((float3)sampleAOData.gba * 2.0 - 1.0);
+                float3 sampleNormal = _HoGTAOSpatialUseGeometryNormal > 0.5
+                    ? normalize((float3)sampleND.rgb * 2.0 - 1.0)
+                    : normalize((float3)sampleAOData.gba * 2.0 - 1.0);
                 float3 samplePositionVS = HoGTAOViewPosition(sampleUV, sampleDepth);
                 float planeDistance = abs(dot(samplePositionVS - centerPositionVS, centerNormalVS)) / max(centerDepth, 0.05);
                 float normalWeight = _HoGTAOSpatialFilter > 0.5
@@ -786,7 +793,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 half centerSelectedCoverage = HoGTAOGeometrySelectedCoverageAt(uv, centerND);
                 if (centerSelectedCoverage < centerCoverage - 0.001h)
                 {
-                    float2 oneTexel = rcp(_ScreenParams.xy);
+                    float2 oneTexel = _HoGTAOScreenSize.zw;
                     float backgroundOcclusion = 0.0;
                     float backgroundWeight = 0.0;
                     // Two rings. The second is walked only when the first found
