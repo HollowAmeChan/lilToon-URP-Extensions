@@ -32,15 +32,12 @@ namespace lilToon.URP.Extensions.Debugging
     public sealed class HoDebugPerformanceInfo
     {
         private readonly ProfilingSampler[] samplers;
-        private int previousGpuSamples;
-        private int previousCpuSamples;
-        private float previousGpuElapsed;
-        private float previousCpuElapsed;
         private float gpuMilliseconds;
         private float cpuMilliseconds;
         private bool hasGpuSample;
         private bool hasCpuSample;
-        private bool refreshedThisUpdate;
+        private bool refreshedGpuThisUpdate;
+        private bool refreshedCpuThisUpdate;
 
         public HoDebugPerformanceInfo(string featureName, string displayName, params string[] markerNames)
         {
@@ -75,7 +72,9 @@ namespace lilToon.URP.Extensions.Debugging
         public float CpuMilliseconds => cpuMilliseconds;
         public bool HasGpuSample => hasGpuSample;
         public bool HasCpuSample => hasCpuSample;
-        public bool RefreshedThisUpdate => refreshedThisUpdate;
+        public bool GpuRefreshedThisUpdate => refreshedGpuThisUpdate;
+        public bool CpuRefreshedThisUpdate => refreshedCpuThisUpdate;
+        public bool RefreshedThisUpdate => refreshedGpuThisUpdate || refreshedCpuThisUpdate;
 
         internal void SetRecordingEnabled(bool enabled)
         {
@@ -85,9 +84,10 @@ namespace lilToon.URP.Extensions.Debugging
             }
         }
 
-        internal bool Update(int frameDelta, double now)
+        internal bool Update()
         {
-            refreshedThisUpdate = false;
+            refreshedGpuThisUpdate = false;
+            refreshedCpuThisUpdate = false;
             int gpuSamples = 0;
             int cpuSamples = 0;
             float gpuElapsed = 0.0f;
@@ -101,40 +101,37 @@ namespace lilToon.URP.Extensions.Debugging
                 cpuElapsed += sampler.cpuElapsedTime;
             }
 
-            int gpuSampleDelta = gpuSamples - previousGpuSamples;
-            int cpuSampleDelta = cpuSamples - previousCpuSamples;
-            float gpuElapsedDelta = gpuElapsed - previousGpuElapsed;
-            float cpuElapsedDelta = cpuElapsed - previousCpuElapsed;
-            int windowFrames = Mathf.Max(1, frameDelta);
-            if (gpuSampleDelta > 0 && gpuElapsedDelta > 0.0f)
+            // Recorder timings are per-frame values, not cumulative counters. CPU reports the
+            // previous frame and GPU reports a frame with a backend-defined delay, so cache a
+            // valid frame directly instead of subtracting the previous readback.
+            if (gpuSamples > 0 || gpuElapsed > 0.0f)
             {
-                // Sum all declared markers, then normalize the recorder window to one frame.
-                gpuMilliseconds = gpuElapsedDelta / windowFrames;
+                gpuMilliseconds = Mathf.Max(0.0f, gpuElapsed);
                 hasGpuSample = true;
-                refreshedThisUpdate = true;
-            }
-            else if (gpuSamples < previousGpuSamples || gpuElapsed < previousGpuElapsed)
-            {
-                hasGpuSample = false;
+                refreshedGpuThisUpdate = true;
             }
 
-            if (cpuSampleDelta > 0 && cpuElapsedDelta >= 0.0f)
+            if (cpuSamples > 0 || cpuElapsed > 0.0f)
             {
-                cpuMilliseconds = cpuElapsedDelta / windowFrames;
+                cpuMilliseconds = Mathf.Max(0.0f, cpuElapsed);
                 hasCpuSample = true;
-                refreshedThisUpdate = true;
-            }
-            else if (cpuSamples < previousCpuSamples || cpuElapsed < previousCpuElapsed)
-            {
-                hasCpuSample = false;
+                refreshedCpuThisUpdate = true;
             }
 
-            previousGpuSamples = gpuSamples;
-            previousCpuSamples = cpuSamples;
-            previousGpuElapsed = gpuElapsed;
-            previousCpuElapsed = cpuElapsed;
-            return refreshedThisUpdate;
+            return refreshedGpuThisUpdate || refreshedCpuThisUpdate;
         }
+    }
+
+    public readonly struct HoDebugPerformanceSegment
+    {
+        public HoDebugPerformanceSegment(string text, Color color)
+        {
+            Text = text;
+            Color = color;
+        }
+
+        public readonly string Text;
+        public readonly Color Color;
     }
 
     public readonly struct HoDebugPerformanceLine
@@ -146,12 +143,15 @@ namespace lilToon.URP.Extensions.Debugging
 
         public HoDebugPerformanceLine(string text, Color color)
         {
-            Text = text;
-            Color = color;
+            Segments = new[] { new HoDebugPerformanceSegment(text, color) };
         }
 
-        public readonly string Text;
-        public readonly Color Color;
+        public HoDebugPerformanceLine(params HoDebugPerformanceSegment[] segments)
+        {
+            Segments = segments ?? Array.Empty<HoDebugPerformanceSegment>();
+        }
+
+        public readonly HoDebugPerformanceSegment[] Segments;
     }
 
     /// <summary>Central timing catalog. Feature debug declarations own the marker names.</summary>
@@ -225,7 +225,6 @@ namespace lilToon.URP.Extensions.Debugging
                 return;
             }
 
-            int frameDelta = updatedFrame < 0 ? 1 : Time.frameCount - updatedFrame;
             updatedFrame = Time.frameCount;
             float deltaTime = Time.unscaledDeltaTime;
             if (deltaTime > 0.0f)
@@ -238,7 +237,7 @@ namespace lilToon.URP.Extensions.Debugging
             double now = Time.realtimeSinceStartupAsDouble;
             for (int i = 0; i < Entries.Count; i++)
             {
-                if (Entries[i].Update(frameDelta, now))
+                if (Entries[i].Update())
                 {
                     lastRefreshTime = now;
                 }
@@ -272,10 +271,15 @@ namespace lilToon.URP.Extensions.Debugging
                     HoDebugPerformanceInfo entry = Entries[i];
                     string gpu = entry.HasGpuSample ? Format(entry.GpuMilliseconds, 2) + "MS" : "--";
                     string cpu = entry.HasCpuSample ? Format(entry.CpuMilliseconds, 2) + "MS" : "--";
-                    Color color = entry.RefreshedThisUpdate
-                        ? new Color(1.0f, 0.82f, 0.18f, 1.0f)
-                        : Color.white;
-                    lines.Add(new HoDebugPerformanceLine(entry.DisplayName + " G " + gpu + " C " + cpu, color));
+                    Color gpuColor = entry.GpuRefreshedThisUpdate && entry.HasGpuSample
+                        ? new Color(1.0f, 0.82f, 0.18f, 1.0f) : Color.white;
+                    Color cpuColor = entry.CpuRefreshedThisUpdate && entry.HasCpuSample
+                        ? new Color(1.0f, 0.82f, 0.18f, 1.0f) : Color.white;
+                    lines.Add(new HoDebugPerformanceLine(
+                        new HoDebugPerformanceSegment(entry.DisplayName + " G ", Color.white),
+                        new HoDebugPerformanceSegment(gpu, gpuColor),
+                        new HoDebugPerformanceSegment(" C ", Color.white),
+                        new HoDebugPerformanceSegment(cpu, cpuColor)));
                 }
             }
 

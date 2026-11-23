@@ -31,7 +31,17 @@ namespace lilToon.URP.Extensions.Debugging
             int maxLength = 0;
             for (int i = 0; i < lines.Count; i++)
             {
-                maxLength = Mathf.Max(maxLength, Mathf.Clamp((lines[i].Text ?? string.Empty).Length, 0, 40));
+                HoDebugPerformanceSegment[] segments = lines[i].Segments;
+                int lineLength = 0;
+                if (segments != null)
+                {
+                    for (int segmentIndex = 0; segmentIndex < segments.Length; segmentIndex++)
+                    {
+                        lineLength = Mathf.Min(40, lineLength + (segments[segmentIndex].Text ?? string.Empty).Length);
+                        if (lineLength == 40) break;
+                    }
+                }
+                maxLength = Mathf.Max(maxLength, lineLength);
             }
 
             int glyphScale = viewportWidth >= 640 && maxLength * 12 <= viewportWidth - 16 ? 2 : 1;
@@ -42,33 +52,50 @@ namespace lilToon.URP.Extensions.Debugging
             for (int lineIndex = 0; lineIndex < lines.Count; lineIndex++)
             {
                 HoDebugPerformanceLine lineData = lines[lineIndex];
-                string line = (lineData.Text ?? string.Empty).ToUpperInvariant();
-                int length = Mathf.Clamp(line.Length, 0, 40);
-                if (length == 0) continue;
-
-                Array.Clear(chars, 0, chars.Length);
-                for (int i = 0; i < length; i++)
-                {
-                    int chunk = i / 4;
-                    int component = i % 4;
-                    chars[chunk][component] = line[i];
-                }
-
-                int width = Mathf.Min(Mathf.Max(characterWidth, viewportWidth - 16), length * characterWidth);
                 int height = fontHeight;
-                int x = viewportX + 8;
                 int y = viewportY + viewportHeight - 8 - (lineIndex + 1) * lineHeight;
                 if (y < viewportY) break;
 
-                Properties.Clear();
-                Properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
-                Properties.SetVectorArray(TextChars, chars);
-                Properties.SetFloat(TextLength, length);
-                Properties.SetVector(TextCell, new Vector4(characterWidth, fontHeight, glyphScale, 0));
-                Properties.SetFloat(TextFlipY, flipY ? 1.0f : 0.0f);
-                Properties.SetColor(TextColor, lineData.Color);
-                cmd.SetViewport(new Rect(x, y, width, height));
-                cmd.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1, Properties);
+                HoDebugPerformanceSegment[] segments = lineData.Segments;
+                if (segments == null) continue;
+
+                int x = viewportX + 8;
+                int remaining = 40;
+                int viewportRight = viewportX + viewportWidth - 8;
+                for (int segmentIndex = 0; segmentIndex < segments.Length && remaining > 0; segmentIndex++)
+                {
+                    HoDebugPerformanceSegment segment = segments[segmentIndex];
+                    string text = (segment.Text ?? string.Empty).ToUpperInvariant();
+                    int length = Mathf.Min(text.Length, remaining);
+                    if (length == 0) continue;
+                    if (x >= viewportRight) break;
+
+                    int visibleLength = Mathf.Min(length, Mathf.Max(0, (viewportRight - x) / characterWidth));
+                    if (visibleLength == 0) break;
+
+                    Array.Clear(chars, 0, chars.Length);
+                    for (int i = 0; i < visibleLength; i++)
+                    {
+                        int chunk = i / 4;
+                        int component = i % 4;
+                        chars[chunk][component] = text[i];
+                    }
+
+                    int width = visibleLength * characterWidth;
+                    Properties.Clear();
+                    Properties.SetVector(BlitScaleBias, new Vector4(1, 1, 0, 0));
+                    Properties.SetVectorArray(TextChars, chars);
+                    Properties.SetFloat(TextLength, visibleLength);
+                    Properties.SetVector(TextCell, new Vector4(characterWidth, fontHeight, glyphScale, 0));
+                    Properties.SetFloat(TextFlipY, flipY ? 1.0f : 0.0f);
+                    Properties.SetColor(TextColor, segment.Color);
+                    cmd.SetViewport(new Rect(x, y, width, height));
+                    cmd.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1, Properties);
+
+                    x += width;
+                    remaining -= visibleLength;
+                    if (visibleLength < length) break;
+                }
             }
 
             cmd.SetViewport(targetViewport);
