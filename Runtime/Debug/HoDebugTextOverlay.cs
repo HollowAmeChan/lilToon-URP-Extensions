@@ -12,11 +12,13 @@ namespace lilToon.URP.Extensions.Debugging
         private static readonly int TextChars = Shader.PropertyToID("_HoDebugTextChars");
         private static readonly int TextLength = Shader.PropertyToID("_HoDebugTextLength");
         private static readonly int TextCell = Shader.PropertyToID("_HoDebugTextCell");
+        private static readonly int TextFlipY = Shader.PropertyToID("_HoDebugTextFlipY");
         private static readonly int TextColor = Shader.PropertyToID("_HoDebugTextColor");
         private static readonly MaterialPropertyBlock Properties = new MaterialPropertyBlock();
         private static Material material;
 
-        public static void DrawLines(RasterCommandBuffer cmd, IReadOnlyList<string> lines, Vector2Int size, Rect? viewport = null)
+        public static void DrawLines(RasterCommandBuffer cmd, IReadOnlyList<string> lines, Vector2Int size,
+            Rect? viewport = null, bool flipY = false)
         {
             EnsureMaterial();
             if (material == null || lines == null) return;
@@ -62,6 +64,7 @@ namespace lilToon.URP.Extensions.Debugging
                 Properties.SetVectorArray(TextChars, chars);
                 Properties.SetFloat(TextLength, length);
                 Properties.SetVector(TextCell, new Vector4(characterWidth, fontHeight, glyphScale, 0));
+                Properties.SetFloat(TextFlipY, flipY ? 1.0f : 0.0f);
                 Properties.SetColor(TextColor, new Color(0.96f, 0.96f, 0.90f, 0.96f));
                 cmd.SetViewport(new Rect(x, y, width, height));
                 cmd.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1, Properties);

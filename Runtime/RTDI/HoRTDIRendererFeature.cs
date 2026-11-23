@@ -41,8 +41,8 @@ namespace lilToon.URP.Extensions.RTDI
         internal HoRTDIContext LastContext {get;private set;}
         internal HoRTDIContext ContextForCamera(Camera camera)=>camera!=null&&contexts.TryGetValue(camera,out var context)?context:null;
         internal HoRTView SceneViewForCamera(Camera camera)=>camera!=null&&sceneViews.TryGetValue(camera,out var view)?view:default;
-        internal static readonly ProfilingSampler FinalVisibilityProfiling=new("HoRTDI Final Visibility");
-        internal static readonly ProfilingSampler VisibilityGradientsProfiling=new("HoRTDI Visibility Gradients");
+        internal static readonly ProfilingSampler FinalVisibilityProfiling=lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("HoRTDI Final Visibility");
+        internal static readonly ProfilingSampler VisibilityGradientsProfiling=lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("HoRTDI Visibility Gradients");
         public override void Create()
         {
             DisposeResources();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();

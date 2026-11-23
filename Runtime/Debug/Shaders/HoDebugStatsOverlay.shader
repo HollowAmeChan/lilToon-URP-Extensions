@@ -19,6 +19,7 @@ Shader "Hidden/lilToon/URP/Debug/StatsOverlay"
             float4 _HoDebugTextChars[12];
             float _HoDebugTextLength;
             float4 _HoDebugTextCell;
+            float _HoDebugTextFlipY;
             float4 _HoDebugTextColor;
 
             uint TextChar(int index)
@@ -87,7 +88,9 @@ Shader "Hidden/lilToon/URP/Debug/StatsOverlay"
                 float cellWidth = max(_HoDebugTextCell.x, 6.0);
                 float fontHeight = max(_HoDebugTextCell.y, 7.0);
                 float glyphScale = max(_HoDebugTextCell.z, 1.0);
-                float2 pixel = input.texcoord * float2(max(_HoDebugTextLength, 1.0) * cellWidth, fontHeight);
+                float2 uv = input.texcoord;
+                if (_HoDebugTextFlipY > 0.5) uv.y = 1.0 - uv.y;
+                float2 pixel = uv * float2(max(_HoDebugTextLength, 1.0) * cellWidth, fontHeight);
                 int charIndex = (int)floor(pixel.x / cellWidth);
                 int col = (int)floor(fmod(pixel.x, cellWidth) / glyphScale);
                 int row = 6 - (int)floor(pixel.y / glyphScale);
