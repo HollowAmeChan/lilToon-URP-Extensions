@@ -40,6 +40,7 @@ namespace lilToon.URP.Extensions.Debugging
         private float cpuMilliseconds;
         private bool hasGpuSample;
         private bool hasCpuSample;
+        private bool refreshedThisUpdate;
 
         public HoDebugPerformanceInfo(string featureName, string displayName, params string[] markerNames)
         {
@@ -74,6 +75,7 @@ namespace lilToon.URP.Extensions.Debugging
         public float CpuMilliseconds => cpuMilliseconds;
         public bool HasGpuSample => hasGpuSample;
         public bool HasCpuSample => hasCpuSample;
+        public bool RefreshedThisUpdate => refreshedThisUpdate;
 
         internal void SetRecordingEnabled(bool enabled)
         {
@@ -83,8 +85,9 @@ namespace lilToon.URP.Extensions.Debugging
             }
         }
 
-        internal void Update(int frameDelta)
+        internal bool Update(int frameDelta, double now)
         {
+            refreshedThisUpdate = false;
             int gpuSamples = 0;
             int cpuSamples = 0;
             float gpuElapsed = 0.0f;
@@ -108,6 +111,7 @@ namespace lilToon.URP.Extensions.Debugging
                 // Sum all declared markers, then normalize the recorder window to one frame.
                 gpuMilliseconds = gpuElapsedDelta / windowFrames;
                 hasGpuSample = true;
+                refreshedThisUpdate = true;
             }
             else if (gpuSamples < previousGpuSamples || gpuElapsed < previousGpuElapsed)
             {
@@ -118,6 +122,7 @@ namespace lilToon.URP.Extensions.Debugging
             {
                 cpuMilliseconds = cpuElapsedDelta / windowFrames;
                 hasCpuSample = true;
+                refreshedThisUpdate = true;
             }
             else if (cpuSamples < previousCpuSamples || cpuElapsed < previousCpuElapsed)
             {
@@ -128,17 +133,25 @@ namespace lilToon.URP.Extensions.Debugging
             previousCpuSamples = cpuSamples;
             previousGpuElapsed = gpuElapsed;
             previousCpuElapsed = cpuElapsed;
+            return refreshedThisUpdate;
         }
     }
 
     public readonly struct HoDebugPerformanceLine
     {
         public HoDebugPerformanceLine(string text)
+            : this(text, Color.white)
+        {
+        }
+
+        public HoDebugPerformanceLine(string text, Color color)
         {
             Text = text;
+            Color = color;
         }
 
         public readonly string Text;
+        public readonly Color Color;
     }
 
     /// <summary>Central timing catalog. Feature debug declarations own the marker names.</summary>
@@ -152,6 +165,7 @@ namespace lilToon.URP.Extensions.Debugging
         private static int updatedFrame = -1;
         private static float smoothedDeltaTime;
         private static bool hasFrameTiming;
+        private static double lastRefreshTime = -1.0;
 
         public static IReadOnlyList<HoDebugPerformanceInfo> All => Entries;
 
@@ -221,9 +235,13 @@ namespace lilToon.URP.Extensions.Debugging
                     : Mathf.Lerp(smoothedDeltaTime, deltaTime, 0.1f);
                 hasFrameTiming = true;
             }
+            double now = Time.realtimeSinceStartupAsDouble;
             for (int i = 0; i < Entries.Count; i++)
             {
-                Entries[i].Update(frameDelta);
+                if (Entries[i].Update(frameDelta, now))
+                {
+                    lastRefreshTime = now;
+                }
             }
         }
 
@@ -245,12 +263,19 @@ namespace lilToon.URP.Extensions.Debugging
             if (showFeatures)
             {
                 lines.Add(new HoDebugPerformanceLine("HO FEATURES " + Entries.Count));
+                string last = lastRefreshTime >= 0.0
+                    ? Format((float)Math.Max(0.0, Time.realtimeSinceStartupAsDouble - lastRefreshTime), 2) + "S"
+                    : "--";
+                lines.Add(new HoDebugPerformanceLine("LAST " + last));
                 for (int i = 0; i < Entries.Count; i++)
                 {
                     HoDebugPerformanceInfo entry = Entries[i];
                     string gpu = entry.HasGpuSample ? Format(entry.GpuMilliseconds, 2) + "MS" : "--";
                     string cpu = entry.HasCpuSample ? Format(entry.CpuMilliseconds, 2) + "MS" : "--";
-                    lines.Add(new HoDebugPerformanceLine(entry.DisplayName + " G " + gpu + " C " + cpu));
+                    Color color = entry.RefreshedThisUpdate
+                        ? new Color(1.0f, 0.82f, 0.18f, 1.0f)
+                        : Color.white;
+                    lines.Add(new HoDebugPerformanceLine(entry.DisplayName + " G " + gpu + " C " + cpu, color));
                 }
             }
 

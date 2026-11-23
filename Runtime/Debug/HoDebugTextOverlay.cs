@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Debugging
         private static readonly MaterialPropertyBlock Properties = new MaterialPropertyBlock();
         private static Material material;
 
-        public static void DrawLines(RasterCommandBuffer cmd, IReadOnlyList<string> lines, Vector2Int size,
+        public static void DrawLines(RasterCommandBuffer cmd, IReadOnlyList<HoDebugPerformanceLine> lines, Vector2Int size,
             Rect? viewport = null, bool flipY = false)
         {
             EnsureMaterial();
@@ -31,7 +31,7 @@ namespace lilToon.URP.Extensions.Debugging
             int maxLength = 0;
             for (int i = 0; i < lines.Count; i++)
             {
-                maxLength = Mathf.Max(maxLength, Mathf.Clamp((lines[i] ?? string.Empty).Length, 0, 40));
+                maxLength = Mathf.Max(maxLength, Mathf.Clamp((lines[i].Text ?? string.Empty).Length, 0, 40));
             }
 
             int glyphScale = viewportWidth >= 640 && maxLength * 12 <= viewportWidth - 16 ? 2 : 1;
@@ -41,7 +41,8 @@ namespace lilToon.URP.Extensions.Debugging
             Vector4[] chars = new Vector4[12];
             for (int lineIndex = 0; lineIndex < lines.Count; lineIndex++)
             {
-                string line = (lines[lineIndex] ?? string.Empty).ToUpperInvariant();
+                HoDebugPerformanceLine lineData = lines[lineIndex];
+                string line = (lineData.Text ?? string.Empty).ToUpperInvariant();
                 int length = Mathf.Clamp(line.Length, 0, 40);
                 if (length == 0) continue;
 
@@ -65,7 +66,7 @@ namespace lilToon.URP.Extensions.Debugging
                 Properties.SetFloat(TextLength, length);
                 Properties.SetVector(TextCell, new Vector4(characterWidth, fontHeight, glyphScale, 0));
                 Properties.SetFloat(TextFlipY, flipY ? 1.0f : 0.0f);
-                Properties.SetColor(TextColor, new Color(0.96f, 0.96f, 0.90f, 0.96f));
+                Properties.SetColor(TextColor, lineData.Color);
                 cmd.SetViewport(new Rect(x, y, width, height));
                 cmd.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1, Properties);
             }

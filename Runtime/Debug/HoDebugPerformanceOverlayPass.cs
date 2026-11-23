@@ -16,7 +16,7 @@ namespace lilToon.URP.Extensions.Debugging
             public Vector2Int size;
             public Rect viewport;
             public bool flipY;
-            public string[] lines;
+            public HoDebugPerformanceLine[] lines;
         }
 
         private IReadOnlyList<HoDebugPerformanceLine> lines;
@@ -94,10 +94,10 @@ namespace lilToon.URP.Extensions.Debugging
             CommandBufferPool.Release(cmd);
         }
 
-        private static string[] CopyLines(IReadOnlyList<HoDebugPerformanceLine> values)
+        private static HoDebugPerformanceLine[] CopyLines(IReadOnlyList<HoDebugPerformanceLine> values)
         {
-            string[] result = new string[values.Count];
-            for (int i = 0; i < values.Count; i++) result[i] = values[i].Text;
+            HoDebugPerformanceLine[] result = new HoDebugPerformanceLine[values.Count];
+            for (int i = 0; i < values.Count; i++) result[i] = values[i];
             return result;
         }
     }
