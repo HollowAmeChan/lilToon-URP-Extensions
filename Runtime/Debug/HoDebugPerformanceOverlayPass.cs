@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.Debugging
             public TextureHandle target;
             public Vector2Int size;
             public Rect viewport;
-            public bool flipY;
+            public UniversalCameraData cameraData;
             public string[] lines;
         }
 
@@ -52,7 +52,7 @@ namespace lilToon.URP.Extensions.Debugging
                 data.target = resources.activeColorTexture;
                 data.size = new Vector2Int(width, height);
                 data.viewport = cameraData.camera.pixelRect;
-                data.flipY = cameraData.IsHandleYFlipped(resources.activeColorTexture);
+                data.cameraData = cameraData;
                 if (data.viewport.width <= 0.0f || data.viewport.height <= 0.0f)
                 {
                     data.viewport = new Rect(0, 0, width, height);
@@ -62,7 +62,8 @@ namespace lilToon.URP.Extensions.Debugging
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
-                    HoDebugTextOverlay.DrawLines(context.cmd, passData.lines, passData.size, passData.viewport, passData.flipY);
+                    bool flipY = passData.cameraData.IsHandleYFlipped(passData.target);
+                    HoDebugTextOverlay.DrawLines(context.cmd, passData.lines, passData.size, passData.viewport, flipY);
                 });
             }
         }

@@ -16,7 +16,9 @@ namespace lilToon.URP.Extensions.Debugging
         [SerializeField] private bool enabled = true;
         [SerializeField] private bool enabledForGameView = true;
         [SerializeField] private bool enabledForSceneView = true;
+#pragma warning disable 0414
         [SerializeField, HideInInspector] private string selectedDebugViewId = NoneViewId;
+#pragma warning restore 0414
         [SerializeField] private HoDebugTilePerformanceMode performanceMode = HoDebugTilePerformanceMode.Off;
         private HoDebugPerformanceOverlayPass performancePass;
 
