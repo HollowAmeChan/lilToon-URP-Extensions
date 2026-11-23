@@ -11,39 +11,39 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     {
 
         /// <summary>只画参数行：标题、启用开关、折叠状态由 Volume 编辑器（效果浏览器）负责。</summary>
-        public static void DrawEffects(SerializedProperty effects)
+        public static void DrawEffects(SerializedProperty effects, HoCharacterEffectLayout layout)
         {
-            DrawProperty(Find(effects, "enhancedOutlineSourceChannel"), "来源通道");
-            DrawProperty(Find(effects, "enhancedOutlineStrength"), "雾气强度");
-            DrawProperty(Find(effects, "enhancedOutlineRadiusPixels"), "外扩半径像素");
-            DrawFogProperties(effects);
-            DrawHeightFadeProperties(effects);
+            layout.Property(Find(effects, "enhancedOutlineSourceChannel"), "来源通道");
+            layout.Property(Find(effects, "enhancedOutlineStrength"), "雾气强度");
+            layout.Property(Find(effects, "enhancedOutlineRadiusPixels"), "外扩半径像素");
+            DrawFogProperties(effects, layout);
+            DrawHeightFadeProperties(effects, layout);
         }
 
         private static void DrawFogProperties(
-            SerializedProperty effects)
+            SerializedProperty effects, HoCharacterEffectLayout layout)
         {
-            DrawProperty(Find(effects, "enhancedOutlineFogColor"), "雾气颜色");
-            DrawProperty(Find(effects, "enhancedOutlineFogHueShiftDegrees"), "雾气色相偏移");
-            DrawProperty(Find(effects, "enhancedOutlineFogSaturation"), "雾气饱和度");
-            DrawProperty(Find(effects, "enhancedOutlineFogValue"), "雾气亮度");
-            DrawProperty(Find(effects, "enhancedOutlineFogSoftness"), "雾气柔化");
+            layout.Property(Find(effects, "enhancedOutlineFogColor"), "雾气颜色");
+            layout.Property(Find(effects, "enhancedOutlineFogHueShiftDegrees"), "雾气色相偏移");
+            layout.Property(Find(effects, "enhancedOutlineFogSaturation"), "雾气饱和度");
+            layout.Property(Find(effects, "enhancedOutlineFogValue"), "雾气亮度");
+            layout.Property(Find(effects, "enhancedOutlineFogSoftness"), "雾气柔化");
         }
 
         private static void DrawHeightFadeProperties(
-            SerializedProperty effects)
+            SerializedProperty effects, HoCharacterEffectLayout layout)
         {
-            DrawProperty(Find(effects, "enhancedOutlineHeightFadeMode"), "高度渐隐");
+            layout.Property(Find(effects, "enhancedOutlineHeightFadeMode"), "高度渐隐");
             if (GetHeightFadeMode(Find(effects, "enhancedOutlineHeightFadeMode")) == HoCharacterSubjectOutlineHeightFadeMode.Off)
             {
                 return;
             }
 
-            DrawProperty(Find(effects, "enhancedOutlineHeightFadeGroundY"), "地面高度");
-            DrawProperty(Find(effects, "outlineHeightFadeReferenceDistance"), "渐隐参考距离（共用）");
-            DrawProperty(Find(effects, "enhancedOutlineHeightFadeStart"), "渐隐开始距离");
-            DrawProperty(Find(effects, "enhancedOutlineHeightFadeEnd"), "渐隐结束距离");
-            DrawProperty(Find(effects, "enhancedOutlineHeightFadeHardness"), "渐隐硬度");
+            layout.Property(Find(effects, "enhancedOutlineHeightFadeGroundY"), "地面高度");
+            layout.Property(Find(effects, "outlineHeightFadeReferenceDistance"), "渐隐参考距离（共用）");
+            layout.Property(Find(effects, "enhancedOutlineHeightFadeStart"), "渐隐开始距离");
+            layout.Property(Find(effects, "enhancedOutlineHeightFadeEnd"), "渐隐结束距离");
+            layout.Property(Find(effects, "enhancedOutlineHeightFadeHardness"), "渐隐硬度");
         }
 
         private static HoCharacterSubjectOutlineHeightFadeMode GetHeightFadeMode(SerializedProperty property)
@@ -62,12 +62,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             return settingsProperty?.FindPropertyRelative(relativeName);
         }
 
-        private static void DrawProperty(SerializedProperty property, string label)
-        {
-            if (property != null)
-            {
-                EditorGUILayout.PropertyField(property, new GUIContent(label));
-            }
-        }
+
     }
 }

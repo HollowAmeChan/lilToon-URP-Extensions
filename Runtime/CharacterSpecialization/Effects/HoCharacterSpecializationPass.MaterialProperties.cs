@@ -70,6 +70,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 enhancedOutlineHeightFadeParams,
                 enhancedOutlineOptions,
                 options);
+            ApplyCompositionOrder(material, settings != null ? settings.compositionOrderFirst : HoCharacterCompositionOrder.DefaultFirst,
+                settings != null ? settings.compositionOrderLast : HoCharacterCompositionOrder.DefaultLast);
+        }
+
+        private static void ApplyCompositionOrder(Material material, Vector4 first, Vector4 last)
+        {
+            material.SetVector(HoCharacterSpecializationShaderConstants.CompositionOrderFirstId, first);
+            material.SetVector(HoCharacterSpecializationShaderConstants.CompositionOrderLastId, last);
         }
 
         private static void ApplyMaterialProperties(

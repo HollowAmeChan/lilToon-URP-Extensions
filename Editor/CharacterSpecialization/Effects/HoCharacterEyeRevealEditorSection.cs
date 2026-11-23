@@ -10,20 +10,20 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     {
 
         /// <summary>只画参数行：标题、启用开关、折叠状态由 Volume 编辑器（效果浏览器）负责。</summary>
-        public static void DrawEffects(SerializedProperty effects)
+        public static void DrawEffects(SerializedProperty effects, HoCharacterEffectLayout layout)
         {
-            DrawProperty(Find(effects, "eyeRevealStrength"), "透过强度");
-            DrawProperty(Find(effects, "eyeRevealFeatherPixels"), "羽化像素");
-            DrawProperty(Find(effects, "eyeRevealDilationPixels"), "扩张像素");
-            DrawProperty(Find(effects, "eyeRevealDepthBias"), "深度偏移");
-            DrawProperty(Find(effects, "useEyeRevealArea"), "使用眼透区域");
-            DrawProperty(Find(effects, "sameCharacterOnly"), "仅同角色");
-            EditorGUILayout.Space(4.0f);
-            DrawProperty(Find(effects, "eyeRevealAngleEnabled"), "启用相机角度修正");
-            DrawProperty(Find(effects, "eyeRevealAngleStrength"), "角度修正强度");
-            DrawProperty(Find(effects, "eyeRevealAngleYawRangeDegrees"), "平转半角范围");
-            DrawProperty(Find(effects, "eyeRevealAnglePitchRangeDegrees"), "俯仰半角范围");
-            DrawProperty(Find(effects, "eyeRevealAngleSoftnessDegrees"), "角度柔化");
+            layout.Property(Find(effects, "eyeRevealStrength"), "透过强度");
+            layout.Property(Find(effects, "eyeRevealFeatherPixels"), "羽化像素");
+            layout.Property(Find(effects, "eyeRevealDilationPixels"), "扩张像素");
+            layout.Property(Find(effects, "eyeRevealDepthBias"), "深度偏移");
+            layout.Property(Find(effects, "useEyeRevealArea"), "使用眼透区域");
+            layout.Property(Find(effects, "sameCharacterOnly"), "仅同角色");
+            layout.Space(4.0f);
+            layout.Property(Find(effects, "eyeRevealAngleEnabled"), "启用相机角度修正");
+            layout.Property(Find(effects, "eyeRevealAngleStrength"), "角度修正强度");
+            layout.Property(Find(effects, "eyeRevealAngleYawRangeDegrees"), "平转半角范围");
+            layout.Property(Find(effects, "eyeRevealAnglePitchRangeDegrees"), "俯仰半角范围");
+            layout.Property(Find(effects, "eyeRevealAngleSoftnessDegrees"), "角度柔化");
         }
 
         private static SerializedProperty Find(SerializedProperty settingsProperty, string relativeName)
@@ -31,12 +31,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             return settingsProperty?.FindPropertyRelative(relativeName);
         }
 
-        private static void DrawProperty(SerializedProperty property, string label)
-        {
-            if (property != null)
-            {
-                EditorGUILayout.PropertyField(property, new GUIContent(label));
-            }
-        }
+
     }
 }

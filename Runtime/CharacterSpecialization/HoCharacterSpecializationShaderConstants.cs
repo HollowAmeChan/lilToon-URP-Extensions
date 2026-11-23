@@ -82,6 +82,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int SubjectOutlineSourceParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineSourceParams");
         public static readonly int SubjectOutlineBlurParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineBlurParams");
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
+        public static readonly int CompositionOrderFirstId = Shader.PropertyToID("_HoCharacterCompositionOrderFirst");
+        public static readonly int CompositionOrderLastId = Shader.PropertyToID("_HoCharacterCompositionOrderLast");
         public static readonly int EyeAngleParamsId = Shader.PropertyToID("_HoCharacterEyeAngleParams");
         public static readonly int ObjectSemanticLowTextureId = Shader.PropertyToID(ObjectSemanticLowTextureName);
         public static readonly int ObjectSemanticHighTextureId = Shader.PropertyToID(ObjectSemanticHighTextureName);

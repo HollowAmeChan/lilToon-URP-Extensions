@@ -51,6 +51,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float4 _HoCharacterOutlineHeightPlane0; // xy UV slopes, z world Y at UV origin
             float4 _HoCharacterOutlineHeightPlane1;
             float4 _HoCharacterOptions; // x eye enabled, y shadow enabled, z same character only, w debug mode
+            #include "HoCharacterComposition.hlsl"
 
             float4 _lilHoCharacterScreenTexelSize; // xy = 1/宽高（语义平面 / 眼捕获 / 几何都是同一个渲染分辨率）
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
@@ -299,24 +300,6 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float invRange = max(_HoCharacterFaceHairDiffuseLevels.z, 0.0001);
                 float mask = saturate((value - blackPoint) * invRange);
                 return mask * mask * (3.0 - 2.0 * mask);
-            }
-
-            half3 BlendFaceHairDiffuse(half3 source, half3 tint, float amount)
-            {
-                float blendMode = round(_HoCharacterFaceHairDiffuseParams.w);
-                half3 result = tint;
-                if (blendMode > 0.5 && blendMode < 1.5)
-                {
-                    result = source + tint;
-                }
-                else if (blendMode >= 1.5)
-                {
-                    half3 source01 = saturate(source);
-                    half3 tint01 = saturate(tint);
-                    result = 1.0 - (1.0 - source01) * (1.0 - tint01);
-                }
-
-                return lerp(source, max(result, 0.0), saturate(amount));
             }
 
             float ResolveFaceHairDiffuseMask(float2 uv)
@@ -577,17 +560,6 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return HoCharacterSubjectOutlineHsvToRgb(hsv);
             }
 
-            half3 BlendOutlineFog(half3 baseColor, half3 fogColor, float amount)
-            {
-                float alpha = saturate(amount);
-                half3 base01 = saturate(baseColor);
-                half3 fog01 = saturate(fogColor);
-                half3 screen = 1.0 - (1.0 - base01) * (1.0 - fog01);
-                half3 hdrLift = max(fogColor - fog01, 0.0);
-                half3 target = max(baseColor, screen + hdrLift);
-                return lerp(baseColor, target, alpha);
-            }
-
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -808,59 +780,39 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return half4(enhancedOutlineFogMask * enhancedOutlineHeightFade, enhancedOutlineFogMask * enhancedOutlineHeightFade, enhancedOutlineFogMask * enhancedOutlineHeightFade, source.a);
                 }
 
-                half3 color = lerp(source.rgb, eyeColor.rgb, revealMask * eyeAngleFactor);
-                float shadowAmount = shadowMask * saturate(_HoCharacterHairShadowParams.x);
-                if (shadowAmount > 0.0001)
-                {
-                    half3 shadowColor = (half3)_HoCharacterHairShadowColor.rgb;
-                    if (round(_HoCharacterHairShadowParams1.y) < 0.5)
-                    {
-                        color *= lerp(half3(1.0, 1.0, 1.0), shadowColor, shadowAmount);
-                    }
-                    else
-                    {
-                        color = lerp(color, shadowColor, shadowAmount);
-                    }
-                }
-
-                float faceHairDiffuseAmount = faceHairDiffuseMask * saturate(_HoCharacterFaceHairDiffuseParams.x) * saturate(_HoCharacterFaceHairDiffuseTintColor.a) * saturate(_HoCharacterFaceHairDiffuseOptions.x);
-                if (faceHairDiffuseAmount > 0.0001)
-                {
-                    // 扩散的是**受光脸**（模糊后的），颜色乘只在这一步乘上去 —— 它是层色，不是被扩散的内容。
-                    half3 faceHairDiffuseColor = ResolveFaceHairDiffuseColor(uv) * (half3)_HoCharacterFaceHairDiffuseTintColor.rgb;
-                    color = BlendFaceHairDiffuse(color, faceHairDiffuseColor, faceHairDiffuseAmount);
-                }
-
-                float enhancedOutlineFogAmount = enhancedOutlineFogMask * enhancedOutlineHeightFade * saturate(_HoCharacterEnhancedOutlineParams.x) * saturate(_HoCharacterEnhancedOutlineFogColor.a) * saturate(_HoCharacterEnhancedOutlineOptions.x);
-                if (enhancedOutlineFogAmount > 0.0001)
-                {
-                    half3 enhancedFogColor = ResolveEnhancedOutlineFogColor(source.rgb);
-                    color = BlendOutlineFog(color, enhancedFogColor, enhancedOutlineFogAmount);
-                }
-
+                HoCharacterCompositionInputs composition;
+                composition.source = source.rgb;
+                composition.eyeColor = eyeColor.rgb;
+                composition.eyeAmount = revealMask * eyeAngleFactor;
+                composition.shadowAmount = shadowMask * saturate(_HoCharacterHairShadowParams.x);
+                composition.diffuseAmount = faceHairDiffuseMask * saturate(_HoCharacterFaceHairDiffuseParams.x)
+                    * saturate(_HoCharacterFaceHairDiffuseTintColor.a) * saturate(_HoCharacterFaceHairDiffuseOptions.x);
+                composition.diffuseColor = 0;
+                if (composition.diffuseAmount > 0.0001)
+                    composition.diffuseColor = ResolveFaceHairDiffuseColor(uv) * (half3)_HoCharacterFaceHairDiffuseTintColor.rgb;
+                composition.enhancedAmount = enhancedOutlineFogMask * enhancedOutlineHeightFade * saturate(_HoCharacterEnhancedOutlineParams.x)
+                    * saturate(_HoCharacterEnhancedOutlineFogColor.a) * saturate(_HoCharacterEnhancedOutlineOptions.x);
+                composition.enhancedColor = 0;
+                if (composition.enhancedAmount > 0.0001)
+                    composition.enhancedColor = ResolveEnhancedOutlineFogColor(source.rgb);
                 float subjectOutlineStyle = round(_HoCharacterSubjectOutlineOptions.z);
+                composition.subjectIsFog = subjectOutlineStyle > 1.5 ? 1 : 0;
+                composition.subjectColor = 0;
                 if (subjectOutlineStyle > 1.5)
                 {
-                    float subjectOutlineFogMask = ResolveSubjectOutlineFogMask(subjectOutlineEdgeSdf);
-                    float subjectOutlineFogAmount = subjectOutlineFogMask * subjectOutlineHeightFade * saturate(_HoCharacterSubjectOutlineParams.x) * saturate(_HoCharacterSubjectOutlineFogColor.a) * saturate(_HoCharacterSubjectOutlineOptions.x);
-                    if (subjectOutlineFogAmount > 0.0001)
-                    {
-                        half3 fogColor = ResolveSubjectOutlineFogColor(source.rgb);
-                        color = BlendOutlineFog(color, fogColor, subjectOutlineFogAmount);
-                    }
+                    composition.subjectAmount = ResolveSubjectOutlineFogMask(subjectOutlineEdgeSdf) * subjectOutlineHeightFade
+                        * saturate(_HoCharacterSubjectOutlineParams.x) * saturate(_HoCharacterSubjectOutlineFogColor.a)
+                        * saturate(_HoCharacterSubjectOutlineOptions.x);
+                    if (composition.subjectAmount > 0.0001) composition.subjectColor = ResolveSubjectOutlineFogColor(source.rgb);
                 }
                 else
                 {
                     float subjectOutlineStyleAlpha = subjectOutlineStyle < 0.5 ? saturate(_HoCharacterSubjectOutlineColor.a) : 1.0;
-                    float subjectOutlineAmount = subjectOutlineMask * subjectOutlineHeightFade * saturate(_HoCharacterSubjectOutlineParams.x) * subjectOutlineStyleAlpha * saturate(_HoCharacterSubjectOutlineOptions.x);
-                    if (subjectOutlineAmount > 0.0001)
-                    {
-                        half3 outlineColor = ResolveSubjectOutlineColor(subjectOutlineNormal);
-                        color = lerp(color, outlineColor, subjectOutlineAmount);
-                    }
+                    composition.subjectAmount = subjectOutlineMask * subjectOutlineHeightFade * saturate(_HoCharacterSubjectOutlineParams.x)
+                        * subjectOutlineStyleAlpha * saturate(_HoCharacterSubjectOutlineOptions.x);
+                    if (composition.subjectAmount > 0.0001) composition.subjectColor = ResolveSubjectOutlineColor(subjectOutlineNormal);
                 }
-
-                return half4(color, source.a);
+                return half4(HoCharacterCompose(composition), source.a);
             }
             ENDHLSL
         }

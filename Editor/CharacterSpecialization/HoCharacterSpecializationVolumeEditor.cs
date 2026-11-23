@@ -3,6 +3,7 @@ using System.Reflection;
 using lilToon.URP.Extensions.CharacterSpecialization;
 using lilToon.URP.Extensions.Editor.PostProcessing;
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEditor.Rendering;
 using UnityEngine;
 
@@ -13,7 +14,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     /// （顶栏搜索 + 左侧图标侧栏 + 右侧区段行）。
     /// </summary>
     /// <remarks>
-    /// 这块**没有图层、也没有顺序**：五个效果是固定的一组区段，每个只有"启用/停用"两态，
+    /// 五个效果各自保留一份参数；右侧列表可拖动排序，顺序同时用于最终颜色合成。
     /// 参数由 Volume 单一提供（不再有 Settings 兜底值与逐参数 override，见
     /// Documentation~/归档/CharacterSpecializationBrowser.md）。
     /// </remarks>
@@ -25,6 +26,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private const float CheckboxWidth = 18.0f;
         private const float RemoveWidth = 18.0f;
         private const string ExpandKeyPrefix = "lilToon.CharacterSpecialization.";
+        private static readonly string[] LayoutFields = { "subjectOutlineFillMode", "subjectOutlineHeightFadeMode", "enhancedOutlineHeightFadeMode" };
 
         /// <summary>区段行里那个「×」的背景色（与 IP/SP 的搜索高亮同一套观感）。</summary>
         private static readonly Color RowHighlightColor = new Color(0.30f, 0.55f, 0.95f, 0.16f);
@@ -53,23 +55,26 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             }
         }
 
-        /// <summary>侧栏顺序 = 右侧区段顺序 = 执行顺序，写死（这块不做排序）。</summary>
+        /// <summary>目录的稳定 ID 对应 HoCharacterCompositionEffect；右侧顺序来自 Volume。</summary>
         private static readonly EffectSection[] Sections =
         {
-            new EffectSection("EyeReveal", "眼透", "icon_Glow_SelectColor_v1", "eyeRevealEnabled", "eyeRevealStrength",
-                new[] { "eyeReveal", "useEyeRevealArea", "sameCharacterOnly" }),
             new EffectSection("DropShadow", "前发投影", "icon_DropShadow_v1", "hairDropShadowEnabled", "hairShadowOpacity",
                 new[] { "hairDropShadow", "hairShadow" }),
             new EffectSection("FaceHairDiffuse", "前发漫反射", "icon_Blur_v1", "faceHairDiffuseEnabled", "faceHairDiffuseStrength",
                 new[] { "faceHairDiffuse" }),
-            new EffectSection("SubjectOutline", "主体描边", "icon_OutLine_v1", "subjectOutlineEnabled", "subjectOutlineStrength",
-                new[] { "subjectOutline" }),
             new EffectSection("EnhancedOutline", "增强描边", "icon_RimLight_v1", "enhancedOutlineEnabled", "enhancedOutlineStrength",
                 new[] { "enhancedOutline" }),
+            new EffectSection("SubjectOutline", "主体描边", "icon_OutLine_v1", "subjectOutlineEnabled", "subjectOutlineStrength",
+                new[] { "subjectOutline" }),
+            new EffectSection("EyeReveal", "眼透", "icon_Glow_SelectColor_v1", "eyeRevealEnabled", "eyeRevealStrength",
+                new[] { "eyeReveal", "useEyeRevealArea", "sameCharacterOnly" }),
         };
 
         private SerializedProperty effectsParameter;
         private SerializedProperty effects;
+        private SerializedProperty compositionOrder;
+        private ReorderableList effectList;
+        private int layoutStamp;
         private EffectBrowserState browserState;
         private EffectBrowserCatalog browserCatalog;
 
@@ -77,6 +82,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         {
             effectsParameter = serializedObject.FindProperty("Effects");
             effects = effectsParameter != null ? effectsParameter.FindPropertyRelative("m_Value") : null;
+            compositionOrder = effects != null ? effects.FindPropertyRelative("compositionOrder") : null;
             browserState = EffectBrowserState.For("CharacterSpecialization");
         }
 
@@ -84,13 +90,14 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         {
             serializedObject.Update();
 
-            if (effects == null)
+            if (effects == null || compositionOrder == null)
             {
                 DrawDefaultInspector();
                 serializedObject.ApplyModifiedProperties();
                 return;
             }
 
+            EnsureCompositionOrder();
             EnsureBrowser();
             EffectBrowserView.Draw(browserCatalog, browserState, DrawSections);
 
@@ -218,81 +225,103 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
         // ------------------------------------------------------------------ 右侧区段
 
-        private void DrawSections()
+        private void EnsureCompositionOrder()
         {
-            string query = EffectBrowserView.CurrentQuery;
-
-            for (int i = 0; i < Sections.Length; i++)
+            int used = 0;
+            bool valid = compositionOrder.arraySize == HoCharacterCompositionOrder.Count;
+            for (int i = 0; i < compositionOrder.arraySize && valid; i++)
             {
-                DrawSectionRow(i, Sections[i], query);
+                int value = compositionOrder.GetArrayElementAtIndex(i).intValue;
+                valid = value >= 0 && value < HoCharacterCompositionOrder.Count && (used & (1 << value)) == 0;
+                if (valid) used |= 1 << value;
+            }
+            if (valid) return;
+            var stored = new HoCharacterCompositionEffect[compositionOrder.arraySize];
+            for (int i = 0; i < stored.Length; i++) stored[i] = (HoCharacterCompositionEffect)compositionOrder.GetArrayElementAtIndex(i).intValue;
+            HoCharacterCompositionOrder.Pack(stored, out Vector4 first, out Vector4 last);
+            compositionOrder.arraySize = HoCharacterCompositionOrder.Count;
+            for (int i = 0; i < compositionOrder.arraySize; i++)
+                compositionOrder.GetArrayElementAtIndex(i).intValue = (int)(i < 4 ? first[i] : last.x);
+        }
+
+        private int GetLayoutStamp()
+        {
+            unchecked
+            {
+                int stamp = 17;
+                for (int i = 0; i < compositionOrder.arraySize; i++)
+                {
+                    int effect = compositionOrder.GetArrayElementAtIndex(i).intValue;
+                    stamp = stamp * 31 + effect;
+                    stamp = stamp * 31 + (SessionState.GetBool(ExpandKeyPrefix + Sections[effect].Id, false) ? 1 : 0);
+                }
+                foreach (string name in LayoutFields)
+                    stamp = stamp * 31 + Find(name).intValue;
+                return stamp;
             }
         }
 
-        private void DrawSectionRow(int index, EffectSection section, string query)
+        private void DrawSections()
+        {
+            int stamp = GetLayoutStamp();
+            if (effectList == null || stamp != layoutStamp)
+            {
+                layoutStamp = stamp;
+                effectList = new ReorderableList(serializedObject, compositionOrder, true, false, false, false);
+                effectList.headerHeight = 0;
+                effectList.drawHeaderCallback = null;
+                effectList.elementHeightCallback = GetElementHeight;
+                effectList.drawElementCallback = (rect, index, active, focused) =>
+                {
+                    int effect = compositionOrder.GetArrayElementAtIndex(index).intValue;
+                    DrawSectionRow(rect, effect, Sections[effect], EffectBrowserView.CurrentQuery);
+                };
+            }
+            effectList.DoLayoutList();
+        }
+
+        private float GetElementHeight(int index)
+        {
+            EffectSection section = Sections[compositionOrder.GetArrayElementAtIndex(index).intValue];
+            if (!SessionState.GetBool(ExpandKeyPrefix + section.Id, false)) return LineHeight + 6;
+            var layout = new HoCharacterEffectLayout(new Rect(), false);
+            DrawEffect(section, layout);
+            return LineHeight + 10 + layout.Height;
+        }
+
+        private void DrawSectionRow(Rect rect, int effect, EffectSection section, string query)
         {
             SerializedProperty enabled = Find(section.EnableField);
             SerializedProperty summaryValue = Find(section.SummaryField);
             bool expanded = SessionState.GetBool(ExpandKeyPrefix + section.Id, false);
-
-            Rect rect = EditorGUILayout.GetControlRect(false, LineHeight);
-            DrawRowHighlight(rect, index, query);
-
-            float foldoutWidth = Mathf.Max(0.0f, rect.width - CheckboxWidth - RemoveWidth - 6.0f);
+            rect.y += 2;
+            DrawRowHighlight(new Rect(rect.x, rect.y, rect.width, LineHeight), effect, query);
             if (enabled != null)
-            {
-                Rect toggleRect = new Rect(rect.x, rect.y, CheckboxWidth, rect.height);
-                EditorGUI.BeginChangeCheck();
-                bool value = EditorGUI.Toggle(toggleRect, enabled.boolValue);
-                if (EditorGUI.EndChangeCheck())
-                {
-                    enabled.boolValue = value;
-                }
-            }
-
+                enabled.boolValue = EditorGUI.Toggle(new Rect(rect.x, rect.y, CheckboxWidth, LineHeight), enabled.boolValue);
             string summary = enabled != null && enabled.boolValue
-                ? "开" + (summaryValue != null ? " " + summaryValue.floatValue.ToString("0.###") : string.Empty)
-                : "关";
-            Rect foldoutRect = new Rect(rect.x + CheckboxWidth, rect.y, foldoutWidth, rect.height);
-            string title = section.Label + "　" + summary;
-            expanded = EditorGUI.Foldout(foldoutRect, expanded, title, true);
-
-            Rect removeRect = new Rect(rect.xMax - RemoveWidth, rect.y + 1.0f, RemoveWidth, rect.height - 2.0f);
-            if (EffectBrowserView.DrawChromeLessButton(removeRect, new GUIContent("×", "关掉这个效果")))
-            {
-                if (enabled != null)
-                {
-                    enabled.boolValue = false;
-                }
-            }
-
+                ? "开" + (summaryValue != null ? " " + summaryValue.floatValue.ToString("0.###") : string.Empty) : "关";
+            float foldoutWidth = Mathf.Max(0, rect.width - CheckboxWidth - RemoveWidth - 6);
+            var title = new GUIContent(section.Label + "　" + summary, "拖动左侧手柄调整叠加顺序；从上到下合成，眼透默认最后。关闭效果会保留参数和位置。");
+            expanded = EditorGUI.Foldout(new Rect(rect.x + CheckboxWidth, rect.y, foldoutWidth, LineHeight), expanded, title, true);
+            Rect removeRect = new Rect(rect.xMax - RemoveWidth, rect.y + 1, RemoveWidth, LineHeight - 2);
+            if (EffectBrowserView.DrawChromeLessButton(removeRect, new GUIContent("×", "关闭这个效果，保留参数和位置")) && enabled != null)
+                enabled.boolValue = false;
             SessionState.SetBool(ExpandKeyPrefix + section.Id, expanded);
-            if (!expanded)
-            {
-                return;
-            }
+            if (!expanded) return;
+            using (new EditorGUI.IndentLevelScope())
+                DrawEffect(section, new HoCharacterEffectLayout(new Rect(rect.x, rect.y + LineHeight + 4, rect.width, 0), true));
+        }
 
-            EditorGUI.indentLevel++;
+        private void DrawEffect(EffectSection section, HoCharacterEffectLayout layout)
+        {
             switch (section.Id)
             {
-                case "EyeReveal":
-                    HoCharacterEyeRevealEditorSection.DrawEffects(effects);
-                    break;
-                case "DropShadow":
-                    HoCharacterDropShadowEditorSection.DrawEffects(effects);
-                    break;
-                case "FaceHairDiffuse":
-                    HoCharacterFaceHairDiffuseEditorSection.DrawEffects(effects);
-                    break;
-                case "SubjectOutline":
-                    HoCharacterSubjectOutlineEditorSection.DrawEffects(effects);
-                    break;
-                case "EnhancedOutline":
-                    HoCharacterEnhancedOutlineEditorSection.DrawEffects(effects);
-                    break;
+                case "EyeReveal": HoCharacterEyeRevealEditorSection.DrawEffects(effects, layout); break;
+                case "DropShadow": HoCharacterDropShadowEditorSection.DrawEffects(effects, layout); break;
+                case "FaceHairDiffuse": HoCharacterFaceHairDiffuseEditorSection.DrawEffects(effects, layout); break;
+                case "SubjectOutline": HoCharacterSubjectOutlineEditorSection.DrawEffects(effects, layout); break;
+                case "EnhancedOutline": HoCharacterEnhancedOutlineEditorSection.DrawEffects(effects, layout); break;
             }
-
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space(2.0f);
         }
 
         private void DrawRowHighlight(Rect rect, int effect, string query)

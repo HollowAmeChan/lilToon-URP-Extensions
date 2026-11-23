@@ -200,6 +200,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             target.eyeRevealEnabled = Effects.value.eyeRevealEnabled;
+            HoCharacterCompositionOrder.Pack(Effects.value.compositionOrder,
+                out target.compositionOrderFirst, out target.compositionOrderLast);
             target.eyeRevealStrength = Effects.value.eyeRevealStrength;
             target.eyeRevealFeatherPixels = Effects.value.eyeRevealFeatherPixels;
             target.eyeRevealDilationPixels = Effects.value.eyeRevealDilationPixels;

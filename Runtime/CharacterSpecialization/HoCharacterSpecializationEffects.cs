@@ -14,6 +14,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     [Serializable]
     public sealed class HoCharacterSpecializationEffects
     {
+        [Tooltip("按列表从上到下叠加；每种效果保留一份独立参数，关闭不改变其位置。眼透默认最后合成。")]
+        public HoCharacterCompositionEffect[] compositionOrder = HoCharacterCompositionOrder.CreateDefault();
+
         [InspectorName("启用眼睛透过"), Tooltip("让被前发遮挡的眼睛按眼睛捕获结果透出。")]
         public bool eyeRevealEnabled = true;
 

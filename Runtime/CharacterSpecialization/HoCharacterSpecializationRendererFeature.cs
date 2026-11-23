@@ -963,6 +963,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.faceHairDiffuseSourceColorSampled = faceHairDiffuseSourceColorSampled;
                 passData.screenTexelSize = screenTexelSize;
                 passData.material = compositeMaterial;
+                passData.compositionOrderFirst = settings.compositionOrderFirst;
+                passData.compositionOrderLast = settings.compositionOrderLast;
                 passData.faceHairDiffuseReady = faceHairDiffuseReady;
                 passData.subjectOutlineReady = subjectOutlineReady;
                 passData.enhancedOutlineReady = enhancedOutlineReady;
@@ -1070,6 +1072,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         data.enhancedOutlineHeightFadeParams,
                         data.enhancedOutlineOptions,
                         data.options);
+                    ApplyCompositionOrder(data.material, data.compositionOrderFirst, data.compositionOrderLast);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.geometryNormalDepthTexture);
                     if (data.faceHairDiffuseReady)
                     {

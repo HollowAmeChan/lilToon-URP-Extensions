@@ -122,6 +122,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     [Serializable]
     public sealed class HoCharacterSpecializationSettings
     {
+        // Per-camera values copied from Volume; never retain a mutable profile order array.
+        internal Vector4 compositionOrderFirst = HoCharacterCompositionOrder.DefaultFirst;
+        internal Vector4 compositionOrderLast = HoCharacterCompositionOrder.DefaultLast;
+
         [InspectorName("启用")]
         [Tooltip("跳过或启用整个角色特化合成。推荐通过 Volume 控制。")]
         public bool enabled = true;
