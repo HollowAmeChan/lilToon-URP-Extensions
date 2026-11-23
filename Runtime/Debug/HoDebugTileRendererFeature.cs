@@ -1,112 +1,84 @@
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.GeometryBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.Debugging
 {
-    // Keep the type and script GUID so existing renderer assets remain valid.
-    [DisallowMultipleRendererFeature("Ho-DebugTile (External Systems)")]
+    // Keep this type and script GUID so existing renderer assets remain valid.
+    [DisallowMultipleRendererFeature("Ho-DebugPerformance")]
     public sealed class HoDebugTileRendererFeature : ScriptableRendererFeature
     {
+        // Legacy constants/field are retained for serialized renderer compatibility.
         public const string NoneViewId = "";
         public const string AllRegisteredViewId = "__AllRegistered";
+        [SerializeField] private bool enabled = true;
         [SerializeField] private bool enabledForGameView = true;
         [SerializeField] private bool enabledForSceneView = true;
-        [SerializeField] private string selectedDebugViewId = NoneViewId;
-        private HoSystemDebugPass pass;
-        private Material material;
-        private bool warnedMissingShader;
+        [SerializeField, HideInInspector] private string selectedDebugViewId = NoneViewId;
+        [SerializeField] private HoDebugTilePerformanceMode performanceMode = HoDebugTilePerformanceMode.Off;
+        private HoDebugPerformanceOverlayPass performancePass;
 
         public override void Create()
         {
-            pass?.ReleaseDebugResources();
-            pass = new HoSystemDebugPass();
+            performancePass = new HoDebugPerformanceOverlayPass();
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            CameraType type = renderingData.cameraData.cameraType;
-            if (!((enabledForGameView && type == CameraType.Game) || (enabledForSceneView && type == CameraType.SceneView))) return;
-            int mode = selectedDebugViewId == AllRegisteredViewId ? HoDebugGrid.All : 0;
-            foreach (var view in HoDebugViewRegistry.SystemViews)
-                if (view.ViewId == selectedDebugViewId) mode = view.ModeValue;
-            if (mode == 0) { pass?.ReleaseDebugResources(); return; }
-            if (material == null)
+            ResolveVolume(out bool resolvedEnabled, out bool resolvedGameView, out bool resolvedSceneView,
+                out HoDebugTilePerformanceMode resolvedPerformanceMode);
+            if (resolvedPerformanceMode == HoDebugTilePerformanceMode.Off)
             {
-                var shader = Shader.Find(HoDebugTileShaderConstants.ShaderName);
-                if (shader == null)
-                {
-                    if (!warnedMissingShader) Debug.LogWarning("External system debug shader is missing.");
-                    warnedMissingShader = true;
-                    return;
-                }
-                material = CoreUtils.CreateEngineMaterial(shader);
+                HoDebugPerformanceRegistry.SetRecordingEnabled(false);
             }
-            pass.Setup(material, mode);
-            pass.Enqueue(renderer);
+
+            if (!resolvedEnabled)
+            {
+                return;
+            }
+
+            CameraType type = renderingData.cameraData.cameraType;
+            bool cameraEnabled = (resolvedGameView && type == CameraType.Game)
+                || (resolvedSceneView && type == CameraType.SceneView);
+            if (!cameraEnabled || resolvedPerformanceMode == HoDebugTilePerformanceMode.Off)
+            {
+                return;
+            }
+
+            HoDebugPerformanceRegistry.EnsureInitialized();
+            HoDebugPerformanceRegistry.SetRecordingEnabled(true);
+            HoDebugPerformanceRegistry.Update();
+            performancePass.Setup(HoDebugPerformanceRegistry.BuildLines(resolvedPerformanceMode));
+            renderer.EnqueuePass(performancePass);
         }
 
         protected override void Dispose(bool disposing)
         {
-            pass?.ReleaseDebugResources();
-            pass = null;
-            CoreUtils.Destroy(material);
-            material = null;
+            performancePass = null;
+            HoDebugPerformanceRegistry.SetRecordingEnabled(false);
         }
 
-        private sealed class HoSystemDebugPass : HoDebugRenderPass
+        private void ResolveVolume(out bool resolvedEnabled, out bool resolvedGameView, out bool resolvedSceneView,
+            out HoDebugTilePerformanceMode resolvedPerformanceMode)
         {
-            private Material material;
-            private int mode;
-            private sealed class PassData
+            resolvedEnabled = enabled;
+            resolvedGameView = enabledForGameView;
+            resolvedSceneView = enabledForSceneView;
+            resolvedPerformanceMode = performanceMode;
+
+            VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
+            HoDebugTileVolume volume = stack != null ? stack.GetComponent<HoDebugTileVolume>() : null;
+            if (volume == null)
             {
-                public Material material;
-                public TextureHandle geometry;
-                public int mode;
-                public Vector2Int size;
+                return;
             }
 
-            public void Setup(Material value, int selectedMode)
-            {
-                material = value;
-                mode = selectedMode;
-                renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
-            }
-
-            public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
-            {
-                var geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>().normalDepthTexture;
-                if (!geometry.IsValid()) return;
-                TextureHandle destination = CreateDebugTarget(graph, frameData);
-                using (var builder = graph.AddRasterRenderPass<PassData>("Ho-External System Debug", out var data))
-                {
-                    data.material = material; data.geometry = geometry; data.mode = mode;
-                    data.size = DebugSize(graph, destination);
-                    builder.UseTexture(geometry, AccessFlags.Read);
-                    builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
-                    builder.AllowGlobalStateModification(true);
-                    builder.SetRenderFunc(static (PassData d, RasterGraphContext ctx) =>
-                    {
-                        ctx.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, d.geometry);
-                        HoDebugGrid.Draw(ctx.cmd, d.material, d.mode, HoDebugTileShaderConstants.ModeId, HoDebugViewRegistry.SystemViews, d.size, integerMode: true);
-                    });
-                }
-            }
-
-            public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
-            {
-                if (Shader.GetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId) == null) return;
-                var cmd = CommandBufferPool.Get("Ho-External System Debug");
-                HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), material, mode,
-                    HoDebugTileShaderConstants.ModeId, HoDebugViewRegistry.SystemViews, new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height), integerMode: true);
-                PublishCompatibility(renderingData.cameraData.camera);
-                context.ExecuteCommandBuffer(cmd);
-                CommandBufferPool.Release(cmd);
-            }
+            if (volume.enable.overrideState) resolvedEnabled = volume.enable.value;
+            if (volume.performance.overrideState) resolvedPerformanceMode = volume.performance.value;
+            if (volume.debugInSceneView.overrideState) resolvedSceneView = volume.debugInSceneView.value;
+            if (volume.debugInGameView.overrideState) resolvedGameView = volume.debugInGameView.value;
         }
     }
 }

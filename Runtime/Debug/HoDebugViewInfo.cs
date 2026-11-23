@@ -10,7 +10,8 @@ namespace lilToon.URP.Extensions.Debugging
             string shaderName,
             string shaderAssetPath,
             bool requiresShaderCollection,
-            string missingFallback)
+            string missingFallback,
+            HoDebugPerformanceInfo performance = null)
         {
             FeatureName = featureName;
             ViewId = viewId;
@@ -20,6 +21,7 @@ namespace lilToon.URP.Extensions.Debugging
             ShaderAssetPath = shaderAssetPath;
             RequiresShaderCollection = requiresShaderCollection;
             MissingFallback = missingFallback;
+            Performance = performance;
         }
 
         public readonly string FeatureName;
@@ -30,6 +32,7 @@ namespace lilToon.URP.Extensions.Debugging
         public readonly string ShaderAssetPath;
         public readonly bool RequiresShaderCollection;
         public readonly string MissingFallback;
+        public readonly HoDebugPerformanceInfo Performance;
 
         public bool HasShader => !string.IsNullOrEmpty(ShaderName);
     }

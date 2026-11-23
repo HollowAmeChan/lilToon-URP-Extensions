@@ -1,6 +1,10 @@
 # 调试归属与最终显示
 
-调试由功能模块自己维护。`HoDebugTileRendererFeature` 保留原脚本类型和 GUID，但只承接 APV 等外部系统诊断，不再提供 OB / GB / SB / ShadowCast / SSS / PLR 的集中式调试。
+调试由功能模块自己维护。`HoDebugTileRendererFeature` 保留原脚本类型和 GUID，但用户-facing 名称已收缩为 `Ho-DebugPerformance`：它是一个 Ho 渲染体系专用的最终画面性能 HUD，不再承接 APV 或任何模块的集中式 tile 视图。
+
+旧的 `Ho-DebugTile` Volume 类型继续保留以兼容已有 Profile；它现在只提供启用、性能模式和 Scene/Game View 覆盖。未勾选 Override 时使用 RendererFeature 的兜底值。
+
+推荐把它理解成“渲染管线内的诊断 HUD”：RendererFeature 在最终 active color 上叠加文字，Volume 只提供逐相机开关和模式。它不替代 Unity Rendering Debugger、Frame Debugger 或 RenderDoc，也不接管 Feature 自己的图像调试。
 
 ## 模块入口
 
@@ -22,10 +26,12 @@ SB All 合并数值面和 legacy semantic lane 的调试需求；关闭后按原
 ## 扩展规则
 
 - 新视图在所属模块登记 `HoDebugViewInfo`，将模式映射、shader、读依赖留在模块内。
+- 功能模块在自己的 `HoDebugViewInfo` 声明中附带 `HoDebugPerformanceInfo`，列出本功能使用的 `ProfilingSampler` marker 名称。Ho-DebugPerformance 在性能模式开启时统一打开 recorder，把声明的 marker elapsed 合并并按 recorder 窗口折算为每帧 CPU/GPU Feature 总耗时，再绘制到最终画面；新增功能需要同时登记计时 marker。
+- HUD 首行显示 `HO FEATURES N`，随后列出每个已登记 Feature 的 CPU/GPU 总耗时。GPU recorder 没有有效样本的平台显示 `--`，不会把缺失数据伪装成零成本。
 - 全屏类视图调用 `HoDebugGrid.Draw`；GeometryData 的几何绘制复用公共矩形与标签，保持自身 renderer list 和独立深度。
 - `HoDebugViewRegistry.AllViews` 是工具和 shader 检查目录，不是渲染分派器。已移除 `HoDebugViewRenderKind`。
-- `HoDebugViewRegistry.SystemViews` 只收录外部系统视图；当前为 APV Validity / GI / Toon。DebugTile 的 All 只平铺这些外部视图。
-- 原 DebugTile 中选中的 `object.*`、`geometry.*`、`surface.*` 等模式需改用对应模块入口；不自动修改已有 RendererData 或 VolumeProfile。
+- `HoDebugViewRegistry.SystemViews` 仍只收录外部系统视图；当前为 APV Validity / GI / Toon，供工具和历史资源检查使用。Ho-DebugPerformance 不再平铺这些视图。
+- 原 DebugTile 中选中的 `object.*`、`geometry.*`、`surface.*` 等模式需改用对应模块入口；旧 RendererData / VolumeProfile 中的字段保留兼容，但不再驱动集中式 tile 渲染。
 - All 暂用均匀网格。未来的中央结果布局只需要扩展布局工具，模块 shader 无需增加集中式分支。
 
 ## 验证入口

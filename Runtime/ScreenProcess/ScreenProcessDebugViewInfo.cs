@@ -4,6 +4,10 @@ namespace lilToon.URP.Extensions.ScreenProcess
 {
     public static class ScreenProcessDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "ScreenProcess", "ScreenProcess", "Ho-ScreenProcess AfterURP BeforeImageProcess",
+            "Ho-ScreenProcess RT lighting", "Ho-ScreenProcess Release Semantic Buffers");
+
         public static readonly HoDebugViewInfo[] Views =
         {
             new HoDebugViewInfo(
@@ -14,7 +18,8 @@ namespace lilToon.URP.Extensions.ScreenProcess
                 string.Empty,
                 string.Empty,
                 false,
-                "Mask debug uses each active ScreenProcess layer shader through _LayerMaskDebugOutput; no standalone debug shader is owned by the public debug UI.")
+                "Mask debug uses each active ScreenProcess layer shader through _LayerMaskDebugOutput; no standalone debug shader is owned by the public debug UI.",
+                Performance)
         };
     }
 }

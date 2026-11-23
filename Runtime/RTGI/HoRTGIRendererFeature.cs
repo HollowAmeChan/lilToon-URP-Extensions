@@ -196,6 +196,7 @@ namespace lilToon.URP.Extensions.RTGI
         }
         private sealed class HoRTGIPass : ScriptableRenderPass
         {
+            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-RTGI");
             private HoRTGIContext context;private HoRTView sceneView;private ComputeShader shader;private RayTracingShader rayShader;
             private PassSettings settings;private HoRTAnalyticLight[] lights;private int lightCount,signature;
             private double renderTime;
@@ -259,7 +260,7 @@ namespace lilToon.URP.Extensions.RTGI
                         d.primary.Bind(raster);
                         if(d.environment.IsValid())cmd.SetRayTracingTextureParam(d.rayShader,HoAtmosphereBindings.RadianceId,d.environment);
                         else cmd.SetRayTracingTextureParam(d.rayShader,HoAtmosphereBindings.RadianceId,CoreUtils.blackCubeTexture);
-                        Dispatch(cmd,d,false,default);
+                        using(new ProfilingScope(cmd,ProfilingSampler)) Dispatch(cmd,d,false,default);
                     });
                 }
             }
@@ -385,7 +386,8 @@ namespace lilToon.URP.Extensions.RTGI
                     d.environmentConstant=HoAtmosphereBindings.compatibilityConstant;d.environmentRevision=HoAtmosphereBindings.compatibilityRevision;
                 }
                 else cmd.SetRayTracingTextureParam(d.rayShader,HoAtmosphereBindings.RadianceId,CoreUtils.blackCubeTexture);
-                Dispatch(cmd,d,true,data.cameraData);rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
+                using(new ProfilingScope(cmd,ProfilingSampler)) Dispatch(cmd,d,true,data.cameraData);
+                rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
             }
         }
     }

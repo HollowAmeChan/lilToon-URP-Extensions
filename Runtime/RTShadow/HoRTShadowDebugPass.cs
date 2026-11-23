@@ -9,10 +9,13 @@ namespace lilToon.URP.Extensions.RTShadow
 {
     public static class HoRTShadowDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "RTShadow", "RTShadow", "Ho-RTShadow");
+
         public static readonly HoDebugViewInfo[] Views = HoDebugGrid.EnumViews<HoRTShadowDebugMode>(
             "RTShadow", "Hidden/lilToon/URP/RTShadow/Debug",
             "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTShadow/Shaders/HoRTShadowDebug.shader",
-            "VISIBILITY", "RAW", "DIFFERENCE", "BLOCKER", "RECEIVER", "STATUS");
+            Performance, "VISIBILITY", "RAW", "DIFFERENCE", "BLOCKER", "RECEIVER", "STATUS");
     }
 
     internal sealed class HoRTShadowDebugPass : HoDebugRenderPass

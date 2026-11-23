@@ -4,6 +4,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
 {
     public static class HoPlanarReflectionDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "PLR", "PLR", "Ho-PLR Preprocess", "Ho-PLR Composite");
+
         private const string FeatureName = "PLR";
         private const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/PlanarReflection/HoPlanarReflectionComposite.shader";
         private const string MissingFallback = "PlanarReflection debug view is skipped when the composite shader is missing.";
@@ -37,7 +40,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 HoPlanarReflectionShaderConstants.CompositeShaderName,
                 ShaderAssetPath,
                 true,
-                MissingFallback);
+                MissingFallback,
+                Performance);
         }
     }
 }

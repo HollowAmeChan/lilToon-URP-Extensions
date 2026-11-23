@@ -11,6 +11,7 @@ namespace lilToon.URP.Extensions.RTGI
     // Same camera/depth/fog contract as DI's verified additive composition.
     internal sealed class HoRTGICompositePass:ScriptableRenderPass,IDisposable
     {
+        static readonly ProfilingSampler ProfilingSampler=new ProfilingSampler("Ho-RTGI Composite");
         static readonly int DiffuseId=Shader.PropertyToID("_HoRTGICompositeDiffuse");
         static readonly int DepthId=Shader.PropertyToID("_CameraDepthTexture");
         static readonly int IntensityId=Shader.PropertyToID("_HoRTGICompositeIntensity");
@@ -45,9 +46,12 @@ namespace lilToon.URP.Extensions.RTGI
                 builder.SetRenderAttachment(destination,0,AccessFlags.WriteAll);builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static(Data d,RasterGraphContext ctx)=>
                 {
-                    d.lighting.MarkGpu(ctx.cmd,"GI.Composite",true);d.primary.Bind(ctx.cmd);ctx.cmd.SetGlobalTexture(DiffuseId,d.diffuse);ctx.cmd.SetGlobalTexture(DepthId,d.depth);ctx.cmd.SetGlobalFloat(IntensityId,d.intensity);
-                    Blitter.BlitTexture(ctx.cmd,d.source,new Vector4(1,1,0,0),d.material,0);
-                    d.lighting.MarkGpu(ctx.cmd,"GI.Composite",false);
+                    using(new ProfilingScope(ctx.cmd,ProfilingSampler))
+                    {
+                        d.lighting.MarkGpu(ctx.cmd,"GI.Composite",true);d.primary.Bind(ctx.cmd);ctx.cmd.SetGlobalTexture(DiffuseId,d.diffuse);ctx.cmd.SetGlobalTexture(DepthId,d.depth);ctx.cmd.SetGlobalFloat(IntensityId,d.intensity);
+                        Blitter.BlitTexture(ctx.cmd,d.source,new Vector4(1,1,0,0),d.material,0);
+                        d.lighting.MarkGpu(ctx.cmd,"GI.Composite",false);
+                    }
                 });
             }
             resources.cameraColor=destination;
@@ -60,11 +64,14 @@ namespace lilToon.URP.Extensions.RTGI
         public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)
         {
             var source=data.cameraData.renderer.cameraColorTargetHandle;var cmd=CommandBufferPool.Get("Ho-RTGI additive composite");
-            lighting.MarkGpu(cmd,"GI.Composite",true);
-            HoRTPrimarySurfaceInputs.BindCompatibility(cmd,data.cameraData);
-            cmd.SetGlobalTexture(DiffuseId,lighting.PublishedDiffuse.nameID);cmd.SetGlobalFloat(IntensityId,intensity);
-            Blitter.BlitCameraTexture(cmd,source,scratch,material,0);Blitter.BlitCameraTexture(cmd,scratch,source);
-            lighting.MarkGpu(cmd,"GI.Composite",false);
+            using(new ProfilingScope(cmd,ProfilingSampler))
+            {
+                lighting.MarkGpu(cmd,"GI.Composite",true);
+                HoRTPrimarySurfaceInputs.BindCompatibility(cmd,data.cameraData);
+                cmd.SetGlobalTexture(DiffuseId,lighting.PublishedDiffuse.nameID);cmd.SetGlobalFloat(IntensityId,intensity);
+                Blitter.BlitCameraTexture(cmd,source,scratch,material,0);Blitter.BlitCameraTexture(cmd,scratch,source);
+                lighting.MarkGpu(cmd,"GI.Composite",false);
+            }
             rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
         }
         public void Dispose(){scratch?.Release();scratch=null;}

@@ -8,8 +8,11 @@ namespace lilToon.URP.Extensions.RTDI
 {
     public static class HoRTDIDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "RTDI", "RTDI", "HoRTDI Final Visibility", "HoRTDI Visibility Gradients");
+
         public static readonly HoDebugViewInfo[] Views=HoDebugGrid.EnumViews<HoRTDIDebugMode>("RTDI","Hidden/lilToon/URP/RTDI/Debug",
-            "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIDebug.shader");
+            "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIDebug.shader", Performance);
     }
     internal sealed class HoRTDIDebugPass:HoDebugRenderPass
     {

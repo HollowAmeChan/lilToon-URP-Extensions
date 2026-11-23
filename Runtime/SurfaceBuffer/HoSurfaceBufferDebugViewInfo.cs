@@ -4,6 +4,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     public static class HoSurfaceBufferDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "SurfaceBuffer", "SurfaceBuffer", "Ho-SurfaceBuffer", "Ho-SurfaceBuffer Semantic", "Ho-Surface Semantic Association");
+
         private const string FeatureName = "SurfaceBuffer";
         private const string ShaderName = "Hidden/lilToon/URP/SurfaceBuffer/DebugView";
         private const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/Debug/HoSurfaceBufferDebug.shader";
@@ -32,7 +35,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoSurfaceBufferDebugMode mode)
         {
-            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback);
+            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback, Performance);
         }
     }
 }

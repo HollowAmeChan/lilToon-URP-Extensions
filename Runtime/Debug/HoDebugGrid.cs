@@ -77,6 +77,12 @@ namespace lilToon.URP.Extensions.Debugging
 
         public static HoDebugViewInfo[] EnumViews<T>(string feature, string shaderName, string shaderPath, params string[] labels) where T : Enum
         {
+            return EnumViews<T>(feature, shaderName, shaderPath, null, labels);
+        }
+
+        public static HoDebugViewInfo[] EnumViews<T>(string feature, string shaderName, string shaderPath,
+            HoDebugPerformanceInfo performance, params string[] labels) where T : Enum
+        {
             var values = (T[])Enum.GetValues(typeof(T));
             var views = new System.Collections.Generic.List<HoDebugViewInfo>();
             foreach (T value in values)
@@ -85,7 +91,7 @@ namespace lilToon.URP.Extensions.Debugging
                 if (mode == 0 || mode == All) continue;
                 string label = views.Count < labels.Length ? labels[views.Count] : value.ToString();
                 views.Add(new HoDebugViewInfo(feature, feature + "." + value, label, mode,
-                    shaderName, shaderPath, true, "Feature input unavailable."));
+                    shaderName, shaderPath, true, "Feature input unavailable.", performance));
             }
             return views.ToArray();
         }

@@ -4,6 +4,9 @@ namespace lilToon.URP.Extensions.ImageProcess
 {
     public static class ImageProcessDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "ImageProcess", "ImageProcess", "Ho-ImageProcess AfterURPPost");
+
         public static readonly HoDebugViewInfo[] Views =
         {
             new HoDebugViewInfo(
@@ -14,7 +17,8 @@ namespace lilToon.URP.Extensions.ImageProcess
                 string.Empty,
                 string.Empty,
                 false,
-                "ImageProcess debug is observed through Frame Debugger pass names and layer isolation; it has no semantic input texture or standalone debug shader.")
+                "ImageProcess debug is observed through Frame Debugger pass names and layer isolation; it has no semantic input texture or standalone debug shader.",
+                Performance)
         };
     }
 }

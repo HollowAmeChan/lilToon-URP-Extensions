@@ -4,6 +4,9 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 {
     public static class HoGeometryBufferDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "GeometryBuffer", "GeoBuffer", "Ho-GeometryBuffer Output", "Ho-GeometryBuffer Sky");
+
         private const string FeatureName = "GeometryBuffer";
         private const string ShaderName = "Hidden/lilToon/URP/GeometryBuffer/DebugView";
         private const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/Debug/HoGeometryBufferDebug.shader";
@@ -23,7 +26,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoGeometryBufferDebugMode mode)
         {
-            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback);
+            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback, Performance);
         }
     }
 }

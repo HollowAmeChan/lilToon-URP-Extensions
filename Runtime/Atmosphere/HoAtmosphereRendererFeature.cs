@@ -116,6 +116,8 @@ namespace lilToon.URP.Extensions.Atmosphere
 
         private sealed class EnvironmentPass : ScriptableRenderPass
         {
+            private static readonly ProfilingSampler CaptureProfilingSampler = new ProfilingSampler("Ho-Atmosphere Capture");
+            private static readonly ProfilingSampler PublishProfilingSampler = new ProfilingSampler("Ho-Atmosphere Publish");
             private readonly HoAtmosphereCache cache;
             private new HoAtmosphereCache.Input input;
             private Vector4 parameters, tint, constant;
@@ -156,13 +158,16 @@ namespace lilToon.URP.Extensions.Atmosphere
                             builder.SetRenderFunc(static (FaceData d, UnsafeGraphContext context) =>
                             {
                                 var cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
-                                cmd.SetRenderTarget(d.input.texture.nameID, 0, (CubemapFace)d.face);
-                                cmd.SetViewport(new Rect(0, 0, d.size, d.size));
-                                cmd.ClearRenderTarget(false, true, Color.clear);
-                                cmd.SetViewProjectionMatrices(d.view, d.projection);
-                                cmd.DrawRendererList(d.list);
-                                cmd.SetViewProjectionMatrices(d.restoreView, d.restoreProjection);
-                                if (d.last) d.cache.Complete(d.input);
+                                using (new ProfilingScope(cmd, CaptureProfilingSampler))
+                                {
+                                    cmd.SetRenderTarget(d.input.texture.nameID, 0, (CubemapFace)d.face);
+                                    cmd.SetViewport(new Rect(0, 0, d.size, d.size));
+                                    cmd.ClearRenderTarget(false, true, Color.clear);
+                                    cmd.SetViewProjectionMatrices(d.view, d.projection);
+                                    cmd.DrawRendererList(d.list);
+                                    cmd.SetViewProjectionMatrices(d.restoreView, d.restoreProjection);
+                                    if (d.last) d.cache.Complete(d.input);
+                                }
                             });
                         }
                     }
@@ -177,33 +182,42 @@ namespace lilToon.URP.Extensions.Atmosphere
                     builder.SetGlobalTextureAfterPass(texture, HoAtmosphereBindings.RadianceId);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
-                    builder.SetRenderFunc(static (PublishData d, RasterGraphContext context) => HoAtmosphereBindings.Bind(context.cmd, d.resources));
+                    builder.SetRenderFunc(static (PublishData d, RasterGraphContext context) =>
+                    {
+                        using (new ProfilingScope(context.cmd, PublishProfilingSampler))
+                        {
+                            HoAtmosphereBindings.Bind(context.cmd, d.resources);
+                        }
+                    });
                 }
             }
 
             public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
             {
                 var cmd = CommandBufferPool.Get("HoAtmosphere");
-                if (input.capture)
+                using (new ProfilingScope(cmd, CaptureProfilingSampler))
                 {
-                    for (int face = 0; face < 6; ++face)
+                    if (input.capture)
                     {
-                        var faceCamera = cache.FaceCamera(face);
-                        var list = context.CreateSkyboxRendererList(faceCamera);
-                        cmd.SetRenderTarget(input.texture.nameID, 0, (CubemapFace)face);
-                        cmd.SetViewport(new Rect(0, 0, input.resolution, input.resolution));
-                        cmd.ClearRenderTarget(false, true, Color.clear);
-                        cmd.SetViewProjectionMatrices(faceCamera.worldToCameraMatrix, faceCamera.projectionMatrix);
-                        cmd.DrawRendererList(list);
+                        for (int face = 0; face < 6; ++face)
+                        {
+                            var faceCamera = cache.FaceCamera(face);
+                            var list = context.CreateSkyboxRendererList(faceCamera);
+                            cmd.SetRenderTarget(input.texture.nameID, 0, (CubemapFace)face);
+                            cmd.SetViewport(new Rect(0, 0, input.resolution, input.resolution));
+                            cmd.ClearRenderTarget(false, true, Color.clear);
+                            cmd.SetViewProjectionMatrices(faceCamera.worldToCameraMatrix, faceCamera.projectionMatrix);
+                            cmd.DrawRendererList(list);
+                        }
+                        cmd.SetViewProjectionMatrices(renderingData.cameraData.GetViewMatrix(), renderingData.cameraData.GetProjectionMatrix());
+                        CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle,
+                            renderingData.cameraData.renderer.cameraDepthTargetHandle);
+                        var descriptor = renderingData.cameraData.cameraTargetDescriptor;
+                        cmd.SetViewport(renderingData.cameraData.isDefaultViewport
+                            ? new Rect(0, 0, descriptor.width, descriptor.height)
+                            : renderingData.cameraData.camera.pixelRect);
+                        cache.Complete(input);
                     }
-                    cmd.SetViewProjectionMatrices(renderingData.cameraData.GetViewMatrix(), renderingData.cameraData.GetProjectionMatrix());
-                    CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle,
-                        renderingData.cameraData.renderer.cameraDepthTargetHandle);
-                    var descriptor = renderingData.cameraData.cameraTargetDescriptor;
-                    cmd.SetViewport(renderingData.cameraData.isDefaultViewport
-                        ? new Rect(0, 0, descriptor.width, descriptor.height)
-                        : renderingData.cameraData.camera.pixelRect);
-                    cache.Complete(input);
                 }
                 cmd.SetGlobalTexture(HoAtmosphereBindings.RadianceId, input.texture.nameID);
                 cmd.SetGlobalVector(HoAtmosphereBindings.ParametersId, parameters);

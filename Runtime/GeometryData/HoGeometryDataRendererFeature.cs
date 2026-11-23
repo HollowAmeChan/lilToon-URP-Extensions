@@ -91,6 +91,7 @@ namespace lilToon.URP.Extensions.GeometryData
 
         private sealed class PublishPass : ScriptableRenderPass
         {
+            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GD Outline Publish");
             private sealed class Data { public BufferHandle entries,values;public int count; }
             public PublishPass(){renderPassEvent=RenderPassEvent.BeforeRendering;}
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frameData)
@@ -103,10 +104,13 @@ namespace lilToon.URP.Extensions.GeometryData
                     builder.AllowGlobalStateModification(true);
                     builder.SetRenderFunc(static (Data d,RasterGraphContext context)=>
                     {
-                        context.cmd.SetGlobalBuffer(HoOutlineDataRegistry.EntriesId,d.entries);
-                        context.cmd.SetGlobalBuffer(HoOutlineDataRegistry.ValuesId,d.values);
-                        context.cmd.SetGlobalInt(HoOutlineDataRegistry.CountId,d.count);
-                        context.cmd.SetGlobalFloat(HoOutlineDataRegistry.AvailableId,1);
+                        using(new ProfilingScope(context.cmd,ProfilingSampler))
+                        {
+                            context.cmd.SetGlobalBuffer(HoOutlineDataRegistry.EntriesId,d.entries);
+                            context.cmd.SetGlobalBuffer(HoOutlineDataRegistry.ValuesId,d.values);
+                            context.cmd.SetGlobalInt(HoOutlineDataRegistry.CountId,d.count);
+                            context.cmd.SetGlobalFloat(HoOutlineDataRegistry.AvailableId,1);
+                        }
                     });
                 }
             }
@@ -115,8 +119,11 @@ namespace lilToon.URP.Extensions.GeometryData
             {
                 HoOutlineDataRegistry.Capture(out var entries,out var values);
                 var cmd=CommandBufferPool.Get("Ho-GD Outline Publish");
-                cmd.SetGlobalBuffer(HoOutlineDataRegistry.EntriesId,entries);cmd.SetGlobalBuffer(HoOutlineDataRegistry.ValuesId,values);
-                cmd.SetGlobalInt(HoOutlineDataRegistry.CountId,HoOutlineDataRegistry.EntryCount);cmd.SetGlobalFloat(HoOutlineDataRegistry.AvailableId,1);
+                using(new ProfilingScope(cmd,ProfilingSampler))
+                {
+                    cmd.SetGlobalBuffer(HoOutlineDataRegistry.EntriesId,entries);cmd.SetGlobalBuffer(HoOutlineDataRegistry.ValuesId,values);
+                    cmd.SetGlobalInt(HoOutlineDataRegistry.CountId,HoOutlineDataRegistry.EntryCount);cmd.SetGlobalFloat(HoOutlineDataRegistry.AvailableId,1);
+                }
                 context.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
             }
 #pragma warning restore CS0672, CS0618

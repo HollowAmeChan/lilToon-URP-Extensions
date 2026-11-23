@@ -301,6 +301,7 @@ namespace lilToon.URP.Extensions.RTShadow
 
         internal sealed class ShadowPass : ScriptableRenderPass
         {
+            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-RTShadow");
             private Output output; private HoRTView view; private RayTracingShader shader; private uint[] receivers;
             private ComputeShader sigmaShader;
             private Vector4 lightDirection, parameters, localPosition, localForward; private bool main; private int slot; private int samples, seed, signature; private float strength, tanRadius;
@@ -362,7 +363,7 @@ namespace lilToon.URP.Extensions.RTShadow
                     {
                         var cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd); d.primary.Bind(CommandBufferHelpers.GetRasterCommandBuffer(cmd));
                         if (d.output.sigma != null) d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd), d.sigmaShader, d.sigmaShader.FindKernel("Prepare"));
-                        Produce(cmd, d);
+                        using (new ProfilingScope(cmd, ProfilingSampler)) Produce(cmd, d);
                     });
                 }
             }
@@ -402,7 +403,8 @@ namespace lilToon.URP.Extensions.RTShadow
                 var d = new Data(); Snapshot(d, data.cameraData.camera, data.cameraData.GetViewMatrix(), data.cameraData.GetProjectionMatrix()); d.scene = view.ReadCompatibility(); var cmd = CommandBufferPool.Get("Ho-RTShadow raw main-light visibility");
                 HoRTPrimarySurfaceInputs.BindCompatibility(cmd, data.cameraData, true);
                 if (output.sigma != null) HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd, sigmaShader, sigmaShader.FindKernel("Prepare"), data.cameraData, true);
-                Produce(cmd, d); if(main)cmd.SetGlobalTexture("_HoRTShadowRawTexture", output.raw.nameID);
+                using (new ProfilingScope(cmd, ProfilingSampler)) Produce(cmd, d);
+                if(main)cmd.SetGlobalTexture("_HoRTShadowRawTexture", output.raw.nameID);
                 if(main)cmd.SetGlobalTexture("_HoRTShadowVisibilityTexture", output.Visibility.nameID);
                 var depth = HoSurfaceBufferPass.CompatibilityProduced ? HoSurfaceBufferPass.CompatibilityDepthTexture : null;
                 if(main)cmd.SetGlobalTexture("_HoRTShadowDepthTexture", depth?.rt != null ? depth.nameID : new RenderTargetIdentifier(Texture2D.blackTexture));

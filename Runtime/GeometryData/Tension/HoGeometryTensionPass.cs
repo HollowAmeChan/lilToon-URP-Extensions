@@ -8,6 +8,8 @@ namespace lilToon.URP.Extensions.GeometryData
 {
     internal sealed class HoGeometryTensionPass : ScriptableRenderPass
     {
+        private static readonly ProfilingSampler TensionProfilingSampler = new ProfilingSampler("Ho-GD Tension Produce");
+        private static readonly ProfilingSampler PublishProfilingSampler = new ProfilingSampler("Ho-GD Tension Publish");
         private readonly List<HoGeometrySkinnedSample> borrowed = new List<HoGeometrySkinnedSample>();
         private ComputeShader compute;
         private int extractKernel, triangleKernel, gatherKernel, smoothKernel, blendKernel;
@@ -85,23 +87,25 @@ namespace lilToon.URP.Extensions.GeometryData
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (ComputeData data, ComputeGraphContext context) =>
                     {
-                        var cmd = context.cmd; var s = data.shader;
-                        cmd.SetComputeIntParam(s, "_VertexCount", data.vertices); cmd.SetComputeIntParam(s, "_TriangleCount", data.faces);
-                        cmd.SetComputeIntParam(s, "_Stride", data.stride); cmd.SetComputeIntParam(s, "_OutputOffset", data.offset);
-                        cmd.SetComputeFloatParam(s, "_LengthEpsilon", data.lengthEpsilon); cmd.SetComputeFloatParam(s, "_AreaEpsilon", data.areaEpsilon);
-                        cmd.SetComputeVectorParam(s, "_Weights", data.weights); cmd.SetComputeMatrixParam(s, "_ToRendererLocal", data.matrix);
-                        cmd.SetComputeBufferParam(s, data.extract, "_Source", data.source); cmd.SetComputeBufferParam(s, data.extract, "_Positions", data.positions);
-                        cmd.DispatchCompute(s, data.extract, (data.vertices + 63) / 64, 1, 1);
-                        cmd.SetComputeBufferParam(s, data.triangle, "_Positions", data.positions); cmd.SetComputeBufferParam(s, data.triangle, "_Triangles", data.triangles);
-                        cmd.SetComputeBufferParam(s, data.triangle, "_RestMetrics", data.restMetrics); cmd.SetComputeBufferParam(s, data.triangle, "_TriangleMetrics", data.triangleMetrics);
-                        cmd.DispatchCompute(s, data.triangle, (data.faces + 63) / 64, 1, 1);
-                        cmd.SetComputeBufferParam(s, data.gather, "_Positions", data.positions); cmd.SetComputeBufferParam(s, data.gather, "_RestPositions", data.rest);
-                        cmd.SetComputeBufferParam(s, data.gather, "_RestMetrics", data.restMetrics); cmd.SetComputeBufferParam(s, data.gather, "_TriangleMetrics", data.triangleMetrics);
-                        cmd.SetComputeBufferParam(s, data.gather, "_NeighborOffsets", data.neighborOffsets); cmd.SetComputeBufferParam(s, data.gather, "_Neighbors", data.neighbors);
-                        cmd.SetComputeBufferParam(s, data.gather, "_CornerOffsets", data.cornerOffsets); cmd.SetComputeBufferParam(s, data.gather, "_Corners", data.corners);
-                        cmd.SetComputeBufferParam(s, data.gather, "_Tension", data.output); cmd.DispatchCompute(s, data.gather, (data.vertices + 63) / 64, 1, 1);
-                        if (data.smoothingIterations > 0 && data.smoothingBlend > 0)
+                        using (new ProfilingScope(context.cmd, TensionProfilingSampler))
                         {
+                            var cmd = context.cmd; var s = data.shader;
+                            cmd.SetComputeIntParam(s, "_VertexCount", data.vertices); cmd.SetComputeIntParam(s, "_TriangleCount", data.faces);
+                            cmd.SetComputeIntParam(s, "_Stride", data.stride); cmd.SetComputeIntParam(s, "_OutputOffset", data.offset);
+                            cmd.SetComputeFloatParam(s, "_LengthEpsilon", data.lengthEpsilon); cmd.SetComputeFloatParam(s, "_AreaEpsilon", data.areaEpsilon);
+                            cmd.SetComputeVectorParam(s, "_Weights", data.weights); cmd.SetComputeMatrixParam(s, "_ToRendererLocal", data.matrix);
+                            cmd.SetComputeBufferParam(s, data.extract, "_Source", data.source); cmd.SetComputeBufferParam(s, data.extract, "_Positions", data.positions);
+                            cmd.DispatchCompute(s, data.extract, (data.vertices + 63) / 64, 1, 1);
+                            cmd.SetComputeBufferParam(s, data.triangle, "_Positions", data.positions); cmd.SetComputeBufferParam(s, data.triangle, "_Triangles", data.triangles);
+                            cmd.SetComputeBufferParam(s, data.triangle, "_RestMetrics", data.restMetrics); cmd.SetComputeBufferParam(s, data.triangle, "_TriangleMetrics", data.triangleMetrics);
+                            cmd.DispatchCompute(s, data.triangle, (data.faces + 63) / 64, 1, 1);
+                            cmd.SetComputeBufferParam(s, data.gather, "_Positions", data.positions); cmd.SetComputeBufferParam(s, data.gather, "_RestPositions", data.rest);
+                            cmd.SetComputeBufferParam(s, data.gather, "_RestMetrics", data.restMetrics); cmd.SetComputeBufferParam(s, data.gather, "_TriangleMetrics", data.triangleMetrics);
+                            cmd.SetComputeBufferParam(s, data.gather, "_NeighborOffsets", data.neighborOffsets); cmd.SetComputeBufferParam(s, data.gather, "_Neighbors", data.neighbors);
+                            cmd.SetComputeBufferParam(s, data.gather, "_CornerOffsets", data.cornerOffsets); cmd.SetComputeBufferParam(s, data.gather, "_Corners", data.corners);
+                            cmd.SetComputeBufferParam(s, data.gather, "_Tension", data.output); cmd.DispatchCompute(s, data.gather, (data.vertices + 63) / 64, 1, 1);
+                            if (data.smoothingIterations > 0 && data.smoothingBlend > 0)
+                            {
                             cmd.SetComputeMatrixParam(s, "_RendererToWorld", data.rendererToWorld);
                             cmd.SetComputeBufferParam(s, data.smooth, "_Positions", data.positions);
                             cmd.SetComputeBufferParam(s, data.smooth, "_NeighborOffsets", data.neighborOffsets);
@@ -119,11 +123,12 @@ namespace lilToon.URP.Extensions.GeometryData
                             cmd.SetComputeBufferParam(s, data.blend, "_SmoothInput", input);
                             cmd.SetComputeBufferParam(s, data.blend, "_Tension", data.output);
                             cmd.DispatchCompute(s, data.blend, (data.vertices + 63) / 64, 1, 1);
+                            }
+                            data.producer.ProducedFrame = data.frame; data.producer.ProducedWeights = data.weights; data.producer.ProductionCount++;
+                            data.producer.ProducedSmoothingIterations = data.smoothingIterations;
+                            data.producer.ProducedSmoothingBlend = data.smoothingBlend;
+                            data.producer.SetStatus($"有效 GPU 数据；参考版本 {data.producer.ReferenceVersion}，帧 {data.frame}");
                         }
-                        data.producer.ProducedFrame = data.frame; data.producer.ProducedWeights = data.weights; data.producer.ProductionCount++;
-                        data.producer.ProducedSmoothingIterations = data.smoothingIterations;
-                        data.producer.ProducedSmoothingBlend = data.smoothingBlend;
-                        data.producer.SetStatus($"有效 GPU 数据；参考版本 {data.producer.ReferenceVersion}，帧 {data.frame}");
                     });
                 }
             }
@@ -134,8 +139,11 @@ namespace lilToon.URP.Extensions.GeometryData
                 builder.UseBuffer(d.entries, AccessFlags.Read); builder.UseBuffer(d.values, AccessFlags.Read); builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static (PublishData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalBuffer(HoTensionDataRegistry.EntriesId, data.entries); context.cmd.SetGlobalBuffer(HoTensionDataRegistry.ValuesId, data.values);
-                    context.cmd.SetGlobalInt(HoTensionDataRegistry.CountId, data.count); context.cmd.SetGlobalFloat(HoTensionDataRegistry.AvailableId, 1);
+                    using (new ProfilingScope(context.cmd, PublishProfilingSampler))
+                    {
+                        context.cmd.SetGlobalBuffer(HoTensionDataRegistry.EntriesId, data.entries); context.cmd.SetGlobalBuffer(HoTensionDataRegistry.ValuesId, data.values);
+                        context.cmd.SetGlobalInt(HoTensionDataRegistry.CountId, data.count); context.cmd.SetGlobalFloat(HoTensionDataRegistry.AvailableId, 1);
+                    }
                 });
             }
         }
@@ -144,8 +152,10 @@ namespace lilToon.URP.Extensions.GeometryData
         {
             var items = HoTensionDataRegistry.Capture(out var entries, out var values);
             var cmd = CommandBufferPool.Get("Ho-GD Tension");
-            foreach (var item in items)
+            using (new ProfilingScope(cmd, TensionProfilingSampler))
             {
+                foreach (var item in items)
+                {
                 if (!Acquire(item, out var sample)) continue;
                 var p = item.producer; var r = p.EnsureResources();
                 int iterations = p.SmoothingBlend > 0 ? p.SmoothingIterations : 0;
@@ -187,9 +197,10 @@ namespace lilToon.URP.Extensions.GeometryData
                 p.ProducedFrame = Time.frameCount; p.ProducedWeights = p.Weights; p.ProductionCount++;
                 p.ProducedSmoothingIterations = p.SmoothingIterations; p.ProducedSmoothingBlend = p.SmoothingBlend;
             }
-            HoTensionDataRegistry.UploadEntries();
-            cmd.SetGlobalBuffer(HoTensionDataRegistry.EntriesId, entries); cmd.SetGlobalBuffer(HoTensionDataRegistry.ValuesId, values);
-            cmd.SetGlobalInt(HoTensionDataRegistry.CountId, HoTensionDataRegistry.EntryCount); cmd.SetGlobalFloat(HoTensionDataRegistry.AvailableId, 1);
+                HoTensionDataRegistry.UploadEntries();
+                cmd.SetGlobalBuffer(HoTensionDataRegistry.EntriesId, entries); cmd.SetGlobalBuffer(HoTensionDataRegistry.ValuesId, values);
+                cmd.SetGlobalInt(HoTensionDataRegistry.CountId, HoTensionDataRegistry.EntryCount); cmd.SetGlobalFloat(HoTensionDataRegistry.AvailableId, 1);
+            }
             context.ExecuteCommandBuffer(cmd); CommandBufferPool.Release(cmd);
         }
 #pragma warning restore CS0672, CS0618

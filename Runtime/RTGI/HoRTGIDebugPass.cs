@@ -8,8 +8,11 @@ namespace lilToon.URP.Extensions.RTGI
 {
     public static class HoRTGIDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "RTGI", "RTGI", "Ho-RTGI", "Ho-RTGI Composite");
+
         public static readonly HoDebugViewInfo[] Views=HoDebugGrid.EnumViews<HoRTGIDebugMode>("RTGI","Hidden/lilToon/URP/RTGI/Debug",
-            "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGIDebug.shader");
+            "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI/Shaders/HoRTGIDebug.shader", Performance);
     }
     internal sealed class HoRTGIDebugPass:HoDebugRenderPass
     {

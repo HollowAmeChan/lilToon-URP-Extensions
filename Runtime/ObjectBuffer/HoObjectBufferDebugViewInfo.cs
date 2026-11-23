@@ -4,6 +4,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 {
     public static class HoObjectBufferDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "ObjectBuffer", "ObjBuffer", "Ho-ObjectBuffer Output", "Ho-ObjectBuffer MSAA Resolve");
+
         private const string FeatureName = "ObjectBuffer";
         private const string ShaderName = "Hidden/lilToon/URP/ObjectBuffer/DebugView";
         private const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/Debug/HoObjectBufferDebug.shader";
@@ -29,7 +32,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoObjectBufferDebugMode mode)
         {
-            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback);
+            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback, Performance);
         }
     }
 }

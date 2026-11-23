@@ -4,6 +4,9 @@ namespace lilToon.URP.Extensions.ShadowCast
 {
     public static class HoShadowCastDebugViewInfo
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "ShadowCast", "ShadowCast", "Ho-ShadowCast");
+
         private const string FeatureName = "ShadowCast";
         private const string ShaderName = "Hidden/lilToon-HoShadowCast/URP/DebugView";
         private const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader";
@@ -17,7 +20,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoShadowCastDebugMode mode)
         {
-            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback);
+            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback, Performance);
         }
     }
 }

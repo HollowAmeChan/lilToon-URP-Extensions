@@ -47,6 +47,23 @@ namespace lilToon.URP.Extensions.Debugging
             }
         }
 
+        public static IReadOnlyList<HoDebugPerformanceInfo> PerformanceViews
+        {
+            get
+            {
+                List<HoDebugPerformanceInfo> performances = new List<HoDebugPerformanceInfo>();
+                foreach (HoDebugViewInfo view in AllViews)
+                {
+                    if (view.Performance != null && !performances.Contains(view.Performance))
+                    {
+                        performances.Add(view.Performance);
+                    }
+                }
+
+                return performances;
+            }
+        }
+
         public static IReadOnlyList<HoDebugViewInfo> ShaderCollectionViews
         {
             get
@@ -63,6 +80,9 @@ namespace lilToon.URP.Extensions.Debugging
                 views.Add(new HoDebugViewInfo("DebugGrid", "debug-grid.overlay", "Labels", 0,
                     "Hidden/lilToon/URP/Debug/GridOverlay",
                     "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugGridOverlay.shader", true, "Grid labels unavailable."));
+                views.Add(new HoDebugViewInfo("DebugStats", "debug-stats.overlay", "Performance", 0,
+                    "Hidden/lilToon/URP/Debug/StatsOverlay",
+                    "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugStatsOverlay.shader", true, "Performance overlay unavailable."));
                 return views;
             }
         }

@@ -45,6 +45,7 @@ namespace lilToon.URP.Extensions.Atmosphere
 
     internal sealed class HoAtmosphereMediumPass : ScriptableRenderPass
     {
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-Atmosphere Medium Publish");
         private HoAtmosphereMediumSnapshot snapshot;
         private Texture3D wrappedTexture, fallback;
         private RTHandle texture;
@@ -62,23 +63,32 @@ namespace lilToon.URP.Extensions.Atmosphere
                 builder.UseTexture(input.densityTexture, AccessFlags.Read);
                 builder.SetGlobalTextureAfterPass(input.densityTexture, HoAtmosphereMediumBindings.TextureId);
                 builder.AllowGlobalStateModification(true); builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (Data d, RasterGraphContext context) => HoAtmosphereMediumBindings.Bind(context.cmd, d.input, d.time));
+                builder.SetRenderFunc(static (Data d, RasterGraphContext context) =>
+                {
+                    using (new ProfilingScope(context.cmd, ProfilingSampler))
+                    {
+                        HoAtmosphereMediumBindings.Bind(context.cmd, d.input, d.time);
+                    }
+                });
             }
         }
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
             EnsureTexture();
             var cmd = CommandBufferPool.Get("HoAtmosphere Medium Publish");
-            cmd.SetGlobalMatrix(HoAtmosphereMediumBindings.WorldToRegionId, snapshot.worldToRegion);
-            cmd.SetGlobalMatrix(HoAtmosphereMediumBindings.RegionToWorldId, snapshot.valid ? snapshot.worldToRegion.inverse : Matrix4x4.identity);
-            cmd.SetGlobalVector(HoAtmosphereMediumBindings.HalfSizeId, snapshot.halfSizeAndBlend);
-            cmd.SetGlobalVector(HoAtmosphereMediumBindings.DensityId, snapshot.valid ? snapshot.densityAndWeight : Vector4.zero);
-            cmd.SetGlobalVector(HoAtmosphereMediumBindings.TintId, snapshot.tint);
-            cmd.SetGlobalVector(HoAtmosphereMediumBindings.NoiseId, snapshot.noise);
-            cmd.SetGlobalVector(HoAtmosphereMediumBindings.WindId, snapshot.wind);
-            cmd.SetGlobalFloat(HoAtmosphereMediumBindings.TimeId, snapshot.sampleTime);
-            cmd.SetGlobalVector(HoAtmosphereMediumBindings.AlbedoId, snapshot.albedo); cmd.SetGlobalVector(HoAtmosphereMediumBindings.OpticsId, snapshot.optics);
-            cmd.SetGlobalTexture(HoAtmosphereMediumBindings.TextureId, texture.nameID);
+            using (new ProfilingScope(cmd, ProfilingSampler))
+            {
+                cmd.SetGlobalMatrix(HoAtmosphereMediumBindings.WorldToRegionId, snapshot.worldToRegion);
+                cmd.SetGlobalMatrix(HoAtmosphereMediumBindings.RegionToWorldId, snapshot.valid ? snapshot.worldToRegion.inverse : Matrix4x4.identity);
+                cmd.SetGlobalVector(HoAtmosphereMediumBindings.HalfSizeId, snapshot.halfSizeAndBlend);
+                cmd.SetGlobalVector(HoAtmosphereMediumBindings.DensityId, snapshot.valid ? snapshot.densityAndWeight : Vector4.zero);
+                cmd.SetGlobalVector(HoAtmosphereMediumBindings.TintId, snapshot.tint);
+                cmd.SetGlobalVector(HoAtmosphereMediumBindings.NoiseId, snapshot.noise);
+                cmd.SetGlobalVector(HoAtmosphereMediumBindings.WindId, snapshot.wind);
+                cmd.SetGlobalFloat(HoAtmosphereMediumBindings.TimeId, snapshot.sampleTime);
+                cmd.SetGlobalVector(HoAtmosphereMediumBindings.AlbedoId, snapshot.albedo); cmd.SetGlobalVector(HoAtmosphereMediumBindings.OpticsId, snapshot.optics);
+                cmd.SetGlobalTexture(HoAtmosphereMediumBindings.TextureId, texture.nameID);
+            }
             context.ExecuteCommandBuffer(cmd); CommandBufferPool.Release(cmd);
         }
         private void EnsureTexture()
