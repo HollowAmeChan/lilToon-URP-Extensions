@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.Debugging
             public TextureHandle target;
             public Vector2Int size;
             public Rect viewport;
-            public UniversalCameraData cameraData;
+            public bool flipY;
             public string[] lines;
         }
 
@@ -52,7 +52,7 @@ namespace lilToon.URP.Extensions.Debugging
                 data.target = resources.activeColorTexture;
                 data.size = new Vector2Int(width, height);
                 data.viewport = cameraData.camera.pixelRect;
-                data.cameraData = cameraData;
+                data.flipY = SystemInfo.graphicsUVStartsAtTop;
                 if (data.viewport.width <= 0.0f || data.viewport.height <= 0.0f)
                 {
                     data.viewport = new Rect(0, 0, width, height);
@@ -62,8 +62,7 @@ namespace lilToon.URP.Extensions.Debugging
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
-                    bool flipY = passData.cameraData.IsHandleYFlipped(passData.target);
-                    HoDebugTextOverlay.DrawLines(context.cmd, passData.lines, passData.size, passData.viewport, flipY);
+                    HoDebugTextOverlay.DrawLines(context.cmd, passData.lines, passData.size, passData.viewport, passData.flipY);
                 });
             }
         }
@@ -86,9 +85,7 @@ namespace lilToon.URP.Extensions.Debugging
             {
                 viewport = new Rect(0, 0, Mathf.Max(1, camera.pixelWidth), Mathf.Max(1, camera.pixelHeight));
             }
-            bool flipY = SystemInfo.graphicsUVStartsAtTop
-                && camera.targetTexture == null
-                && camera.cameraType != CameraType.SceneView;
+            bool flipY = SystemInfo.graphicsUVStartsAtTop;
             HoDebugTextOverlay.DrawLines(CommandBufferHelpers.GetRasterCommandBuffer(cmd), CopyLines(lines),
                 new Vector2Int(Mathf.Max(1, camera.pixelWidth), Mathf.Max(1, camera.pixelHeight)), viewport, flipY);
             context.ExecuteCommandBuffer(cmd);
