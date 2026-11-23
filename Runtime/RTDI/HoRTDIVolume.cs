@@ -29,11 +29,21 @@ namespace lilToon.URP.Extensions.RTDI
         public HoRTDIFinalSamplingParameter(HoRTDIFinalSampling value) : base(value) { }
         public override void Interp(HoRTDIFinalSampling from,HoRTDIFinalSampling to,float t)=>value=t>0?to:from;
     }
-    [Serializable,VolumeComponentMenu("Post-processing/Ho-RTDI/直接光")]
+    [Serializable,VolumeComponentMenu(HoVolumeNames.RTDI)]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.RTDI)]
+#endif
     public sealed class HoRTDIVolume : VolumeComponent,IPostProcessComponent
     {
-        [Tooltip("必须勾选此项覆盖并开启，当前相机才运行 RTDI；仅添加 Renderer Feature 不会自动启用。")]
+        public HoRTDIVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.RTDI;
+#endif
+        }
+
+        [Tooltip("必须勾选此项覆盖并开启，当前相机才运行 RTDI；仅添加 Renderer Feature 不会自动启用。\n\n勾选左侧覆盖并启用才运行 RTDI。这里控制生产参数；画面合成由 Ho ScreenProcess 的 RTDI 图层控制。")]
         [InspectorName("启用")] public BoolParameter enable=new BoolParameter(false);
         // Legacy serialized fields retained for old Volume assets. Camera-color
         // ownership now belongs to ScreenProcess RTDI layers.
@@ -50,7 +60,7 @@ namespace lilToon.URP.Extensions.RTDI
         [Tooltip("局部灯初始候选数；增加可降低方差，同时增加采样开销。方向灯另有一个候选。")]
         public ClampedIntParameter initialSamples=new ClampedIntParameter(8,1,32);
         public BoolParameter temporal=new BoolParameter(true);
-        [Tooltip("ReSTIR 历史样本预算，不是 NRD 历史帧数；建议从4开始。")]
+        [Tooltip("ReSTIR 历史样本预算，不是 NRD 历史帧数；建议从4开始。\n\nReSTIR 历史上限，不是 NRD 历史帧数，通常从 4 开始；增加候选和重采样预算会增加开销。")]
         public ClampedIntParameter maxHistory=new ClampedIntParameter(4,1,32);
         public BoolParameter spatial=new BoolParameter(true);
         public ClampedIntParameter spatialSamples=new ClampedIntParameter(4,1,16);
@@ -61,6 +71,7 @@ namespace lilToon.URP.Extensions.RTDI
         public ClampedIntParameter environmentSamples=new ClampedIntParameter(4,1,32);
         [Tooltip("与天空 PDF 使用 MIS 的 BRDF 候选；0关闭该提案。")]
         public ClampedIntParameter environmentBrdfSamples=new ClampedIntParameter(4,0,32);
+        [Tooltip("查看独立参考 BRDF 直接光；关闭调试不影响 RTDI 产品生产。")]
         [InspectorName("调试模式")] public HoRTDIDebugModeParameter debugMode=new HoRTDIDebugModeParameter(HoRTDIDebugMode.Off);
         public BoolParameter debugInSceneView=new BoolParameter(true);
         public BoolParameter debugInGameView=new BoolParameter(true);

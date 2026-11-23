@@ -6,9 +6,9 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.GeometryData
 {
     [CustomEditor(typeof(HoGeometryDataVolume))]
-    internal sealed class HoGeometryDataVolumeEditor : VolumeComponentEditor
+    internal sealed class HoGeometryDataVolumeEditor : HoVolumeComponentEditor
     {
-        private bool showRuntime = true, showDebug;
+        private bool showDebug;
         private SerializedDataParameter enable, mode, scene, game, layers, range;
         public override void OnEnable()
         {
@@ -19,27 +19,16 @@ namespace lilToon.URP.Extensions.Editor.GeometryData
         }
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.HelpBox("GD 的逐相机调试入口。RendererFeature 保留运行兜底与数据源状态；选择预览模式并勾选覆盖，即可独立查看几何数据，不需要开启材质 Tesion。", MessageType.Info);
-            if (LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", LilUrpEditorSectionGui.BoolSummary(enable), new Color(0.46f,0.64f,0.92f)))
+            PropertyField(enable, new GUIContent("启用"));
+            if (!HoVolumeEditorGUI.Section(ref showDebug, "调试", LilUrpEditorSectionGui.EnumSummary(mode))) return;
+            using (new EditorGUILayout.VerticalScope())
             {
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                {
-                    PropertyField(enable, new GUIContent("启用"));
-                    EditorGUILayout.HelpBox("未勾选覆盖时使用 Feature 的运行兜底值。", MessageType.None);
-                }
-            }
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", LilUrpEditorSectionGui.EnumSummary(mode), new Color(0.86f,0.62f,0.38f))) return;
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                PropertyField(mode, new GUIContent("调试模式"));
                 var selected = (HoGeometryDataDebugMode)mode.value.intValue;
-                if (selected != HoGeometryDataDebugMode.Off) EditorGUILayout.HelpBox(Describe(selected), MessageType.Info);
-                PropertyField(scene, new GUIContent("Scene 视图")); PropertyField(game, new GUIContent("Game 视图"));
+                PropertyField(mode, new GUIContent("调试模式", selected == HoGeometryDataDebugMode.Off ? null : Describe(selected)));
+                PropertyField(scene, new GUIContent("场景视图")); PropertyField(game, new GUIContent("游戏视图"));
                 PropertyField(layers, new GUIContent("预览 Layer Mask"));
                 if (selected == HoGeometryDataDebugMode.All || (selected >= HoGeometryDataDebugMode.TensionStretch && selected <= HoGeometryDataDebugMode.TensionAngular))
                     PropertyField(range, new GUIContent("热图满量程"));
-                if (selected != HoGeometryDataDebugMode.Off)
-                    EditorGUILayout.HelpBox("预览替换所选视图画面，直接画几何，跳过材质裁剪与描边位移。预览在最终后处理之后显示；数据源的准备状态和失败原因在组件与 Feature 中查看。", MessageType.None);
             }
         }
         private static string Describe(HoGeometryDataDebugMode mode)

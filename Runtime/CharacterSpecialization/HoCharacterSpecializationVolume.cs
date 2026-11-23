@@ -136,20 +136,23 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     }
 
 #if UNITY_2023_1_OR_NEWER
-    [VolumeComponentMenu("Post-processing/Ho-CharacterSpecialization/角色特化"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+    [VolumeComponentMenu(HoVolumeNames.CharacterSpecialization), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-    [VolumeComponentMenuForRenderPipeline("Post-processing/Ho-CharacterSpecialization/角色特化", typeof(UniversalRenderPipeline))]
+    [VolumeComponentMenuForRenderPipeline(HoVolumeNames.CharacterSpecialization, typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
     [VolumeRequiresRendererFeatures(typeof(HoCharacterSpecializationRendererFeature))]
 #endif
     [Serializable]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.CharacterSpecialization)]
+#endif
     public sealed class HoCharacterSpecializationVolume : VolumeComponent, IPostProcessComponent
     {
         public HoCharacterSpecializationVolume()
         {
 #if !UNITY_6000_3_OR_NEWER
-            displayName = "Ho-CharacterSpecialization 角色特化";
+            displayName = HoVolumeNames.CharacterSpecialization;
 #endif
         }
 

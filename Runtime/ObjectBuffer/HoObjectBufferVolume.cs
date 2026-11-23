@@ -20,20 +20,30 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     }
 
     [Serializable]
-    [VolumeComponentMenu("Post-processing/Ho-ObjectBuffer/逐物体通道")]
+    [VolumeComponentMenu(HoVolumeNames.ObjectBuffer)]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.ObjectBuffer)]
+#endif
     public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponent
     {
+        public HoObjectBufferVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.ObjectBuffer;
+#endif
+        }
+
         [InspectorName("启用")]
         public BoolParameter enable = new BoolParameter(true);
 
         [InspectorName("调试模式")]
         public HoObjectBufferDebugModeParameter debugMode = new HoObjectBufferDebugModeParameter(HoObjectBufferDebugMode.Off);
 
-        [InspectorName("Debug In Scene View")]
+        [InspectorName("场景视图")]
         public BoolParameter debugInSceneView = new BoolParameter(true);
 
-        [InspectorName("Debug In Game View")]
+        [InspectorName("游戏视图")]
         public BoolParameter debugInGameView = new BoolParameter(false);
 
         public bool IsActive()

@@ -18,7 +18,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     /// Documentation~/归档/CharacterSpecializationBrowser.md）。
     /// </remarks>
     [CustomEditor(typeof(HoCharacterSpecializationVolume))]
-    internal sealed class HoCharacterSpecializationVolumeEditor : VolumeComponentEditor
+    internal sealed class HoCharacterSpecializationVolumeEditor : HoVolumeComponentEditor
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;

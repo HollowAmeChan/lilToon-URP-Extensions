@@ -18,24 +18,34 @@ namespace lilToon.URP.Extensions.PlanarReflection
     }
 
 #if UNITY_2023_1_OR_NEWER
-    [VolumeComponentMenu("Post-processing/Ho-PlanarReflection/平面反射"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+    [VolumeComponentMenu(HoVolumeNames.PlanarReflection), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-    [VolumeComponentMenuForRenderPipeline("Post-processing/Ho-PlanarReflection/平面反射", typeof(UniversalRenderPipeline))]
+    [VolumeComponentMenuForRenderPipeline(HoVolumeNames.PlanarReflection, typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
     [VolumeRequiresRendererFeatures(typeof(HoPlanarReflectionRendererFeature))]
 #endif
     [Serializable]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.PlanarReflection)]
+#endif
     public sealed class HoPlanarReflectionVolume : VolumeComponent, IPostProcessComponent
     {
+        public HoPlanarReflectionVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.PlanarReflection;
+#endif
+        }
+
         [InspectorName("启用")]
         [Tooltip("覆盖 RendererFeature 的总开关；未勾选 Override 时沿用 RendererFeature 设置。")]
         public BoolParameter enable = new BoolParameter(true);
 
-        [InspectorName("Game View")]
+        [InspectorName("游戏视图")]
         public BoolParameter renderGameView = new BoolParameter(true);
 
-        [InspectorName("Scene View")]
+        [InspectorName("场景视图")]
         public BoolParameter renderSceneView = new BoolParameter(true);
 
         [InspectorName("最大反射面数")]

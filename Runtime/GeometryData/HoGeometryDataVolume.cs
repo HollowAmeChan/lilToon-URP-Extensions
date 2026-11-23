@@ -23,14 +23,26 @@ namespace lilToon.URP.Extensions.GeometryData
         public HoGeometryDataPassEventParameter(RenderPassEvent value, bool overrideState = false) : base(value, overrideState) { }
         public override void Interp(RenderPassEvent from, RenderPassEvent to, float t) => value = t > 0 ? to : from;
     }
-    [Serializable, VolumeComponentMenu("Post-processing/Ho-GeometryData/几何数据")]
+    [Serializable, VolumeComponentMenu(HoVolumeNames.GeometryData)]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.GeometryData)]
+#endif
     public sealed class HoGeometryDataVolume : VolumeComponent, IPostProcessComponent
     {
+        public HoGeometryDataVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.GeometryData;
+#endif
+        }
+
+        [Tooltip("逐相机覆盖运行开关；未覆盖时使用 Feature 兜底值。调试不要求开启材质 Tension。")]
         [InspectorName("启用")] public BoolParameter enable = new BoolParameter(true);
         [InspectorName("调试模式")] public HoGeometryDataDebugModeParameter debugMode = new HoGeometryDataDebugModeParameter(HoGeometryDataDebugMode.Off);
-        [InspectorName("Scene 视图")] public BoolParameter debugInSceneView = new BoolParameter(true);
-        [InspectorName("Game 视图")] public BoolParameter debugInGameView = new BoolParameter(true);
+        [InspectorName("场景视图")] public BoolParameter debugInSceneView = new BoolParameter(true);
+        [InspectorName("游戏视图")] public BoolParameter debugInGameView = new BoolParameter(true);
+        [Tooltip("仅筛选预览几何，不改变实际数据生产或材质；预览跳过材质裁剪与描边位移，在最终后处理之后显示。")]
         [InspectorName("预览 Layer Mask")] public HoGeometryDataLayerMaskParameter debugLayerMask = new HoGeometryDataLayerMaskParameter(-1);
         [InspectorName("热图满量程")] public MinFloatParameter debugMaxValue = new MinFloatParameter(0.2f, 0.0001f);
         [HideInInspector] public HoGeometryDataPassEventParameter debugPassEvent = new HoGeometryDataPassEventParameter(RenderPassEvent.AfterRenderingPostProcessing);

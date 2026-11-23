@@ -7,12 +7,10 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
 {
     /// <summary>
     /// SB 的调试入口面板（SB 架构 §14：调试在 Volume，feature 只放高级设置 + 兜底默认值）。
-    /// 调试模式的下拉里**只写视图名**，每个模式的说明按当前选择在下面**单独画一行**：
-    /// 说明塞进枚举显示名会被 Unity 的下拉当成分组（名字里的 "/" 会变成一层子菜单），
-    /// 而且下拉一展开就是一屏长句，选值反而看不见。
+    /// 下拉只显示视图名，当前视图的通道含义放在控件的悬停提示中。
     /// </summary>
     [CustomEditor(typeof(HoSurfaceBufferVolume))]
-    internal sealed class HoSurfaceBufferVolumeEditor : VolumeComponentEditor
+    internal sealed class HoSurfaceBufferVolumeEditor : HoVolumeComponentEditor
     {
         private SerializedDataParameter enable;
         private SerializedDataParameter debugMode;
@@ -31,14 +29,8 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
         public override void OnInspectorGUI()
         {
             PropertyField(enable);
-            PropertyField(debugMode);
-
-            // 只画当前模式的说明：整张表铺出来就等于把说明又挪回下拉里。
             string description = DescribeDebugMode((HoSurfaceBufferDebugMode)debugMode.value.intValue);
-            if (!string.IsNullOrEmpty(description))
-            {
-                EditorGUILayout.HelpBox(description, MessageType.None);
-            }
+            PropertyField(debugMode, new GUIContent("调试模式", description));
 
             PropertyField(debugInSceneView);
             PropertyField(debugInGameView);

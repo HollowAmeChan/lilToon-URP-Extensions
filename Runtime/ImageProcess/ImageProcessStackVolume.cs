@@ -21,20 +21,23 @@ namespace lilToon.URP.Extensions.PostProcessing
     }
 
 #if UNITY_2023_1_OR_NEWER
-    [VolumeComponentMenu("Post-processing/Ho-ImageProcess/Post Process Stack"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+    [VolumeComponentMenu(HoVolumeNames.ImageProcess), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-    [VolumeComponentMenuForRenderPipeline("Post-processing/Ho-ImageProcess/Post Process Stack", typeof(UniversalRenderPipeline))]
+    [VolumeComponentMenuForRenderPipeline(HoVolumeNames.ImageProcess, typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
     [VolumeRequiresRendererFeatures(typeof(ImageProcessRendererFeature))]
 #endif
     [Serializable]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.ImageProcess)]
+#endif
     public sealed class ImageProcessStackVolume : VolumeComponent, IPostProcessComponent
     {
         public ImageProcessStackVolume()
         {
 #if !UNITY_6000_3_OR_NEWER
-            displayName = "Ho-ImageProcess";
+            displayName = HoVolumeNames.ImageProcess;
 #endif
         }
 

@@ -5,7 +5,7 @@ using UnityEditor.Rendering;
 namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 {
     [CustomEditor(typeof(HoObjectBufferVolume))]
-    internal sealed class HoObjectBufferVolumeEditor : VolumeComponentEditor
+    internal sealed class HoObjectBufferVolumeEditor : HoVolumeComponentEditor
     {
         private SerializedDataParameter enable;
         private SerializedDataParameter debugMode;

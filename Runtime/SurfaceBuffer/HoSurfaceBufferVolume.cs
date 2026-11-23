@@ -21,10 +21,20 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
     /// <summary>SB 的**调试入口**（SB 架构 §14：调试在 Volume，feature 只放高级设置 + 兜底默认值）。</summary>
     [Serializable]
-    [VolumeComponentMenu("Post-processing/Ho-SurfaceBuffer/表面数值")]
+    [VolumeComponentMenu(HoVolumeNames.SurfaceBuffer)]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.SurfaceBuffer)]
+#endif
     public sealed class HoSurfaceBufferVolume : VolumeComponent, IPostProcessComponent
     {
+        public HoSurfaceBufferVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.SurfaceBuffer;
+#endif
+        }
+
         [InspectorName("启用")]
         public BoolParameter enable = new BoolParameter(true);
 
@@ -32,10 +42,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public HoSurfaceBufferDebugModeParameter debugMode =
             new HoSurfaceBufferDebugModeParameter(HoSurfaceBufferDebugMode.Off);
 
-        [InspectorName("Debug In Scene View")]
+        [InspectorName("场景视图")]
         public BoolParameter debugInSceneView = new BoolParameter(true);
 
-        [InspectorName("Debug In Game View")]
+        [InspectorName("游戏视图")]
         public BoolParameter debugInGameView = new BoolParameter(true);
 
         public bool IsActive()

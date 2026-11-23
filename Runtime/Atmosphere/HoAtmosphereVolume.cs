@@ -20,11 +20,21 @@ namespace lilToon.URP.Extensions.Atmosphere
         public override void Interp(HoAtmosphereDebugMode from, HoAtmosphereDebugMode to, float t) => value = t > 0 ? to : from;
     }
 
-    [Serializable, VolumeComponentMenu("Post-processing/HoAtmosphere/环境输入")]
+    [Serializable, VolumeComponentMenu(HoVolumeNames.Atmosphere)]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.Atmosphere)]
+#endif
     public sealed class HoAtmosphereVolume : VolumeComponent, IPostProcessComponent
     {
-        [InspectorName("环境输入启用"), Tooltip("仅覆盖环境辐射输入，不关闭基础大气区域介质。")]
+        public HoAtmosphereVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.Atmosphere;
+#endif
+        }
+
+        [InspectorName("环境输入启用"), Tooltip("仅覆盖环境辐射输入，不关闭基础大气区域介质。\n\n未覆盖的运行参数沿用 Ho Atmosphere Feature 兜底值。")]
         public BoolParameter enable = new BoolParameter(true);
         public MinFloatParameter intensity = new MinFloatParameter(1, 0);
         public ColorParameter tint = new ColorParameter(Color.white, true, false, false);

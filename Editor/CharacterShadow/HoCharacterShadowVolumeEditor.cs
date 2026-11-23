@@ -6,11 +6,11 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.CharacterShadow
 {
     [CustomEditor(typeof(HoCharacterShadowVolume))]
-    internal sealed class HoCharacterShadowVolumeEditor : VolumeComponentEditor
+    internal sealed class HoCharacterShadowVolumeEditor : HoVolumeComponentEditor
     {
-        private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
-        private static readonly Color SoftShadowColor = new Color(0.42f, 0.72f, 0.58f);
-        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
+
+
+
 
         private static bool showRuntime = true;
         private static bool showSoftShadow = true;
@@ -50,9 +50,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
 
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.HelpBox(
-                "逐相机覆盖；未勾选覆盖的字段用 RendererFeature 兜底值。接收对象由场景组件声明。",
-                MessageType.Info);
 
             DrawRuntime();
             DrawSoftShadow();
@@ -64,12 +61,12 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             string summary = LilUrpEditorSectionGui.BoolSummary(enable)
                 + " / " + LilUrpEditorSectionGui.EnumSummary(resolution)
                 + " / " + LilUrpEditorSectionGui.FloatSummary(softnessRadius);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
+            if (!HoVolumeEditorGUI.Section(ref showRuntime, "运行", summary))
             {
                 return;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
                 DrawParameter(enable, "启用");
                 DrawParameter(resolution, "单角色分辨率");
@@ -82,12 +79,12 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             string summary = LilUrpEditorSectionGui.BoolSummary(pcssEnabled)
                 + " / " + LilUrpEditorSectionGui.EnumSummary(pcssQuality)
                 + " / " + LilUrpEditorSectionGui.FloatSummary(pcssSoftness);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSoftShadow, "软阴影（PCSS）", summary, SoftShadowColor))
+            if (!HoVolumeEditorGUI.Section(ref showSoftShadow, "软阴影（PCSS）", summary))
             {
                 return;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
                 DrawParameter(pcssEnabled, "启用 PCSS");
                 DrawParameter(pcssQuality, "质量档");
@@ -96,24 +93,19 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 DrawParameter(pcssMaxPenumbraRadius, "半影半径上限（米）");
                 DrawParameter(pcssDepthBias, "Blocker 深度偏移");
 
-                EditorGUILayout.HelpBox(
-                    "Add Override 会把该组件所有字段都设成覆盖态，所以 feature 上改不动是正常的（要么在这里改，要么把覆盖勾掉）。",
-                    MessageType.None);
             }
         }
 
         private void DrawDebug()
         {
             string summary = LilUrpEditorSectionGui.EnumSummary(debugMode);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
+            if (!HoVolumeEditorGUI.Section(ref showDebug, "调试", summary))
             {
                 return;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
-                DrawParameter(debugMode, "调试模式");
-
                 int mode = debugMode != null && debugMode.value != null ? debugMode.value.intValue : 0;
                 string desc = null;
                 if (mode == (int)HoCharacterShadowDebugMode.Atlas)
@@ -129,22 +121,19 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     desc = "只放大「单角色 tile」那个 tile（编号见组件 Inspector 的「图集 Tile」；超范围显示紫色）。";
                 }
 
-                if (!string.IsNullOrEmpty(desc))
-                {
-                    EditorGUILayout.HelpBox(desc, MessageType.None);
-                }
+                DrawParameter(debugMode, "调试模式", desc);
 
-                DrawParameter(debugInSceneView, "Debug In Scene View");
-                DrawParameter(debugInGameView, "Debug In Game View");
+                DrawParameter(debugInSceneView, "场景视图");
+                DrawParameter(debugInGameView, "游戏视图");
                 DrawParameter(debugCharacter, "单角色 tile");
             }
         }
 
-        private void DrawParameter(SerializedDataParameter parameter, string label)
+        private void DrawParameter(SerializedDataParameter parameter, string label, string tooltip = null)
         {
             if (parameter != null)
             {
-                PropertyField(parameter, new GUIContent(label));
+                PropertyField(parameter, new GUIContent(label, tooltip));
             }
         }
     }

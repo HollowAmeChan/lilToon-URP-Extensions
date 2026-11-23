@@ -26,10 +26,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private int GetGlowLineCount(SerializedProperty element)
         {
-            int count = 11;
+            int count = 8;
             SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
             if (GetGlowUsesMappedInput(element) && parameters0 != null && parameters0.vector4Value.x > 1.0f)
-                count++;
+                count += 4; // Three warning lines and its corrective button.
             if (GetGlowMode(element) == 2)
             {
                 count += 2;
@@ -101,17 +101,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             bool mappedInput = GetGlowUsesMappedInput(element);
-            EditorGUI.HelpBox(new Rect(rect.x, y, rect.width, LineHeight * 3),
-                mappedInput ?
+            if (mappedInput && threshold.x > 1.0f)
+            {
+                EditorGUI.HelpBox(new Rect(rect.x, y, rect.width, LineHeight * 3),
                     "前面可能已有色调映射，阈值 > 1 时请检查输入亮度。" +
-                    "需要 HDR 发光时，将发光放在 Ho 色调映射之前。" :
-                    "Ho 模式保留 HDR 亮部，阈值可以大于 1。" +
-                    "需要色调映射时，在发光之后添加 Ho 色调映射图层。",
-                mappedInput && threshold.x > 1.0f ? MessageType.Warning : MessageType.Info);
-            y += (LineHeight + LineSpacing) * 3;
-            if (mappedInput && threshold.x > 1.0f &&
-                GUI.Button(new Rect(rect.x, y, rect.width, LineHeight), "将阈值设为图像域起点 0.7"))
-                threshold.x = 0.7f;
+                    "需要 HDR 发光时，将发光放在 Ho 色调映射之前。", MessageType.Warning);
+                y += (LineHeight + LineSpacing) * 3;
+                if (GUI.Button(new Rect(rect.x, y, rect.width, LineHeight), "将阈值设为图像域起点 0.7"))
+                    threshold.x = 0.7f;
+            }
 
             parameters0.vector4Value = threshold;
             parameters1.vector4Value = look;

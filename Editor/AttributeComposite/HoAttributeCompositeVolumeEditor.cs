@@ -9,17 +9,15 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
 {
     /// <summary>
     /// AC 的调试入口面板（AC 架构 §9.13：调试在 Volume，feature 只放高级设置 + 消费者登记表）。
-    /// 调试模式的下拉里**只写视图名**，每个模式的说明按当前选择在下面**单独画一行** ——
-    /// 说明塞进枚举显示名会被 Unity 的下拉当成分组。
+    /// 调试模式只显示视图名，说明放在对应控件的悬停提示中。
     /// </summary>
     [CustomEditor(typeof(HoAttributeCompositeVolume))]
-    internal sealed class HoAttributeCompositeVolumeEditor : VolumeComponentEditor
+    internal sealed class HoAttributeCompositeVolumeEditor : HoVolumeComponentEditor
     {
-        private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
-        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
 
-        private static bool showRuntime = true;
-        private static bool showDebug = true;
+
+
+        private static bool showDebug;
         private static bool showTechnical;
         private static int diagnosticFamily;
 
@@ -53,28 +51,17 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
 
         private void DrawRuntime()
         {
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", LilUrpEditorSectionGui.BoolSummary(enable), RuntimeColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                DrawParameter(enable, "启用");
-                EditorGUILayout.HelpBox(
-                    "不勾选覆盖时用 Ho-AttributeComposite RendererFeature 的「运行」兜底值。",
-                    MessageType.None);
-            }
+            DrawParameter(enable, "启用");
         }
 
         private void DrawDebug()
         {
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", LilUrpEditorSectionGui.EnumSummary(debugMode), DebugColor))
+            if (!HoVolumeEditorGUI.Section(ref showDebug, "调试", LilUrpEditorSectionGui.EnumSummary(debugMode)))
             {
                 return;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
                 DrawViewSelector();
                 HoAttributeCompositeDebugMode mode = (HoAttributeCompositeDebugMode)debugMode.value.enumValueIndex;
@@ -100,7 +87,10 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                 using (new EditorGUI.DisabledScope(!debugMode.overrideState.boolValue))
                 {
                     EditorGUI.BeginChangeCheck();
-                    int next = GUILayout.Toolbar(selected, new[] { "关闭", "彩色总览", "单项遮罩" });
+                    int next = GUILayout.Toolbar(selected, new[] {
+                        new GUIContent("关闭", "恢复正常画面。"),
+                        new GUIContent("彩色总览", "按分类查看已登记项；点击名称突出显示，重叠项会混色。"),
+                        new GUIContent("单项遮罩", "查看所选登记项的遮罩。") });
                     if (EditorGUI.EndChangeCheck()) debugMode.value.intValue = next == 0 ? 0 : next == 1 ?
                         (int)HoAttributeCompositeDebugMode.ColorOverview : (int)HoAttributeCompositeDebugMode.MaskPreview;
                 }
@@ -128,17 +118,17 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                 using (new EditorGUI.DisabledScope(!debugTarget.overrideState.boolValue))
                 {
                     EditorGUI.BeginChangeCheck();
-                    int next = EditorGUILayout.Popup(mode == HoAttributeCompositeDebugMode.ColorOverview ? "突出显示" : "查看遮罩", selected, labels);
+                    string hint = entries.Count == 0 ? "当前分类还没有登记项。选择组可在 Ho ObjectBuffer 组件的选区中添加。" :
+                        "选择已登记项；彩色总览中也可点击下方名称突出显示。";
+                    int next = EditorGUILayout.Popup(new GUIContent(mode == HoAttributeCompositeDebugMode.ColorOverview ? "突出显示" : "查看遮罩", hint), selected, labels);
                     if (EditorGUI.EndChangeCheck()) debugTarget.value.stringValue = next == 0 ? string.Empty : entries[next - 1].Key;
                 }
             }
-            if (selected == 0 && !string.IsNullOrEmpty(debugTarget.value.stringValue))
+            if (debugTarget.overrideState.boolValue && selected == 0 && !string.IsNullOrEmpty(debugTarget.value.stringValue))
                 EditorGUILayout.HelpBox("目标已不存在，请重新选择。", MessageType.Warning);
             if (mode == HoAttributeCompositeDebugMode.ColorOverview && !string.IsNullOrEmpty(debugTarget.value.stringValue) && GUILayout.Button("显示全部"))
             { debugTarget.value.stringValue = string.Empty; debugTarget.overrideState.boolValue = true; }
-            if (entries.Count == 0)
-                EditorGUILayout.HelpBox(category == HoACDebugCategory.SelectionGroups ? "先在 OB 的「选区」中添加选择组和对象。" : "当前分类还没有登记项。", MessageType.None);
-            else
+            if (entries.Count > 0)
             {
                 // A searchable color legend replaces numeric IDs in the normal workflow.
                 legendSearch = EditorGUILayout.TextField("查找名称", legendSearch);
@@ -149,7 +139,8 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                     Rect rect = EditorGUILayout.GetControlRect(false, 20);
                     EditorGUI.DrawRect(new Rect(rect.x + 2, rect.y + 3, 14, 14), entry.Color);
                     bool current = debugTarget.value.stringValue == entry.Key;
-                    if (GUI.Button(new Rect(rect.x + 22, rect.y, rect.width - 22, rect.height), entry.Label,
+                    if (GUI.Button(new Rect(rect.x + 22, rect.y, rect.width - 22, rect.height),
+                        new GUIContent(entry.Label, "点击突出显示，再次点击取消；重叠的选择组或语义会混色。"),
                         current ? EditorStyles.miniButton : EditorStyles.label))
                     {
                         debugTarget.value.stringValue = current && mode == HoAttributeCompositeDebugMode.ColorOverview ? string.Empty : entry.Key;
@@ -159,8 +150,6 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                 }
                 EditorGUILayout.EndScrollView();
             }
-            if (mode == HoAttributeCompositeDebugMode.ColorOverview)
-                EditorGUILayout.LabelField("点击色标旁的名称突出显示；重叠的选择组或语义会混色。", EditorStyles.wordWrappedMiniLabel);
         }
 
         private string legendSearch = string.Empty;
@@ -186,7 +175,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             for (int i = 0; i < modes.Length; i++) labels[i] = DiagnosticLabel(modes[i]);
             int selected = Mathf.Max(0, System.Array.IndexOf(modes, currentMode));
             EditorGUI.BeginChangeCheck();
-            int next = EditorGUILayout.Popup("诊断视图", selected, labels);
+            int next = EditorGUILayout.Popup(new GUIContent("诊断视图", DescribeDebugMode(currentMode)), selected, labels);
             if (EditorGUI.EndChangeCheck() || changedFamily)
             {
                 debugMode.value.intValue = (int)modes[changedFamily ? 0 : next];
@@ -198,8 +187,6 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             if (semantic) DrawSemanticSelector();
             if (currentMode == HoAttributeCompositeDebugMode.SelectionGroupCoverage) DrawSelectionSelector();
             if (currentMode == HoAttributeCompositeDebugMode.IdentityGroupCoverage) DrawParameter(debugGroupId, "身份组 ID");
-            string description = DescribeDebugMode(currentMode);
-            if (!string.IsNullOrEmpty(description)) EditorGUILayout.HelpBox(description, MessageType.None);
         }
 
         private static string DiagnosticLabel(HoAttributeCompositeDebugMode mode)
@@ -278,11 +265,10 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                 using (new EditorGUI.DisabledScope(!debugSelectionName.overrideState.boolValue))
                 {
                     EditorGUI.BeginChangeCheck();
-                    int next = EditorGUILayout.Popup("调试选择组", current, labels);
+                    int next = EditorGUILayout.Popup(new GUIContent("调试选择组", "选择组在 Ho ObjectBuffer 组件的选区中创建，并在其中添加对象。"), current, labels);
                     if (EditorGUI.EndChangeCheck() && next > 0) debugSelectionName.value.stringValue = names[next - 1];
                 }
             }
-            if (names.Count == 0) EditorGUILayout.HelpBox("尚无选择组。先在 OB 组件的「选区」中创建一组并添加对象。", MessageType.Info);
         }
 
         private static string DescribeDebugMode(HoAttributeCompositeDebugMode mode)

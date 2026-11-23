@@ -21,27 +21,30 @@ namespace lilToon.URP.Extensions.PostProcessing
     }
 
 #if UNITY_2023_1_OR_NEWER
-    [VolumeComponentMenu("Post-processing/Ho-ScreenProcess/Process Stack"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+    [VolumeComponentMenu(HoVolumeNames.ScreenProcess), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-    [VolumeComponentMenuForRenderPipeline("Post-processing/Ho-ScreenProcess/Process Stack", typeof(UniversalRenderPipeline))]
+    [VolumeComponentMenuForRenderPipeline(HoVolumeNames.ScreenProcess, typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
     [VolumeRequiresRendererFeatures(typeof(ScreenProcessRendererFeature))]
 #endif
     [Serializable]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.ScreenProcess)]
+#endif
     public sealed class ScreenProcessStackVolume : VolumeComponent, IPostProcessComponent
     {
         public ScreenProcessStackVolume()
         {
 #if !UNITY_6000_3_OR_NEWER
-            displayName = "Ho-ScreenProcess";
+            displayName = HoVolumeNames.ScreenProcess;
 #endif
         }
 
         [InspectorName("Enable"), Tooltip("Enable the ScreenProcess subject/effect stack.")]
         public BoolParameter Enable = new BoolParameter(false, BoolParameter.DisplayType.EnumPopup);
 
-        [InspectorName("Scene View"), Tooltip("Apply this ScreenProcess stack in Scene View.")]
+        [InspectorName("场景视图"), Tooltip("Apply this ScreenProcess stack in Scene View.")]
         public BoolParameter ShowInSceneView = new BoolParameter(true, false);
 
         [Tooltip("Ordered ScreenProcess layers. Unlike ImageProcess, these layers can consume semantic buffers.")]

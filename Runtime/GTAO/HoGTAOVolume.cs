@@ -47,11 +47,21 @@ namespace lilToon.URP.Extensions.GTAO
         }
     }
 
-    [VolumeComponentMenu("Post-processing/Ho-GTAO/屏幕空间 AO")]
+    [VolumeComponentMenu(HoVolumeNames.GTAO)]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.GTAO)]
+#endif
     public sealed class HoGTAOVolume : VolumeComponent, IPostProcessComponent
     {
-        [InspectorName("启用"), Tooltip("启用 Ho-GTAO，并将结果发布给材质和调试输出。")]
+        public HoGTAOVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.GTAO;
+#endif
+        }
+
+        [InspectorName("启用"), Tooltip("启用 Ho-GTAO，并将结果发布给材质和调试输出。\n\n读取 Ho GeometryBuffer 的原始深度和法线；Renderer 中应先放置几何数据生产 Feature。")]
         public BoolParameter enable = new BoolParameter(true);
 
         [InspectorName("场景视图"), Tooltip("是否在 Scene View 中显示 GTAO 调试结果。")]
@@ -60,12 +70,10 @@ namespace lilToon.URP.Extensions.GTAO
         [InspectorName("游戏视图"), Tooltip("是否在 Game View 中显示 GTAO 调试结果。")]
         public BoolParameter debugInGameView = new BoolParameter(false);
 
-        [Header("质量")]
 
-        [InspectorName("计算分辨率"), Tooltip("GTAO 追踪和去噪的计算分辨率。最终 AO 会放大到相机分辨率。")]
+        [InspectorName("计算分辨率"), Tooltip("GTAO 追踪和去噪的计算分辨率。最终 AO 会放大到相机分辨率。\n\nHalf/Quarter 降低追踪和去噪的计算分辨率，最终 AO 仍输出到相机分辨率。")]
         public HoGTAOResolutionParameter resolution = new HoGTAOResolutionParameter(HoGTAOResolution.Full);
 
-        [Header("追踪")]
 
         [InspectorName("世界空间半径"), Tooltip("AO 检测的世界空间半径，单位为米。数值越大遮罩跨度越远，越早出现漏光。")]
         public MinFloatParameter worldSpaceRadius = new MinFloatParameter(5.0f, 0.01f);
@@ -88,7 +96,6 @@ namespace lilToon.URP.Extensions.GTAO
         [InspectorName("线性厚度"), Tooltip("按线性眼深度放大厚度，保持近处接触和远处遮挡的尺度一致。")]
         public BoolParameter useLinearThickness = new BoolParameter(true);
 
-        [Header("去噪")]
 
         [InspectorName("时间累积帧数"), Tooltip("历史累积上限帧数（0 = 关闭时间累积）。帧数越高噪声越低，运动时越迟钝。")]
         public ClampedIntParameter temporalFrameCount = new ClampedIntParameter(12, 0, 12);
@@ -108,9 +115,8 @@ namespace lilToon.URP.Extensions.GTAO
         [InspectorName("Box 趟数"), Tooltip("Box 滤波趟数（1-3）。每趟步长扩大，覆盖更大范围。")]
         public ClampedIntParameter boxPassCount = new ClampedIntParameter(3, 1, 3);
 
-        [Header("调试")]
 
-        [InspectorName("调试模式"), Tooltip("输出 GTAO、GeometryBuffer 深度/法线、Motion 或 Temporal Disocclusion。")]
+        [InspectorName("调试模式"), Tooltip("输出 GTAO、GeometryBuffer 深度/法线、Motion 或 Temporal Disocclusion。\n\n各调试视图由 Ho GTAO 自己输出。Motion 静止时为黑色；Temporal Disocclusion 的红色表示被拒绝的历史。")]
         public HoGTAODebugModeParameter debugMode = new HoGTAODebugModeParameter(HoGTAODebugMode.Off);
 
         [InspectorName("AO Debug Pow"), Tooltip("只影响 AO 调试画面的显示曲线，不改变公共 AO 输出。")]

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.RT
 {
     [CustomEditor(typeof(HoRTVolume))]
-    internal sealed class HoRTVolumeEditor : VolumeComponentEditor
+    internal sealed class HoRTVolumeEditor : HoVolumeComponentEditor
     {
         private SerializedDataParameter enable;
 
@@ -19,8 +19,6 @@ namespace lilToon.URP.Extensions.Editor.RT
         public override void OnInspectorGUI()
         {
             PropertyField(enable);
-            EditorGUILayout.HelpBox("勾选左侧覆盖并关闭启用，可停止当前相机的公共 RT 场景准备及依赖它的 RTDI / RTGI / RTShadow。未覆盖时沿用 Feature 启用状态，Volume 不能开启已停用的 Feature。", MessageType.Info);
-            EditorGUILayout.HelpBox("宿主运行状态见 Ho-RT Feature；图像调试与质量覆盖见各消费者的 Volume。", MessageType.None);
         }
     }
 }

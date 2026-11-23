@@ -9,7 +9,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
     [CustomEditor(typeof(ImageProcessStackVolume))]
-    internal sealed partial class ImageProcessStackVolumeEditor : VolumeComponentEditor
+    internal sealed partial class ImageProcessStackVolumeEditor : HoVolumeComponentEditor
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
@@ -319,10 +319,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             PropertyField(enable, new GUIContent("启用"));
             PropertyField(replaceBuiltinPostProcessing, new GUIContent("仅使用 Ho 后处理"));
             PropertyField(showInSceneView, new GUIContent("场景视图"));
-            if (replaceBuiltinPostProcessing.value.boolValue)
-                EditorGUILayout.HelpBox("Ho 接管图像效果：URP 内置调色、Bloom、景深等不执行。" +
-                    "抗锯齿、升采样和显示编码保留；色调映射由 Ho 图层按列表顺序控制。", MessageType.Info);
-            SceneViewPostProcessingNotice.Draw(showInSceneView.value.boolValue, replaceBuiltinPostProcessing.value.boolValue);
+            if (enable.value.boolValue && ((ImageProcessStackVolume)target).active)
+                SceneViewPostProcessingNotice.Draw(showInSceneView.value.boolValue, replaceBuiltinPostProcessing.value.boolValue);
             EditorGUILayout.Space(4.0f);
             EnsureEffectBrowser();
             EffectBrowserView.Draw(effectBrowserCatalog, effectBrowserState, DrawLayerList);
@@ -1381,7 +1379,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             Rect lineRect = new Rect(x, y, width, LineHeight);
-            EditorGUI.PropertyField(lineRect, property, new GUIContent(label));
+            EditorGUI.PropertyField(lineRect, property, new GUIContent(label, property.tooltip));
             return y + LineHeight + LineSpacing;
         }
 

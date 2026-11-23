@@ -19,14 +19,24 @@ namespace lilToon.URP.Extensions.SSGI
         }
     }
 
-    [VolumeComponentMenu("Lighting/Ho-SSGI/屏幕空间 GI")]
+    [VolumeComponentMenu(HoVolumeNames.SSGI)]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.SSGI)]
+#endif
     public sealed class HoSSGIVolume : VolumeComponent, IPostProcessComponent
     {
+        public HoSSGIVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.SSGI;
+#endif
+        }
+
         [InspectorName("启用")]
+        [Tooltip("读取不透明物体光照后的相机颜色，在后处理之前合成；需要 Ho GeometryBuffer 的几何输入。运行参数在此 Volume 调整。")]
         public BoolParameter enable = new BoolParameter(true);
 
-        [Header("追踪")]
         [InspectorName("射线数量")]
         public ClampedIntParameter rayCount = new ClampedIntParameter(8, 1, 128);
 
@@ -39,14 +49,12 @@ namespace lilToon.URP.Extensions.SSGI
         [InspectorName("厚度")]
         public ClampedFloatParameter thickness = new ClampedFloatParameter(0.08f, 0.0f, 4.0f);
 
-        [Header("去噪")]
         [InspectorName("时域混合")]
         public ClampedFloatParameter temporalBlend = new ClampedFloatParameter(0.9f, 0.0f, 1.0f);
 
         [InspectorName("空间半径")]
         public ClampedFloatParameter spatialRadius = new ClampedFloatParameter(2.0f, 0.5f, 8.0f);
 
-        [Header("ReSTIR")]
         [InspectorName("时域 Reservoir 重用")]
         public BoolParameter temporalReservoirReuse = new BoolParameter(true);
 
@@ -62,14 +70,12 @@ namespace lilToon.URP.Extensions.SSGI
         [InspectorName("Firefly 抑制")]
         public BoolParameter fireflySuppression = new BoolParameter(true);
 
-        [Header("外观")]
         [InspectorName("GI 强度")]
         public ClampedFloatParameter intensity = new ClampedFloatParameter(1.0f, 0.0f, 8.0f);
 
         [InspectorName("Source 饱和度")]
         public ClampedFloatParameter sourceSaturation = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
 
-        [Header("调试")]
         [InspectorName("调试模式")]
         public HoSSGIDebugModeParameter debugMode = new HoSSGIDebugModeParameter(HoSSGIDebugMode.Off);
 

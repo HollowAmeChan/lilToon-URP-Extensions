@@ -6,8 +6,9 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.SSGI
 {
     [CustomEditor(typeof(HoSSGIVolume))]
-    internal sealed class HoSSGIVolumeEditor : VolumeComponentEditor
+    internal sealed class HoSSGIVolumeEditor : HoVolumeComponentEditor
     {
+        private bool showTracing = true, showDenoise = true, showReservoir, showAppearance = true, showDebug;
         private SerializedDataParameter enable;
         private SerializedDataParameter rayCount;
         private SerializedDataParameter stepCount;
@@ -46,35 +47,34 @@ namespace lilToon.URP.Extensions.Editor.SSGI
 
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.HelpBox(
-                "Ho-SSGI reads the lit opaque camera color after GeometryBuffer and composites the result before post-processing. GeometryBuffer is the only required input. This Volume is the only tuning surface for runtime parameters.",
-                MessageType.Info);
 
             PropertyField(enable);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("追踪", EditorStyles.boldLabel);
-            PropertyField(rayCount);
-            PropertyField(stepCount);
-            PropertyField(rayLength);
-            PropertyField(thickness);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("去噪", EditorStyles.boldLabel);
-            PropertyField(temporalBlend);
-            PropertyField(spatialRadius);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("ReSTIR", EditorStyles.boldLabel);
-            PropertyField(temporalReservoirReuse);
-            PropertyField(spatialReservoirReuse);
-            PropertyField(temporalReservoirValidation);
-            PropertyField(spatialReservoirValidation);
-            PropertyField(fireflySuppression);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("外观", EditorStyles.boldLabel);
-            PropertyField(intensity);
-            PropertyField(sourceSaturation);
-            EditorGUILayout.Space(4);
-            EditorGUILayout.LabelField("调试", EditorStyles.boldLabel);
-            PropertyField(debugMode);
+            if (HoVolumeEditorGUI.Section(ref showTracing, "追踪"))
+            {
+                PropertyField(rayCount);
+                PropertyField(stepCount);
+                PropertyField(rayLength);
+                PropertyField(thickness);
+            }
+            if (HoVolumeEditorGUI.Section(ref showDenoise, "去噪"))
+            {
+                PropertyField(temporalBlend);
+                PropertyField(spatialRadius);
+            }
+            if (HoVolumeEditorGUI.Section(ref showReservoir, "高级 · ReSTIR"))
+            {
+                PropertyField(temporalReservoirReuse);
+                PropertyField(spatialReservoirReuse);
+                PropertyField(temporalReservoirValidation);
+                PropertyField(spatialReservoirValidation);
+                PropertyField(fireflySuppression);
+            }
+            if (HoVolumeEditorGUI.Section(ref showAppearance, "外观"))
+            {
+                PropertyField(intensity);
+                PropertyField(sourceSaturation);
+            }
+            if (HoVolumeEditorGUI.Section(ref showDebug, "调试")) PropertyField(debugMode);
         }
     }
 }

@@ -29,10 +29,21 @@ namespace lilToon.URP.Extensions.VolumeLight
         public HoVolumeLightDebugParameter(HoVolumeLightDebugMode value) : base(value) { }
         public override void Interp(HoVolumeLightDebugMode from, HoVolumeLightDebugMode to, float t) => value = t > 0 ? to : from;
     }
-    [Serializable, VolumeComponentMenu("Post-processing/Ho-VolumeLight/太阳 HD")]
+    [Serializable, VolumeComponentMenu(HoVolumeNames.VolumeLight)]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+#if UNITY_6000_3_OR_NEWER
+    [DisplayInfo(name = HoVolumeNames.VolumeLight)]
+#endif
     public sealed class HoVolumeLightVolume : VolumeComponent, IPostProcessComponent
     {
+        public HoVolumeLightVolume()
+        {
+#if !UNITY_6000_3_OR_NEWER
+            displayName = HoVolumeNames.VolumeLight;
+#endif
+        }
+
+        [Tooltip("未覆盖的运行参数沿用 Feature 兜底值；体积介质由 Ho Atmosphere 提供。")]
         [InspectorName("启用")] public BoolParameter enable = new(true);
         [InspectorName("体积亮度倍率"), Tooltip("只改变体积效果，不修改太阳的表面照明。")]
         public MinFloatParameter intensity = new(1, 0);

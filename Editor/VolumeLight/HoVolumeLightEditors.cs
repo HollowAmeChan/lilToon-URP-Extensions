@@ -45,9 +45,9 @@ namespace lilToon.URP.Extensions.Editor.VolumeLight
         }
     }
     [CustomEditor(typeof(HoVolumeLightVolume))]
-    internal sealed class HoVolumeLightVolumeEditor : VolumeComponentEditor
+    internal sealed class HoVolumeLightVolumeEditor : HoVolumeComponentEditor
     {
-        private static readonly Color RuntimeColor = new(.46f, .64f, .92f), DebugColor = new(.86f, .62f, .38f);
+
         private static bool showRuntime = true, showDebug;
         private SerializedDataParameter enable, intensity, distance, steps, antialiasing, anisotropy, debug, scene, game;
         public override void OnEnable()
@@ -60,22 +60,20 @@ namespace lilToon.URP.Extensions.Editor.VolumeLight
         }
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.HelpBox("未覆盖的运行参数使用 Feature 兜底值。", MessageType.Info);
-            if (LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", "太阳 HD", RuntimeColor))
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            if (HoVolumeEditorGUI.Section(ref showRuntime, "运行", "太阳 HD"))
+                using (new EditorGUILayout.VerticalScope())
                 {
                     PropertyField(enable, new GUIContent("启用")); PropertyField(intensity, new GUIContent("体积亮度倍率"));
                     PropertyField(distance, new GUIContent("最大照亮距离")); PropertyField(steps, new GUIContent("采样步数")); PropertyField(anisotropy, new GUIContent("散射方向性覆盖"));
                     PropertyField(antialiasing, new GUIContent("抗锯齿"));
                 }
-            if (LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", LilUrpEditorSectionGui.EnumSummary(debug), DebugColor))
-                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            if (HoVolumeEditorGUI.Section(ref showDebug, "调试", LilUrpEditorSectionGui.EnumSummary(debug)))
+                using (new EditorGUILayout.VerticalScope())
                 {
-                    PropertyField(debug, new GUIContent("调试模式"));
                     string description = debug.value.intValue == 1 ? "仅显示实际体积 RGB 贡献，包含 SDF 激活与光源遮挡。" :
                         debug.value.intValue == 2 ? "仅显示忽略阴影的体积 RGB 贡献，用于比较遮挡。" : "";
-                    if (description.Length > 0) EditorGUILayout.HelpBox(description, MessageType.None);
-                    PropertyField(scene, new GUIContent("Debug In Scene View")); PropertyField(game, new GUIContent("Debug In Game View"));
+                    PropertyField(debug, new GUIContent("调试模式", description));
+                    PropertyField(scene, new GUIContent("场景视图")); PropertyField(game, new GUIContent("游戏视图"));
                 }
         }
     }

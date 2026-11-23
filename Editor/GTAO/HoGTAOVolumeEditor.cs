@@ -7,12 +7,12 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.GTAO
 {
     [CustomEditor(typeof(HoGTAOVolume))]
-    internal sealed class HoGTAOVolumeEditor : VolumeComponentEditor
+    internal sealed class HoGTAOVolumeEditor : HoVolumeComponentEditor
     {
-        private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
-        private static readonly Color TracingColor = new Color(0.38f, 0.72f, 0.62f);
-        private static readonly Color DenoiseColor = new Color(0.62f, 0.58f, 0.78f);
-        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
+
+
+
+
 
         private static bool showRuntime = true;
         private static bool showTracing = true;
@@ -65,9 +65,6 @@ namespace lilToon.URP.Extensions.Editor.GTAO
 
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.HelpBox(
-                "Ho-GTAO consumes Ho-GeometryBuffer raw depth and normal data. Keep Ho-GeometryBuffer above Ho-GTAO in the Renderer Feature list. Debug output is controlled here by the active Volume.",
-                MessageType.Info);
 
             DrawRuntime();
             DrawTracing();
@@ -79,17 +76,14 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         {
             string summary = LilUrpEditorSectionGui.BoolSummary(enable)
                 + " / " + LilUrpEditorSectionGui.EnumSummary(resolution);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
+            if (!HoVolumeEditorGUI.Section(ref showRuntime, "运行", summary))
                 return;
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
                 DrawParameter(enable, "启用");
                 DrawPresets();
                 DrawParameter(resolution, "计算分辨率");
-                EditorGUILayout.Space(3.0f);
-                EditorGUILayout.HelpBox("预设只填写密度和去噪参数，不改 Override 勾选、半径或厚度。请手动勾选需要覆盖的参数，填入后可继续调整。", MessageType.None);
-                EditorGUILayout.HelpBox("Half/Quarter 会降低 GTAO 追踪和去噪的计算分辨率，最终 AO 仍输出到相机分辨率。", MessageType.None);
             }
         }
 
@@ -97,10 +91,11 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.PrefixLabel("填入质量预设");
-                if (GUILayout.Button("Low")) ApplyPreset(HoGTAOQuality.Low);
-                if (GUILayout.Button("Medium")) ApplyPreset(HoGTAOQuality.Medium);
-                if (GUILayout.Button("High")) ApplyPreset(HoGTAOQuality.High);
+                const string hint = "填写采样密度和去噪参数，不改变 Override 勾选、半径或厚度；填入后仍可逐项调整。";
+                EditorGUILayout.PrefixLabel(new GUIContent("质量预设", hint));
+                if (GUILayout.Button(new GUIContent("Low", hint))) ApplyPreset(HoGTAOQuality.Low);
+                if (GUILayout.Button(new GUIContent("Medium", hint))) ApplyPreset(HoGTAOQuality.Medium);
+                if (GUILayout.Button(new GUIContent("High", hint))) ApplyPreset(HoGTAOQuality.High);
             }
         }
 
@@ -120,10 +115,10 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         {
             string summary = LilUrpEditorSectionGui.IntSummary(sliceCount, " slices")
                 + " / " + LilUrpEditorSectionGui.IntSummary(stepCount, " steps");
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showTracing, "追踪", summary, TracingColor))
+            if (!HoVolumeEditorGUI.Section(ref showTracing, "追踪", summary))
                 return;
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
                 DrawParameter(worldSpaceRadius, "世界空间半径");
                 DrawParameter(screenSpaceRadius, "最小屏幕半径");
@@ -139,10 +134,10 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         {
             string summary = LilUrpEditorSectionGui.IntSummary(temporalFrameCount, " frames")
                 + " / " + LilUrpEditorSectionGui.EnumSummary(spatialFilter);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDenoise, "去噪", summary, DenoiseColor))
+            if (!HoVolumeEditorGUI.Section(ref showDenoise, "去噪", summary))
                 return;
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
                 DrawParameter(temporalFrameCount, "时间累积帧数");
                 DrawParameter(temporalRejection, "时间拒绝强度");
@@ -156,15 +151,14 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         private void DrawDebug()
         {
             string summary = LilUrpEditorSectionGui.EnumSummary(debugMode);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
+            if (!HoVolumeEditorGUI.Section(ref showDebug, "调试", summary))
                 return;
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope())
             {
-                EditorGUILayout.HelpBox("调试输出由 Ho-GTAO 自己持有，不经过 Ho-DebugTile。Motion 静止时为黑色符合 HTrace 语义；Temporal Disocclusion 用红色表示被拒绝的历史。", MessageType.None);
                 DrawParameter(debugMode, "调试模式");
-                DrawParameter(debugInSceneView, "Debug In Scene View");
-                DrawParameter(debugInGameView, "Debug In Game View");
+                DrawParameter(debugInSceneView, "场景视图");
+                DrawParameter(debugInGameView, "游戏视图");
                 DrawParameter(debugIntensity, "AO Debug Pow");
             }
         }
