@@ -1,4 +1,5 @@
 #pragma warning disable CS0618, CS0672
+using System.Collections.Generic;
 using Unity.Collections;
 using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
@@ -66,7 +67,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 || !renderingData.shadowData.supportsMainLightShadows || HoCharacterShadow.Active.Count == 0)
             { LastCullStatus += $"light(main={main},null={light == null},dir={(light != null && light.type == LightType.Directional)},shadows={(light != null && light.shadows != LightShadows.None)},supports={renderingData.shadowData.supportsMainLightShadows},active={HoCharacterShadow.Active.Count})"; return; }
             var config = HoCharacterShadowRenderConfig.Resolve(settings, volume);
-            var frame = HoCharacterShadowFrame.Build(camera, light, renderingData.cameraData.GetViewMatrix(),
+            var frame = pass.BuildFrame(camera, light, renderingData.cameraData.GetViewMatrix(),
                 renderingData.cameraData.GetProjectionMatrix(), config);
             if (frame.slices.Count == 0) { LastCullStatus += "noSlices"; return; }
             pass.Setup(frame);
@@ -116,6 +117,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
         private HoCharacterShadowFrame frame;
         private RTHandle compatibilityAtlas;
         private RTHandle persistentAtlas;
+        private sealed class CameraResources
+        {
+            internal readonly HoCharacterShadowFrame frame = new HoCharacterShadowFrame();
+            internal double lastUsedTime;
+        }
+        private readonly Dictionary<Camera, CameraResources> cameraResources = new Dictionary<Camera, CameraResources>();
+        private readonly List<Camera> unusedCameras = new List<Camera>();
         private Camera cullingCamera;
         private Light localLight;
         private sealed class PassData
@@ -129,10 +137,41 @@ namespace lilToon.URP.Extensions.CharacterShadow
         // 与 CS 最初的行为一致。
         internal HoCharacterShadowPass() { renderPassEvent = RenderPassEvent.BeforeRenderingShadows; }
         internal void Setup(HoCharacterShadowFrame value) { frame = value; }
+        internal HoCharacterShadowFrame BuildFrame(Camera camera, Light light, Matrix4x4 cameraView,
+            Matrix4x4 cameraProjection, HoCharacterShadowRenderConfig config)
+        {
+            return HoCharacterShadowFrame.Rebuild(camera, light, cameraView, cameraProjection, config,
+                GetCameraResources(camera).frame);
+        }
+
+        private CameraResources GetCameraResources(Camera camera)
+        {
+            double now = Time.realtimeSinceStartupAsDouble;
+            unusedCameras.Clear();
+            foreach (var pair in cameraResources)
+                if (pair.Key == null || (pair.Key != camera && now - pair.Value.lastUsedTime > 10.0))
+                    unusedCameras.Add(pair.Key);
+            for (int i = 0; i < unusedCameras.Count; i++)
+            {
+                Camera key = unusedCameras[i];
+                cameraResources.Remove(key);
+            }
+            if (!cameraResources.TryGetValue(camera, out CameraResources resources))
+            {
+                resources = new CameraResources();
+                cameraResources.Add(camera, resources);
+            }
+            resources.lastUsedTime = now;
+            return resources;
+        }
+
         internal void Dispose()
         {
             compatibilityAtlas?.Release(); compatibilityAtlas = null;
             persistentAtlas?.Release(); persistentAtlas = null;
+            cameraResources.Clear();
+            unusedCameras.Clear();
+            frame = null;
             DestroyTemporary(cullingCamera != null ? cullingCamera.gameObject : null);
             cullingCamera = null;
             DestroyTemporary(localLight != null ? localLight.gameObject : null);
@@ -270,7 +309,10 @@ namespace lilToon.URP.Extensions.CharacterShadow
             parameters.isOrthographic = true;
             float width = 1f / slice.projection.m00;
             parameters.shadowDistance = Mathf.Sqrt(slice.farPlane * slice.farPlane + 2 * width * width) + 1;
-            parameters.cullingOptions &= ~(CullingOptions.OcclusionCull | CullingOptions.Stereo);
+            // This cull feeds depth-only ShadowRendererLists, not a lit camera pass. Keep
+            // NeedsLighting for the local light lookup, but skip unused reflection-probe culling.
+            parameters.cullingOptions &= ~(CullingOptions.OcclusionCull | CullingOptions.Stereo
+                | CullingOptions.NeedsReflectionProbes);
             parameters.cullingOptions |= CullingOptions.ShadowCasters;
             parameters.cullingPlaneCount = 6;
             for (int i = 0; i < 6; i++) parameters.SetCullingPlane(i, slice.planes[i]);
@@ -347,6 +389,8 @@ namespace lilToon.URP.Extensions.CharacterShadow
             // aliased away right after this pass and the materials then sample another pass's
             // memory - the symptom is shadows that come and go with camera state. Keep the atlas
             // in a feature-owned RTHandle and import it instead, so its lifetime covers the frame.
+            // RenderingUtils already pools discarded descriptors. Share the allocation across
+            // sequential cameras rather than retaining a large depth atlas for every camera.
             RenderingUtils.ReAllocateIfNeeded(ref persistentAtlas, Descriptor(frame.atlasSize),
                 FilterMode.Point, TextureWrapMode.Clamp, name: "_HoCSAtlas");
             var atlas = graph.ImportTexture(persistentAtlas);
@@ -363,7 +407,8 @@ namespace lilToon.URP.Extensions.CharacterShadow
                     listCount++;
                 }
                 HoCharacterShadowRendererFeature.LastCullStatus += $"|lists={listCount}/{frame.slices.Count}";
-                builder.SetRenderAttachmentDepth(atlas, AccessFlags.Write);
+                // The pass clears the whole depth atlas before drawing any slice.
+                builder.SetRenderAttachmentDepth(atlas, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetGlobalTextureAfterPass(atlas, AtlasId);
@@ -462,6 +507,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             // PCSS: (enabled, tanHalfAngle, search metres, cap metres) + (bias, counts, fixed softness).
             cmd.SetGlobalVector("_HoCSPcssParams", f.pcssParams);
             cmd.SetGlobalVector("_HoCSPcssParams2", f.pcssParams2);
+            HoCharacterShadowShaderContract.BindSamplingPattern(cmd, f.pcssParams2);
             cmd.SetGlobalInt("_HoCSCount", f.slices.Count);
             cmd.SetGlobalFloat("_HoCSActive", 1);
         }

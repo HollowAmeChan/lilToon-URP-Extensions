@@ -1,0 +1,26 @@
+[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader, PCSS sample contract.
+[Ho-CS Frame Reuse] Allocation counter unavailable: a 64 KiB probe reported 0 B. Skipped byte-reduction assertion; storage identity and repeated rebuild checks remain active.
+[Ho-CS Frame Reuse] PASS: active/empty/active masks and validity, per-render animated upstream bounds, independent camera frames, destroyed-camera cleanup, repeated storage reuse. Allocation assertion runs only with a verified counter.
+[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader, PCSS sample contract.
+[Ho-CS Receiver Selection] PASS: specified part, empty selection, whole group, renderer lookup and shadow masks.
+[Ho-CS Rendering] PASS: off-screen caster=0.000, distant=0.000, perspective=0.000, cast-off=1.000, disabled fallback=1.000, identity/feature reset, atlas=0.984, volume=1.000/atlas 512, lilToon=0.000/1.000.
+[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader, PCSS sample contract.
+[Ho-CS Receiver Selection] PASS: specified part, empty selection, whole group, renderer lookup and shadow masks.
+[Ho-CS Distance] PASS
+[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader, PCSS sample contract.
+[Ho-CS Scene Shadows] PASS: lit=0.803, URP shadow=0.008/0.008 (CS off/on), lilToon shadow=0.008/0.008, skipped draws=0, graphics=Direct3D12.
+[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader, PCSS sample contract.
+[Ho-CS PCSS] PASS: pcf width=12px core=0.000 lit=1.000 speckles=0 | pcss width=22px core=0.000 lit=1.000 speckles=0 | softness0 width=12px | 4096-tile width=7px speckles=0 core=0.000, graphics=Direct3D12.
+[Ho-CS Filtering] cached-offsets-Low-0: min=0.000000, max=0.000002, mean=0.000001
+[Ho-CS Filtering] cached-offsets-Low-1: min=0.000000, max=0.000000, mean=0.000000
+[Ho-CS Filtering] cached-offsets-Medium-0: min=0.000000, max=0.000004, mean=0.000002
+[Ho-CS Filtering] cached-offsets-Medium-1: min=0.000000, max=0.000001, mean=0.000001
+[Ho-CS Filtering] cached-offsets-High-0: min=0.000000, max=0.000006, mean=0.000002
+[Ho-CS Filtering] cached-offsets-High-1: min=0.000000, max=0.000002, mean=0.000001
+[Ho-CS Filtering] cached-offsets-Ultra-0: min=0.000000, max=0.000007, mean=0.000002
+[Ho-CS Filtering] cached-offsets-Ultra-1: min=0.000000, max=0.000003, mean=0.000002
+[Ho-CS Filtering] PASS: continuous PCF, gather order, receiver plane, real occluder, tile isolation, depth crop and user 4096 settings. Output=C:\Users\hhh12\AppData\Local\Temp\HoCSFilteringValidation\Direct3D12
+HO_CS_IMAGE_EQUIVALENCE_PASSED cases=324 maximumError=2.71201134E-05
+HO_CS_OPTIMIZATION_VALIDATION_PASSED
+Leak Detected : Persistent allocates 4 individual allocations. To find out more please enable 'Preferences > Jobs > Leak Detection Level > Enabled With Stack Trace' and reproduce the leak again.
+There are unreleased allocations left in a heap that is released!

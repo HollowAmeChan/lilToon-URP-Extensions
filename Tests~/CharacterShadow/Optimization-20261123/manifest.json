@@ -1,0 +1,37 @@
+{
+  "baseline": "acde9c8be10747a7a51e1dde289eee166368893d",
+  "date": "2026-11-23",
+  "unity": "6000.3.15f1",
+  "apis": [
+    "Direct3D11",
+    "Direct3D12"
+  ],
+  "productionMatchesTestedPackage": true,
+  "sha256": {
+    "Runtime/CharacterShadow/HoCharacterShadowFrame.cs": "44d725e0f42eaaeb8b122f0e2de20ed5d77c31fe799ac1e6793ef235a4a390e5",
+    "Runtime/CharacterShadow/HoCharacterShadowRendererFeature.cs": "9a096bf3a9e74d3ecf11ff5c2d922252a57af6939af3163a81b4cf5fe847cb33",
+    "Runtime/CharacterShadow/HoCharacterShadowShaderContract.cs": "c2d23d852e1592576b9adc66e33dd6a28380558bf03e958c162ac5c0ddad6207",
+    "Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl": "3cdf0ddcd8a4f4e1a247852f2ad140caee7e70e9d891b2c0b09fb8b5b86a1538",
+    "Editor/CharacterShadow/HoCharacterShadowReuseValidation.cs": "1bc6e0146c65b5e76644b4168fc61669435b744c37a61687609f3ba4910d0e15",
+    "Editor/CharacterShadow/HoCharacterShadowFilteringValidation.cs": "4157463d02f6b91fa67f6594d665142d845f4b70de9dfb89dbac97a4bba9d3e9",
+    "Editor/CharacterShadow/HoCharacterShadowFilteringProbe.shader": "2bfafa0e6910a72838b2fe980cd62ffbcc6bf15068fc04dde547258b1934ab9b",
+    "Editor/CharacterShadow/HoCharacterShadowValidation.cs": "ccfdcca069308c42f9dbeb8bb13efc568db84aeff72c61728f89f8fb903fb961"
+  },
+  "evidenceSha256": {
+    "baseline.hlsl": "6fbd342049144eb772a0870dcdaef924caaa800042835a0d97da779be2bf23b3",
+    "edge-image-equivalence-d3d12.txt": "c5f7cbca39486b2fc25b408bcde31ee4e32aee51d7319836023dc3e735a2d6ae",
+    "edge-validation-summary-d3d12.txt": "c85510ea5af4fd99fedb47e580e31fd5028cf57781c5230ddb45e01bc1d72af1",
+    "HoCSFilteringAB.shader": "70e73c376a274de13b8b35e198ed9eb78fee3c7c16ba3f96d2470767c4fe9b85",
+    "HoCSFilteringReferenceAB.shader": "ee9755ca5d1e895b9501b36552c6cdd8564f5996007034bce93d2464a5cfdc7f",
+    "HoCSOptimizationEdgeValidation.cs": "aa96598bf9dfdba268a4b8a7ad2d37294b9c555c3a2aa07096ae274885bace96",
+    "HoCSOptimizationValidation.cs": "b5b1fa8f8a7d2524dbdca35f86739c1159bb99ad35dea15db1b48aba28ebb2d9",
+    "HoCSOptimizedPerformanceProbe.cs": "6544c6c017844b74d3db5f6a3babdd702e7dd60c42eb90d44abaada41c522fc0",
+    "HoCSOptimizedPerformanceProbe.shader": "d77676073aeb0965a80a1f952d950cc51194b945f8c565102318cf793dba7a14",
+    "image-equivalence-d3d11.txt": "e331c853fb2a0ede94baee3a25faabf61e10e64d7d330e4fcceae28010d52601",
+    "README.md": "12920ce7b1f8e6811f0182e3172dd621aa77ddb7baf4f794cf4f506c5ef4f674",
+    "sampling-final-run1.json": "767649a48cc018f1d6c2d6949032597e0649a05599b81eccc69a39f30a3725e6",
+    "sampling-final-run2.json": "673a2315046b6e65fec72c790e84a5eb932d2aa4331e61f94e788467029cd859",
+    "validation-summary-d3d11.txt": "579b8a158f9d0af8ba60656d089b91ebf4281ef93e8e943be380e084031d2994",
+    "validation-summary-d3d12.txt": "8078f501c73f552f1d53da09b8091352fec84b227656833b0dc2aeb88698077f"
+  }
+}

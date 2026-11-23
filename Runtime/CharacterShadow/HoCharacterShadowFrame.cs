@@ -9,6 +9,8 @@ namespace lilToon.URP.Extensions.CharacterShadow
     internal sealed class HoCharacterShadowFrame
     {
         internal const int MaxSlices = 16;
+        private static readonly IComparer<HoCharacterShadow> SubjectComparer = Comparer<HoCharacterShadow>.Create(
+            static (a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID()));
         internal readonly List<HoCharacterShadowSlice> slices = new List<HoCharacterShadowSlice>();
         internal readonly Vector4[] groupSlices = new Vector4[64];
         internal readonly Vector4[] partMasks = new Vector4[MaxSlices * 64];
@@ -17,6 +19,12 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal readonly Vector4[] tileRects = new Vector4[MaxSlices];
         internal readonly Vector4[] parameters = new Vector4[MaxSlices];
         internal readonly Vector4[] depthParameters = new Vector4[MaxSlices];
+        private readonly List<HoCharacterShadow> subjects = new List<HoCharacterShadow>();
+        private readonly HashSet<int> groups = new HashSet<int>();
+        private readonly Vector3[] corners = new Vector3[8];
+        private readonly Plane[] cameraPlanes = new Plane[6];
+        private readonly List<Bounds> casterBounds = new List<Bounds>();
+        private readonly HoCharacterShadowSlice[] sliceCache = new HoCharacterShadowSlice[MaxSlices];
         internal int atlasSize, resolution;
         internal Light light;
         internal Vector3 cameraPosition;
@@ -28,12 +36,23 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal static HoCharacterShadowFrame Build(Camera camera, Light light,
             Matrix4x4 cameraView, Matrix4x4 cameraProjection, HoCharacterShadowRenderConfig config)
         {
-            var frame = new HoCharacterShadowFrame
-            {
-                light = light, resolution = config.resolution,
-                cameraPosition = camera.transform.position, cameraView = cameraView,
-                cameraProjection = cameraProjection, pcssStatus = config.pcssStatus
-            };
+            return Rebuild(camera, light, cameraView, cameraProjection, config, new HoCharacterShadowFrame());
+        }
+
+        // Reuse storage per camera, while still rebuilding visibility and bounds on every render.
+        // In particular, do not cache scene membership or animated caster bounds across frames.
+        internal static HoCharacterShadowFrame Rebuild(Camera camera, Light light,
+            Matrix4x4 cameraView, Matrix4x4 cameraProjection, HoCharacterShadowRenderConfig config,
+            HoCharacterShadowFrame frame)
+        {
+            frame.slices.Clear();
+            System.Array.Clear(frame.groupSlices, 0, frame.groupSlices.Length);
+            frame.light = light;
+            frame.resolution = config.resolution;
+            frame.cameraPosition = camera.transform.position;
+            frame.cameraView = cameraView;
+            frame.cameraProjection = cameraProjection;
+            frame.pcssStatus = config.pcssStatus;
             // Directional PCSS consumes tan(angular diameter / 2), not a distance to the
             // arbitrary shadow-camera near plane. PCF keeps its sample budget when PCSS is off.
             frame.pcssParams = new Vector4(
@@ -45,32 +64,25 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 Mathf.Max(0.0f, config.pcssDepthBias), config.pcssBlockerSamples, config.pcssFilterSamples,
                 Mathf.Max(0.0f, config.softnessRadiusWorld));
             HoObjectBufferRegistry.EnsureBuilt();
-            var subjects = new List<HoCharacterShadow>(HoCharacterShadow.Active);
-            subjects.Sort((a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID()));
+            List<HoCharacterShadow> subjects = frame.subjects;
+            subjects.Clear();
+            subjects.AddRange(HoCharacterShadow.Active);
+            subjects.Sort(SubjectComparer);
             int maxSize = Mathf.Min(config.maxAtlasSize, SystemInfo.maxTextureSize);
             int columns = Mathf.FloorToInt((float)maxSize / frame.resolution);
             int capacity = Mathf.Min(Mathf.Clamp(config.maxCharacters, 1, MaxSlices), columns * columns);
-            var groups = new HashSet<int>();
-            var corners = new Vector3[8];
-            var cameraPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
+            HashSet<int> groups = frame.groups;
+            groups.Clear();
+            Vector3[] corners = frame.corners;
+            Plane[] cameraPlanes = frame.cameraPlanes;
+            GeometryUtility.CalculateFrustumPlanes(camera, cameraPlanes);
 
             // This broad scan supplies bounds only, once per camera, never manual draw commands.
             // The native shadow renderer list below owns LOD, ShadowsOnly, TwoSided, terrain, etc.
             // Bounds are deliberately conservative; filtering by layers happens in native culling.
-            var casterBounds = new List<Bounds>();
-            foreach (Renderer renderer in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
-                if (renderer.enabled && renderer.gameObject.activeInHierarchy
-                    && renderer.shadowCastingMode != ShadowCastingMode.Off
-                    && (light.cullingMask & (1 << renderer.gameObject.layer)) != 0)
-                    casterBounds.Add(renderer.bounds);
-            foreach (Terrain terrain in Terrain.activeTerrains)
-                if (terrain.terrainData != null && terrain.shadowCastingMode != ShadowCastingMode.Off
-                    && (light.cullingMask & (1 << terrain.gameObject.layer)) != 0)
-                {
-                    Bounds bounds = terrain.terrainData.bounds;
-                    bounds.center += terrain.transform.position;
-                    casterBounds.Add(bounds);
-                }
+            List<Bounds> casterBounds = frame.casterBounds;
+            casterBounds.Clear();
+            bool collectedCasterBounds = false;
 
             foreach (HoCharacterShadow subject in subjects)
             {
@@ -91,8 +103,10 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 int index = frame.slices.Count;
                 System.Array.Clear(frame.partMasks, index * 64, 64);
                 bool hasReceiver = false;
-                foreach (string name in group.GetPartNames())
+                IReadOnlyList<string> partNames = group.GetPartNames();
+                for (int partIndex = 0; partIndex < partNames.Count; partIndex++)
                 {
+                    string name = partNames[partIndex];
                     if (!subject.receiveWholeGroup && !subject.receiverParts.Contains(name)) continue;
                     uint identity = HoObjectBufferRegistry.GetPartId(group.groupId, name);
                     if (identity == 0) continue;
@@ -101,8 +115,17 @@ namespace lilToon.URP.Extensions.CharacterShadow
                     hasReceiver = true;
                 }
                 if (!hasReceiver) { subject.status = "没有匹配的 OB 接收部件"; continue; }
-                HoCharacterShadowSlice slice = HoCharacterShadowProjection.Build(subject, light, corners,
-                    casterBounds, frame.resolution, config.pcssFilterRadiusTexels, config.depthBias, config.normalBias);
+                if (!collectedCasterBounds)
+                {
+                    // Cameras with no eligible receiving domain need no scene-wide caster scan.
+                    CollectCasterBounds(light, casterBounds);
+                    collectedCasterBounds = true;
+                }
+                HoCharacterShadowSlice cachedSlice = frame.sliceCache[index];
+                if (cachedSlice == null) frame.sliceCache[index] = cachedSlice = new HoCharacterShadowSlice();
+                HoCharacterShadowSlice slice = HoCharacterShadowProjection.Rebuild(subject, light, corners,
+                    casterBounds, frame.resolution, config.pcssFilterRadiusTexels, config.depthBias, config.normalBias,
+                    cachedSlice);
                 if (slice == null) { subject.status = "包围盒变换无效"; continue; }
                 groups.Add(group.groupId);
                 frame.slices.Add(slice);
@@ -129,13 +152,30 @@ namespace lilToon.URP.Extensions.CharacterShadow
             }
             return frame;
         }
+
+        private static void CollectCasterBounds(Light light, List<Bounds> destination)
+        {
+            foreach (Renderer renderer in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+                if (renderer.enabled && renderer.gameObject.activeInHierarchy
+                    && renderer.shadowCastingMode != ShadowCastingMode.Off
+                    && (light.cullingMask & (1 << renderer.gameObject.layer)) != 0)
+                    destination.Add(renderer.bounds);
+            foreach (Terrain terrain in Terrain.activeTerrains)
+                if (terrain.terrainData != null && terrain.shadowCastingMode != ShadowCastingMode.Off
+                    && (light.cullingMask & (1 << terrain.gameObject.layer)) != 0)
+                {
+                    Bounds bounds = terrain.terrainData.bounds;
+                    bounds.center += terrain.transform.position;
+                    destination.Add(bounds);
+                }
+        }
     }
 
     internal sealed class HoCharacterShadowSlice
     {
         internal Matrix4x4 view, projection, worldToShadow;
         internal Vector3 origin;
-        internal Plane[] planes;
+        internal readonly Plane[] planes = new Plane[6];
         internal Vector4 bias;
         internal Rect viewport;
         internal float nearPlane, farPlane, texelSize;
@@ -146,6 +186,14 @@ namespace lilToon.URP.Extensions.CharacterShadow
     {
         internal static HoCharacterShadowSlice Build(HoCharacterShadow subject, Light light, Vector3[] corners,
             List<Bounds> casters, int resolution, float filterRadius, float depthBias, float normalBias)
+        {
+            return Rebuild(subject, light, corners, casters, resolution, filterRadius, depthBias, normalBias,
+                new HoCharacterShadowSlice());
+        }
+
+        internal static HoCharacterShadowSlice Rebuild(HoCharacterShadow subject, Light light, Vector3[] corners,
+            List<Bounds> casters, int resolution, float filterRadius, float depthBias, float normalBias,
+            HoCharacterShadowSlice slice)
         {
             if (Mathf.Abs(subject.Anchor.localToWorldMatrix.determinant) < 1e-8f) return null;
             Quaternion rotation = light.transform.rotation;
@@ -175,15 +223,15 @@ namespace lilToon.URP.Extensions.CharacterShadow
             float padding = Mathf.Max(0.1f, texel * (depthBias + normalBias + 4));
             const float near = 0.01f;
             Vector3 origin = rotation * new Vector3(center.x, center.y, upstream - padding - near);
-            var slice = new HoCharacterShadowSlice
-            {
-                origin = origin, nearPlane = near, farPlane = max.z - upstream + padding * 2 + near,
-                texelSize = texel,
-                view = Matrix4x4.Scale(new Vector3(1, 1, -1)) * Matrix4x4.TRS(origin, rotation, Vector3.one).inverse,
-                bias = new Vector4(-Mathf.Max(0, depthBias) * texel, -Mathf.Max(0, normalBias) * texel, (float)LightType.Directional, 0)
-            };
+            slice.origin = origin;
+            slice.nearPlane = near;
+            slice.farPlane = max.z - upstream + padding * 2 + near;
+            slice.texelSize = texel;
+            slice.view = Matrix4x4.Scale(new Vector3(1, 1, -1)) * Matrix4x4.TRS(origin, rotation, Vector3.one).inverse;
+            slice.bias = new Vector4(-Mathf.Max(0, depthBias) * texel, -Mathf.Max(0, normalBias) * texel, (float)LightType.Directional, 0);
+            slice.valid = false;
             slice.projection = Matrix4x4.Ortho(-extent, extent, -extent, extent, near, slice.farPlane);
-            slice.planes = GeometryUtility.CalculateFrustumPlanes(slice.projection * slice.view);
+            GeometryUtility.CalculateFrustumPlanes(slice.projection * slice.view, slice.planes);
             Matrix4x4 projection = slice.projection;
             if (SystemInfo.usesReversedZBuffer)
                 for (int column = 0; column < 4; column++) projection[2, column] = -projection[2, column];

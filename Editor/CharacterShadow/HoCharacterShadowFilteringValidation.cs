@@ -19,6 +19,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             Vector4 previousSize = Shader.GetGlobalVector("_HoCSAtlasSize");
             Vector4 previousPcss = Shader.GetGlobalVector("_HoCSPcssParams");
             Vector4 previousPcss2 = Shader.GetGlobalVector("_HoCSPcssParams2");
+            Vector4 previousOffsetCounts = Shader.GetGlobalVector("_HoCSSampleOffsetCounts");
+            Vector4[] previousOffsets = Shader.GetGlobalVectorArray("_HoCSSampleOffsets");
             var created = new List<Object>();
             try
             {
@@ -35,6 +37,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 Shader.SetGlobalVector("_HoCSAtlasSize", new Vector4(1f / 4096, 1f / 4096, 4096, 4096));
                 Shader.SetGlobalVector("_HoCSPcssParams", new Vector4(1, Mathf.Tan(Mathf.Deg2Rad), 0.072f, 0.008f));
                 Shader.SetGlobalVector("_HoCSPcssParams2", new Vector4(0, 32, 64, 0.0001f));
+                lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowShaderContract.BindSamplingPattern(new Vector4(0, 32, 64, 0.0001f));
 
                 Color[] Sample(string label, int pattern, int mode, float radius = 0, float crop = 16, float shift = 0, float slope = 0.1f, float angle = 0)
                 {
@@ -69,6 +72,22 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 }
                 float Maximum(Color[] pixels) { float value = float.MinValue; foreach (Color p in pixels) value = Mathf.Max(value, p.r); return value; }
                 float Minimum(Color[] pixels) { float value = float.MaxValue; foreach (Color p in pixels) value = Mathf.Min(value, p.r); return value; }
+                foreach (lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowPcssQuality quality in
+                    Enum.GetValues(typeof(lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowPcssQuality)))
+                {
+                    lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowShaderContract.GetPcssSampleCounts(quality, out int blockers, out int filters);
+                    lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowShaderContract.BindSamplingPattern(new Vector4(0, blockers, filters, 0));
+                    foreach (int pattern in new[] { 0, 1 })
+                    {
+                        Color[] errors = Sample("cached-offsets-" + quality + "-" + pattern, pattern, 9);
+                        // CPU Mathf and GPU trigonometric approximations differ slightly.
+                        // This bound is in the unit disk (0.001 texel at radius 100);
+                        // final visibility is also checked by the image comparisons.
+                        foreach (Color error in errors)
+                            Require(Mathf.Max(error.r, error.g) < 0.00001f, "Cached sample pattern changed: " + quality);
+                    }
+                }
+                lilToon.URP.Extensions.CharacterShadow.HoCharacterShadowShaderContract.BindSamplingPattern(new Vector4(0, 32, 64, 0));
                 var raw = Sample("raw-point", 0, 0);
                 var filtered = Sample("small-radius", 0, 1, 0.2f);
                 var levels = new HashSet<int>();
@@ -211,6 +230,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 Shader.SetGlobalVector("_HoCSAtlasSize", previousSize);
                 Shader.SetGlobalVector("_HoCSPcssParams", previousPcss);
                 Shader.SetGlobalVector("_HoCSPcssParams2", previousPcss2);
+                Shader.SetGlobalVector("_HoCSSampleOffsetCounts", previousOffsetCounts);
+                if (previousOffsets != null && previousOffsets.Length > 0)
+                    Shader.SetGlobalVectorArray("_HoCSSampleOffsets", previousOffsets);
                 for (int i = created.Count - 1; i >= 0; i--) Object.DestroyImmediate(created[i]);
             }
         }

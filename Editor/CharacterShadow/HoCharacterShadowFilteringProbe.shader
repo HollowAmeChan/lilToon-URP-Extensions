@@ -93,6 +93,13 @@ Shader "Hidden/Ho-CharacterShadow/FilteringProbe"
                     hi.x = 0.5 - 0.5 / 4096.0;
                     uv.x = hi.x - input.uv.x * 2 / 4096.0;
                 }
+                if (_Mode == 9)
+                {
+                    int count = _Pattern == 0 ? (int)_HoCSSampleOffsetCounts.x : (int)_HoCSSampleOffsetCounts.y;
+                    int index = min((int)(input.uv.x * 64), max(count - 1, 0));
+                    float2 error = abs(HoCSSampleOffset(index, count) - HoCSCalculateSampleOffset(index, count));
+                    return float4(error, 0, 1);
+                }
                 if (_Mode == 4)
                 {
                     float a = HoCSDirectionalPenumbra(0.1, 10);

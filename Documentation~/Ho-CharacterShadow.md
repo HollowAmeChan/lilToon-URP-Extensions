@@ -1,6 +1,6 @@
 # Ho-CharacterShadow：当前栅格化角色投影
 
-> 状态：**现行实现与使用入口**，2026-10-29。CS 使用角色局部 shadow map、PCF / PCSS；修复基线 `541d06f2` 不代表所有角色近景画质已验收。独立 [Ho-RT / RTShadow / SIGMA](Ho-RT.md) 已实现并有有界 GPU / Player 验收，需单独配置，不自动替换本模块。
+> 状态：**现行实现与使用入口**，2026-11-23。CS 使用角色局部 shadow map、PCF / PCSS；修复基线 `541d06f2` 不代表所有角色近景画质已验收。独立 [Ho-RT / RTShadow / SIGMA](Ho-RT.md) 已实现并有有界 GPU / Player 验收，需单独配置，不自动替换本模块。
 
 ## 功能与接入
 
@@ -43,6 +43,14 @@ CS 为角色接收盒生成高精度的主方向光实时投影。局部覆盖�
 
 质量档的 blocker / filter 预算为 Low 8/16、Medium 16/32、High 24/48、Ultra 32/64。
 
+## 性能与统计范围
+
+关闭 PCSS 只关闭 blocker 搜索，仍执行固定 PCF 和基础抗锯齿；Ultra 的宽核固定滤波仍有 64 个四点采样。分辨率提高后，相同世界半径和屏幕像素覆盖范围会换算成更多 atlas texel，可能越过小核与稀疏盘的切换阈值。因此关闭 PCSS，甚至把固定软边设为 0，都不保证接收端变成一次简单深度读取。
+
+CPU 按相机复用 frame、slice 和 Shader 数组存储；动态 caster 仍在每次存在有效接收域的相机渲染时重新收集一次并参与深度范围计算，不缓存过期的运动 bounds。采样 offset 预计算、对称采样成对循环和 tile 内四点读取的共享数学运算保留原采样预算与世界半径，SM3.5 后备路径的每个四点采样仍执行四次原始深度读取。
+
+HUD 的 `Ho-CharacterShadow` GPU 耗时覆盖 atlas 生成 pass；接收端滤波在 lilToon 材质 Forward 中执行，不包含在该数字内。开启 CS 后的整帧变化还受接收像素、overdraw、caster 和相机数量影响，不能用 atlas 耗时代表全部成本。
+
 ## 采样与资源契约
 
 - 光空间 X/Y 拟合角色接收盒；上游 caster 主要扩展 Z。增加 caster 数量不会自动分摊 tile 的 X/Y 分辨率，扩大接收盒会降低单位面积的 texel 密度。
@@ -77,6 +85,7 @@ CS 固定在 `BeforeRenderingShadows` 工作，用自己的隐藏方向光及光
 | 方法 | 覆盖 |
 | --- | --- |
 | `Validate` | 固定 XY、上游覆盖、接收盒、Shader 参数上限 |
+| `ValidateFrameReuse` | 存储复用、接收切换清理、动态上游 caster 更新、相机独立性与销毁清理；分配计数可用时检查分配减少 |
 | `ValidateReceiverSelectionRendering` | 整组、指定、空指定与接收身份 |
 | `ValidateRendering` | 场景 caster、材质接收、停用 / 恢复、Volume 与图集调试 |
 | `ValidatePcss` | 固定与距离相关软边、核心亮度、细 tile |
@@ -84,7 +93,7 @@ CS 固定在 `BeforeRenderingShadows` 工作，用自己的隐藏方向光及光
 | `ValidateDistanceRendering` | 1 / 4 级联与远近相机扫描 |
 | `ValidateSceneShadows` | CS 开关不影响其他物体的普通阴影、SRV 与临时对象生命周期 |
 
-2026-10-28 的独立 D3D11 / D3D12 RenderGraph 运行通过完整 suite 与扩展 filtering；本次提交前再次确认相关源 SHA 与记录一致，Runtime / Editor 分程序集编译为 0 errors。摘要、实际 metrics 和复核范围见 [Filtering 验证快照](../Tests~/CharacterShadow/Filtering-20261028/README.md)。这些证据不等同于完整透明 / XR / 大规模动画角色矩阵或所有近景画质已通过。
+2026-11-23 的独立 D3D11 / D3D12 RenderGraph 运行均通过完整 suite，每个 API 另通过 324 组优化前后图像对照。D3D12 额外通过 1280 组对照，覆盖 6144 非二次幂 atlas、奇数采样预算与采样 offset 缓存后备路径；最大可见度误差为 `4.41074371e-5`。夹具、基线与验证范围见 [优化验证快照](../Tests~/CharacterShadow/Optimization-20261123/README.md)。这些结果验证本轮优化的图像与状态回归，不证明用户完整场景的帧率改善，也不等同于完整透明 / XR / 大规模动画角色矩阵或所有近景画质已通过。此前的独立验证保留在 [2026-10-28 Filtering 快照](../Tests~/CharacterShadow/Filtering-20261028/README.md)。
 
 ## 已知限制与后续入口
 

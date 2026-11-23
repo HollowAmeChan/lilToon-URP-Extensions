@@ -1,0 +1,20 @@
+{
+  "baseline": "acde9c8be10747a7a51e1dde289eee166368893d",
+  "sha256": {
+    "Runtime/CharacterShadow/HoCharacterShadowRendererFeature.cs": "06ee39646579909211d202bc81e9860000fe4a09a80f4fa09e720053698f24c1",
+    "Runtime/CharacterShadow/HoCharacterShadowFrame.cs": "a2208c44acdaebe9b13232c40e963dffb7c286627837dcb2b3d8a7e69812fe87",
+    "Runtime/CharacterShadow/HoCharacterShadowSettings.cs": "defb2635dc44c7319b9443971997761c83fb94bfe7eb68bdb8db33ce1dafb994",
+    "Runtime/CharacterShadow/HoCharacterShadowShaderContract.cs": "bc98bbc50bf451584fa9625c2d17e129891638625855fc3de2bcf5396c978404",
+    "Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl": "6fbd342049144eb772a0870dcdaef924caaa800042835a0d97da779be2bf23b3"
+  },
+  "evidenceSha256": {
+    "HoCSCameraPerformanceProbe.cs": "0534202979758b7cef4b752cb5579b37df5cb32be0b49a256be7f8c36fac8883",
+    "HoCSPerformanceProbe.cs": "01ee0af98ec6aec210890f257479a1876b11fce554dd220e9338f84ddf05560f",
+    "HoCSPerformanceProbe.shader": "eea97ae1b61283c1ffac1ef684ad1f222e624e21ef7fda484a61ad99090897a2",
+    "HoCSReceiverPerformanceProbe.shader": "210b3754ddc134a1e80f8de8109e85cd7c1ac16808002cc9d4af3c3420a8a71d",
+    "HoCSReceiverPerformanceProbeSM35.shader": "572a69a3b64688cdec4d941bb254c26da97e8f8a5d0e4e3d1ffae51dd78efdb4",
+    "README.md": "80d5416ec0ae53b020e4b2b5d59f4dea3173273fa388b45823091f7501ebfce8",
+    "receiver-target-comparison.json": "0c6cef747c9cb928b3ec4222a2bdfb016280dd659bfe33cd0a4798b34a1dcd0d",
+    "sampling.json": "9ec131d9be1835fd8c0c4d8202e322ba785acf778d75894906980da6a8b63a7e"
+  }
+}

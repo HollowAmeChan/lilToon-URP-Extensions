@@ -22,6 +22,10 @@ float4 _HoCSDepthParameters[HO_CS_MAX_SLICES];
 float4 _HoCSPcssParams;
 // (blocker depth bias, blocker samples, filter samples, additional soft radius metres)
 float4 _HoCSPcssParams2;
+float4 _HoCSSampleOffsets[HO_CS_MAX_PCSS_FILTER_SAMPLES];
+// x = filter budget, y = blocker budget minus its explicit first centre tap.
+// Zero keeps the self-contained arithmetic fallback available to existing diagnostic shaders.
+float4 _HoCSSampleOffsetCounts;
 
 float HoCSSampleRawDepth(float2 uv)
 {
@@ -63,19 +67,25 @@ void HoCSReadDepthQuad(float2 tapUv, float2 lo, float2 hi,
     float2 f = frac(p);
     float2 b = (floor(p) + 0.5) * _HoCSAtlasSize.xy;
     weights = float4((1 - f.x) * f.y, f.x * f.y, f.x * (1 - f.y), (1 - f.x) * (1 - f.y));
-    #if defined(PLATFORM_SUPPORT_GATHER) && SHADER_TARGET >= 45
-    if (all(b >= lo) && all(b + _HoCSAtlasSize.xy <= hi))
+    UNITY_BRANCH if (all(b >= lo) && all(b + _HoCSAtlasSize.xy <= hi))
     {
+        #if defined(PLATFORM_SUPPORT_GATHER) && SHADER_TARGET >= 45
         // Gather order: upper-left, upper-right, lower-right, lower-left.
         // Gather at the footprint's centre, not at a fractional boundary: texture-unit
         // coordinate rounding must not select a different quad than floor(p) above.
         depths = GATHER_TEXTURE2D(_HoCSAtlas, sampler_PointClamp, b + 0.5 * _HoCSAtlasSize.xy);
+        #else
+        // Most receiving pixels are away from a tile edge. The SM3.5 path also
+        // shares one receiver-plane reference and avoids four redundant clamps/dots.
+        depths = float4(HoCSSampleRawDepth(b + float2(0, _HoCSAtlasSize.y)),
+            HoCSSampleRawDepth(b + _HoCSAtlasSize.xy),
+            HoCSSampleRawDepth(b + float2(_HoCSAtlasSize.x, 0)), HoCSSampleRawDepth(b));
+        #endif
         float reference = HoCSReceiverDepth(b, receiverUv, receiverDepth, gradient);
         float2 dz = gradient.xy * _HoCSAtlasSize.xy;
         references = reference + float4(dz.y, dz.x + dz.y, dz.x, 0);
     }
     else
-    #endif
     {
         // Also isolates adjacent atlas tiles; the sampler only clamps to the whole atlas.
         float2 a = clamp(b, lo, hi);
@@ -99,6 +109,13 @@ float2 HoCSCompareBilinear(float2 tapUv, float2 lo, float2 hi,
     HoCSReadDepthQuad(tapUv, lo, hi, receiverUv, receiverDepth, gradient, depths, references, weights);
     float4 visibility = HoCSCompareDepth(depths, references);
     float4 rawVisibility = HoCSCompareDepth(depths, receiverDepth.xxxx);
+    UNITY_BRANCH if (all(visibility == rawVisibility))
+    {
+        // When plane correction cannot change any comparison, its trust blend
+        // and second dot product have no effect, including along a mixed quad.
+        float value = dot(rawVisibility, weights);
+        return value.xx;
+    }
     // A tangent triangle's plane can extrapolate through an unrelated occluder. Only use
     // its acne correction when the stored surface actually agrees with that local plane.
     float4 trust = 1.0 - smoothstep(gradient.z, gradient.z * 2.0, abs(depths - references));
@@ -109,7 +126,7 @@ float2 HoCSCompareBilinear(float2 tapUv, float2 lo, float2 hi,
 float HoCSTentIntegral(float position, float support)
 {
     float x = clamp(position / support, -1.0, 1.0);
-    return x < 0 ? 0.5 * (x + 1) * (x + 1) : 1 - 0.5 * (1 - x) * (1 - x);
+    return 0.5 + x * (1.0 - 0.5 * abs(x));
 }
 
 // Integrate a tent over texel CELLS, then pack adjacent cell weights into bilinear taps.
@@ -137,17 +154,22 @@ float2 HoCSSampleDenseTent(float2 uv, float2 lo, float2 hi, float receiverDepth,
     }
     float2 visibility = 0;
     [unroll] for (int y = 0; y < 4; y++)
-        [unroll] for (int x = 0; x < 4; x++)
+    {
+        UNITY_BRANCH if (weightsY[y] > 0)
         {
-            float weight = weightsX[x] * weightsY[y];
-            if (weight > 0)
-                visibility += weight * HoCSCompareBilinear(float2(offsetsX[x], offsetsY[y]), lo, hi, uv, receiverDepth, gradient);
+            [unroll] for (int x = 0; x < 4; x++)
+            {
+                UNITY_BRANCH if (weightsX[x] > 0)
+                    visibility += weightsX[x] * weightsY[y] * HoCSCompareBilinear(
+                        float2(offsetsX[x], offsetsY[y]), lo, hi, uv, receiverDepth, gradient);
+            }
         }
+    }
     return visibility;
 }
 
 // Fixed, symmetric samples: no world-cell hash, temporal dependency or per-pixel noise.
-float2 HoCSSampleOffset(int index, int sampleCount)
+float2 HoCSCalculateSampleOffset(int index, int sampleCount)
 {
     // Odd search budgets must still have zero centroid: a centre sample plus antipodal pairs.
     if ((sampleCount & 1) != 0)
@@ -164,6 +186,15 @@ float2 HoCSSampleOffset(int index, int sampleCount)
     float angle = pair * 2.39996323;
     float direction = (index & 1) == 0 ? 1.0 : -1.0;
     return float2(cos(angle), sin(angle)) * (radius * direction);
+}
+
+float2 HoCSSampleOffset(int index, int sampleCount)
+{
+    UNITY_BRANCH if (sampleCount == (int)_HoCSSampleOffsetCounts.x && sampleCount > 0)
+        return _HoCSSampleOffsets[index].xy;
+    UNITY_BRANCH if (sampleCount == (int)_HoCSSampleOffsetCounts.y && sampleCount > 0)
+        return _HoCSSampleOffsets[index].zw;
+    return HoCSCalculateSampleOffset(index, sampleCount);
 }
 
 float HoCSRadiusTexels(float worldRadius, float texelWorld)
@@ -183,7 +214,7 @@ float HoCSSampleDisk(float2 uv, float2 lo, float2 hi, float receiverDepth,
     float radiusTexels, int sampleCount, float3 gradient)
 {
     float2 visibility = 1;
-    if (radiusTexels <= 2.0 || sampleCount <= 0)
+    UNITY_BRANCH if (radiusTexels <= 2.0 || sampleCount <= 0)
     {
         visibility = HoCSSampleDenseTent(uv, lo, hi, receiverDepth, gradient, min(radiusTexels, 2.0));
     }
@@ -193,15 +224,21 @@ float HoCSSampleDisk(float2 uv, float2 lo, float2 hi, float receiverDepth,
         // Preserve the base-AA variance as artistic softness grows instead of replacing its
         // kernel with a narrower disk. The dense/sparse transition uses matching second moments.
         float diskRadius = sqrt(radiusTexels * radiusTexels + 1.5);
-        [loop] for (int i = 0; i < HO_CS_MAX_PCSS_FILTER_SAMPLES; i++)
+        int firstPair = sampleCount & 1;
+        if (firstPair != 0)
+            visibility = HoCSCompareBilinear(uv, lo, hi, uv, receiverDepth, gradient);
+        // Adjacent pattern entries are exact antipodes. Fetch/scale their shared
+        // offset once and keep the original accumulation order, with half the loop work.
+        [loop] for (int i = firstPair; i < HO_CS_MAX_PCSS_FILTER_SAMPLES; i += 2)
         {
             if (i >= sampleCount) break;
-            float2 tapUv = uv + HoCSSampleOffset(i, sampleCount) * _HoCSAtlasSize.xy * diskRadius;
-            visibility += HoCSCompareBilinear(tapUv, lo, hi, uv, receiverDepth, gradient);
+            float2 offset = HoCSSampleOffset(i, sampleCount) * _HoCSAtlasSize.xy * diskRadius;
+            visibility += HoCSCompareBilinear(uv + offset, lo, hi, uv, receiverDepth, gradient);
+            visibility += HoCSCompareBilinear(uv - offset, lo, hi, uv, receiverDepth, gradient);
         }
         visibility /= (float)sampleCount;
         // Avoid a shape discontinuity when PCSS transitions out of the small-kernel path.
-        if (radiusTexels < 2.5)
+        UNITY_BRANCH if (radiusTexels < 2.5)
             visibility = lerp(HoCSSampleDenseTent(uv, lo, hi, receiverDepth, gradient, radiusTexels), visibility, smoothstep(2.0, 2.5, radiusTexels));
     }
     return HoCSResolveFilter(visibility);
@@ -233,12 +270,18 @@ float2 HoCSBlockerStatistics(float2 tapUv, float2 lo, float2 hi,
 float2 HoCSSearchBlockers(float2 uv, float2 lo, float2 hi, float receiverDepth,
     float3 gradient, float blockerRadius, int sampleCount)
 {
-    float2 statistics = 0;
-    [loop] for (int i = 0; i < HO_CS_MAX_PCSS_BLOCKER_SAMPLES; i++)
+    if (sampleCount <= 0) return 0;
+    float2 statistics = HoCSBlockerStatistics(uv, lo, hi, uv, receiverDepth, gradient);
+    int remaining = sampleCount - 1;
+    int firstPair = remaining & 1;
+    if (firstPair != 0)
+        statistics += HoCSBlockerStatistics(uv, lo, hi, uv, receiverDepth, gradient);
+    [loop] for (int i = firstPair; i < HO_CS_MAX_PCSS_BLOCKER_SAMPLES - 1; i += 2)
     {
-        if (i >= sampleCount) break;
-        float2 offset = i == 0 ? float2(0, 0) : HoCSSampleOffset(i - 1, sampleCount - 1) * blockerRadius;
-        statistics += HoCSBlockerStatistics(uv + offset * _HoCSAtlasSize.xy, lo, hi, uv, receiverDepth, gradient);
+        if (i >= remaining) break;
+        float2 offset = HoCSSampleOffset(i, remaining) * blockerRadius * _HoCSAtlasSize.xy;
+        statistics += HoCSBlockerStatistics(uv + offset, lo, hi, uv, receiverDepth, gradient);
+        statistics += HoCSBlockerStatistics(uv - offset, lo, hi, uv, receiverDepth, gradient);
     }
     return statistics;
 }
@@ -249,7 +292,7 @@ float HoCSSampleAtlasPcss(float2 uv, float2 lo, float2 hi, float receiverDepth,
     int filterSamples = clamp((int)round(_HoCSPcssParams2.z), 1, HO_CS_MAX_PCSS_FILTER_SAMPLES);
     float minRadius = max(HoCSRadiusTexels(_HoCSPcssParams2.w, texelWorld), footprintTexels);
     float radius = minRadius;
-    if (_HoCSPcssParams.x >= 0.5 && _HoCSPcssParams.y > 0)
+    UNITY_BRANCH if (_HoCSPcssParams.x >= 0.5 && _HoCSPcssParams.y > 0)
     {
         int blockerSamples = clamp((int)round(_HoCSPcssParams2.y), 1, HO_CS_MAX_PCSS_BLOCKER_SAMPLES);
         float blockerRadius = HoCSRadiusTexels(_HoCSPcssParams.z, texelWorld);

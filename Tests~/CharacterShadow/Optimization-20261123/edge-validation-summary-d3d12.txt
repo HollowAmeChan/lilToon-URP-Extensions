@@ -1,0 +1,5 @@
+HO_CS_EDGE_IMAGE_EQUIVALENCE_PASSED cases=1280 maximumError=4.41074371E-05
+HO_CS_OPTIMIZATION_EDGE_VALIDATION_PASSED
+Leak Detected : Persistent allocates 4 individual allocations. To find out more please enable 'Preferences > Jobs > Leak Detection Level > Enabled With Stack Trace' and reproduce the leak again.
+There are unreleased allocations left in a heap that is released!
+~StackAllocator(ALLOC_TEMP_MAIN) m_LastAlloc not NULL. Did you forget to call FreeAllStackAllocations()? To get more information, run app with -diag-temp-memory-leak-validation cmd line argument

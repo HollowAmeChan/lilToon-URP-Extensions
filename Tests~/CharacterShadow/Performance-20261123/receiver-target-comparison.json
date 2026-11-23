@@ -1,0 +1,98 @@
+{
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "api": "Direct3D12",
+    "width": 2560,
+    "height": 1440,
+    "cases": [
+        {
+            "label": "SM45 off",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.0,
+            "opaqueMs": 0.016383999958634378,
+            "cpuRenderMs": 0.4555,
+            "status": ";等待 CS Renderer Feature"
+        },
+        {
+            "label": "SM45 atlas-only",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.030719999223947526,
+            "opaqueMs": 0.6256639957427979,
+            "cpuRenderMs": 9.8911,
+            "status": "slices=1|camLights=1,add=0|pcss=on,min=0.002m,max=0.076m,angle=0.1deg,Ultra,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        },
+        {
+            "label": "SM45 pcf-zero",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.030719999223947526,
+            "opaqueMs": 0.737280011177063,
+            "cpuRenderMs": 2.5898000000000005,
+            "status": "slices=1|camLights=1,add=0|pcss=off,min=0m,max=0.076m,angle=0.1deg,Ultra,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        },
+        {
+            "label": "SM45 pcss-low",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.030719999223947526,
+            "opaqueMs": 2.293760061264038,
+            "cpuRenderMs": 2.5507,
+            "status": "slices=1|camLights=1,add=0|pcss=on,min=0.002m,max=0.076m,angle=0.1deg,Low,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        },
+        {
+            "label": "SM45 pcss-ultra",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.030719999223947526,
+            "opaqueMs": 3.384320020675659,
+            "cpuRenderMs": 2.5358,
+            "status": "slices=1|camLights=1,add=0|pcss=on,min=0.002m,max=0.076m,angle=0.1deg,Ultra,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        },
+        {
+            "label": "SM35 off",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.0,
+            "opaqueMs": 0.016383999958634378,
+            "cpuRenderMs": 0.4829,
+            "status": "slices=1|camLights=1,add=0|pcss=on,min=0.002m,max=0.076m,angle=0.1deg,Ultra,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        },
+        {
+            "label": "SM35 atlas-only",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.030719999223947526,
+            "opaqueMs": 0.6174719929695129,
+            "cpuRenderMs": 2.5583,
+            "status": "slices=1|camLights=1,add=0|pcss=on,min=0.002m,max=0.076m,angle=0.1deg,Ultra,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        },
+        {
+            "label": "SM35 pcf-zero",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.030719999223947526,
+            "opaqueMs": 0.7434239983558655,
+            "cpuRenderMs": 2.8998,
+            "status": "slices=1|camLights=1,add=0|pcss=off,min=0m,max=0.076m,angle=0.1deg,Ultra,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        },
+        {
+            "label": "SM35 pcss-low",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.02969600073993206,
+            "opaqueMs": 2.500607967376709,
+            "cpuRenderMs": 3.456,
+            "status": "slices=1|camLights=1,add=0|pcss=on,min=0.002m,max=0.076m,angle=0.1deg,Low,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        },
+        {
+            "label": "SM35 pcss-ultra",
+            "resolution": 2048,
+            "samples": 32,
+            "atlasMs": 0.030719999223947526,
+            "opaqueMs": 3.5338239669799806,
+            "cpuRenderMs": 2.402,
+            "status": "slices=1|camLights=1,add=0|pcss=on,min=0.002m,max=0.076m,angle=0.1deg,Ultra,vol=0|ok(lights=2,ori=0.0,0.0,-1.2,near=0.01,far=1.81)|p(origin=0.0,0.0,-1.2,shadowDist=3.4,isOrtho=True,opts=76,lodCam=0.0,0.0,-1.2,cm=1.1111,0.33)|lists=1/1;CS 天光投影"
+        }
+    ]
+}

@@ -414,6 +414,18 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                         RenderCenter();
                         float atlasSize = Shader.GetGlobalVector("_HoCSAtlasSize").z;
                         Require(Mathf.Approximately(atlasSize, 512f), $"Volume 覆盖的单角色分辨率没有生效: {atlasSize:F0}");
+                        volumeComponent.pcssEnabled.overrideState = true;
+                        volumeComponent.pcssEnabled.value = false;
+                        VolumeManager.instance.Update(volumeStack, camera.transform, additionalData.volumeLayerMask);
+                        RenderCenter("cs-volume-pcss-off");
+                        Require(Shader.GetGlobalVector("_HoCSPcssParams").x < 0.5f
+                            && Shader.GetGlobalFloat("_HoCSActive") > 0.5f,
+                            "PCSS Volume override did not disable blocker search while retaining CS");
+                        volumeComponent.pcssEnabled.overrideState = false;
+                        VolumeManager.instance.Update(volumeStack, camera.transform, additionalData.volumeLayerMask);
+                        RenderCenter("cs-volume-pcss-fallback");
+                        Require(Shader.GetGlobalVector("_HoCSPcssParams").x > 0.5f,
+                            "Removing the PCSS override did not restore the enabled feature fallback");
                         volumeResult = $"volume={volumeDisabled:F3}/atlas {atlasSize:F0}";
                     }
                     else
@@ -425,6 +437,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 {
                     volumeComponent.enable.overrideState = false;
                     volumeComponent.resolution.overrideState = false;
+                    volumeComponent.pcssEnabled.overrideState = false;
                     volume.profile = null;
                     Object.DestroyImmediate(volumeObject);
                     created.Remove(volumeObject);

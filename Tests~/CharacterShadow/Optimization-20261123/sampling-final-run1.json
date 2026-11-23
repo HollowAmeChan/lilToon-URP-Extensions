@@ -1,0 +1,326 @@
+{
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "api": "Direct3D12",
+    "cases": [
+        {
+            "label": "flat-baseline-0-0",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 0.1876479983329773,
+            "gpuP90Ms": 0.1881600022315979,
+            "cpuMedianMs": 0.04650000110268593
+        },
+        {
+            "label": "flat-optimized-0-1",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 0.17587199807167054,
+            "gpuP90Ms": 0.19788800179958344,
+            "cpuMedianMs": 0.06239999830722809
+        },
+        {
+            "label": "flat-optimized-0-2",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 0.1770240068435669,
+            "gpuP90Ms": 0.17715199291706086,
+            "cpuMedianMs": 0.045099999755620959
+        },
+        {
+            "label": "flat-baseline-0-3",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 0.1886720061302185,
+            "gpuP90Ms": 0.18880000710487367,
+            "cpuMedianMs": 0.04349999874830246
+        },
+        {
+            "label": "flat-baseline-0.002-0",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.7537280321121216,
+            "gpuP90Ms": 1.8785279989242554,
+            "cpuMedianMs": 0.06270000338554383
+        },
+        {
+            "label": "flat-optimized-0.002-1",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.3794560432434083,
+            "gpuP90Ms": 1.5156480073928834,
+            "cpuMedianMs": 0.07180000096559525
+        },
+        {
+            "label": "flat-optimized-0.002-2",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.477504014968872,
+            "gpuP90Ms": 1.6089600324630738,
+            "cpuMedianMs": 0.09179999679327011
+        },
+        {
+            "label": "flat-baseline-0.002-3",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.9393279552459717,
+            "gpuP90Ms": 2.150912046432495,
+            "cpuMedianMs": 0.07429999858140946
+        },
+        {
+            "label": "flat-baseline-0.005-0",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.5797760486602784,
+            "gpuP90Ms": 1.6339199542999268,
+            "cpuMedianMs": 0.07289999723434448
+        },
+        {
+            "label": "flat-optimized-0.005-1",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.1125760078430176,
+            "gpuP90Ms": 1.2071679830551148,
+            "cpuMedianMs": 0.05260000005364418
+        },
+        {
+            "label": "flat-optimized-0.005-2",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.1406079530715943,
+            "gpuP90Ms": 1.2712960243225098,
+            "cpuMedianMs": 0.055399999022483829
+        },
+        {
+            "label": "flat-baseline-0.005-3",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.553920030593872,
+            "gpuP90Ms": 1.6687359809875489,
+            "cpuMedianMs": 0.05310000106692314
+        },
+        {
+            "label": "flat-baseline-0-0",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 5.125247955322266,
+            "gpuP90Ms": 7.016064167022705,
+            "cpuMedianMs": 0.08940000087022782
+        },
+        {
+            "label": "flat-optimized-0-1",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.4885759353637699,
+            "gpuP90Ms": 4.611455917358398,
+            "cpuMedianMs": 0.08479999750852585
+        },
+        {
+            "label": "flat-optimized-0-2",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.492800235748291,
+            "gpuP90Ms": 4.689919948577881,
+            "cpuMedianMs": 0.09000000357627869
+        },
+        {
+            "label": "flat-baseline-0-3",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.96281623840332,
+            "gpuP90Ms": 5.298687934875488,
+            "cpuMedianMs": 0.08780000358819962
+        },
+        {
+            "label": "flat-baseline-0.002-0",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.813568115234375,
+            "gpuP90Ms": 5.1941118240356449,
+            "cpuMedianMs": 0.09290000051259995
+        },
+        {
+            "label": "flat-optimized-0.002-1",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.737919807434082,
+            "gpuP90Ms": 4.8633599281311039,
+            "cpuMedianMs": 0.09130000323057175
+        },
+        {
+            "label": "flat-optimized-0.002-2",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.658815860748291,
+            "gpuP90Ms": 4.777472019195557,
+            "cpuMedianMs": 0.09200000017881394
+        },
+        {
+            "label": "flat-baseline-0.002-3",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 6.650752067565918,
+            "gpuP90Ms": 7.364992141723633,
+            "cpuMedianMs": 0.09520000219345093
+        },
+        {
+            "label": "flat-baseline-0.005-0",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 6.875391960144043,
+            "gpuP90Ms": 7.755519866943359,
+            "cpuMedianMs": 0.09520000219345093
+        },
+        {
+            "label": "flat-optimized-0.005-1",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.63424015045166,
+            "gpuP90Ms": 5.048704147338867,
+            "cpuMedianMs": 0.09269999712705612
+        },
+        {
+            "label": "flat-optimized-0.005-2",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.651519775390625,
+            "gpuP90Ms": 5.170815944671631,
+            "cpuMedianMs": 0.08630000054836273
+        },
+        {
+            "label": "flat-baseline-0.005-3",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.777599811553955,
+            "gpuP90Ms": 5.120768070220947,
+            "cpuMedianMs": 0.0869000032544136
+        },
+        {
+            "label": "sloped-baseline-0.002-0",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.7576960325241089,
+            "gpuP90Ms": 1.8946559429168702,
+            "cpuMedianMs": 0.06930000334978104
+        },
+        {
+            "label": "sloped-optimized-0.002-1",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.486464023590088,
+            "gpuP90Ms": 1.5260159969329835,
+            "cpuMedianMs": 0.06340000033378601
+        },
+        {
+            "label": "sloped-optimized-0.002-2",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 2.416896104812622,
+            "gpuP90Ms": 2.75763201713562,
+            "cpuMedianMs": 0.09809999912977219
+        },
+        {
+            "label": "sloped-baseline-0.002-3",
+            "atlas": 2048,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.8731520175933838,
+            "gpuP90Ms": 3.274496078491211,
+            "cpuMedianMs": 0.0794999971985817
+        },
+        {
+            "label": "sloped-baseline-0.002-0",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 4.861184120178223,
+            "gpuP90Ms": 5.108096122741699,
+            "cpuMedianMs": 0.09939999878406525
+        },
+        {
+            "label": "sloped-optimized-0.002-1",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 6.471039772033691,
+            "gpuP90Ms": 7.057919979095459,
+            "cpuMedianMs": 0.11129999905824661
+        },
+        {
+            "label": "sloped-optimized-0.002-2",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 1.5303679704666138,
+            "gpuP90Ms": 2.3106560707092287,
+            "cpuMedianMs": 0.07670000195503235
+        },
+        {
+            "label": "sloped-baseline-0.002-3",
+            "atlas": 4096,
+            "width": 1280,
+            "height": 720,
+            "samples": 32,
+            "gpuMedianMs": 6.827136039733887,
+            "gpuP90Ms": 7.160319805145264,
+            "cpuMedianMs": 0.09539999812841416
+        }
+    ]
+}
