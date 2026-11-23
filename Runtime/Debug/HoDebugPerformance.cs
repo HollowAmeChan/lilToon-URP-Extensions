@@ -61,7 +61,7 @@ namespace lilToon.URP.Extensions.Debugging
                     continue;
                 }
 
-                ProfilingSampler sampler = new ProfilingSampler(markerName);
+                ProfilingSampler sampler = HoDebugPerformanceRegistry.GetSampler(markerName);
                 declaredSamplers.Add(sampler);
             }
 
@@ -147,6 +147,8 @@ namespace lilToon.URP.Extensions.Debugging
         private static readonly List<HoDebugPerformanceInfo> Entries = new List<HoDebugPerformanceInfo>();
         private static readonly Dictionary<string, HoDebugPerformanceInfo> EntriesByFeature =
             new Dictionary<string, HoDebugPerformanceInfo>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, ProfilingSampler> SamplersByName =
+            new Dictionary<string, ProfilingSampler>(StringComparer.Ordinal);
         private static int updatedFrame = -1;
         private static float smoothedDeltaTime;
         private static bool hasFrameTiming;
@@ -165,6 +167,23 @@ namespace lilToon.URP.Extensions.Debugging
             {
                 Entries[i].SetRecordingEnabled(enabled);
             }
+        }
+
+        public static ProfilingSampler GetSampler(string markerName)
+        {
+            if (string.IsNullOrWhiteSpace(markerName))
+            {
+                throw new ArgumentException("A profiling marker requires a name.", nameof(markerName));
+            }
+
+            if (SamplersByName.TryGetValue(markerName, out ProfilingSampler sampler))
+            {
+                return sampler;
+            }
+
+            sampler = new ProfilingSampler(markerName);
+            SamplersByName.Add(markerName, sampler);
+            return sampler;
         }
 
         public static HoDebugPerformanceInfo Register(string featureName, string displayName, params string[] markerNames)

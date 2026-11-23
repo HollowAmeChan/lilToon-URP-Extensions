@@ -301,7 +301,7 @@ namespace lilToon.URP.Extensions.RTShadow
 
         internal sealed class ShadowPass : ScriptableRenderPass
         {
-            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-RTShadow");
+            private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-RTShadow");
             private Output output; private HoRTView view; private RayTracingShader shader; private uint[] receivers;
             private ComputeShader sigmaShader;
             private Vector4 lightDirection, parameters, localPosition, localForward; private bool main; private int slot; private int samples, seed, signature; private float strength, tanRadius;

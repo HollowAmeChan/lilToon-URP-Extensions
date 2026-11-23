@@ -16,7 +16,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         internal const string PassName = "HO_SURFACE_CORRELATED_V1";
         internal const string LightMode = "HoSurfaceCorrelatedV1";
         internal const string ReduceShader = "Hidden/lilToon/URP/SurfaceBuffer/CorrelatedReduce";
-        private static readonly ProfilingSampler Sampler = new ProfilingSampler("Ho-Surface Semantic Association");
+        private static readonly ProfilingSampler Sampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-Surface Semantic Association");
         private readonly List<Renderer> assigned = new List<Renderer>();
         private readonly List<Material> materials = new List<Material>();
         private readonly HashSet<Material> checkedMaterials = new HashSet<Material>();

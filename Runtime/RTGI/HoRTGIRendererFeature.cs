@@ -196,7 +196,7 @@ namespace lilToon.URP.Extensions.RTGI
         }
         private sealed class HoRTGIPass : ScriptableRenderPass
         {
-            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-RTGI");
+            private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-RTGI");
             private HoRTGIContext context;private HoRTView sceneView;private ComputeShader shader;private RayTracingShader rayShader;
             private PassSettings settings;private HoRTAnalyticLight[] lights;private int lightCount,signature;
             private double renderTime;

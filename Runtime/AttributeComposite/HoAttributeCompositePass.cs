@@ -18,7 +18,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     /// </summary>
     internal sealed class HoAttributeCompositePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-AttributeComposite");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-AttributeComposite");
 
         private HoAttributeCompositeSettings settings;
         private Material resolveMaterial;

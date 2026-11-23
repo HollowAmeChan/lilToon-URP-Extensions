@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 {
     internal sealed class HoGeometryBufferDebugPass : HoDebugRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GeometryBuffer Debug");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GeometryBuffer Debug");
         private HoGeometryBufferSettings settings;
         private HoGeometryBufferRenderTargets renderTargets;
         private RTHandle cameraColorTarget;

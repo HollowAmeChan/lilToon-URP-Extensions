@@ -294,7 +294,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     internal sealed partial class HoCharacterSpecializationPass : HoDebugRenderPass
     {
         private readonly HoCharacterReferenceFrameBuffer referenceFrameBuffer = new HoCharacterReferenceFrameBuffer();
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterSpecialization");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-CharacterSpecialization");
         private const int FaceHairDiffuseBlurIterationCount = 2;
         private const int SubjectOutlineBlurIterationCount = 2;
         private static readonly List<ShaderTagId> CaptureShaderTagIds = new List<ShaderTagId>

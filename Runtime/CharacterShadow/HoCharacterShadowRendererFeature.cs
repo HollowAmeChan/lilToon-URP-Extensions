@@ -110,7 +110,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
 
     internal sealed class HoCharacterShadowPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler Sampler = new ProfilingSampler("Ho-CharacterShadow");
+        private static readonly ProfilingSampler Sampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-CharacterShadow");
         private static readonly GlobalKeyword Punctual = GlobalKeyword.Create("_CASTING_PUNCTUAL_LIGHT_SHADOW");
         internal static readonly int AtlasId = Shader.PropertyToID("_HoCSAtlas");
         private HoCharacterShadowFrame frame;

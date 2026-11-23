@@ -19,7 +19,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     /// </summary>
     internal sealed class HoSurfaceBufferPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SurfaceBuffer");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SurfaceBuffer");
         private static readonly Color[] ClearColors = new Color[HoSurfaceBufferShaderConstants.ValueAttachmentCount];
 
         private HoSurfaceBufferSettings settings;

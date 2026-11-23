@@ -91,7 +91,7 @@ namespace lilToon.URP.Extensions.GeometryData
 
         private sealed class PublishPass : ScriptableRenderPass
         {
-            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GD Outline Publish");
+            private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GD Outline Publish");
             private sealed class Data { public BufferHandle entries,values;public int count; }
             public PublishPass(){renderPassEvent=RenderPassEvent.BeforeRendering;}
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frameData)

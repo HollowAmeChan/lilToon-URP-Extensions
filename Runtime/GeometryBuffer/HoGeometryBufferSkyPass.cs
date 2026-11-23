@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 {
     internal sealed class HoGeometryBufferSkyPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GeometryBuffer Sky");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GeometryBuffer Sky");
         private static readonly int BlitTextureId = Shader.PropertyToID("_BlitTexture");
 
         private HoGeometryBufferSettings settings;

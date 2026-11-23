@@ -470,7 +470,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
     internal sealed class ScreenProcessSemanticBufferReleasePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ScreenProcess Release Semantic Buffers");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-ScreenProcess Release Semantic Buffers");
 
         private sealed class PassData
         {
@@ -633,7 +633,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public ScreenProcessPass(string passName)
         {
             screenProcessPassName = passName;
-            screenProcessProfilingSampler = new ProfilingSampler(passName);
+            screenProcessProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler(passName);
             subjectMaskRenderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
         }
 

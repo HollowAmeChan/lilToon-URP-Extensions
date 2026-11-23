@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.Atmosphere
 
     internal sealed class HoAtmosphereMediumPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-Atmosphere Medium Publish");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-Atmosphere Medium Publish");
         private HoAtmosphereMediumSnapshot snapshot;
         private Texture3D wrappedTexture, fallback;
         private RTHandle texture;

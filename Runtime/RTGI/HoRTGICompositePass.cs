@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.RTGI
     // Same camera/depth/fog contract as DI's verified additive composition.
     internal sealed class HoRTGICompositePass:ScriptableRenderPass,IDisposable
     {
-        static readonly ProfilingSampler ProfilingSampler=new ProfilingSampler("Ho-RTGI Composite");
+        static readonly ProfilingSampler ProfilingSampler=lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-RTGI Composite");
         static readonly int DiffuseId=Shader.PropertyToID("_HoRTGICompositeDiffuse");
         static readonly int DepthId=Shader.PropertyToID("_CameraDepthTexture");
         static readonly int IntensityId=Shader.PropertyToID("_HoRTGICompositeIntensity");

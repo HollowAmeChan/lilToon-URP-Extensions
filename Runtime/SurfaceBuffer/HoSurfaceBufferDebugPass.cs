@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     /// </summary>
     internal sealed class HoSurfaceBufferDebugPass : HoDebugRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SurfaceBuffer Debug");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SurfaceBuffer Debug");
         private static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
 
         private HoSurfaceBufferSettings settings;

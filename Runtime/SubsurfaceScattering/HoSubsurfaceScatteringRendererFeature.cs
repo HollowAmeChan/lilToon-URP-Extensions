@@ -333,7 +333,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
     internal sealed class HoSubsurfaceScatteringSourcePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering Source");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SubsurfaceScattering Source");
         private RTHandle cameraColorTarget;
         private HoSubsurfaceScatteringSettings settings;
         private HoSubsurfaceScatteringRenderTargets renderTargets;
@@ -570,7 +570,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         {
             blurPassName = passName;
             this.direction = direction;
-            blurProfilingSampler = new ProfilingSampler(passName);
+            blurProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler(passName);
         }
 
         public void Setup(
@@ -736,7 +736,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
     internal sealed class HoSubsurfaceScatteringTransmissionGatherPass : ScriptableRenderPass
     {
         private const int TransmissionGatherPassIndex = 2;
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering TransmissionGather");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SubsurfaceScattering TransmissionGather");
         private HoSubsurfaceScatteringSettings settings;
         private HoSubsurfaceScatteringRenderTargets renderTargets;
         private Material material;
@@ -924,7 +924,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         {
             blurPassName = passName;
             this.direction = direction;
-            blurProfilingSampler = new ProfilingSampler(passName);
+            blurProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler(passName);
         }
 
         public void Setup(
@@ -1082,7 +1082,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
     internal sealed class HoSubsurfaceScatteringCompositePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering Composite");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SubsurfaceScattering Composite");
         private RTHandle cameraColorTarget;
         private HoSubsurfaceScatteringSettings settings;
         private HoSubsurfaceScatteringRenderTargets renderTargets;

@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     /// </summary>
     internal sealed class HoAttributeCompositeDebugPass : HoDebugRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-AttributeComposite Debug");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-AttributeComposite Debug");
         private static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
         private static readonly int DebugQueryId = Shader.PropertyToID("_HoACDebugQuery");
         private static readonly int DebugCategoryId = Shader.PropertyToID("_HoACDebugCategory");

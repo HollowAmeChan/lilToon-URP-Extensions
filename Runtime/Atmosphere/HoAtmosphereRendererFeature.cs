@@ -116,8 +116,8 @@ namespace lilToon.URP.Extensions.Atmosphere
 
         private sealed class EnvironmentPass : ScriptableRenderPass
         {
-            private static readonly ProfilingSampler CaptureProfilingSampler = new ProfilingSampler("Ho-Atmosphere Capture");
-            private static readonly ProfilingSampler PublishProfilingSampler = new ProfilingSampler("Ho-Atmosphere Publish");
+            private static readonly ProfilingSampler CaptureProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-Atmosphere Capture");
+            private static readonly ProfilingSampler PublishProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-Atmosphere Publish");
             private readonly HoAtmosphereCache cache;
             private new HoAtmosphereCache.Input input;
             private Vector4 parameters, tint, constant;

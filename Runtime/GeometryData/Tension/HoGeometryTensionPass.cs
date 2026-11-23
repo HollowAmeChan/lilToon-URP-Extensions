@@ -8,8 +8,8 @@ namespace lilToon.URP.Extensions.GeometryData
 {
     internal sealed class HoGeometryTensionPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler TensionProfilingSampler = new ProfilingSampler("Ho-GD Tension Produce");
-        private static readonly ProfilingSampler PublishProfilingSampler = new ProfilingSampler("Ho-GD Tension Publish");
+        private static readonly ProfilingSampler TensionProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GD Tension Produce");
+        private static readonly ProfilingSampler PublishProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GD Tension Publish");
         private readonly List<HoGeometrySkinnedSample> borrowed = new List<HoGeometrySkinnedSample>();
         private ComputeShader compute;
         private int extractKernel, triangleKernel, gatherKernel, smoothKernel, blendKernel;

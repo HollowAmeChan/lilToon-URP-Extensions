@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public ImageProcessPass(string passName)
         {
             _passName = passName;
-            _profilingSampler = new ProfilingSampler(passName);
+            _profilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler(passName);
         }
 
         public void Setup(

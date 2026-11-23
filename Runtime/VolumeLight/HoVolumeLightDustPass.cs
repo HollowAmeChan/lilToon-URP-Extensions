@@ -8,9 +8,9 @@ namespace lilToon.URP.Extensions.VolumeLight
 {
     internal sealed class HoVolumeLightDustPass : ScriptableRenderPass
     {
-        internal static readonly ProfilingSampler Profiling = new("Ho-VolumeLight Dust Clusters");
+        internal static readonly ProfilingSampler Profiling = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-VolumeLight Dust Clusters");
         internal static int ProfilingCameraId;
-        private static readonly ProfilingSampler OtherCameraProfiling = new("Ho-VolumeLight Dust Other Camera");
+        private static readonly ProfilingSampler OtherCameraProfiling = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-VolumeLight Dust Other Camera");
         private Material material;
         private RTHandle pattern;
         private float intensity, anisotropy;

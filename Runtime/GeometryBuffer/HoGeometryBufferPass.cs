@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 {
     internal sealed class HoGeometryBufferPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GeometryBuffer Output");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GeometryBuffer Output");
         // CPU publication for compatibility consumers; queued GPU globals cannot be read back during pass recording.
         internal static HoGeometryBufferRenderTargets CompatibilityTargets { get; private set; }
         private static readonly List<ShaderTagId> GeometryShaderTagIds = new List<ShaderTagId>

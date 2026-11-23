@@ -323,7 +323,7 @@ namespace lilToon.URP.Extensions.GTAO
 
     internal sealed class HoGTAODebugPass : HoDebugRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GTAO Debug Output");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GTAO Debug Output");
 
         private sealed class PassData
         {
@@ -408,10 +408,10 @@ namespace lilToon.URP.Extensions.GTAO
 
     internal sealed class HoGTAOPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GTAO");
-        private static readonly ProfilingSampler MotionMaskProfilingSampler = new ProfilingSampler("Ho-GTAO Motion Mask");
-        private static readonly ProfilingSampler MotionDeltaProfilingSampler = new ProfilingSampler("Ho-GTAO Motion Delta");
-        private static readonly ProfilingSampler CameraMotionProfilingSampler = new ProfilingSampler("Ho-GTAO Camera Motion");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GTAO");
+        private static readonly ProfilingSampler MotionMaskProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GTAO Motion Mask");
+        private static readonly ProfilingSampler MotionDeltaProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GTAO Motion Delta");
+        private static readonly ProfilingSampler CameraMotionProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GTAO Camera Motion");
         private static readonly int DebugModeId = Shader.PropertyToID("_HoGTAODebugMode");
         private static readonly int HistoryBlendId = Shader.PropertyToID("_HoGTAOHistoryBlend");
         private static readonly int HistoryValidId = Shader.PropertyToID("_HoGTAOHistoryValid");

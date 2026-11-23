@@ -714,7 +714,7 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle nextSource = renderGraph.ImportTexture(history.NextSource);
             TextureHandle previousDepthForSource = renderGraph.ImportTexture(history.PreviousDepth);
             TextureHandle sourceReprojected = renderGraph.CreateTexture(sourceDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<SourceReprojectionPassData>("Ho-SSGI Source Reprojection", out SourceReprojectionPassData data, new ProfilingSampler("Ho-SSGI Source Reprojection")))
+            using (var builder = renderGraph.AddRasterRenderPass<SourceReprojectionPassData>("Ho-SSGI Source Reprojection", out SourceReprojectionPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Source Reprojection")))
             {
                 data.material = material;
                 data.currentSource = source;
@@ -789,7 +789,7 @@ namespace lilToon.URP.Extensions.SSGI
             resources.rawGiTexture = raw;
             resources.sourceTexture = sourceReprojected;
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Raw Trace", out PassData data, new ProfilingSampler("Ho-SSGI Raw Trace")))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Raw Trace", out PassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Raw Trace")))
             {
                 data.material = material;
                 data.geometry = geometry.normalDepthTexture;
@@ -863,7 +863,7 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle motion = resourceData.motionVectorColor;
             TextureHandle temporal = renderGraph.CreateTexture(outputDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<TemporalPassData>("Ho-SSGI Temporal", out TemporalPassData data, new ProfilingSampler("Ho-SSGI Temporal")))
+            using (var builder = renderGraph.AddRasterRenderPass<TemporalPassData>("Ho-SSGI Temporal", out TemporalPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Temporal")))
             {
                 data.material = material;
                 data.current = raw;
@@ -959,7 +959,7 @@ namespace lilToon.URP.Extensions.SSGI
             // Keep the resolved temporal GI in its own ping-pong history. The
             // reservoir payload is separate, but the temporal color history is
             // still required by the lighting validation path.
-            using (var builder = renderGraph.AddRasterRenderPass<SourceHistoryPassData>("Ho-SSGI Temporal History", out SourceHistoryPassData data, new ProfilingSampler("Ho-SSGI Temporal History")))
+            using (var builder = renderGraph.AddRasterRenderPass<SourceHistoryPassData>("Ho-SSGI Temporal History", out SourceHistoryPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Temporal History")))
             {
                 data.material = material;
                 data.source = temporal;
@@ -973,7 +973,7 @@ namespace lilToon.URP.Extensions.SSGI
                 });
             }
 
-            using (var builder = renderGraph.AddRasterRenderPass<DepthHistoryPassData>("Ho-SSGI Depth History", out DepthHistoryPassData data, new ProfilingSampler("Ho-SSGI Depth History")))
+            using (var builder = renderGraph.AddRasterRenderPass<DepthHistoryPassData>("Ho-SSGI Depth History", out DepthHistoryPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Depth History")))
             {
                 data.material = material;
                 data.geometry = geometry.normalDepthTexture;
@@ -989,7 +989,7 @@ namespace lilToon.URP.Extensions.SSGI
 
             TextureHandle sampleCountOutput = nextSampleCount;
             TextureHandle invalidityOutput = nextInvalidity;
-            using (var builder = renderGraph.AddRasterRenderPass<TemporalMetadataPassData>("Ho-SSGI Temporal Metadata", out TemporalMetadataPassData data, new ProfilingSampler("Ho-SSGI Temporal Metadata")))
+            using (var builder = renderGraph.AddRasterRenderPass<TemporalMetadataPassData>("Ho-SSGI Temporal Metadata", out TemporalMetadataPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Temporal Metadata")))
             {
                 data.currentSource = source;
                 data.previousSource = previousSource;
@@ -1035,7 +1035,7 @@ namespace lilToon.URP.Extensions.SSGI
                 });
             }
 
-            using (var builder = renderGraph.AddRasterRenderPass<SourceHistoryPassData>("Ho-SSGI Source History", out SourceHistoryPassData data, new ProfilingSampler("Ho-SSGI Source History")))
+            using (var builder = renderGraph.AddRasterRenderPass<SourceHistoryPassData>("Ho-SSGI Source History", out SourceHistoryPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Source History")))
             {
                 data.material = material;
                 data.source = source;
@@ -1056,7 +1056,7 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle fireflyReservoirAux = renderGraph.CreateTexture(fireflyDesc);
             fireflyDesc.name = HoSSGIShaderConstants.ReservoirOutputRayName;
             TextureHandle fireflyReservoirRay = renderGraph.CreateTexture(fireflyDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<FireflyPassData>("Ho-SSGI Firefly", out FireflyPassData data, new ProfilingSampler("Ho-SSGI Firefly")))
+            using (var builder = renderGraph.AddRasterRenderPass<FireflyPassData>("Ho-SSGI Firefly", out FireflyPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Firefly")))
             {
                 data.material = material;
                 data.reservoirColor = nextReservoirColor;
@@ -1096,7 +1096,7 @@ namespace lilToon.URP.Extensions.SSGI
             TextureDesc guidanceDesc = reservoirDesc;
             guidanceDesc.name = "_HoSSGISpatialGuidance";
             TextureHandle spatialGuidance = renderGraph.CreateTexture(guidanceDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<SpatialResamplingPassData>("Ho-SSGI Spatial Resampling", out SpatialResamplingPassData data, new ProfilingSampler("Ho-SSGI Spatial Resampling")))
+            using (var builder = renderGraph.AddRasterRenderPass<SpatialResamplingPassData>("Ho-SSGI Spatial Resampling", out SpatialResamplingPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Spatial Resampling")))
             {
                 data.material = material;
                 data.reservoirColor = fireflyReservoirColor;
@@ -1151,7 +1151,7 @@ namespace lilToon.URP.Extensions.SSGI
             TextureDesc validatedGuidanceDesc = guidanceDesc;
             validatedGuidanceDesc.name = "_HoSSGISpatialGuidanceValidated";
             TextureHandle validatedGuidance = renderGraph.CreateTexture(validatedGuidanceDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<SpatialValidationPassData>("Ho-SSGI Spatial Validation", out SpatialValidationPassData data, new ProfilingSampler("Ho-SSGI Spatial Validation")))
+            using (var builder = renderGraph.AddRasterRenderPass<SpatialValidationPassData>("Ho-SSGI Spatial Validation", out SpatialValidationPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Spatial Validation")))
             {
                 data.material = material;
                 data.reservoirColor = spatialReservoirColor;
@@ -1191,7 +1191,7 @@ namespace lilToon.URP.Extensions.SSGI
                 });
             }
             TextureHandle temporallyDenoised = renderGraph.CreateTexture(outputDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<DenoisedTemporalPassData>("Ho-SSGI Temporal Accumulation", out DenoisedTemporalPassData data, new ProfilingSampler("Ho-SSGI Temporal Accumulation")))
+            using (var builder = renderGraph.AddRasterRenderPass<DenoisedTemporalPassData>("Ho-SSGI Temporal Accumulation", out DenoisedTemporalPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Temporal Accumulation")))
             {
                 data.material = material;
                 data.source = filtered;
@@ -1232,7 +1232,7 @@ namespace lilToon.URP.Extensions.SSGI
                 });
             }
 
-            using (var builder = renderGraph.AddRasterRenderPass<DenoisedHistoryPassData>("Ho-SSGI Denoised History", out DenoisedHistoryPassData data, new ProfilingSampler("Ho-SSGI Denoised History")))
+            using (var builder = renderGraph.AddRasterRenderPass<DenoisedHistoryPassData>("Ho-SSGI Denoised History", out DenoisedHistoryPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Denoised History")))
             {
                 data.material = material;
                 data.source = temporallyDenoised;
@@ -1248,7 +1248,7 @@ namespace lilToon.URP.Extensions.SSGI
             TextureDesc bilateralDesc = outputDesc;
             bilateralDesc.name = "_HoSSGIBilateralDenoise1";
             TextureHandle bilateralFirst = renderGraph.CreateTexture(bilateralDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<BilateralPassData>("Ho-SSGI Spatial Filter 1", out BilateralPassData data, new ProfilingSampler("Ho-SSGI Spatial Filter 1")))
+            using (var builder = renderGraph.AddRasterRenderPass<BilateralPassData>("Ho-SSGI Spatial Filter 1", out BilateralPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Spatial Filter 1")))
             {
                 data.material = material;
                 data.source = temporallyDenoised;
@@ -1279,7 +1279,7 @@ namespace lilToon.URP.Extensions.SSGI
             }
             bilateralDesc.name = "_HoSSGIBilateralDenoise2";
             TextureHandle denoised = renderGraph.CreateTexture(bilateralDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<BilateralPassData>("Ho-SSGI Spatial Filter 2", out BilateralPassData data, new ProfilingSampler("Ho-SSGI Spatial Filter 2")))
+            using (var builder = renderGraph.AddRasterRenderPass<BilateralPassData>("Ho-SSGI Spatial Filter 2", out BilateralPassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Spatial Filter 2")))
             {
                 data.material = material;
                 data.source = bilateralFirst;
@@ -1358,7 +1358,7 @@ namespace lilToon.URP.Extensions.SSGI
                 using (var builder = renderGraph.AddRasterRenderPass<DepthPyramidPassData>(
                     "Ho-SSGI Depth Pyramid " + mip,
                     out DepthPyramidPassData data,
-                    new ProfilingSampler("Ho-SSGI Depth Pyramid " + mip)))
+                    lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Depth Pyramid " + mip)))
                 {
                     data.material = material;
                     data.source = source;
@@ -1431,7 +1431,7 @@ namespace lilToon.URP.Extensions.SSGI
             destinationDesc.name = "_HoSSGICompositeColor";
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Composite", out PassData data, new ProfilingSampler("Ho-SSGI Composite")))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Composite", out PassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Composite")))
             {
                 data.material = material;
                 data.source = source;
@@ -1511,7 +1511,7 @@ namespace lilToon.URP.Extensions.SSGI
                 || !ssgi.temporalDenoisedTexture.IsValid() || !ssgi.bilateralFirstTexture.IsValid()
                 || !geometry.normalDepthTexture.IsValid()) return;
             TextureHandle destination = CreateDebugTarget(renderGraph, frameData);
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Debug", out PassData data, new ProfilingSampler("Ho-SSGI Debug")))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Debug", out PassData data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SSGI Debug")))
             {
                 data.debugSize = DebugSize(renderGraph, destination);
                 data.material = material;

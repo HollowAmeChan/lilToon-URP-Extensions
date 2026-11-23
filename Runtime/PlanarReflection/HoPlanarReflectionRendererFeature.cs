@@ -599,8 +599,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
     internal sealed class HoPlanarReflectionCompositePass : HoDebugRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-PLR Composite");
-        private static readonly ProfilingSampler PreprocessProfilingSampler = new ProfilingSampler("Ho-PLR Preprocess");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-PLR Composite");
+        private static readonly ProfilingSampler PreprocessProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-PLR Preprocess");
 
         private HoPlanarReflectionRendererFeature.Settings settings;
         private RTHandle cameraColorTarget;

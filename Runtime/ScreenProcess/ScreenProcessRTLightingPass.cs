@@ -174,7 +174,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 renderGraph.AddRasterRenderPass<PassData>(
                     "Ho-ScreenProcess RT lighting",
                     out PassData data,
-                    new ProfilingSampler("Ho-ScreenProcess RT lighting")))
+                    lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-ScreenProcess RT lighting")))
             {
                 data.material = material;
                 data.source = source;

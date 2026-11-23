@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 {
     internal sealed class HoShadowCastDebugPass : HoDebugRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ShadowCast Debug");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-ShadowCast Debug");
 
         private HoShadowCastRenderTargets renderTargets;
         private RTHandle cameraColorTarget;

@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 {
     internal sealed class HoShadowCastPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ShadowCast");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-ShadowCast");
         private static readonly ShaderTagId ShadowCasterShaderTagId = new ShaderTagId("ShadowCaster");
         private readonly HoShadowCastFrame frame = new HoShadowCastFrame();
         private readonly HoShadowCastSecondDirectionalFrame secondDirectionalFrame = new HoShadowCastSecondDirectionalFrame();

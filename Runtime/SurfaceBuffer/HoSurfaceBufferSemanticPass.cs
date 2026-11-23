@@ -24,7 +24,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     /// </summary>
     internal sealed class HoSurfaceBufferSemanticPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SurfaceBuffer Semantic");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SurfaceBuffer Semantic");
         private static readonly Vector4[] LaneIds = new Vector4[2];
         private static readonly Vector4[] LaneTagMasks = new Vector4[2];
 

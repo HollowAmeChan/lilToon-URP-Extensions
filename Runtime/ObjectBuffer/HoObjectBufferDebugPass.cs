@@ -14,7 +14,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// </summary>
     internal sealed class HoObjectBufferDebugPass : HoDebugRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer Debug");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-ObjectBuffer Debug");
 
         private HoObjectBufferSettings settings;
         private HoObjectBufferRenderTargets renderTargets;

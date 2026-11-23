@@ -158,7 +158,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITResetPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT Reset");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-WeightedOIT Reset");
 
         private sealed class PassData
         {
@@ -197,7 +197,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITOpaqueCopyPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT OpaqueCopy");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-WeightedOIT OpaqueCopy");
         private RTHandle cameraColorTarget;
         private WeightedOITRenderTargets renderTargets;
 
@@ -328,7 +328,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITClearPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT Clear");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-WeightedOIT Clear");
         private readonly RTHandle[] colorTargets = new RTHandle[2];
         private WeightedOITSettings settings;
         private WeightedOITRenderTargets renderTargets;
@@ -397,7 +397,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITAccumulationPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT Accumulation");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-WeightedOIT Accumulation");
         private readonly List<ShaderTagId> shaderTagIds = new List<ShaderTagId> { WeightedOITShaderConstants.ShaderTagId };
         private readonly RTHandle[] colorTargets = new RTHandle[2];
         private WeightedOITSettings settings;
@@ -595,7 +595,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITCompositePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT Composite");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-WeightedOIT Composite");
         private RTHandle cameraColorTarget;
         private WeightedOITRenderTargets renderTargets;
         private Material compositeMaterial;

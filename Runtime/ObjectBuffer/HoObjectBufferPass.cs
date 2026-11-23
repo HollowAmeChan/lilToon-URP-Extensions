@@ -23,9 +23,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// </summary>
     internal sealed class HoObjectBufferPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer Output");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-ObjectBuffer Output");
         internal static HoObjectBufferRenderTargets CompatibilityTargets { get; private set; }
-        private static readonly ProfilingSampler ResolveProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer MSAA Resolve");
+        private static readonly ProfilingSampler ResolveProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-ObjectBuffer MSAA Resolve");
 
         private static readonly List<ShaderTagId> FallbackShaderTagIds = new List<ShaderTagId>
         {

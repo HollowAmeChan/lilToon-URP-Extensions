@@ -27,6 +27,7 @@ SB All 合并数值面和 legacy semantic lane 的调试需求；关闭后按原
 
 - 新视图在所属模块登记 `HoDebugViewInfo`，将模式映射、shader、读依赖留在模块内。
 - 功能模块在自己的 `HoDebugViewInfo` 声明中附带 `HoDebugPerformanceInfo`，列出本功能使用的 `ProfilingSampler` marker 名称。Ho-DebugPerformance 在性能模式开启时统一打开 recorder，把声明的 marker elapsed 合并并按 recorder 窗口折算为每帧 CPU/GPU Feature 总耗时，再绘制到最终画面；新增功能需要同时登记计时 marker。
+- Feature 实际渲染 pass 也必须通过 `HoDebugPerformanceRegistry.GetSampler` 取得这些 marker；只用相同字符串重新 `new ProfilingSampler` 不会共享 Unity recorder。
 - HUD 首行显示 `HO FEATURES N`，随后列出每个已登记 Feature 的 CPU/GPU 总耗时。GPU recorder 没有有效样本的平台显示 `--`，不会把缺失数据伪装成零成本。
 - 全屏类视图调用 `HoDebugGrid.Draw`；GeometryData 的几何绘制复用公共矩形与标签，保持自身 renderer list 和独立深度。
 - `HoDebugViewRegistry.AllViews` 是工具和 shader 检查目录，不是渲染分派器。已移除 `HoDebugViewRenderKind`。

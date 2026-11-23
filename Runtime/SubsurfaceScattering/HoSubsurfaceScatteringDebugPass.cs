@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 {
     internal sealed class HoSubsurfaceScatteringDebugPass : HoDebugRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering Debug");
+        private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-SubsurfaceScattering Debug");
         private RTHandle cameraColorTarget;
         private HoSubsurfaceScatteringSettings settings;
         private HoSubsurfaceScatteringRenderTargets renderTargets;
