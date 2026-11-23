@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 #pragma warning disable CS0618, CS0672
 
 using UnityEngine;
@@ -68,13 +69,13 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             if (outputPass != null)
             {
                 outputPass.SetupRenderGraph(settings, renderTargets, fallbackMaterial, resolveMaterial);
-                renderer.EnqueuePass(outputPass);
+                HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, outputPass, HoGeometryBufferDebugViewInfo.Performance);
             }
 
             if (skyPass != null && settings.enableSkyBuffer && skyCaptureMaterial != null)
             {
                 skyPass.SetupRenderGraph(settings, renderTargets, skyCaptureMaterial);
-                renderer.EnqueuePass(skyPass);
+                HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, skyPass, HoGeometryBufferDebugViewInfo.Performance);
             }
             else
             {
@@ -84,7 +85,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             if (debugPass != null && shouldDebug)
             {
                 debugPass.SetupRenderGraph(settings, renderTargets, debugMaterial);
-                debugPass.Enqueue(renderer);
+                debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoGeometryBufferDebugViewInfo.Performance);
             }
             else
             {

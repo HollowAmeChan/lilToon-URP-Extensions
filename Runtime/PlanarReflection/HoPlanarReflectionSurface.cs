@@ -4,6 +4,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.Debugging;
 
 namespace lilToon.URP.Extensions.PlanarReflection
 {
@@ -370,7 +371,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             {
 #pragma warning disable CS0618
                 using (HoAttributeCompositeConsumerRegistry.BeginStandaloneCamera(reflectionCamera))
-                    UniversalRenderPipeline.RenderSingleCamera(context, reflectionCamera);
+                    RenderProfiledReflectionCamera(context);
 #pragma warning restore CS0618
                 renderedReflection = true;
             }
@@ -655,6 +656,24 @@ namespace lilToon.URP.Extensions.PlanarReflection
             reflectionCamera.ResetCullingMatrix();
         }
 
+        private void RenderProfiledReflectionCamera(ScriptableRenderContext context)
+        {
+            ProfilingSampler sampler = HoDebugPerformanceRegistry.GetSampler("Ho-PLR Reflection Camera");
+            CommandBuffer cmd = CommandBufferPool.Get("Ho-PLR Reflection Camera");
+            sampler.Begin(cmd);
+            context.ExecuteCommandBuffer(cmd);
+            cmd.Clear();
+#pragma warning disable CS0618
+            try { UniversalRenderPipeline.RenderSingleCamera(context, reflectionCamera); }
+#pragma warning restore CS0618
+            finally
+            {
+                sampler.End(cmd);
+                context.ExecuteCommandBuffer(cmd);
+                CommandBufferPool.Release(cmd);
+            }
+        }
+
         private void CopyReflectionCameraTexture(ScriptableRenderContext context)
         {
             if (reflectionCameraTextureHandle == null || reflectionTextureHandle == null)
@@ -663,8 +682,11 @@ namespace lilToon.URP.Extensions.PlanarReflection
             }
 
             CommandBuffer cmd = CommandBufferPool.Get("Ho-PLR Copy");
-            Blitter.BlitCameraTexture(cmd, reflectionCameraTextureHandle, reflectionTextureHandle);
-            BuildReflectionPrefilter(cmd);
+            using (new ProfilingScope(cmd, HoDebugPerformanceRegistry.GetSampler("Ho-PLR Copy Prefilter")))
+            {
+                Blitter.BlitCameraTexture(cmd, reflectionCameraTextureHandle, reflectionTextureHandle);
+                BuildReflectionPrefilter(cmd);
+            }
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }

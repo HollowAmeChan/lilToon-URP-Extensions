@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 // Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
 #pragma warning disable CS0618, CS0672
 
@@ -186,13 +187,13 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             transmissionVerticalBlurPass?.SetupRenderGraph(settings, renderTargets, material, true);
             compositePass?.SetupRenderGraph(settings, renderTargets, material);
 
-            renderer.EnqueuePass(sourcePass);
-            renderer.EnqueuePass(horizontalBlurPass);
-            renderer.EnqueuePass(verticalBlurPass);
-            renderer.EnqueuePass(transmissionGatherPass);
-            renderer.EnqueuePass(transmissionHorizontalBlurPass);
-            renderer.EnqueuePass(transmissionVerticalBlurPass);
-            renderer.EnqueuePass(compositePass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, sourcePass, HoSubsurfaceScatteringDebugViewInfo.Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, horizontalBlurPass, HoSubsurfaceScatteringDebugViewInfo.Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, verticalBlurPass, HoSubsurfaceScatteringDebugViewInfo.Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, transmissionGatherPass, HoSubsurfaceScatteringDebugViewInfo.Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, transmissionHorizontalBlurPass, HoSubsurfaceScatteringDebugViewInfo.Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, transmissionVerticalBlurPass, HoSubsurfaceScatteringDebugViewInfo.Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, compositePass, HoSubsurfaceScatteringDebugViewInfo.Performance);
 
             if (IsDebugEnabled())
             {
@@ -200,7 +201,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 if (debugMaterial != null)
                 {
                     debugPass?.SetupRenderGraph(settings, renderTargets, debugMaterial);
-                    debugPass.Enqueue(renderer);
+                    debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoSubsurfaceScatteringDebugViewInfo.Performance);
                 }
             }
             else

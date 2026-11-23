@@ -1,11 +1,15 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.Debugging
 {
+    public enum HoDebugPreparationStage { BeginCamera = 0, AddRenderPasses = 1 }
+
     public enum HoDebugTilePerformanceMode
     {
         Off = 0,
@@ -38,6 +42,7 @@ namespace lilToon.URP.Extensions.Debugging
         private bool hasCpuSample;
         private bool refreshedGpuThisUpdate;
         private bool refreshedCpuThisUpdate;
+        internal bool SampleInlineCpu { get; set; }
 
         public HoDebugPerformanceInfo(string featureName, string displayName, params string[] markerNames)
         {
@@ -96,9 +101,9 @@ namespace lilToon.URP.Extensions.Debugging
             {
                 ProfilingSampler sampler = samplers[i];
                 gpuSamples += sampler.gpuSampleCount;
-                cpuSamples += sampler.cpuSampleCount;
+                cpuSamples += SampleInlineCpu ? sampler.inlineCpuSampleCount : sampler.cpuSampleCount;
                 gpuElapsed += sampler.gpuElapsedTime;
-                cpuElapsed += sampler.cpuElapsedTime;
+                cpuElapsed += SampleInlineCpu ? sampler.inlineCpuElapsedTime : sampler.cpuElapsedTime;
             }
 
             // Recorder timings are per-frame values, not cumulative counters. CPU reports the
@@ -157,6 +162,23 @@ namespace lilToon.URP.Extensions.Debugging
     /// <summary>Central timing catalog. Feature debug declarations own the marker names.</summary>
     public static class HoDebugPerformanceRegistry
     {
+        private readonly struct ScheduledPass
+        {
+            internal ScheduledPass(ScriptableRenderPass pass, int phase, HoDebugPerformanceInfo performance, int order)
+            { Pass = pass; Phase = phase; Performance = performance; Order = order; }
+            internal readonly ScriptableRenderPass Pass;
+            internal readonly int Phase;
+            internal RenderPassEvent Event => Pass != null ? Pass.renderPassEvent : RenderPassEvent.BeforeRendering;
+            internal readonly HoDebugPerformanceInfo Performance;
+            internal readonly int Order;
+        }
+
+        private sealed class CameraSchedule
+        {
+            internal readonly List<ScheduledPass> Passes = new List<ScheduledPass>();
+        }
+
+        private static readonly ConditionalWeakTable<Camera, CameraSchedule> Schedules = new();
         private static readonly List<HoDebugPerformanceInfo> Entries = new List<HoDebugPerformanceInfo>();
         private static readonly Dictionary<string, HoDebugPerformanceInfo> EntriesByFeature =
             new Dictionary<string, HoDebugPerformanceInfo>(StringComparer.Ordinal);
@@ -166,13 +188,86 @@ namespace lilToon.URP.Extensions.Debugging
         private static float smoothedDeltaTime;
         private static bool hasFrameTiming;
         private static double lastRefreshTime = -1.0;
+        private static bool initialized;
+        private static bool recordingRequested;
+        private static double lastRecordingRequestTime = double.NegativeInfinity;
+
+        static HoDebugPerformanceRegistry()
+        {
+            // Reset per render invocation, including repeated renders of the same camera
+            // in one editor frame. Camera schedules must never leak between views.
+            RenderPipelineManager.beginCameraRendering += (_, camera) => BeginCamera(camera);
+            RenderPipelineManager.endCameraRendering += (_, camera) => BeginCamera(camera);
+            RenderPipelineManager.beginContextRendering += (_, cameras) => recordingRequested = false;
+            RenderPipelineManager.endContextRendering += (_, cameras) =>
+            {
+                // Editor views may render in separate contexts. Keep recording
+                // across those contexts and the delayed GPU readback window.
+                if (!recordingRequested && Time.realtimeSinceStartupAsDouble - lastRecordingRequestTime > 1.0)
+                    SetRecordingEnabled(false);
+            };
+        }
+
+        internal static void BeginCamera(Camera camera)
+        {
+            if (camera != null && Schedules.TryGetValue(camera, out CameraSchedule schedule)) schedule.Passes.Clear();
+        }
 
         public static IReadOnlyList<HoDebugPerformanceInfo> All => Entries;
 
         public static void EnsureInitialized()
         {
+            if (initialized) return;
+            initialized = true;
             // Feature declarations self-register when the shared debug catalog is touched.
             _ = HoDebugViewRegistry.AllViews;
+            _ = AttributeComposite.HoAttributeCompositeRendererFeature.Performance;
+            _ = OIT.WeightedOITRendererFeature.Performance;
+            _ = RT.HoRTRendererFeature.Performance;
+        }
+
+        /// <summary>Enqueue and declare a feature's actual work for this camera's HUD.</summary>
+        public static void EnqueuePass(ScriptableRenderer renderer, Camera camera, ScriptableRenderPass pass,
+            HoDebugPerformanceInfo performance)
+        {
+            renderer.EnqueuePass(pass);
+            TrackPass(camera, pass, performance);
+        }
+
+        public static void TrackPass(Camera camera, ScriptableRenderPass pass, HoDebugPerformanceInfo performance)
+        {
+            if (camera == null || pass == null || performance == null) return;
+            CameraSchedule schedule = Schedules.GetOrCreateValue(camera);
+            schedule.Passes.Add(new ScheduledPass(pass, 2, performance, schedule.Passes.Count));
+        }
+
+        /// <summary>Declare CPU preparation that runs before the scheduled GPU passes.</summary>
+        public static void TrackPreparation(Camera camera, HoDebugPerformanceInfo performance,
+            HoDebugPreparationStage stage = HoDebugPreparationStage.AddRenderPasses)
+        {
+            if (camera == null || performance == null) return;
+            CameraSchedule schedule = Schedules.GetOrCreateValue(camera);
+            schedule.Passes.Add(new ScheduledPass(null, (int)stage, performance, schedule.Passes.Count));
+        }
+
+        /// <summary>One row per participating feature, ordered by its first scheduled pass.</summary>
+        public static IReadOnlyList<HoDebugPerformanceInfo> GetActiveFeatures(Camera camera)
+        {
+            List<HoDebugPerformanceInfo> active = new List<HoDebugPerformanceInfo>();
+            if (camera == null || !Schedules.TryGetValue(camera, out CameraSchedule schedule)) return active;
+            schedule.Passes.Sort(static (a, b) =>
+            {
+                int phase = a.Phase.CompareTo(b.Phase);
+                if (phase != 0) return phase;
+                int comparison = a.Event.CompareTo(b.Event);
+                return comparison != 0 ? comparison : a.Order.CompareTo(b.Order);
+            });
+            for (int i = 0; i < schedule.Passes.Count; i++)
+            {
+                HoDebugPerformanceInfo info = schedule.Passes[i].Performance;
+                if (!active.Contains(info)) active.Add(info);
+            }
+            return active;
         }
 
         public static void SetRecordingEnabled(bool enabled)
@@ -181,6 +276,15 @@ namespace lilToon.URP.Extensions.Debugging
             {
                 Entries[i].SetRecordingEnabled(enabled);
             }
+        }
+
+        public static void RequestRecording()
+        {
+            // Recorders are shared and GPU readback is delayed. A second camera
+            // with its HUD off must not stop a visible camera's measurements.
+            recordingRequested = true;
+            lastRecordingRequestTime = Time.realtimeSinceStartupAsDouble;
+            SetRecordingEnabled(true);
         }
 
         public static ProfilingSampler GetSampler(string markerName)
@@ -218,6 +322,13 @@ namespace lilToon.URP.Extensions.Debugging
             return info;
         }
 
+        public static HoDebugPerformanceInfo RegisterInlineCpu(string featureName, string displayName, params string[] markerNames)
+        {
+            HoDebugPerformanceInfo info = Register(featureName, displayName, markerNames);
+            info.SampleInlineCpu = true;
+            return info;
+        }
+
         public static void Update()
         {
             if (updatedFrame == Time.frameCount)
@@ -244,7 +355,7 @@ namespace lilToon.URP.Extensions.Debugging
             }
         }
 
-        public static IReadOnlyList<HoDebugPerformanceLine> BuildLines(HoDebugTilePerformanceMode mode)
+        public static IReadOnlyList<HoDebugPerformanceLine> BuildLines(HoDebugTilePerformanceMode mode, Camera camera = null)
         {
             List<HoDebugPerformanceLine> lines = new List<HoDebugPerformanceLine>();
             bool showFrame = mode == HoDebugTilePerformanceMode.Frame
@@ -261,14 +372,15 @@ namespace lilToon.URP.Extensions.Debugging
 
             if (showFeatures)
             {
-                lines.Add(new HoDebugPerformanceLine("HO FEATURES " + Entries.Count));
+                IReadOnlyList<HoDebugPerformanceInfo> active = GetActiveFeatures(camera);
+                lines.Add(new HoDebugPerformanceLine("HO FEATURES " + active.Count + " ACTIVE OF " + Entries.Count));
                 string last = lastRefreshTime >= 0.0
                     ? Format((float)Math.Max(0.0, Time.realtimeSinceStartupAsDouble - lastRefreshTime), 2) + "S"
                     : "--";
                 lines.Add(new HoDebugPerformanceLine("LAST " + last));
-                for (int i = 0; i < Entries.Count; i++)
+                for (int i = 0; i < active.Count; i++)
                 {
-                    HoDebugPerformanceInfo entry = Entries[i];
+                    HoDebugPerformanceInfo entry = active[i];
                     string gpu = entry.HasGpuSample ? Format(entry.GpuMilliseconds, 2) + "MS" : "--";
                     string cpu = entry.HasCpuSample ? Format(entry.CpuMilliseconds, 2) + "MS" : "--";
                     Color gpuColor = entry.GpuRefreshedThisUpdate && entry.HasGpuSample

@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 #pragma warning disable CS0618, CS0672
 
 using UnityEngine;
@@ -75,14 +76,14 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             pass.SetupRenderGraph(settings, config);
-            renderer.EnqueuePass(pass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoShadowCastDebugViewInfo.Performance);
 
             if (debugPass != null && ShouldDebug(config))
             {
                 if (debugMaterialCache.Ensure())
                 {
                     debugPass.SetupRenderGraph(config, debugMaterialCache.Material);
-                    debugPass.Enqueue(renderer);
+                    debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoShadowCastDebugViewInfo.Performance);
                 }
             }
             else

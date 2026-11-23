@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 #pragma warning disable CS0618, CS0672
 using System;
 using System.Collections.Generic;
@@ -191,7 +192,7 @@ namespace lilToon.URP.Extensions.RTShadow
                         lastEffective.debugMode == HoRTShadowDebugMode.ForceShadow)
                     {
                         consumerDebugPass.mode = (int)lastEffective.debugMode;
-                        renderer.EnqueuePass(consumerDebugPass);
+                        HoDebugPerformanceRegistry.EnqueuePass(renderer, data.cameraData.camera, consumerDebugPass, HoRTShadowDebugViewInfo.Performance);
                     }
                     else
                     {
@@ -200,7 +201,7 @@ namespace lilToon.URP.Extensions.RTShadow
                         {
                             Output selected = scheduled.Find(item => item.slot == lastEffective.debugLight);
                             debugPass.Setup(debugMaterial, lastEffective, selected);
-                            debugPass.Enqueue(renderer);
+                            debugPass.Enqueue(renderer, data.cameraData.camera, HoRTShadowDebugViewInfo.Performance);
                         }
                     }
                 }
@@ -284,7 +285,7 @@ namespace lilToon.URP.Extensions.RTShadow
             // Metadata pass is separate so rejected products are observable even
             // when there is nothing to trace. No invalid product masquerades as V=1.
             var publish=new ProductPass();publish.camera=data.cameraData.camera;publish.products=rejected.ToArray();renderer.EnqueuePass(publish);
-            foreach(var output in scheduled)renderer.EnqueuePass(output.pass);
+            foreach(var output in scheduled)HoDebugPerformanceRegistry.EnqueuePass(renderer, data.cameraData.camera, output.pass, HoRTShadowDebugViewInfo.Performance);
             Status=$"请求 {requested.Count} 灯 / 生产 {scheduled.Count} / 不可用 {rejected.Count}";
         }
         private sealed class ProductPass:ScriptableRenderPass

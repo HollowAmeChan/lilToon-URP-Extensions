@@ -31,11 +31,6 @@ namespace lilToon.URP.Extensions.Debugging
         {
             ResolveVolume(out bool resolvedEnabled, out bool resolvedGameView, out bool resolvedSceneView,
                 out HoDebugTilePerformanceMode resolvedPerformanceMode);
-            if (resolvedPerformanceMode == HoDebugTilePerformanceMode.Off)
-            {
-                HoDebugPerformanceRegistry.SetRecordingEnabled(false);
-            }
-
             if (!resolvedEnabled)
             {
                 return;
@@ -50,16 +45,14 @@ namespace lilToon.URP.Extensions.Debugging
             }
 
             HoDebugPerformanceRegistry.EnsureInitialized();
-            HoDebugPerformanceRegistry.SetRecordingEnabled(true);
-            HoDebugPerformanceRegistry.Update();
-            performancePass.Setup(HoDebugPerformanceRegistry.BuildLines(resolvedPerformanceMode));
+            HoDebugPerformanceRegistry.RequestRecording();
+            performancePass.Setup(resolvedPerformanceMode);
             renderer.EnqueuePass(performancePass);
         }
 
         protected override void Dispose(bool disposing)
         {
             performancePass = null;
-            HoDebugPerformanceRegistry.SetRecordingEnabled(false);
         }
 
         private void ResolveVolume(out bool resolvedEnabled, out bool resolvedGameView, out bool resolvedSceneView,

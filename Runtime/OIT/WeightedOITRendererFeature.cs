@@ -7,12 +7,16 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.Debugging;
 
 namespace lilToon.URP.Extensions.OIT
 {
     [DisallowMultipleRendererFeature("Ho-WeightedOIT")]
     public sealed class WeightedOITRendererFeature : ScriptableRendererFeature
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "WeightedOIT", "WeightedOIT", "Ho-WeightedOIT OpaqueCopy", "Ho-WeightedOIT Clear",
+            "Ho-WeightedOIT Accumulation", "Ho-WeightedOIT Composite");
         [SerializeField]
         private WeightedOITSettings settings = new WeightedOITSettings();
 
@@ -78,10 +82,10 @@ namespace lilToon.URP.Extensions.OIT
             accumulationPass.SetupRenderGraph(settings, renderTargets);
             compositePass.SetupRenderGraph(settings, renderTargets, compositeMaterial);
 
-            renderer.EnqueuePass(clearPass);
-            renderer.EnqueuePass(opaqueCopyPass);
-            renderer.EnqueuePass(accumulationPass);
-            renderer.EnqueuePass(compositePass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, clearPass, Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, opaqueCopyPass, Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, accumulationPass, Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, compositePass, Performance);
         }
 
         protected override void Dispose(bool disposing)

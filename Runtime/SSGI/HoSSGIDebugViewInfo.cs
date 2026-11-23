@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.SSGI
             "Ho-SSGI Spatial Validation", "Ho-SSGI Temporal Accumulation", "Ho-SSGI Denoised History",
             "Ho-SSGI Spatial Filter 1", "Ho-SSGI Spatial Filter 2", "Ho-SSGI Depth Pyramid 0",
             "Ho-SSGI Depth Pyramid 1", "Ho-SSGI Depth Pyramid 2", "Ho-SSGI Depth Pyramid 3",
-            "Ho-SSGI Composite");
+            "Ho-SSGI Composite", "Ho-SSGI Debug");
 
         public static readonly HoDebugViewInfo[] Views = HoDebugGrid.EnumViews<HoSSGIDebugMode>(
             "SSGI", "Hidden/lilToon/URP/HoSSGI/Debug",

@@ -5,7 +5,7 @@ namespace lilToon.URP.Extensions.ShadowCast
     public static class HoShadowCastDebugViewInfo
     {
         public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
-            "ShadowCast", "ShadowCast", "Ho-ShadowCast");
+            "ShadowCast", "ShadowCast", "Ho-ShadowCast", "Ho-ShadowCast Debug");
 
         private const string FeatureName = "ShadowCast";
         private const string ShaderName = "Hidden/lilToon-HoShadowCast/URP/DebugView";

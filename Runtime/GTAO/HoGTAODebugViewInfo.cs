@@ -4,7 +4,7 @@ namespace lilToon.URP.Extensions.GTAO
     public static class HoGTAODebugViewInfo
     {
         public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
-            "GTAO", "GTAO", "Ho-GTAO", "Ho-GTAO Motion Mask", "Ho-GTAO Motion Delta", "Ho-GTAO Camera Motion");
+            "GTAO", "GTAO", "Ho-GTAO", "Ho-GTAO Motion Mask", "Ho-GTAO Motion Delta", "Ho-GTAO Camera Motion", "Ho-GTAO Debug Output", "Ho-GTAO Debug Capture");
 
         public static readonly HoDebugViewInfo[] Views = HoDebugGrid.EnumViews<HoGTAODebugMode>(
             "GTAO", "Hidden/lilToon/URP/HoGTAO/DebugView",

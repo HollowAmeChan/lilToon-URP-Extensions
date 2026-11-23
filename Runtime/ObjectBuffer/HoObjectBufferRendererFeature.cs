@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 #pragma warning disable CS0618, CS0672
 
 using UnityEngine;
@@ -74,12 +75,12 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             }
 
             outputPass.Setup(settings, renderTargets, fallbackMaterial, resolveMaterial, settings.RequestedSampleCount, ShouldProduceSelections());
-            renderer.EnqueuePass(outputPass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, outputPass, HoObjectBufferDebugViewInfo.Performance);
 
             if (debugPass != null && shouldDebug)
             {
                 debugPass.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
-                debugPass.Enqueue(renderer);
+                debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoObjectBufferDebugViewInfo.Performance);
             }
             else debugPass?.ReleaseDebugResources();
         }

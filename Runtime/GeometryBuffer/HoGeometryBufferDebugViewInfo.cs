@@ -5,7 +5,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
     public static class HoGeometryBufferDebugViewInfo
     {
         public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
-            "GeometryBuffer", "GeoBuffer", "Ho-GeometryBuffer Output", "Ho-GeometryBuffer Sky");
+            "GeometryBuffer", "GeoBuffer", "Ho-GeometryBuffer Output", "Ho-GeometryBuffer Sky", "Ho-GeometryBuffer Debug");
 
         private const string FeatureName = "GeometryBuffer";
         private const string ShaderName = "Hidden/lilToon/URP/GeometryBuffer/DebugView";

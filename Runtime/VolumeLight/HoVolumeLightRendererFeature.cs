@@ -109,7 +109,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             float localG = volume != null && volume.anisotropy.overrideState ? Mathf.Clamp(HoAtmosphereRegion.Finite(volume.anisotropy.value), -.9f, .9f) :
                 settings.overrideAnisotropy ? Mathf.Clamp(HoAtmosphereRegion.Finite(settings.anisotropy), -.9f, .9f) : 2;
             localPass.Setup(Mathf.Max(0, HoAtmosphereRegion.Finite(localIntensity)), localG, Mathf.Max(.01f, HoAtmosphereRegion.Finite(localDistance, 100)));
-            renderer.EnqueuePass(localPass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, data.cameraData.camera, localPass, HoVolumeLightDebugViewInfo.Performance);
             int main = data.lightData.mainLightIndex;
             if (main < 0 || data.lightData.visibleLights[main].lightType != LightType.Directional)
             {
@@ -152,9 +152,9 @@ namespace lilToon.URP.Extensions.VolumeLight
                     sunSignature = HoAtmosphereCache.Hash(sunSignature, (int)additional.softShadowQuality);
             }
             pass.Setup(new Vector4(Mathf.Max(0, HoAtmosphereRegion.Finite(intensity)), Mathf.Max(.01f, HoAtmosphereRegion.Finite(distance, 100)), Mathf.Clamp(steps, 8, 256), g), material, debug, aa, sunSignature);
-            renderer.EnqueuePass(pass);
-            dustPass.Setup(Mathf.Max(0, HoAtmosphereRegion.Finite(intensity)), g); renderer.EnqueuePass(dustPass);
-            if (debug != 0) debugPass.Enqueue(renderer);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, data.cameraData.camera, pass, HoVolumeLightDebugViewInfo.Performance);
+            dustPass.Setup(Mathf.Max(0, HoAtmosphereRegion.Finite(intensity)), g); HoDebugPerformanceRegistry.EnqueuePass(renderer, data.cameraData.camera, dustPass, HoVolumeLightDebugViewInfo.Performance);
+            if (debug != 0) debugPass.Enqueue(renderer, data.cameraData.camera, HoVolumeLightDebugViewInfo.Performance);
             else debugPass.ReleaseDebugResources();
             Status = "已安排太阳 HD";
         }
@@ -239,7 +239,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 TextureHandle raw = reconstruct ? graph.CreateTexture(new TextureDesc(descriptor.width, descriptor.height)
                     { name = "Ho-VolumeLight Samples", colorFormat = GraphicsFormat.R16G16B16A16_SFloat, clearBuffer = false }) : TextureHandle.nullHandle;
                 var shadows = frameData.Get<UniversalShadowData>();
-                using (var builder = graph.AddRasterRenderPass<Data>(debugOutput ? "Ho-VolumeLight Debug" : "Ho-VolumeLight Solar HD", out var data))
+                using (var builder = graph.AddRasterRenderPass<Data>(debugOutput ? "Ho-VolumeLight Debug" : "Ho-VolumeLight Solar HD", out var data, HoDebugPerformanceRegistry.GetSampler(debugOutput ? "Ho-VolumeLight Debug" : "Ho-VolumeLight Solar HD")))
                 {
                     data.material = material; data.parameters = parameters; data.debug = debugOutput ? debug : 0; data.medium = medium; data.time = medium.snapshot.sampleTime; data.shaderPass = debugOutput ? 1 : 0;
                     data.sampling = sampling;

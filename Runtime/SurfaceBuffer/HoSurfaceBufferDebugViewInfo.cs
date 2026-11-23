@@ -5,7 +5,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     public static class HoSurfaceBufferDebugViewInfo
     {
         public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
-            "SurfaceBuffer", "SurfaceBuffer", "Ho-SurfaceBuffer", "Ho-SurfaceBuffer Semantic", "Ho-Surface Semantic Association");
+            "SurfaceBuffer", "SurfaceBuffer", "Ho-SurfaceBuffer", "Ho-SurfaceBuffer Semantic", "Ho-Surface Semantic Association", "Ho-SurfaceBuffer Debug");
 
         private const string FeatureName = "SurfaceBuffer";
         private const string ShaderName = "Hidden/lilToon/URP/SurfaceBuffer/DebugView";

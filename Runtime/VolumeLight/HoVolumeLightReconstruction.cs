@@ -82,7 +82,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             int write = temporal ? 1 - history.index : 0;
             TextureHandle destination = temporal ? graph.ImportTexture(history.color[write]) : graph.CreateTexture(colorDesc);
             TextureHandle depthTarget = temporal ? graph.ImportTexture(history.depth[write]) : graph.CreateTexture(depthDesc);
-            using (var builder = graph.AddRasterRenderPass<ResolveData>("Ho-VolumeLight Reconstruct", out var data))
+            using (var builder = graph.AddRasterRenderPass<ResolveData>("Ho-VolumeLight Reconstruct", out var data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-VolumeLight Reconstruct")))
             {
                 data.material = material; data.current = current; data.depth = resources.cameraDepthTexture;
                 data.parameters = parameters; data.sampling = sampling; data.medium = medium;
@@ -128,7 +128,7 @@ namespace lilToon.URP.Extensions.VolumeLight
         internal int Sequence(Camera camera) => histories.TryGetValue(camera.GetInstanceID(), out var history) ? history.sequence : 0;
         internal static void Present(RenderGraph graph, Material material, TextureHandle source, TextureHandle target, bool debug)
         {
-            using (var builder = graph.AddRasterRenderPass<PresentData>(debug ? "Ho-VolumeLight Debug" : "Ho-VolumeLight Composite", out var data))
+            using (var builder = graph.AddRasterRenderPass<PresentData>(debug ? "Ho-VolumeLight Debug" : "Ho-VolumeLight Composite", out var data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler(debug ? "Ho-VolumeLight Debug" : "Ho-VolumeLight Composite")))
             {
                 data.material = material; data.source = source; data.pass = debug ? 5 : 4;
                 builder.UseTexture(source, AccessFlags.Read);

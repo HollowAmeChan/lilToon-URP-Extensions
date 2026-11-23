@@ -86,11 +86,11 @@ namespace lilToon.URP.Extensions.SSGI
             }
 
             pass.Setup(settings, material, cameraHistory);
-            renderer.EnqueuePass(pass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoSSGIDebugViewInfo.Performance);
             if (settings.debugMode == HoSSGIDebugMode.Off)
             {
                 compositePass.Setup(settings, material);
-                renderer.EnqueuePass(compositePass);
+                HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, compositePass, HoSSGIDebugViewInfo.Performance);
             }
             bool debugEnabled = settings.debugMode != HoSSGIDebugMode.Off
                 && debugMaterial != null
@@ -99,7 +99,7 @@ namespace lilToon.URP.Extensions.SSGI
             if (debugEnabled)
             {
                 debugPass.Setup(settings, debugMaterial);
-                debugPass.Enqueue(renderer);
+                debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoSSGIDebugViewInfo.Performance);
             }
         }
 

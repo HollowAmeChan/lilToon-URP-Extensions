@@ -70,7 +70,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 renderingData.cameraData.GetProjectionMatrix(), config);
             if (frame.slices.Count == 0) { LastCullStatus += "noSlices"; return; }
             pass.Setup(frame);
-            renderer.EnqueuePass(pass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoCharacterShadowDebugViewInfo.Performance);
 
             HoCharacterShadowDebugMode debugMode = volume != null && volume.debugMode.overrideState ? volume.debugMode.value : settings.debugMode;
             if (debugMode == HoCharacterShadowDebugMode.Off) return;
@@ -87,7 +87,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             {
                 int debugCharacter = volume != null && volume.debugCharacter.overrideState ? volume.debugCharacter.value : settings.debugCharacter;
                 debugPass.Setup(debugMaterial, debugMode, debugCharacter);
-                debugPass.Enqueue(renderer);
+                debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoCharacterShadowDebugViewInfo.Performance);
             }
         }
 

@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 #pragma warning disable CS0618,CS0672
 using System.Collections.Generic;
 using lilToon.URP.Extensions.AttributeComposite;
@@ -123,7 +124,7 @@ namespace lilToon.URP.Extensions.RTGI
             // camera-color consumer, so GI always runs after GB/SB and before
             // opaque Forward regardless of whether composition is requested.
             pass.renderPassEvent=RenderPassEvent.BeforeRenderingOpaques;
-            renderer.EnqueuePass(pass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, data.cameraData.camera, pass, HoRTGIDebugViewInfo.Performance);
             Status=$"一跳 diffuse GI：{lights.Count} 灯 / {scene.InstanceCount} RT submesh / 排除 {excluded} 灯、{materials.Rejections.Count} 命中材质、{scene.Rejections.Count} 几何项";
             if(denoise)Status+=" / "+context.nrdStatus;
             if(scene.CutoutCount>0)Status+=" / 基础裁切 "+scene.CutoutCount;
@@ -132,7 +133,7 @@ namespace lilToon.URP.Extensions.RTGI
             if(volume!=null&&volume.debugMode.value!=HoRTGIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
                 if(debugMaterial==null){var found=Shader.Find("Hidden/lilToon/URP/RTGI/Debug");if(found!=null)debugMaterial=CoreUtils.CreateEngineMaterial(found);}
-                if(debugMaterial!=null){debugPass.Setup(volume.debugMode.value,debugMaterial,context,volume.debugExposure.value,volume.debugTonemap.value);debugPass.Enqueue(renderer);}
+                if(debugMaterial!=null){debugPass.Setup(volume.debugMode.value,debugMaterial,context,volume.debugExposure.value,volume.debugTonemap.value);debugPass.Enqueue(renderer, data.cameraData.camera, HoRTGIDebugViewInfo.Performance);}
             }
         }
         // Identical analytic-light adaptation to Ho-RTDI; no dependency on DI being enabled.

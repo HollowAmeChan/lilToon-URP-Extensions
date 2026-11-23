@@ -3,6 +3,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.Debugging;
 using lilToon.URP.Extensions.SurfaceBuffer;
 
 namespace lilToon.URP.Extensions.AttributeComposite
@@ -15,6 +16,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
     [DisallowMultipleRendererFeature("Ho-AttributeComposite")]
     public sealed class HoAttributeCompositeRendererFeature : ScriptableRendererFeature
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
+            "AttributeComposite", "AC", "Ho-AttributeComposite", "Ho-AttributeComposite Debug");
         [SerializeField]
         private HoAttributeCompositeSettings settings = new HoAttributeCompositeSettings();
 
@@ -71,13 +74,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
             pass?.UploadLaneCatalogIfNeeded();
             pass?.Setup(activeSettings, resolveMaterial);
-            renderer.EnqueuePass(pass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, Performance);
 
             if (WantsDebugView(activeSettings, renderingData.cameraData.cameraType))
             {
                 HoAttributeCompositeDemandDebug.Declare(renderingData.cameraData.camera, this, activeSettings);
                 debugPass?.Setup(activeSettings, debugMaterial, null);
-                debugPass.Enqueue(renderer);
+                debugPass.Enqueue(renderer, renderingData.cameraData.camera, Performance);
             }
             else debugPass?.ReleaseDebugResources();
         }

@@ -113,8 +113,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 faceHairDiffuseMaterial,
                 subjectOutlineMaterial,
                 objectSemanticMaterial);
-            if (activeSettings.debugMode != HoCharacterSpecializationDebugMode.Off) pass.Enqueue(renderer);
-            else renderer.EnqueuePass(pass);
+            if (activeSettings.debugMode != HoCharacterSpecializationDebugMode.Off) pass.Enqueue(renderer, renderingData.cameraData.camera, HoCharacterSpecializationDebugViewInfo.Performance);
+            else HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoCharacterSpecializationDebugViewInfo.Performance);
         }
 
         protected override void Dispose(bool disposing)

@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 using System.Collections.Generic;
 // Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
 #pragma warning disable CS0618, CS0672
@@ -92,7 +93,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     "没有可运行的 ImageProcess layer。");
             }
 
-            EnqueueRenderGraphPass(renderer, afterPostProcessPass, afterPostProcessLayers, ScreenProcessRenderPassEvents.ImageProcessFinalStack);
+            EnqueueRenderGraphPass(renderer, renderingData.cameraData.camera, afterPostProcessPass, afterPostProcessLayers, ScreenProcessRenderPassEvents.ImageProcessFinalStack);
         }
 
         protected override void Dispose(bool disposing)
@@ -197,6 +198,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private void EnqueueRenderGraphPass(
             ScriptableRenderer renderer,
+            Camera camera,
             ImageProcessPass pass,
             List<ImageProcessRuntimeLayer> layers,
             RenderPassEvent passEvent)
@@ -209,7 +211,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             pass.SetupRenderGraph(layers, passEvent);
-            renderer.EnqueuePass(pass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, camera, pass, lilToon.URP.Extensions.ImageProcess.ImageProcessDebugViewInfo.Performance);
         }
 
         private static ImageProcessStackVolume GetVolumeComponent()

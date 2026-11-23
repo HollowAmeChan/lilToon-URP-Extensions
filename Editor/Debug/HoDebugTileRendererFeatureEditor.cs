@@ -75,7 +75,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
                 }
 
                 EditorGUILayout.HelpBox(
-                    "新 Feature 需要在 HoDebugViewInfo 中登记 HoDebugPerformanceInfo，并列出实际使用的 ProfilingSampler marker。",
+                    "新 Feature 需要声明 HoDebugPerformanceInfo 和共享计时 marker，并通过 EnqueuePass 登记本相机的执行顺序；HUD 仅显示本相机参与渲染的 Feature。",
                     MessageType.None);
             }
         }

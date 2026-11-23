@@ -5,7 +5,9 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
     public static class HoSubsurfaceScatteringDebugViewInfo
     {
         public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
-            "Subsurface Scattering", "SSS", "Ho-SubsurfaceScattering Source", "Ho-SubsurfaceScattering TransmissionGather", "Ho-SubsurfaceScattering Composite");
+            "Subsurface Scattering", "SSS", "Ho-SubsurfaceScattering Source", "Ho-SubsurfaceScattering BlurX",
+            "Ho-SubsurfaceScattering BlurY", "Ho-SubsurfaceScattering TransmissionGather",
+            "Ho-SubsurfaceScattering TransmissionX", "Ho-SubsurfaceScattering TransmissionY", "Ho-SubsurfaceScattering Composite", "Ho-SubsurfaceScattering Debug");
 
         private const string FeatureName = "Subsurface Scattering";
         private const string ShaderName = "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView";

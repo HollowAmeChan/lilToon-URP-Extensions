@@ -100,14 +100,14 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             pass.Setup(settings, material, motionMaterial, debugMaterial, cameraHistory);
-            renderer.EnqueuePass(pass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoGTAODebugViewInfo.Performance);
             bool debugEnabledForCamera = settings.debugMode != HoGTAODebugMode.Off
                 && ((cameraType == CameraType.SceneView && settings.debugInSceneView)
                     || (cameraType == CameraType.Game && settings.debugInGameView));
             if (debugEnabledForCamera && debugMaterial != null)
             {
                 debugPass.Setup(debugMaterial, settings.debugMode, settings.debugIntensity);
-                debugPass.Enqueue(renderer);
+                debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoGTAODebugViewInfo.Performance);
             }
         }
 
@@ -1144,7 +1144,7 @@ namespace lilToon.URP.Extensions.GTAO
                 desc.name = "_HoGTAOAllDebug" + mode;
                 TextureHandle output = graph.CreateTexture(desc);
                 resources.debugViews[mode - 1] = output;
-                using (var builder = graph.AddRasterRenderPass<AllDebugData>("Ho-GTAO Capture Debug " + mode, out var data))
+                using (var builder = graph.AddRasterRenderPass<AllDebugData>("Ho-GTAO Capture Debug " + mode, out var data, HoDebugPerformanceRegistry.GetSampler("Ho-GTAO Debug Capture")))
                 {
                     data.material = material; data.mode = mode; data.geometry = geometry; data.depth = depth;
                     data.motion = motion; data.motionMask = motionMask; data.motionDelta = motionDelta;

@@ -23,6 +23,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
     [ExecuteAlways]
     public sealed class HoPlanarReflectionRendererFeature : ScriptableRendererFeature
     {
+        private Camera lastReflectionCamera;
+        private int lastReflectionFrame = -1;
         [Serializable]
         public sealed class Settings
         {
@@ -149,6 +151,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            if (lastReflectionCamera == renderingData.cameraData.camera && lastReflectionFrame == Time.frameCount)
+                HoDebugPerformanceRegistry.TrackPreparation(renderingData.cameraData.camera, HoPlanarReflectionDebugViewInfo.Performance, HoDebugPreparationStage.BeginCamera);
             HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
             // Reflection rendering is driven from beginCameraRendering so the mirror camera renders before the source camera.
             Settings activeSettings = ResolveSettings(renderingData.cameraData.camera);
@@ -170,8 +174,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 HoACDemandResources.Identity | HoACDemandResources.SurfaceAttributes | HoACDemandResources.SurfaceColor,
                 (1u << 1) | (1u << 2));
             compositePass?.SetupRenderGraph(activeSettings, compositeMaterial);
-            if (activeSettings.debugMode != HoPlanarReflectionDebugMode.Off) compositePass.Enqueue(renderer);
-            else renderer.EnqueuePass(compositePass);
+            if (activeSettings.debugMode != HoPlanarReflectionDebugMode.Off) compositePass.Enqueue(renderer, renderingData.cameraData.camera, HoPlanarReflectionDebugViewInfo.Performance);
+            else HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, compositePass, HoPlanarReflectionDebugViewInfo.Performance);
         }
 
         protected override void Dispose(bool disposing)
@@ -249,6 +253,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 context,
                 camera,
                 feature.CreateRenderSettings(activeSettings));
+            feature.lastReflectionCamera = stats.ActiveSurfaceCount > 0 ? camera : null;
+            feature.lastReflectionFrame = Time.frameCount;
             HoPlanarReflectionRuntimeDiagnostics.Publish(camera, stats);
         }
 

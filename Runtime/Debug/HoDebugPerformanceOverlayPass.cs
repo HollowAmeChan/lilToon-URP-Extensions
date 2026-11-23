@@ -19,23 +19,27 @@ namespace lilToon.URP.Extensions.Debugging
             public HoDebugPerformanceLine[] lines;
         }
 
-        private IReadOnlyList<HoDebugPerformanceLine> lines;
+        private HoDebugTilePerformanceMode mode;
 
-        public void Setup(IReadOnlyList<HoDebugPerformanceLine> values)
+        public void Setup(HoDebugTilePerformanceMode value)
         {
-            lines = values;
+            mode = value;
             renderPassEvent = (RenderPassEvent)((int)HoDebugRenderPass.PresentationEvent + 1);
         }
 
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
         {
             UniversalResourceData resources = frameData.Get<UniversalResourceData>();
-            if (!resources.activeColorTexture.IsValid() || lines == null || lines.Count == 0)
+            if (!resources.activeColorTexture.IsValid())
             {
                 return;
             }
 
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+            // All features have finished AddRenderPasses by now, even if the HUD
+            // is first in RendererData. Build from this camera's complete schedule.
+            HoDebugPerformanceRegistry.Update();
+            IReadOnlyList<HoDebugPerformanceLine> lines = HoDebugPerformanceRegistry.BuildLines(mode, cameraData.camera);
             bool backBufferActive = resources.isActiveTargetBackBuffer;
             TextureDesc desc = backBufferActive
                 ? default
@@ -70,12 +74,9 @@ namespace lilToon.URP.Extensions.Debugging
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (lines == null || lines.Count == 0)
-            {
-                return;
-            }
-
             Camera camera = renderingData.cameraData.camera;
+            HoDebugPerformanceRegistry.Update();
+            IReadOnlyList<HoDebugPerformanceLine> lines = HoDebugPerformanceRegistry.BuildLines(mode, camera);
             RenderTargetIdentifier target = camera.targetTexture != null
                 ? new RenderTargetIdentifier(camera.targetTexture)
                 : new RenderTargetIdentifier(BuiltinRenderTextureType.CameraTarget);

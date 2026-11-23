@@ -1,4 +1,5 @@
 #pragma warning disable CS0618, CS0672
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -58,7 +59,7 @@ namespace lilToon.URP.Extensions.Atmosphere
             }
             Medium = HoAtmosphereRegionRegistry.Capture();
             mediumPass.Setup(Medium);
-            renderer.EnqueuePass(mediumPass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, camera, mediumPass, HoAtmosphereDebugViewInfo.Performance);
             if (!enabled)
             {
                 Status = "环境输入关闭";
@@ -80,7 +81,7 @@ namespace lilToon.URP.Extensions.Atmosphere
             uint revision = unchecked((uint)HoAtmosphereCache.Hash((int)input.content,
                 HoAtmosphereCache.Hash(parameters.GetHashCode(), HoAtmosphereCache.Hash(color.GetHashCode(), constant.GetHashCode()))));
             environmentPass.Setup(input, parameters, color, constant, input.valid ? revision : 0);
-            renderer.EnqueuePass(environmentPass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, camera, environmentPass, HoAtmosphereDebugViewInfo.Performance);
             Status = input.valid ? (input.capture ? "已安排天空捕获" : "复用环境输入") : "天空来源缺失或不支持，输出无效/黑色";
             EnqueueDebug(renderer, camera, volume);
         }
@@ -97,7 +98,7 @@ namespace lilToon.URP.Extensions.Atmosphere
                 if (debugMaterial != null)
                 {
                     debugPass.Setup(volume.debugMode.value, debugMaterial);
-                    debugPass.Enqueue(renderer);
+                    debugPass.Enqueue(renderer, camera, HoAtmosphereDebugViewInfo.Performance);
                 }
             }
         }

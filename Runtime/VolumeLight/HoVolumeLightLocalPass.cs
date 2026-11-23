@@ -104,7 +104,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                         var atlas = Matrix4x4.identity; atlas.m00 = 1f / columns; atlas.m11 = 1f / rows;
                         atlas.m03 = (float)(face % columns) / columns; atlas.m13 = (float)(face / columns) / rows;
                         matrices[face] = atlas * matrices[face];
-                        using var builder = graph.AddRasterRenderPass<ShadowData>("Ho Local LightDepth Face " + face, out var data);
+                        using var builder = graph.AddRasterRenderPass<ShadowData>("Ho Local LightDepth Face " + face, out var data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-VolumeLight Local Shadow"));
                         var settings = new ShadowDrawingSettings(shadowCull, shadowIndex) { splitIndex = face, useRenderingLayerMaskTest = UniversalRenderPipeline.asset.useRenderingLayers };
                         data.list = graph.CreateShadowRendererList(ref settings); builder.UseRendererList(data.list);
                         data.view = view; data.projection = projection; data.cameraView = cameraData.GetViewMatrix(); data.cameraProjection = cameraData.GetProjectionMatrix();
@@ -126,13 +126,13 @@ namespace lilToon.URP.Extensions.VolumeLight
                 UniversalRenderPipeline.GetLightAttenuationAndSpotDirection(light.type, light.range, light.transform.localToWorldMatrix,
                     light.spotAngle, light.innerSpotAngle, out var attenuation, out var spotDirection);
                 if (DebugShadowTarget != null && captured)
-                    using (var builder = graph.AddRasterRenderPass<DebugData>("Local depth readback", out var data))
+                    using (var builder = graph.AddRasterRenderPass<DebugData>("Local depth readback", out var data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-VolumeLight Debug")))
                     {
                         data.material = material; data.shadow = shadow; builder.UseTexture(shadow, AccessFlags.Read);
                         builder.SetRenderAttachment(graph.ImportTexture(DebugShadowTarget), 0, AccessFlags.WriteAll); builder.AllowGlobalStateModification(true);
                         builder.SetRenderFunc(static (DebugData d, RasterGraphContext ctx) => { ctx.cmd.SetGlobalTexture("_HoDebugShadow", d.shadow); Blitter.BlitTexture(ctx.cmd, new Vector4(1,1,0,0), d.material, 1); });
                     }
-                using (var builder = graph.AddRasterRenderPass<DrawData>("Ho Local Volume " + light.name, out var data))
+                using (var builder = graph.AddRasterRenderPass<DrawData>("Ho Local Volume " + light.name, out var data, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-VolumeLight Local Draw")))
                 {
                     data.material = material; data.medium = medium; data.depth = resources.cameraDepthTexture; data.shadow = shadow; data.noise = graph.ImportTexture(noise);
                     data.shadowMatrices = matrices; data.worldToLight = Matrix4x4.TRS(light.transform.position, light.transform.rotation, Vector3.one).inverse;

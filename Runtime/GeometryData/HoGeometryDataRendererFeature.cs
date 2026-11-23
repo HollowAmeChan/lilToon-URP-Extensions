@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -41,7 +42,8 @@ namespace lilToon.URP.Extensions.GeometryData
             LastCamera = renderingData.cameraData.camera; LastScheduledFrame = Time.frameCount;
             // Allocate Tension slots before building the outline table, so both tables cover the shared addressing range.
             HoTensionDataRegistry.Capture(out _,out _);
-            renderer.EnqueuePass(pass);renderer.EnqueuePass(tensionPass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoGeometryDataDebugViewInfo.Performance);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, tensionPass, HoGeometryDataDebugViewInfo.Performance);
             DebugStatus = "预览关闭";
             if (!ShouldDebug(renderingData.cameraData.camera)) return;
             if (debugMaterial == null)
@@ -50,7 +52,7 @@ namespace lilToon.URP.Extensions.GeometryData
                 if (shader == null || !shader.isSupported) { DebugStatus = "数据预览 Shader 不可用"; return; }
                 debugMaterial = CoreUtils.CreateEngineMaterial(shader);
             }
-            debugPass.Setup(cameraDebug, debugMaterial); debugPass.Enqueue(renderer);
+            debugPass.Setup(cameraDebug, debugMaterial); debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoGeometryDataDebugViewInfo.Performance);
             DebugStatus = "已安排数据预览";
         }
         private void ResolveCameraSettings()

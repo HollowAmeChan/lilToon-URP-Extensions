@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.Debugging;
 using Object = UnityEngine.Object;
 
 namespace lilToon.URP.Extensions.RT
@@ -72,6 +73,8 @@ namespace lilToon.URP.Extensions.RT
     [DisallowMultipleRendererFeature("Ho-RT")]
     public sealed class HoRTRendererFeature : ScriptableRendererFeature
     {
+        public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.RegisterInlineCpu(
+            "RT", "RT Scene", "Ho-RT Prepare", "Ho-RT Build");
         // This registry locates owned domains. It does not own one global AS.
         // SceneView and GameView can use the same RendererData in one editor
         // frame. Their screen inputs and GPU lifetimes are independent.
@@ -241,8 +244,9 @@ namespace lilToon.URP.Extensions.RT
         {
             if (!CheckVolumeEnabled(renderer, renderingData.cameraData.camera)) return;
             if (!Find(renderer, renderingData.cameraData.camera, out var domain) || domain.owner != this) return;
-            domain.Prepare();
+            using (new ProfilingScope((CommandBuffer)null, HoDebugPerformanceRegistry.GetSampler("Ho-RT Prepare"))) domain.Prepare();
             if (domain.requests.Count == 0) { Status = "没有 RT 请求"; return; }
+            HoDebugPerformanceRegistry.TrackPreparation(renderingData.cameraData.camera, Performance);
             domain.fenceExpected = true;
             domain.fencePass.domain = domain; renderer.EnqueuePass(domain.fencePass);
             Status = $"views={domain.views.Count}, epoch={domain.epoch}, bakes={domain.geometry.BakeCount}, wait={LastPrepareWaitMilliseconds:F2}ms";

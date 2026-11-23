@@ -104,7 +104,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             rtLightingPass?.SetMaterialAndConsumerSettings(rtLightingMaterial, rtSettings);
             if (rtLightingPass != null && rtLightingMaterial != null && rtSettings.HasAny)
             {
-                renderer.EnqueuePass(rtLightingPass);
+                HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, rtLightingPass, lilToon.URP.Extensions.ScreenProcess.ScreenProcessDebugViewInfo.Performance);
             }
             if (runtimeLayers.Count == 0 && !rtSettings.HasAny)
             {
@@ -114,7 +114,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     "没有可运行的 ScreenProcess layer。");
             }
 
-            EnqueueRenderGraphPass(renderer, pass, runtimeLayers);
+            EnqueueRenderGraphPass(renderer, renderingData.cameraData.camera, pass, runtimeLayers);
         }
 
         protected override void Dispose(bool disposing)
@@ -282,6 +282,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private void EnqueueRenderGraphPass(
             ScriptableRenderer renderer,
+            Camera camera,
             ScreenProcessPass pass,
             List<ScreenProcessRuntimeLayer> layers)
         {
@@ -298,8 +299,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 ScreenProcessRenderPassEvents.ScreenProcessStack,
                 settings,
                 EnsureSubjectMaskMaterial());
-            if (layers.Exists(layer => layer.settings.debugMask)) pass.Enqueue(renderer);
-            else renderer.EnqueuePass(pass);
+            if (layers.Exists(layer => layer.settings.debugMask)) pass.Enqueue(renderer, camera, lilToon.URP.Extensions.ScreenProcess.ScreenProcessDebugViewInfo.Performance);
+            else HoDebugPerformanceRegistry.EnqueuePass(renderer, camera, pass, lilToon.URP.Extensions.ScreenProcess.ScreenProcessDebugViewInfo.Performance);
             EnqueueSemanticBufferReleasePass(renderer);
         }
 

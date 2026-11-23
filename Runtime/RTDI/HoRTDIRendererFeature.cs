@@ -164,7 +164,7 @@ namespace lilToon.URP.Extensions.RTDI
             // camera-color composition, so its producer always runs after the
             // surface buffers and before opaque Forward.
             pass.renderPassEvent=RenderPassEvent.BeforeRenderingOpaques;
-            renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, data.cameraData.camera, pass, HoRTDIDebugViewInfo.Performance);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
             ScreenProcessRTLightingCompatibility.PublishDirectProduct(
                 camera,
                 context.PublishedDiffuse,
@@ -176,7 +176,7 @@ namespace lilToon.URP.Extensions.RTDI
             {
                 if(debugMaterial==null&&debugShader!=null)debugMaterial=CoreUtils.CreateEngineMaterial(debugShader);
                 HoDebugGrid.EnsureOverlay(debugOverlayShader);
-                if(debugMaterial!=null){debugPass.Setup(volume.debugMode.value,debugMaterial,context);debugPass.Enqueue(renderer);}
+                if(debugMaterial!=null){debugPass.Setup(volume.debugMode.value,debugMaterial,context);debugPass.Enqueue(renderer, data.cameraData.camera, HoRTDIDebugViewInfo.Performance);}
             }
         }
         private void DisposeResources()
@@ -316,6 +316,7 @@ namespace lilToon.URP.Extensions.RTDI
             }
             private static void Dispatch(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
             {
+                using var timing = new ProfilingScope(cmd, HoDebugPerformanceRegistry.GetSampler("Ho-RTDI"));
                 var c=d.context;unchecked{d.signature=d.signature*397^(int)d.environmentRevision^d.settings.useEnvironment.GetHashCode()^(d.settings.environmentSamples*7919)^(d.settings.environmentBrdfSamples*104729)^d.settings.environmentIntensity.GetHashCode();}
                 #if UNITY_EDITOR
                 if(c.nrd?.ValidationMotionCapture!=null)

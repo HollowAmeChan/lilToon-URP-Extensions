@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Debugging;
 #pragma warning disable CS0618, CS0672
 
 using UnityEngine;
@@ -120,7 +121,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 activeSettings.layerMask.value);
 
             pass?.Setup(activeSettings, filteringSettings);
-            renderer.EnqueuePass(pass);
+            HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoSurfaceBufferDebugViewInfo.Performance);
 
             // 语义 lane：5 个 MRT（owner + 4 张 lane 图）。不够就只关这一趟，数值面照跑并报错
             // ——AC 会因为没有 lane 而回落到物体位，不是静默错值。
@@ -142,11 +143,11 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 else
                 {
                     semanticPass?.Setup(activeSettings, filteringSettings);
-                    renderer.EnqueuePass(semanticPass);
+                    HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, semanticPass, HoSurfaceBufferDebugViewInfo.Performance);
                     if (activeSettings.enableCorrelatedSemantics)
                     {
                         correlatedPass?.Setup(activeSettings, filteringSettings, renderingData.cameraData.camera);
-                        renderer.EnqueuePass(correlatedPass);
+                        HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, correlatedPass, HoSurfaceBufferDebugViewInfo.Performance);
                     }
                     else
                     {
@@ -175,7 +176,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                         System.Array.Empty<HoACQueryDescriptor>(), null, demand, 0,
                         (demand & HoACDemandResources.LegacySemantic) != 0 ? 255u : 0u);
                     debugPass?.Setup(activeSettings, debugMaterial, null);
-                    debugPass.Enqueue(renderer);
+                    debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoSurfaceBufferDebugViewInfo.Performance);
                 }
             }
             else debugPass?.ReleaseDebugResources();

@@ -5,7 +5,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
     public static class HoPlanarReflectionDebugViewInfo
     {
         public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
-            "PLR", "PLR", "Ho-PLR Preprocess", "Ho-PLR Composite");
+            "PLR", "PLR", "Ho-PLR Reflection Camera", "Ho-PLR Copy Prefilter", "Ho-PLR Preprocess", "Ho-PLR Composite");
 
         private const string FeatureName = "PLR";
         private const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/PlanarReflection/HoPlanarReflectionComposite.shader";

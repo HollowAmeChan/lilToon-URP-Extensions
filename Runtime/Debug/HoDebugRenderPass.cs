@@ -31,9 +31,10 @@ namespace lilToon.URP.Extensions.Debugging
             RenderPipelineManager.endCameraRendering += (_, camera) => CompatibilitySelections.Remove(camera);
         }
 
-        public void Enqueue(ScriptableRenderer renderer)
+        public void Enqueue(ScriptableRenderer renderer, Camera camera = null, HoDebugPerformanceInfo performance = null)
         {
             HoDebugGrid.EnsureOverlay();
+            HoDebugPerformanceRegistry.TrackPass(camera, this, performance);
             renderer.EnqueuePass(this);
             renderer.EnqueuePass(presentation);
         }

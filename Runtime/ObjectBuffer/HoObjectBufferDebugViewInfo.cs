@@ -5,7 +5,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     public static class HoObjectBufferDebugViewInfo
     {
         public static readonly HoDebugPerformanceInfo Performance = HoDebugPerformanceRegistry.Register(
-            "ObjectBuffer", "ObjBuffer", "Ho-ObjectBuffer Output", "Ho-ObjectBuffer MSAA Resolve");
+            "ObjectBuffer", "ObjBuffer", "Ho-ObjectBuffer Output", "Ho-ObjectBuffer MSAA Resolve", "Ho-ObjectBuffer Debug");
 
         private const string FeatureName = "ObjectBuffer";
         private const string ShaderName = "Hidden/lilToon/URP/ObjectBuffer/DebugView";

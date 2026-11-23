@@ -308,7 +308,12 @@ namespace lilToon.URP.Extensions.RT
                     foreach (var e in scene.entries.Values) scene.instanceData[e.identity] = new InstanceData { submesh = (uint)e.submesh, material = e.materialId, triangles = e.triangles, valid = 1 };
                     cmd.SetBufferData(scene.instanceBuffer, scene.instanceData); scene.metadataDirty = false;
                 }
-                if (scene.asDirty) { cmd.BuildRayTracingAccelerationStructure(scene.acceleration); scene.asDirty = false; scene.BuildCount++; }
+                if (scene.asDirty)
+                {
+                    using (new ProfilingScope(cmd, lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-RT Build")))
+                        cmd.BuildRayTracingAccelerationStructure(scene.acceleration);
+                    scene.asDirty = false; scene.BuildCount++;
+                }
             }
             internal void BuildAndBind(CommandBuffer cmd, ComputeShader shader, int kernel)
             {
