@@ -1,13 +1,25 @@
 # Ho-SurfaceBuffer（SB）
 
+> **2026-11-25 静态化状态**：源码已切换为原生 ShaderLab / HLSL 维护。本轮已停止追加测试，GPU 对照、Player 和安装复开等完整验收未完成，未完成项不记为通过；历史记录仅代表其注明日期与范围。
+
 > 调试架构更新：单视图与模块内 All 共用本模块 shader，并在最终后处理之后显示。DebugTile 已收缩为 APV 等外部系统入口；本文中原 DebugTile 接入要求由模块内 All 替代，见 [Ho-Debug.md](Ho-Debug.md)。
 
-> **状态：已落地并稳定**（代码在 `Runtime/SurfaceBuffer/`，材质侧在 lilToon 的 22 个 URP lilblock）。
+> **状态：已落地并稳定**（代码在 `Runtime/SurfaceBuffer/`，材质侧直接维护 lilToon 的普通 `Shader/lts*.shader` 与保留的 `ltspass_*.shader`）。
 > 本文是 **SB 的现行架构说明**：字段、名字、执行记录与冻结决议；§0 是流水线复核与勘误基线。
 > 相关：`Ho-ObjectBuffer.md`、`Ho-AttributeComposite.md`（AC 面向合成与后处理；RT 按需直接读取已有 SB 输入）、`架构边界/MSAA.md`。
 > **已删除的旧来源**：MetadataBuffer 的 `SurfaceColor` / `SurfaceData` / `ReflectionMaterial`（R6/R7 删除，见 `CHANGELOG.md`）。
 
 表面数值 buffer：回答"表面是什么样"。**几何在 GB，身份与逐物体属性在 OB，合成在 AC。**
+
+**2026-11-24 原生 Shader 维护入口**：8 个材质 Shader 与 3 个共享 Pass Shader
+均直接声明 `HO_SURFACE_BUFFER`、`HO_SURFACE_SEMANTIC` 与关联语义 Pass，
+源码位于 lilToon `Shader/lts*.shader` 和 `Shader/ltspass_opaque/cutout/transparent.shader`。
+共享实现继续使用 `lil_pass_surface_buffer.hlsl`、`lil_pass_surface_semantic.hlsl`、
+`lil_pass_surface_correlated.hlsl` 和 `lil_pass_surface_common.hlsl`；静态功能集合在
+`Shader/Includes/lil_feature_config.hlsl`。普通 `.shader` 是正式源码，旧 block/容器与生成菜单
+不再参与安装或构建。这里的源码声明范围不改变 SB 的实际入队队列、透明参与规则、owner、
+MRT 或 AC 关联协议。下文 R3 / R6 / R7 的 22 模板数量只描述当时执行过程。
+
 
 **2026-10-19 零透明度输出规则**：普通透明片元的最终有效alpha为0时，在共享材质构建路径直接discard，不能仅把颜色或validity清零后继续写深度。数值MRT、Emission writer、owner、语义owner/lane与关联写入共用这项裁剪，后方有效表面应保留。规则不把Opaque的Color.a或折射强度直接当作透明度。GPU覆盖范围与边界见[审计](../Tests~/Infrastructure/ZeroAlpha/README.md)。
 
@@ -24,7 +36,7 @@
 
 
 > **落地状态（R3-sb，数值面 + 语义 lane 本轮）**：SB 的**数值面**已经可以跑：
-> - 已落地：`Runtime/SurfaceBuffer/`（feature + 数值 pass + 语义 lane pass + 资源集 + 格式工具 + Volume/调试直出）、材质侧 `lil_pass_surface_buffer.hlsl` / `lil_pass_surface_semantic.hlsl`（两者共用 `lil_pass_surface_common.hlsl` 的几何 + alpha clip 前半段）与 22 个 URP lilblock 的 `LightMode=HoSurfaceBuffer` / `HoSurfaceSemantic` 两个 pass、5 个新材质属性（`_HoSurfaceThickness` / `_HoSurfaceCurvature` / `_HoSurfaceTransmittanceHint` / `_HoSurfaceMaterialClassId` / `_HoSemanticWeight`）。
+> - 已落地：`Runtime/SurfaceBuffer/`（feature + 数值 pass + 语义 lane pass + 资源集 + 格式工具 + Volume/调试直出）、材质侧 `lil_pass_surface_buffer.hlsl` / `lil_pass_surface_semantic.hlsl`（两者共用 `lil_pass_surface_common.hlsl` 的几何 + alpha clip 前半段）与当时 22 个 URP lilblock 的 `LightMode=HoSurfaceBuffer` / `HoSurfaceSemantic` 两个 pass（模板数为 R3 历史记录；现行入口见下段）、5 个新材质属性（`_HoSurfaceThickness` / `_HoSurfaceCurvature` / `_HoSurfaceTransmittanceHint` / `_HoSurfaceMaterialClassId` / `_HoSemanticWeight`）。
 > - **owner 用两个字节（RGBA8 的 R/G）承载 16-bit IdentityId**（规划写的是 `R16_UINT`，此处按可采样性改）：0..65535 逐值精确，且消费端仍是普通浮点采样；`R16_UINT` 需要整数纹理通道，会污染所有消费端。语义 lane 的 owner 同布局。
 > - **透明不生产**：队列上限压在上不透明段末尾（`GeometryLast`），对应 §0.5 的第三种策略（"对 transparent 不生产"）；其余两种策略等定了再放开。
 > - **语义 lane（§0.4 的 8-lane 档）已落地，但读端走单采样**：材质侧 `HoSurfaceSemantic` 逐像素写 `owner + 8 条 (SemanticId, value)`（4 张 RGBA8，5 MRT + 自用深度），AC 用**普通采样**读、按 catalog 的 `sourceMode` 合成（默认 `Intersection`：表面侧只能收窄 / 细化）。**SB 只覆盖 OB 语义**——材质先按 palette 表读自己 renderer 的物体位，只写它真有的那几位，lane → SemanticId / 物体位掩码由 `HoSemanticSchema` 上传，材质侧是 `_HoSemanticWeight`（0..1）× 可选的 `_HoSemanticWeightTex`（R 通道，**要显式打开 `_HO_SEMANTIC_MASK`** 才采样 —— 老材质没有这张图，无条件采样会读到未定义的绑定）。

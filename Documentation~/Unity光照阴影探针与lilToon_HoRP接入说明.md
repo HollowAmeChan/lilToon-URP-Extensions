@@ -1,13 +1,37 @@
 # Unity 光照、阴影与探针：lilToon / HoRP 混合实现与接入说明
 
-> 状态：**现行参考手册（2026 文档审核时重校）**。本文是“Unity 光照系统 ↔ lilToon 消费 ↔ HoRP 增强”的工程认知文档，不是架构契约；契约看 `Ho-管线总览.md` / `Ho-*.md` / `Ho-ChannelContract-v1.md`。
+> **2026-11-25 静态化状态**：源码已切换为原生 ShaderLab / HLSL 维护。本轮已停止追加测试，GPU 对照、Player 和安装复开等完整验收未完成，未完成项不记为通过；历史记录仅代表其注明日期与范围。
+
+> 状态：**光照参考与历史接入记录；2026-11-24 原生 Shader 流程更新**。本文是“Unity 光照系统 ↔ lilToon 消费 ↔ HoRP 增强”的工程认知文档，不是架构契约；契约看 `Ho-管线总览.md` / `Ho-*.md` / `Ho-ChannelContract-v1.md`。
 > 适用范围：Unity 6000.x、URP 17.x、本地 lilToon fork、lilToon-URP-Extensions（Ho-GTAO / Ho-SSGI 已实现并接入）。
-> **本次重校范围**：① §0/§1 的 Unity 侧事实（通用知识，未逐条重验）；② §2 的 lilToon 消费路径与“语义而非实现名”原则；③ §3 的编译工作表、设置入口、朱木古堂实测基线（**已按当前 `PC_Renderer.asset` / `lilToonSetting.json` 重新扫描**）；④ §4 的推荐基线与操作路径；⑤ §5/§6 任务与参考。
+> **阅读边界**：§0/§1 保留 Unity 光照背景；§2 的旧文件行号与消费实现需对照现行 HLSL；§3 保存早期生成器时期的编译工作表和朱木古堂实测，不是现行包结构或菜单指南。当前源码维护以紧接下文的“原生 Shader 工作流”和 §4 的更新操作路径为准。
 > 写作时仍存在的 `MetadataBuffer` 已在 R6/R7 删除（身份→OB、表面→SB、语义遮罩→AC）；凡本文提到“材质/对象语义 buffer”的地方一律按 **OB + AC + SB** 读。
-> **数字口径**：文中“52 个生成 Shader / 47 个命中 `ProbeVolumeVariants.hlsl`”是 2026-09-08 写作时的数；2026 文档审核重扫为 **54 个输出 / 49 个命中**（Lite 家族仍为 12 个）。其余历史数字保留原样，读到时按本条换算。
+> **历史数字口径**：“52 个生成 Shader / 47 个命中”是 2026-09-08 记录，后一次历史重扫为“54 个输出 / 49 个命中”（当时 Lite 为 12 个）。这些数字不换算为现行数量；Lite、Multi 等家族及生成器已退役，不能据此恢复旧文件或判断当前变体能力。
 > 反射方案、反射输入契约和后续实现路线不在本文维护：见 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md`、`Documentation~/Ho-管线总览.md`。本文只保留 Reflection Probe 的 Unity 背景与验证方法。
 
 ---
+
+## 现行原生 Shader 工作流（2026-11-24）
+
+- lilToon 的 `Assets/lilToon/Shader/lts*.shader` 是 8 个材质入口的正式 ShaderLab
+  源码；`ltspass_opaque.shader`、`ltspass_cutout.shader`、`ltspass_transparent.shader`
+  保留为 3 个共享 Pass 源码。各文件的原路径、Shader 名称与资产 GUID 延续使用。
+- `Shader/Includes/lil_feature_config.hlsl` 保存专用功能宏与 HoURP 源码版本约定；
+  光照计算、输入声明和 Ho 数据输出仍在普通 HLSL 中。Pass、pragma、队列、混合与
+  Properties 直接维护在实际 `.shader` 中。
+- 安装、切换 D3D11/D3D12、进入/退出播放和 Player 构建只消费正式源码；不扫描材质或
+  动画来重写包文件。旧 block/容器、生成设置页、设置 JSON 与 Shader 刷新菜单退出流程。
+- APV 与可选 Lightmap 能力由原生 pragma 提供；`LIGHTMAP_ON`、
+  `DYNAMICLIGHTMAP_ON`、`DIRLIGHTMAP_COMBINED`、`SHADOWS_SHADOWMASK` 与
+  `ProbeVolumeVariants.hlsl` 是应检查的实际声明。变体存在不代表场景已经烘焙，仍需
+  URP Asset、Renderer、Baking Set 与有效资源绑定共同成立。
+- 材质参数与已有局部关键字继续表达效果及动画，材质管理器、预设和贴图中控继续使用；
+  RendererFeature 的生产/资源生命周期不转成材质编译开关。普通源码改动后由 Unity
+  正常导入编译，在隔离工程核对实际 SubShader/Pass，不能用 fallback 成功替代验收。
+
+本节描述原生源码与变体入口，不宣称下面记录的制作场景或所有 GI/Shadowmask
+组合已经重新验收。当前支持域和验证限制以 lilToon 的
+[专用版本契约](D:/Unity_Fork/lilToon/docs/ho-urp-support-contract.md) 及对应专项结果为准。
 
 ## 0. 结论先行
 
@@ -466,7 +490,7 @@ URP Asset/Renderer 开启 APV
 场景属于有效 Baking Set 且已烘焙
 ```
 
-当前 lilToon 模板通过 `lil_skip_variants_probevolumes` 阻止了第二项，因此源码函数存在不等于材质实际能采样 APV。
+旧模板曾通过 `lil_skip_variants_probevolumes` 阻止 APV pragma 的注入，这是历史排障背景。现行普通 Shader 已直接包含 `ProbeVolumeVariants.hlsl`；源码函数、真实 Draw Call 变体和有效 APV 资源仍需分别检查。
 
 #### E. Reflection Probe
 
@@ -503,7 +527,7 @@ Lightmapping.BakeReflectionProbe(probe, path);
 
 - 反射是材质的 view-dependent 组件，不应并入 Light Probe 的 diffuse/ambient 语义。
 - SSR/Planar 失败时使用 Reflection Probe fallback。
-- Lite 模板的 probe blending/box projection variants 被裁掉，反射关键资产使用标准 Default 系列。
+- 历史 Lite 模板曾裁掉 probe blending/box projection；Lite 已从当前专用包退出。现行资产使用保留的普通材质 Shader，并检查实际 Reflection Probe 关键字和绑定。
 
 #### F. Camera Opaque 与折射
 
@@ -589,7 +613,12 @@ Ho-ShadowCast 通过 RenderGraph 创建 atlas，再调用 `SetGlobalTextureAfter
 
 ---
 
-## 3. lilToon 实际编译情况工作表
+## 3. 历史：生成器时期的编译情况与朱木古堂调查
+
+> 本节保留原调查、Shader 家族数量、模板策略、工程序列化值与当时结论。
+> 凡“当前”均指该次历史调查现场；不是 2026-11-24 原生包现状。旧版本保留 Lite/Multi、
+> 关闭 Lightmap 或建议全局生成开关，不构成现行支持承诺。现行流程见文首与 §4，
+> 不再按本节重建生成器或旧 Shader 家族。
 
 ### 3.1 证据规则
 
@@ -793,108 +822,30 @@ APV 不会通过 Lightmap UV 变体实现。它需要 `PROBE_VOLUMES_L1/L2` 变�
 
 APV 与 Lightmap 可以并存：静态几何用 Lightmap，动态角色用 APV。它们不是互相排斥的全局模式。
 
-### 3.11 lilToon 的设置入口、持久化和交互方式
+### 3.11 历史生成设置与现行替代
 
-#### 用户入口
+当时由 `lilToonSetting` 保存全局功能、变体和优化选项，并通过
+`ProjectSettings/lilToonSetting.json`、模板展开、材质/动画扫描与构建前后恢复
+改变生成结果。这解释了旧工程 JSON 和部分历史截图的来源。
 
-当前 lilToon 的入口是任意 lilToon 材质的 Inspector：
+这套入口和自动源码写入已退役。本节不再给出旧菜单或设置页的操作步骤，
+也不把残留 JSON 视为正式源码的控制面。当前功能集合在普通
+`lil_feature_config.hlsl` 中维护；变体和 Pass 直接维护在 `.shader`，
+材质效果、预设和 Renderer/场景资源分别沿用各自的配置入口。
 
-```text
-选中任意 lilToon Material
-    -> Inspector 顶部模式栏
-    -> Advanced | Preset | Shader Setting
-    -> 选择 Shader Setting
-```
+### 3.12 现行的源码、材质与生产者分工
 
-对应代码：
+- 专用编译能力：普通 `.shader` 的原生 pragma 与
+  `Shader/Includes/lil_feature_config.hlsl`。APV、Lightmap、Reflection Probe
+  变体由受支持的源码集合提供，不在每个材质上开启全局生成选项。
+- 材质效果与动画：现有强度、mask、颜色、运行时属性及局部关键字；由 Inspector、
+  材质管理器、预设和动画控制，不依赖工程扫描认定“未使用”。
+- 光照资源：URP Asset、Renderer、Light、Baking Set 与相关场景组件。
+- Ho 生产者：RendererFeature 的启停、资源声明、相机生命周期及统一语义协议。
 
-- `lilInspector.cs` 选择 `EditorMode.Settings`。
-- `lilGUIUtility.cs` 绘制三段模式 Toolbar。
-- `lilSettingAndPresetGUI.cs` 的 `DrawSettingsGUI()` 绘制全局设置。
-
-这不是“该材质自己的编译开关”。即使从某一个材质 Inspector 打开，它编辑的也是整个工程的 lilToon Shader Setting。
-
-#### 持久化位置
-
-```text
-ProjectSettings/lilToonSetting.json
-```
-
-路径由 `lilDirectoryManager.GetShaderSettingPath()` 返回。朱木古堂当前文件是：[lilToonSetting.json](D:/Unity_Project/BREAK_URP/ProjectSettings/lilToonSetting.json)
-
-#### 设置分层
-
-| 分层 | 代表字段 | 作用 | 是否写入单个材质 |
-|---|---|---|---:|
-| 全局功能编译开关 | `LIL_FEATURE_*` | 把某类 HLSL 功能宏编入/移出生成 Shader | 否 |
-| 全局构建/变体开关 | `LIL_OPTIMIZE_*` | ForwardAdd、VertexLight、Lightmap 等变体与路径选择 | 否 |
-| 全局优化行为 | `isDebugOptimize`、`isOptimizeInNDMF`、`isOptimizeInTestBuild` | 编辑器/NDMF/构建阶段是否进行优化；其中部分字段在当前 fork 中没有完整本地调用链 | 否 |
-| 全局默认值 | `defaultLightMinLimit`、`defaultLightMaxLimit` 等 | `[GameObject] Fix lighting` 和 Lighting Preset 的初始值 | 否，之后复制到材质属性 |
-| 材质运行时属性 | `_UseShadow`、`_ShadowBorder`、`_UseScreenSpaceAO`、`_ReflectionColor` 等 | 每个材质的艺术控制和运行时行为 | 是 |
-| Renderer/场景设置 | `ReceiveGI`、`LightProbeUsage`、`ReflectionProbeUsage`、APV/Lightmap | 对象如何接收 Unity 光照资源 | 否，属于 Renderer/场景 |
-
-#### 修改后发生什么
-
-1. GUI 修改 `lilToonSetting` 对象。
-2. `ApplyShaderSetting()` 先把设置写入 `ProjectSettings/lilToonSetting.json`。
-3. 它从 `BaseShaderResources` 找到 `.lilinternal`，调用 `lilShaderContainer.UnpackContainer()`。
-4. 重新写出 `Shader/*.shader`，重新导入 `.lilcontainer` 目录并刷新 AssetDatabase。
-5. 生成文本中的 `#define LIL_FEATURE_*`、`#pragma skip_variants` 和 Pass 由此改变。
-
-“Assets/lilToon/[Shader] Refresh shaders” 菜单会重新生成全部 Shader。这个菜单不是只刷新 Inspector，而是真正重写生成文件。[lilToonEditorUtils.cs](D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilToonEditorUtils.cs)
-
-#### 自动优化模式
-
-当 `isDebugOptimize` 或构建预处理触发优化时，lilToon 会：
-
-```text
-收集场景/项目中的 Material 和 AnimationClip
-    -> TurnOffAllShaderSetting()
-    -> SetupShaderSettingFromMaterial()
-    -> 检查实际材质属性、贴图、动画绑定
-    -> 只重新打开真正使用的 LIL_FEATURE_*
-    -> ApplyShaderSetting()
-```
-
-`SetupShaderSettingFromMaterial()` 会跳过 Lite 和 Multi Shader，说明这两类本来就不是按普通材质功能扫描的 Standard 优化路径。构建前还会记录需要临时优化的 Shader，构建后恢复设置。
-
-### 3.12 HO 开关应该放在哪里
-
-建议沿用 lilToon 的“全局编译设置 + 材质运行时属性”分层，但不要把 HoRP 的 RendererFeature 生命周期塞进材质编译开关。
-
-#### 适合放在 lilToon 全局 Shader Setting 的内容
-
-- 是否生成 APV `PROBE_VOLUMES_L1/L2` 变体。
-- 是否保留 Lightmap variants。
-- 是否保留 Reflection Probe blending/box projection variants。
-- 是否保留某个 HoRP 需要的轻量 Shader 输入宏。
-
-这些开关的共同特点是：**会改变生成 Shader 的结构或变体数量，应该工程统一，而不是每个材质各自决定。**
-
-建议未来增加：
-
-```text
-LIL_OPTIMIZE_USE_PROBEVOLUMES
-LIL_OPTIMIZE_USE_LIGHTMAP
-LIL_OPTIMIZE_USE_REFLECTION_PROBE_QUALITY
-```
-
-其中 `LIL_OPTIMIZE_USE_PROBEVOLUMES` 应该是“可条件启用”，默认值可保持关闭；当 URP Asset 使用 APV 时由项目设置打开。
-
-#### 适合放在材质界面的内容
-
-- `_UseScreenSpaceAO`、`_SSAOStrength`、`_SSAORemap`、`_SSAOContrast`、`_SSAOMask`。
-- GI/Reflection/SSS 的强度、mask、颜色和 apply mode。
-- 是否让该材质写入/排除某个 HoRP 语义通道。
-- 反射 roughness、Fresnel、Cubemap override。
-
-这些是艺术意图或消费强度，不应改变整个 Shader 的编译结构。
-
-#### 不建议放在材质界面的内容
-
-- “本材质是否编译 APV”——会造成同一 Shader 家族的编译策略不一致，且当前 lilToon 生成器并非按材质生成独立 APV Shader。
-- “本材质是否打开 Lightmap variants”——Lightmap 是 Renderer/场景资源，材质只应决定是否消费，不应拥有全局变体开关。
-- “本材质是否生成 Ho-GTAO/Ho-GI”——生产端是 RendererFeature，不是材质属性。
+材质消费 AO、GI、反射与阴影的语义分层保持不变。不要把“生成 APV/Lightmap
+Shader”或“生成 Ho-GTAO/Ho-GI”恢复成材质按钮；源码能力和实际数据是否可用
+仍然是不同的验证项。
 
 ### 3.13 Lite 材质在当前工程中的实际使用
 
@@ -914,7 +865,7 @@ Standard（lts*.shader）：238
 
 1. **HO 主线默认使用 Standard 家族。**
 2. 不为了理论上的远景性能保留 Lite 作为主工作流要求。
-3. Lite 继续作为上游兼容资产和低成本 fallback，但不参与 HO 质量验收基线。
+3. 这条历史保留建议已被后续剪枝取代：Lite 已退出当前专用包，不再作为安装时恢复的兼容资产或隐式 fallback。
 4. 只有出现明确的大规模远景、透明层或 Shader 编译瓶颈时，才重新评估 Lite。
 5. 如果未来需要 Lite，也应把它定义为明确的“质量降级 preset”，而不是和 Standard 混用后再猜测功能差异。
 
@@ -1261,15 +1212,17 @@ Lite 仍保留 `_REFLECTION_PROBE_ATLAS`，因此不是完全没有 Reflection P
 
 这是“让静态物体接收烘焙光照”的路径，不需要 APV。
 
-#### A. 先让 lilToon 编译 Lightmap 变体
+#### A. 核对正式 Shader 的 Lightmap 编译能力
 
-1. 选中任意 lilToon 材质，进入 Inspector 的 `Shader Setting` 模式。
-2. 展开 `Build Size Optimization (for all materials)` / “优化构建大小（用于所有材质）”。
-3. 打开 `Use Lightmap` / “使用光照贴图”。
-4. 点击 `Assets/lilToon/[Shader] Refresh shaders`，或让 `ApplyShaderSetting()` 自动刷新。
-5. 检查 [lts.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts.shader) 不再出现 `skip_variants LIGHTMAP_ON ...`，并出现 `LIGHTMAP_ON`、`DYNAMICLIGHTMAP_ON` 等 `multi_compile`。
+1. 检查实际使用的 `Shader/lts*.shader`，确认有 `LIGHTMAP_ON`、
+   `DYNAMICLIGHTMAP_ON`、`DIRLIGHTMAP_COMBINED` 与 `SHADOWS_SHADOWMASK`
+   等原生 `multi_compile`，且没有把这些受支持组合全局排除的 `skip_variants`。
+2. 检查 `Shader/Includes/lil_feature_config.hlsl` 与当前源码配置一致，
+   等待 Unity 正常导入和编译；无需旧全局设置页、JSON 或生成菜单。
+3. 在隔离的目标 API/Renderer 配置中检查实际 Draw Call 的关键字、材质 Pass
+   和资源绑定。源码有 pragma 不等于 Player 保留该变体，也不等于画面已验收。
 
-这一步只改变 Shader 编译能力，不会自动把场景变成已烘焙状态。
+这一步只核对 Shader 编译能力，不会自动把场景变成已烘焙状态。
 
 #### B. 设置静态场景几何
 
@@ -1494,13 +1447,15 @@ PROBE_VOLUMES_L1
 
 如果只看到普通 Forward variant，没有 `PROBE_VOLUMES_L1`，按以下顺序处理：
 
-1. 确认 [lts.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts.shader) 有 `ProbeVolumeVariants.hlsl` include。
-2. 确认 `ProjectSettings/lilToonSetting.json` 中 `LIL_OPTIMIZE_USE_PROBEVOLUMES=true`。
-3. 执行 `Assets/lilToon/[Shader] Refresh shaders`。
-4. 等待 ShaderImporter 和 ShaderCompiler 完成。
-5. 必要时清理当前工程的 ShaderCache 后重新打开工程，确认 Frame Debugger 不再使用旧 artifact。
+1. 确认实际使用的普通 `.shader` 包含 `ProbeVolumeVariants.hlsl`，
+   并核对 `Includes/lil_feature_config.hlsl` 的专用功能配置。
+2. 等待 Unity 的标准 ShaderImporter/ShaderCompiler 完成；检查真实 Draw Call
+   是否选择正确 SubShader 与 `PROBE_VOLUMES_L1/L2` 变体。
+3. 核对当前 URP Asset 的探针系统、Baking Set、加载的 APV 数据和对象采样位置。
+   若怀疑旧 artifact，在隔离副本中复现导入；不要用删除制作工程缓存替代资源诊断。
 
-当前源码生成链已经满足第 1、2 项；重新生成后的 Standard `lts.shader`/`lts_cutout.shader` 已包含 APV include。Unity 工程仍有其他 Ho-GTAO/Ho-SSGI 编译错误时，不能把那些错误误判成 lilToon APV 错误。
+旧 `lilToonSetting.json` 和生成菜单不再控制 APV。其他模块的 C# / Shader 编译错误
+需按实际来源分别排查，不能直接归因于 lilToon 的探针采样。
 
 #### 第三步：做一个“必然看得见”的 APV 试验
 
@@ -1598,7 +1553,7 @@ lilToon APV variants          已生成
 
 ## 5. 后续任务清单
 
-### P0：确认当前真实支持
+### P0：历史调查进度（保留当时勾选，不作为当前验收报告）
 
 - [x] 扫描修复前的 `lts.shader`、`lts_cutout.shader` 和全部 52 个输出，确认 APV 变体缺失。
 - [x] 实现并启用“条件启用 APV 变体、不新增 Shader 文件”的路线。
@@ -1644,12 +1599,11 @@ lilToon APV variants          已生成
 - [lilToon rendering macros](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_macro.hlsl)
 - [lilToon fragment lighting](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl)
 - [lilToon ShadowCaster pass](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_pass_shadowcaster.hlsl)
-- [lilToon shader importer](D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilShaderContainerImporter.cs)
-- [lilToon shader settings](D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilToonSetting.cs)
-- [当前 Standard 生成输出 lts.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts.shader)
-- [当前 Cutout 生成输出 lts_cutout.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts_cutout.shader)
+- [lilToon 静态功能配置](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_feature_config.hlsl)
+- [当前 Standard ShaderLab 源码 lts.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts.shader)
+- [当前 Cutout ShaderLab 源码 lts_cutout.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts_cutout.shader)
 - [朱木古堂测试场景目录](D:/Unity_Project/BREAK_URP/Assets/mmd场景测试/朱木古堂)（写作时的场景文件是 `New Scene.unity`；2026 文档整理时该目录里只剩 `HIRO.unity`，实机以工程为准）
-- [朱木古堂 lilToon 编译设置](D:/Unity_Project/BREAK_URP/ProjectSettings/lilToonSetting.json)
+- 朱木古堂历史 `ProjectSettings/lilToonSetting.json` 只作调查背景，不是现行编译入口。
 - [朱木古堂 URP Asset](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_RPAsset.asset)
 - [朱木古堂 Renderer](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_Renderer.asset)
 - [URP17 LightProbeSystem enum](D:/Unity_Fork/HoUrp17.3.0/Runtime/Data/UniversalRenderPipelineAsset.cs:398)

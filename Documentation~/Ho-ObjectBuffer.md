@@ -1,5 +1,7 @@
 # Ho-ObjectBuffer（OB）
 
+> **2026-11-25 静态化状态**：源码已切换为原生 ShaderLab / HLSL 维护。本轮已停止追加测试，GPU 对照、Player 和安装复开等完整验收未完成，未完成项不记为通过；历史记录仅代表其注明日期与范围。
+
 **2026-10-19 零透明度原生写入修复**：普通透明材质经共享材质路径解析后，alpha=0的片元不写身份、coverage或selection，也不占用该pass深度。4x实际原生路径已验证后方身份保留；1x降级路径目前只跑opaque fallback，不能用它证明透明原生writer已执行。详见[底层输出审计](../Tests~/Infrastructure/ZeroAlpha/README.md)。
 
 > 调试架构更新：单视图与模块内 All 共用本模块 shader，并在最终后处理之后显示。DebugTile 已收缩为 APV 等外部系统入口；本文中原 DebugTile 接入要求由模块内 All 替代，见 [Ho-Debug.md](Ho-Debug.md)。
@@ -12,6 +14,16 @@
 > **2026-10-05 朝向边界更新**：世界参考系现由 GD 的 Renderer 作用列表生产，OB 不再保存朝向字段或 GD 组件引用。眼透消费适配器关联完整屏幕身份与 GD 输出，并传入本次相机位置。下文旧 R2 执行记录中的 OB 朝向与每相机角度表是历史设计，现行用法见 [Ho-GeometryData](Ho-GeometryData.md)。
 
 逐物体 buffer：回答"**这是谁、占多少、我要抠哪一块**"。**几何在 GB，表面数值在 SB，合成在 AC。**
+
+**2026-11-24 原生 Shader 维护入口**：材质侧 `HO_OBJECT_BUFFER` / `LightMode=HoObjectBuffer`
+直接声明在 lilToon 的 `Shader/lts*.shader` 与三个保留的
+`Shader/ltspass_opaque.shader`、`ltspass_cutout.shader`、`ltspass_transparent.shader`。
+实现见 `Shader/Includes/lil_pass_object_buffer.hlsl`，静态功能集合见
+`Shader/Includes/lil_feature_config.hlsl`。修改实际 Pass、布局 pragma 或共享 HLSL，
+由 Unity 正常导入编译；不再编辑 block 或运行生成菜单。下文 R1 的 22 模板数字为历史记录，
+不代表现行 Shader 或 Pass 数。普通 Shader 保留的 OB 布局关键字、RSUV 与 instancing
+协议继续适用。
+
 
 ### 2026-10-08：对象选择组用法（覆盖下文旧 Selection 规划）
 
@@ -133,7 +145,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但当时 `D:\Un
 
 这四条都是"看起来像渲染玄学、实际是明确契约"的坑，各花掉过一轮以上排查，按可复现判据写死：
 
-1. **材质侧声明的 SV_Target 数必须 ≤ 实际绑定数。** 绑定数由运行期决定（N=1：Id0/Id1/Coverage(+Selection)；N>1：一张逐样本身份图(+Selection)），材质侧用两个全局关键字切布局：`_HO_OBJECT_BUFFER_MSAA`、`_HO_OBJECT_BUFFER_SELECTION`。声明超标时 D3D **丢弃整个 draw**，症状是"纹理一直是被清理后的 0"，看上去像"没画"。两个关键字必须在 22 个 URP lilblock 的 `HO_OBJECT_BUFFER` pass 里各自 `#pragma multi_compile`；少一条就等于那个布局永远开不起来（`_HO_OBJECT_BUFFER_SELECTION` 曾长期处于这种状态）。
+1. **材质侧声明的 SV_Target 数必须 ≤ 实际绑定数。** 绑定数由运行期决定（N=1：Id0/Id1/Coverage(+Selection)；N>1：一张逐样本身份图(+Selection)），材质侧用两个全局关键字切布局：`_HO_OBJECT_BUFFER_MSAA`、`_HO_OBJECT_BUFFER_SELECTION`。声明超标时 D3D **丢弃整个 draw**，症状是"纹理一直是被清理后的 0"，看上去像"没画"。两个关键字必须在实际参与绘制的普通 `.shader` 的每个 `HO_OBJECT_BUFFER` pass 里各自 `#pragma multi_compile`；少一条就等于那个布局永远开不起来（`_HO_OBJECT_BUFFER_SELECTION` 曾长期处于这种状态）。
 2. **自建附件必须自己清。** 附件用 `AccessFlags.WriteAll` 时原生 pass 的 load action 是 DontCare，RenderGraph 不会替你清，而 `0 = 背景` 是这条通道的硬契约。写法与 `Ho-GeometryBuffer` 对齐：`cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1, 0)`。ID pass 的 depth 必须一起清——池子里残留的深度会把几何整体拒掉，症状同样是"一个像素都没写进去"。
 3. **RSUV 的读取前置条件是 instancing，不是"CPU 写过就有"。** `unity_RendererUserValue` 由 `UnityInstancing.hlsl` 在 `UNITY_USE_RENDERINGLAYER_ARRAY`（来自 `#pragma instancing_options renderinglayer`）下声明，并要求 `#pragma multi_compile_instancing`。少任一条，片元里读出来恒为 0，而 `clip(identityId - 0.5)` 会把物体整片丢掉：**"屏幕只剩背景"是读数失败，不是采集失败**。另外 RSUV 不参与序列化，域重载/切场景后必须重写（组件面板的「刷新全场景 RSUV」）。
 4. **层 1..3 在轮廓像素上出现第二个身份是设计结果。** resolve 逐 sample 数票、按票数降序（平票取线性眼深更近者），所以两个物体的交界那圈像素会是"层0 = 主导身份、层1 = 另一个身份"，各占 0.5 覆盖率。消费端不得只看层0，必须按 ID 在 4 层里累加覆盖率。判据：`Coverage (Layers)` 在该像素约 50/50，且 `id0` 的 R/G 是层0 的组/槽、B/A 是层1 的组/槽。
@@ -176,7 +188,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但当时 `D:\Un
 | 失败可见（未声明 ID / 非法槽 / 表满 / 溢出） | ✅ | 未声明 ID → unknown 行洋红；槽位满 / 表满 / 组满 → 警告；**身份池溢出结构性不可能**（见 0.3.2）；选择层那个没人读的 `dropped` 已删 |
 | 最小闭环回归（`HoLil/Validation/Validate Ho-ObjectBuffer R1`） | ✅ 已跑通过 | 实测（2026-09）：`Id0=(1,1,1,1)`（白色 Subject、覆盖率 1）、`CoverageTotal=(1,1,1,1)`、`Valid=(0,0.796,0,1)`（绿哨兵；线性 0.6 的 sRGB 值）、`Id3=(0.271,0.271,0.271,1)`（背景 0.06 灰的 sRGB 值） |
 | 表名与计划一致 | ✅ 已清 | 部件行表的全局名改为 `_HoObjectBufferEntries`（HLSL + 常量同步），与 §1.2 一致 |
-| lilToon 跨仓 pass（22 lilblock + 布局关键字 + instancing） | ✅ | 重生成后的 `ltspass_opaque.shader` 已带 `_HO_OBJECT_BUFFER_MSAA` / `_HO_OBJECT_BUFFER_SELECTION`（1079/1080 行） |
+| lilToon 跨仓 pass（历史 R1：22 lilblock + 布局关键字 + instancing） | ✅ 历史验收 | 当时重生成的 `ltspass_opaque.shader` 已带 `_HO_OBJECT_BUFFER_MSAA` / `_HO_OBJECT_BUFFER_SELECTION`；模板数量与旧行号不是现行源码清单 |
 | RSUV 写入 / 收回 / 手动落盘刷新 | ✅ | `ApplyIdentity` / `ClearIdentity` / `lastWrittenRenderers` / 「刷新全场景 RSUV」 |
 | 调试视图 + DebugTile 一致性 + 契约登记 | ✅ | 10 个视图（含 Sample Count）、kind 7 门控、两边同色；`object.facing` 随 0.3.1 撤掉（没有逐像素朝向可看） |
 | RSUV 类型覆盖 | ⚠ P1 留白 | 只支持 MeshRenderer / SkinnedMeshRenderer，其余告警；Sprite/SpriteShape/Tilemap 的 API 见 `TODO(P1)` |

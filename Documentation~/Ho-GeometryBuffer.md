@@ -1,5 +1,7 @@
 # GeometryBuffer 公共契约
 
+> **2026-11-25 静态化状态**：源码已切换为原生 ShaderLab / HLSL 维护。本轮已停止追加测试，GPU 对照、Player 和安装复开等完整验收未完成，未完成项不记为通过；历史记录仅代表其注明日期与范围。
+
 > **状态：现行契约**（2026 文档审核时按当前实现校正：语义数值现由 SB / OB / AC 提供，MetadataBuffer 已删除）。
 > 相关：`Ho-ObjectBuffer.md`、`Ho-SurfaceBuffer.md`、`Ho-AttributeComposite.md`、
 > `架构边界/MSAA.md`（GB 是唯一的 MSAA 解析入口）。
@@ -152,13 +154,23 @@ MSAA 下覆盖率有独立来源，不能只看 alpha：
 
 OutlineNormalDepth pass 使用 `LightMode = HoGeometryBufferOutlineNormalDepth`，顶点路径启用 lilToon 的 `LIL_OUTLINE`，因此会执行 outline vertex expansion；fragment 做 outline alpha/cutout/dissolve clipping，并输出翻转后的描边法线与线性深度。
 
-lilToon 的 `CustomShaderResources/URP/Default*Outline.lilblock` 模板直接声明这个 pass。使用 `UsePass` 的自定义模板只有在其 `lilPassShaderName` 指向的隐藏 pass shader 自己提供该 pass 时才能引用它；本次不向通用 `DefaultUsePassOutline*.lilblock` 强行添加不存在的 UsePass。`lilShaderContainerImporter` 只负责展开模板占位符，不承载这个 pass 的业务结构。修改模板后需要执行：
+现行 pass 直接声明在 lilToon 的普通 ShaderLab 源码中：
 
-```text
-Assets/lilToon/[Shader] Refresh shaders
-```
+- `Shader/lts_o.shader`
+- `Shader/lts_cutout_o.shader`
+- `Shader/lts_trans_o.shader`
+- `Shader/lts_twotrans_o.shader`
 
-否则已有生成 shader 仍没有新 pass，OutlineNormalDepthTexture 会是全黑。
+共享片元实现为 `Shader/Includes/lil_pass_outline_normal_depth.hlsl`，功能配置为
+`Shader/Includes/lil_feature_config.hlsl`。直接编辑这些源码，由 Unity 的标准
+ShaderImporter 编译；安装、切换 Graphics API、进入/退出播放和构建不再拼装 Shader。
+`.lilinternal` / `.lilblock` / `.lilcontainer` 与旧 Shader 刷新菜单已退役。
+
+自定义 Shader 若使用原生 `UsePass`，目标 Shader 必须实际提供
+`HO_OUTLINE_NORMAL_DEPTH`。保留的三个 `ltspass_opaque/cutout/transparent.shader`
+共享 pass 文件不含这个描边 pass，不能凭名称假定可复用。检查真实 Draw Call
+的 Pass 名与 `HoGeometryBufferOutlineNormalDepth` LightMode；缺失或未被绘制时
+OutlineNormalDepthTexture 仍可能全黑。
 
 ### 3.4 SkyTexture
 
@@ -301,8 +313,8 @@ GeometryBuffer 只提供 PLR/SSR 所需的物理法线、线性深度和 coverag
 - 采样函数：`Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl`
 - 模块视图注册：`Runtime/GeometryBuffer/HoGeometryBufferDebugViewInfo.cs`
 - Debug shader：`Runtime/GeometryBuffer/Shaders/Debug/HoGeometryBufferDebug.shader`
-- lilToon outline 模板：`D:\Unity_Fork\lilToon\Assets\lilToon\CustomShaderResources\URP\Default*Outline.lilblock`
-- lilToon UsePass 模板（仅当隐藏 pass shader 提供对应 pass 时适用）：`D:\Unity_Fork\lilToon\Assets\lilToon\CustomShaderResources\URP\DefaultUsePassOutline*.lilblock`
+- lilToon outline ShaderLab：`D:\Unity_Fork\lilToon\Assets\lilToon\Shader\lts_o.shader`、`lts_cutout_o.shader`、`lts_trans_o.shader`、`lts_twotrans_o.shader`
+- lilToon 静态功能配置：`D:\Unity_Fork\lilToon\Assets\lilToon\Shader\Includes\lil_feature_config.hlsl`
 - outline normal/depth fragment：`D:\Unity_Fork\lilToon\Assets\lilToon\Shader\Includes\lil_pass_outline_normal_depth.hlsl`
 
 ## 11. VisualSurfaceBuffer 扩展与 RT 成本

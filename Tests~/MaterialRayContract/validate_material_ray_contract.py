@@ -43,10 +43,11 @@ class Audit:
     @staticmethod
     def evidence(path: Path, text: str, patterns: Iterable[str]) -> list[dict]:
         rows = []
-        lines = text.splitlines()
         for pattern in patterns:
-            rx = re.compile(pattern, re.IGNORECASE)
-            hits = [i + 1 for i, line in enumerate(lines) if rx.search(line)]
+            # Whole-source matching also records multi-line producer/consumer
+            # chains, rather than treating an isolated symbol as sufficient.
+            rx = re.compile(pattern, re.IGNORECASE | re.MULTILINE)
+            hits = [text.count("\n", 0, match.start()) + 1 for match in rx.finditer(text)]
             rows.append({"pattern": pattern, "lines": hits[:8]})
         return rows
 
@@ -81,17 +82,46 @@ class Audit:
         self.require("oit.resolve", "transparent/OIT", "Weighted OIT clips alpha and writes weighted accumulation plus revealage.",
                      [r / "Runtime/OIT/WeightedOIT.hlsl"], {r / "Runtime/OIT/WeightedOIT.hlsl": [r"clip\s*\(\s*color\.a\s*-\s*_lilOITAlphaClipThreshold", r"output\.accumulation\s*=", r"output\.revealage\s*="]},
                      "Static shader contract only; blend order and visual correctness need GPU capture.")
-        self.require("oit.feature", "transparent/OIT", "Ho-WeightedOIT owns reset, opaque copy, accumulation and composite passes.",
-                     [r / "Runtime/OIT/WeightedOITRendererFeature.cs"], {r / "Runtime/OIT/WeightedOITRendererFeature.cs": [r"WeightedOITResetPass", r"WeightedOITOpaqueCopyPass", r"WeightedOITAccumulationPass", r"WeightedOITCompositePass", r"renderer\.EnqueuePass\(clearPass\)"]})
+        self.require("oit.feature", "transparent/OIT", "Ho-WeightedOIT resets camera state and sets up/enqueues clear, opaque copy, accumulation and composite in order.",
+                     [r / "Runtime/OIT/WeightedOITRendererFeature.cs"], {r / "Runtime/OIT/WeightedOITRendererFeature.cs": [
+                         r"resetPass\s*=\s*new\s+WeightedOITResetPass\s*\(",
+                         r"RenderPipelineManager\.beginCameraRendering\s*\+=\s*ResetOITState",
+                         r"Shader\.SetGlobalFloat\(WeightedOITShaderConstants\.OITActiveId,\s*0\.0f\)",
+                         r"clearPass\.Setup\(settings,\s*renderTargets\)",
+                         r"opaqueCopyPass\.SetupRenderGraph\(settings,\s*renderTargets\)",
+                         r"accumulationPass\.SetupRenderGraph\(settings,\s*renderTargets\)",
+                         r"compositePass\.SetupRenderGraph\(settings,\s*renderTargets,\s*compositeMaterial\)",
+                         r"HoDebugPerformanceRegistry\.EnqueuePass\(renderer,\s*renderingData\.cameraData\.camera,\s*clearPass,\s*Performance\);[\s\S]*?"
+                         r"HoDebugPerformanceRegistry\.EnqueuePass\(renderer,\s*renderingData\.cameraData\.camera,\s*opaqueCopyPass,\s*Performance\);[\s\S]*?"
+                         r"HoDebugPerformanceRegistry\.EnqueuePass\(renderer,\s*renderingData\.cameraData\.camera,\s*accumulationPass,\s*Performance\);[\s\S]*?"
+                         r"HoDebugPerformanceRegistry\.EnqueuePass\(renderer,\s*renderingData\.cameraData\.camera,\s*compositePass,\s*Performance\);"]},
+                     "Source scheduling and state-reset contract only; resource bindings and pass execution still need GPU qualification.")
         self.require("liltoon.alpha", "transparent/Cutout", "lilToon forward alpha uses cutoff and Ho surface alpha rejects invisible ordinary transparent fragments.",
                      [l / "Assets/lilToon/Shader/Includes/lil_common_frag_alpha.hlsl", l / "Assets/lilToon/Shader/Includes/lil_ho_surface_alpha.hlsl"], {
                          l / "Assets/lilToon/Shader/Includes/lil_common_frag_alpha.hlsl": [r"clip\s*\(\s*fd\.col\.a\s*-\s*_Cutoff"],
                          l / "Assets/lilToon/Shader/Includes/lil_ho_surface_alpha.hlsl": [r"LIL_RENDER\s*==\s*2", r"clip\s*\(\s*alpha\s*-\s*_Cutoff", r"clip\s*\(\s*alpha\s*>\s*0\.0"]})
-        self.require("liltoon.oit-entry", "transparent/OIT", "lilToon OIT entry point is present in generated forward include paths.",
-                     [l / "Assets/lilToon/Shader/Includes/lil_oit.hlsl", l / "Assets/lilToon/Shader/Includes/lil_pass_forward_normal.hlsl", l / "Assets/lilToon/Shader/Includes/lil_pass_forward_hair.hlsl"], {
-                         l / "Assets/lilToon/Shader/Includes/lil_oit.hlsl": [r"LIL_OIT_RETURN", r"lilOITOutputColor"],
-                         l / "Assets/lilToon/Shader/Includes/lil_pass_forward_normal.hlsl": [r"LIL_OIT_RETURN"],
-                         l / "Assets/lilToon/Shader/Includes/lil_pass_forward_hair.hlsl": [r"LIL_OIT_RETURN"]})
+        oit_shaders = [l / "Assets/lilToon/Shader" / name for name in (
+            "lts_trans.shader", "lts_trans_o.shader", "lts_twotrans.shader", "lts_twotrans_o.shader", "ltspass_transparent.shader")]
+        oit_patterns = {shader: [
+            r'Name\s+"LILTOON_OIT"(?:(?!ENDHLSL)[\s\S])*?Tags\s*\{\s*"LightMode"\s*=\s*"lilToonOIT"\s*\}'
+            r'(?:(?!ENDHLSL)[\s\S])*?Blend\s+0\s+One\s+One\s+Blend\s+1\s+Zero\s+OneMinusSrcColor'
+            r'(?:(?!ENDHLSL)[\s\S])*?#define\s+LIL_OIT_PASS\b'
+            r'(?:(?!ENDHLSL)[\s\S])*?#include\s+"Includes/lil_pass_forward\.hlsl"'] for shader in oit_shaders}
+        oit_patterns.update({
+            l / "Assets/lilToon/Shader/Includes/lil_pass_forward.hlsl": [r'#include\s+"lil_pass_forward_normal\.hlsl"'],
+            l / "Assets/lilToon/Shader/Includes/lil_oit.hlsl": [
+                r"output\.accumulation\s*=\s*float4\(color\.rgb\s*\*\s*weight,\s*alpha\s*\*\s*weight\)",
+                r"output\.revealage\s*=\s*float4\(alpha,",
+                r"#define\s+LIL_OIT_RETURN\(color,\s*positionCS\)\s+return\s+lilOITOutputColor\(color,"],
+            l / "Assets/lilToon/Shader/Includes/lil_pass_forward_normal.hlsl": [
+                r'#if\s+defined\(LIL_OIT_PASS\)\s+#include\s+"lil_oit\.hlsl"',
+                r"#define\s+LIL_FORWARD_FRAGMENT_RETURN_TYPE\s+LIL_OIT_FRAGMENT_RETURN_TYPE",
+                r"clip\(_lilOITEnabled\s*-\s*0\.5\)",
+                r"clip\(0\.5\s*-\s*_lilOITEnabled\s*\*\s*_lilOITActive\)",
+                r"#if\s+defined\(LIL_OIT_PASS\)\s+LIL_OIT_RETURN\(fd\.col,\s*input\.positionCS\)"]})
+        self.require("liltoon.oit-entry", "transparent/OIT", "Native transparent/OIT Passes route through the normal forward consumer into gated weighted MRT output.",
+                     list(oit_patterns), oit_patterns,
+                     "The retired Hair include is not a native consumer. This source chain does not establish GPU blend/depth correctness.")
         self.require("rtgi.sky-exclusion", "RTGI sky exclusion", "RTGI exposes explicit excluded material inputs and forwards them to the ray scene synchronizer.",
                      [r / "Runtime/RTGI/HoRTGISettings.cs", r / "Runtime/RTGI/HoRTGIRendererFeature.cs", r / "Runtime/RT/HoRTScene.cs"], {
                          r / "Runtime/RTGI/HoRTGISettings.cs": [r"excludedRayMaterials", r"includeDirectEnvironment", r"useEnvironment"],
@@ -110,12 +140,21 @@ class Audit:
                          r / "Runtime/PlanarReflection/HoPlanarReflectionComposite.shader": [r"perceptualRoughness", r"smoothness\s*=\s*1\.0h\s*-\s*perceptualRoughness", r"metallic", r"reflectance"],
                          r / "Runtime/PlanarReflection/HoPlanarReflectionRendererFeature.cs": [r"minSmoothness", r"_UsePlanarReflection", r"reflectionMaterial"],
                          l / "Assets/lilToon/Shader/Includes/lil_common_frag.hlsl": [r"_UsePlanarReflection", r"_PlanarReflectionStrength", r"smoothnessFade"]})
-        self.require("apv.variant", "APV/probe", "Generated lilToon Standard and Cutout shaders include URP probe-volume variants and runtime APV sampling exists.",
-                     [l / "Assets/lilToon/Shader/lts.shader", l / "Assets/lilToon/Shader/lts_cutout.shader", l / "Assets/lilToon/Shader/Includes/lil_common_functions.hlsl", r / "Runtime/Debug/Shaders/HoDebugTile.shader"], {
+        self.require("apv.variant", "APV/probe", "Native Standard/Cutout variants reach the unified environment evaluator, which samples/evaluates APV only for non-lightmapped receivers.",
+                     [l / "Assets/lilToon/Shader/lts.shader", l / "Assets/lilToon/Shader/lts_cutout.shader", l / "Assets/lilToon/Shader/Includes/lil_common_vert.hlsl", l / "Assets/lilToon/Shader/Includes/lil_common_macro.hlsl", l / "Assets/lilToon/Shader/Includes/lil_common_functions.hlsl", r / "Runtime/Debug/Shaders/HoDebugTile.shader"], {
                          l / "Assets/lilToon/Shader/lts.shader": [r"ProbeVolumeVariants\.hlsl", r"_REFLECTION_PROBE_BLENDING"],
                          l / "Assets/lilToon/Shader/lts_cutout.shader": [r"ProbeVolumeVariants\.hlsl", r"_REFLECTION_PROBE_BLENDING"],
-                         l / "Assets/lilToon/Shader/Includes/lil_common_functions.hlsl": [r"SampleAPV", r"PROBE_VOLUMES_L1", r"lilGetLightColorDoubleAPV"],
-                         r / "Runtime/Debug/Shaders/HoDebugTile.shader": [r"SampleAPV", r"EvaluateAdaptiveProbeVolume", r"APV_SAMPLE_STATUS_INVALID"]})
+                         l / "Assets/lilToon/Shader/Includes/lil_common_vert.hlsl": [r"LIL_CALC_MAINLIGHT\(vertexInput,\s*lightdataInput\)"],
+                         l / "Assets/lilToon/Shader/Includes/lil_common_macro.hlsl": [r"#define\s+LIL_CALC_MAINLIGHT\(i,o\)[\s\S]*?lilGetEnvironmentLighting\(i\.positionWS,\s*vertexNormalInput\.normalWS,"],
+                         l / "Assets/lilToon/Shader/Includes/lil_common_functions.hlsl": [
+                             r"void\s+lilEvaluateToonAPV\([^\{]+\{[\s\S]*?EvaluateAdaptiveProbeVolume\(apvSample,\s*N,\s*-N,\s*shMax,\s*shMin\)",
+                             r"#if\s*!defined\(LIL_USE_LIGHTMAP\)\s*&&\s*!defined\(LIL_USE_DYNAMICLIGHTMAP\)",
+                             r"#if\s+defined\(PROBE_VOLUMES_L1\)\s*\|\|\s*defined\(PROBE_VOLUMES_L2\)",
+                             r"if\s*\(_EnableProbeVolumes\)\s*\{\s*APVSample\s+apvSample\s*=\s*SampleAPV\(positionWS,\s*normalWS,\s*lilGetRenderingLayer\(\)",
+                             r"if\s*\(apvSample\.status\s*!=\s*APV_SAMPLE_STATUS_INVALID\)\s*\{\s*apvSample\.Decode\(\)",
+                             r"lilEvaluateToonAPV\(apvSample,\s*sampleDirection,\s*shMax,\s*shMin\)"],
+                         r / "Runtime/Debug/Shaders/HoDebugTile.shader": [r"SampleAPV", r"EvaluateAdaptiveProbeVolume", r"APV_SAMPLE_STATUS_INVALID"]},
+                     "Source capability and consumer routing only; no claim that APV data is baked, loaded, valid or retained in Player.")
         self.note("gpu.transparent-cutout", "GPU qualification", "Render a real lilToon opaque/transparent/cutout/OIT matrix and inspect depth, coverage, ordering and shadow outputs.", "UNVERIFIED here: requires Unity 6000.3.x, URP renderer, D3D12 and actual GPU readback.")
         self.note("gpu.rtgi-sky", "GPU qualification", "Toggle an excluded sky shell and compare RTGI sky radiance while preserving raster output.", "UNVERIFIED here: source path proves the filter exists, not that the configured material is present or the result is visually correct.")
         self.note("gpu.plr-probe", "GPU qualification", "Probe PLR with metallic/smoothness extremes and verify reflection probe/APV debug views in Frame Debugger.", "UNVERIFIED here: requires a baked/loaded probe volume and reflection capture; static source cannot prove resource validity.")
@@ -136,7 +175,7 @@ class Audit:
         }
 
     def markdown(self, report: dict) -> str:
-        lines = ["# lilToon / HoURP material-ray contract audit", "", f"Generated: `{report['generatedUtc']}`", "", "This is a source-only audit. It does not modify BREAK_URP or run Unity.", "", "| Check | Area | Status |", "|---|---|---|"]
+        lines = ["# lilToon / HoURP material-ray contract audit", "", f"Native-source audit captured: `{report['generatedUtc']}`", "", "This is a source-only audit. It does not modify BREAK_URP or run Unity.", "", "| Check | Area | Status |", "|---|---|---|"]
         for c in report["checks"]:
             lines.append(f"| `{c['id']}` | {c['area']} | **{c['status'].upper()}** |")
         lines += ["", f"Static checks: **{report['staticPass']} pass**, **{report['staticFail']} fail**. Runtime checks awaiting GPU/Unity: **{report['unverified']}**.", "", "## Evidence", ""]

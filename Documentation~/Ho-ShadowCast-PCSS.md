@@ -1,5 +1,7 @@
 # ShadowCast PCSS：现状与坑
 
+> **2026-11-25 静态化状态**：源码已切换为原生 ShaderLab / HLSL 维护。本轮已停止追加测试，GPU 对照、Player 和安装复开等完整验收未完成，未完成项不记为通过；历史记录仅代表其注明日期与范围。
+
 > 状态：**现行栅格化 ShadowCast 实现说明**，2026-10-28。角色 CS 的现行参数和采样见 [Ho-CharacterShadow](Ho-CharacterShadow.md)。
 > 依据：URP17 **没有内置 PCSS**（源码 0 处命中，只有 PCF 软档 `_SHADOWS_SOFT_LOW/MEDIUM/HIGH`），所以 PCSS 是自研的；`Ho-ShadowCast` 的附加灯 atlas 与第二方向光级联都走它。
 > 本页的边界仅适用于 Ho-ShadowCast；下一轮 RT 公共底座与 RTShadow 设计见 [Ho-RT](Ho-RT.md)。
@@ -8,7 +10,7 @@
 
 ## HoRP阴影模式
 
-Ho lilToon 的「照明设置」提供 **HoRP阴影模式**，旧、新 Inspector 均可编辑，支持多材质混合值。源属性在 `CustomShaderResources/Properties/Default.lilblock` 和 `DefaultAll.lilblock`，不要只编辑生成的 `.shader`；生成器会覆盖生成物。内部值 `_HoRPShadowMode`：1=主阴影（默认），2=全阴影。旧材质缺少该键时使用 shader 默认值，故已有舞台若要继续使用附加 Cast，需要明确选择全阴影；本改动不批量重写用户材质。
+Ho lilToon 的现行材质 Inspector 提供 **HoRP阴影模式**，支持多材质混合值。源属性直接声明在普通 `Shader/lts*.shader` 与保留的 `ltspass_*.shader` 的 `Properties` 中；直接维护这些 ShaderLab 源码，共享 HLSL 位于 `Shader/Includes/`。功能宏由 `lil_feature_config.hlsl` 固定，不再通过 block、旧生成设置或刷新菜单重写 Shader。内部值 `_HoRPShadowMode`：1=主阴影（默认），2=全阴影。旧材质缺少该键时使用 shader 默认值，故已有舞台若要继续使用附加 Cast，需要明确选择全阴影；本改动不批量重写用户材质。
 
 - **主阴影**：保留 URP 天光 / HoCS / 当前 RTShadow Main Cast 的既有选择与优先级；普通附加灯的 HoShadowCast 不参与。附加灯挂 `Rendering/Ho-ShadowCast Light` 并勾选「加入主阴影」后，其投影同时进入主、全模式。
 - **全阴影**：既有 Main Cast 加上所有合格的 HoShadowCast 附加投影。它是现有艺术投影合成语义，不是每灯物理 BRDF 的替代。普通附加灯不必挂新组件，仍自动参与全阴影。
@@ -77,8 +79,8 @@ CS 的旧实现说明已合并至其现行文档，本页不再复制另一套 C
 
 ## 7. 定点回归
 
-`Tests/Editor/ShadowCast` 包含灯光资格、Main 池声明、Lighting/Shadow Layers 分离、每灯 Culling Mask、生成 shader 默认属性，以及直接 GPU 遮挡采样的回归用例。GPU 测试需要图形设备，不能用 `-nographics` 作为渲染通过的证据。
+`Tests/Editor/ShadowCast` 包含灯光资格、Main 池声明、Lighting/Shadow Layers 分离、每灯 Culling Mask、正式 Shader 的默认属性，以及直接 GPU 遮挡采样的回归用例。GPU 测试需要图形设备，不能用 `-nographics` 作为渲染通过的证据。
 
 Unity Test Runner 需在测试工程 manifest 的 `testables` 启用本包。若只测试本模块，注意旧 ScreenProcess 测试在 Unity 6.3 的兼容性 define 条件；不要为了跑本模块改用户工程的全局兼容模式。
 
-固定机位验证在独立 `D:/HoBakeAudit26` 工程中进行，`HoRPShadowModeValidation` 使用 capture 的 configure 回调覆盖本次加载实例的 MaterialPropertyBlock；不能在截帧工具重新打开 Scene 前覆盖旧实例，再将近似相同的截图当成模式通过。实测主／全模式命中同一场景 83 个材质槽；生成器重建后属性也必须仍存在。
+固定机位验证在独立 `D:/HoBakeAudit26` 工程中进行，`HoRPShadowModeValidation` 使用 capture 的 configure 回调覆盖本次加载实例的 MaterialPropertyBlock；不能在截帧工具重新打开 Scene 前覆盖旧实例，再将近似相同的截图当成模式通过。该次历史实测中主／全模式命中同一场景 83 个材质槽。现行回归直接检查原生 Shader 的 `_HoRPShadowMode` 类型和默认值，并在首次导入、重导入与 Player 构建后确认材质行为；不再以生成器重建作为前置步骤。

@@ -1,8 +1,10 @@
 # lilToon URP 加权 OIT 实现笔记
 
+> **2026-11-25 静态化状态**：源码已切换为原生 ShaderLab / HLSL 维护。本轮已停止追加测试，GPU 对照、Player 和安装复开等完整验收未完成，未完成项不记为通过；历史记录仅代表其注明日期与范围。
+
 > **状态：现行功能说明（实现笔记）**。2026 文档审核时逐项核对过：`_lilOITEnabled` / `_lilOITActive` /
 > `lil_oit.hlsl`（lilToon 侧）、`WeightedOITRendererFeature` 与 `_lilOITAccumulationTexture` /
-> `_lilOITRevealageTexture` / `_lilOITOpaqueTexture`（本仓）在代码里都在，各 `*OIT.lilblock` 也在。
+> `_lilOITRevealageTexture` / `_lilOITOpaqueTexture`（本仓）继续使用。材质侧现直接维护普通 `.shader` 的 OIT Pass，旧 block/容器生成链已退役。
 > 写作时的目标环境是 Unity 2022.3 + URP 14.x；本项目现在跑 Unity 6000.3 + HoUrp17.3.0 fork，机制未变。
 
 本文记录 `lilToon` fork 与配套 `lilToon-URP-Extensions` 包之间已经完成的加权 OIT 集成。
@@ -20,11 +22,11 @@
 - 只有 skybox 作为背景时也能正常工作。
 - 多个透明 lilToon 对象重叠时，不再像普通 alpha blending 那样强依赖对象排序。
 
-实现目标环境是：
+最初实现环境（历史记录）是：
 
 - Unity 2022.3
 - URP 14.x
-- lilToon fork 的 shader-template 布局
+- 当时的 lilToon fork shader-template 布局
 - `lilToon-URP-Extensions` 作为外部 Renderer Feature 包
 
 ## 架构
@@ -33,12 +35,12 @@
 
 ### lilToon fork 侧
 
-lilToon fork 负责材质属性、shader 模板组装，以及 shader 片元输出。
+lilToon fork 负责材质属性、普通 ShaderLab Pass 声明与共享 HLSL 片元输出。
 
 它增加了：
 
 - 名为 `_lilOITEnabled` 的材质属性。
-- 包含 `LILTOON_OIT` pass 的 URP use-pass 模板。
+- 普通透明 `.shader` 中的 `LILTOON_OIT` Pass，LightMode 为 `lilToonOIT`。
 - 共享的 `lil_oit.hlsl` include，用来把 lilToon forward color 转换成 MRT OIT 输出。
 - forward shader guard，用来在 OIT accumulation pass 激活时跳过普通 forward transparent pass。
 
@@ -206,33 +208,23 @@ Invalid output merger - Depth target is different size or MS count to render tar
 
 ## lilToon Fork 中变更的文件
 
-### 基础 shader 资源
+### 现行普通 ShaderLab 源码
 
-透明 shader descriptor 已切换到支持 OIT 的 URP use-pass block。受影响的系列包括：
+OIT 的直接材质入口是以下四个文件：
 
-- `lts*_trans*.lilinternal`
-- `lts*_onetrans*.lilinternal`
-- `lts*_twotrans*.lilinternal`
-- `lts*_overlay*.lilinternal`
-- lite 和 tessellation 变体
+- `Shader/lts_trans.shader`
+- `Shader/lts_trans_o.shader`
+- `Shader/lts_twotrans.shader`
+- `Shader/lts_twotrans_o.shader`
 
-这些文件会选择类似下面的 block：
+它们均直接声明 `LILTOON_OIT` Pass；保留的共享 Pass 源码
+`Shader/ltspass_transparent.shader` 也提供该 Pass。实际维护以 Pass 声明为准，
+不能只按 `lts*` 文件名前缀推断透明能力。Lite、Tessellation、Overlay 与旧
+`lts*_onetrans*` 命名文件不再是本专用包的维护入口；早期 use-pass block
+组装过程属于历史实现，普通透明行为以这里列出的四个材质源码为准。
+当前四个直接材质入口不依赖容器或自定义生成器。
 
-- `DefaultUsePassOIT`
-- `DefaultUsePassOutlineOIT`
-- `DefaultUsePassTwoSideOIT`
-- `DefaultUsePassOutlineTwoSideOIT`
-- `DefaultUsePassOverlayOIT`
-
-### URP shader 模板
-
-OIT pass 被加入到隐藏 pass shader：
-
-- `Assets/lilToon/CustomShaderResources/URP/DefaultTwoSide.lilblock`
-- `Assets/lilToon/CustomShaderResources/URP/DefaultLiteTwoSide.lilblock`
-- `Assets/lilToon/CustomShaderResources/URP/DefaultTessellationTwoSide.lilblock`
-
-该 pass 使用：
+OIT Pass 继续使用：
 
 ```shaderlab
 Name "LILTOON_OIT"
@@ -244,47 +236,34 @@ Blend 0 One One
 Blend 1 Zero OneMinusSrcColor
 ```
 
-### URP use-pass 模板
-
-新的 URP use-pass 模板会把透明 shader 路由到 OIT pass：
-
-- `DefaultUsePassOIT.lilblock`
-- `DefaultUsePassOutlineOIT.lilblock`
-- `DefaultUsePassTwoSideOIT.lilblock`
-- `DefaultUsePassOutlineTwoSideOIT.lilblock`
-- `DefaultUsePassOverlayOIT.lilblock`
-
-这些模板保留常规 lilToon pass，并额外加入：
-
-```shaderlab
-UsePass "*LIL_PASS_SHADER_NAME*/LILTOON_OIT"
-```
+自定义 Shader 可以使用 Unity 原生 `UsePass`，但目标 Shader 必须实际提供
+`LILTOON_OIT`，并共享正确的材质属性与片元输入；这不恢复旧 `.lilblock` DSL。
 
 ### 材质属性与 Inspector
 
-透明属性 block 增加：
+普通透明 Shader 的 `Properties` 包含：
 
 ```shaderlab
 [lilToggle] _lilOITEnabled ("Weighted OIT", Int) = 0
 ```
 
-Inspector 变更：
-
-- `lilMaterialProperties.cs` 绑定 `_lilOITEnabled`。
-- `lilPropertyGroupDrawerBaseSetting.cs` 只在 URP 透明材质中显示该 toggle。
+`lilMaterialProperties.cs` 绑定该属性；现行入口 `lilNextInspectorGUI.cs` 的
+透明材质设置显示 Weighted OIT。维护属性名、类型或默认值时直接修改正式
+`.shader`，同时核对材质管理器与预设；没有全局 Shader 生成设置页。
 
 ### Shader include
 
-变更/新增的 include：
+当前共享实现包括：
 
-- `Shader/Includes/lil_oit.hlsl`
-- `Shader/Includes/lil_common_input.hlsl`
-- `Shader/Includes/lil_common_input_base.hlsl`
-- `Shader/Includes/lil_common_input_opt.hlsl`
-- `Shader/Includes/lil_pass_forward_normal.hlsl`
-- `Shader/Includes/lil_pass_forward_lite.hlsl`
+- `Shader/Includes/lil_feature_config.hlsl`：专用功能集合。
+- `Shader/Includes/lil_oit.hlsl`：OIT MRT 输出和全局状态。
+- `Shader/Includes/lil_common_input.hlsl`、`lil_common_input_base.hlsl`：普通输入声明。
+- `Shader/Includes/lil_pass_forward_normal.hlsl`：正常 Forward 与 OIT 共用片元路径。
 
-`lil_pass_forward_*` 会在 `LIL_OIT_PASS` 下把 fragment return type 切换成 MRT 输出，并调用 `LIL_OIT_RETURN(...)`，而不是常规输出。
+`LIL_OIT_PASS` 将片元返回类型切换为 MRT 并调用 `LIL_OIT_RETURN(...)`。
+旧 `lil_common_input_opt.hlsl`、Lite 片元和 block 资源不再作为现行源码。
+修改 Pass/pragma/状态时编辑普通 `.shader`；修改共享算法时编辑 HLSL，由 Unity
+标准导入器编译。不要恢复在安装、API 切换或构建前后重写 Shader 的逻辑。
 
 ## URP 扩展包中变更的文件
 
@@ -324,7 +303,7 @@ Fullscreen composite shader。它会采样：
 
 ### Runtime/OIT/WeightedOIT.hlsl
 
-保留给扩展包使用者的 package-side helper include。lilToon fork 目前有自己的 `lil_oit.hlsl` include，因为它已经集成进 lilToon 的 shader 生成管线。
+保留给扩展包使用者的 package-side helper include。lilToon fork 使用自己的 `lil_oit.hlsl`，由普通 ShaderLab Pass 包含，直接消费相同 OIT 全局协议。
 
 ## 调试时间线与坑点
 
@@ -448,4 +427,4 @@ lilToon 承诺：
 - 除非尺寸和 MSAA 匹配，否则不要把 camera depth 绑定到缩放过的 OIT RT。
 - 不要在 accumulation pass 结束后让 `_lilOITActive` 保持开启。
 - 尽早使用 RenderDoc。最终最快定位修复的是 D3D output merger 警告，而不是 shader 侧视觉猜测。
-- 把生成的 `Assets/lilToon/Shader/*.shader` 文件当作验证输出。长期编辑应放在 `.lilinternal`、`.lilblock`、editor binding 或 HLSL include 文件中。
+- `Assets/lilToon/Shader/*.shader` 是正式 ShaderLab 源码；功能宏维护在 `Includes/lil_feature_config.hlsl`，共享算法维护在普通 HLSL。直接导入与编译这些源码，并核对实际 Pass，不再运行 block/容器生成流程。
