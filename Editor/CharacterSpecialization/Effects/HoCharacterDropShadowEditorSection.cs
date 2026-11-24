@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             layout.Property(Find(effects, "hairShadowDistanceReferenceDepth"), "投影距离参考深度");
             layout.Property(Find(effects, "hairShadowDistanceMinScale"), "投影距离最小倍率");
             layout.Property(Find(effects, "hairShadowAngleDegrees"), "投影角度");
+            layout.Property(Find(effects, "hairShadowMainLightInfluence"), "主光方向影响度");
             layout.Property(Find(effects, "hairShadowSoftnessPixels"), "柔化像素");
             layout.Property(Find(effects, "hairShadowSpreadPixels"), "扩散像素");
             layout.Property(Find(effects, "hairShadowBlendMode"), "混合模式");

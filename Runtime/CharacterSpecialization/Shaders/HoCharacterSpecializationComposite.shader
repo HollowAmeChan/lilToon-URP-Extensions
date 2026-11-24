@@ -29,9 +29,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float4 _HoCharacterEyeRevealParams; // x strength, y feather px, z dilation px, w depth bias
             float4 _HoCharacterEyeAngleParams; // x strength, y yaw range deg, z pitch range deg, w softness deg
             float4 _HoCharacterHairShadowParams; // x opacity, y distance px, z angle deg, w softness px
-            float4 _HoCharacterHairShadowParams1; // x spread px, y blend mode, z use reveal area
+            float4 _HoCharacterHairShadowParams1; // x spread px, y blend mode, z use reveal area, w main light influence
             float4 _HoCharacterHairShadowParams2; // x perspective strength, y reference depth, z min scale
             float4 _HoCharacterHairShadowColor;
+            float4 _HoCharacterHairShadowLightDirection; // xyz surface-to-main-light, w valid
             float4 _HoCharacterFaceHairDiffuseParams; // x strength, y radius px, z depth tolerance, w blend mode
             float4 _HoCharacterFaceHairDiffuseLevels; // x black, y white, z inverse range
             float4 _HoCharacterFaceHairDiffuseTintColor;
@@ -63,6 +64,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
             TEXTURE2D_X(_lilHoCharacterEyeDataTexture);
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Shaders/HoGeometryDataReferenceFrame.hlsl"
+            #include "HoCharacterHairShadow.hlsl"
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);
@@ -270,7 +272,31 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return lerp(scale, 1.0, unity_OrthoParams.w);
             }
 
-            float ResolveHairShadowMask(float2 uv, float revealMask)
+            float2 ResolveHairShadowDirection(float2 uv, out float appliedInfluence)
+            {
+                float angleRadians = radians(_HoCharacterHairShadowParams.z);
+                float2 manual = float2(cos(angleRadians), sin(angleRadians));
+                appliedInfluence = 0.0;
+                if (_HoCharacterOptions.y <= 0.5 && _HoCharacterOptions.w != 22 && _HoCharacterOptions.w != 255)
+                    return manual;
+                [branch] if (_HoCharacterHairShadowParams1.w <= 0.0001 || _HoCharacterHairShadowLightDirection.w <= 0.5)
+                    return manual;
+
+                uint identity = HoAC_Layer0Identity(uv);
+                if (!HoGDIdentityFrameValid(identity))
+                    return manual;
+                HoGDObjectFrame frame = _HoGDObjectFrames[_HoGDIdentityFrameSlots[identity]];
+                return HoCharacterResolveHairShadowDirection(
+                    frame,
+                    _HoCharacterHairShadowLightDirection,
+                    UNITY_MATRIX_VP,
+                    _lilHoCharacterScreenTexelSize.zw,
+                    angleRadians,
+                    _HoCharacterHairShadowParams1.w,
+                    appliedInfluence);
+            }
+
+            float ResolveHairShadowMask(float2 uv, float revealMask, float2 direction)
             {
                 if (_HoCharacterOptions.y <= 0.5)
                 {
@@ -278,8 +304,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 }
 
                 float distancePx = max(_HoCharacterHairShadowParams.y, 0.0) * ResolveHairShadowDistanceScale(uv);
-                float angleRadians = radians(_HoCharacterHairShadowParams.z);
-                float2 offset = float2(cos(angleRadians), sin(angleRadians)) * distancePx * ScreenTexelSize();
+                float2 offset = direction * distancePx * ScreenTexelSize();
                 float2 shiftedUv = uv - offset;
 
                 float spreadPx = max(_HoCharacterHairShadowParams1.x, 0.0);
@@ -573,17 +598,23 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return source;
                 }
 
-                half4 eyeColor = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeColorTexture, sampler_LinearClamp, uv);
+                int debugMode = (int)round(_HoCharacterOptions.w);
+                half4 eyeColor = 0;
+                [branch] if (_HoCharacterOptions.x > 0.5 || debugMode == 1 || debugMode == 255)
+                    eyeColor = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeColorTexture, sampler_LinearClamp, uv);
                 float revealMask = ResolveEyeRevealMask(uv);
-                float eyeAngleFactor = saturate(ResolveEyeAngleFactor(uv));
-                float shadowMask = ResolveHairShadowMask(uv, revealMask);
+                float eyeAngleFactor = 1.0;
+                [branch] if (_HoCharacterOptions.x > 0.5 || debugMode == 16 || debugMode == 255)
+                    eyeAngleFactor = saturate(ResolveEyeAngleFactor(uv));
+                float hairShadowLightInfluence;
+                float2 hairShadowDirection = ResolveHairShadowDirection(uv, hairShadowLightInfluence);
+                float shadowMask = ResolveHairShadowMask(uv, revealMask, hairShadowDirection);
                 float faceHairDiffuseMask = ResolveFaceHairDiffuseMask(uv);
                 float subjectOutlineSourceMask = SampleSubjectOutlineSourceMask(uv);
                 float4 subjectOutlineBlurData = SampleSubjectOutlineBlurData(uv);
                 float subjectOutlineBlurMask = subjectOutlineBlurData.r;
                 float subjectOutlineEdgeSdf = ResolveSubjectOutlineEdgeSdf(subjectOutlineSourceMask, subjectOutlineBlurMask);
                 float subjectOutlineMask = ResolveSubjectOutlineMask(subjectOutlineEdgeSdf);
-                int debugMode = (int)round(_HoCharacterOptions.w);
                 float2 subjectOutlineNormal = float2(0.0, 1.0);
                 if (debugMode == 12 || (_HoCharacterSubjectOutlineOptions.x > 0.5 && round(_HoCharacterSubjectOutlineOptions.z) == 1.0))
                     subjectOutlineNormal = ResolveSubjectOutlineNormal(uv);
@@ -630,6 +661,12 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 if (debugMode == 4)
                 {
                     return half4(shadowMask, shadowMask, shadowMask, source.a);
+                }
+
+                if (debugMode == 22)
+                {
+                    float visible = saturate(SampleSemanticEdge(uv, 0) + SampleSemanticEdge(uv, 1));
+                    return half4(float3(hairShadowDirection * 0.5 + 0.5, hairShadowLightInfluence) * visible, source.a);
                 }
 
                 if (debugMode == 5)

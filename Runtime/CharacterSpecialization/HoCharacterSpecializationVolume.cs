@@ -221,6 +221,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             target.hairShadowDistanceReferenceDepth = Effects.value.hairShadowDistanceReferenceDepth;
             target.hairShadowDistanceMinScale = Effects.value.hairShadowDistanceMinScale;
             target.hairShadowAngleDegrees = Effects.value.hairShadowAngleDegrees;
+            target.hairShadowMainLightInfluence = Effects.value.hairShadowMainLightInfluence;
             target.hairShadowSoftnessPixels = Effects.value.hairShadowSoftnessPixels;
             target.hairShadowSpreadPixels = Effects.value.hairShadowSpreadPixels;
             target.hairShadowBlendMode = Effects.value.hairShadowBlendMode;

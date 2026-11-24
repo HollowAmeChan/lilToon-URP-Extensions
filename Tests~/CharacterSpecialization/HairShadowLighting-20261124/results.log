@@ -1,0 +1,19 @@
+[d3d11 Unity 6000.3.15f1]
+HO_CHARACTER_DEBUG_GRAPH_PASSED mode=Off passes=2 capture=0
+HO_CHARACTER_DEBUG_GRAPH_PASSED mode=HairShadowDirection passes=2 capture=0
+HO_CHARACTER_DEBUG_GRAPH_PASSED mode=EyeAngleFactor passes=2 capture=0
+HO_CHARACTER_DEBUG_GRAPH_PASSED mode=ReferenceFrameView passes=2 capture=0
+HO_CHARACTER_HAIR_SHADOW_PRODUCTION_PASSED manualX=39.5 lightRightX=23.5 lightLeftX=39.5 lightAboveY=9.5 lightBelowY=25.3142853 missingLightX=39.5
+HO_CHARACTER_HAIR_SHADOW_GPU_PASSED api=Direct3D11 cases=1010 maxError=5.03659248E-05 perspective/ortho/aspect/roll/head/light/fallback=passed
+HO_CHARACTER_COMPOSITION_CPU_PASSED permutations=120 legacy/default/invalid/save/undo/layout/binding=passed
+HO_CHARACTER_COMPOSITION_GPU_PASSED api=Direct3D11 cases=1440 maxError=1.1920929E-07 eyeLast=0.779952 eyeFirst=0.5961544
+
+[d3d12 Unity 6000.3.15f1]
+HO_CHARACTER_DEBUG_GRAPH_PASSED mode=Off passes=2 capture=0
+HO_CHARACTER_DEBUG_GRAPH_PASSED mode=HairShadowDirection passes=2 capture=0
+HO_CHARACTER_DEBUG_GRAPH_PASSED mode=EyeAngleFactor passes=2 capture=0
+HO_CHARACTER_DEBUG_GRAPH_PASSED mode=ReferenceFrameView passes=2 capture=0
+HO_CHARACTER_HAIR_SHADOW_PRODUCTION_PASSED manualX=39.5 lightRightX=23.5 lightLeftX=39.5 lightAboveY=9.5 lightBelowY=25.3142853 missingLightX=39.5
+HO_CHARACTER_HAIR_SHADOW_GPU_PASSED api=Direct3D12 cases=1010 maxError=5.03659248E-05 perspective/ortho/aspect/roll/head/light/fallback=passed
+HO_CHARACTER_COMPOSITION_CPU_PASSED permutations=120 legacy/default/invalid/save/undo/layout/binding=passed
+HO_CHARACTER_COMPOSITION_GPU_PASSED api=Direct3D12 cases=1440 maxError=1.1920929E-07 eyeLast=0.779952 eyeFirst=0.5961544

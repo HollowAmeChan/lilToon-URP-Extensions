@@ -116,6 +116,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         FaceHairDiffuseTintedFaceLit = 20,
         [InspectorName("脸色扩散最终合成")]
         FaceHairDiffuseComposite = 21,
+        [InspectorName("前发投影方向")]
+        HairShadowDirection = 22,
         [InspectorName("All")] All = 255
     }
 
@@ -286,6 +288,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("投影方向，单位为角度。")]
         [NonSerialized]
         public float hairShadowAngleDegrees = 240.0f;
+
+        [InspectorName("主光方向影响度")]
+        [Tooltip("把固定投影角度向主方向光投到角色面部平面的方向混合。需要对象有 GD ReferenceFrame；没有主光或有效参考系时回退到固定角度。")]
+        [Range(0.0f, 1.0f)]
+        [NonSerialized]
+        public float hairShadowMainLightInfluence = 0.0f;
 
         [InspectorName("柔化像素")]
         [Tooltip("前发投影边缘柔化范围。掩码读入时始终保留 1 像素的抗锯齿模糊，这里是在此之上的额外柔化。")]

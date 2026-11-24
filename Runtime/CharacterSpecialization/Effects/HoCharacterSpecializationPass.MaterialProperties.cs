@@ -1,9 +1,19 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     internal sealed partial class HoCharacterSpecializationPass
     {
+        internal static Vector4 GetHairShadowLightDirection(VisibleLight visibleLight)
+        {
+            if (visibleLight.lightType != LightType.Directional) return Vector4.zero;
+            Vector3 direction = -visibleLight.localToWorldMatrix.GetColumn(2);
+            if (direction.sqrMagnitude < 1.0e-8f) return Vector4.zero;
+            direction.Normalize();
+            return new Vector4(direction.x, direction.y, direction.z, 1.0f);
+        }
+
         // Pixel sizes are authored at a reference height, then converted to the
         // texture actually sampled. Camera Render Scale and capture downsampling
         // must not change the effect's fraction of the screen.
@@ -208,7 +218,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 Mathf.Max(0.0f, settings.hairShadowSpreadPixels) * pixelScale,
                 (float)settings.hairShadowBlendMode,
                 settings.useEyeRevealArea ? 1.0f : 0.0f,
-                0.0f);
+                Mathf.Clamp01(settings.hairShadowMainLightInfluence));
             hairShadowParams2 = new Vector4(
                 Mathf.Clamp01(settings.hairShadowDistancePerspectiveStrength),
                 Mathf.Max(0.0f, settings.hairShadowDistanceReferenceDepth),

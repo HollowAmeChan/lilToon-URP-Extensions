@@ -85,6 +85,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("投影角度"), Tooltip("投影方向，单位为角度。")]
         public float hairShadowAngleDegrees = 240.0f;
 
+        [InspectorName("主光方向影响度"), Tooltip("把固定投影角度向主方向光投到角色面部平面的方向混合。需要对象有 GD ReferenceFrame；没有主光或有效参考系时回退到固定角度。0 保持固定角度。")]
+        [Range(0.0f, 1.0f)]
+        public float hairShadowMainLightInfluence = 0.0f;
+
         [InspectorName("柔化像素"), Tooltip("前发投影边缘柔化范围。掩码读入时始终保留 1 像素的抗锯齿模糊，这里是在此之上的额外柔化。")]
         public float hairShadowSoftnessPixels = 2.0f;
 

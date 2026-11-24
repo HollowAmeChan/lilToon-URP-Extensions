@@ -12,6 +12,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Performance,
             "Eye Color", "Eye Alpha", "Eye Reveal", "Hair Shadow", "FHD Source Mask", "FHD Blur Mask", "FHD Blur Color",
             "FHD Mask", "Outline Source", "Outline Blur", "Outline Mask", "Outline Normal", "EnhOutline Src",
-            "EnhOutline Blur", "EnhOutline Fog", "Eye Angle", "Ref Frame", "FHD Face Lit", "FHD Blur Lit", "FHD Tint Lit", "FHD Composite");
+            "EnhOutline Blur", "EnhOutline Fog", "Eye Angle", "Ref Frame", "FHD Face Lit", "FHD Blur Lit", "FHD Tint Lit", "FHD Composite",
+            "Hair Direction");
     }
 }

@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public BufferHandle referenceFrameIdentities;
             public int referenceFrameCount;
             public Vector4 observerPosition;
+            public Vector4 hairShadowLightDirection;
             public Vector4 outlineHeightPlane0;
             public Vector4 outlineHeightPlane1;
             public TextureHandle source;
@@ -47,6 +48,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public Vector4 hairShadowParams1;
             public Vector4 hairShadowParams2;
             public Color hairShadowColor;
+            public bool eyeColorSampled;
             public Vector4 faceHairDiffuseParams;
             public Vector4 faceHairDiffuseLevels;
             public Color faceHairDiffuseTintColor;

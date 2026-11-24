@@ -400,12 +400,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             if (settings.debugMode != HoCharacterSpecializationDebugMode.Off) base.OnCameraSetup(cmd, ref renderingData);
             else
             {
+                ReleaseDebugResources();
                 ConfigureTarget(cameraColorTarget);
                 ConfigureClear(ClearFlag.None, Color.clear);
             }
             renderTargets.ReAllocateIfNeeded(
                 renderingData.cameraData.cameraTargetDescriptor,
                 settings,
+                RequiresFaceCapture(settings),
                 objectSemanticMaterial != null);
             captureColorTargets[0] = renderTargets.EyeColorTexture;
             captureColorTargets[1] = renderTargets.EyeDataTexture;
@@ -428,25 +430,33 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
-                captureColorIdentifiers[0] = renderTargets.EyeColorTexture.nameID;
-                captureColorIdentifiers[1] = renderTargets.EyeDataTexture.nameID;
-                cmd.SetRenderTarget(captureColorIdentifiers, renderTargets.CaptureDepthTexture.nameID);
-                ClearCaptureTargets(cmd, captureClearMaterial);
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
+                bool needsFaceCapture = RequiresFaceCapture(settings);
+                bool needsEyeCapture = RequiresCharacterCapture(settings);
+                if (needsFaceCapture)
+                {
+                    captureColorIdentifiers[0] = renderTargets.EyeColorTexture.nameID;
+                    captureColorIdentifiers[1] = renderTargets.EyeDataTexture.nameID;
+                    cmd.SetRenderTarget(captureColorIdentifiers, renderTargets.CaptureDepthTexture.nameID);
+                    ClearCaptureTargets(cmd, captureClearMaterial);
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
 
-                DrawingSettings drawingSettings = CreateCharacterDrawingSettings(CaptureShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
-                cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 1.0f);
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
-                context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings, ref renderStateBlock);
+                    DrawingSettings drawingSettings = CreateCharacterDrawingSettings(CaptureShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
+                    cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 1.0f);
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
+                    context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings, ref renderStateBlock);
 
-                cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 2.0f);
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
-                context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings, ref renderStateBlock);
+                    if (needsEyeCapture)
+                    {
+                        cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 2.0f);
+                        context.ExecuteCommandBuffer(cmd);
+                        cmd.Clear();
+                        context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings, ref renderStateBlock);
+                    }
 
-                cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 0.0f);
+                    cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 0.0f);
+                }
 
                 Vector4 screenTexelSize = GetScreenTexelSize(renderingData.cameraData.cameraTargetDescriptor, settings);
                 bool objectSemanticReady = objectSemanticMaterial != null
@@ -475,8 +485,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 Vector3 observerPosition = renderingData.cameraData.camera.transform.position;
                 cmd.SetGlobalVector(HoCharacterReferenceFrameBuffer.ViewPositionId,
                     new Vector4(observerPosition.x, observerPosition.y, observerPosition.z, 0));
-                cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, renderTargets.EyeColorTexture.nameID);
-                cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, renderTargets.EyeDataTexture.nameID);
+                bool eyeColorSampled = RequiresCompositeEyeColorSample(settings);
+                if (eyeColorSampled)
+                    cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, renderTargets.EyeColorTexture.nameID);
+                if (needsEyeCapture)
+                    cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, renderTargets.EyeDataTexture.nameID);
+                int mainLightIndex = renderingData.lightData.mainLightIndex;
+                Vector4 lightDirection = mainLightIndex >= 0 && mainLightIndex < renderingData.lightData.visibleLights.Length
+                    ? HoCharacterSpecializationPass.GetHairShadowLightDirection(renderingData.lightData.visibleLights[mainLightIndex])
+                    : Vector4.zero;
+                cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.HairShadowLightDirectionId, lightDirection);
                 if (objectSemanticReady)
                 {
                     cmd.SetGlobalTexture(
@@ -554,15 +572,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             // 脸色扩散的底色输入就是同一次脸捕获的 MRT0（= 材质算完光照的 color），
             // 所以这条链要跑（效果开关打开，或它的 8 个 debug 视图任一）就必须有脸捕获；
             // 眼捕获仍然只服务眼透：脸捕获自己会把 MRT0 写成受光脸（ClearCaptureTargets 先清 0）。
-            bool needsFaceCapture = RequiresCharacterCapture(settings) || requiresFaceHairDiffuseTextures;
+            bool needsFaceCapture = RequiresFaceCapture(settings);
             bool needsEyeCapture = RequiresCharacterCapture(settings);
             bool needsCharacterCapture = needsFaceCapture || needsEyeCapture;
 
             TextureHandle source = resourceData.activeColorTexture;
-            // eyeColor 始终存在，有两个消费者：合成 shader 在 :621 无条件采样它（见 RequiresCharacterCapture
-            // 的注释），以及脸色扩散源趟的"受光脸"输入（只在 needsFaceCapture 时才是真数据）。
-            // 描述符带 clearBuffer，RDG 会在本帧首次使用（= 被谁当采样输入）时把它显式清成 0。
-            TextureHandle eyeColorTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, GetHdrGraphicsFormat(), HoCharacterSpecializationShaderConstants.EyeColorTextureName));
+            TextureHandle eyeColorTexture = needsFaceCapture
+                ? renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, GetHdrGraphicsFormat(), HoCharacterSpecializationShaderConstants.EyeColorTextureName))
+                : TextureHandle.nullHandle;
             // eyeData 是 CaptureFace 清屏材质的第二个 MRT（HoCharacterCaptureClear.shader:41,57），
             // 所以只要有一趟捕获在录，它就得存在；但只有眼透路径会采样它。
             TextureHandle eyeDataTexture = needsCharacterCapture
@@ -947,6 +964,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
                 Vector3 observerPosition = cameraData.camera.transform.position;
                 passData.observerPosition = new Vector4(observerPosition.x, observerPosition.y, observerPosition.z, 0);
+                int mainLightIndex = lightData.mainLightIndex;
+                passData.hairShadowLightDirection = mainLightIndex >= 0 && mainLightIndex < lightData.visibleLights.Length
+                    ? HoCharacterSpecializationPass.GetHairShadowLightDirection(lightData.visibleLights[mainLightIndex])
+                    : Vector4.zero;
                 passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
                 passData.objectSemanticLowTexture = objectSemanticLowTexture;
                 passData.objectSemanticHighTexture = objectSemanticHighTexture;
@@ -960,6 +981,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.eyeColorTexture = eyeColorTexture;
                 passData.eyeDataTexture = eyeDataTexture;
                 passData.eyeDataSampled = needsEyeCapture;
+                passData.eyeColorSampled = RequiresCompositeEyeColorSample(settings);
                 passData.faceHairDiffuseSourceColorSampled = faceHairDiffuseSourceColorSampled;
                 passData.screenTexelSize = screenTexelSize;
                 passData.material = compositeMaterial;
@@ -1003,14 +1025,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.UseBuffer(passData.referenceFrames, AccessFlags.Read);
                 builder.UseBuffer(passData.referenceFrameIdentities, AccessFlags.Read);
                 builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
-                // eyeColor 是**真读**：Composite.shader:621 在 Frag 开头无条件采样它
-                // （debug 1 在 :640-642 直接返回它，:823 的 lerp 也拿它当目标色）。所以捕获支被门控掉时
-                // 这条读和下面的全局绑定都保留 —— 那张纹理由 RDG 按描述符清成 0，而
-                // revealMask 恒为 0（:243-246）→ :823 的 lerp 结果逐位等于 source。
-                builder.UseTexture(eyeColorTexture, AccessFlags.Read);
-                // eyeData 的 4 个采样点全部有门（:250 在 _HoCharacterOptions.x > 0.5 之后、
-                // :275 在角度强度 > 0.0001 之后、:647/:665 在 debug 2/17 分支里），
-                // 而 needsEyeCapture 就是这几个条件的并集，所以这里可以跟着门控。
+                if (passData.eyeColorSampled)
+                    builder.UseTexture(eyeColorTexture, AccessFlags.Read);
+                // Eye mask and alpha debug are the only consumers; GD angles read buffers.
                 if (needsEyeCapture)
                 {
                     builder.UseTexture(eyeDataTexture, AccessFlags.Read);
@@ -1095,7 +1112,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EnhancedOutlineTextureId, data.enhancedOutlineTexture);
                     }
 
-                    context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
+                    if (data.eyeColorSampled)
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
                     // eyeData 只有 needsEyeCapture 时才存在（否则它连纹理都不是），
                     // 而 shader 也只在同一组门下才会采它。
                     if (data.eyeDataSampled)
@@ -1113,6 +1131,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     context.cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.IdentityMapId, data.referenceFrameIdentities);
                     context.cmd.SetGlobalInt(HoCharacterReferenceFrameBuffer.FrameCountId, data.referenceFrameCount);
                     context.cmd.SetGlobalVector(HoCharacterReferenceFrameBuffer.ViewPositionId, data.observerPosition);
+                    context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.HairShadowLightDirectionId, data.hairShadowLightDirection);
                     if (data.options.w > 0)
                     {
                         context.cmd.SetGlobalTexture("_BlitTexture", data.source);
@@ -1126,22 +1145,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             if (settings.debugMode == HoCharacterSpecializationDebugMode.Off) resourceData.cameraColor = destination;
         }
 
-        // 捕获支（CaptureFace / CaptureEye 两趟几何 pass + captureDepth + eyeData）的消费者有两个：
-        //   · 合成趟的眼睛透过路径（返回 true 的那组条件就是它的 shader 侧门）；
-        //   · 脸色扩散源趟的"受光脸"输入（MRT0 = CaptureFace 写的材质受光 color）——
-        //     它的条件不在这里，而是录制处的 `needsFaceCapture = RequiresCharacterCapture(settings)
-        //     || requiresFaceHairDiffuseTextures`（那条链只消费脸捕获，不需要眼捕获）。
-        // 下面这把门复制的是"眼透这条消费者到底会不会用到捕获"的 shader 侧条件：
-        //   · ResolveEyeRevealMask 在 _HoCharacterOptions.x <= 0.5 时**采样前** return 0
-        //     （Composite.shader:241-246），而 options.x = settings.eyeRevealEnabled（MaterialProperties.cs:233）；
-        //   · ResolveEyeAngleFactor 在角度强度 <= 0.0001 时**采样前** return 1（:265-271），
-        //     角度强度 = eyeRevealAngleEnabled ? Clamp01(eyeRevealAngleStrength) : 0（:177-181）——
-        //     这一项不影响画面（revealMask=0 时 :823 的 lerp 权重恒为 0），但它会真的去采 eyeData，
-        //     所以门里必须带上它，否则会读到没绑定的纹理；
-        //   · debug 1/2/3/16/17 分别是 eyeColor / eyeData / revealMask / 角度因子 / 角度表，
-        //     它们的采样点不受上面两个 gate 保护（:642、:647、:653、:659、:665），所以也要留在门内。
-        // 不在门里的情形，:823 的 lerp(source.rgb, eyeColor.rgb, revealMask * eyeAngleFactor) 权重恒为 0，
-        // 输出逐位等于 source.rgb：eyeColor 即使在门控帧里也是被 RDG 清成 0 的合法纹理（见下面录制处）。
+        // Only real consumers request capture. GD angle/direction debug reads reference buffers only.
         private static bool RequiresCharacterCapture(HoCharacterSpecializationSettings settings)
         {
             if (settings == null)
@@ -1154,23 +1158,29 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return true;
             }
 
-            if (settings.eyeRevealAngleEnabled && settings.eyeRevealAngleStrength > 0.0001f)
-            {
-                return true;
-            }
-
             switch (settings.debugMode)
             {
                 case HoCharacterSpecializationDebugMode.All:
                 case HoCharacterSpecializationDebugMode.EyeColor:
                 case HoCharacterSpecializationDebugMode.EyeAlpha:
                 case HoCharacterSpecializationDebugMode.EyeRevealMask:
-                case HoCharacterSpecializationDebugMode.EyeAngleFactor:
-                case HoCharacterSpecializationDebugMode.ReferenceFrameView:
                     return true;
                 default:
                     return false;
             }
+        }
+
+        private static bool RequiresFaceCapture(HoCharacterSpecializationSettings settings)
+        {
+            return settings != null && (RequiresCharacterCapture(settings) || RequiresFaceHairDiffuseTextures(settings));
+        }
+
+        private static bool RequiresCompositeEyeColorSample(HoCharacterSpecializationSettings settings)
+        {
+            if (settings == null) return false;
+            return settings.eyeRevealEnabled
+                || settings.debugMode == HoCharacterSpecializationDebugMode.EyeColor
+                || settings.debugMode == HoCharacterSpecializationDebugMode.All;
         }
 
         private void ConfigurePass()
@@ -1363,7 +1373,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public RTHandle ObjectSemanticLowTexture => objectSemanticLowTexture;
         public RTHandle ObjectSemanticHighTexture => objectSemanticHighTexture;
 
-        public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings, bool allocateObjectSemantic)
+        public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings,
+            bool allocateCharacterCapture, bool allocateObjectSemantic)
         {
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             RenderTextureDescriptor descriptor = cameraTextureDescriptor;
@@ -1379,9 +1390,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 descriptor.graphicsFormat = colorFormat;
             }
 
-            RenderingUtils.ReAllocateIfNeeded(ref eyeColorTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.EyeColorTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref eyeDataTexture, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.EyeDataTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref captureDepthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.CaptureDepthTextureName);
+            if (allocateCharacterCapture)
+            {
+                RenderingUtils.ReAllocateIfNeeded(ref eyeColorTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.EyeColorTextureName);
+                RenderingUtils.ReAllocateIfNeeded(ref eyeDataTexture, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.EyeDataTextureName);
+            }
+            else ReleaseCharacterCaptureTextures();
+
+            if (allocateCharacterCapture || allocateObjectSemantic)
+                RenderingUtils.ReAllocateIfNeeded(ref captureDepthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.CaptureDepthTextureName);
+            else
+            {
+                captureDepthTexture?.Release();
+                captureDepthTexture = null;
+            }
 
             RenderTextureDescriptor objectSemanticDescriptor = descriptor;
             GraphicsFormat semanticMaskFormat = GetObjectSemanticGraphicsFormat();
@@ -1411,15 +1433,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             objectSemanticHighTexture = null;
         }
 
-        public void Release()
+        private void ReleaseCharacterCaptureTextures()
         {
             eyeColorTexture?.Release();
             eyeDataTexture?.Release();
+            eyeColorTexture = null;
+            eyeDataTexture = null;
+        }
+
+        public void Release()
+        {
+            ReleaseCharacterCaptureTextures();
             captureDepthTexture?.Release();
             objectSemanticLowTexture?.Release();
             objectSemanticHighTexture?.Release();
-            eyeColorTexture = null;
-            eyeDataTexture = null;
             captureDepthTexture = null;
             objectSemanticLowTexture = null;
             objectSemanticHighTexture = null;
