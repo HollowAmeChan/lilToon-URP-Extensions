@@ -103,6 +103,19 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         [InspectorName("厚度倍率")]
         [Range(0.0f, 4.0f)]
         public float thicknessScale = 1.0f;
+
+        internal void CopyFrom(HoSubsurfaceScatteringProfileSettings source, int index)
+        {
+            enabled = source != null ? source.enabled : index == 0;
+            profileId = source != null ? source.profileId : index + 1;
+            diffusionColor = source != null ? source.diffusionColor : new Color(1.0f, 0.43f, 0.32f, 1.0f);
+            diffusionRadius = source != null ? source.diffusionRadius : 8.0f;
+            sourcePreserve = source != null ? source.sourcePreserve : 0.25f;
+            transmissionColor = source != null ? source.transmissionColor : new Color(1.0f, 0.38f, 0.22f, 1.0f);
+            transmissionStrength = source != null ? source.transmissionStrength : 0.18f;
+            transmissionRadius = source != null ? source.transmissionRadius : 5.0f;
+            thicknessScale = source != null ? source.thicknessScale : 1.0f;
+        }
     }
 
     [Serializable]
@@ -116,7 +129,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         internal const int MaxProfileCount = 8;
 
         [InspectorName("启用")]
-        [Tooltip("不移除 RendererFeature，但跳过所有屏幕空间 SSS pass。")]
+        [Tooltip("SSS 的兜底开关；当前相机的 Ho SSS Volume 可覆盖此值。关闭后跳过所有屏幕空间 SSS pass，不移除 RendererFeature。")]
         public bool enabled = true;
 
         [InspectorName("源提取时机")]
@@ -228,6 +241,44 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         [InspectorName("场景视图")]
         [Tooltip("在场景视图中运行 SSS，便于调试材质遮罩与半径。")]
         public bool renderInSceneView = true;
+
+        // Reuse camera working storage; Volume resolution must never modify Feature/Profile assets.
+        internal void CopyFrom(HoSubsurfaceScatteringSettings source)
+        {
+            enabled = source.enabled;
+            sourcePassEvent = source.sourcePassEvent;
+            compositePassEvent = source.compositePassEvent;
+            renderScale = source.renderScale;
+            quality = source.quality;
+            shader = source.shader;
+            strength = source.strength;
+            radius = source.radius;
+            depthTolerance = source.depthTolerance;
+            normalTolerance = source.normalTolerance;
+            color = source.color;
+            sourcePreserve = source.sourcePreserve;
+            transmissionStrength = source.transmissionStrength;
+            transmissionRadius = source.transmissionRadius;
+            transmissionSamples = source.transmissionSamples;
+            transmissionMainLightDirection = source.transmissionMainLightDirection;
+            transmissionDepthWeight = source.transmissionDepthWeight;
+            transmissionEdgeBoost = source.transmissionEdgeBoost;
+            transmissionRimWeight = source.transmissionRimWeight;
+            transmissionBlendMode = source.transmissionBlendMode;
+            transmissionTintInjection = source.transmissionTintInjection;
+            transmissionSmoothing = source.transmissionSmoothing;
+            transmissionColor = source.transmissionColor;
+            debugMode = source.debugMode;
+            renderInSceneView = source.renderInSceneView;
+            CopyProfilesFrom(source.profiles);
+        }
+
+        internal void CopyProfilesFrom(HoSubsurfaceScatteringProfileSettings[] source)
+        {
+            EnsureProfiles();
+            for (int i = 0; i < MaxProfileCount; i++)
+                profiles[i].CopyFrom(source != null && i < source.Length ? source[i] : null, i);
+        }
 
         internal void EnsureProfiles()
         {

@@ -20,6 +20,7 @@ namespace lilToon.URP.Extensions
         public const string RTShadow = "Ho RTShadow";
         public const string ScreenProcess = "Ho ScreenProcess";
         public const string SSGI = "Ho SSGI";
+        public const string SSS = "Ho SSS";
         public const string SurfaceBuffer = "Ho SurfaceBuffer";
         public const string VolumeLight = "Ho VolumeLight";
     }

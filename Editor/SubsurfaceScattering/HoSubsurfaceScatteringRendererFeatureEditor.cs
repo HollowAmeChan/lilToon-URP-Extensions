@@ -36,10 +36,6 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
                 return;
             }
 
-            EditorGUILayout.HelpBox(
-                "漫反射输入取 SB 的 Color（经 AC 门面）；外观参数由材质/profile 控制。",
-                MessageType.Info);
-
             DrawRuntime();
             DrawProfiles();
             DrawDebug();
@@ -58,7 +54,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
                 ? $"开 {FormatFloat(strength)} / {LilUrpEditorSectionGui.EnumName(renderScale)} / {LilUrpEditorSectionGui.EnumName(quality)}"
                 : "关";
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行默认值", summary, RuntimeColor))
             {
                 return;
             }
@@ -81,7 +77,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
 
             if (!snapshot.IsValid)
             {
-                EditorGUILayout.HelpBox("尚未记录 Ho-SSS 运行帧。进入 Play Mode，或让使用该 RendererFeature 的 Scene/Game camera 渲染一帧。", MessageType.Info);
+                EditorGUILayout.LabelField(new GUIContent("状态", "让使用此 RendererFeature 的 Scene/Game camera 渲染一帧后更新。"), new GUIContent("尚无记录"));
                 return;
             }
 
@@ -92,11 +88,8 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             EditorGUILayout.LabelField("Coverage (AC/OB)", FormatAvailable(snapshot.CoverageAvailable));
             EditorGUILayout.LabelField("GeometryBuffer", FormatAvailable(snapshot.GeometryBufferAvailable));
 
-            EditorGUILayout.HelpBox(
-                snapshot.Ready
-                    ? "Ho-SSS 输入有效：角色覆盖率与 GeometryBuffer 均可用。"
-                    : "Ho-SSS 已跳过：" + snapshot.Reason,
-                snapshot.Ready ? MessageType.Info : MessageType.Warning);
+            if (!snapshot.Ready)
+                EditorGUILayout.HelpBox("Ho-SSS 已跳过：" + snapshot.Reason, MessageType.Warning);
         }
 
         private void DrawProfiles()

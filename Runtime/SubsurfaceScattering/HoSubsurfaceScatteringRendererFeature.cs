@@ -80,6 +80,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         [SerializeField, InspectorName("Ho-SSS 设置")]
         private HoSubsurfaceScatteringSettings settings = new HoSubsurfaceScatteringSettings();
 
+        private readonly HoSubsurfaceScatteringSettings resolvedSettings = new HoSubsurfaceScatteringSettings();
         private readonly HoSubsurfaceScatteringRenderTargets renderTargets = new HoSubsurfaceScatteringRenderTargets();
         private HoSubsurfaceScatteringSourcePass sourcePass;
         private HoSubsurfaceScatteringBlurPass horizontalBlurPass;
@@ -119,13 +120,13 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
-            if (!ShouldRender(in renderingData))
+            HoSubsurfaceScatteringSettings activeSettings = ResolveSettings();
+            if (!ShouldRender(in renderingData, activeSettings))
             {
                 renderTargets.Release();
                 return;
             }
 
-            settings?.ClampPassEvents();
             EnsureMaterial();
             if (material == null)
             {
@@ -133,19 +134,19 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 return;
             }
 
-            sourcePass?.Setup(settings, renderer.cameraColorTargetHandle, renderTargets, material);
-            horizontalBlurPass?.Setup(settings, renderTargets, material, false);
-            verticalBlurPass?.Setup(settings, renderTargets, material, true);
-            transmissionGatherPass?.Setup(settings, renderTargets, material);
-            transmissionHorizontalBlurPass?.Setup(settings, renderTargets, material, false);
-            transmissionVerticalBlurPass?.Setup(settings, renderTargets, material, true);
-            compositePass?.Setup(settings, renderer.cameraColorTargetHandle, renderTargets, material);
-            if (IsDebugEnabled())
+            sourcePass?.Setup(activeSettings, renderer.cameraColorTargetHandle, renderTargets, material);
+            horizontalBlurPass?.Setup(activeSettings, renderTargets, material, false);
+            verticalBlurPass?.Setup(activeSettings, renderTargets, material, true);
+            transmissionGatherPass?.Setup(activeSettings, renderTargets, material);
+            transmissionHorizontalBlurPass?.Setup(activeSettings, renderTargets, material, false);
+            transmissionVerticalBlurPass?.Setup(activeSettings, renderTargets, material, true);
+            compositePass?.Setup(activeSettings, renderer.cameraColorTargetHandle, renderTargets, material);
+            if (IsDebugEnabled(activeSettings))
             {
                 EnsureDebugMaterial();
                 if (debugMaterial != null)
                 {
-                    debugPass?.Setup(settings, renderer.cameraColorTargetHandle, renderTargets, debugMaterial);
+                    debugPass?.Setup(activeSettings, renderer.cameraColorTargetHandle, renderTargets, debugMaterial);
                 }
             }
             else
@@ -157,17 +158,17 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (!ShouldRender(in renderingData))
+            HoSubsurfaceScatteringSettings activeSettings = ResolveSettings();
+            if (!ShouldRender(in renderingData, activeSettings))
             {
                 renderTargets.Release();
                 HoSubsurfaceScatteringRuntimeDiagnostics.PublishSkipped(
                     renderingData.cameraData.camera,
                     "RendererFeature",
-                    GetSkipReason(in renderingData));
+                    GetSkipReason(in renderingData, activeSettings));
                 return;
             }
 
-            settings?.ClampPassEvents();
             EnsureMaterial();
             if (material == null)
             {
@@ -179,13 +180,13 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 return;
             }
 
-            sourcePass?.SetupRenderGraph(settings, renderTargets, material);
-            horizontalBlurPass?.SetupRenderGraph(settings, renderTargets, material, false);
-            verticalBlurPass?.SetupRenderGraph(settings, renderTargets, material, true);
-            transmissionGatherPass?.SetupRenderGraph(settings, renderTargets, material);
-            transmissionHorizontalBlurPass?.SetupRenderGraph(settings, renderTargets, material, false);
-            transmissionVerticalBlurPass?.SetupRenderGraph(settings, renderTargets, material, true);
-            compositePass?.SetupRenderGraph(settings, renderTargets, material);
+            sourcePass?.SetupRenderGraph(activeSettings, renderTargets, material);
+            horizontalBlurPass?.SetupRenderGraph(activeSettings, renderTargets, material, false);
+            verticalBlurPass?.SetupRenderGraph(activeSettings, renderTargets, material, true);
+            transmissionGatherPass?.SetupRenderGraph(activeSettings, renderTargets, material);
+            transmissionHorizontalBlurPass?.SetupRenderGraph(activeSettings, renderTargets, material, false);
+            transmissionVerticalBlurPass?.SetupRenderGraph(activeSettings, renderTargets, material, true);
+            compositePass?.SetupRenderGraph(activeSettings, renderTargets, material);
 
             HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, sourcePass, HoSubsurfaceScatteringDebugViewInfo.Performance);
             HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, horizontalBlurPass, HoSubsurfaceScatteringDebugViewInfo.Performance);
@@ -195,12 +196,12 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, transmissionVerticalBlurPass, HoSubsurfaceScatteringDebugViewInfo.Performance);
             HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, compositePass, HoSubsurfaceScatteringDebugViewInfo.Performance);
 
-            if (IsDebugEnabled())
+            if (IsDebugEnabled(activeSettings))
             {
                 EnsureDebugMaterial();
                 if (debugMaterial != null)
                 {
-                    debugPass?.SetupRenderGraph(settings, renderTargets, debugMaterial);
+                    debugPass?.SetupRenderGraph(activeSettings, renderTargets, debugMaterial);
                     debugPass.Enqueue(renderer, renderingData.cameraData.camera, HoSubsurfaceScatteringDebugViewInfo.Performance);
                 }
             }
@@ -229,9 +230,19 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             materialShader = null;
         }
 
-        private bool ShouldRender(in RenderingData renderingData)
+        private HoSubsurfaceScatteringSettings ResolveSettings()
         {
-            if (settings == null || !settings.enabled)
+            if (settings == null) return null;
+            resolvedSettings.CopyFrom(settings);
+            VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
+            stack?.GetComponent<HoSubsurfaceScatteringVolume>()?.ApplyTo(resolvedSettings);
+            resolvedSettings.ClampPassEvents();
+            return resolvedSettings;
+        }
+
+        private static bool ShouldRender(in RenderingData renderingData, HoSubsurfaceScatteringSettings activeSettings)
+        {
+            if (activeSettings == null || !activeSettings.enabled)
             {
                 return false;
             }
@@ -239,21 +250,21 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             CameraType cameraType = renderingData.cameraData.cameraType;
             if (cameraType == CameraType.SceneView)
             {
-                return settings.renderInSceneView;
+                return activeSettings.renderInSceneView;
             }
 
             return cameraType == CameraType.Game;
         }
 
-        private string GetSkipReason(in RenderingData renderingData)
+        private static string GetSkipReason(in RenderingData renderingData, HoSubsurfaceScatteringSettings activeSettings)
         {
-            if (settings == null || !settings.enabled)
+            if (activeSettings == null || !activeSettings.enabled)
             {
-                return "Feature 已关闭。";
+                return "SSS 已关闭。";
             }
 
             CameraType cameraType = renderingData.cameraData.cameraType;
-            if (cameraType == CameraType.SceneView && !settings.renderInSceneView)
+            if (cameraType == CameraType.SceneView && !activeSettings.renderInSceneView)
             {
                 return "Scene View 渲染已关闭。";
             }
@@ -289,18 +300,13 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             material = CoreUtils.CreateEngineMaterial(shader);
         }
 
-        private bool IsDebugEnabled()
+        private static bool IsDebugEnabled(HoSubsurfaceScatteringSettings activeSettings)
         {
-            return settings != null && settings.debugMode != HoSubsurfaceScatteringDebugMode.Off;
+            return activeSettings != null && activeSettings.debugMode != HoSubsurfaceScatteringDebugMode.Off;
         }
 
         private void EnsureDebugMaterial()
         {
-            if (!IsDebugEnabled())
-            {
-                return;
-            }
-
             Shader shader = Shader.Find(HoSubsurfaceScatteringShaderConstants.DebugShaderName);
             if (debugMaterial != null && debugMaterialShader == shader)
             {
