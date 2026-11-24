@@ -101,7 +101,7 @@ class Audit:
                          l / "Assets/lilToon/Shader/Includes/lil_common_frag_alpha.hlsl": [r"clip\s*\(\s*fd\.col\.a\s*-\s*_Cutoff"],
                          l / "Assets/lilToon/Shader/Includes/lil_ho_surface_alpha.hlsl": [r"LIL_RENDER\s*==\s*2", r"clip\s*\(\s*alpha\s*-\s*_Cutoff", r"clip\s*\(\s*alpha\s*>\s*0\.0"]})
         oit_shaders = [l / "Assets/lilToon/Shader" / name for name in (
-            "lts_trans.shader", "lts_trans_o.shader", "lts_twotrans.shader", "lts_twotrans_o.shader", "ltspass_transparent.shader")]
+            "lts_trans.shader", "lts_trans_o.shader", "lts_twotrans.shader", "lts_twotrans_o.shader")]
         oit_patterns = {shader: [
             r'Name\s+"LILTOON_OIT"(?:(?!ENDHLSL)[\s\S])*?Tags\s*\{\s*"LightMode"\s*=\s*"lilToonOIT"\s*\}'
             r'(?:(?!ENDHLSL)[\s\S])*?Blend\s+0\s+One\s+One\s+Blend\s+1\s+Zero\s+OneMinusSrcColor'
