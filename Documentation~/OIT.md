@@ -217,8 +217,8 @@ OIT 的直接材质入口是以下四个文件：
 - `Shader/lts_twotrans.shader`
 - `Shader/lts_twotrans_o.shader`
 
-它们均直接声明 `LILTOON_OIT` Pass；保留的共享 Pass 源码
-`Shader/ltspass_transparent.shader` 也提供该 Pass。实际维护以 Pass 声明为准，
+当前 8 个材质入口中，这四个透明 Shader 直接声明 `LILTOON_OIT` Pass；
+无消费者的旧共享入口 `Shader/ltspass_transparent.shader` 已退役。实际维护以 Pass 声明为准，
 不能只按 `lts*` 文件名前缀推断透明能力。Lite、Tessellation、Overlay 与旧
 `lts*_onetrans*` 命名文件不再是本专用包的维护入口；早期 use-pass block
 组装过程属于历史实现，普通透明行为以这里列出的四个材质源码为准。

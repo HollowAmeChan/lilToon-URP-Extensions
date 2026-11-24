@@ -15,14 +15,14 @@
 
 逐物体 buffer：回答"**这是谁、占多少、我要抠哪一块**"。**几何在 GB，表面数值在 SB，合成在 AC。**
 
-**2026-11-24 原生 Shader 维护入口**：材质侧 `HO_OBJECT_BUFFER` / `LightMode=HoObjectBuffer`
-直接声明在 lilToon 的 `Shader/lts*.shader` 与三个保留的
-`Shader/ltspass_opaque.shader`、`ltspass_cutout.shader`、`ltspass_transparent.shader`。
+**2026-11-25 原生 Shader 维护入口**：材质侧 `HO_OBJECT_BUFFER` / `LightMode=HoObjectBuffer`
+直接声明在 lilToon 的 8 个 `Shader/lts*.shader` 材质入口中。三个无现役消费者的
+旧 Pass provider 已退役，不再作为 OB 的源码或 UsePass 入口。
 实现见 `Shader/Includes/lil_pass_object_buffer.hlsl`，静态功能集合见
 `Shader/Includes/lil_feature_config.hlsl`。修改实际 Pass、布局 pragma 或共享 HLSL，
 由 Unity 正常导入编译；不再编辑 block 或运行生成菜单。下文 R1 的 22 模板数字为历史记录，
-不代表现行 Shader 或 Pass 数。普通 Shader 保留的 OB 布局关键字、RSUV 与 instancing
-协议继续适用。
+不代表现行 Shader 或 Pass 数。当前 8 个材质 Shader 保留的 OB 布局关键字、RSUV 与
+普通 GPU instancing 协议继续适用。旧 provider 独有的 DOTS pragma 随无消费者入口退役；当前 8 个材质 Shader 的普通 GPU instancing 声明保持原样，本轮未新增或承诺 DOTS instancing 支持。
 
 
 ### 2026-10-08：对象选择组用法（覆盖下文旧 Selection 规划）

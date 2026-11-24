@@ -10,7 +10,7 @@
 
 ## HoRP阴影模式
 
-Ho lilToon 的现行材质 Inspector 提供 **HoRP阴影模式**，支持多材质混合值。源属性直接声明在普通 `Shader/lts*.shader` 与保留的 `ltspass_*.shader` 的 `Properties` 中；直接维护这些 ShaderLab 源码，共享 HLSL 位于 `Shader/Includes/`。功能宏由 `lil_feature_config.hlsl` 固定，不再通过 block、旧生成设置或刷新菜单重写 Shader。内部值 `_HoRPShadowMode`：1=主阴影（默认），2=全阴影。旧材质缺少该键时使用 shader 默认值，故已有舞台若要继续使用附加 Cast，需要明确选择全阴影；本改动不批量重写用户材质。
+Ho lilToon 的现行材质 Inspector 提供 **HoRP阴影模式**，支持多材质混合值。源属性直接声明在 8 个普通 `Shader/lts*.shader` 材质入口的 `Properties` 中；无消费者的三个旧共享 Pass provider 已退役。直接维护这些 ShaderLab 源码，共享 HLSL 位于 `Shader/Includes/`。功能宏由 `lil_feature_config.hlsl` 固定，不再通过 block、旧生成设置或刷新菜单重写 Shader。内部值 `_HoRPShadowMode`：1=主阴影（默认），2=全阴影。旧材质缺少该键时使用 shader 默认值，故已有舞台若要继续使用附加 Cast，需要明确选择全阴影；本改动不批量重写用户材质。
 
 - **主阴影**：保留 URP 天光 / HoCS / 当前 RTShadow Main Cast 的既有选择与优先级；普通附加灯的 HoShadowCast 不参与。附加灯挂 `Rendering/Ho-ShadowCast Light` 并勾选「加入主阴影」后，其投影同时进入主、全模式。
 - **全阴影**：既有 Main Cast 加上所有合格的 HoShadowCast 附加投影。它是现有艺术投影合成语义，不是每灯物理 BRDF 的替代。普通附加灯不必挂新组件，仍自动参与全阴影。

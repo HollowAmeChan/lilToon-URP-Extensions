@@ -2,7 +2,7 @@
 
 > **2026-11-25 静态化状态**：源码已切换为原生 ShaderLab / HLSL 维护。本轮已停止追加测试，GPU 对照、Player 和安装复开等完整验收未完成，未完成项不记为通过；历史记录仅代表其注明日期与范围。
 
-> 状态：**光照参考与历史接入记录；2026-11-24 原生 Shader 流程更新**。本文是“Unity 光照系统 ↔ lilToon 消费 ↔ HoRP 增强”的工程认知文档，不是架构契约；契约看 `Ho-管线总览.md` / `Ho-*.md` / `Ho-ChannelContract-v1.md`。
+> 状态：**光照参考与历史接入记录；2026-11-25 原生 Shader 流程更新**。本文是“Unity 光照系统 ↔ lilToon 消费 ↔ HoRP 增强”的工程认知文档，不是架构契约；契约看 `Ho-管线总览.md` / `Ho-*.md` / `Ho-ChannelContract-v1.md`。
 > 适用范围：Unity 6000.x、URP 17.x、本地 lilToon fork、lilToon-URP-Extensions（Ho-GTAO / Ho-SSGI 已实现并接入）。
 > **阅读边界**：§0/§1 保留 Unity 光照背景；§2 的旧文件行号与消费实现需对照现行 HLSL；§3 保存早期生成器时期的编译工作表和朱木古堂实测，不是现行包结构或菜单指南。当前源码维护以紧接下文的“原生 Shader 工作流”和 §4 的更新操作路径为准。
 > 写作时仍存在的 `MetadataBuffer` 已在 R6/R7 删除（身份→OB、表面→SB、语义遮罩→AC）；凡本文提到“材质/对象语义 buffer”的地方一律按 **OB + AC + SB** 读。
@@ -11,11 +11,15 @@
 
 ---
 
-## 现行原生 Shader 工作流（2026-11-24）
+## 现行原生 Shader 工作流（2026-11-25）
 
-- lilToon 的 `Assets/lilToon/Shader/lts*.shader` 是 8 个材质入口的正式 ShaderLab
-  源码；`ltspass_opaque.shader`、`ltspass_cutout.shader`、`ltspass_transparent.shader`
-  保留为 3 个共享 Pass 源码。各文件的原路径、Shader 名称与资产 GUID 延续使用。
+- lilToon 当前仅交付 `Assets/lilToon/Shader/lts*.shader` 的 8 个材质入口；
+  它们的原路径、Shader 名称与资产 GUID 延续使用。无现役消费者的
+  `ltspass_opaque.shader`、`ltspass_cutout.shader`、`ltspass_transparent.shader` 已退役。
+- 旧 provider 独有的 DOTS pragma 随无消费者入口退役；当前 8 个材质 Shader 的普通 GPU instancing 声明保持原样，本轮未新增或承诺 DOTS instancing 支持。
+- `LIL_OPTIMIZE_USE_VERTEXLIGHT`、`LIL_OPTIMIZE_USE_LIGHTMAP` 和
+  `LIL_OPTIMIZE_USE_PROBEVOLUMES` 三个旧生成宏已无源码消费者并删除；
+  §3 对它们的记载保留为历史，不代表当前编译开关。
 - `Shader/Includes/lil_feature_config.hlsl` 保存专用功能宏与 HoURP 源码版本约定；
   光照计算、输入声明和 Ho 数据输出仍在普通 HLSL 中。Pass、pragma、队列、混合与
   Properties 直接维护在实际 `.shader` 中。

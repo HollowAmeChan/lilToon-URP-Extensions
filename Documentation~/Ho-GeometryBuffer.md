@@ -167,8 +167,9 @@ ShaderImporter 编译；安装、切换 Graphics API、进入/退出播放和构
 `.lilinternal` / `.lilblock` / `.lilcontainer` 与旧 Shader 刷新菜单已退役。
 
 自定义 Shader 若使用原生 `UsePass`，目标 Shader 必须实际提供
-`HO_OUTLINE_NORMAL_DEPTH`。保留的三个 `ltspass_opaque/cutout/transparent.shader`
-共享 pass 文件不含这个描边 pass，不能凭名称假定可复用。检查真实 Draw Call
+`HO_OUTLINE_NORMAL_DEPTH`。当前 8 个材质入口中，仅上述四个显式描边入口提供此
+Pass；无消费者的三个旧 `ltspass_opaque/cutout/transparent.shader` 共享入口已退役，
+不能再以它们为目标。检查真实 Draw Call
 的 Pass 名与 `HoGeometryBufferOutlineNormalDepth` LightMode；缺失或未被绘制时
 OutlineNormalDepthTexture 仍可能全黑。
 
