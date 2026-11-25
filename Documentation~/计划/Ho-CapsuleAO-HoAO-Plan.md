@@ -1,6 +1,6 @@
 # Ho Capsule AO 与 HoAO 附加流程规划
 
-日期：2026-11-25。状态：分阶段实施中；发布与附加路径已接入，支持域和扩展验证继续按下文推进。
+日期：2026-11-25。状态：首版已实现；本文保留设计和审计边界，现行用法与支持范围见 [Capsule AO / Cross](../角色特化/CharacterSpecialization_CapsuleAO.md)。下文完整研究验收清单不等于所有平台与美术场景均已覆盖。
 
 **Capsule AO 归属现有角色特化 RendererFeature，作为已发布 HoAO 的附加计算。只有当前相机存在有效、可写的 HoAO 资源时才执行；它不创建公共 AO 输出，不独立发布有效位，也不直接压暗相机颜色。** 脚部胶囊提供遮挡体，地板接收组件限定参与表面，Capsule／十字模式及外观参数统一放进角色特化 Volume。
 
@@ -150,7 +150,7 @@ GB 法线可能包含法线贴图，不能称为无扰动三角面法线。接�
 
 十字明确为地面上两条交叉柔软暗带。它是世界空间的风格化接触遮蔽，不是两盏方向光的投影，也不要求通过交叉实体胶囊自然生成形状。
 
-中心跟随脚部胶囊，方向由胶囊／脚的参考轴和全局旋转决定；在接收面上计算两条有限长度的软带。臂长、宽度、夹角与软度由 Volume 统一控制，离接收面越远按高度范围衰减；相机旋转不应使图案跟着屏幕旋转。
+中心跟随脚部胶囊，方向由胶囊／脚的参考轴和全局旋转决定；在接收面上计算两道有限长度的扁平软带。每道沿长度向两头连续渐隐，横向独立羽化，不使用圆头等强胶囊条带。臂长、宽度、夹角与软度由 Volume 统一控制，离接收面越远按高度范围衰减；相机旋转不应使图案跟着屏幕旋转。
 
 ```text
 Ocross = max(Band1, Band2) × HeightFade × Strength
@@ -184,7 +184,8 @@ Multiply  Gfinal = G × Cw
 | 角色特化 Volume | 强度与影响／高度衰减距离 | 世界单位与无量纲强度分开标注 |
 | 角色特化 Volume | HoAO 混合 | Min 默认，Multiply 可选 |
 | 角色特化 Volume | 十字臂长、宽度、夹角、旋转和软度 | Cross 模式显示；无逐脚外观覆盖 |
-| 角色特化系统设置 | 必要预算与调试 | 不复制一套 Volume 外观参数；按实际测量决定预算项 |
+| 角色特化 Volume | 相机胶囊预算 | 默认 32，上限 64；不另建逐组件外观参数 |
+| 角色特化 Feature Inspector | 运行状态与计数 | 展示跳过原因与活动胶囊／接收面数 |
 | 胶囊组件 | 中心、轴、半径、长度 | 只描述几何，随 Transform 更新；显式处理缩放规则 |
 | 地板接收组件 | 自身 Renderer 登记 | 默认无效果参数；不保存材质接收强度 |
 | HoGTAO Settings／Volume | 仅发布 AO 纹理 | 默认关闭，沿用现有 Volume 覆盖规则 |
@@ -193,7 +194,7 @@ Multiply  Gfinal = G × Cw
 
 ## 9 预计改动位置与审计边界
 
-下表为未来实施范围，本轮不创建这些运行时代码。路径相对于本仓库；lilToon 文件只作既有消费链核对。
+下表为本次实施与审计范围。路径相对于本仓库；lilToon 文件只作既有消费链核对，不在本任务修改。
 
 | 位置 | 预计改动 | 审计重点 |
 | --- | --- | --- |
@@ -202,8 +203,8 @@ Multiply  Gfinal = G × Cw
 | `Runtime/GTAO/HoGTAORenderGraphResources.cs` 及对应 Compatibility 记录 | 暴露可借用写入的同相机 AO 资源信息 | 可见度语义、写入能力、SSGI 与 Debug 句柄一致 |
 | `Runtime/CharacterSpecialization/HoCharacterSpecializationRendererFeature.cs` | 管理独立的 Capsule AO 早期 Pass | 不拉起眼／脸捕获；不改变原颜色效果时序 |
 | `Runtime/CharacterSpecialization/HoCharacterSpecializationEffects.cs`、Settings、Volume 与 Editor | 增加全局效果入口与模式参数 | 整容器 override、旧 Profile 默认关闭、阶段说明 |
-| `Runtime/CharacterSpecialization/CapsuleAO/`（拟新增） | 胶囊与 Receiver 组件、登记和局部候选准备 | 无全场景扫描、去重、停用／销毁／重载生命周期 |
-| `Runtime/CharacterSpecialization/Shaders/`（拟新增内部文件） | 胶囊核、十字核、接收面与 HoAO 混合 | 可见表面、单次附加、无 SRV/RTV 反馈 |
+| `Runtime/CharacterSpecialization/CapsuleAO/` | 胶囊与 Receiver 组件、登记和局部候选准备 | 无全场景扫描、去重、停用／销毁生命周期 |
+| `Runtime/CharacterSpecialization/Resources/HoCapsuleAO.shader` | 胶囊核、十字核、接收面与 HoAO 混合 | 可见表面、单次附加、无 SRV/RTV 反馈；Resources 保留内部 Shader 引用 |
 | SSGI、AO Debug、lilToon 现有 AO 读取 | 核对附加后的同一输出；只在真实依赖缺失时修接线 | 不新增 Capsule 材质字段、不改变 AO 响应公式 |
 
 不改普通地板 Shader 资产，不新增公共 Capsule AO 纹理／有效位，不新增独立 RendererFeature，不把本次工作扩展到高光、Rim、RTDI／RTGI 或通用后处理架构。
@@ -229,7 +230,8 @@ Multiply  Gfinal = G × Cw
 | --- | --- | --- |
 | 规划基线 | `ffa6cd1e` | 文档与索引 |
 | HoGTAO 仅发布与借用合同 | `601990c3` | 隔离 Unity 6000.3.15f1，16 项 EditMode 测试通过；白色输出不依赖 GB／Color／Motion |
-| Capsule／Cross 与接收覆盖 | 已接入，继续验证 | D3D11 核心 GPU 8 项通过；实际 URP RG 97×65 的公共 AO 消费、组件关闭／恢复、前景拒绝和材质资产不变对照通过 |
+| Capsule／Cross 与接收覆盖 | `bd170148` | 私有接收覆盖先合并、同一公共 AO 原地 Min／Multiply，内部 Shader 无目标 SRV 反馈 |
+| 扩展验证与收口 | `40f92880`；[验证记录](../../Tests~/CapsuleAO/README.md) | D3D11 / D3D12 各 165/165；实际 URP、lilToon 消费、MSAA、静态合批、Volume 和多相机；Cross 已按反馈改为双头渐隐软带 |
 
 当前 Capsule 核选择最近球的投影盘遮蔽近似，多个胶囊取最大遮蔽后与原 AO 合成；没有采用 ZMD Log-SH 查表链，也不宣称原式等价。Cross 采用两条有限软带。两者均无需原游戏资源。首轮整链测试的 Volume 容器 override 设置遗漏已在测试构造中修正，原失败报告与通过报告分别保留。
 

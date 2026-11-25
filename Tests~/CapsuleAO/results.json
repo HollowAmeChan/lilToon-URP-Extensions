@@ -1,0 +1,67 @@
+{
+  "date": "2026-11-25",
+  "timezone": "Asia/Shanghai",
+  "sourceCommit": "40f92880c3db28c63fbd7b9a864c56fb76a24bbb",
+  "sourceSnapshot": "D:/Temp/HoCapsuleAOValidation-20261125/PackageSnapshot",
+  "sourceSnapshotMatchesCommittedPhase3Blobs": true,
+  "lilToonBaseline": "d134eed394860018080818ccf5dda9da087fa2be",
+  "unity": "6000.3.15f1",
+  "urp": "Ho URP 17.3 fork",
+  "gpu": "NVIDIA GeForce RTX 4060",
+  "project": "D:\\Temp\\HoCapsuleAOValidation-20261125",
+  "runs": [
+    {
+      "api": "d3d11",
+      "result": "Passed",
+      "total": 165,
+      "passed": 165,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 17.2388952,
+      "capsuleAndGTAOCases": 31,
+      "report": "Results/gradient-d3d11-tests.xml",
+      "reportSha256": "3c056faeeb3ffa7e9f3dbeec36c4f137b33528f3545507ebd842beb78d77b806",
+      "editorLog": "D:\\Temp\\HoCapsuleAOValidation-20261125\\gradient-d3d11-editor.log"
+    },
+    {
+      "api": "d3d12",
+      "result": "Passed",
+      "total": 165,
+      "passed": 165,
+      "failed": 0,
+      "skipped": 0,
+      "durationSeconds": 25.4756622,
+      "capsuleAndGTAOCases": 31,
+      "report": "Results/gradient-d3d12-tests.xml",
+      "reportSha256": "728a0965972bdc55677dfcfd40ac80b2930b835c3b7a2408192f11248f052279",
+      "editorLog": "D:\\Temp\\HoCapsuleAOValidation-20261125\\gradient-d3d12-editor.log"
+    }
+  ],
+  "sourceFileSha256": {
+    "Runtime/CharacterSpecialization/CapsuleAO/HoCapsuleAOEmitter.cs": "bdc8c2707cd004bbc5b0e89a8fe329965a9450890b536a3414f71171c6299f73",
+    "Runtime/CharacterSpecialization/CapsuleAO/HoCapsuleAOPass.cs": "b61bb07be9523594cb9d11cb7e7811df2371b790e7299d1922f13c053b5832db",
+    "Runtime/CharacterSpecialization/CapsuleAO/HoCapsuleAOReceiver.cs": "201956c3a0008326d8c5267c743f9e644c329dd066e2233c8e759f7c5c5d4d9d",
+    "Runtime/CharacterSpecialization/HoCharacterSpecializationRendererFeature.cs": "fa05136272a4752dac0ff539134e1f4791a9e04658575ebf715eba885deb0503",
+    "Runtime/CharacterSpecialization/Resources/HoCapsuleAO.shader": "a1061b8174c13d9c430547b4703635afdc6d2feaba7cf5fcaae3c5ffdd78e7cc",
+    "Runtime/GTAO/HoGTAORendererFeature.cs": "5c47a792e50e4df9773e3bdafe68e8bf5592fec0f2ecc86eef0d3dc6db54c2c5",
+    "Runtime/GTAO/HoGTAOSettings.cs": "060c84fac6e011272856b56178fc3293256f0dbcc7a48b14ae5b959011e2ac0e",
+    "Tests/Editor/GTAO/HoCapsuleAOGpuTests.cs": "b896e6f82a243cfbc0b5d5ab4e63d0042b7cf3b61e640b97bda90b01512a44a8",
+    "Tests/Editor/GTAO/HoCapsuleAOIntegrationTests.cs": "358673a45214d59127184aaad83d44dc48cf654bc493e3209347d41f5768099b",
+    "Tests/Editor/GTAO/HoCapsuleAOVolumeTests.cs": "579f21c1ba494410a804f090208506041528387a4c38be9c1ab015c9af3c2442",
+    "Tests/Editor/GTAO/HoCapsuleAOVolumeTests.cs.meta": "4a550ff83a9043df1290cb96637a4b67a6d225c66a5621944f6c914c5a2f1ad7"
+  },
+  "previewSha256": {
+    "Capsule-Direct3D11.png": "57920141a3f28a99671f0435028ebf387b09340c722693018906af47322f8d5f",
+    "Capsule-Direct3D12.png": "57920141a3f28a99671f0435028ebf387b09340c722693018906af47322f8d5f",
+    "Cross-Direct3D11.png": "4c121b15445ec74cd73f544631e29c6d333fad99f6dd0038b7fd79be1937e558",
+    "Cross-Direct3D12.png": "4c121b15445ec74cd73f544631e29c6d333fad99f6dd0038b7fd79be1937e558"
+  },
+  "limitations": [
+    "Editor GPU verification only; no standalone Player build",
+    "Compatibility verifies white AO publication; computed GTAO remains RenderGraph only",
+    "No XR, Overlay, partial viewport, or dynamic resolution",
+    "No mesh displacement, complex alpha clip, or skinned receiver validation",
+    "No character art acceptance or performance timing claim",
+    "No separate SSGI or Debug end-to-end image acceptance"
+  ]
+}

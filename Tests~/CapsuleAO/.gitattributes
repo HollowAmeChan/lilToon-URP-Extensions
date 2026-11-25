@@ -1,0 +1,2 @@
+Results/*.xml -text whitespace=cr-at-eol
+Reference/*.png binary

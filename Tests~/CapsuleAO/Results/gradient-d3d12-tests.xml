@@ -1,0 +1,1196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="165" result="Passed" total="165" passed="165" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:56Z" duration="25.4756622">
+  <test-suite type="TestSuite" id="1000" name="HoCapsuleAOValidation-20261125" fullname="HoCapsuleAOValidation-20261125" runstate="Runnable" testcasecount="165" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:56Z" duration="25.475662" total="165" passed="165" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1042" name="lilToon.URP.Extensions.GTAO.Tests.dll" fullname="D:/Temp/HoCapsuleAOValidation-20261125/Library/ScriptAssemblies/lilToon.URP.Extensions.GTAO.Tests.dll" runstate="Runnable" testcasecount="31" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:38Z" duration="7.467107" total="31" passed="31" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="57276" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1043" name="lilToon" fullname="lilToon" runstate="Runnable" testcasecount="31" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:38Z" duration="7.466747" total="31" passed="31" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1044" name="URP" fullname="lilToon.URP" runstate="Runnable" testcasecount="31" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:38Z" duration="7.466634" total="31" passed="31" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1045" name="Extensions" fullname="lilToon.URP.Extensions" runstate="Runnable" testcasecount="31" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:38Z" duration="7.466575" total="31" passed="31" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1046" name="Tests" fullname="lilToon.URP.Extensions.Tests" runstate="Runnable" testcasecount="31" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:38Z" duration="7.466489" total="31" passed="31" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1002" name="HoAOPublicationTests" fullname="lilToon.URP.Extensions.Tests.HoAOPublicationTests" classname="lilToon.URP.Extensions.Tests.HoAOPublicationTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:30Z" duration="0.045832" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1003" name="ExistingProfilesKeepGtaoComputationByDefault" fullname="lilToon.URP.Extensions.Tests.HoAOPublicationTests.ExistingProfilesKeepGtaoComputationByDefault" methodname="ExistingProfilesKeepGtaoComputationByDefault" classname="lilToon.URP.Extensions.Tests.HoAOPublicationTests" runstate="Runnable" seed="712208387" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:30Z" duration="0.007029" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1004" name="WhitePublicationNeedsNoGeometryColorOrMotionAndOwnsWritableCameraSizedOutput" fullname="lilToon.URP.Extensions.Tests.HoAOPublicationTests.WhitePublicationNeedsNoGeometryColorOrMotionAndOwnsWritableCameraSizedOutput" methodname="WhitePublicationNeedsNoGeometryColorOrMotionAndOwnsWritableCameraSizedOutput" classname="lilToon.URP.Extensions.Tests.HoAOPublicationTests" runstate="Runnable" seed="159115508" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:30Z" duration="0.030092" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1005" name="HoCapsuleAOGpuTests" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:31Z" duration="0.210073" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="ParameterizedMethod" id="1010" name="ContactCombinesVisibilityOnce" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ContactCombinesVisibilityOnce" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:31Z" duration="0.174476" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1006" name="ContactCombinesVisibilityOnce(Capsule,Min,0.6f)" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ContactCombinesVisibilityOnce(Capsule,Min,0.6f)" methodname="ContactCombinesVisibilityOnce" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="1477676764" result="Passed" start-time="2026-11-25 08:00:30Z" end-time="2026-11-25 08:00:31Z" duration="0.158000" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1007" name="ContactCombinesVisibilityOnce(Capsule,Multiply,0.42f)" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ContactCombinesVisibilityOnce(Capsule,Multiply,0.42f)" methodname="ContactCombinesVisibilityOnce" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="1621445666" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.006155" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1008" name="ContactCombinesVisibilityOnce(Cross,Min,0.6f)" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ContactCombinesVisibilityOnce(Cross,Min,0.6f)" methodname="ContactCombinesVisibilityOnce" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="1264002168" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.004278" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1009" name="ContactCombinesVisibilityOnce(Cross,Multiply,0.42f)" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ContactCombinesVisibilityOnce(Cross,Multiply,0.42f)" methodname="ContactCombinesVisibilityOnce" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="409720043" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.005211" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1014" name="CrossProducesTwoFiniteDoubleEndedGradientBands" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.CrossProducesTwoFiniteDoubleEndedGradientBands" methodname="CrossProducesTwoFiniteDoubleEndedGradientBands" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="553863413" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.006674" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1015" name="EmitterGeometryFollowsBoneAndConservativeScaleWithoutPhysicsCollider" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.EmitterGeometryFollowsBoneAndConservativeScaleWithoutPhysicsCollider" methodname="EmitterGeometryFollowsBoneAndConservativeScaleWithoutPhysicsCollider" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="594522868" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.005819" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1013" name="ForegroundAndRaisedFootDoNotDarkenGround" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ForegroundAndRaisedFootDoNotDarkenGround" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.016262" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1011" name="ForegroundAndRaisedFootDoNotDarkenGround(Capsule)" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ForegroundAndRaisedFootDoNotDarkenGround(Capsule)" methodname="ForegroundAndRaisedFootDoNotDarkenGround" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="1082471395" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.005109" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1012" name="ForegroundAndRaisedFootDoNotDarkenGround(Cross)" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ForegroundAndRaisedFootDoNotDarkenGround(Cross)" methodname="ForegroundAndRaisedFootDoNotDarkenGround" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="916175830" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.004857" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1016" name="ShearedParentDoesNotShrinkTheTransverseOccluder" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests.ShearedParentDoesNotShrinkTheTransverseOccluder" methodname="ShearedParentDoesNotShrinkTheTransverseOccluder" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOGpuTests" runstate="Runnable" seed="749991868" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:31Z" duration="0.004741" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1017" name="HoCapsuleAOIntegrationTests" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:38Z" duration="7.166222" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1019" name="ActualPipelineMsaa4ReadsAppendedHoAO" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests.ActualPipelineMsaa4ReadsAppendedHoAO" methodname="ActualPipelineMsaa4ReadsAppendedHoAO" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests" runstate="Runnable" seed="1478786593" result="Passed" start-time="2026-11-25 08:00:31Z" end-time="2026-11-25 08:00:37Z" duration="6.802138" asserts="0">
+                  <properties>
+                    <property name="_JOINTYPE" value="UnityCombinatorial" />
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[HO_CAPSULE_AO_PIPELINE_PASS compatibility=False msaa=4 perspective=False size=97x65 receiver/foreground/disable/re-enable/material-controls
+]]></output>
+                </test-case>
+                <test-case id="1020" name="ActualPipelinePerspectiveReadsAppendedHoAO" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests.ActualPipelinePerspectiveReadsAppendedHoAO" methodname="ActualPipelinePerspectiveReadsAppendedHoAO" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests" runstate="Runnable" seed="985508801" result="Passed" start-time="2026-11-25 08:00:37Z" end-time="2026-11-25 08:00:38Z" duration="0.065758" asserts="0">
+                  <properties>
+                    <property name="_JOINTYPE" value="UnityCombinatorial" />
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[HO_CAPSULE_AO_PIPELINE_PASS compatibility=False msaa=1 perspective=True size=97x65 receiver/foreground/disable/re-enable/material-controls
+]]></output>
+                </test-case>
+                <test-case id="1018" name="ActualPipelineReadsAppendedHoAO" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests.ActualPipelineReadsAppendedHoAO" methodname="ActualPipelineReadsAppendedHoAO" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests" runstate="Runnable" seed="1453859459" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.106867" asserts="0">
+                  <properties>
+                    <property name="_JOINTYPE" value="UnityCombinatorial" />
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[HO_CAPSULE_AO_PIPELINE_PASS compatibility=False msaa=1 perspective=False size=97x65 receiver/foreground/disable/re-enable/material-controls
+]]></output>
+                </test-case>
+                <test-case id="1021" name="CompatibilityReadsAppendedHoAO" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests.CompatibilityReadsAppendedHoAO" methodname="CompatibilityReadsAppendedHoAO" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOIntegrationTests" runstate="Runnable" seed="2040149655" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.187753" asserts="0">
+                  <properties>
+                    <property name="_JOINTYPE" value="UnityCombinatorial" />
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[HO_CAPSULE_AO_PIPELINE_PASS compatibility=True msaa=1 perspective=False size=97x65 receiver/foreground/disable/re-enable/material-controls
+]]></output>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1022" name="HoCapsuleAOVolumeTests" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOVolumeTests" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOVolumeTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.029021" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1024" name="ActualVolumeEditorMeasuresModeFieldsAndResetsOnlyCapsuleParameters" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOVolumeTests.ActualVolumeEditorMeasuresModeFieldsAndResetsOnlyCapsuleParameters" methodname="ActualVolumeEditorMeasuresModeFieldsAndResetsOnlyCapsuleParameters" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOVolumeTests" runstate="Runnable" seed="134598962" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.026982" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1023" name="AOStackEntryDoesNotChangeTheFiveColorCompositionStages" fullname="lilToon.URP.Extensions.Tests.HoCapsuleAOVolumeTests.AOStackEntryDoesNotChangeTheFiveColorCompositionStages" methodname="AOStackEntryDoesNotChangeTheFiveColorCompositionStages" classname="lilToon.URP.Extensions.Tests.HoCapsuleAOVolumeTests" runstate="Runnable" seed="92340909" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001505" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1025" name="HoGTAOQualityPresetTests" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" testcasecount="14" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.013947" total="14" passed="14" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1041" name="InspectorFillSupportsUndoAndRedoWithoutChangingOverrides" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.InspectorFillSupportsUndoAndRedoWithoutChangingOverrides" methodname="InspectorFillSupportsUndoAndRedoWithoutChangingOverrides" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="1659902257" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.007752" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1029" name="PresetFillsOnlyDensityAndDenoiseValues" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetFillsOnlyDensityAndDenoiseValues" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001743" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1026" name="PresetFillsOnlyDensityAndDenoiseValues(Low,Quarter,2,8,0,1)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetFillsOnlyDensityAndDenoiseValues(Low,Quarter,2,8,0,1)" methodname="PresetFillsOnlyDensityAndDenoiseValues" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="973075982" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000827" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1027" name="PresetFillsOnlyDensityAndDenoiseValues(Medium,Half,2,12,4,2)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetFillsOnlyDensityAndDenoiseValues(Medium,Half,2,12,4,2)" methodname="PresetFillsOnlyDensityAndDenoiseValues" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="1757567287" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000121" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1028" name="PresetFillsOnlyDensityAndDenoiseValues(High,Full,4,32,12,3)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetFillsOnlyDensityAndDenoiseValues(High,Full,4,32,12,3)" methodname="PresetFillsOnlyDensityAndDenoiseValues" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="1616754827" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000094" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1039" name="PresetPreservesAllUserOverrideChoices" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001823" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1030" name="PresetPreservesAllUserOverrideChoices(Low,0)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(Low,0)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="973614575" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000382" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1031" name="PresetPreservesAllUserOverrideChoices(Low,1)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(Low,1)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="645629796" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000138" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1032" name="PresetPreservesAllUserOverrideChoices(Low,2)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(Low,2)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="1246665187" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000117" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1033" name="PresetPreservesAllUserOverrideChoices(Medium,0)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(Medium,0)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="256428968" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000120" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1034" name="PresetPreservesAllUserOverrideChoices(Medium,1)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(Medium,1)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="503665913" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000116" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1035" name="PresetPreservesAllUserOverrideChoices(Medium,2)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(Medium,2)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="320881222" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000114" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1036" name="PresetPreservesAllUserOverrideChoices(High,0)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(High,0)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="935561175" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000125" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1037" name="PresetPreservesAllUserOverrideChoices(High,1)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(High,1)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="1324078613" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000119" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1038" name="PresetPreservesAllUserOverrideChoices(High,2)" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.PresetPreservesAllUserOverrideChoices(High,2)" methodname="PresetPreservesAllUserOverrideChoices" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="1048145301" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000117" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1040" name="UserCanAdjustValuesAndExplicitlyRefillTheSamePreset" fullname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests.UserCanAdjustValuesAndExplicitlyRefillTheSamePreset" methodname="UserCanAdjustValuesAndExplicitlyRefillTheSamePreset" classname="lilToon.URP.Extensions.Tests.HoGTAOQualityPresetTests" runstate="Runnable" seed="972424274" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000181" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1172" name="lilToon.URP.Extensions.ScreenProcess.Tests.dll" fullname="D:/Temp/HoCapsuleAOValidation-20261125/Library/ScriptAssemblies/lilToon.URP.Extensions.ScreenProcess.Tests.dll" runstate="Runnable" testcasecount="102" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:55Z" duration="17.198030" total="102" passed="102" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="57276" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1173" name="lilToon" fullname="lilToon" runstate="Runnable" testcasecount="102" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:55Z" duration="17.197933" total="102" passed="102" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1174" name="URP" fullname="lilToon.URP" runstate="Runnable" testcasecount="102" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:55Z" duration="17.197877" total="102" passed="102" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1175" name="Extensions" fullname="lilToon.URP.Extensions" runstate="Runnable" testcasecount="102" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:55Z" duration="17.197836" total="102" passed="102" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1176" name="Tests" fullname="lilToon.URP.Extensions.Tests" runstate="Runnable" testcasecount="102" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:55Z" duration="17.197717" total="102" passed="102" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1047" name="HoPostProcessingOwnershipTests" fullname="lilToon.URP.Extensions.Tests.HoPostProcessingOwnershipTests" classname="lilToon.URP.Extensions.Tests.HoPostProcessingOwnershipTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.006834" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1048" name="DisabledLayersDoNotResurrectNativeEffects_AndLegacyModeIsExplicit" fullname="lilToon.URP.Extensions.Tests.HoPostProcessingOwnershipTests.DisabledLayersDoNotResurrectNativeEffects_AndLegacyModeIsExplicit" methodname="DisabledLayersDoNotResurrectNativeEffects_AndLegacyModeIsExplicit" classname="lilToon.URP.Extensions.Tests.HoPostProcessingOwnershipTests" runstate="Runnable" seed="391828550" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.004084" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1049" name="ReusedCameraFrameDataDoesNotLeakHoOwnership" fullname="lilToon.URP.Extensions.Tests.HoPostProcessingOwnershipTests.ReusedCameraFrameDataDoesNotLeakHoOwnership" methodname="ReusedCameraFrameDataDoesNotLeakHoOwnership" classname="lilToon.URP.Extensions.Tests.HoPostProcessingOwnershipTests" runstate="Runnable" seed="505982024" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.002287" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1050" name="ObjectSelectionRegressionTests" fullname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests" classname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.024578" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1054" name="CachedConsumerResolvesNamesAgainWhenRegistryIdsChange" fullname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests.CachedConsumerResolvesNamesAgainWhenRegistryIdsChange" methodname="CachedConsumerResolvesNamesAgainWhenRegistryIdsChange" classname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests" runstate="Runnable" seed="2028383397" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.006434" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1055" name="FullIdentityGroupFailsClosedInsteadOfSelectingSharedPart" fullname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests.FullIdentityGroupFailsClosedInsteadOfSelectingSharedPart" methodname="FullIdentityGroupFailsClosedInsteadOfSelectingSharedPart" classname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests" runstate="Runnable" seed="777499568" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.009206" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[[Ho-ObjectBuffer] 选择组有 1 个 Renderer 超出身份槽位预算（每组 256 / 全局 4096 行），未加入遮罩。请拆分身份组或减少不同的成员组合。
+]]></output>
+                </test-case>
+                <test-case id="1056" name="MembershipBitsCrossEveryWordBoundary" fullname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests.MembershipBitsCrossEveryWordBoundary" methodname="MembershipBitsCrossEveryWordBoundary" classname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests" runstate="Runnable" seed="190534041" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.002397" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1053" name="SameNamedDeclarationsUnionAndTypedQueriesUseIdentityWithoutSemanticLanes" fullname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests.SameNamedDeclarationsUnionAndTypedQueriesUseIdentityWithoutSemanticLanes" methodname="SameNamedDeclarationsUnionAndTypedQueriesUseIdentityWithoutSemanticLanes" classname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests" runstate="Runnable" seed="357837920" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000855" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1052" name="SelectionOnlyObjectsRespectChildrenAndPreserveGeometrySlot" fullname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests.SelectionOnlyObjectsRespectChildrenAndPreserveGeometrySlot" methodname="SelectionOnlyObjectsRespectChildrenAndPreserveGeometrySlot" classname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests" runstate="Runnable" seed="1645323492" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.002329" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1051" name="SubsetOfSharedPartOverlapsAcrossIdentityGroupsAndCleansUp" fullname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests.SubsetOfSharedPartOverlapsAcrossIdentityGroupsAndCleansUp" methodname="SubsetOfSharedPartOverlapsAcrossIdentityGroupsAndCleansUp" classname="lilToon.URP.Extensions.Tests.ObjectSelectionRegressionTests" runstate="Runnable" seed="1711169358" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001453" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1057" name="PostProcessEnableRegressionTests" fullname="lilToon.URP.Extensions.Tests.PostProcessEnableRegressionTests" classname="lilToon.URP.Extensions.Tests.PostProcessEnableRegressionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.004575" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1058" name="ImageProcess_MasterEnableCanDisableExistingLayers" fullname="lilToon.URP.Extensions.Tests.PostProcessEnableRegressionTests.ImageProcess_MasterEnableCanDisableExistingLayers" methodname="ImageProcess_MasterEnableCanDisableExistingLayers" classname="lilToon.URP.Extensions.Tests.PostProcessEnableRegressionTests" runstate="Runnable" seed="1356941472" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.003146" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1059" name="ScreenProcess_MasterEnableCanDisableExistingLayers" fullname="lilToon.URP.Extensions.Tests.PostProcessEnableRegressionTests.ScreenProcess_MasterEnableCanDisableExistingLayers" methodname="ScreenProcess_MasterEnableCanDisableExistingLayers" classname="lilToon.URP.Extensions.Tests.PostProcessEnableRegressionTests" runstate="Runnable" seed="1500012061" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000469" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1060" name="RTGIMaterialHistoryTests" fullname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests" classname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.002767" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="ParameterizedMethod" id="1064" name="DormantEmissionAnimationDoesNotInvalidateStaticHistory" fullname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests.DormantEmissionAnimationDoesNotInvalidateStaticHistory" classname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.002375" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1061" name="DormantEmissionAnimationDoesNotInvalidateStaticHistory(&quot;_EmissionBlink&quot;,False)" fullname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests.DormantEmissionAnimationDoesNotInvalidateStaticHistory(&quot;_EmissionBlink&quot;,False)" methodname="DormantEmissionAnimationDoesNotInvalidateStaticHistory" classname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests" runstate="Runnable" seed="341723681" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001177" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1062" name="DormantEmissionAnimationDoesNotInvalidateStaticHistory(&quot;_EmissionMap_ScrollRotate&quot;,True)" fullname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests.DormantEmissionAnimationDoesNotInvalidateStaticHistory(&quot;_EmissionMap_ScrollRotate&quot;,True)" methodname="DormantEmissionAnimationDoesNotInvalidateStaticHistory" classname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests" runstate="Runnable" seed="1879282609" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000490" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1063" name="DormantEmissionAnimationDoesNotInvalidateStaticHistory(&quot;_EmissionBlendMask_ScrollRotate&quot;,True)" fullname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests.DormantEmissionAnimationDoesNotInvalidateStaticHistory(&quot;_EmissionBlendMask_ScrollRotate&quot;,True)" methodname="DormantEmissionAnimationDoesNotInvalidateStaticHistory" classname="lilToon.URP.Extensions.Tests.RTGIMaterialHistoryTests" runstate="Runnable" seed="169307410" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000406" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+              <test-suite type="TestFixture" id="1065" name="RTLightingContractTests" fullname="lilToon.URP.Extensions.Tests.RTLightingContractTests" classname="lilToon.URP.Extensions.Tests.RTLightingContractTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.011360" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1068" name="ConsumerSanitizesInvalidSettingsAndAppliesExposureOutsideOpacity" fullname="lilToon.URP.Extensions.Tests.RTLightingContractTests.ConsumerSanitizesInvalidSettingsAndAppliesExposureOutsideOpacity" methodname="ConsumerSanitizesInvalidSettingsAndAppliesExposureOutsideOpacity" classname="lilToon.URP.Extensions.Tests.RTLightingContractTests" runstate="Runnable" seed="427749468" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001220" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1071" name="ConsumerShaderKeepsReceiverDepthAndLinearHdrProductGates" fullname="lilToon.URP.Extensions.Tests.RTLightingContractTests.ConsumerShaderKeepsReceiverDepthAndLinearHdrProductGates" methodname="ConsumerShaderKeepsReceiverDepthAndLinearHdrProductGates" classname="lilToon.URP.Extensions.Tests.RTLightingContractTests" runstate="Runnable" seed="1217206754" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001305" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1066" name="ConsumerSnapshotsPreserveOrderDuplicatesAndDoNotFollowVolumeMutations" fullname="lilToon.URP.Extensions.Tests.RTLightingContractTests.ConsumerSnapshotsPreserveOrderDuplicatesAndDoNotFollowVolumeMutations" methodname="ConsumerSnapshotsPreserveOrderDuplicatesAndDoNotFollowVolumeMutations" classname="lilToon.URP.Extensions.Tests.RTLightingContractTests" runstate="Runnable" seed="606097356" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000241" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1067" name="LegacyGiAssetsRemainAdditiveAndNewFieldsHaveNeutralDefaults" fullname="lilToon.URP.Extensions.Tests.RTLightingContractTests.LegacyGiAssetsRemainAdditiveAndNewFieldsHaveNeutralDefaults" methodname="LegacyGiAssetsRemainAdditiveAndNewFieldsHaveNeutralDefaults" classname="lilToon.URP.Extensions.Tests.RTLightingContractTests" runstate="Runnable" seed="693188184" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000403" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1069" name="ProducersPublishTypedProductsBeforeOpaqueAndOwnNoCompositePass" fullname="lilToon.URP.Extensions.Tests.RTLightingContractTests.ProducersPublishTypedProductsBeforeOpaqueAndOwnNoCompositePass" methodname="ProducersPublishTypedProductsBeforeOpaqueAndOwnNoCompositePass" classname="lilToon.URP.Extensions.Tests.RTLightingContractTests" runstate="Runnable" seed="2005305030" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.003937" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1070" name="ScreenProcessConsumerUsesFrameProductsBeforeTransparents" fullname="lilToon.URP.Extensions.Tests.RTLightingContractTests.ScreenProcessConsumerUsesFrameProductsBeforeTransparents" methodname="ScreenProcessConsumerUsesFrameProductsBeforeTransparents" classname="lilToon.URP.Extensions.Tests.RTLightingContractTests" runstate="Runnable" seed="607102433" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001074" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1072" name="ScreenProcessOwnsRTLayerNamesAndRTVolumesDoNotExposeCompositionUi" fullname="lilToon.URP.Extensions.Tests.RTLightingContractTests.ScreenProcessOwnsRTLayerNamesAndRTVolumesDoNotExposeCompositionUi" methodname="ScreenProcessOwnsRTLayerNamesAndRTVolumesDoNotExposeCompositionUi" classname="lilToon.URP.Extensions.Tests.RTLightingContractTests" runstate="Runnable" seed="94240340" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.002495" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1073" name="RTLightingSchedulingTests" fullname="lilToon.URP.Extensions.Tests.RTLightingSchedulingTests" classname="lilToon.URP.Extensions.Tests.RTLightingSchedulingTests" runstate="Runnable" testcasecount="1" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.001067" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1074" name="AddRenderPassesDoesNotReadUnallocatedCameraTargets" fullname="lilToon.URP.Extensions.Tests.RTLightingSchedulingTests.AddRenderPassesDoesNotReadUnallocatedCameraTargets" methodname="AddRenderPassesDoesNotReadUnallocatedCameraTargets" classname="lilToon.URP.Extensions.Tests.RTLightingSchedulingTests" runstate="Runnable" seed="638750211" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:38Z" duration="0.000775" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1075" name="ScreenProcessRegressionTests" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="74" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:55Z" duration="16.852427" total="74" passed="74" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="ParameterizedMethod" id="1138" name="AcColorOverviewAndNamedMaskUseVisualOwnership" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcColorOverviewAndNamedMaskUseVisualOwnership" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:41Z" duration="2.690380" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1134" name="AcColorOverviewAndNamedMaskUseVisualOwnership(False,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcColorOverviewAndNamedMaskUseVisualOwnership(False,1)" methodname="AcColorOverviewAndNamedMaskUseVisualOwnership" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="33030600" result="Passed" start-time="2026-11-25 08:00:38Z" end-time="2026-11-25 08:00:39Z" duration="0.972960" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1135" name="AcColorOverviewAndNamedMaskUseVisualOwnership(True,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcColorOverviewAndNamedMaskUseVisualOwnership(True,1)" methodname="AcColorOverviewAndNamedMaskUseVisualOwnership" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="237168238" result="Passed" start-time="2026-11-25 08:00:39Z" end-time="2026-11-25 08:00:39Z" duration="0.512142" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1136" name="AcColorOverviewAndNamedMaskUseVisualOwnership(False,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcColorOverviewAndNamedMaskUseVisualOwnership(False,4)" methodname="AcColorOverviewAndNamedMaskUseVisualOwnership" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="670216331" result="Passed" start-time="2026-11-25 08:00:39Z" end-time="2026-11-25 08:00:40Z" duration="0.524431" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1137" name="AcColorOverviewAndNamedMaskUseVisualOwnership(True,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcColorOverviewAndNamedMaskUseVisualOwnership(True,4)" methodname="AcColorOverviewAndNamedMaskUseVisualOwnership" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1659092545" result="Passed" start-time="2026-11-25 08:00:40Z" end-time="2026-11-25 08:00:41Z" duration="0.680274" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1133" name="AcColorOverviewCompositesEveryRankWithoutRenormalizingCoverage" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcColorOverviewCompositesEveryRankWithoutRenormalizingCoverage" methodname="AcColorOverviewCompositesEveryRankWithoutRenormalizingCoverage" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="40885182" result="Passed" start-time="2026-11-25 08:00:41Z" end-time="2026-11-25 08:00:41Z" duration="0.168866" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1132" name="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-25 08:00:41Z" end-time="2026-11-25 08:00:47Z" duration="6.216764" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1126" name="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(False,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(False,1)" methodname="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1102386454" result="Passed" start-time="2026-11-25 08:00:43Z" end-time="2026-11-25 08:00:44Z" duration="0.995800" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1127" name="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(True,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(True,1)" methodname="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="964394405" result="Passed" start-time="2026-11-25 08:00:44Z" end-time="2026-11-25 08:00:44Z" duration="0.627193" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1128" name="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(False,2)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(False,2)" methodname="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1815385568" result="Passed" start-time="2026-11-25 08:00:44Z" end-time="2026-11-25 08:00:45Z" duration="0.674523" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1129" name="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(True,2)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(True,2)" methodname="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1706924385" result="Passed" start-time="2026-11-25 08:00:45Z" end-time="2026-11-25 08:00:46Z" duration="0.584271" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1130" name="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(False,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(False,4)" methodname="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="547918005" result="Passed" start-time="2026-11-25 08:00:46Z" end-time="2026-11-25 08:00:46Z" duration="0.717582" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1131" name="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(True,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain(True,4)" methodname="AcOwnsOutlineIdentityAndSemanticsWithoutChangingPhysicalDomain" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1691865195" result="Passed" start-time="2026-11-25 08:00:46Z" end-time="2026-11-25 08:00:47Z" duration="0.604399" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1098" name="BokehZoomBackgroundResponseCanBeDisabled" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomBackgroundResponseCanBeDisabled" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-11-25 08:00:47Z" end-time="2026-11-25 08:00:48Z" duration="0.506616" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1095" name="BokehZoomBackgroundResponseCanBeDisabled(1.0f,1.0f,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomBackgroundResponseCanBeDisabled(1.0f,1.0f,True)" methodname="BokehZoomBackgroundResponseCanBeDisabled" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1870997141" result="Passed" start-time="2026-11-25 08:00:47Z" end-time="2026-11-25 08:00:47Z" duration="0.243262" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1096" name="BokehZoomBackgroundResponseCanBeDisabled(0.0f,1.0f,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomBackgroundResponseCanBeDisabled(0.0f,1.0f,True)" methodname="BokehZoomBackgroundResponseCanBeDisabled" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1734317247" result="Passed" start-time="2026-11-25 08:00:47Z" end-time="2026-11-25 08:00:47Z" duration="0.055600" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1097" name="BokehZoomBackgroundResponseCanBeDisabled(1.0f,0.0f,False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomBackgroundResponseCanBeDisabled(1.0f,0.0f,False)" methodname="BokehZoomBackgroundResponseCanBeDisabled" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1348011577" result="Passed" start-time="2026-11-25 08:00:47Z" end-time="2026-11-25 08:00:48Z" duration="0.076167" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1099" name="BokehZoomFocusAndMissingDepthKeepTheOriginal" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomFocusAndMissingDepthKeepTheOriginal" methodname="BokehZoomFocusAndMissingDepthKeepTheOriginal" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="593705093" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.057691" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1100" name="BokehZoomFocusTargetDoesNotReadDepthOfFieldConfiguration" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomFocusTargetDoesNotReadDepthOfFieldConfiguration" methodname="BokehZoomFocusTargetDoesNotReadDepthOfFieldConfiguration" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="395693787" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.019371" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1094" name="BokehZoomProtectsFocusedOutlineAtEveryColorContributor" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomProtectsFocusedOutlineAtEveryColorContributor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.072064" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1092" name="BokehZoomProtectsFocusedOutlineAtEveryColorContributor(0.0f)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomProtectsFocusedOutlineAtEveryColorContributor(0.0f)" methodname="BokehZoomProtectsFocusedOutlineAtEveryColorContributor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="166327982" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.030106" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1093" name="BokehZoomProtectsFocusedOutlineAtEveryColorContributor(0.6f)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomProtectsFocusedOutlineAtEveryColorContributor(0.6f)" methodname="BokehZoomProtectsFocusedOutlineAtEveryColorContributor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="771976344" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.031095" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1101" name="BokehZoomStreaksOnlyDefocusedHighlights" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.BokehZoomStreaksOnlyDefocusedHighlights" methodname="BokehZoomStreaksOnlyDefocusedHighlights" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1367167076" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.041238" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1087" name="DefocusedOutlineStillBlurs" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DefocusedOutlineStillBlurs" methodname="DefocusedOutlineStillBlurs" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="972609265" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.023948" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1111" name="DofApertureBokehDoesNotEnhanceFocusedOrDarkColors" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehDoesNotEnhanceFocusedOrDarkColors" methodname="DofApertureBokehDoesNotEnhanceFocusedOrDarkColors" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1795039077" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.076399" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1110" name="DofApertureBokehKeepsFocusedOutlineOutOfHighlights" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehKeepsFocusedOutlineOutOfHighlights" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.079737" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1108" name="DofApertureBokehKeepsFocusedOutlineOutOfHighlights(0.0f)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehKeepsFocusedOutlineOutOfHighlights(0.0f)" methodname="DofApertureBokehKeepsFocusedOutlineOutOfHighlights" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="38252049" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.031967" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1109" name="DofApertureBokehKeepsFocusedOutlineOutOfHighlights(0.7f)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehKeepsFocusedOutlineOutOfHighlights(0.7f)" methodname="DofApertureBokehKeepsFocusedOutlineOutOfHighlights" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="2080855472" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.028844" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1102" name="DofApertureBokehSpreadsDefocusedHighlightsWithTheLensShape" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehSpreadsDefocusedHighlightsWithTheLensShape" methodname="DofApertureBokehSpreadsDefocusedHighlightsWithTheLensShape" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="988042891" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.019758" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1107" name="DofApertureBokehThresholdGainAndDisable" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehThresholdGainAndDisable" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.270475" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1103" name="DofApertureBokehThresholdGainAndDisable(1.0f,0.0f,2.0f,12.0f)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehThresholdGainAndDisable(1.0f,0.0f,2.0f,12.0f)" methodname="DofApertureBokehThresholdGainAndDisable" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1863359956" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.055837" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1104" name="DofApertureBokehThresholdGainAndDisable(1.0f,10.0f,2.0f,4.0f)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehThresholdGainAndDisable(1.0f,10.0f,2.0f,4.0f)" methodname="DofApertureBokehThresholdGainAndDisable" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1350347206" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.077505" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1105" name="DofApertureBokehThresholdGainAndDisable(1.0f,0.0f,0.0f,4.0f)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehThresholdGainAndDisable(1.0f,0.0f,0.0f,4.0f)" methodname="DofApertureBokehThresholdGainAndDisable" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1105543964" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.052046" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1106" name="DofApertureBokehThresholdGainAndDisable(0.0f,0.0f,2.0f,4.0f)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.DofApertureBokehThresholdGainAndDisable(0.0f,0.0f,2.0f,4.0f)" methodname="DofApertureBokehThresholdGainAndDisable" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1988369646" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.077937" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1085" name="FocusedOutlineDoesNotLeak" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="9" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:49Z" duration="0.381481" total="9" passed="9" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1076" name="FocusedOutlineDoesNotLeak(0.0f,0,False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(0.0f,0,False)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="220006251" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.044228" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1077" name="FocusedOutlineDoesNotLeak(0.6f,0,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(0.6f,0,True)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="645440585" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.036793" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1078" name="FocusedOutlineDoesNotLeak(1.3f,0,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(1.3f,0,True)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1385657764" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.043869" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1079" name="FocusedOutlineDoesNotLeak(0.0f,1,False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(0.0f,1,False)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1787208720" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.036324" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1080" name="FocusedOutlineDoesNotLeak(0.6f,1,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(0.6f,1,True)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="542538376" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.045042" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1081" name="FocusedOutlineDoesNotLeak(1.3f,1,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(1.3f,1,True)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="818686402" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.040305" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1082" name="FocusedOutlineDoesNotLeak(0.0f,2,False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(0.0f,2,False)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1081934050" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:48Z" duration="0.044510" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1083" name="FocusedOutlineDoesNotLeak(0.6f,2,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(0.6f,2,True)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="371447161" result="Passed" start-time="2026-11-25 08:00:48Z" end-time="2026-11-25 08:00:49Z" duration="0.036968" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1084" name="FocusedOutlineDoesNotLeak(1.3f,2,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.FocusedOutlineDoesNotLeak(1.3f,2,True)" methodname="FocusedOutlineDoesNotLeak" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="973605322" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.043486" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1121" name="HeightFogUsesScreenUvExactlyOnce" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.HeightFogUsesScreenUvExactlyOnce" methodname="HeightFogUsesScreenUvExactlyOnce" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1735829038" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.103199" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1120" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.489242" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1112" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths(False,False,False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths(False,False,False)" methodname="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1760228467" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.053835" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1113" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths(True,False,False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths(True,False,False)" methodname="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="801881725" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.079507" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1114" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths(False,True,False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths(False,True,False)" methodname="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="366279420" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.047074" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1115" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths(True,True,False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths(True,True,False)" methodname="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="219373439" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.043884" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1116" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths(False,False,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths(False,False,True)" methodname="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="296732035" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.070108" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1117" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths(True,False,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths(True,False,True)" methodname="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1641481189" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.044675" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1118" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths(False,True,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths(False,True,True)" methodname="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="704244606" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.048768" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1119" name="LensEffectsDeclareDepthAndCompositeInBothRenderPaths(True,True,True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.LensEffectsDeclareDepthAndCompositeInBothRenderPaths(True,True,True)" methodname="LensEffectsDeclareDepthAndCompositeInBothRenderPaths" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="618424027" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.048593" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1090" name="MissingDepthInputsPreserveColor" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.MissingDepthInputsPreserveColor" methodname="MissingDepthInputsPreserveColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="389912302" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:49Z" duration="0.045804" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1156" name="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:52Z" duration="2.888559" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1152" name="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(False,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(False,1)" methodname="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1889069382" result="Passed" start-time="2026-11-25 08:00:49Z" end-time="2026-11-25 08:00:51Z" duration="1.626826" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1153" name="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(True,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(True,1)" methodname="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="989741710" result="Passed" start-time="2026-11-25 08:00:51Z" end-time="2026-11-25 08:00:51Z" duration="0.386863" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1154" name="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(False,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(False,4)" methodname="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1660112114" result="Passed" start-time="2026-11-25 08:00:51Z" end-time="2026-11-25 08:00:52Z" duration="0.317141" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1155" name="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(True,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(True,4)" methodname="MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1063678642" result="Passed" start-time="2026-11-25 08:00:52Z" end-time="2026-11-25 08:00:52Z" duration="0.520632" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1148" name="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-11-25 08:00:52Z" end-time="2026-11-25 08:00:53Z" duration="0.680977" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1144" name="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(False,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(False,1)" methodname="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1074880657" result="Passed" start-time="2026-11-25 08:00:52Z" end-time="2026-11-25 08:00:52Z" duration="0.155000" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1145" name="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(True,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(True,1)" methodname="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="906157248" result="Passed" start-time="2026-11-25 08:00:52Z" end-time="2026-11-25 08:00:53Z" duration="0.149004" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1146" name="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(False,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(False,4)" methodname="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="90321373" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.103433" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1147" name="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(True,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(True,4)" methodname="NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="960170662" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.155256" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1091" name="OrthographicDepthFallbackKeepsFocusedColor" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.OrthographicDepthFallbackKeepsFocusedColor" methodname="OrthographicDepthFallbackKeepsFocusedColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1214461508" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.036894" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1088" name="OutlineDepthOffsetCanDefocusAnOtherwiseFocusedOwner" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.OutlineDepthOffsetCanDefocusAnOtherwiseFocusedOwner" methodname="OutlineDepthOffsetCanDefocusAnOtherwiseFocusedOwner" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="85148066" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.022129" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1151" name="OverlappingNativeOutlinesInheritTheForwardVisibleCharacter" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.OverlappingNativeOutlinesInheritTheForwardVisibleCharacter" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.164284" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1149" name="OverlappingNativeOutlinesInheritTheForwardVisibleCharacter(False)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.OverlappingNativeOutlinesInheritTheForwardVisibleCharacter(False)" methodname="OverlappingNativeOutlinesInheritTheForwardVisibleCharacter" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1687126464" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.044462" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1150" name="OverlappingNativeOutlinesInheritTheForwardVisibleCharacter(True)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.OverlappingNativeOutlinesInheritTheForwardVisibleCharacter(True)" methodname="OverlappingNativeOutlinesInheritTheForwardVisibleCharacter" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1897067580" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.049814" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1125" name="PrivateOutlineDepthCopyPreservesStencil" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.PrivateOutlineDepthCopyPreservesStencil" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="3" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.085907" total="3" passed="3" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1122" name="PrivateOutlineDepthCopyPreservesStencil(1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.PrivateOutlineDepthCopyPreservesStencil(1)" methodname="PrivateOutlineDepthCopyPreservesStencil" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="998369584" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.026990" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1123" name="PrivateOutlineDepthCopyPreservesStencil(2)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.PrivateOutlineDepthCopyPreservesStencil(2)" methodname="PrivateOutlineDepthCopyPreservesStencil" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="2085219128" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.022431" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1124" name="PrivateOutlineDepthCopyPreservesStencil(4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.PrivateOutlineDepthCopyPreservesStencil(4)" methodname="PrivateOutlineDepthCopyPreservesStencil" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="429288729" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.024307" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1163" name="RealPipelineTransfersOutlineAndProtectsItsColor" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.RealPipelineTransfersOutlineAndProtectsItsColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:54Z" duration="0.742322" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1157" name="RealPipelineTransfersOutlineAndProtectsItsColor(False,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.RealPipelineTransfersOutlineAndProtectsItsColor(False,1)" methodname="RealPipelineTransfersOutlineAndProtectsItsColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="104764522" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.130013" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1158" name="RealPipelineTransfersOutlineAndProtectsItsColor(True,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.RealPipelineTransfersOutlineAndProtectsItsColor(True,1)" methodname="RealPipelineTransfersOutlineAndProtectsItsColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="891397929" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.123852" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                    <output><![CDATA[CommandBuffer: temporary render texture  not found while executing  (SetGlobalTexture)
+]]></output>
+                  </test-case>
+                  <test-case id="1159" name="RealPipelineTransfersOutlineAndProtectsItsColor(False,2)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.RealPipelineTransfersOutlineAndProtectsItsColor(False,2)" methodname="RealPipelineTransfersOutlineAndProtectsItsColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1861834512" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:53Z" duration="0.110654" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1160" name="RealPipelineTransfersOutlineAndProtectsItsColor(True,2)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.RealPipelineTransfersOutlineAndProtectsItsColor(True,2)" methodname="RealPipelineTransfersOutlineAndProtectsItsColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="461678926" result="Passed" start-time="2026-11-25 08:00:53Z" end-time="2026-11-25 08:00:54Z" duration="0.129291" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1161" name="RealPipelineTransfersOutlineAndProtectsItsColor(False,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.RealPipelineTransfersOutlineAndProtectsItsColor(False,4)" methodname="RealPipelineTransfersOutlineAndProtectsItsColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="624422361" result="Passed" start-time="2026-11-25 08:00:54Z" end-time="2026-11-25 08:00:54Z" duration="0.130656" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1162" name="RealPipelineTransfersOutlineAndProtectsItsColor(True,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.RealPipelineTransfersOutlineAndProtectsItsColor(True,4)" methodname="RealPipelineTransfersOutlineAndProtectsItsColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="669612076" result="Passed" start-time="2026-11-25 08:00:54Z" end-time="2026-11-25 08:00:54Z" duration="0.109817" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1143" name="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" testcasecount="4" result="Passed" start-time="2026-11-25 08:00:54Z" end-time="2026-11-25 08:00:55Z" duration="0.875348" total="4" passed="4" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1139" name="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(False,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(False,1)" methodname="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1241199819" result="Passed" start-time="2026-11-25 08:00:54Z" end-time="2026-11-25 08:00:54Z" duration="0.173846" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1140" name="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(True,1)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(True,1)" methodname="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="426123242" result="Passed" start-time="2026-11-25 08:00:54Z" end-time="2026-11-25 08:00:54Z" duration="0.310608" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1141" name="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(False,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(False,4)" methodname="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="2124880897" result="Passed" start-time="2026-11-25 08:00:54Z" end-time="2026-11-25 08:00:55Z" duration="0.165448" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1142" name="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(True,4)" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(True,4)" methodname="SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="628484692" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.187480" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1089" name="WeightedGatherPreservesUniformColor" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.WeightedGatherPreservesUniformColor" methodname="WeightedGatherPreservesUniformColor" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="421382246" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.067587" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1086" name="ZeroCoverageAndMissingOutlineDoNotReuseShellDepth" fullname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests.ZeroCoverageAndMissingOutlineDoNotReuseShellDepth" methodname="ZeroCoverageAndMissingOutlineDoNotReuseShellDepth" classname="lilToon.URP.Extensions.Tests.ScreenProcessRegressionTests" runstate="Runnable" seed="1737735232" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.021734" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1164" name="ScreenProcessSamplingStrideTests" fullname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" classname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.293377" total="7" passed="7" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1170" name="BokehZoomStridePreservesFocusedOutlineDepthGate" fullname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests.BokehZoomStridePreservesFocusedOutlineDepthGate" methodname="BokehZoomStridePreservesFocusedOutlineDepthGate" classname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" runstate="Runnable" seed="1742773447" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.015593" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1166" name="DensitySettingMapsToFullHalfAndQuarterSampleStride" fullname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests.DensitySettingMapsToFullHalfAndQuarterSampleStride" methodname="DensitySettingMapsToFullHalfAndQuarterSampleStride" classname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" runstate="Runnable" seed="2144988973" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.000854" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1168" name="DepthOfFieldKeepsConstantColorAtEverySampleDensity" fullname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests.DepthOfFieldKeepsConstantColorAtEverySampleDensity" methodname="DepthOfFieldKeepsConstantColorAtEverySampleDensity" classname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" runstate="Runnable" seed="1360399583" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.122229" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1169" name="DepthOfFieldStridePreservesFocusedOutlineDepthGate" fullname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests.DepthOfFieldStridePreservesFocusedOutlineDepthGate" methodname="DepthOfFieldStridePreservesFocusedOutlineDepthGate" classname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" runstate="Runnable" seed="1137176094" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.008000" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1167" name="FilterLimitsClampLegacyValuesAtEveryDensity" fullname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests.FilterLimitsClampLegacyValuesAtEveryDensity" methodname="FilterLimitsClampLegacyValuesAtEveryDensity" classname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" runstate="Runnable" seed="90404624" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.001318" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1165" name="FullDensityCapturesReferenceFilterOutputs" fullname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests.FullDensityCapturesReferenceFilterOutputs" methodname="FullDensityCapturesReferenceFilterOutputs" classname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" runstate="Runnable" seed="1738083803" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.095193" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1171" name="SkyTyndallStridePreservesConstantSignalEnergy" fullname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests.SkyTyndallStridePreservesConstantSignalEnergy" methodname="SkyTyndallStridePreservesConstantSignalEnergy" classname="lilToon.URP.Extensions.Tests.ScreenProcessSamplingStrideTests" runstate="Runnable" seed="2014532022" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:55Z" duration="0.021952" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+    <test-suite type="Assembly" id="1217" name="lilToon.URP.Extensions.ShadowCast.Tests.dll" fullname="D:/Temp/HoCapsuleAOValidation-20261125/Library/ScriptAssemblies/lilToon.URP.Extensions.ShadowCast.Tests.dll" runstate="Runnable" testcasecount="32" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:56Z" duration="0.806342" total="32" passed="32" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="57276" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1218" name="lilToon" fullname="lilToon" runstate="Runnable" testcasecount="32" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:56Z" duration="0.806065" total="32" passed="32" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1219" name="URP" fullname="lilToon.URP" runstate="Runnable" testcasecount="32" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:56Z" duration="0.805998" total="32" passed="32" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestSuite" id="1220" name="Extensions" fullname="lilToon.URP.Extensions" runstate="Runnable" testcasecount="32" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:56Z" duration="0.805959" total="32" passed="32" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-suite type="TestSuite" id="1221" name="Tests" fullname="lilToon.URP.Extensions.Tests" runstate="Runnable" testcasecount="32" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:56Z" duration="0.805873" total="32" passed="32" failed="0" inconclusive="0" skipped="0" asserts="0">
+              <properties />
+              <test-suite type="TestFixture" id="1177" name="HoRPShadowModeTests" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:56Z" duration="0.756242" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1190" name="FullAdditionalCastIsMatchedOnlyToItsUrpLightIndex" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.FullAdditionalCastIsMatchedOnlyToItsUrpLightIndex" methodname="FullAdditionalCastIsMatchedOnlyToItsUrpLightIndex" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="1471373391" result="Passed" start-time="2026-11-25 08:00:55Z" end-time="2026-11-25 08:00:56Z" duration="0.560320" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1178" name="GeneratedLilToonVariantsExposePersistentMainDefault" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GeneratedLilToonVariantsExposePersistentMainDefault" methodname="GeneratedLilToonVariantsExposePersistentMainDefault" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="179806515" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.181458" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1189" name="GPUReceiverModeFiltersOnlyTheRequestedPool" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.012831" total="10" passed="10" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1179" name="GPUReceiverModeFiltersOnlyTheRequestedPool(0,0,1.0f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(0,0,1.0f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="867380720" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.004505" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1180" name="GPUReceiverModeFiltersOnlyTheRequestedPool(0,2,0.35f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(0,2,0.35f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="194967106" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.001148" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1181" name="GPUReceiverModeFiltersOnlyTheRequestedPool(1,0,1.0f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(1,0,1.0f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="818500820" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000773" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1182" name="GPUReceiverModeFiltersOnlyTheRequestedPool(1,1,1.0f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(1,1,1.0f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="1697386099" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000650" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1183" name="GPUReceiverModeFiltersOnlyTheRequestedPool(2,0,0.35f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(2,0,0.35f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="1544303397" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000698" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1184" name="GPUReceiverModeFiltersOnlyTheRequestedPool(2,1,0.35f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(2,1,0.35f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="1501125357" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000683" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1185" name="GPUReceiverModeFiltersOnlyTheRequestedPool(1,2,0.35f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(1,2,0.35f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="374777235" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000698" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1186" name="GPUReceiverModeFiltersOnlyTheRequestedPool(1,3,0.35f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(1,3,0.35f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="1417971115" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000914" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1187" name="GPUReceiverModeFiltersOnlyTheRequestedPool(2,2,0.35f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(2,2,0.35f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="621513757" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000894" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1188" name="GPUReceiverModeFiltersOnlyTheRequestedPool(2,3,0.35f)" fullname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests.GPUReceiverModeFiltersOnlyTheRequestedPool(2,3,0.35f)" methodname="GPUReceiverModeFiltersOnlyTheRequestedPool" classname="lilToon.URP.Extensions.Tests.HoRPShadowModeTests" runstate="Runnable" seed="395801306" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000916" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+              </test-suite>
+              <test-suite type="TestFixture" id="1191" name="HoShadowCastLightEligibilityTests" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" testcasecount="12" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.005888" total="12" passed="12" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-suite type="ParameterizedMethod" id="1198" name="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.AdditionalLightBufferIndexMatchesUrpVisibleLightPacking" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000913" total="6" passed="6" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1192" name="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(0,2,0)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(0,2,0)" methodname="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="691669925" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000387" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1193" name="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(1,2,1)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(1,2,1)" methodname="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="77258725" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000033" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1194" name="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(3,2,2)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(3,2,2)" methodname="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="833160772" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000024" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1195" name="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(2,2,-1)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(2,2,-1)" methodname="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="136770317" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000025" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1196" name="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(3,-1,3)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(3,-1,3)" methodname="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="1862408850" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000024" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1197" name="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(-1,2,-1)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.AdditionalLightBufferIndexMatchesUrpVisibleLightPacking(-1,2,-1)" methodname="AdditionalLightBufferIndexMatchesUrpVisibleLightPacking" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="191046863" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000025" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1200" name="CasterFilteringPreservesPerLightCullingMaskAndEmptyMasks" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.CasterFilteringPreservesPerLightCullingMaskAndEmptyMasks" methodname="CasterFilteringPreservesPerLightCullingMaskAndEmptyMasks" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="1841338733" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000781" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1199" name="CustomShadowLayersAreIndependentFromLightingLayers" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.CustomShadowLayersAreIndependentFromLightingLayers" methodname="CustomShadowLayersAreIndependentFromLightingLayers" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="1809935231" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.001271" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1201" name="MainPoolDeclarationPreservesHardSoftAndDoesNotGrantShadowEligibility" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.MainPoolDeclarationPreservesHardSoftAndDoesNotGrantShadowEligibility" methodname="MainPoolDeclarationPreservesHardSoftAndDoesNotGrantShadowEligibility" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="145683557" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000790" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1202" name="NoShadowLightIsExcludedWithoutChangingItsLightingState" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.NoShadowLightIsExcludedWithoutChangingItsLightingState" methodname="NoShadowLightIsExcludedWithoutChangingItsLightingState" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="64664956" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000497" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1204" name="RealtimeAndMixedHardOrSoftLightsRemainEligible" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.RealtimeAndMixedHardOrSoftLightsRemainEligible" methodname="RealtimeAndMixedHardOrSoftLightsRemainEligible" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="354932419" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000397" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-case id="1203" name="ZeroStrengthAndBakedLightsAreExcluded" fullname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests.ZeroStrengthAndBakedLightsAreExcluded" methodname="ZeroStrengthAndBakedLightsAreExcluded" classname="lilToon.URP.Extensions.Tests.HoShadowCastLightEligibilityTests" runstate="Runnable" seed="1633124852" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000136" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+              </test-suite>
+              <test-suite type="TestFixture" id="1205" name="HoShadowCastShaderContractValidatorTests" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.043510" total="8" passed="8" failed="0" inconclusive="0" skipped="0" asserts="0">
+                <properties />
+                <test-case id="1209" name="FinalDefineDoesNotRequireATrailingNewline" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.FinalDefineDoesNotRequireATrailingNewline" methodname="FinalDefineDoesNotRequireATrailingNewline" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" seed="2000202120" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000319" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                </test-case>
+                <test-suite type="ParameterizedMethod" id="1215" name="MissingOrChangedValuesStillProduceAnError" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.MissingOrChangedValuesStillProduceAnError" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.001790" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1213" name="MissingOrChangedValuesStillProduceAnError(False)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.MissingOrChangedValuesStillProduceAnError(False)" methodname="MissingOrChangedValuesStillProduceAnError" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" seed="2092111068" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.001309" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1214" name="MissingOrChangedValuesStillProduceAnError(True)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.MissingOrChangedValuesStillProduceAnError(True)" methodname="MissingOrChangedValuesStillProduceAnError" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" seed="427724679" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000113" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1208" name="NumericDefinesAcceptLineEndingsWhitespaceAndComments" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.NumericDefinesAcceptLineEndingsWhitespaceAndComments" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000579" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1206" name="NumericDefinesAcceptLineEndingsWhitespaceAndComments(&quot;\n&quot;)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.NumericDefinesAcceptLineEndingsWhitespaceAndComments(&quot;\n&quot;)" methodname="NumericDefinesAcceptLineEndingsWhitespaceAndComments" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" seed="1844097705" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000336" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1207" name="NumericDefinesAcceptLineEndingsWhitespaceAndComments(&quot;\r\n&quot;)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.NumericDefinesAcceptLineEndingsWhitespaceAndComments(&quot;\r\n&quot;)" methodname="NumericDefinesAcceptLineEndingsWhitespaceAndComments" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" seed="1874353685" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.000044" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-suite type="ParameterizedMethod" id="1212" name="ShippingContractParsesAllNumericLimits" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.ShippingContractParsesAllNumericLimits" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.022361" total="2" passed="2" failed="0" inconclusive="0" skipped="0" asserts="0">
+                  <properties />
+                  <test-case id="1210" name="ShippingContractParsesAllNumericLimits(&quot;\n&quot;)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.ShippingContractParsesAllNumericLimits(&quot;\n&quot;)" methodname="ShippingContractParsesAllNumericLimits" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" seed="2036303135" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.018742" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                  <test-case id="1211" name="ShippingContractParsesAllNumericLimits(&quot;\r\n&quot;)" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.ShippingContractParsesAllNumericLimits(&quot;\r\n&quot;)" methodname="ShippingContractParsesAllNumericLimits" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" seed="582361463" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.003360" asserts="0">
+                    <properties>
+                      <property name="retryIteration" value="0" />
+                      <property name="repeatIteration" value="0" />
+                    </properties>
+                  </test-case>
+                </test-suite>
+                <test-case id="1216" name="ShippingContractPassesCompleteValidation" fullname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests.ShippingContractPassesCompleteValidation" methodname="ShippingContractPassesCompleteValidation" classname="lilToon.URP.Extensions.Tests.HoShadowCastShaderContractValidatorTests" runstate="Runnable" seed="1324851527" result="Passed" start-time="2026-11-25 08:00:56Z" end-time="2026-11-25 08:00:56Z" duration="0.009252" asserts="0">
+                  <properties>
+                    <property name="retryIteration" value="0" />
+                    <property name="repeatIteration" value="0" />
+                  </properties>
+                  <output><![CDATA[Saving results to: C:/Users/hhh12/AppData/LocalLow/DefaultCompany/HoCapsuleAOValidation-20261125\TestResults.xml
+]]></output>
+                </test-case>
+              </test-suite>
+            </test-suite>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>
