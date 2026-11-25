@@ -256,7 +256,12 @@ public static class HoMmdStageBuilder
             AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceSynchronousImport);
             var importer=AssetImporter.GetAtPath(path) as HoPmxImporter;
             if(importer==null)throw new Exception("Ho PMX importer missing "+path);
-            importer.generateOutline=false; EditorUtility.SetDirty(importer);importer.SaveAndReimport();
+            if (HoMmdEnvironmentSurface.Available)
+                importer.materialProfile = HoPmxMaterialProfile.EnvironmentUrp;
+            else
+                importer.generateOutline = false;
+            EditorUtility.SetDirty(importer);
+            importer.SaveAndReimport();
             HoPmxMaterialExtraction.Extract(path,folder+"/Materials");
         }
         var setup=EditorSceneManager.GetSceneManagerSetup();
@@ -303,8 +308,7 @@ public static class HoMmdStageBuilder
             environment.pipeline=pipeline;environment.sun=sun;environment.ambientSky=r.ambient;
             environment.ambientEquator=r.ambient*.7f;environment.ambientGround=r.ambient*.3f;
             environment.ambientIntensity=1;environment.reflectionIntensity=.35f;environment.fog=false;
-            var sky=new Material(Shader.Find("Skybox/Procedural")){name=r.name+" 天空"};
-            sky.SetColor("_SkyTint",r.ambient);sky.SetColor("_GroundColor",r.ambient*.3f);sky.SetFloat("_Exposure",.6f);
+            var sky=HoMmdEnvironmentSurface.CreateStageSky(r.name+" 天空",r.ambient,r.ambient*.3f,.6f);
             AssetDatabase.CreateAsset(sky,folder+"/Rendering/天空.mat");environment.skybox=sky;environment.ApplyNow();
             var volume=renderRoot.gameObject.AddComponent<Volume>();volume.isGlobal=true;volume.priority=50;
             volume.sharedProfile=CreateProfile(folder,r);
@@ -334,6 +338,16 @@ public static class HoMmdStageBuilder
     static void TuneMaterial(Material mat,Recipe recipe)
     {
         string n=mat.name;
+        if (HoMmdEnvironmentSurface.IsEnvironment(mat))
+        {
+            bool reflectiveMetal = new[] { "金", "银", "黑铁", "框架", "镶边", "齿轮", "钟", "鐘", "指針", "指针" }.Any(n.Contains);
+            bool glass = new[] { "玻璃", "水晶", "水滴" }.Any(n.Contains);
+            bool emissive = new[] { "燈膽", "灯胆", "燈胆", "金灯", "银灯", "红灯", "星星" }.Any(n.Contains);
+            HoMmdEnvironmentSurface.Configure(mat, reflectiveMetal, glass, n.Contains("水晶") ? 0.72f : 0.22f,
+                emissive ? recipe.accent * 2.2f : Color.black);
+            EditorUtility.SetDirty(mat);
+            return;
+        }
         Set(mat,"_AsUnlit",.05f);Set(mat,"_LightMinLimit",.08f);Set(mat,"_LightMaxLimit",1.6f);
         Set(mat,"_MonochromeLighting",0);Set(mat,"_MultiLightIntensity",1);Set(mat,"_MultiLightCastShadowStrength",.7f);
         Set(mat,"_ShadowStrength",.65f);Set(mat,"_ShadowBorder",.35f);Set(mat,"_ShadowBlur",.3f);

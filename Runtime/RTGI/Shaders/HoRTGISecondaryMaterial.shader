@@ -4,6 +4,10 @@ Shader "Hidden/lilToon/URP/RTGI/SecondaryMaterial"
     {
         [HideInInspector] _HoRTGISecondarySupported("Supported", Float) = 0
         [HideInInspector] _HoRTGICutout("Cutout enabled", Float) = 0
+        [HideInInspector] _HoRTGIEnvironment("Environment surface", Float) = 0
+        [HideInInspector] _HoRTGIEnvironmentPBRMode("Environment PBR mode", Float) = 0
+        [HideInInspector] _HoRTGIEnvironmentNormalMap("Environment normal map", Float) = 0
+        [HideInInspector] _HoRTGIEnvironmentEmission("Environment emission", Float) = 0
         _AlphaMask("Alpha mask",2D)="white"{}
         _AlphaMaskMode("Mask mode",Float)=0
         _AlphaMaskScale("Mask scale",Float)=1
@@ -22,6 +26,8 @@ Shader "Hidden/lilToon/URP/RTGI/SecondaryMaterial"
         _EmissionBlendMask("Emission mask", 2D) = "white" {}
         _EmissionGradTex("Emission gradient", 2D) = "white" {}
         _BumpMap("Normal", 2D) = "bump" {}
+        _BumpScale("Normal scale", Float) = 1
+        _FlipNormal("Flip backface normals", Float) = 0
         _SmoothnessTex("Smoothness", 2D) = "white" {}
         _MetallicGlossMap("Metallic", 2D) = "white" {}
     }

@@ -64,6 +64,7 @@ float4 HoShadowCastTransformWorldToSecondDirectionalShadow(int sliceIndex, float
         dot(_HoShadowCastSecondDirectionalWorldToShadowRow3[sliceIndex], position));
 }
 
+// Both transforms yield slice-local UV. The depth sampler applies atlas packing.
 bool HoShadowCastIsInsidePunctualSlice(int sliceIndex, float3 positionWS)
 {
     if (sliceIndex < 0 || sliceIndex >= _HoShadowCastSliceCount || sliceIndex >= HO_SHADOW_CAST_ARRAY_SLICES)
@@ -78,10 +79,8 @@ bool HoShadowCastIsInsidePunctualSlice(int sliceIndex, float3 positionWS)
     }
 
     shadowCoord.xyz /= shadowCoord.w;
-    float4 sliceData = _HoShadowCastSliceData[sliceIndex];
-    float2 sliceMax = sliceData.xy + sliceData.zz;
     return shadowCoord.z > 0.0 && shadowCoord.z < 1.0 &&
-        all(shadowCoord.xy >= sliceData.xy) && all(shadowCoord.xy <= sliceMax);
+        all(shadowCoord.xy >= 0.0) && all(shadowCoord.xy <= 1.0);
 }
 
 bool HoShadowCastIsInsideSecondDirectionalSlice(int sliceIndex, float3 positionWS)
@@ -100,10 +99,8 @@ bool HoShadowCastIsInsideSecondDirectionalSlice(int sliceIndex, float3 positionW
     }
 
     shadowCoord.xyz /= shadowCoord.w;
-    float4 sliceData = _HoShadowCastSecondDirectionalSliceData[sliceIndex];
-    float2 sliceMax = sliceData.xy + sliceData.zz;
     return shadowCoord.z > 0.0 && shadowCoord.z < 1.0 &&
-        all(shadowCoord.xy >= sliceData.xy) && all(shadowCoord.xy <= sliceMax);
+        all(shadowCoord.xy >= 0.0) && all(shadowCoord.xy <= 1.0);
 }
 
 float HoShadowCastLightInfluence(int lightIndex, float3 positionWS)

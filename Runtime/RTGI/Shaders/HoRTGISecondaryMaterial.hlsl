@@ -3,8 +3,15 @@
 // lilToon material components are called directly, without forward lighting.
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+#include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
 #include "UnityRayTracingMeshUtils.cginc"
 #include "HoRTGISecondarySurface.hlsl"
+
+float3 HoGIUnpackEnvironmentNormal(float4 normalSample, float scale)
+{
+    return UnpackNormalScale(normalSample, scale);
+}
+
 // This bounded entry must be updated together with lilToon's shared HLSL.
 #define LIL_PASS_RTGI_SECONDARY
 #define LIL_RENDER 0
@@ -26,6 +33,16 @@ float4x4 HoGIObjectToWorld() { float3x4 m=ObjectToWorld3x4();return float4x4(m[0
 #include "Packages/jp.lilxyzw.liltoon/Shader/Includes/lil_common_frag.hlsl"
 
 float _HoRTGISecondarySupported,_HoRTGICutout;
+float _HoRTGIEnvironment;
+float _HoRTGIEnvironmentPBRMode;
+float _HoRTGIEnvironmentNormalMap;
+float _HoRTGIEnvironmentEmission;
+
+SAMPLER(sampler_BumpMap);
+SAMPLER(sampler_PBRMap);
+SAMPLER(sampler_MetallicGlossMap);
+SAMPLER(sampler_ReflectanceTex);
+SAMPLER(sampler_SmoothnessTex);
 // LIL_RENDER=0 keeps the opaque material component layout; its optional alpha
 // uniforms are therefore explicit for this private any-hit adapter.
 float4 _AlphaMask_ST;
@@ -49,6 +66,52 @@ void HoRTGIAlphaHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
     float3 weights=float3(1-attributes.barycentrics.x-attributes.barycentrics.y,attributes.barycentrics);
     float2 uv=HoGIUV(tri,weights,kVertexAttributeTexCoord0);
     if(HoRTEvaluateCutoutAlpha(uv)<_Cutoff)IgnoreHit();
+}
+
+// The Environment material reads each map from the original mesh UV. Keep
+// those transforms distinct from the lilToon main-UV chains below.
+void HoGIEvaluateEnvironment(float2 uv, float3 normalWS, float4 tangentOS,
+    inout HoRTGISecondarySurface surface)
+{
+    float4 baseSample = _MainTex.SampleLevel(sampler_MainTex, TRANSFORM_TEX(uv, _MainTex), 0);
+    surface.baseColor = baseSample.rgb * _Color.rgb;
+    float metallic;
+    float reflectanceWeight;
+    float smoothness;
+    [branch] if (_HoRTGIEnvironmentPBRMode >= 0.5)
+    {
+        float4 packed = _PBRMap.SampleLevel(sampler_PBRMap, TRANSFORM_TEX(uv, _PBRMap), 0);
+        metallic = packed.r;
+        reflectanceWeight = packed.g;
+        smoothness = packed.a;
+    }
+    else
+    {
+        metallic = _MetallicGlossMap.SampleLevel(sampler_MetallicGlossMap, TRANSFORM_TEX(uv, _MetallicGlossMap), 0).r;
+        reflectanceWeight = _ReflectanceTex.SampleLevel(sampler_ReflectanceTex, TRANSFORM_TEX(uv, _ReflectanceTex), 0).r;
+        smoothness = _SmoothnessTex.SampleLevel(sampler_SmoothnessTex, TRANSFORM_TEX(uv, _SmoothnessTex), 0).r;
+    }
+
+    surface.metallic = saturate(_Metallic * metallic);
+    surface.reflectance = saturate(_Reflectance * reflectanceWeight);
+    surface.perceptualRoughness = 1.0 - saturate(_Smoothness * smoothness);
+    if (_HoRTGIEnvironmentNormalMap > 0.5 && dot(tangentOS.xyz, tangentOS.xyz) > 1e-10)
+    {
+        float3x3 objectToWorld = (float3x3)ObjectToWorld3x4();
+        float3 tangentWS = normalize(mul(objectToWorld, tangentOS.xyz));
+        float handedness = tangentOS.w * (determinant(objectToWorld) < 0 ? -1 : 1);
+        float3 bitangentWS = handedness * cross(normalWS, tangentWS);
+        float4 normalSample = _BumpMap.SampleLevel(sampler_BumpMap, TRANSFORM_TEX(uv, _BumpMap), 0);
+        float3 normalTS = HoGIUnpackEnvironmentNormal(normalSample, _BumpScale);
+        normalWS = normalize(mul(normalTS, float3x3(tangentWS, bitangentWS, normalWS)));
+    }
+    float faceSign = _FlipNormal > 0.5 && HitKind() == HIT_KIND_TRIANGLE_BACK_FACE ? -1.0 : 1.0;
+    surface.normalWS = normalWS * faceSign;
+    if (_HoRTGIEnvironmentEmission > 0.5)
+    {
+        float3 emission = _EmissionMap.SampleLevel(sampler_EmissionMap, TRANSFORM_TEX(uv, _EmissionMap), 0).rgb;
+        surface.emission = max(0, emission * _EmissionColor.rgb);
+    }
 }
 
 [shader("closesthit")]
@@ -76,6 +139,13 @@ void HoRTGIClosestHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
     float3 geo=normalize(cross(edge1,edge2));
     if(dot(geo,WorldRayDirection())>0)geo=-geo;
     n=normalize(mul(n,(float3x3)WorldToObject3x4()));
+    [branch] if (_HoRTGIEnvironment > 0.5)
+    {
+        HoGIEvaluateEnvironment(HoGIUV(tri, weights, kVertexAttributeTexCoord0), n, tangent, payload);
+        payload.geometricNormalWS = geo;
+        payload.status = 1;
+        return;
+    }
     if(dot(n,geo)<0)n=-n;
     lilFragData fd=lilInitFragData();
     fd.positionWS=WorldRayOrigin()+WorldRayDirection()*RayTCurrent();

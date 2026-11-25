@@ -89,7 +89,7 @@ public static class HoMmdStageRemaining
     {
         var scene=EditorSceneManager.OpenScene(HoMmdStageBuilder.Root+name+"/"+name+".unity",OpenSceneMode.Single);
         var env=scene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<HoMmdStageEnvironment>()).Single();
-        env.skybox.shader=Shader.Find("Ho/MMD Stage Gradient Sky");EditorUtility.SetDirty(env.skybox);
+        env.skybox.shader=HoMmdEnvironmentSurface.FindSky("HoShader/Environment Gradient Sky","Ho/MMD Stage Gradient Sky");EditorUtility.SetDirty(env.skybox);
         EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
     }
     public static void Art(string name)
@@ -193,7 +193,7 @@ public static class HoMmdStageRemaining
         if(importer==null)throw new InvalidOperationException("HDR importer unavailable "+path);
         if(importer.textureShape!=TextureImporterShape.TextureCube){importer.textureShape=TextureImporterShape.TextureCube;importer.generateCubemap=TextureImporterGenerateCubemap.AutoCubemap;importer.maxTextureSize=2048;importer.SaveAndReimport();}
         var cube=AssetDatabase.LoadAssetAtPath<Cubemap>(path);if(cube==null)throw new Exception("HDR cubemap import failed "+path);
-        env.skybox.shader=Shader.Find("Skybox/Cubemap");env.skybox.SetTexture("_Tex",cube);env.skybox.SetFloat("_Exposure",spec.skyExposure);env.skybox.SetFloat("_Rotation",20);
+        env.skybox.shader=HoMmdEnvironmentSurface.FindSky("HoShader/Environment Cubemap Sky","Skybox/Cubemap");env.skybox.SetTexture("_Tex",cube);env.skybox.SetFloat("_Exposure",spec.skyExposure);env.skybox.SetFloat("_Rotation",20);
         var sky=env.GetComponentsInChildren<MeshRenderer>().Single(x=>x.name=="天空球").sharedMaterial;
         sky.SetTexture("_HdrTex",cube);sky.SetFloat("_UseHdr",1);sky.SetFloat("_HdrExposure",spec.skyExposure);sky.SetFloat("_HdrRotation",20);
         EditorUtility.SetDirty(sky);EditorUtility.SetDirty(env.skybox);
@@ -240,7 +240,7 @@ public static class HoMmdStageRemaining
     {
         var group=root.transform.Find("01 场景模型");if(group.Find("展台地面")!=null)return;
         var plane=GameObject.CreatePrimitive(PrimitiveType.Plane);plane.name="展台地面";plane.transform.SetParent(group,false);plane.transform.position=new Vector3(0,-.155f,0);plane.transform.localScale=Vector3.one*.3f;
-        Object.DestroyImmediate(plane.GetComponent<Collider>());var mat=new Material(Shader.Find("lilToon")){name="展台地面"};mat.SetColor("_Color",C(.09f,.11f,.12f));
+        Object.DestroyImmediate(plane.GetComponent<Collider>());var mat=HoMmdEnvironmentSurface.Create("展台地面",C(.09f,.11f,.12f));
         AssetDatabase.CreateAsset(mat,folder+"/Materials/展台地面.mat");plane.GetComponent<MeshRenderer>().sharedMaterial=mat;
     }
     static void Dapple(GameObject root,string folder,Light sun,Vector3 target,float size)
@@ -262,8 +262,8 @@ public static class HoMmdStageRemaining
             }
             mesh=new Mesh{name="斑驳光影遮片"};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();AssetDatabase.CreateAsset(mesh,meshPath);
         }
-        var mat=AssetDatabase.LoadAssetAtPath<Material>(matPath);if(mat==null){mat=new Material(Shader.Find("lilToon")){name="斑驳遮片"};AssetDatabase.CreateAsset(mat,matPath);}
-        F(mat,"_Cull",0);mat.SetColor("_Color",Color.black);mat.SetShaderPassEnabled("ShadowCaster",true);EditorUtility.SetDirty(mat);
+        var mat=AssetDatabase.LoadAssetAtPath<Material>(matPath);if(mat==null){mat=HoMmdEnvironmentSurface.Create("斑驳遮片",Color.black,shadowOnly:true);AssetDatabase.CreateAsset(mat,matPath);}
+        F(mat,"_Cull",0);HoMmdEnvironmentSurface.SetColor(mat,Color.black);mat.SetShaderPassEnabled("ShadowCaster",true);EditorUtility.SetDirty(mat);
         go.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=go.AddComponent<MeshRenderer>();renderer.sharedMaterial=mat;renderer.shadowCastingMode=ShadowCastingMode.ShadowsOnly;renderer.receiveShadows=true;
     }
     static void AddPost(GameObject root,Spec spec,string name)

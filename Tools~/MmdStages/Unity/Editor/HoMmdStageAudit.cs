@@ -47,7 +47,9 @@ public static class HoMmdStageAudit
                     (x=="Assets/Settings/PC_Renderer.asset"||x=="Assets/Settings/PC_RPAsset.asset")&&!sharedRenderAssets).ToArray();
                 var modelRenderers=renderers.Where(x=>x.transform.parent.name!="04 环境与后处理").ToArray();
                 bool skySphere=renderers.Any(x=>x.name=="天空球"&&x.sharedMaterial!=null&&x.sharedMaterial.shader!=null&&x.sharedMaterial.shader.name=="Ho/MMD Stage Sky Sphere");
-                var missing=mats.Where(x=>x==null||x.shader==null||(!x.shader.name.Contains("lilToon")&&x.shader.name!="Ho/MMD Stage Sky Sphere")).Select(x=>x==null?"null":x.name).ToArray();
+                var missing=mats.Where(x=>x==null||x.shader==null||(!HoMmdEnvironmentSurface.IsEnvironment(x)&&
+                    !x.shader.name.Contains("lilToon")&&x.shader.name!="Ho/MMD Stage Sky Sphere"&&
+                    x.shader.name!="HoShader/Environment Sky Sphere")).Select(x=>x==null?"null":x.name).ToArray();
                 bool dof=profile.TryGet<ScreenProcessStackVolume>(out var screen)&&screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.DepthOfField);
                 profile.TryGet<ImageProcessStackVolume>(out var image);
                 var bars=image!=null?image.layers.value.FirstOrDefault(x=>x.enabled&&x.effect==ImageProcessEffect.CinematicBars):null;

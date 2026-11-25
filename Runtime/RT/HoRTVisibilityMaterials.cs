@@ -18,6 +18,8 @@ namespace lilToon.URP.Extensions.RT
         private readonly HashSet<Material> seen = new(References.Instance);
         private readonly List<Material> removed = new();
         private static readonly string[] Scalars = { "_Cutoff", "_AlphaMaskMode", "_AlphaMaskScale", "_AlphaMaskValue" };
+        private static readonly string[] LilToonTextures = { "_MainTex", "_AlphaMask" };
+        private static readonly string[] EnvironmentTextures = { "_BaseMap" };
         internal int Signature { get; private set; }
         int IHoRTMaterialProfile.Signature => Signature;
         void IHoRTMaterialProfile.BeginPrepare() => BeginFrame();
@@ -50,13 +52,15 @@ namespace lilToon.URP.Extensions.RT
                 adapters.Add(source, adapter);
             }
             adapter.CopyPropertiesFromMaterial(source); adapter.shaderKeywords = Array.Empty<string>();
-            bool cutout = HoRTCutoutSupport.Supports(source); adapter.SetFloat(cutoutProperty, cutout ? 1 : 0);
-            if (cutout) unchecked
+            bool environment = HoRTCutoutSupport.IsEnvironmentSurface(source);
+            if (environment) HoRTCutoutSupport.CopyEnvironmentBaseToAdapter(source, adapter);
+            adapter.SetFloat(cutoutProperty, 1);
+            unchecked
             {
                 int hash = source.GetInstanceID();
-                hash = hash * 397 ^ source.GetColor("_Color").a.GetHashCode();
+                hash = hash * 397 ^ source.GetColor(environment ? "_BaseColor" : "_Color").a.GetHashCode();
                 foreach (string name in Scalars) hash = hash * 397 ^ Float(source, name).GetHashCode();
-                foreach (string name in new[] { "_MainTex", "_AlphaMask" })
+                foreach (string name in environment ? EnvironmentTextures : LilToonTextures)
                 {
                     if (!source.HasProperty(name)) continue;
                     var texture = source.GetTexture(name);

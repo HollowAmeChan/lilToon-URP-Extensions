@@ -443,11 +443,13 @@ public static class HoMmdVideoWorkshop
             Transform studio = new GameObject("摄影棚 · 地面与补光").transform;
             GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Plane);
             floor.name = "地面 · 接触阴影"; floor.transform.SetParent(studio, false); floor.transform.localScale = Vector3.one * 3;
-            var material = new Material(Shader.Find("lilToon")) { name = "摄影棚地面" };
-            material.SetColor("_Color", new Color(.32f, .37f, .44f));
-            material.SetFloat("_UseShadow", 1); material.SetFloat("_ShadowReceive", 1);
-            material.SetColor("_ShadowColor", new Color(.17f, .22f, .32f));
-            material.SetFloat("_ShadowBlur", .3f);
+            var material = HoMmdEnvironmentSurface.Create("摄影棚地面", new Color(.32f, .37f, .44f));
+            if (!HoMmdEnvironmentSurface.IsEnvironment(material))
+            {
+                material.SetFloat("_UseShadow", 1); material.SetFloat("_ShadowReceive", 1);
+                material.SetColor("_ShadowColor", new Color(.17f, .22f, .32f));
+                material.SetFloat("_ShadowBlur", .3f);
+            }
             string materialPath = Path.GetDirectoryName(Path.GetDirectoryName(scene.path)).Replace('\\', '/') + "/Rendering/摄影棚地面.mat";
             AssetDatabase.CreateAsset(material, materialPath);
             floor.GetComponent<MeshRenderer>().sharedMaterial = material;

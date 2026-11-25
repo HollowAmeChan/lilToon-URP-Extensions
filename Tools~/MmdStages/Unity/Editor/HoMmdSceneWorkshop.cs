@@ -66,7 +66,19 @@ public static class HoMmdSceneWorkshop
         {
             var importer = AssetImporter.GetAtPath(path) as HoPmxImporter;
             if (importer == null) throw new InvalidOperationException("Ho PMX importer unavailable: " + path);
-            if (importer.generateOutline) { importer.generateOutline = false; importer.SaveAndReimport(); }
+            if (HoMmdEnvironmentSurface.Available)
+            {
+                if (importer.materialProfile != HoPmxMaterialProfile.EnvironmentUrp)
+                {
+                    importer.materialProfile = HoPmxMaterialProfile.EnvironmentUrp;
+                    importer.SaveAndReimport();
+                }
+            }
+            else if (importer.generateOutline)
+            {
+                importer.generateOutline = false;
+                importer.SaveAndReimport();
+            }
             HoPmxMaterialExtraction.Extract(path, folder + "/Materials");
         }
         foreach (string guid in AssetDatabase.FindAssets("t:Material", new[] { folder + "/Materials" }))
@@ -118,7 +130,10 @@ public static class HoMmdSceneWorkshop
             }
             var environment = Child(root.transform, "04 环境与后处理").gameObject.AddComponent<HoMmdStageEnvironment>();
             environment.gameObject.layer = 31; environment.pipeline = pipeline; environment.sun = key; environment.fog = false;
-            var sky = new Material(Shader.Find("Skybox/Procedural")) { name = "初始天空" };
+            var sky = HoMmdEnvironmentSurface.Available
+                ? HoMmdEnvironmentSurface.CreateStageSky("初始天空", new Color(.45f, .55f, .70f),
+                    new Color(.36f, .35f, .32f), 1)
+                : new Material(Shader.Find("Skybox/Procedural")) { name = "初始天空" };
             AssetDatabase.CreateAsset(sky, folder + "/Rendering/天空.mat"); environment.skybox = sky;
             var profile = ScriptableObject.CreateInstance<VolumeProfile>();
             AssetDatabase.CreateAsset(profile, folder + "/Rendering/后处理.asset");

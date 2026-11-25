@@ -49,22 +49,60 @@ namespace lilToon.URP.Extensions.RTGI
             // emission groups. The private hit shader keeps its own keywords.
             adapter.CopyPropertiesFromMaterial(source);
             adapter.shaderKeywords = Array.Empty<string>();
-            bool supported = IsSupported(source);
-            unchecked { Signature ^= MaterialSignature(source); }
-            if (supported) TimeVarying |= Animated(source);
+            bool environment = HoRTCutoutSupport.IsEnvironmentSurface(source);
+            bool cutout = HoRTCutoutSupport.Supports(source);
+            bool supported = IsSupported(source, environment, cutout);
+            bool normalMap = false;
+            bool emission = false;
+            if (environment && (supported || cutout))
+                HoRTCutoutSupport.CopyEnvironmentBaseToAdapter(source, adapter);
+            if (environment && supported)
+            {
+                normalMap = source.IsKeywordEnabled("_NORMALMAP");
+                emission = source.IsKeywordEnabled("_EMISSION");
+                adapter.SetFloat("_HoRTGIEnvironmentPBRMode", Float(source, "_PBRInputMode"));
+            }
+            unchecked
+            {
+                int hash = MaterialSignature(source);
+                if (environment)
+                {
+                    hash = hash * 397 ^ supported.GetHashCode();
+                    hash = hash * 397 ^ cutout.GetHashCode();
+                    hash = hash * 397 ^ normalMap.GetHashCode();
+                    hash = hash * 397 ^ emission.GetHashCode();
+                }
+                Signature ^= hash;
+            }
+            if (supported && !environment) TimeVarying |= Animated(source);
             adapter.SetFloat("_HoRTGISecondarySupported", supported ? 1 : 0);
-            adapter.SetFloat("_HoRTGICutout", HoRTCutoutSupport.Supports(source) ? 1 : 0);
+            adapter.SetFloat("_HoRTGICutout", cutout ? 1 : 0);
+            adapter.SetFloat("_HoRTGIEnvironment", environment ? 1 : 0);
+            adapter.SetFloat("_HoRTGIEnvironmentNormalMap", normalMap ? 1 : 0);
+            adapter.SetFloat("_HoRTGIEnvironmentEmission", emission ? 1 : 0);
             if (!supported) Rejections.Add(source.name + ": secondary material not supported; remains opaque to RT.");
             return adapter;
         }
 
-        internal static bool IsSupported(Material source) => source != null && source.shader != null
-            && ((source.shader.name == "lilToon" && source.renderQueue < (int)RenderQueue.AlphaTest) || HoRTCutoutSupport.Supports(source))
-            && !Enabled(source, "_UseParallax");
+        internal static bool IsSupported(Material source) =>
+            IsSupported(source, HoRTCutoutSupport.IsEnvironmentSurface(source), HoRTCutoutSupport.Supports(source));
 
-        // Same bounded static-alpha domain as the already verified DI any-hit.
+        private static bool IsSupported(Material source, bool environment, bool cutout)
+        {
+            if (source == null || source.shader == null) return false;
+            if (environment)
+            {
+                if (Enabled(source, "_Surface")) return false;
+                if (Enabled(source, "_AlphaClip")) return cutout;
+                return source.renderQueue < (int)RenderQueue.AlphaTest
+                    && source.GetTag("RenderType", false) == "Opaque";
+            }
+            return ((source.shader.name == "lilToon" && source.renderQueue < (int)RenderQueue.AlphaTest) || cutout)
+                && !Enabled(source, "_UseParallax");
+        }
 
-        private static bool Enabled(Material material, string property) => material.HasProperty(property) && material.GetFloat(property) != 0;
+        private static float Float(Material material, string property) => material.HasProperty(property) ? material.GetFloat(property) : 0;
+        private static bool Enabled(Material material, string property) => Float(material, property) != 0;
 
         // A conservative content signature for GI radiance history, not a second
         // material representation. Texture contents and ST participate as well.

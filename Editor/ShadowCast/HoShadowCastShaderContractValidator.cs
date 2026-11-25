@@ -5,6 +5,7 @@ using System.IO;
 using System.Text.RegularExpressions;
 using lilToon.URP.Extensions.ShadowCast;
 using UnityEditor;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.ShadowCast
@@ -308,11 +309,22 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
         private static string FindAssetPath(string fileName)
         {
-            string[] guids = AssetDatabase.FindAssets(Path.GetFileNameWithoutExtension(fileName));
+            string relativePath = "Runtime/ShadowCast/Shaders/" +
+                (fileName == DebugShaderFileName ? "Debug/" : string.Empty) + fileName;
+            PackageInfo owner = PackageInfo.FindForAssembly(typeof(HoShadowCastShaderContractValidator).Assembly);
+            if (owner != null)
+            {
+                string path = Path.Combine(owner.resolvedPath, relativePath);
+                return File.Exists(path) ? path : null;
+            }
+
+            // Assets-based installs have no UPM owner. Match the producer layout rather than
+            // receiver headers with the same filename in other shaders.
+            string[] guids = AssetDatabase.FindAssets(Path.GetFileNameWithoutExtension(fileName), new[] { "Assets" });
             for (int i = 0; i < guids.Length; i++)
             {
                 string path = AssetDatabase.GUIDToAssetPath(guids[i]);
-                if (!string.IsNullOrEmpty(path) && path.EndsWith("/" + fileName, StringComparison.Ordinal))
+                if (!string.IsNullOrEmpty(path) && path.EndsWith("/" + relativePath, StringComparison.Ordinal))
                 {
                     return path;
                 }

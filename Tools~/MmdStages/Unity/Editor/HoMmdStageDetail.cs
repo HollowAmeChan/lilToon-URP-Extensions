@@ -268,7 +268,7 @@ public static class HoMmdStageDetail
             mesh=new Mesh{name="局部光叶片遮影"};mesh.SetVertices(v);mesh.SetTriangles(t,0);mesh.RecalculateNormals();mesh.RecalculateBounds();AssetDatabase.CreateAsset(mesh,path);
         }
         string mp=folder+"/Rendering/局部斑驳遮片.mat";var m=AssetDatabase.LoadAssetAtPath<Material>(mp);
-        if(m==null){m=new Material(Shader.Find("lilToon")){name="局部斑驳遮片"};m.SetFloat("_Cull",0);AssetDatabase.CreateAsset(m,mp);}m.SetShaderPassEnabled("ShadowCaster",true);
+        if(m==null){m=HoMmdEnvironmentSurface.Create("局部斑驳遮片",Color.white,shadowOnly:true);m.SetFloat("_Cull",0);AssetDatabase.CreateAsset(m,mp);}m.SetShaderPassEnabled("ShadowCaster",true);
         go.AddComponent<MeshFilter>().sharedMesh=mesh;var mr=go.AddComponent<MeshRenderer>();mr.sharedMaterial=m;mr.shadowCastingMode=ShadowCastingMode.ShadowsOnly;
     }
     [Serializable] sealed class LocalState {public string stage;public int frame,count,view;public Vector3 camera;public bool centerPostLighting;public string[] sources,status;public float[] intensities;}

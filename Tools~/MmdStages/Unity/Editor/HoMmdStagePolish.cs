@@ -54,7 +54,7 @@ public static class HoMmdStagePolish
         var profile=volume.sharedProfile;
         var r=HoMmdStageBuilder.ReadRecipe(name);
         bool day=name=="花吐电気"||name=="乐园·深命"||name=="茉莉庭院";
-        var sky=env.skybox;sky.shader=Shader.Find("Ho/MMD Stage Gradient Sky");
+        var sky=env.skybox;sky.shader=HoMmdEnvironmentSurface.FindSky("HoShader/Environment Gradient Sky","Ho/MMD Stage Gradient Sky");
         if(sky.shader==null)throw new Exception("Stage gradient shader missing");
         sky.SetColor("_Top",day?C(.48f,.58f,.65f):C(.12f,.1f,.23f));
         sky.SetColor("_Bottom",day?C(.8f,.82f,.78f):C(.2f,.16f,.3f));
