@@ -1,5 +1,7 @@
 # Capsule AO 验证记录
 
+状态：历史首版验证，HoAO 合并路径已被取代；现行验证见 [ReceiverOverlay](ReceiverOverlay/README.md)。
+
 日期：2026-11-25。使用独立空项目，不操作用户已打开的 Unity Editor。运行时源码和测试位于本仓库，未修改 lilToon、Ho URP 或项目业务资源。
 
 ## 环境与复现

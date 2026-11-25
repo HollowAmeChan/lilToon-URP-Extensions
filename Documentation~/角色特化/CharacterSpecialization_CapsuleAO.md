@@ -1,59 +1,41 @@
-# Capsule AO / Cross
+# Capsule AO / Cross 接收面叠加
 
-状态：现行。2026-11-25。Capsule AO 是角色特化内的前置 HoAO 附加项，默认关闭。
+状态：现行。2026-11-25。已按实际使用反馈改为独立接收面叠加，取代写入公共 HoAO 的首版设计。
 
-它把脚部胶囊产生的遮蔽写入**当前相机已经发布的同一张 HoAO**，由原材质的实时／混合 AO 路径消费。不新增材质属性、贴图槽、关键字或材质 Pass，不修改材质资产，不直接乘相机颜色。内部有独立计算 Shader，位于 `Resources/HoCapsuleAO.shader`；用户无需给地板更换 Shader。
+Capsule/Cross 属于现有角色特化 Feature。它额外重绘登记的接收 Renderer，计算私有遮蔽，再将结果叠加到不透明颜色。**不读写 HoAO，不要求开启 HoGTAO 或 GB，不经过 lilToon 的 AO 来源、阴影和压暗设置。** GTAO 的 AO 纹理保持原样，两项可以分别开关与调强度。
 
 ## 使用
 
-1. Renderer Data 按同事件顺序排列 **HoGeometryBuffer → HoGTAO → HoCharacterSpecialization**。三者的相关生产 Pass 均在不透明绘制前执行，角色特化原有颜色合成保持原阶段。
-2. 保持 HoGTAO 总开关开启。需要原 GTAO 时正常计算；只需要脚边遮蔽时勾选 HoGTAO 的“仅发布 AO 纹理”，提供每帧清为 1 的可写载体，跳过 GTAO 追踪、Motion、滤波和历史分配。
-3. 脚骨对象添加 **Rendering / Ho Capsule AO Emitter**，校准中心、轴、半径、总长度。默认轴 Z、半径 0.06、总长度 0.22，单位随 Transform 转为世界单位；不需要 CapsuleCollider。
-4. 地板 MeshRenderer 对象添加 **Rendering / Ho Capsule AO Receiver**。组件没有效果参数，只登记本对象的接收表面。
-5. 角色特化 Volume 中添加／展开“胶囊 AO（前置）”，启用容器覆盖与胶囊 AO，选择 Capsule 或 Cross。外观与预算统一由 Volume 控制，不在每只脚上重复设置。
+1. Renderer Data 中保留 HoCharacterSpecialization。胶囊 AO 不再要求 GB → GTAO → 角色特化的同事件顺序；其它依赖 GB/GTAO 的效果照旧配置。
+2. 脚骨添加 **Rendering / Ho Capsule AO Emitter**，校准中心、轴、半径、总长度。组件只定义几何，不需要物理 Collider。
+3. 地板 MeshRenderer 对象添加 **Rendering / Ho Capsule AO Receiver**，无需填参数或换材质。
+4. 角色特化 Volume 的“胶囊 AO（接收面叠加）”启用后，全局选择 Capsule / Cross，调强度、影响距离与十字形状。材质 AO 关闭也能显示。
 
-地板需要已经使用现有实时／混合 AO 消费路径。材质 AO 关闭、实时权重为零或 AO Mask 屏蔽时，挂组件不会强制开启材质 AO。
+已有组件和 Volume 的模式、强度、几何配置继续使用。旧“与 HoAO 混合”选项已移除；现在只在私有遮蔽内取最强遮挡，再对颜色附加一次。HoGTAO 的“仅发布 AO 纹理”仍保留，但本项不需要它；如需正常 GTAO，请保持正常计算模式。
 
-Feature Inspector 的“胶囊 AO”状态可查看跳过原因、活动胶囊数和接收面数。仅开 Capsule 不要求眼睛／脸捕获或 AC 颜色合成资源。
+## 算法与执行
 
-## 模式和参数
+- Capsule：胶囊最近球的投影盘遮蔽近似，使用接收点位置、法线、半径与距离衰减。没有宣称与 ZMD Log-SH 等价。
+- Cross：在接收面切平面内形成两道扁平软暗带，每道向两头渐隐、横向独立羽化。朝向跟随脚轴，并受全局旋转和夹角控制。半臂长、全宽与软度采用世界单位。
+- Cross 高度：按胶囊端点相对接收面法线的距离衰减，允许脚骨中心在地面、胶囊部分穿地；只有整个胶囊处于接收面背后或离面太远才消失。旧核“胶囊底部低于地面 2 cm 就裁掉”的条件已经移除。
+- 多胶囊取最大遮蔽；重叠 Receiver 先合并私有可见度，再统一压暗一次，不会重复相乘。
 
-| 项目 | 含义 |
-| --- | --- |
-| Capsule | 胶囊最近点球体的投影盘遮蔽近似，结合接收法线半球和有限距离衰减；不是 ZMD Log-SH 的等价实现 |
-| Cross | 在世界 XZ 平面上的两道扁平软暗带交叉，沿长度从中心向两头连续渐隐，横向独立羽化；跟随脚的位置和水平轴，全局角度、旋转决定十字／X 形状 |
-| 强度 | 0–1，作用于本项遮蔽；默认 0.75 |
-| 影响／高度衰减距离 | 世界单位；Capsule 按离胶囊表面距离衰减，Cross 按脚底离接收点高度衰减 |
-| 十字臂长／宽度／软度 | 世界单位；臂长是中心到臂端的半长，宽度是全宽 |
-| Min | 默认。原可见度 G、本项可见度 C，输出 `min(G,C)`，避免与 GTAO 简单累乘加深 |
-| Multiply | 输出 `G*C`；允许更强的叠加遮蔽 |
-| 胶囊预算 | 默认 32，上限 64。按相机距离、实例 ID 稳定选择；组件开关只移除对应几何输入 |
+执行阶段固定为 **BeforeRenderingTransparents**：不透明与天空完成后，透明绘制前。它不属于原五项角色颜色合成的排序循环。系统向 URP 请求相机深度，用它拒绝被前景挡住的接收面；不额外要求 GB 法线／深度，也不读取或重绑 HoAO。
 
-多个胶囊先取最大遮蔽，十字交叉的两条暗带也取最大值。先将 Receiver 覆盖合并，再对原 AO 附加一次，重叠接收面不会在 Multiply 下反复乘暗。
+接收重绘写一张清白的私有 R8 可见度，Min 混合合并覆盖；第二趟固定功能 Multiply 写相机颜色的 RGB，保留 alpha，不采样正在写入的颜色目标。既有材质无需添加属性、Pass 或关键字，也不会被克隆、改资产或设置 MaterialPropertyBlock。
 
-Cross 是水平地面风格化图案；向上的接收法线参与衰减，脚底以上超过小容差的表面不接收，不按局部斜面重新投影成等宽十字。胶囊随 Transform 更新；非均匀缩放和父级剪切使用保守的横向半径，负缩放允许，无效几何跳过。
+这是对接收面已着色结果的整体压暗，包含该表面的反射和自发光；不再沿用材质 AO 对 Toon 阴影等分量的单独响应。它仍会与已经呈现在颜色中的 GTAO 同时变暗，但两份源数据和开关互不污染。
 
-## 资源与支持边界
+## 参数与支持范围
 
-附加路径只借用发布者授权的可写可见度目标，通过固定功能 Min／Multiply 混合原地更新。它不采样该目标，不重新发布 `_HoAOTexture`／`_HoAOAvailable`，不写 GTAO 时间历史。后续 typed handle 和全局消费者读取同一资源的更新内容。
+强度默认 0.75，影响距离默认 0.5；十字半臂长 0.25、全宽 0.06、夹角 90°、软度 0.02。相机胶囊预算默认 32，上限 64，按距离和实例 ID 稳定选择。组件的非均匀缩放／父级剪切使用保守横向半径，无效几何跳过。
 
-接收面只支持普通不透明 MeshRenderer + MeshFilter，包含静态合批。私有接收覆盖重绘几何，并与当前 GB 原始深度比较，拒绝被前景遮挡的地板；不复制原材质的顶点位移、复杂 alpha clip 或蒙皮。深度容差不能区分完全共面的不同物体，复杂共面层叠需要另行验收。
+支持普通不透明 MeshRenderer + MeshFilter，包括静态合批、接收面倾斜和随脚移动。重绘采用 mesh 几何和法线，不复制原材质的自定义顶点位移／复杂 alpha clip，也不支持蒙皮接收面。完全共面物体无法仅靠深度容差区分，需避免此类歧义接收布局。
 
-| 路径 | 本轮验证 |
-| --- | --- |
-| RenderGraph | 白色 HoAO 与正常 GTAO 均可附加；透视／正交、多相机、奇数尺寸、1×／4× MSAA |
-| Compatibility | 白色 HoAO 发布 + Capsule／Cross；原有正常 GTAO 没有 Compatibility 计算实现，本项不补建它 |
-| 图形 API | Windows D3D11 / D3D12，Unity 6000.3.15f1 + 当前 Ho URP 17.3 fork |
-| 明确跳过 | XR、Overlay camera、非全 viewport、动态分辨率、尺寸／格式不匹配、无当前发布者或 GB |
-| 未覆盖 | 其它图形 API、Player 实机构建、复杂裁剪／位移／蒙皮接收面、完整角色美术与批量性能基准 |
+Windows D3D11 / D3D12 的 Editor 中验证 RG 正交、RG 透视、RG 4× MSAA 和 Compatibility 正交。XR、Overlay、非全 viewport、动态分辨率明确跳过；Player、其它 API、复杂角色美术与大规模性能未验收。有效时有一张私有 R8、接收面重绘和一次颜色合成，并可能需要 URP 深度复制；无 GPU 毫秒承诺。
 
-无有效发布者、胶囊或接收面时不创建本项覆盖纹理、不录制附加绘制。有效时增加一张私有单通道接收覆盖和两趟绘制；CPU 先做影响 bounds／视锥筛选，GPU 限制到影响区的屏幕 scissor。这里说明的是资源结构，尚无可对外承诺的 GPU 毫秒数据。
+## 验证与审计
 
-## 验证与源码
+[接收面叠加验收记录](../../Tests~/CapsuleAO/ReceiverOverlay/README.md) 包含最终颜色对照、无 GB/GTAO、材质 AO 关闭、公共 GTAO 纹理不变、穿地 Cross、倾斜地板、静态合批、前景拒绝及多相机用例。
 
-自动化覆盖白色输出合同、同一目标原地混合、接收面重叠、前景拒绝、抬脚／移动、静态合批、多相机、Volume 覆盖、实际 lilToon AO 开关与材质资产不变。最终 D3D11 与 D3D12 各 165/165 项全仓 EditMode 回归通过，其中本项及 GTAO 为各 31 项；复现命令和原始报告见 [Capsule AO 验证记录](../../Tests~/CapsuleAO/README.md)。
-
-- [组件与调度](../../Runtime/CharacterSpecialization/CapsuleAO/HoCapsuleAOPass.cs)
-- [内部 Shader](../../Runtime/CharacterSpecialization/Resources/HoCapsuleAO.shader)
-- [HoGTAO 发布模式](../Ho-GTAO.md)
-- [设计与审计边界](../计划/Ho-CapsuleAO-HoAO-Plan.md)
+原首版 [HoAO 附加规划](../计划/Ho-CapsuleAO-HoAO-Plan.md) 和 [首版测试](../../Tests~/CapsuleAO/README.md) 只作历史记录，其发布依赖和材质消费约束不再适用于本项。

@@ -1,6 +1,6 @@
 # Ho Capsule AO 与 HoAO 附加流程规划
 
-日期：2026-11-25。状态：首版已实现；本文保留设计和审计边界，现行用法与支持范围见 [Capsule AO / Cross](../角色特化/CharacterSpecialization_CapsuleAO.md)。下文完整研究验收清单不等于所有平台与美术场景均已覆盖。
+日期：2026-11-25。状态：历史设计，已由接收面独立叠加取代。下文记录首版 HoAO 合并方案及当时验收，不能作为现行接入依据；当前实现见 [Capsule AO / Cross 接收面叠加](../角色特化/CharacterSpecialization_CapsuleAO.md)。
 
 **Capsule AO 归属现有角色特化 RendererFeature，作为已发布 HoAO 的附加计算。只有当前相机存在有效、可写的 HoAO 资源时才执行；它不创建公共 AO 输出，不独立发布有效位，也不直接压暗相机颜色。** 脚部胶囊提供遮挡体，地板接收组件限定参与表面，Capsule／十字模式及外观参数统一放进角色特化 Volume。
 
