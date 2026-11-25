@@ -1,0 +1,78 @@
+{
+  "date": "2026-11-25",
+  "hashNormalization": "CRLF normalized to LF",
+  "baselineRuntimeCommit": "995742bbb347f71cde07374ce8e190fb0116cb2d",
+  "baselineGTAOFeatureSha256LF": "f25313b8941e4f6f4fdc5057f465ee605c3e57edfa4e93bcea93a28213d0f230",
+  "sources": [
+    {
+      "path": "Runtime/GTAO/HoAOGlobalState.cs",
+      "sha256LF": "f7bb7ff5452c4ce87b87561e0275e9e6fe80de33f63f48eddc7b191c190e580a",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/GTAO/HoAOGlobalState.cs.meta",
+      "sha256LF": "2894d867d3c48b5a549ce72bea53330704fc93924740775f45931b5860bee985",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/GTAO/HoAOStandaloneCameraScope.cs",
+      "sha256LF": "f04f3dfc7409fdaca5d937857f2f317a86c00e6d9954478c69c43b1ab895416c",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/GTAO/HoAOStandaloneCameraScope.cs.meta",
+      "sha256LF": "1148e12f5ddf41857753066b8bccd7c0468e7ee711e559a193a2936c28ee5a48",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAORendererFeature.cs",
+      "sha256LF": "65bac48b74bb818f4c8218ff4c1eac805dcbdb1f1226e4eec4dc6354d50e52f3",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAOVolume.cs",
+      "sha256LF": "9b1943d6c4647864aa1c72ef3d1f8a2b5941ea848736d0bf1fcc6135e52cd0b7",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAOPublishOnlyPass.cs",
+      "sha256LF": "9183d0355948493793268d1b5b74cb0e85fa21f17c372ce194ed92a75378923d",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/GTAO/HoGTAOShaderConstants.cs",
+      "sha256LF": "146dac44f31ac5d8be7b97080c4b22685b6f9ec25d1adc1c16beb7c7187bb72b",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/GeometryBuffer/HoGeometryBufferRendererFeature.cs",
+      "sha256LF": "ba4422987a6f917daf0cc97cb9dc6b29e9ecc56befbb8e907015c28c2182feed",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Runtime/PlanarReflection/HoPlanarReflectionSurface.cs",
+      "sha256LF": "9e93c3301fb9b847031adbb41ab280a156a666231492cf3bd16affaee1c22037",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Tests~/GTAO/VolumeDisable/HoAODisableValidation.cs",
+      "sha256LF": "b36ec2728e0e48feebdad9132ec65037aa19f6b25a580a3359b6cb9380550374",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Tests~/GTAO/VolumeDisable/HoAODisableProbe.shader",
+      "sha256LF": "950db86ea08b73d78ddf3dfd346f5fe72ad8d19e36c02ceeaad925cffa345062",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Tests~/GTAO/PlanarReflection/PLRAOValidation.cs",
+      "sha256LF": "144be421ba0c278c53e657bb71ef1747065509c4dde68479924cda51fd7f1c01",
+      "isolatedSourceMatches": true
+    },
+    {
+      "path": "Tests~/GTAO/PlanarReflection/AOConsumer.shader",
+      "sha256LF": "9a49bd1abf85eb6c403e7985f1f5a1a2bbeb29cd2b800a9bd496637ca3aab7d2",
+      "isolatedSourceMatches": true
+    }
+  ]
+}

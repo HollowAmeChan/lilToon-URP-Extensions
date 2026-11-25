@@ -8,7 +8,7 @@
 
 1. 独立的 `Ho-GTAO` RendererFeature 生产实时 AO。
 2. 发布全局纹理 `_HoAOTexture`。lilToon 在着色时采样，AOV 和 DebugTile 也可读取 AO。
-3. `_HoAOAvailable` 在每台相机开始渲染时归零，仅在该相机实际发布纹理时置一。实时来源不可用时，材质的实时项为中性值，混合模式继续使用烘焙 AO。
+3. `_HoAOAvailable` 在每台相机开始和结束渲染时归零，同时把全局 AO 绑定为白色；仅在该相机实际发布纹理的绘制期间置一。实时来源不可用时，材质的实时项为中性值，混合模式继续使用烘焙 AO。RenderGraph 的帧内结果不能在相机结束后继续通过全局纹理读取。
 4. **架构立场（强硬版）**：GeometryBuffer 是**屏幕几何的唯一生产者**（全分辨率、不动 renderScale），GTAO 是它的**消费者**，降分辨率只是消费者自己的计算分辨率。这与 HTrace“自画 PrePass + 用深度重建法线”的隔离路线相反——**只用一个屏幕几何，谁用谁降采样**：
    - 消除 HTrace 的三笔代价：多画一遍深度、重建法线 ≠ 真实渲染法线（toon 法线贴图下 AO 错位/网格感的来源）、两套深度/法线语义并存。
 5. **唯一结构性时序改动**：GeometryBuffer 与 Ho-GTAO 同在 `BeforeRenderingOpaques`，**先后由 Renderer Feature 列表顺序保证**（GB 在前、GTAO 紧随）。HoTrace 时代 GB 在 opaque 之后（300），而材质采样模式要求 AO 在 opaque 绘制前就绪。
@@ -24,7 +24,10 @@ Settings 与 Volume 的“仅发布 AO 纹理”默认关闭。启用后，在�
 
 Volume 覆盖解析到逐相机运行时副本，不回写 Feature 序列化的回退设置。独立接收面 Capsule AO 的组件安装与支持域见 [Capsule AO / Cross](角色特化/CharacterSpecialization_CapsuleAO.md)。Compatibility 仅实现白色发布路径，原正常 GTAO 计算仍要求 RenderGraph。
 
+Volume 的“启用”勾选 Override、值设为关闭时，不安排 GTAO 计算或可写 AO 发布；默认实时项为白色无遮挡，`_HoAOAvailable=0`，该相机的旧时间历史失效。开始 / 结束的中性绑定同时写入 CPU 状态与渲染上下文命令流，避免 RenderGraph 结束时将纹理解绑成黑色后仍留下“有效”标记。它复用系统白纹理，不分配全分辨率回退 RT。回归与读回口径见 [Volume 关闭回归](../Tests~/GTAO/VolumeDisable/README.md)。
+
 - `_HoAOTexture` 存储 0～1 的可见度，1 表示无遮挡。材质在「表面定义 → AO」选择关闭、烘焙、实时或混合，并设置实时权重、调整和遮罩。阴影和 AO 压暗各自控制对这份 AO 的响应。
+- PLR 的 Reflection 相机没有独立 GTAO；捕获时实时 AO 使用中性值，退出后恢复外层相机的 AO，避免套用主视图的屏幕空间结果。原因与支持边界见 [PLR 相机隔离](PlanarReflection.md#gtao-相机隔离)。
 - **必须显式单采样**：`msaaSamples = None`、`bindTextureMS = false`、`filterMode = Bilinear`——发布给材质的全局纹理**不能继承相机颜色的 MSAA 描述**（4x + bindTextureMS 会让正经 `Texture2D` 采样的材质读未定义行为）。
 - **公共输出极性**：中间缓冲存“AO 量”（1−visibility），最终输出存“visibility 乘数”（1 = 无 AO）。fragment 版必须沿用这个极性约定。
 - `aointent`（意图模式）：**未做**（契约占位保留）。

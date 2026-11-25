@@ -1,0 +1,7 @@
+PLR_AO_CASE baseline=False oblique=False seed=0 reflectedPeak=1 sourcePeak=0
+PLR_AO_CASE baseline=False oblique=False seed=0.25 reflectedPeak=1 sourcePeak=0.25
+PLR_AO_CASE baseline=False oblique=False seed=1 reflectedPeak=1 sourcePeak=1
+PLR_AO_CASE baseline=False oblique=True seed=0 reflectedPeak=1 sourcePeak=0
+PLR_AO_CASE baseline=False oblique=True seed=0.25 reflectedPeak=1 sourcePeak=0.25
+PLR_AO_CASE baseline=False oblique=True seed=1 reflectedPeak=1 sourcePeak=1
+PLR_AO_VALIDATION_PASSED api=Direct3D12 checks=18

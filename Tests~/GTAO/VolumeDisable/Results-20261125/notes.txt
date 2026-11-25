@@ -1,0 +1,1 @@
+All three CLI runs exited 0. D3D11 additionally logged a Unity.AspNetCore.NamedPipeSupport.NamedPipeServer IOException while accepting a connection; the render tests subsequently completed. No claim of a globally clean project console is made.

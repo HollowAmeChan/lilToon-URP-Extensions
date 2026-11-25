@@ -45,6 +45,14 @@ beginCameraRendering
 
 递归相机、Reflection/Preview 相机、被禁用的 Game/Scene View 或超过 `每相机最大表面数` 时跳过 surface，并把 `_UsePlanarReflection` 清零。ForwardLit 通过每个 Renderer 的 PropertyBlock 读取各自 source，因此支持多个 surface；特殊 fullscreen 路径仍只有一个全局 source，在 source id/PLR 专用 receiver RT 落地前，多于一个有效 surface 时会自动关闭特殊合成。
 
+### GTAO 相机隔离
+
+目前 GTAO 和 GeometryBuffer 只处理 Game / Scene View，相机反射捕获没有独立的实时 GTAO。PLR 在捕获期间将 `_HoAOAvailable` 置零、`_HoAOTexture` 绑定为全白；完成后恢复调用前的 AO 纹理、有效标记和 Compatibility 发布记录，主视图继续使用自己的 AO。材质自己的烘焙 AO 不受这个实时项的隔离影响。
+
+这里必须显式隔离：URP 的 `RenderSingleCamera` 不触发 `beginCameraRendering` / `endCameraRendering`，不会执行 GTAO 通常使用的相机重置回调。直接继承主视图的屏幕空间 AO，会按错误的视角和 UV 压暗反射，甚至使反射全黑。隔离同时写入 CPU 全局状态和渲染上下文的命令流，避免延迟执行时重新读到外层状态。
+
+这不是镜像视角的 GTAO 实现。将来若需要镜内实时 AO，必须补齐反射相机的几何输入、oblique 深度重建和独立历史，不能直接放开相机类型过滤。复现与 GPU 检查见 [GTAO / PLR 回归](../Tests~/GTAO/PlanarReflection/README.md)。
+
 ## 输入（已换到 OB / SB / GB）
 
 特殊 fullscreen resolve 的输入**只**来自现役 producer；opaque ForwardLit 直接使用材质值：

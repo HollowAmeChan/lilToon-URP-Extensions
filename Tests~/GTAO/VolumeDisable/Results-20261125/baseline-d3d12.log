@@ -1,0 +1,16 @@
+AO_DISABLE_CASE fresh-volume-off scene=RGBA(1.000, 0.000, 1.000, 1.000) afterGraph=RGBA(1.000, 0.000, 1.000, 1.000) resolvedEnabled=False
+AO_DISABLE_CASE volume-on scene=RGBA(1.000, 1.000, 1.000, 1.000) afterGraph=RGBA(0.000, 1.000, 0.000, 1.000) resolvedEnabled=True
+AO_DISABLE_CASE volume-off-after-on scene=RGBA(1.000, 0.000, 1.000, 1.000) afterGraph=RGBA(1.000, 0.000, 1.000, 1.000) resolvedEnabled=False
+AO_DISABLE_CASE volume-off-second-render scene=RGBA(1.000, 0.000, 1.000, 1.000) afterGraph=RGBA(1.000, 0.000, 1.000, 1.000) resolvedEnabled=False
+AO_DISABLE_CASE no-enable-override scene=RGBA(1.000, 1.000, 1.000, 1.000) afterGraph=RGBA(0.000, 1.000, 0.000, 1.000) resolvedEnabled=True
+AO_DISABLE_CASE feature-setting-off scene=RGBA(1.000, 0.000, 1.000, 1.000) afterGraph=RGBA(1.000, 0.000, 1.000, 1.000) resolvedEnabled=False
+AO_DISABLE_CASE volume-on-over-feature-off scene=RGBA(1.000, 1.000, 1.000, 1.000) afterGraph=RGBA(0.000, 1.000, 0.000, 1.000) resolvedEnabled=True
+AO_DISABLE_CASE both-off scene=RGBA(1.000, 0.000, 1.000, 1.000) afterGraph=RGBA(1.000, 0.000, 1.000, 1.000) resolvedEnabled=False
+AO_DISABLE_CASE normal-mode-without-geometry scene=RGBA(1.000, 0.000, 1.000, 1.000) afterGraph=RGBA(1.000, 0.000, 1.000, 1.000) resolvedEnabled=True
+AO_DISABLE_CASE normal-mode-with-geometry scene=RGBA(1.000, 1.000, 1.000, 1.000) afterGraph=RGBA(0.000, 1.000, 0.000, 1.000) resolvedEnabled=True
+AO_DISABLE_CASE volume-off-after-normal-mode scene=RGBA(1.000, 0.000, 1.000, 1.000) afterGraph=RGBA(1.000, 0.000, 1.000, 1.000) resolvedEnabled=False
+AO_DISABLE_HISTORY afterVolumeOff=True
+AO_DISABLE_CASE normal-mode-resumed scene=RGBA(1.000, 1.000, 1.000, 1.000) afterGraph=RGBA(0.000, 1.000, 0.000, 1.000) resolvedEnabled=True
+AO_DISABLE_CASE renderer-feature-inactive scene=RGBA(1.000, 0.000, 1.000, 1.000) afterGraph=RGBA(1.000, 0.000, 1.000, 1.000) resolvedEnabled=True
+AO_DISABLE_CASE publish-only-resumed scene=RGBA(1.000, 1.000, 1.000, 1.000) afterGraph=RGBA(0.000, 1.000, 0.000, 1.000) resolvedEnabled=True
+AO_DISABLE_VALIDATION_BASELINE api=Direct3D12 cases=14 checks=69

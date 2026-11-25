@@ -5,6 +5,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.Debugging;
+using lilToon.URP.Extensions.GTAO;
 
 namespace lilToon.URP.Extensions.PlanarReflection
 {
@@ -664,7 +665,11 @@ namespace lilToon.URP.Extensions.PlanarReflection
             context.ExecuteCommandBuffer(cmd);
             cmd.Clear();
 #pragma warning disable CS0618
-            try { UniversalRenderPipeline.RenderSingleCamera(context, reflectionCamera); }
+            try
+            {
+                using (new HoAOStandaloneCameraScope(context))
+                    UniversalRenderPipeline.RenderSingleCamera(context, reflectionCamera);
+            }
 #pragma warning restore CS0618
             finally
             {

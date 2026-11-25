@@ -42,6 +42,7 @@ namespace lilToon.URP.Extensions.GTAO
             if (!resetRegistered)
             {
                 RenderPipelineManager.beginCameraRendering += ResetGlobalState;
+                RenderPipelineManager.endCameraRendering += ResetGlobalState;
                 resetRegistered = true;
             }
         }
@@ -57,6 +58,9 @@ namespace lilToon.URP.Extensions.GTAO
             HoGTAOSettings activeSettings = runtimeSettings;
             if (!activeSettings.enabled)
             {
+                Camera camera = renderingData.cameraData.camera;
+                if (camera != null && cameraHistories.TryGetValue(camera.GetInstanceID(), out HoGTAOHistory history))
+                    history.Invalidate();
                 return;
             }
 
@@ -147,6 +151,7 @@ namespace lilToon.URP.Extensions.GTAO
             if (resetRegistered)
             {
                 RenderPipelineManager.beginCameraRendering -= ResetGlobalState;
+                RenderPipelineManager.endCameraRendering -= ResetGlobalState;
                 resetRegistered = false;
                 ResetGlobalState(default, null);
             }
@@ -174,8 +179,9 @@ namespace lilToon.URP.Extensions.GTAO
 
         private static void ResetGlobalState(ScriptableRenderContext context, Camera camera)
         {
-            Shader.SetGlobalTexture(HoGTAOShaderConstants.AOTextureId, Texture2D.whiteTexture);
-            Shader.SetGlobalFloat(HoGTAOShaderConstants.AOAvailableId, 0f);
+            // RenderGraph unbinds published textures to black after execution. Their
+            // availability must end with the camera too, before any external draw.
+            HoAOGlobalState.Bind(context, Texture2D.whiteTexture, 0f, camera != null);
             HoAOCompatibilityPublication.Reset();
         }
 
