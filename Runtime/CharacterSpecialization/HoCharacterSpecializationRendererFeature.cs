@@ -23,6 +23,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private readonly HoCharacterSpecializationSettings runtimeSettings = new HoCharacterSpecializationSettings();
         private HoCharacterSpecializationPass pass;
         private HoCapsuleAOPass capsuleAOPass;
+        private HoCharacterRimPass rimLightPass;
         private Material compositeMaterial;
         private Material captureClearMaterial;
         private Material faceHairDiffuseMaterial;
@@ -40,6 +41,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private bool warnedMissingObjectSemanticShader;
 
         public HoCharacterSpecializationSettings Settings => settings;
+        public string RimLightStatus => rimLightPass?.Status ?? "未启用。";
+        public int RimLightActiveCount => rimLightPass?.LastLightCount ?? 0;
+        public int RimLightShadowCount => rimLightPass?.LastShadowCount ?? 0;
+        public int RimLightCasterDrawCount => rimLightPass?.LastCasterDrawCount ?? 0;
+        public int RimLightRejectedCount => rimLightPass?.LastRejectedCount ?? 0;
+
         public string CapsuleAOStatus => capsuleAOPass?.Status ?? "未启用。";
         public int CapsuleAOActiveCount => capsuleAOPass?.LastCapsuleCount ?? 0;
         public int CapsuleAOReceiverCount => capsuleAOPass?.LastReceiverCount ?? 0;
@@ -47,6 +54,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public override void Create()
         {
             HoAttributeCompositeConsumerRegistry.EnsureInitialized();
+            // Global fallback also initializes independently of this feature.
+            HoCharacterRimShaderState.Initialize();
+            rimLightPass?.Dispose();
+            rimLightPass = new HoCharacterRimPass();
             pass?.Dispose();
             pass = new HoCharacterSpecializationPass();
             capsuleAOPass?.Dispose();
@@ -82,6 +93,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoCharacterSpecializationSettings activeSettings = ResolveSettings(in renderingData);
             // Receiver AO overlays opaque color independently of HoAO and the AC/capture chain.
             var effects = GetVolumeComponent()?.Effects.value;
+            var rimConfiguration = effects != null ? effects.RimLightConfiguration : HoCharacterRimConfiguration.Default;
+            rimConfiguration.enabled &= activeSettings != null && activeSettings.enabled;
+            rimLightPass.Setup(rimConfiguration, renderingData.cameraData.camera);
+            renderer.EnqueuePass(rimLightPass);
             if (activeSettings != null && activeSettings.enabled && effects != null && effects.capsuleAOEnabled)
             {
                 capsuleAOPass.Setup(effects);
@@ -138,6 +153,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             pass = null;
             capsuleAOPass?.Dispose();
             capsuleAOPass = null;
+            rimLightPass?.Dispose();
+            rimLightPass = null;
             renderTargets.Release();
             CoreUtils.Destroy(compositeMaterial);
             CoreUtils.Destroy(captureClearMaterial);

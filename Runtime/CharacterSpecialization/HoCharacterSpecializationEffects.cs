@@ -17,6 +17,22 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("按列表从上到下叠加；每种效果保留一份独立参数，关闭不改变其位置。眼透默认最后合成。")]
         public HoCharacterCompositionEffect[] compositionOrder = HoCharacterCompositionOrder.CreateDefault();
 
+        [InspectorName("启用专用 Rim"), Tooltip("只发布专用边光和本角色阴影，不加入普通光照。")]
+        public bool rimLightEnabled = false;
+        [InspectorName("每角色活动光源预算"), Range(1, 256), Tooltip("每个角色参与当前相机着色的专用源数量上限。")] public int rimLightMaxLightsPerCharacter = 8;
+        [InspectorName("相机投影预算"), Range(0, 256), Tooltip("当前相机最多生成的边光阴影数量；超额的带阴影源会被跳过。")] public int rimLightShadowBudget = 16;
+        [InspectorName("阴影图集尺寸"), Min(128), Tooltip("每相机独立分配，按有效投影源分片。D32 格式下 2048 图集约占 16 MiB。")] public int rimLightAtlasSize = 2048;
+        [InspectorName("深度偏移"), Min(0), Tooltip("以当前阴影分片的 texel 为单位。适当增加可减轻自遮挡噪点。")] public float rimLightDepthBias = 1;
+        [InspectorName("法线偏移"), Min(0), Tooltip("以当前阴影分片的 texel 为单位，沿接收面法线偏移。较大值会使阴影与衣服分离。")] public float rimLightNormalBias = 1;
+
+        public HoCharacterRimConfiguration RimLightConfiguration => new HoCharacterRimConfiguration
+        {
+            enabled = rimLightEnabled, maxLightsPerCharacter = rimLightMaxLightsPerCharacter,
+            shadowBudget = rimLightShadowBudget, atlasSize = rimLightAtlasSize,
+            depthBias = rimLightDepthBias, normalBias = rimLightNormalBias
+        };
+
+
         [InspectorName("启用胶囊 AO"), Tooltip("重绘登记接收面并独立叠加到颜色；不读写 HoAO，不依赖材质 AO。")]
         public bool capsuleAOEnabled;
         [InspectorName("模式")] public HoCapsuleAOMode capsuleAOMode;

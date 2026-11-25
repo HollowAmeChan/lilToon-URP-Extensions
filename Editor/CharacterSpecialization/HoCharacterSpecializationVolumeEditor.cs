@@ -70,6 +70,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 new[] { "eyeReveal", "useEyeRevealArea", "sameCharacterOnly" }),
             new EffectSection("CapsuleAO", "胶囊 AO（接收面叠加）", "icon_DropShadow_v1", "capsuleAOEnabled", "capsuleAOStrength",
                 new[] { "capsuleAO" }),
+            new EffectSection("RimLight", "专用边光（前置）", "icon_RimLight_v1", "rimLightEnabled", null,
+                new[] { "rimLight" }),
         };
 
         private SerializedProperty effectsParameter;
@@ -294,7 +296,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private void DrawSectionRow(Rect rect, int effect, EffectSection section, string query)
         {
             SerializedProperty enabled = Find(section.EnableField);
-            SerializedProperty summaryValue = Find(section.SummaryField);
+            SerializedProperty summaryValue = section.SummaryField != null ? Find(section.SummaryField) : null;
             bool expanded = SessionState.GetBool(ExpandKeyPrefix + section.Id, false);
             rect.y += 2;
             DrawRowHighlight(new Rect(rect.x, rect.y, rect.width, LineHeight), effect, query);
@@ -305,6 +307,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             float foldoutWidth = Mathf.Max(0, rect.width - CheckboxWidth - RemoveWidth - 6);
             var title = new GUIContent(section.Label + "　" + summary, section.Id == "CapsuleAO"
                 ? "在不透明与天空之后、透明之前重绘接收面叠加颜色；独立于 HoAO 与材质 AO。"
+                : section.Id == "RimLight"
+                ? "前置生产阶段，始终在不透明绘制前执行；列表位置不改变生产时机。"
                 : "拖动左侧手柄调整颜色效果叠加顺序；眼透默认最后。前置 AO 不参与颜色叠加。");
             expanded = EditorGUI.Foldout(new Rect(rect.x + CheckboxWidth, rect.y, foldoutWidth, LineHeight), expanded, title, true);
             Rect removeRect = new Rect(rect.xMax - RemoveWidth, rect.y + 1, RemoveWidth, LineHeight - 2);
@@ -325,6 +329,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 case "FaceHairDiffuse": HoCharacterFaceHairDiffuseEditorSection.DrawEffects(effects, layout); break;
                 case "SubjectOutline": HoCharacterSubjectOutlineEditorSection.DrawEffects(effects, layout); break;
                 case "EnhancedOutline": HoCharacterEnhancedOutlineEditorSection.DrawEffects(effects, layout); break;
+                case "RimLight":
+                    layout.Property(Find("rimLightMaxLightsPerCharacter"), "每角色光源预算");
+                    layout.Property(Find("rimLightShadowBudget"), "相机投影预算");
+                    layout.Property(Find("rimLightAtlasSize"), "阴影图集尺寸");
+                    layout.Property(Find("rimLightDepthBias"), "深度偏移");
+                    layout.Property(Find("rimLightNormalBias"), "法线偏移");
+                    break;
                 case "CapsuleAO":
                     layout.Property(Find("capsuleAOMode"), "模式");
                     layout.Property(Find("capsuleAOStrength"), "强度");

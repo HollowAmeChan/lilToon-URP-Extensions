@@ -11,12 +11,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         EnhancedOutline = 2,
         SubjectOutline = 3,
         EyeReveal = 4,
-        CapsuleAO = 5
+        CapsuleAO = 5,
+        RimLight = 6
     }
 
     public static class HoCharacterCompositionOrder
     {
-        public const int Count = 6;
+        public const int Count = 7;
         private const int ColorCount = 5;
         public static Vector4 DefaultFirst => new Vector4(0, 1, 2, 3);
         public static Vector4 DefaultLast => new Vector4(4, 1, 0, 0);
@@ -25,7 +26,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             return new[] { HoCharacterCompositionEffect.DropShadow, HoCharacterCompositionEffect.FaceHairDiffuse,
                 HoCharacterCompositionEffect.EnhancedOutline, HoCharacterCompositionEffect.SubjectOutline,
-                HoCharacterCompositionEffect.EyeReveal, HoCharacterCompositionEffect.CapsuleAO };
+                HoCharacterCompositionEffect.EyeReveal, HoCharacterCompositionEffect.CapsuleAO, HoCharacterCompositionEffect.RimLight };
         }
 
         // Editor order includes the pre-opaque AO entry. The color ABI remains five effects.
