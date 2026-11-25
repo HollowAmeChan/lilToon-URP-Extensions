@@ -98,5 +98,20 @@ namespace lilToon.URP.Extensions.GTAO
         public Shader shader;
 
         public int ResolutionDivisor => resolution == HoGTAOResolution.Full ? 1 : resolution == HoGTAOResolution.Half ? 2 : 4;
+
+        internal void CopyFrom(HoGTAOSettings source)
+        {
+            enabled = source.enabled; publishAOTextureOnly = source.publishAOTextureOnly;
+            passEvent = source.passEvent; resolution = source.resolution;
+            sliceCount = source.sliceCount; stepCount = source.stepCount;
+            worldSpaceRadius = source.worldSpaceRadius; screenSpaceRadius = source.screenSpaceRadius;
+            thickness = source.thickness; useAttenuation = source.useAttenuation;
+            useLinearThickness = source.useLinearThickness; temporalFrameCount = source.temporalFrameCount;
+            temporalRejection = source.temporalRejection; spatialFilter = source.spatialFilter;
+            filterRadius = source.filterRadius; filterAdaptivity = source.filterAdaptivity;
+            boxPassCount = source.boxPassCount; debugMode = source.debugMode;
+            debugInSceneView = source.debugInSceneView; debugInGameView = source.debugInGameView;
+            debugIntensity = source.debugIntensity; shader = source.shader;
+        }
     }
 }

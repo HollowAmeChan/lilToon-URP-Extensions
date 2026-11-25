@@ -29,11 +29,13 @@ namespace lilToon.URP.Extensions.Tests
         }
 
         [UnityTest] public IEnumerator ActualPipelineReadsAppendedHoAO() => Validate(false);
+        [UnityTest] public IEnumerator ActualPipelineMsaa4ReadsAppendedHoAO() => Validate(false, 4);
+        [UnityTest] public IEnumerator ActualPipelinePerspectiveReadsAppendedHoAO() => Validate(false, 1, true);
 #if URP_COMPATIBILITY_MODE
         [UnityTest] public IEnumerator CompatibilityReadsAppendedHoAO() => Validate(true);
 #endif
 
-        private static IEnumerator Validate(bool compatibility)
+        private static IEnumerator Validate(bool compatibility, int msaa=1, bool perspective=false)
         {
             var created = new List<Object>();
             T Keep<T>(T x) where T : Object { created.Add(x); return x; }
@@ -42,8 +44,8 @@ namespace lilToon.URP.Extensions.Tests
             RenderTexture oldActive = RenderTexture.active;
             RTHandle probeOutput = null;
 #if URP_COMPATIBILITY_MODE
-            var graphSettings = GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>();
-            bool oldCompatibility = graphSettings.enableRenderCompatibilityMode;
+            RenderGraphSettings graphSettings = null;
+            bool oldCompatibility = false;
 #endif
             try
             {
@@ -58,9 +60,14 @@ namespace lilToon.URP.Extensions.Tests
                 probe.material = Keep(new Material(Shader.Find("Hidden/HoCapsuleAO/Fixture")));
                 renderer.rendererFeatures.Add(probe);
                 var pipeline = Keep(UniversalRenderPipelineAsset.Create(renderer));
-                pipeline.msaaSampleCount = 1; pipeline.supportsHDR = true; pipeline.shadowDistance = 0;
+                pipeline.msaaSampleCount = msaa; pipeline.supportsHDR = true; pipeline.shadowDistance = 0;
                 GraphicsSettings.defaultRenderPipeline = pipeline; QualitySettings.renderPipeline = pipeline;
 #if URP_COMPATIBILITY_MODE
+                typeof(UniversalRenderPipelineAsset).Assembly.GetType("UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings",true)
+                    .GetMethod("Ensure",BindingFlags.Static|BindingFlags.NonPublic).Invoke(null,new object[]{true});
+                graphSettings = GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>();
+                Assert.That(graphSettings,Is.Not.Null,"The isolated URP fixture must register its global graphics settings before selecting a backend.");
+                oldCompatibility = graphSettings.enableRenderCompatibilityMode;
                 graphSettings.enableRenderCompatibilityMode = compatibility;
 #endif
                 var volume = Keep(new GameObject("Capsule AO integration volume")).AddComponent<Volume>();
@@ -74,11 +81,12 @@ namespace lilToon.URP.Extensions.Tests
                 gtaoVolume.enable.Override(true); gtaoVolume.publishAOTextureOnly.Override(true);
                 var camera = Keep(new GameObject("Capsule AO integration camera")).AddComponent<Camera>();
                 camera.enabled = false; camera.clearFlags = CameraClearFlags.SolidColor;
-                camera.transform.SetPositionAndRotation(new Vector3(0,2,0),Quaternion.LookRotation(Vector3.down,Vector3.forward));
-                camera.orthographic = true; camera.orthographicSize = 1; camera.aspect = 97f / 65;
+                Vector3 cameraPosition=perspective?new Vector3(0,2,-1.5f):new Vector3(0,2,0);
+                camera.transform.SetPositionAndRotation(cameraPosition,Quaternion.LookRotation(-cameraPosition,perspective?Vector3.up:Vector3.forward));
+                camera.orthographic = !perspective; camera.fieldOfView=50; camera.orthographicSize = 1; camera.aspect = 97f / 65;
                 camera.nearClipPlane = .01f; camera.farClipPlane = 10;
                 camera.GetUniversalAdditionalCameraData().volumeLayerMask = -1;
-                var target = Keep(new RenderTexture(97,65,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();
+                var target = Keep(new RenderTexture(97,65,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear){antiAliasing=msaa});target.Create();
                 var captured = Keep(new RenderTexture(97,65,0,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear));captured.Create();
                 probeOutput = RTHandles.Alloc(captured); probe.destination = probeOutput;
                 var image = Keep(new Texture2D(97,65,TextureFormat.RGBAFloat,false,true));
@@ -106,8 +114,37 @@ namespace lilToon.URP.Extensions.Tests
                 Assert.That(character.CapsuleAOActiveCount,Is.EqualTo(1),character.CapsuleAOStatus);
                 Assert.That(Read(),Is.EqualTo(.6f).Within(.006f),character.CapsuleAOStatus);
                 Assert.That(Read(.95f,.95f),Is.EqualTo(1).Within(.001f));
+                var firstCamera=camera;
+                camera=Keep(new GameObject("Second capsule camera")).AddComponent<Camera>();
+                camera.CopyFrom(firstCamera);camera.enabled=false;
+                camera.transform.SetPositionAndRotation(new Vector3(2,2,0),Quaternion.LookRotation(Vector3.down,Vector3.forward));
+                camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;
+                Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f),"Another camera reused the first foot projection.");
+                camera=firstCamera;Render();Assert.That(Read(),Is.EqualTo(.6f).Within(.006f));
                 effects.capsuleAOMode=HoCapsuleAOMode.Cross; Render();
                 Assert.That(Read(),Is.EqualTo(.6f).Within(.006f),character.CapsuleAOStatus);
+                if(!compatibility && msaa==1 && !perspective)
+                {
+                    string previews=Environment.GetEnvironmentVariable("HO_CAPSULE_AO_PREVIEW_DIR");
+                    if(!string.IsNullOrEmpty(previews))
+                    {
+                        System.IO.Directory.CreateDirectory(previews);
+                        var previousTarget=target;var previousProbe=probe.destination;float previousAspect=camera.aspect;
+                        var previewColor=Keep(new RenderTexture(512,512,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));previewColor.Create();
+                        var previewAO=Keep(new RenderTexture(512,512,0,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear));previewAO.Create();
+                        var previewHandle=RTHandles.Alloc(previewAO);
+                        target=previewColor;probe.destination=previewHandle;camera.aspect=1;
+                        foreach(var mode in new[]{HoCapsuleAOMode.Capsule,HoCapsuleAOMode.Cross})
+                        {
+                            effects.capsuleAOMode=mode;Render();
+                            var png=Keep(new Texture2D(512,512,TextureFormat.RGB24,false,true));
+                            RenderTexture.active=previewAO;png.ReadPixels(new Rect(0,0,512,512),0,0);png.Apply();
+                            System.IO.File.WriteAllBytes(System.IO.Path.Combine(previews,mode+"-"+SystemInfo.graphicsDeviceType+".png"),png.EncodeToPNG());
+                        }
+                        target=previousTarget;probe.destination=previousProbe;camera.aspect=previousAspect;
+                        previewHandle.Release();effects.capsuleAOMode=HoCapsuleAOMode.Cross;
+                    }
+                }
                 receiver.enabled=false;Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f));
                 receiver.enabled=true;emitter.enabled=false;Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f));
                 emitter.enabled=true;
@@ -121,14 +158,66 @@ namespace lilToon.URP.Extensions.Tests
                 gtaoVolume.enable.value=true;Render();Assert.That(Read(),Is.EqualTo(.6f).Within(.006f));
                 effects.capsuleAOEnabled=false;Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f));
                 Assert.That(EditorJsonUtility.ToJson(floorMaterial),Is.EqualTo(originalMaterial));
+                var staticRoot=Keep(new GameObject("Static receiver root"));
+                ground.transform.SetParent(staticRoot.transform,true);
+                var distant=Keep(GameObject.CreatePrimitive(PrimitiveType.Plane));
+                distant.transform.position=new Vector3(20,0,0);
+                distant.GetComponent<Renderer>().sharedMaterial=floorMaterial;
+                StaticBatchingUtility.Combine(new[]{ground,distant},staticRoot);
+                Assert.That(ground.GetComponent<MeshRenderer>().isPartOfStaticBatch,Is.True);
+                effects.capsuleAOEnabled=true;Render();Assert.That(Read(),Is.EqualTo(.6f).Within(.006f),"Static-batched receiver did not match GB.");
+                emitter.transform.position=new Vector3(.4f,.06f,0);Render();
+                Vector3 movedPoint=camera.WorldToViewportPoint(new Vector3(.4f,0,0));
+                Assert.That(Read(movedPoint.x,movedPoint.y),Is.EqualTo(.6f).Within(.008f),"Static batch or world-space foot movement was not followed.");
+                Assert.That(Read(),Is.EqualTo(1).Within(.001f),"Old foot position retained an AO stamp.");
+                emitter.transform.position=new Vector3(0,.06f,0);Render();
+                if(!compatibility)
+                {
+                    effects.capsuleAOEnabled=false;
+                    gtaoVolume.publishAOTextureOnly.value=false;
+                    gtaoVolume.temporalFrameCount.Override(0);gtaoVolume.sliceCount.Override(1);gtaoVolume.stepCount.Override(8);
+                    gtaoVolume.boxPassCount.Override(1);Render();
+                    float baseAO=Read();effects.capsuleAOEnabled=true;Render();
+                    Assert.That(gtao.Settings.publishAOTextureOnly,Is.True,"Volume mode polluted the serialized Feature fallback.");
+                    Assert.That(gtao.Settings.temporalFrameCount,Is.EqualTo(12),"Volume sampling polluted the serialized Feature fallback.");
+                    Assert.That(Read(),Is.EqualTo(Mathf.Min(baseAO,.6f)).Within(.008f),"Computed GTAO and capsule Min were not combined.");
+                    effects.capsuleAOBlend=HoCapsuleAOBlendMode.Multiply;Render();
+                    Assert.That(Read(),Is.EqualTo(baseAO*.6f).Within(.008f));
+                    gtaoVolume.publishAOTextureOnly.value=true;
+                    effects.capsuleAOBlend=HoCapsuleAOBlendMode.Min;
+                }
+                // Existing lilToon AO properties, on a disposable fixture material only.
+                var lil=Keep(new Material(Shader.Find("lilToon")));
+                lil.SetColor("_Color",Color.white);lil.SetFloat("_LightMinLimit",1);lil.SetFloat("_LightMaxLimit",1);
+                lil.SetFloat("_UseShadow",0);lil.SetFloat("_UseReflection",0);lil.SetFloat("_AOSource",2);
+                lil.SetFloat("_UseAODarkening",1);lil.SetFloat("_AODarkStrength",1);lil.SetColor("_AOColor",Color.black);
+                ground.GetComponent<Renderer>().sharedMaterial=lil;
+                float ReadColor()
+                {
+                    RenderTexture source=target;
+                    if(target.antiAliasing>1)
+                    {
+                        var resolved=Keep(new RenderTexture(97,65,0,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));resolved.Create();
+                        target.ResolveAntiAliasedSurface(resolved);source=resolved;
+                    }
+                    RenderTexture.active=source;image.ReadPixels(new Rect(0,0,97,65),0,0);image.Apply();
+                    return image.GetPixel(48,32).r;
+                }
+                effects.capsuleAOEnabled=false;Render();float baselineColor=ReadColor();
+                effects.capsuleAOEnabled=true;Render();float contactColor=ReadColor();
+                Assert.That(baselineColor,Is.GreaterThan(.01f));
+                Assert.That(contactColor,Is.LessThan(baselineColor*.85f),"lilToon did not consume appended HoAO.");
+                lil.SetFloat("_AOSource",0);Render();
+                Assert.That(ReadColor(),Is.EqualTo(baselineColor).Within(.01f),"Capsule AO bypassed the material's AO Off setting.");
+                Assert.That(ShaderUtil.ShaderHasError(lil.shader),Is.False);
                 Assert.That(character.Settings.renderScale,Is.EqualTo(HoCharacterRenderScale.Full));
-                Debug.Log("HO_CAPSULE_AO_PIPELINE_PASS compatibility="+compatibility+" size=97x65 receiver/foreground/disable/re-enable/material-controls");
+                Debug.Log("HO_CAPSULE_AO_PIPELINE_PASS compatibility="+compatibility+" msaa="+msaa+" perspective="+perspective+" size=97x65 receiver/foreground/disable/re-enable/material-controls");
             }
             finally
             {
                 GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;
 #if URP_COMPATIBILITY_MODE
-                graphSettings.enableRenderCompatibilityMode=oldCompatibility;
+                if(graphSettings!=null)graphSettings.enableRenderCompatibilityMode=oldCompatibility;
 #endif
                 probeOutput?.Release();RenderTexture.active=oldActive;ShaderUtil.allowAsyncCompilation=oldAsync;
                 for(int i=created.Count-1;i>=0;i--)if(created[i]!=null)Object.DestroyImmediate(created[i]);

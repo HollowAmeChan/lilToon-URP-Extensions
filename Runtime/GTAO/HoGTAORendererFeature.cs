@@ -16,6 +16,7 @@ namespace lilToon.URP.Extensions.GTAO
     {
         [SerializeField, InspectorName("Ho-GTAO 设置")]
         private HoGTAOSettings settings = new HoGTAOSettings();
+        private readonly HoGTAOSettings runtimeSettings = new HoGTAOSettings();
 
         private HoGTAOPass pass;
         private HoGTAODebugPass debugPass;
@@ -53,7 +54,8 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             ResolveVolume();
-            if (!settings.enabled)
+            HoGTAOSettings activeSettings = runtimeSettings;
+            if (!activeSettings.enabled)
             {
                 return;
             }
@@ -64,17 +66,17 @@ namespace lilToon.URP.Extensions.GTAO
                 return;
             }
 
-            if (settings.publishAOTextureOnly)
+            if (activeSettings.publishAOTextureOnly)
             {
                 int id = renderingData.cameraData.camera.GetInstanceID();
                 if (cameraHistories.TryGetValue(id, out HoGTAOHistory previousHistory))
                     previousHistory.Invalidate();
                 renderer.EnqueuePass(publishOnlyPass);
-                EnqueueDebug(renderer, ref renderingData, true);
+                EnqueueDebug(renderer, ref renderingData, true, activeSettings);
                 return;
             }
 
-            Shader currentShader = settings.shader != null ? settings.shader : Shader.Find(HoGTAOShaderConstants.ShaderName);
+            Shader currentShader = activeSettings.shader != null ? activeSettings.shader : Shader.Find(HoGTAOShaderConstants.ShaderName);
             if (currentShader == null)
             {
                 return;
@@ -112,12 +114,12 @@ namespace lilToon.URP.Extensions.GTAO
                 cameraHistories.Add(cameraId, cameraHistory);
             }
 
-            pass.Setup(settings, material, motionMaterial, debugMaterial, cameraHistory);
+            pass.Setup(activeSettings, material, motionMaterial, debugMaterial, cameraHistory);
             HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoGTAODebugViewInfo.Performance);
-            EnqueueDebug(renderer, ref renderingData, false);
+            EnqueueDebug(renderer, ref renderingData, false, activeSettings);
         }
 
-        private void EnqueueDebug(ScriptableRenderer renderer, ref RenderingData renderingData, bool publishOnly)
+        private void EnqueueDebug(ScriptableRenderer renderer, ref RenderingData renderingData, bool publishOnly, HoGTAOSettings settings)
         {
             CameraType cameraType = renderingData.cameraData.cameraType;
             bool debugEnabledForCamera = (publishOnly ? settings.debugMode == HoGTAODebugMode.AO : settings.debugMode != HoGTAODebugMode.Off)
@@ -179,6 +181,8 @@ namespace lilToon.URP.Extensions.GTAO
 
         private void ResolveVolume()
         {
+            HoGTAOSettings settings = runtimeSettings;
+            settings.CopyFrom(this.settings);
             VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
             HoGTAOVolume volume = stack != null ? stack.GetComponent<HoGTAOVolume>() : null;
             if (volume == null || settings == null)
@@ -207,6 +211,7 @@ namespace lilToon.URP.Extensions.GTAO
             if (volume.debugInGameView.overrideState) settings.debugInGameView = volume.debugInGameView.value;
             if (volume.debugIntensity.overrideState) settings.debugIntensity = volume.debugIntensity.value;
         }
+
     }
 
     internal sealed class HoGTAOHistory : System.IDisposable

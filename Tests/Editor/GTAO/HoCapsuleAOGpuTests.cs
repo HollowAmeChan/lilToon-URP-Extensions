@@ -134,13 +134,19 @@ namespace lilToon.URP.Extensions.Tests
         }
 
         [Test]
-        public void CrossProducesTwoFiniteDiagonalBands()
+        public void CrossProducesTwoFiniteDoubleEndedGradientBands()
         {
-            DrawMask();Append(HoCapsuleAOMode.Cross,HoCapsuleAOBlendMode.Min);
-            Assert.That(At(new Vector3(.13f,0,.13f)),Is.LessThan(.65f));
-            Assert.That(At(new Vector3(.13f,0,-.13f)),Is.LessThan(.65f));
-            Assert.That(At(new Vector3(.16f,0,0)),Is.EqualTo(.7f).Within(.001f));
-            Assert.That(At(new Vector3(.4f,0,.4f)),Is.EqualTo(.7f).Within(.001f));
+            DrawMask();Append(HoCapsuleAOMode.Cross,HoCapsuleAOBlendMode.Min,strength:.8f,initial:1);
+            float inner=At(new Vector3(.04f,0,.04f));
+            float middle=At(new Vector3(.1f,0,.1f));
+            float tip=At(new Vector3(.145f,0,.145f));
+            Assert.That(middle,Is.GreaterThan(inner+.15f),"A streak must fade along its length instead of retaining a uniform bar.");
+            Assert.That(tip,Is.GreaterThan(middle+.1f));
+            Assert.That(tip,Is.LessThan(.999f));
+            Assert.That(At(new Vector3(-.1f,0,-.1f)),Is.EqualTo(middle).Within(.03f),"Both tips fade symmetrically.");
+            Assert.That(At(new Vector3(.1f,0,-.1f)),Is.EqualTo(middle).Within(.03f),"The second crossing streak also fades.");
+            Assert.That(At(new Vector3(.16f,0,0)),Is.EqualTo(1).Within(.001f));
+            Assert.That(At(new Vector3(.4f,0,.4f)),Is.EqualTo(1).Within(.001f));
         }
 
         [Test]
@@ -170,6 +176,31 @@ namespace lilToon.URP.Extensions.Tests
             RenderTexture.active=previous;ShaderUtil.allowAsyncCompilation=asyncCompilation;
             foreach(Object o in new Object[]{depth,normal,mask,ao,read,floor,capsule,fixture,cameraObject})
                 if(o!=null)Object.DestroyImmediate(o);
+        }
+
+        [Test]
+        public void ShearedParentDoesNotShrinkTheTransverseOccluder()
+        {
+            var parent=new GameObject("Sheared emitter parent");
+            var child=new GameObject("Sheared emitter");
+            try
+            {
+                parent.transform.localScale=new Vector3(2,1,1);
+                child.transform.SetParent(parent.transform,false);
+                child.transform.localRotation=Quaternion.Euler(0,0,45);
+                var emitter=child.AddComponent<HoCapsuleAOEmitter>();
+                emitter.radius=.1f;emitter.height=.5f;emitter.direction=2;
+                Assert.That(emitter.TryGetWorldCapsule(out Vector3 a,out Vector3 b,out float r),Is.True);
+                for(int i=0;i<64;i++)
+                {
+                    float angle=i*Mathf.PI/32;
+                    Vector3 p=child.transform.TransformPoint(new Vector3(Mathf.Cos(angle),Mathf.Sin(angle),0)*.1f);
+                    Vector3 axis=b-a;
+                    Vector3 nearest=a+axis*Mathf.Clamp01(Vector3.Dot(p-a,axis)/axis.sqrMagnitude);
+                    Assert.That(Vector3.Distance(p,nearest),Is.LessThanOrEqualTo(r+1e-6f));
+                }
+            }
+            finally{Object.DestroyImmediate(child);Object.DestroyImmediate(parent);}
         }
     }
 }

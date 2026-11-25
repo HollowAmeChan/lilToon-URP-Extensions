@@ -27,7 +27,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private static readonly int CrossId = Shader.PropertyToID("_HoCapsuleCross");
         private static readonly int RotationId = Shader.PropertyToID("_HoCapsuleRotation");
 
-        private struct Surface { internal Mesh mesh; internal Matrix4x4 matrix; internal int submeshCount; }
+        private struct Surface { internal MeshRenderer renderer; internal int submeshCount; }
         private struct Source { internal Vector3 a, b; internal float radius, sort; internal int id; internal Bounds bounds; }
         private sealed class Inputs
         {
@@ -66,6 +66,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         }
 
         internal void Setup(HoCharacterSpecializationEffects effects) => configuration = HoCapsuleAOConfiguration.From(effects);
+        internal void SetInactive()
+        {
+            LastCapsuleCount = LastReceiverCount = 0;
+            Status = "未启用。";
+        }
 
         private bool Prepare(Camera camera, int width, int height, Matrix4x4 vp, out Inputs inputs)
         {
@@ -80,6 +85,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 var bounds = new Bounds((a + b) * .5f, Abs(b - a));
                 float extent = radius + (configuration.mode == HoCapsuleAOMode.Cross
                     ? Mathf.Max(configuration.distance, configuration.crossLength + configuration.crossSoftness) : configuration.distance);
+                if (!float.IsFinite(extent) || !HoCapsuleAOEmitter.Finite(bounds.size + Vector3.one * (extent * 2))) continue;
                 bounds.Expand(extent * 2);
                 if (!GeometryUtility.TestPlanesAABB(planes, bounds)) continue;
                 candidates.Add(new Source { a = a, b = b, radius = radius, bounds = bounds,
@@ -102,10 +108,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 var materials = renderer.sharedMaterials;
                 bool opaque = materials.Length > 0;
                 foreach (Material m in materials) opaque &= m != null && m.renderQueue <= (int)RenderQueue.GeometryLast;
-                if (!opaque || renderer.isPartOfStaticBatch) continue;
-                surfaces.Add(new Surface { mesh = mesh, matrix = renderer.localToWorldMatrix, submeshCount = mesh.subMeshCount });
+                if (!opaque) continue;
+                surfaces.Add(new Surface { renderer = renderer, submeshCount = Mathf.Min(mesh.subMeshCount, materials.Length) });
             }
-            if (surfaces.Count == 0) { Status = "没有受影响的普通不透明地板 Receiver（静态合批接收面暂不支持）。"; return false; }
+            if (surfaces.Count == 0) { Status = "没有受影响的普通不透明地板 Receiver。"; return false; }
             if (!SystemInfo.IsFormatSupported(GraphicsFormat.R8_UNorm, GraphicsFormatUsage.Blend))
             { Status = "设备不支持接收覆盖的 R8 混合。"; return false; }
             if (material == null)
@@ -148,6 +154,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
         {
+            LastCapsuleCount = LastReceiverCount = 0;
             var camera = frameData.Get<UniversalCameraData>();
             var descriptor = camera.cameraTargetDescriptor;
             var ao = frameData.GetOrCreate<HoGTAORenderGraphResources>();
@@ -158,7 +165,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             { Status = "当前相机没有 GB 物理几何。"; return; }
             var aoDesc = graph.GetTextureDesc(ao.aoTexture);
             var depthDesc = graph.GetTextureDesc(geometry.depthTexture);
-            if (camera.xr != null && camera.xr.enabled || !camera.isDefaultViewport || aoDesc.dimension != TextureDimension.Tex2D
+            if (camera.xr != null && camera.xr.enabled || camera.renderType != CameraRenderType.Base
+                || !camera.isDefaultViewport || descriptor.useDynamicScale || aoDesc.dimension != TextureDimension.Tex2D
                 || depthDesc.width != aoDesc.width || depthDesc.height != aoDesc.height
                 || aoDesc.msaaSamples != MSAASamples.None
                 || !SystemInfo.IsFormatSupported(aoDesc.colorFormat, GraphicsFormatUsage.Blend))
@@ -187,7 +195,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     context.cmd.EnableScissorRect(d.inputs.scissor);
                     foreach (Surface surface in d.inputs.surfaces)
                         for (int submesh = 0; submesh < surface.submeshCount; submesh++)
-                            context.cmd.DrawMesh(surface.mesh, surface.matrix, d.material, submesh, 0);
+                            context.cmd.DrawRenderer(surface.renderer, d.material, submesh, 0);
                     context.cmd.DisableScissorRect();
                 });
             }
@@ -224,13 +232,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
+            LastCapsuleCount = LastReceiverCount = 0;
             Camera camera = renderingData.cameraData.camera;
             RTHandle ao = HoAOCompatibilityPublication.Camera == camera ? HoAOCompatibilityPublication.Texture : null;
             var geometry = HoGeometryBufferPass.CompatibilityCamera == camera ? HoGeometryBufferPass.CompatibilityTargets : null;
             if (ao == null || ao.rt == null || geometry == null || geometry.DepthTexture == null || geometry.NormalDepthTexture == null)
             { Status = "当前相机没有 Compatibility HoAO／GB 发布。"; return; }
             var descriptor = renderingData.cameraData.cameraTargetDescriptor;
-            if (camera.stereoEnabled || camera.rect != new Rect(0, 0, 1, 1)
+            if (camera.stereoEnabled || renderingData.cameraData.renderType != CameraRenderType.Base
+                || camera.rect != new Rect(0, 0, 1, 1) || descriptor.useDynamicScale
                 || ao.rt.width != descriptor.width || ao.rt.height != descriptor.height
                 || geometry.DepthTexture.rt.width != descriptor.width || geometry.DepthTexture.rt.height != descriptor.height)
             { Status = "Compatibility AO／GB 尺寸或相机配置不匹配。"; return; }
@@ -251,7 +261,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             cmd.EnableScissorRect(inputs.scissor);
             foreach (Surface surface in inputs.surfaces)
                 for (int submesh = 0; submesh < surface.submeshCount; submesh++)
-                    cmd.DrawMesh(surface.mesh, surface.matrix, material, submesh, 0);
+                    cmd.DrawRenderer(surface.renderer, material, submesh, 0);
             cmd.DisableScissorRect();
             CoreUtils.SetRenderTarget(cmd, ao, ClearFlag.None);
             cmd.SetGlobalTexture(MaskId, mask);

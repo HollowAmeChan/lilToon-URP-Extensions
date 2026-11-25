@@ -25,11 +25,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Vector3 localAxis = direction == 0 ? Vector3.right : direction == 1 ? Vector3.up : Vector3.forward;
             Vector3 axis = transform.TransformVector(localAxis);
             float axisScale = axis.magnitude;
-            float perpendicularScale = 0;
+            Vector3 u = Vector3.zero, v = Vector3.zero;
+            int perpendicularAxis = 0;
             for (int i = 0; i < 3; i++)
                 if (i != direction)
-                    perpendicularScale = Mathf.Max(perpendicularScale,
-                        transform.TransformVector(i == 0 ? Vector3.right : i == 1 ? Vector3.up : Vector3.forward).magnitude);
+                {
+                    Vector3 basis = transform.TransformVector(i == 0 ? Vector3.right : i == 1 ? Vector3.up : Vector3.forward);
+                    if (perpendicularAxis++ == 0) u = basis; else v = basis;
+                }
+            // Largest singular value of the transverse basis also covers parent shear.
+            float uu = u.sqrMagnitude, vv = v.sqrMagnitude, uv = Vector3.Dot(u, v);
+            float perpendicularScale = Mathf.Sqrt(.5f * (uu + vv + Mathf.Sqrt((uu - vv) * (uu - vv) + 4 * uv * uv)));
             Vector3 c = transform.TransformPoint(center);
             worldRadius = radius * perpendicularScale;
             if (!Finite(c) || !Finite(axis) || !float.IsFinite(worldRadius)

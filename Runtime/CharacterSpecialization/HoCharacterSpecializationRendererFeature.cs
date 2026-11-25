@@ -87,6 +87,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 capsuleAOPass.Setup(effects);
                 renderer.EnqueuePass(capsuleAOPass);
             }
+            else capsuleAOPass?.SetInactive();
             if (!ShouldRender(in renderingData, activeSettings))
             {
                 pass?.ReleaseCompatibilityResources();

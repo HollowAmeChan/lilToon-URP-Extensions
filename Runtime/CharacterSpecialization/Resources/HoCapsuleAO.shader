@@ -57,10 +57,14 @@ Shader "Hidden/lilToon/URP/CharacterCapsuleAO"
         float CrossBand(float2 p, float2 axis)
         {
             float halfWidth = _HoCapsuleCross.y * .5;
-            float2 q = float2(max(abs(dot(p, axis)) - max(_HoCapsuleCross.x - halfWidth, 0), 0),
-                dot(p, float2(-axis.y, axis.x)));
-            float sd = length(q) - halfWidth;
-            return 1 - smoothstep(-_HoCapsuleCross.w, _HoCapsuleCross.w, sd);
+            float along = abs(dot(p, axis));
+            float across = abs(dot(p, float2(-axis.y, axis.x)));
+            // A flat streak fades continuously to both tips. Do not use a
+            // capsule signed distance: that produces uniform, round-ended bars.
+            float tipFade = 1 - smoothstep(0, max(_HoCapsuleCross.x, 1e-5), along);
+            float sideFade = 1 - smoothstep(max(halfWidth - _HoCapsuleCross.w, 0),
+                halfWidth + _HoCapsuleCross.w, across);
+            return tipFade * sideFade;
         }
         float CrossOcclusion(float3 p, float3 n, float3 a, float3 b, float r)
         {

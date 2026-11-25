@@ -18,7 +18,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             renderer = cachedRenderer != null ? cachedRenderer : cachedRenderer = GetComponent<MeshRenderer>();
             var filter = cachedFilter != null ? cachedFilter : cachedFilter = GetComponent<MeshFilter>();
             mesh = filter != null ? filter.sharedMesh : null;
-            return isActiveAndEnabled && renderer != null && renderer.enabled && mesh != null
+            return isActiveAndEnabled && renderer != null && renderer.enabled && !renderer.forceRenderingOff && mesh != null
                 && gameObject.activeInHierarchy && (camera.cullingMask & (1 << gameObject.layer)) != 0;
         }
     }
