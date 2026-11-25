@@ -65,7 +65,15 @@ Tags {"LightMode" = "lilToonOIT"}
 - `WeightedOITComposite.shader`
 - OIT shader 常量与设置
 
-Renderer Feature 只绘制带有 `LightMode = lilToonOIT` tag 的 pass。除了 OIT include 使用的全局 shader 属性之外，它不需要知道 lilToon 材质内部细节。
+Renderer Feature 在同一份 draw settings 中接收 `HoOIT` 与已发布的 `lilToonOIT` Pass tag。
+
+### HoOIT 材质契约
+
+新接入的透明材质使用 `LightMode = HoOIT`。Renderer Feature 发布 `_HoOITActive`、`_HoOITWeight`、`_HoOITAlphaClipThreshold` 与 `_HoOITQueueRange`。队列向量的 X/Y 是 accumulation 实际过滤的闭区间下限和上限。材质的 OIT Pass 只在 `_HoOITActive` 为 1 时输出；透明 Forward 根据同一状态与材质实际队列是否处于该区间决定是否让出绘制。队列字段需要与材质的有效 Render Queue 同步。
+
+`_HoOITActive` 只在全分辨率 accumulation 已绑定尺寸、采样数和纹理维度匹配的相机深度，且 OIT Layer Mask 覆盖当前相机 Culling Mask 时置 1。Accumulation 必须在不透明绘制之后、普通透明绘制之前，composite 必须在普通透明之后。缩小分辨率、相机深度不可用或设置不满足上述条件时，`HoOIT` 材质继续使用普通透明 Forward。
+
+Render Graph 与兼容模式均在相机开始、Preview、合成结束和 Feature 释放时重置相机相关全局参数。已发布的旧 Pass 仍读取原 tag 与全局参数。
 
 ## 数据流
 

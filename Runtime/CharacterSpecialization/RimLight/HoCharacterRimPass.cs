@@ -454,6 +454,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     builder.SetRenderAttachmentDepth(atlas, AccessFlags.WriteAll);
                     builder.SetGlobalTextureAfterPass(atlas, AtlasId);
                 }
+                else if (frame.lights != null && frame.lights.Length > 0)
+                {
+                    // A no-shadow source never samples the atlas, but the receiver still declares its SRV.
+                    builder.SetGlobalTextureAfterPass(graph.defaultResources.blackTexture, AtlasId);
+                }
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData d, RasterGraphContext context) => DrawAndPublish(context.cmd, d.frame));
@@ -476,6 +481,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             if (frame.slices.Length > 0) CoreUtils.SetRenderTarget(command, frame.resources.atlas);
             DrawAndPublish(CommandBufferHelpers.GetRasterCommandBuffer(command), frame);
             if (frame.slices.Length > 0) command.SetGlobalTexture(AtlasId, frame.resources.atlas);
+            else if (frame.lights != null && frame.lights.Length > 0) command.SetGlobalTexture(AtlasId, Texture2D.blackTexture);
             if (frame.slices.Length > 0)
                 CoreUtils.SetRenderTarget(command, camera.renderer.cameraColorTargetHandle, camera.renderer.cameraDepthTargetHandle,
                     ClearFlag.None, Color.clear);
@@ -486,6 +492,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         private static void DrawAndPublish(RasterCommandBuffer cmd, Frame frame)
         {
+            cmd.SetKeyword(HoCharacterRimShaderState.HairReceiverKeyword, false);
             cmd.SetGlobalFloat(ActiveId, 0); cmd.SetGlobalInt(CountId, 0);
             var emptyLights = HoCharacterRimShaderState.EmptyLights;
             if (emptyLights != null) cmd.SetGlobalBuffer(LightsId, emptyLights);
@@ -540,6 +547,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             cmd.SetGlobalVector(AtlasSizeId, frame.atlasSize);
             cmd.SetGlobalInt(CountId, frame.lights.Length);
             cmd.SetGlobalFloat(ActiveId, 1);
+            cmd.SetKeyword(HoCharacterRimShaderState.HairReceiverKeyword, true);
         }
 
         private void Prune(Camera current)

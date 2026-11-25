@@ -18,13 +18,13 @@ namespace lilToon.URP.Extensions.OIT
         [Tooltip("Skip the OIT passes without removing the renderer feature from the renderer data.")]
         public bool enabled = true;
 
-        [Tooltip("Layers that can write to the OIT accumulation buffers.")]
+        [Tooltip("Layers that can write to the OIT accumulation buffers. HoOIT requires all layers rendered by the camera to be included.")]
         public LayerMask layerMask = -1;
 
-        [Tooltip("Lowest render queue included in the OIT accumulation pass. lilToon transparent shaders often use AlphaTest+10.")]
+        [Tooltip("Lowest render queue included in the OIT accumulation pass, inclusive.")]
         public int minRenderQueue = (int)RenderQueue.AlphaTest + 1;
 
-        [Tooltip("Highest render queue included in the OIT accumulation pass.")]
+        [Tooltip("Highest render queue included in the OIT accumulation pass, inclusive.")]
         public int maxRenderQueue = (int)RenderQueue.Overlay - 1;
 
         [Tooltip("When transparent OIT objects are drawn into accumulation buffers.")]
@@ -36,7 +36,7 @@ namespace lilToon.URP.Extensions.OIT
         [Tooltip("Lower resolutions reduce bandwidth at the cost of transparent edge quality.")]
         public WeightedOITRenderScale renderScale = WeightedOITRenderScale.Full;
 
-        [Tooltip("Composite shader. If empty, the feature tries to find Hidden/lilToon/URP/WeightedOITComposite.")]
+        [Tooltip("Composite shader. An empty field uses the built-in Weighted OIT composite shader.")]
         public Shader compositeShader;
 
         [Tooltip("Global strength multiplier for weighted transparency accumulation.")]

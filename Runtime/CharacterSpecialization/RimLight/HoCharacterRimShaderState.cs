@@ -8,6 +8,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     // is off. This binding must exist without any RendererFeature or source.
     internal static class HoCharacterRimShaderState
     {
+        internal static readonly GlobalKeyword HairReceiverKeyword = GlobalKeyword.Create("_HO_HAIR_RIM_AVAILABLE");
         static readonly int LightsId = Shader.PropertyToID("_HoRimLights");
         static readonly int ActiveId = Shader.PropertyToID("_HoRimActive");
         static readonly int CountId = Shader.PropertyToID("_HoRimLightCount");
@@ -31,6 +32,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         internal static void Reset()
         {
+            Shader.SetKeyword(HairReceiverKeyword, false);
             Shader.SetGlobalFloat(ActiveId, 0);
             Shader.SetGlobalInt(CountId, 0);
             var buffer = EmptyLights;
@@ -79,6 +81,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             // Do not allocate another placeholder during shutdown.
             shuttingDown = true;
             RenderPipelineManager.beginCameraRendering -= BeginCamera;
+            Shader.SetKeyword(HairReceiverKeyword, false);
             Shader.SetGlobalFloat(ActiveId, 0);
             Shader.SetGlobalInt(CountId, 0);
             emptyLights?.Dispose();

@@ -287,10 +287,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 passData.laneTagMasks1 = LaneTagMasks[1];
 
                 builder.UseRendererList(passData.rendererList);
-                builder.SetRenderAttachment(owner, HoSurfaceBufferShaderConstants.SemanticOwnerAttachment, AccessFlags.WriteAll);
+                // Cutout and empty pixels leave these attachments untouched. Retain their
+                // clear load actions because D3D12 native MRT does not reliably clear
+                // every attachment from the explicit clear command alone.
+                builder.SetRenderAttachment(owner, HoSurfaceBufferShaderConstants.SemanticOwnerAttachment, AccessFlags.Write);
                 for (int i = 0; i < lanes.Length; i++)
                 {
-                    builder.SetRenderAttachment(lanes[i], HoSurfaceBufferShaderConstants.SemanticLaneAttachmentBase + i, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(lanes[i], HoSurfaceBufferShaderConstants.SemanticLaneAttachmentBase + i, AccessFlags.Write);
                 }
 
                 builder.SetRenderAttachmentDepth(depth, AccessFlags.WriteAll);
