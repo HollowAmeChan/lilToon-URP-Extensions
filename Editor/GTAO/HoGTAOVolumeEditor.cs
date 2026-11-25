@@ -20,6 +20,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         private static bool showDebug;
 
         private SerializedDataParameter enable;
+        private SerializedDataParameter publishAOTextureOnly;
         private SerializedDataParameter debugInSceneView;
         private SerializedDataParameter debugInGameView;
         private SerializedDataParameter resolution;
@@ -43,6 +44,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         {
             PropertyFetcher<HoGTAOVolume> fetcher = new PropertyFetcher<HoGTAOVolume>(serializedObject);
             enable = Unpack(fetcher.Find(x => x.enable));
+            publishAOTextureOnly = Unpack(fetcher.Find(x => x.publishAOTextureOnly));
             debugInSceneView = Unpack(fetcher.Find(x => x.debugInSceneView));
             debugInGameView = Unpack(fetcher.Find(x => x.debugInGameView));
             resolution = Unpack(fetcher.Find(x => x.resolution));
@@ -67,10 +69,16 @@ namespace lilToon.URP.Extensions.Editor.GTAO
         {
 
             DrawRuntime();
-            DrawTracing();
-            DrawDenoise();
+            if (!PublishOnly)
+            {
+                DrawTracing();
+                DrawDenoise();
+            }
             DrawDebug();
         }
+
+        private bool PublishOnly => publishAOTextureOnly != null
+            && publishAOTextureOnly.value.boolValue;
 
         private void DrawRuntime()
         {
@@ -82,8 +90,13 @@ namespace lilToon.URP.Extensions.Editor.GTAO
             using (new EditorGUILayout.VerticalScope())
             {
                 DrawParameter(enable, "启用");
-                DrawPresets();
-                DrawParameter(resolution, "计算分辨率");
+                DrawParameter(publishAOTextureOnly, "仅发布 AO 纹理");
+                if (!PublishOnly)
+                {
+                    DrawPresets();
+                    DrawParameter(resolution, "计算分辨率");
+                }
+                else EditorGUILayout.HelpBox("发布全白 HoAO，跳过追踪、运动输入与去噪。胶囊等附加项可继续写入；调试仅支持 AO 视图。", MessageType.Info);
             }
         }
 

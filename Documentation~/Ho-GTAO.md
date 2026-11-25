@@ -16,6 +16,12 @@
 
 ## 2. 契约与语义
 
+### 仅发布 AO 纹理
+
+Settings 与 Volume 的“仅发布 AO 纹理”默认关闭。启用后，在不透明绘制前只清理并发布全白、可写的 `_HoAOTexture`，不请求 GB／Color／Motion，不创建新的 GTAO 历史，也不执行追踪和滤波。此模式为 Capsule AO 等附加项提供中性载体；总开关关闭时仍不发布。
+
+正常／仅发布切换会使该相机的旧 GTAO 历史失效。仅发布模式只接受 AO 调试视图，其它调试选择不拉起追踪计算。公共 AO 仍是全相机尺寸、单采样、1 为无遮挡；附加项通过帧内句柄和可写标记借用，不能把几何／Temporal 调试图当作公共可见度写入。
+
 - `_HoAOTexture` 存储 0～1 的可见度，1 表示无遮挡。材质在「表面定义 → AO」选择关闭、烘焙、实时或混合，并设置实时权重、调整和遮罩。阴影和 AO 压暗各自控制对这份 AO 的响应。
 - **必须显式单采样**：`msaaSamples = None`、`bindTextureMS = false`、`filterMode = Bilinear`——发布给材质的全局纹理**不能继承相机颜色的 MSAA 描述**（4x + bindTextureMS 会让正经 `Texture2D` 采样的材质读未定义行为）。
 - **公共输出极性**：中间缓冲存“AO 量”（1−visibility），最终输出存“visibility 乘数”（1 = 无 AO）。fragment 版必须沿用这个极性约定。

@@ -58,6 +58,9 @@ namespace lilToon.URP.Extensions.GTAO
     {
         public bool enabled = true;
 
+        [InspectorName("仅发布 AO 纹理"), Tooltip("发布全白、可写的 HoAO，跳过 GTAO 追踪、运动输入和去噪，供胶囊 AO 等附加项使用。")]
+        public bool publishAOTextureOnly;
+
         // 当前 Renderer Feature 资产配置为 BeforeRenderingOpaques（250）。
         // 与 Ho-GeometryBuffer 同事件，先后由 Renderer 特性列表顺序保证
         // （GeometryBuffer 在前、Ho-GTAO 紧随其后）；序列化默认值仅用于兼容旧资产。

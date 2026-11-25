@@ -32,7 +32,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-GTAO transport validation reads the Ho-GeometryBuffer normal/depth resource and publishes the shared AO semantic. This validation build runs after Ho-GeometryBuffer; move both features before opaque rendering when the consumer path is enabled.",
+                "正常模式读取 Ho-GeometryBuffer 并在不透明绘制前发布 HoAO。仅发布模式提供可写白色 AO，不执行 GTAO 追踪与去噪。",
                 MessageType.Info);
 
             DrawRuntime();
@@ -57,9 +57,13 @@ namespace lilToon.URP.Extensions.Editor.GTAO
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("enabled");
-                DrawProperty("resolution");
-                DrawProperty("sliceCount");
-                DrawProperty("stepCount");
+                DrawProperty("publishAOTextureOnly");
+                if (Find("publishAOTextureOnly")?.boolValue != true)
+                {
+                    DrawProperty("resolution");
+                    DrawProperty("sliceCount");
+                    DrawProperty("stepCount");
+                }
             }
         }
 
@@ -72,6 +76,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
+                if (Find("publishAOTextureOnly")?.boolValue == true) return;
                 DrawProperty("worldSpaceRadius");
                 DrawProperty("screenSpaceRadius");
                 DrawProperty("thickness");

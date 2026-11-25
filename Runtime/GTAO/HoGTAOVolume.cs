@@ -64,6 +64,9 @@ namespace lilToon.URP.Extensions.GTAO
         [InspectorName("启用"), Tooltip("启用 Ho-GTAO，并将结果发布给材质和调试输出。\n\n读取 Ho GeometryBuffer 的原始深度和法线；Renderer 中应先放置几何数据生产 Feature。")]
         public BoolParameter enable = new BoolParameter(true);
 
+        [InspectorName("仅发布 AO 纹理"), Tooltip("只发布全白、可写的 HoAO，跳过 GTAO 追踪、运动输入与去噪。总开关关闭时仍不发布。")]
+        public BoolParameter publishAOTextureOnly = new BoolParameter(false);
+
         [InspectorName("场景视图"), Tooltip("是否在 Scene View 中显示 GTAO 调试结果。")]
         public BoolParameter debugInSceneView = new BoolParameter(true);
 

@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.GTAO
 
         private HoGTAOPass pass;
         private HoGTAODebugPass debugPass;
+        private HoGTAOPublishOnlyPass publishOnlyPass;
         private Material material;
         private Shader shader;
         private Material motionMaterial;
@@ -33,6 +34,8 @@ namespace lilToon.URP.Extensions.GTAO
         public override void Create()
         {
             pass = new HoGTAOPass();
+            publishOnlyPass?.Dispose();
+            publishOnlyPass = new HoGTAOPublishOnlyPass();
             debugPass?.ReleaseDebugResources();
             debugPass = new HoGTAODebugPass();
             if (!resetRegistered)
@@ -58,6 +61,16 @@ namespace lilToon.URP.Extensions.GTAO
             CameraType cameraType = renderingData.cameraData.cameraType;
             if (cameraType != CameraType.Game && cameraType != CameraType.SceneView)
             {
+                return;
+            }
+
+            if (settings.publishAOTextureOnly)
+            {
+                int id = renderingData.cameraData.camera.GetInstanceID();
+                if (cameraHistories.TryGetValue(id, out HoGTAOHistory previousHistory))
+                    previousHistory.Invalidate();
+                renderer.EnqueuePass(publishOnlyPass);
+                EnqueueDebug(renderer, ref renderingData, true);
                 return;
             }
 
@@ -101,9 +114,20 @@ namespace lilToon.URP.Extensions.GTAO
 
             pass.Setup(settings, material, motionMaterial, debugMaterial, cameraHistory);
             HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoGTAODebugViewInfo.Performance);
-            bool debugEnabledForCamera = settings.debugMode != HoGTAODebugMode.Off
+            EnqueueDebug(renderer, ref renderingData, false);
+        }
+
+        private void EnqueueDebug(ScriptableRenderer renderer, ref RenderingData renderingData, bool publishOnly)
+        {
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            bool debugEnabledForCamera = (publishOnly ? settings.debugMode == HoGTAODebugMode.AO : settings.debugMode != HoGTAODebugMode.Off)
                 && ((cameraType == CameraType.SceneView && settings.debugInSceneView)
                     || (cameraType == CameraType.Game && settings.debugInGameView));
+            if (debugEnabledForCamera && debugMaterial == null)
+            {
+                debugShader = Shader.Find(HoGTAOShaderConstants.DebugShaderName);
+                if (debugShader != null) debugMaterial = CoreUtils.CreateEngineMaterial(debugShader);
+            }
             if (debugEnabledForCamera && debugMaterial != null)
             {
                 debugPass.Setup(debugMaterial, settings.debugMode, settings.debugIntensity);
@@ -140,6 +164,8 @@ namespace lilToon.URP.Extensions.GTAO
             }
             cameraHistories.Clear();
             pass = null;
+            publishOnlyPass?.Dispose();
+            publishOnlyPass = null;
             debugPass?.ReleaseDebugResources();
             debugPass = null;
         }
@@ -148,6 +174,7 @@ namespace lilToon.URP.Extensions.GTAO
         {
             Shader.SetGlobalTexture(HoGTAOShaderConstants.AOTextureId, Texture2D.whiteTexture);
             Shader.SetGlobalFloat(HoGTAOShaderConstants.AOAvailableId, 0f);
+            HoAOCompatibilityPublication.Reset();
         }
 
         private void ResolveVolume()
@@ -160,6 +187,7 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             if (volume.enable.overrideState) settings.enabled = volume.enable.value;
+            if (volume.publishAOTextureOnly.overrideState) settings.publishAOTextureOnly = volume.publishAOTextureOnly.value;
             if (volume.resolution.overrideState) settings.resolution = volume.resolution.value;
             if (volume.worldSpaceRadius.overrideState) settings.worldSpaceRadius = volume.worldSpaceRadius.value;
             if (volume.screenSpaceRadius.overrideState) settings.screenSpaceRadius = volume.screenSpaceRadius.value;
@@ -1420,6 +1448,16 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+
+            if (!isDebug)
+            {
+                var camera = frameData.Get<UniversalCameraData>();
+                var output = frameData.GetOrCreate<HoGTAORenderGraphResources>();
+                output.aoTexture = destination;
+                output.canAppend = true;
+                output.cameraId = camera.camera.GetInstanceID();
+                output.size = new Vector2Int(destinationDesc.width, destinationDesc.height);
+            }
 
             using (var builder = renderGraph.AddRasterRenderPass<BlitData>(passName, out BlitData data, ProfilingSampler))
             {
