@@ -2,6 +2,14 @@
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳 diffuse GI product。camera color 消费由 Ho-ScreenProcess 的 `RTGI 间接光` layer 负责。SDK GI reservoir 与时间/空间重采样复用固定原文件；应用 bridge 适配 Ho 生产端。最终 NPR 影色/ramp 映射或材质内接收未纳入本阶段。
 
+## 2026-11-25 共享 HLSL 维护边界
+
+次级命中材质通过单个 `LIL_PASS_RTGI_SECONDARY` 显式入口使用 lilToon 的公共 HLSL，保留原 12 个 feature 形成的第一主色、法线、发光及 smoothness/metallic 有界子集。旧逐项 feature 定义已退役；该入口与原生八材质共同维护，不增加通用 profile 配置层，也不扩大本页原有材质支持域。
+
+`LIL_MATRIX_M` 的 RT 对象变换，以及 `LIL_SAMPLE_2D`、`LIL_SAMPLE_2D_GRAD`、`LIL_SAMPLE_2D_ST`、`LIL_SAMPLE_1D` 的显式 LOD 0 覆写继续保留。没有新增 ray-cone 过滤或改动 GI 光照算法、重采样、NRD 与发布契约。
+
+lilToon 与本 Extensions 包必须使用配套源修订成对升级；两个包均有本地归档，核对各自 release manifest 的源修订与内容 SHA，原 SemVer 不变。主仓当前范围见 `docs/liltoon-slimming/17-hlsl-profile-specialization.md`。本批仅做原生/RTGI 两入口的 CBUFFER 与算法 token 静态对账，cluster 和 Meta 依赖另作源码审查，未运行编译或测试。以下日期记录保留各自历史范围，不算本批重新验收。
+
 ## 2026-11-06 稳定性与调试记录
 
 RTGI producer 在 opaque Forward 前发布 typed product；ScreenProcess 的 RTGI layer 负责 camera-color 消费。RTGI Volume 只覆盖 producer/debug 参数，不再描述画面合成。Debug View 新增 EV 曝光与可选 Reinhard 映射，避免把弱线性 HDR 当作空 product。

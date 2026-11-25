@@ -5,20 +5,9 @@
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 #include "UnityRayTracingMeshUtils.cginc"
 #include "HoRTGISecondarySurface.hlsl"
-#define LIL_URP
+// This bounded entry must be updated together with lilToon's shared HLSL.
+#define LIL_PASS_RTGI_SECONDARY
 #define LIL_RENDER 0
-#define LIL_FEATURE_EMISSION_1ST
-#define LIL_FEATURE_EmissionMap
-#define LIL_FEATURE_EmissionBlendMask
-#define LIL_FEATURE_EmissionGradTex
-#define LIL_FEATURE_EMISSION_GRADATION
-#define LIL_FEATURE_ANIMATE_EMISSION_UV
-#define LIL_FEATURE_ANIMATE_EMISSION_MASK_UV
-#define LIL_FEATURE_AlphaMask
-#define LIL_FEATURE_NORMAL_1ST
-#define LIL_FEATURE_BumpMap
-#define LIL_FEATURE_SmoothnessTex
-#define LIL_FEATURE_MetallicGlossMap
 #include "Packages/jp.lilxyzw.liltoon/Shader/Includes/lil_common_macro.hlsl"
 #undef LIL_MATRIX_M
 float4x4 HoGIObjectToWorld() { float3x4 m=ObjectToWorld3x4();return float4x4(m[0],m[1],m[2],float4(0,0,0,1)); }
