@@ -11,10 +11,12 @@ Ho 管线继续保留现有包 ID、命名空间及 Hidden Shader 名称。它�
 | Cloth | 底色调整、独立／打包 PBR、法线、发光、Tension | 独立原始 UV 遮罩运算后乘颜色 A |
 | Hair | 底色、法线；与其 HoSurface 一致的粗糙度 1、金属度 0、F0 0 | 实体覆盖只读主图 A，不读光学透明度／颜色 A |
 | Skin | 底色、光滑度图、F0 强度、法线、RGBA 发光、Tension | 独立 Coverage R × 颜色 A，使用主图 ST |
-| Eye（Skin 包） | 底色、光滑度、F0 .04、法线、RGBA 发光 | Coverage R；主图 A 仍是 AO |
+| Eye（Skin 包） | 底色、独立光滑度 R 图／倍率／ST 或原标量回退、F0 .04、法线、RGBA 发光 | Coverage R；主图 A 仍是 AO |
 | Environment | 保留原金属度／光滑度乘图语义、法线、发光 | 原主图 A × 颜色 A |
 
 这是供 RTGI 采样的表面数据合同，不执行各材质的直接高光、丝光或皮肤光照模型。使用 LOD 0，不宣称复制屏幕导数与 GSAA。Effect、Fur、Commercial Skin 未加入次级表面数值模型。旧材质的视差、溶解、抖动等超出已声明裁切域的情况仍拒绝适配。
+
+Eye 与 Skin 的独立 `_SmoothnessMap` 使用自己的采样器和 raw UV0 ST，倍率与无图标量互为回退，不额外相乘。Eye 的真实 DXR 验证覆盖独立 Clamp／Main Repeat、ST、零倍率及无图 .65。Ho 实时 AO 遮罩属于屏幕空间照明，不加入次级表面 BAO 数据；本轮没有扩充材质 LUT／ray payload ABI。
 
 各纹理保留其实际采样器和 ST 语义；旧 lilToon 的法线／PBR 链接主图 ST，新专职图使用各自规则。光线 hit group 的空纹理绑定不等于 ShaderLab 默认纹理，因此显式提供白图／平法线身份值。非 HDR 主色按当前颜色空间转换到 canonical 线性 HDR tint；alpha 保持不变。
 

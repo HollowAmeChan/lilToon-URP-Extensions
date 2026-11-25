@@ -70,6 +70,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var eye=Material("HoShader/Eye URP");eye.SetFloat("_SurfaceMode",1);eye.SetTexture("_BaseMap",Texture(new Color(1,1,1,.01f)));
                 eye.SetTexture("_CoverageMap",Texture(Color.clear,Color.white));Sync(eye);var eyeCoverage=Trace(eye);
                 Require(eyeCoverage[0].status==0&&eyeCoverage[1].status==1,"Eye R coverage independent of base A AO");Near(eyeCoverage[1].reflectance,.04f,"Eye F0");
+                CheckEyeSmoothness(eye);
                 var environment=Material("HoShader/Environment URP");environment.SetFloat("_Metallic",.4f);environment.SetFloat("_Smoothness",.6f);environment.SetFloat("_Reflectance",.08f);
                 environment.SetTexture("_MetallicGlossMap",Texture(new Color(.5f,0,0,1)));environment.SetTexture("_SmoothnessTex",Texture(new Color(.5f,0,0,1)));Sync(environment);
                 var envHit=Trace(environment)[0];Near(envHit.metallic,.2f,"Environment legacy map multiplier");Near(envHit.roughness,.7f,"Environment roughness");Near(envHit.reflectance,.08f,"Environment F0");
@@ -103,6 +104,22 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             var result=new Hit[2];hits.GetData(result);Require(before==EditorJsonUtility.ToJson(material),"source raster material unchanged");
             Debug.Log("HO_RT_PROBE "+material.shader.name+" status="+result[0].status+"/"+result[1].status+" base="+result[0].baseColor+" M="+result[0].metallic+" R="+result[0].roughness+" F0="+result[0].reflectance);
             return result;
+        }
+        private static void CheckEyeSmoothness(Material eye)
+        {
+            var map=Texture(new Color(.2f,0,1,1),new Color(.8f,1,0,0));
+            eye.SetFloat("_SurfaceMode",0);eye.SetFloat("_Smoothness",.65f);eye.SetFloat("_SmoothnessMapScale",.5f);
+            eye.SetTexture("_SmoothnessMap",map);eye.SetTextureScale("_BaseMap",new Vector2(2,1));Sync(eye);
+            var mapped=Trace(eye);Near(mapped[0].roughness,.9f,"Eye map R left independent of Base ST/A");Near(mapped[1].roughness,.6f,"Eye map R right");
+            eye.SetTextureScale("_SmoothnessMap",new Vector2(-1,1));eye.SetTextureOffset("_SmoothnessMap",Vector2.right);Sync(eye);
+            mapped=Trace(eye);Near(mapped[0].roughness,.6f,"Eye own map ST left");Near(mapped[1].roughness,.9f,"Eye own map ST right");
+            ((Texture2D)eye.GetTexture("_BaseMap")).wrapMode=TextureWrapMode.Repeat;
+            eye.SetTextureScale("_SmoothnessMap",new Vector2(2,1));eye.SetTextureOffset("_SmoothnessMap",new Vector2(.5f,0));Sync(eye);
+            mapped=Trace(eye);Near(mapped[0].roughness,.6f,"Eye own Clamp sampler left");Near(mapped[1].roughness,.6f,"Eye own Clamp sampler differs from Base Repeat");
+            eye.SetFloat("_SmoothnessMapScale",0);Sync(eye);Near(Trace(eye)[0].roughness,1,"Eye zero map multiplier");
+            eye.SetTexture("_SmoothnessMap",null);Sync(eye);Near(Trace(eye)[0].roughness,.35f,"Eye map removal scalar fallback");
+            eye.SetTextureScale("_BaseMap",Vector2.one);eye.SetFloat("_SurfaceMode",1);Sync(eye);
+            Debug.Log("HO_EYE_RT_SMOOTHNESS_OK own ST/sampler, R, multiplier, zero and default scalar");
         }
         private static void CheckClothAlpha(Material material)
         {

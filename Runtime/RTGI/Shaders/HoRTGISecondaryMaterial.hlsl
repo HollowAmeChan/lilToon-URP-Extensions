@@ -40,7 +40,7 @@ void HoGIPBR(float2 uv,inout HoRTGISecondarySurface surface)
         }
         if(_HoRTPBRFlags.w>.5)
         {
-            float value=_HoRTMaterialFamily==2||_HoRTMaterialFamily==5?_SmoothnessTex.SampleLevel(sampler_SmoothnessTex,HoGITransformUV(uv,_SmoothnessTex_ST),0).r
+            float value=_HoRTMaterialFamily==2||_HoRTMaterialFamily==5||_HoRTMaterialFamily==6?_SmoothnessTex.SampleLevel(sampler_SmoothnessTex,HoGITransformUV(uv,_SmoothnessTex_ST),0).r
                 :_SmoothnessTex.SampleLevel(sampler_MainTex,HoGITransformUV(uv,_SmoothnessTex_ST),0).r;
             smoothness=saturate(_HoRTSmoothnessMapScale*value);
         }

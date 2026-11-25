@@ -87,6 +87,7 @@ namespace lilToon.URP.Extensions.RTGI
             bool environment = family == HoRTMaterialFamily.Environment;
             bool skin = family == HoRTMaterialFamily.Skin;
             bool hair = family == HoRTMaterialFamily.Hair;
+            bool smoothnessMapFamily = skin || family == HoRTMaterialFamily.Eye;
             target.SetFloat("_HoRTMaterialFamily", (float)family);
             target.SetVector("_HoRTColorAdjustment", cloth ? source.GetVector("_ColorAdjustment") : new Vector4(0, 1, 1, 1));
             target.SetFloat("_Metallic", legacy || cloth || environment ? Float(source, "_Metallic") : 0);
@@ -96,14 +97,14 @@ namespace lilToon.URP.Extensions.RTGI
             int input = legacy || environment || cloth ? (Float(source, "_PBRInputMode") > .5f ? 2 : 1) : 0;
             Vector4 flags = cloth ? source.GetVector("_PBRMapFlags") : new Vector4(1, 1, 1, 1);
             if (cloth && input == 2 && flags.x < .5f) input = 0;
-            if (skin && Float(source, "_UseSmoothnessMap") > .5f) { input = 1; flags = new Vector4(0, 0, 0, 1); }
+            if (smoothnessMapFamily && Float(source, "_UseSmoothnessMap") > .5f) { input = 1; flags = new Vector4(0, 0, 0, 1); }
             target.SetFloat("_HoRTPBRMode", input);
             target.SetVector("_HoRTPBRFlags", flags);
             target.SetFloat("_HoRTMetallicMapScale", cloth ? Float(source, "_MetallicMapScale", 1) : Float(source, "_Metallic"));
-            target.SetFloat("_HoRTSmoothnessMapScale", cloth || skin ? Float(source, "_SmoothnessMapScale", 1) : Float(source, "_Smoothness", .5f));
+            target.SetFloat("_HoRTSmoothnessMapScale", cloth || smoothnessMapFamily ? Float(source, "_SmoothnessMapScale", 1) : Float(source, "_Smoothness", .5f));
             foreach (string property in new[] { "_PBRMap", "_MetallicGlossMap", "_ReflectanceTex", "_SmoothnessTex" })
             {
-                string from = skin && property == "_SmoothnessTex" ? "_SmoothnessMap" : property;
+                string from = smoothnessMapFamily && property == "_SmoothnessTex" ? "_SmoothnessMap" : property;
                 HoRTMaterialFamilies.CopyTexture(source, from, target, property);
                 if (legacy) ComposeMainUV(source, target, property);
             }
