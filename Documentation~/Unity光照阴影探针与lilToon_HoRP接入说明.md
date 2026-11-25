@@ -5,6 +5,7 @@
 > 状态：**光照参考与历史接入记录；2026-11-25 原生 Shader 流程更新**。本文是“Unity 光照系统 ↔ lilToon 消费 ↔ HoRP 增强”的工程认知文档，不是架构契约；契约看 `Ho-管线总览.md` / `Ho-*.md` / `Ho-ChannelContract-v1.md`。
 > 适用范围：Unity 6000.x、URP 17.x、本地 lilToon fork、lilToon-URP-Extensions（Ho-GTAO / Ho-SSGI 已实现并接入）。
 > **阅读边界**：§0/§1 保留 Unity 光照背景；§2 的旧文件行号与消费实现需对照现行 HLSL；§3 保存早期生成器时期的编译工作表和朱木古堂实测，不是现行包结构或菜单指南。当前源码维护以紧接下文的“原生 Shader 工作流”和 §4 的更新操作路径为准。
+> **背景采样退役**：主包旧折射/抓屏消费链与 Extensions 无消费者的 OIT opaque snapshot 已删除；下文相关 Camera Opaque / Refraction 说明保留为历史背景，现行 OIT 资源与合成路径以 [OIT.md](OIT.md) 为准。
 > 写作时仍存在的 `MetadataBuffer` 已在 R6/R7 删除（身份→OB、表面→SB、语义遮罩→AC）；凡本文提到“材质/对象语义 buffer”的地方一律按 **OB + AC + SB** 读。
 > **历史数字口径**：“52 个生成 Shader / 47 个命中”是 2026-09-08 记录，后一次历史重扫为“54 个输出 / 49 个命中”（当时 Lite 为 12 个）。这些数字不换算为现行数量；Lite、Multi 等家族及生成器已退役，不能据此恢复旧文件或判断当前变体能力。
 > 反射方案、反射输入契约和后续实现路线不在本文维护：见 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md`、`Documentation~/Ho-管线总览.md`。本文只保留 Reflection Probe 的 Unity 背景与验证方法。

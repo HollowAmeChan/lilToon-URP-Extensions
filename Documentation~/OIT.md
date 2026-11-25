@@ -4,7 +4,7 @@
 
 > **状态：现行功能说明（实现笔记）**。2026 文档审核时逐项核对过：`_lilOITEnabled` / `_lilOITActive` /
 > `lil_oit.hlsl`（lilToon 侧）、`WeightedOITRendererFeature` 与 `_lilOITAccumulationTexture` /
-> `_lilOITRevealageTexture` / `_lilOITOpaqueTexture`（本仓）继续使用。材质侧现直接维护普通 `.shader` 的 OIT Pass，旧 block/容器生成链已退役。
+> `_lilOITRevealageTexture`（本仓）继续使用。2026-11-25 已退役零消费者的 OpaqueCopy、背景 RT 与全局发布；合成仍读取当前相机颜色。材质侧直接维护普通 `.shader` 的 OIT Pass，旧 block/容器生成链已退役。
 > 写作时的目标环境是 Unity 2022.3 + URP 14.x；本项目现在跑 Unity 6000.3 + HoUrp17.3.0 fork，机制未变。
 
 本文记录 `lilToon` fork 与配套 `lilToon-URP-Extensions` 包之间已经完成的加权 OIT 集成。
@@ -60,7 +60,6 @@ Tags {"LightMode" = "lilToonOIT"}
 
 - `WeightedOITRendererFeature`
 - `WeightedOITClearPass`
-- `WeightedOITOpaqueCopyPass`
 - `WeightedOITAccumulationPass`
 - `WeightedOITCompositePass`
 - `WeightedOITComposite.shader`
@@ -75,15 +74,14 @@ Renderer Feature 只绘制带有 `LightMode = lilToonOIT` tag 的 pass。除了 
 1. 每个相机开始渲染时，把 `_lilOITActive` 重置为 `0`。
 2. 渲染 opaque 对象。
 3. 渲染 skybox。
-4. 在 skybox 之后，把 camera color 复制到 `_lilOITOpaqueTexture`。
-5. 将 OIT accumulation 清成透明黑。
-6. 将 OIT revealage 清成白色。
-7. 绘制带有 `LightMode = lilToonOIT` 的 lilToon 对象。
-8. 只在绘制 OIT accumulation pass 时设置 `_lilOITActive = 1`。
-9. 将 accumulation 与 revealage 合成到 camera color target 上。
-10. composite 结束后再次设置 `_lilOITActive = 0`。
+4. 将 OIT accumulation 清成透明黑，将 revealage 清成白色。
+5. 设置 `_lilOITActive = 1`，绘制带有 `LightMode = lilToonOIT` 的 lilToon 对象。
+6. 将 accumulation 与 revealage 合成到当前 camera color target 上。
+7. composite 结束后再次设置 `_lilOITActive = 0`。
 
-在 OIT draw 期间，背景拷贝也会作为 `_CameraOpaqueTexture` 发布。这样现有的 lilToon 背景/折射宏仍然可以采样到包含 skybox 的有效背景，不需要重写所有 shader 侧的采样点。
+当前实现不再捕获 OIT 专属 opaque snapshot，也不覆写 `_CameraOpaqueTexture`。主包原背景采样链已退役，现役 OIT 材质只需 MRT 输出与合成时的相机颜色。
+
+兼容模式的 composite 保留 `_lilOITCompositeSourceTexture` 临时拷贝，避免同一目标同时采样和写入；Render Graph 则读取当前颜色、写入新的颜色目标并更新 `resourceData.cameraColor`。这两条必要合成路径与已删除的绘制前背景拷贝用途不同。
 
 ## 加权 OIT 缓冲
 
@@ -113,27 +111,16 @@ cameraColor.rgb = lerp(cameraColor.rgb, transparentColor, transparentAlpha);
 
 几个重要的 URP 时机选择是：
 
-- opaque 背景拷贝：skybox 之后，OIT accumulation 之前。
 - OIT accumulation：`BeforeRenderingTransparents`。
 - OIT composite：`AfterRenderingTransparents`。
 
-URP 通常会在 opaque 对象之后、transparent 对象之前绘制 skybox。这个顺序是正确的，不应该绕开它。OIT 系统需要的是一张在 skybox 之后捕获的背景纹理，而不是再手动绘制一次 skybox。
+URP 通常会在 opaque 对象之后、transparent 对象之前绘制 skybox。OIT 合成直接读取包含该结果的当前相机颜色，无需提前再捕获一张供材质采样的背景。
 
-## 背景与 Skybox
+## 背景拷贝退役边界
 
-早期有一个 bug：当 OIT 对象背后只有 skybox 时，对象会显得太暗。
+早期折射/抓屏实现曾依赖绘制前的背景快照，以解决只存在 skybox 时采样偏暗的问题。当前主包已删除这条采样链；核对现役 `lilToonOIT` Shader 与相关生产源码后，没有找到 OIT 专属快照的消费者。
 
-原因是 shader 侧的背景采样路径最终依赖 `_CameraOpaqueTexture`，但在这个自定义时机里，URP 的 opaque texture 路径不一定会给 OIT shader 一张包含 skybox 的纹理。
-
-有效的解决方案是：
-
-1. skybox 之后，把 camera color target 复制到 `_lilOITOpaqueTexture`。
-2. 将这张纹理同时绑定为：
-   - `_lilOITOpaqueTexture`
-   - `_CameraOpaqueTexture`
-3. 同时更新 `_CameraOpaqueTexture_TexelSize`。
-
-这样既保留了 lilToon 现有的 `LIL_GET_BG_TEX` / `LIL_GET_GRAB_TEX` 风格路径，又能给 OIT shader 正确的背景。
+因此一并删除 `WeightedOITOpaqueCopyPass`、专属 RTHandle/Render Graph 字段、性能标记，以及 `_lilOITOpaqueTexture` 和 `_CameraOpaqueTexture` 的发布代码。相机自身由 URP 或其他 Renderer Feature 提供的 opaque texture 不属于这次删除范围。以后若增加新的背景采样需求，应重新定义其资源依赖，不能依赖已退役的 OIT 副作用。
 
 ## Render Queue 说明
 
@@ -273,7 +260,6 @@ Blend 1 Zero OneMinusSrcColor
 
 - 按相机重置全局 OIT 状态
 - 分配 OIT RT
-- 复制包含 skybox 的背景
 - 清理 accumulation/revealage
 - 绘制 `lilToonOIT` shader-tag pass
 - 合成回 camera color
@@ -285,11 +271,8 @@ Blend 1 Zero OneMinusSrcColor
 
 - `_lilOITAccumulationTexture`
 - `_lilOITRevealageTexture`
-- `_lilOITOpaqueTexture`
 - `_lilOITCompositeSourceTexture`
 - `_lilOITActive`
-- `_CameraOpaqueTexture`
-- `_CameraOpaqueTexture_TexelSize`
 
 ### Runtime/OIT/WeightedOITComposite.shader
 
@@ -307,21 +290,9 @@ Fullscreen composite shader。它会采样：
 
 ## 调试时间线与坑点
 
-### 1. 只有 skybox 背景时画面偏暗
+### 1. 只有 skybox 背景时画面偏暗（历史）
 
-现象：
-
-- OIT 对象背后有 opaque 对象时看起来正确。
-- OIT 对象背后只有 skybox 时看起来太暗。
-
-原因：
-
-- OIT shader 的背景采样没有拿到包含 skybox 的纹理。
-
-修复：
-
-- 在 skybox 之后复制 camera color。
-- 在 OIT draw 期间把该拷贝发布为 `_CameraOpaqueTexture`。
+早期背景采样拿不到包含 skybox 的纹理，曾通过绘制前拷贝并发布 `_CameraOpaqueTexture` 解决。这条记录只适用于已经退役的背景采样实现；当前颜色合成不依赖该拷贝，不能据此恢复 OpaqueCopy。
 
 ### 2. 强制 queue 3000 导致对象消失
 
@@ -376,10 +347,9 @@ Invalid output merger - Depth target is different size or MS count to render tar
 在 Frame Debugger 或 RenderDoc 中查找：
 
 ```text
-lilToon Weighted OIT Opaque Copy
-lilToon Weighted OIT Clear
-lilToon Weighted OIT Accumulation
-lilToon Weighted OIT Composite
+Ho-WeightedOIT Clear
+Ho-WeightedOIT Accumulation
+Ho-WeightedOIT Composite
 ```
 
 确认：
@@ -393,7 +363,7 @@ lilToon Weighted OIT Composite
 如果 OIT 对象消失：
 
 1. 检查 composite shader 是否找到。
-2. 检查 `lilToon Weighted OIT Accumulation` 是否有 draw call。
+2. 检查 `Ho-WeightedOIT Accumulation` 是否有 draw call。
 3. 检查 RenderDoc 警告里是否有 RT/depth 尺寸或 MSAA 不匹配。
 4. 检查 `_lilOITActive` 是否在 accumulation pass 外卡在 `1`。
 5. 检查材质 render queue override；手动强制 queue 3000 可能会掩盖其他 bug。
@@ -414,7 +384,6 @@ lilToon 承诺：
 - 分配并绑定 MRT。
 - 设置 OIT 全局常量。
 - 在 accumulation 阶段只绘制 `lilToonOIT` pass。
-- 提供包含 skybox 的背景纹理。
 - 将最终结果合成回 camera color。
 - 为每个相机重置全局 OIT 状态。
 
@@ -423,7 +392,7 @@ lilToon 承诺：
 ## 后续修改的实践建议
 
 - 不要在没有检查现有 avatar/toon 材质行为的情况下全局修改 lilToon 的 transparent queue。
-- 不要手动绘制 skybox 来替代背景纹理。
+- 合成读取当前相机颜色；若新增材质背景采样，单独声明其资源与时机。
 - 除非尺寸和 MSAA 匹配，否则不要把 camera depth 绑定到缩放过的 OIT RT。
 - 不要在 accumulation pass 结束后让 `_lilOITActive` 保持开启。
 - 尽早使用 RenderDoc。最终最快定位修复的是 D3D output merger 警告，而不是 shader 侧视觉猜测。

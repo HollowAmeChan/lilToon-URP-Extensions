@@ -84,7 +84,7 @@ Recorder 现在先建立最终输出分辨率，再通过录制帧区间跳过�
 一次停滞中相机和 TAA 仍在推进，而 Recorder 的帧结束等待没有产出视频。Recorder 使用 `WaitForEndOfFrame`，主 Game 页签被隐藏会影响这条等待路径。CLI 现持有临时独立录制 Game View，结束自动关闭，避免依赖用户始终选中主 Game 页签。不要用反复强制焦点或把模拟帧数当作实际编码帧数来绕过。
 CLI 录制相机在本次 Play 中持有最终尺寸的离屏 RenderTexture，结束恢复原 target、启用状态与比例，不改变其他相机开关。Unity Recorder 的 Camera 输入本身只注册捕获回调，不能保证所选相机会渲染；当用户的 Game View 正在看其它 Display 时，只改 Game View 尺寸仍可能导致演出相机完全没渲染。先看 `.render.json.cameraRenders`，没有目标相机时不要误判成 TAA 算法错误。离屏目标保证该相机从预热起独立输出，当前 Game View 可继续看其它 Display。
 
-安装项目桥时，`HoMmdVideoCaptureDriver.cs` 放在 `_制作工具/` 根目录的可挂载程序集，不要整目录复制到带 Editor-only asmdef 的 `VideoRecorder/` 中，否则 Unity 不能添加该 MonoBehaviour。文件内的 Editor 依赖已有 `#if UNITY_EDITOR` 保护；编辑器队列类放在 `_制作工具/Editor/`。
+安装项目桥时，`HoMmdVideoCaptureDriver.cs` 放在 `_制作工具/` 根目录的可挂载程序集。旧 Editor-only `HoMmdVideoCapture.asmdef` 已退役，不再随桥复制；制作工程中无脚本的同名 asmdef 与 meta 也已清理。文件内的 Editor 依赖已有 `#if UNITY_EDITOR` 保护；编辑器队列类放在 `_制作工具/Editor/`。
 
 本机 Ho ScreenProcess / ImageProcess 排在 AA 处理之后，后加效果产生的新边缘不会回到前面的 TAA；这与“不支持后处理”不是一回事。Ho 接管模式保留 TAA 的基础设施，不需要为 TAA 打开 URP 图像效果；运动矢量、单 Base Camera、MSAA=1 等约束仍有效。发丝、衣袖、运镜切换要看动态拖影与细节，不能只看静帧。开场预热不等于每输出帧增加 RT 收敛采样，也不启用 Recorder 仅供 HDRP 的 Accumulation。
 
