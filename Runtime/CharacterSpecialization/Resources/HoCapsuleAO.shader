@@ -6,37 +6,33 @@ Shader "Hidden/lilToon/URP/CharacterCapsuleAO"
         HLSLINCLUDE
         #pragma target 3.5
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-        TEXTURE2D(_HoCapsuleGeometryDepth);
-        TEXTURE2D(_HoCapsuleGeometryNormal);
-        TEXTURE2D(_HoCapsuleReceiverMask);
+        TEXTURE2D(_CameraDepthTexture);
+        TEXTURE2D(_HoCapsuleVisibility);
         float4 _HoCapsuleScreenSize;
-        float4x4 _HoCapsuleViewProjection, _HoCapsuleInverseViewProjection;
+        float4x4 _HoCapsuleViewProjection;
         float4 _HoCapsuleA[64], _HoCapsuleB[64];
         float4 _HoCapsuleParams, _HoCapsuleCross;
         float _HoCapsuleRotation;
         int _HoCapsuleCount;
-
-        struct Varyings { float4 positionCS : SV_Position; };
-        Varyings MaskVertex(float3 positionOS : POSITION)
+        struct Varyings
+        {
+            float4 positionCS : SV_Position;
+            float3 positionWS : TEXCOORD0;
+            float3 normalWS : TEXCOORD1;
+        };
+        Varyings ReceiverVertex(float3 positionOS : POSITION, float3 normalOS : NORMAL)
         {
             Varyings o;
-            o.positionCS = mul(_HoCapsuleViewProjection, float4(TransformObjectToWorld(positionOS), 1));
+            o.positionWS = TransformObjectToWorld(positionOS);
+            o.normalWS = TransformObjectToWorldNormal(normalOS);
+            o.positionCS = mul(_HoCapsuleViewProjection, float4(o.positionWS, 1));
             return o;
-        }
-        float4 MaskFragment(Varyings i) : SV_Target
-        {
-            float raw = LOAD_TEXTURE2D(_HoCapsuleGeometryDepth, int2(i.positionCS.xy)).r;
-            // Both values are raw device depth. The small gradient allowance accommodates
-            // sample positions in the resolved GB without accepting distant foreground.
-            float tolerance = 2e-6 + .5 * (abs(ddx(i.positionCS.z)) + abs(ddy(i.positionCS.z)));
-            clip(tolerance - abs(raw - i.positionCS.z));
-            return 1;
         }
         Varyings FullscreenVertex(uint vertex : SV_VertexID)
         {
-            Varyings o; o.positionCS = GetFullScreenTriangleVertexPosition(vertex); return o;
+            Varyings o = (Varyings)0;
+            o.positionCS = GetFullScreenTriangleVertexPosition(vertex); return o;
         }
-
         float CapsuleOcclusion(float3 p, float3 n, float3 a, float3 b, float r)
         {
             float3 axis = b - a;
@@ -68,31 +64,35 @@ Shader "Hidden/lilToon/URP/CharacterCapsuleAO"
         }
         float CrossOcclusion(float3 p, float3 n, float3 a, float3 b, float r)
         {
-            float3 origin = (a + b) * .5;
-            origin.y = min(a.y, b.y) - r;
-            float gap = origin.y - p.y;
-            if (gap < -.02 || gap > _HoCapsuleParams.y) return 0;
-            float2 axis = (b - a).xz;
-            axis = dot(axis, axis) > 1e-8 ? normalize(axis) : float2(0, 1);
-            axis = Rotate(axis, _HoCapsuleRotation);
-            float2 local = p.xz - origin.xz;
-            float amount = max(CrossBand(local, Rotate(axis, _HoCapsuleCross.z * .5)),
-                               CrossBand(local, Rotate(axis, -_HoCapsuleCross.z * .5)));
-            return amount * (1 - smoothstep(0, _HoCapsuleParams.y, max(gap, 0))) * smoothstep(0, .25, n.y);
+            float hA = dot(a - p, n), hB = dot(b - p, n);
+            // A foot-bone pivot on the floor may place the capsule partly below
+            // it. Reject only a capsule entirely behind the receiver plane.
+            if (max(hA, hB) + r < 0) return 0;
+            float gap = max(min(hA, hB) - r, 0);
+            if (gap >= _HoCapsuleParams.y) return 0;
+            float3 axis = b - a;
+            axis -= n * dot(axis, n);
+            if (dot(axis, axis) < 1e-8)
+            {
+                axis = float3(0, 0, 1) - n * n.z;
+                if (dot(axis, axis) < 1e-8) axis = float3(1, 0, 0) - n * n.x;
+            }
+            axis = normalize(axis);
+            float3 perpendicular = cross(n, axis);
+            float3 offset = p - (a + b) * .5;
+            float2 local = float2(dot(offset, axis), dot(offset, perpendicular));
+            float2 direction = Rotate(float2(1, 0), _HoCapsuleRotation);
+            float amount = max(CrossBand(local, Rotate(direction, _HoCapsuleCross.z * .5)),
+                               CrossBand(local, Rotate(direction, -_HoCapsuleCross.z * .5)));
+            return amount * (1 - smoothstep(0, _HoCapsuleParams.y, gap));
         }
-        float4 AppendFragment(Varyings i) : SV_Target
+        float4 ReceiverFragment(Varyings i) : SV_Target
         {
-            int2 pixel = int2(i.positionCS.xy);
-            clip(LOAD_TEXTURE2D(_HoCapsuleReceiverMask, pixel).r - .5);
-            float4 geometry = LOAD_TEXTURE2D(_HoCapsuleGeometryNormal, pixel);
-            clip(geometry.a - .0001);
-            float3 n = geometry.rgb * 2 - 1;
-            float n2 = dot(n, n); clip(n2 - 1e-8); n *= rsqrt(max(n2, 1e-8));
-            float raw = LOAD_TEXTURE2D(_HoCapsuleGeometryDepth, pixel).r;
-            #if !UNITY_REVERSED_Z
-                raw = lerp(UNITY_NEAR_CLIP_VALUE, 1, raw);
-            #endif
-            float3 p = ComputeWorldSpacePosition(i.positionCS.xy * _HoCapsuleScreenSize.zw, raw, _HoCapsuleInverseViewProjection);
+            float raw = LOAD_TEXTURE2D(_CameraDepthTexture, int2(i.positionCS.xy)).r;
+            float tolerance = 2e-6 + .5 * (abs(ddx(i.positionCS.z)) + abs(ddy(i.positionCS.z)));
+            clip(tolerance - abs(raw - i.positionCS.z));
+            float3 n = normalize(i.normalWS);
+            float3 p = i.positionWS;
             float occlusion = 0;
             [loop] for (int capsule = 0; capsule < _HoCapsuleCount; capsule++)
             {
@@ -103,38 +103,32 @@ Shader "Hidden/lilToon/URP/CharacterCapsuleAO"
                 float value = _HoCapsuleParams.z < .5 ? CapsuleOcclusion(p, n, a, b, r) : CrossOcclusion(p, n, a, b, r);
                 occlusion = max(occlusion, value);
             }
-            float visibility = 1 - saturate(occlusion * _HoCapsuleParams.x);
+            return 1 - saturate(occlusion * _HoCapsuleParams.x);
+        }
+        float4 CompositeFragment(Varyings i) : SV_Target
+        {
+            float visibility = LOAD_TEXTURE2D(_HoCapsuleVisibility, int2(i.positionCS.xy)).r;
             return float4(visibility.xxx, 1);
         }
         ENDHLSL
         Pass
         {
-            Name "Receiver Coverage"
-            ZTest Always ZWrite Off Cull Off ColorMask R
-            Blend One One BlendOp Max
-            HLSLPROGRAM
-            #pragma vertex MaskVertex
-            #pragma fragment MaskFragment
-            ENDHLSL
-        }
-        Pass
-        {
-            Name "Append Min"
+            Name "Receiver Visibility"
             ZTest Always ZWrite Off Cull Off ColorMask R
             Blend One One BlendOp Min
             HLSLPROGRAM
-            #pragma vertex FullscreenVertex
-            #pragma fragment AppendFragment
+            #pragma vertex ReceiverVertex
+            #pragma fragment ReceiverFragment
             ENDHLSL
         }
         Pass
         {
-            Name "Append Multiply"
-            ZTest Always ZWrite Off Cull Off ColorMask R
+            Name "Color Overlay"
+            ZTest Always ZWrite Off Cull Off ColorMask RGB
             Blend DstColor Zero
             HLSLPROGRAM
             #pragma vertex FullscreenVertex
-            #pragma fragment AppendFragment
+            #pragma fragment CompositeFragment
             ENDHLSL
         }
     }

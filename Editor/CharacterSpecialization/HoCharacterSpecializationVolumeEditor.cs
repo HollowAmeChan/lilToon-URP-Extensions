@@ -68,7 +68,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 new[] { "subjectOutline" }),
             new EffectSection("EyeReveal", "眼透", "icon_Glow_SelectColor_v1", "eyeRevealEnabled", "eyeRevealStrength",
                 new[] { "eyeReveal", "useEyeRevealArea", "sameCharacterOnly" }),
-            new EffectSection("CapsuleAO", "胶囊 AO（前置）", "icon_DropShadow_v1", "capsuleAOEnabled", "capsuleAOStrength",
+            new EffectSection("CapsuleAO", "胶囊 AO（接收面叠加）", "icon_DropShadow_v1", "capsuleAOEnabled", "capsuleAOStrength",
                 new[] { "capsuleAO" }),
         };
 
@@ -304,7 +304,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 ? "开" + (summaryValue != null ? " " + summaryValue.floatValue.ToString("0.###") : string.Empty) : "关";
             float foldoutWidth = Mathf.Max(0, rect.width - CheckboxWidth - RemoveWidth - 6);
             var title = new GUIContent(section.Label + "　" + summary, section.Id == "CapsuleAO"
-                ? "只附加到已发布 HoAO，始终在不透明绘制前执行；列表位置不改变该依赖阶段。"
+                ? "在不透明与天空之后、透明之前重绘接收面叠加颜色；独立于 HoAO 与材质 AO。"
                 : "拖动左侧手柄调整颜色效果叠加顺序；眼透默认最后。前置 AO 不参与颜色叠加。");
             expanded = EditorGUI.Foldout(new Rect(rect.x + CheckboxWidth, rect.y, foldoutWidth, LineHeight), expanded, title, true);
             Rect removeRect = new Rect(rect.xMax - RemoveWidth, rect.y + 1, RemoveWidth, LineHeight - 2);
@@ -327,7 +327,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 case "EnhancedOutline": HoCharacterEnhancedOutlineEditorSection.DrawEffects(effects, layout); break;
                 case "CapsuleAO":
                     layout.Property(Find("capsuleAOMode"), "模式");
-                    layout.Property(Find("capsuleAOBlend"), "与 HoAO 混合");
                     layout.Property(Find("capsuleAOStrength"), "强度");
                     layout.Property(Find("capsuleAOInfluenceDistance"), "影响距离");
                     if (Find("capsuleAOMode").enumValueIndex == 1)

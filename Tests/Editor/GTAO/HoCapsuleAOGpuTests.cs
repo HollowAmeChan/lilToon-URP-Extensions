@@ -71,23 +71,18 @@ namespace lilToon.URP.Extensions.Tests
                 cmd.SetRenderTarget(depth);
                 cmd.DrawMesh(floor,Matrix4x4.TRS(new Vector3(0,.1f,0),Quaternion.identity,new Vector3(.2f,1,.2f)),fixture,0,0);
             }
-            cmd.SetRenderTarget(mask);cmd.ClearRenderTarget(false,true,Color.black);
-            cmd.SetGlobalTexture("_HoCapsuleGeometryDepth",depth);
-            cmd.SetGlobalVector("_HoCapsuleScreenSize",new Vector4(Size,Size,1f/Size,1f/Size));
-            cmd.SetGlobalMatrix("_HoCapsuleViewProjection",vp);
-            for(int i=0;i<repeats;i++)cmd.DrawMesh(floor,Matrix4x4.identity,capsule,0,0);
             Graphics.ExecuteCommandBuffer(cmd);cmd.Release();
         }
 
-        private void Append(HoCapsuleAOMode mode, HoCapsuleAOBlendMode blend,float height=.06f,float strength=.4f,float initial=.7f)
+        private void Append(HoCapsuleAOMode mode,float height=.06f,float strength=.4f,float initial=.7f)
         {
             var a=new Vector4[64];var b=new Vector4[64];
             a[0]=new Vector4(0,height,0,.06f);b[0]=new Vector4(0,height,0,0);
             var cmd=new CommandBuffer();
-            cmd.SetRenderTarget(ao);cmd.ClearRenderTarget(false,true,new Color(initial,initial,initial,1));
-            cmd.SetGlobalTexture("_HoCapsuleReceiverMask",mask);
-            cmd.SetGlobalTexture("_HoCapsuleGeometryDepth",depth);
-            cmd.SetGlobalTexture("_HoCapsuleGeometryNormal",normal);
+            cmd.SetRenderTarget(mask);cmd.ClearRenderTarget(false,true,Color.white);
+            cmd.SetGlobalMatrix("_HoCapsuleViewProjection",vp);
+            cmd.SetGlobalTexture("_CameraDepthTexture",depth);
+
             cmd.SetGlobalMatrix("_HoCapsuleInverseViewProjection",vp.inverse);
             cmd.SetGlobalVector("_HoCapsuleScreenSize",new Vector4(Size,Size,1f/Size,1f/Size));
             cmd.SetGlobalInt("_HoCapsuleCount",1);
@@ -95,7 +90,10 @@ namespace lilToon.URP.Extensions.Tests
             cmd.SetGlobalVector("_HoCapsuleParams",new Vector4(strength,.5f,(float)mode,0));
             cmd.SetGlobalVector("_HoCapsuleCross",new Vector4(.25f,.06f,Mathf.PI*.5f,.01f));
             cmd.SetGlobalFloat("_HoCapsuleRotation",0);
-            cmd.DrawProcedural(Matrix4x4.identity,capsule,blend==HoCapsuleAOBlendMode.Min?1:2,MeshTopology.Triangles,3);
+            for(int i=0;i<3;i++)cmd.DrawMesh(floor,Matrix4x4.identity,capsule,0,0);
+            cmd.SetRenderTarget(ao);cmd.ClearRenderTarget(false,true,new Color(initial,initial,initial,.3f));
+            cmd.SetGlobalTexture("_HoCapsuleVisibility",mask);
+            cmd.DrawProcedural(Matrix4x4.identity,capsule,1,MeshTopology.Triangles,3);
             cmd.SetGlobalInt("_HoCapsuleCount",0);
             Graphics.ExecuteCommandBuffer(cmd);cmd.Release();
             Assert.That(ShaderUtil.ShaderHasError(capsule.shader),Is.False);
@@ -112,14 +110,13 @@ namespace lilToon.URP.Extensions.Tests
             return read.GetPixel(x,y).r;
         }
 
-        [TestCase(HoCapsuleAOMode.Capsule,HoCapsuleAOBlendMode.Min,.6f)]
-        [TestCase(HoCapsuleAOMode.Capsule,HoCapsuleAOBlendMode.Multiply,.42f)]
-        [TestCase(HoCapsuleAOMode.Cross,HoCapsuleAOBlendMode.Min,.6f)]
-        [TestCase(HoCapsuleAOMode.Cross,HoCapsuleAOBlendMode.Multiply,.42f)]
-        public void ContactCombinesVisibilityOnce(HoCapsuleAOMode mode,HoCapsuleAOBlendMode blend,float expected)
+        [TestCase(HoCapsuleAOMode.Capsule)]
+        [TestCase(HoCapsuleAOMode.Cross)]
+        public void ContactCombinesVisibilityOnce(HoCapsuleAOMode mode)
         {
-            DrawMask(repeats:3);Append(mode,blend);
-            Assert.That(At(Vector3.zero),Is.EqualTo(expected).Within(.002f));
+            DrawMask(repeats:3);Append(mode);
+            Assert.That(At(Vector3.zero),Is.EqualTo(.42f).Within(.004f));
+            Assert.That(read.GetPixel(Size/2,Size/2).a,Is.EqualTo(.3f).Within(.001f),"RGB overlay must preserve camera alpha.");
             Assert.That(At(new Vector3(.8f,0,.8f)),Is.EqualTo(.7f).Within(.0001f));
         }
 
@@ -127,16 +124,16 @@ namespace lilToon.URP.Extensions.Tests
         [TestCase(HoCapsuleAOMode.Cross)]
         public void ForegroundAndRaisedFootDoNotDarkenGround(HoCapsuleAOMode mode)
         {
-            DrawMask(true);Append(mode,HoCapsuleAOBlendMode.Multiply);
+            DrawMask(true);Append(mode);
             Assert.That(At(Vector3.zero),Is.EqualTo(.7f).Within(.0001f));
-            DrawMask();Append(mode,HoCapsuleAOBlendMode.Multiply,height:.8f);
+            DrawMask();Append(mode,height:.8f);
             Assert.That(At(Vector3.zero),Is.EqualTo(.7f).Within(.0001f));
         }
 
         [Test]
         public void CrossProducesTwoFiniteDoubleEndedGradientBands()
         {
-            DrawMask();Append(HoCapsuleAOMode.Cross,HoCapsuleAOBlendMode.Min,strength:.8f,initial:1);
+            DrawMask();Append(HoCapsuleAOMode.Cross,strength:.8f,initial:1);
             float inner=At(new Vector3(.04f,0,.04f));
             float middle=At(new Vector3(.1f,0,.1f));
             float tip=At(new Vector3(.145f,0,.145f));
@@ -147,6 +144,15 @@ namespace lilToon.URP.Extensions.Tests
             Assert.That(At(new Vector3(.1f,0,-.1f)),Is.EqualTo(middle).Within(.03f),"The second crossing streak also fades.");
             Assert.That(At(new Vector3(.16f,0,0)),Is.EqualTo(1).Within(.001f));
             Assert.That(At(new Vector3(.4f,0,.4f)),Is.EqualTo(1).Within(.001f));
+        }
+
+        [Test]
+        public void CrossRemainsVisibleWithPivotOnGround()
+        {
+            DrawMask();Append(HoCapsuleAOMode.Cross,height:0,initial:1);
+            Assert.That(At(Vector3.zero),Is.EqualTo(.6f).Within(.004f));
+            DrawMask();Append(HoCapsuleAOMode.Cross,height:-.2f,initial:1);
+            Assert.That(At(Vector3.zero),Is.EqualTo(1).Within(.001f));
         }
 
         [Test]

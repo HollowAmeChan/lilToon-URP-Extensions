@@ -17,10 +17,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("按列表从上到下叠加；每种效果保留一份独立参数，关闭不改变其位置。眼透默认最后合成。")]
         public HoCharacterCompositionEffect[] compositionOrder = HoCharacterCompositionOrder.CreateDefault();
 
-        [InspectorName("启用胶囊 AO"), Tooltip("只向当前相机已发布、可写的 HoAO 附加遮蔽；不独立发布，也不修改材质。")]
+        [InspectorName("启用胶囊 AO"), Tooltip("重绘登记接收面并独立叠加到颜色；不读写 HoAO，不依赖材质 AO。")]
         public bool capsuleAOEnabled;
         [InspectorName("模式")] public HoCapsuleAOMode capsuleAOMode;
-        [InspectorName("与 HoAO 混合")] public HoCapsuleAOBlendMode capsuleAOBlend;
         [InspectorName("强度"), Range(0, 1)] public float capsuleAOStrength = .75f;
         [InspectorName("影响距离"), Min(.001f)] public float capsuleAOInfluenceDistance = .5f;
         [InspectorName("十字半臂长"), Min(.001f)] public float capsuleAOCrossLength = .25f;

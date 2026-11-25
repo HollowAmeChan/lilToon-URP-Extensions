@@ -58,7 +58,7 @@ namespace lilToon.URP.Extensions.GTAO
     {
         public bool enabled = true;
 
-        [InspectorName("仅发布 AO 纹理"), Tooltip("发布全白、可写的 HoAO，跳过 GTAO 追踪、运动输入和去噪，供胶囊 AO 等附加项使用。")]
+        [InspectorName("仅发布 AO 纹理"), Tooltip("发布全白、可写的 HoAO，跳过 GTAO 追踪、运动输入和去噪；独立接收面胶囊 AO 不需要开启此模式。")]
         public bool publishAOTextureOnly;
 
         // 当前 Renderer Feature 资产配置为 BeforeRenderingOpaques（250）。

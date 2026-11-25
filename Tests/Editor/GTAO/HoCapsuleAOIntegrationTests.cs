@@ -28,11 +28,11 @@ namespace lilToon.URP.Extensions.Tests
                 PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, symbols + ";URP_COMPATIBILITY_MODE");
         }
 
-        [UnityTest] public IEnumerator ActualPipelineReadsAppendedHoAO() => Validate(false);
-        [UnityTest] public IEnumerator ActualPipelineMsaa4ReadsAppendedHoAO() => Validate(false, 4);
-        [UnityTest] public IEnumerator ActualPipelinePerspectiveReadsAppendedHoAO() => Validate(false, 1, true);
+        [UnityTest] public IEnumerator ActualPipelineOverlaysReceiverColor() => Validate(false);
+        [UnityTest] public IEnumerator ActualPipelineMsaa4OverlaysReceiverColor() => Validate(false, 4);
+        [UnityTest] public IEnumerator ActualPipelinePerspectiveOverlaysReceiverColor() => Validate(false, 1, true);
 #if URP_COMPATIBILITY_MODE
-        [UnityTest] public IEnumerator CompatibilityReadsAppendedHoAO() => Validate(true);
+        [UnityTest] public IEnumerator CompatibilityOverlaysReceiverColor() => Validate(true);
 #endif
 
         private static IEnumerator Validate(bool compatibility, int msaa=1, bool perspective=false)
@@ -55,12 +55,14 @@ namespace lilToon.URP.Extensions.Tests
                 var gtao = Keep(ScriptableObject.CreateInstance<HoGTAORendererFeature>());
                 var character = Keep(ScriptableObject.CreateInstance<HoCharacterSpecializationRendererFeature>());
                 gtao.Settings.publishAOTextureOnly = true;
+                geometry.SetActive(false);gtao.SetActive(false);
                 renderer.rendererFeatures.Add(geometry); renderer.rendererFeatures.Add(gtao); renderer.rendererFeatures.Add(character);
                 var probe = Keep(ScriptableObject.CreateInstance<HoCapsuleAOProbeFeature>());
                 probe.material = Keep(new Material(Shader.Find("Hidden/HoCapsuleAO/Fixture")));
                 renderer.rendererFeatures.Add(probe);
                 var pipeline = Keep(UniversalRenderPipelineAsset.Create(renderer));
                 pipeline.msaaSampleCount = msaa; pipeline.supportsHDR = true; pipeline.shadowDistance = 0;
+                pipeline.supportsCameraDepthTexture = true;
                 GraphicsSettings.defaultRenderPipeline = pipeline; QualitySettings.renderPipeline = pipeline;
 #if URP_COMPATIBILITY_MODE
                 typeof(UniversalRenderPipelineAsset).Assembly.GetType("UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings",true)
@@ -78,7 +80,7 @@ namespace lilToon.URP.Extensions.Tests
                     = effects.subjectOutlineEnabled = effects.enhancedOutlineEnabled = false;
                 effects.capsuleAOEnabled = true; effects.capsuleAOStrength = .4f;
                 var gtaoVolume = volume.sharedProfile.Add<HoGTAOVolume>();
-                gtaoVolume.enable.Override(true); gtaoVolume.publishAOTextureOnly.Override(true);
+                gtaoVolume.enable.Override(false); gtaoVolume.publishAOTextureOnly.Override(true);
                 var camera = Keep(new GameObject("Capsule AO integration camera")).AddComponent<Camera>();
                 camera.enabled = false; camera.clearFlags = CameraClearFlags.SolidColor;
                 Vector3 cameraPosition=perspective?new Vector3(0,2,-1.5f):new Vector3(0,2,0);
@@ -110,108 +112,104 @@ namespace lilToon.URP.Extensions.Tests
                     RenderTexture.active=captured;image.ReadPixels(new Rect(0,0,97,65),0,0);image.Apply();
                     return image.GetPixel(Mathf.Clamp((int)(x*97),0,96),Mathf.Clamp((int)(y*65),0,64)).r;
                 }
-                Render(); yield return null; Render();
-                Assert.That(character.CapsuleAOActiveCount,Is.EqualTo(1),character.CapsuleAOStatus);
-                Assert.That(Read(),Is.EqualTo(.6f).Within(.006f),character.CapsuleAOStatus);
-                Assert.That(Read(.95f,.95f),Is.EqualTo(1).Within(.001f));
-                var firstCamera=camera;
-                camera=Keep(new GameObject("Second capsule camera")).AddComponent<Camera>();
-                camera.CopyFrom(firstCamera);camera.enabled=false;
-                camera.transform.SetPositionAndRotation(new Vector3(2,2,0),Quaternion.LookRotation(Vector3.down,Vector3.forward));
-                camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;
-                Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f),"Another camera reused the first foot projection.");
-                camera=firstCamera;Render();Assert.That(Read(),Is.EqualTo(.6f).Within(.006f));
-                effects.capsuleAOMode=HoCapsuleAOMode.Cross; Render();
-                Assert.That(Read(),Is.EqualTo(.6f).Within(.006f),character.CapsuleAOStatus);
-                if(!compatibility && msaa==1 && !perspective)
-                {
-                    string previews=Environment.GetEnvironmentVariable("HO_CAPSULE_AO_PREVIEW_DIR");
-                    if(!string.IsNullOrEmpty(previews))
-                    {
-                        System.IO.Directory.CreateDirectory(previews);
-                        var previousTarget=target;var previousProbe=probe.destination;float previousAspect=camera.aspect;
-                        var previewColor=Keep(new RenderTexture(512,512,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));previewColor.Create();
-                        var previewAO=Keep(new RenderTexture(512,512,0,RenderTextureFormat.ARGBFloat,RenderTextureReadWrite.Linear));previewAO.Create();
-                        var previewHandle=RTHandles.Alloc(previewAO);
-                        target=previewColor;probe.destination=previewHandle;camera.aspect=1;
-                        foreach(var mode in new[]{HoCapsuleAOMode.Capsule,HoCapsuleAOMode.Cross})
-                        {
-                            effects.capsuleAOMode=mode;Render();
-                            var png=Keep(new Texture2D(512,512,TextureFormat.RGB24,false,true));
-                            RenderTexture.active=previewAO;png.ReadPixels(new Rect(0,0,512,512),0,0);png.Apply();
-                            System.IO.File.WriteAllBytes(System.IO.Path.Combine(previews,mode+"-"+SystemInfo.graphicsDeviceType+".png"),png.EncodeToPNG());
-                        }
-                        target=previousTarget;probe.destination=previousProbe;camera.aspect=previousAspect;
-                        previewHandle.Release();effects.capsuleAOMode=HoCapsuleAOMode.Cross;
-                    }
-                }
-                receiver.enabled=false;Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f));
-                receiver.enabled=true;emitter.enabled=false;Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f));
-                emitter.enabled=true;
-                var front = Keep(GameObject.CreatePrimitive(PrimitiveType.Cube));
-                front.transform.position=new Vector3(0,.15f,0);front.transform.localScale=new Vector3(.2f,.1f,.2f);
-                front.GetComponent<Renderer>().sharedMaterial=floorMaterial;
-                Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f),"Unregistered foreground received ground AO.");
-                front.SetActive(false);
-                gtaoVolume.enable.value=false;Render();
-                Assert.That(probe.hasAO,Is.False,"Capsule AO published a replacement after the owner was disabled.");
-                gtaoVolume.enable.value=true;Render();Assert.That(Read(),Is.EqualTo(.6f).Within(.006f));
-                effects.capsuleAOEnabled=false;Render();Assert.That(Read(),Is.EqualTo(1).Within(.001f));
-                Assert.That(EditorJsonUtility.ToJson(floorMaterial),Is.EqualTo(originalMaterial));
-                var staticRoot=Keep(new GameObject("Static receiver root"));
-                ground.transform.SetParent(staticRoot.transform,true);
-                var distant=Keep(GameObject.CreatePrimitive(PrimitiveType.Plane));
-                distant.transform.position=new Vector3(20,0,0);
-                distant.GetComponent<Renderer>().sharedMaterial=floorMaterial;
-                StaticBatchingUtility.Combine(new[]{ground,distant},staticRoot);
-                Assert.That(ground.GetComponent<MeshRenderer>().isPartOfStaticBatch,Is.True);
-                effects.capsuleAOEnabled=true;Render();Assert.That(Read(),Is.EqualTo(.6f).Within(.006f),"Static-batched receiver did not match GB.");
-                emitter.transform.position=new Vector3(.4f,.06f,0);Render();
-                Vector3 movedPoint=camera.WorldToViewportPoint(new Vector3(.4f,0,0));
-                Assert.That(Read(movedPoint.x,movedPoint.y),Is.EqualTo(.6f).Within(.008f),"Static batch or world-space foot movement was not followed.");
-                Assert.That(Read(),Is.EqualTo(1).Within(.001f),"Old foot position retained an AO stamp.");
-                emitter.transform.position=new Vector3(0,.06f,0);Render();
-                if(!compatibility)
-                {
-                    effects.capsuleAOEnabled=false;
-                    gtaoVolume.publishAOTextureOnly.value=false;
-                    gtaoVolume.temporalFrameCount.Override(0);gtaoVolume.sliceCount.Override(1);gtaoVolume.stepCount.Override(8);
-                    gtaoVolume.boxPassCount.Override(1);Render();
-                    float baseAO=Read();effects.capsuleAOEnabled=true;Render();
-                    Assert.That(gtao.Settings.publishAOTextureOnly,Is.True,"Volume mode polluted the serialized Feature fallback.");
-                    Assert.That(gtao.Settings.temporalFrameCount,Is.EqualTo(12),"Volume sampling polluted the serialized Feature fallback.");
-                    Assert.That(Read(),Is.EqualTo(Mathf.Min(baseAO,.6f)).Within(.008f),"Computed GTAO and capsule Min were not combined.");
-                    effects.capsuleAOBlend=HoCapsuleAOBlendMode.Multiply;Render();
-                    Assert.That(Read(),Is.EqualTo(baseAO*.6f).Within(.008f));
-                    gtaoVolume.publishAOTextureOnly.value=true;
-                    effects.capsuleAOBlend=HoCapsuleAOBlendMode.Min;
-                }
-                // Existing lilToon AO properties, on a disposable fixture material only.
-                var lil=Keep(new Material(Shader.Find("lilToon")));
-                lil.SetColor("_Color",Color.white);lil.SetFloat("_LightMinLimit",1);lil.SetFloat("_LightMaxLimit",1);
-                lil.SetFloat("_UseShadow",0);lil.SetFloat("_UseReflection",0);lil.SetFloat("_AOSource",2);
-                lil.SetFloat("_UseAODarkening",1);lil.SetFloat("_AODarkStrength",1);lil.SetColor("_AOColor",Color.black);
-                ground.GetComponent<Renderer>().sharedMaterial=lil;
-                float ReadColor()
+                float ReadColor(float x=.5f,float y=.5f)
                 {
                     RenderTexture source=target;
                     if(target.antiAliasing>1)
                     {
-                        var resolved=Keep(new RenderTexture(97,65,0,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));resolved.Create();
+                        var resolved=Keep(new RenderTexture(target.width,target.height,0,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));resolved.Create();
                         target.ResolveAntiAliasedSurface(resolved);source=resolved;
                     }
-                    RenderTexture.active=source;image.ReadPixels(new Rect(0,0,97,65),0,0);image.Apply();
-                    return image.GetPixel(48,32).r;
+                    var pixels=Keep(new Texture2D(source.width,source.height,TextureFormat.RGBAFloat,false,true));
+                    RenderTexture.active=source;pixels.ReadPixels(new Rect(0,0,source.width,source.height),0,0);pixels.Apply();
+                    return pixels.GetPixel(Mathf.Clamp((int)(x*source.width),0,source.width-1),Mathf.Clamp((int)(y*source.height),0,source.height-1)).r;
                 }
-                effects.capsuleAOEnabled=false;Render();float baselineColor=ReadColor();
-                effects.capsuleAOEnabled=true;Render();float contactColor=ReadColor();
-                Assert.That(baselineColor,Is.GreaterThan(.01f));
-                Assert.That(contactColor,Is.LessThan(baselineColor*.85f),"lilToon did not consume appended HoAO.");
-                lil.SetFloat("_AOSource",0);Render();
-                Assert.That(ReadColor(),Is.EqualTo(baselineColor).Within(.01f),"Capsule AO bypassed the material's AO Off setting.");
+                effects.capsuleAOEnabled=false;Render();yield return null;Render();float baseline=ReadColor();
+                Assert.That(baseline,Is.GreaterThan(.9f));
+                effects.capsuleAOEnabled=true;Render();
+                Assert.That(character.CapsuleAOActiveCount,Is.EqualTo(1),character.CapsuleAOStatus);
+                Assert.That(ReadColor(),Is.EqualTo(baseline*.6f).Within(.008f),character.CapsuleAOStatus);
+                Assert.That(probe.hasAO,Is.False,"Receiver overlay must work with no HoAO producer or GB.");
+                Assert.That(ReadColor(.75f,.5f),Is.EqualTo(baseline).Within(.008f));
+                effects.capsuleAOMode=HoCapsuleAOMode.Cross;Render();
+                Assert.That(ReadColor(),Is.EqualTo(baseline*.6f).Within(.008f),character.CapsuleAOStatus);
+                emitter.transform.position=Vector3.zero;Render();
+                Assert.That(ReadColor(),Is.EqualTo(baseline*.6f).Within(.008f),"Cross disappeared when the bone pivot was on the floor and the capsule penetrated it.");
+                ground.transform.rotation=Quaternion.Euler(15,0,0);Render();
+                Assert.That(ReadColor(),Is.LessThan(baseline*.75f),"Cross disappeared on a sloped receiver.");
+                ground.transform.rotation=Quaternion.identity;
+                emitter.transform.position=new Vector3(0,.8f,0);Render();Assert.That(ReadColor(),Is.EqualTo(baseline).Within(.008f));
+                emitter.transform.position=new Vector3(0,.06f,0);
+                receiver.enabled=false;Render();Assert.That(ReadColor(),Is.EqualTo(baseline).Within(.008f));
+                receiver.enabled=true;emitter.enabled=false;Render();Assert.That(ReadColor(),Is.EqualTo(baseline).Within(.008f));
+                emitter.enabled=true;
+                var overlap=Keep(GameObject.CreatePrimitive(PrimitiveType.Plane));
+                overlap.transform.localScale=ground.transform.localScale;
+                overlap.GetComponent<Renderer>().sharedMaterial=floorMaterial;overlap.AddComponent<HoCapsuleAOReceiver>();
+                Render();Assert.That(ReadColor(),Is.EqualTo(baseline*.6f).Within(.008f),"Overlapping receivers multiplied the same shadow twice.");
+                overlap.SetActive(false);
+                var front=Keep(GameObject.CreatePrimitive(PrimitiveType.Cube));
+                front.transform.position=new Vector3(0,.15f,0);front.transform.localScale=new Vector3(.2f,.1f,.2f);
+                front.GetComponent<Renderer>().sharedMaterial=floorMaterial;Render();
+                Assert.That(ReadColor(),Is.EqualTo(baseline).Within(.008f),"Unregistered foreground was darkened.");front.SetActive(false);
+                var firstCamera=camera;
+                camera=Keep(new GameObject("Second receiver camera")).AddComponent<Camera>();camera.CopyFrom(firstCamera);camera.enabled=false;
+                camera.transform.SetPositionAndRotation(new Vector3(.7f,2,0),Quaternion.LookRotation(Vector3.down,Vector3.forward));
+                camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;
+                Render();Assert.That(ReadColor(),Is.EqualTo(baseline).Within(.008f),"Another camera reused the foot projection.");
+                camera=firstCamera;
+                var staticRoot=Keep(new GameObject("Static receiver root"));ground.transform.SetParent(staticRoot.transform,true);
+                var distant=Keep(GameObject.CreatePrimitive(PrimitiveType.Plane));distant.transform.position=new Vector3(20,0,0);
+                distant.GetComponent<Renderer>().sharedMaterial=floorMaterial;StaticBatchingUtility.Combine(new[]{ground,distant},staticRoot);
+                Assert.That(ground.GetComponent<MeshRenderer>().isPartOfStaticBatch,Is.True);
+                Render();Assert.That(ReadColor(),Is.EqualTo(baseline*.6f).Within(.008f),"Static batch redraw failed.");
+                emitter.transform.position=new Vector3(.4f,.06f,0);Render();var moved=camera.WorldToViewportPoint(new Vector3(.4f,0,0));
+                Assert.That(ReadColor(moved.x,moved.y),Is.LessThan(baseline*.8f));
+                Assert.That(ReadColor(),Is.EqualTo(baseline).Within(.008f));emitter.transform.position=new Vector3(0,.06f,0);
+                // HoAO stays unchanged, in white mode and in computed GTAO mode.
+                geometry.SetActive(true);gtao.SetActive(true);gtaoVolume.enable.value=true;
+                foreach(bool white in compatibility?new[]{true}:new[]{true,false})
+                {
+                    gtaoVolume.publishAOTextureOnly.value=white;
+                    gtaoVolume.temporalFrameCount.Override(0);gtaoVolume.sliceCount.Override(1);gtaoVolume.stepCount.Override(8);gtaoVolume.boxPassCount.Override(1);
+                    effects.capsuleAOEnabled=false;Render();float originalAO=Read();
+                    Assert.That(probe.hasAO,Is.True);
+                    effects.capsuleAOEnabled=true;Render();
+                    Assert.That(Read(),Is.EqualTo(originalAO).Within(.001f),"Receiver overlay changed the published GTAO texture.");
+                    Assert.That(ReadColor(),Is.EqualTo(baseline*.6f).Within(.008f));
+                }
+                geometry.SetActive(false);gtao.SetActive(false);
+                // Material AO is explicitly off, yet the independent receiver overlay remains visible.
+                var lil=Keep(new Material(Shader.Find("lilToon")));
+                lil.SetColor("_Color",Color.white);lil.SetFloat("_LightMinLimit",1);lil.SetFloat("_LightMaxLimit",1);
+                lil.SetFloat("_UseShadow",0);lil.SetFloat("_UseReflection",0);lil.SetFloat("_AOSource",0);lil.SetFloat("_UseAODarkening",0);
+                ground.GetComponent<Renderer>().sharedMaterial=lil;string originalLil=EditorJsonUtility.ToJson(lil);
+                effects.capsuleAOEnabled=false;Render();float lilBaseline=ReadColor();
+                effects.capsuleAOEnabled=true;Render();
+                Assert.That(ReadColor(),Is.EqualTo(lilBaseline*.6f).Within(.01f),"Receiver overlay still depended on lilToon material AO.");
+                Assert.That(EditorJsonUtility.ToJson(lil),Is.EqualTo(originalLil));
+                Assert.That(EditorJsonUtility.ToJson(floorMaterial),Is.EqualTo(originalMaterial));
                 Assert.That(ShaderUtil.ShaderHasError(lil.shader),Is.False);
-                Assert.That(character.Settings.renderScale,Is.EqualTo(HoCharacterRenderScale.Full));
-                Debug.Log("HO_CAPSULE_AO_PIPELINE_PASS compatibility="+compatibility+" msaa="+msaa+" perspective="+perspective+" size=97x65 receiver/foreground/disable/re-enable/material-controls");
+                ground.GetComponent<Renderer>().sharedMaterial=floorMaterial;
+                if(!compatibility && msaa==1 && !perspective)
+                {
+                    string previews=Environment.GetEnvironmentVariable("HO_CAPSULE_AO_OVERLAY_PREVIEW_DIR");
+                    if(!string.IsNullOrEmpty(previews))
+                    {
+                        System.IO.Directory.CreateDirectory(previews);var previousTarget=target;float previousAspect=camera.aspect;
+                        var preview=Keep(new RenderTexture(512,512,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));preview.Create();
+                        target=preview;camera.aspect=1;
+                        foreach(var mode in new[]{HoCapsuleAOMode.Capsule,HoCapsuleAOMode.Cross})
+                        {
+                            effects.capsuleAOMode=mode;Render();
+                            var png=Keep(new Texture2D(512,512,TextureFormat.RGB24,false,true));
+                            RenderTexture.active=preview;png.ReadPixels(new Rect(0,0,512,512),0,0);png.Apply();
+                            System.IO.File.WriteAllBytes(System.IO.Path.Combine(previews,mode+"-"+SystemInfo.graphicsDeviceType+".png"),png.EncodeToPNG());
+                        }
+                        target=previousTarget;camera.aspect=previousAspect;
+                    }
+                }
+                Debug.Log("HO_CAPSULE_RECEIVER_OVERLAY_PASS compatibility="+compatibility+" msaa="+msaa+" perspective="+perspective+" no-GB/no-GTAO/material-AO-off/unchanged-HoAO/cross-penetration/slope/overlap");
             }
             finally
             {
@@ -238,7 +236,7 @@ namespace lilToon.URP.Extensions.Tests
         {
             private sealed class Data {internal Material material;}
             private readonly HoCapsuleAOProbeFeature owner;
-            internal ProbePass(HoCapsuleAOProbeFeature owner){this.owner=owner;renderPassEvent=RenderPassEvent.AfterRenderingOpaques;}
+            internal ProbePass(HoCapsuleAOProbeFeature owner){this.owner=owner;renderPassEvent=RenderPassEvent.AfterRenderingTransparents;}
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
             {
                 Type type=typeof(HoGTAOSettings).Assembly.GetType("lilToon.URP.Extensions.GTAO.HoGTAORenderGraphResources",true);

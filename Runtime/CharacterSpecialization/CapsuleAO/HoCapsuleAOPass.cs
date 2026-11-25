@@ -1,8 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
 using System.Collections.Generic;
-using lilToon.URP.Extensions.GeometryBuffer;
-using lilToon.URP.Extensions.GTAO;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -14,12 +12,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     internal sealed class HoCapsuleAOPass : ScriptableRenderPass
     {
         internal const int MaxCapsules = 64;
-        private static readonly int DepthId = Shader.PropertyToID("_HoCapsuleGeometryDepth");
-        private static readonly int NormalId = Shader.PropertyToID("_HoCapsuleGeometryNormal");
-        private static readonly int MaskId = Shader.PropertyToID("_HoCapsuleReceiverMask");
+        private static readonly int DepthId = Shader.PropertyToID("_CameraDepthTexture");
+        private static readonly int VisibilityId = Shader.PropertyToID("_HoCapsuleVisibility");
         private static readonly int SizeId = Shader.PropertyToID("_HoCapsuleScreenSize");
         private static readonly int VPId = Shader.PropertyToID("_HoCapsuleViewProjection");
-        private static readonly int InvVPId = Shader.PropertyToID("_HoCapsuleInverseViewProjection");
         private static readonly int CountId = Shader.PropertyToID("_HoCapsuleCount");
         private static readonly int AId = Shader.PropertyToID("_HoCapsuleA");
         private static readonly int BId = Shader.PropertyToID("_HoCapsuleB");
@@ -35,19 +31,19 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             internal Vector4[] a, b;
             internal int count;
             internal Rect scissor;
-            internal Matrix4x4 vp, inverseVP;
+            internal Matrix4x4 vp;
             internal Vector4 screenSize;
             internal HoCapsuleAOConfiguration configuration;
         }
-        private sealed class MaskData
+        private sealed class ReceiverData
         {
             internal TextureHandle depth;
             internal Material material;
             internal Inputs inputs;
         }
-        private sealed class AppendData
+        private sealed class CompositeData
         {
-            internal TextureHandle depth, normal, mask;
+            internal TextureHandle visibility;
             internal Material material;
             internal Inputs inputs;
         }
@@ -61,8 +57,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         internal HoCapsuleAOPass()
         {
-            renderPassEvent = RenderPassEvent.BeforeRenderingOpaques;
-            ConfigureInput(ScriptableRenderPassInput.None);
+            renderPassEvent = RenderPassEvent.BeforeRenderingTransparents;
+            ConfigureInput(ScriptableRenderPassInput.Depth);
         }
 
         internal void Setup(HoCharacterSpecializationEffects effects) => configuration = HoCapsuleAOConfiguration.From(effects);
@@ -121,7 +117,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 material = CoreUtils.CreateEngineMaterial(shader);
             }
             inputs = new Inputs { surfaces = surfaces.ToArray(), a = new Vector4[MaxCapsules], b = new Vector4[MaxCapsules],
-                count = count, configuration = configuration, vp = vp, inverseVP = vp.inverse,
+                count = count, configuration = configuration, vp = vp,
                 screenSize = new Vector4(width, height, 1f / width, 1f / height), scissor = ProjectBounds(camera, union, width, height) };
             for (int i = 0; i < count; i++)
             {
@@ -156,117 +152,86 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             LastCapsuleCount = LastReceiverCount = 0;
             var camera = frameData.Get<UniversalCameraData>();
+            var resources = frameData.Get<UniversalResourceData>();
             var descriptor = camera.cameraTargetDescriptor;
-            var ao = frameData.GetOrCreate<HoGTAORenderGraphResources>();
-            if (!ao.CanAppend(camera.camera, descriptor.width, descriptor.height))
-            { Status = "当前相机没有已发布的可写 HoAO；请检查 HoGTAO 与 Feature 顺序。"; return; }
-            var geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
-            if (!geometry.depthTexture.IsValid() || !geometry.normalDepthTexture.IsValid())
-            { Status = "当前相机没有 GB 物理几何。"; return; }
-            var aoDesc = graph.GetTextureDesc(ao.aoTexture);
-            var depthDesc = graph.GetTextureDesc(geometry.depthTexture);
-            if (camera.xr != null && camera.xr.enabled || camera.renderType != CameraRenderType.Base
-                || !camera.isDefaultViewport || descriptor.useDynamicScale || aoDesc.dimension != TextureDimension.Tex2D
-                || depthDesc.width != aoDesc.width || depthDesc.height != aoDesc.height
-                || aoDesc.msaaSamples != MSAASamples.None
-                || !SystemInfo.IsFormatSupported(aoDesc.colorFormat, GraphicsFormatUsage.Blend))
-            { Status = "当前 AO／GB 尺寸、采样、混合格式或 XR／viewport 不受支持。"; return; }
+            if (!Supported(camera.camera, camera.renderType, descriptor)
+                || !resources.cameraDepthTexture.IsValid() || !resources.activeColorTexture.IsValid())
+            { Status = "当前相机配置或相机深度不可用。"; return; }
             Matrix4x4 vp = GL.GetGPUProjectionMatrix(camera.GetProjectionMatrix(), true) * camera.GetViewMatrix();
             if (!Prepare(camera.camera, descriptor.width, descriptor.height, vp, out Inputs inputs)) return;
-
-            var maskDesc = aoDesc;
-            maskDesc.name = "Ho Capsule AO Receiver Coverage";
-            maskDesc.colorFormat = GraphicsFormat.R8_UNorm;
-            maskDesc.depthBufferBits = DepthBits.None;
-            maskDesc.clearBuffer = true; maskDesc.clearColor = Color.black;
-            maskDesc.filterMode = FilterMode.Point;
-            TextureHandle mask = graph.CreateTexture(maskDesc);
-            using (var builder = graph.AddRasterRenderPass<MaskData>("Ho Capsule AO Receiver Coverage", out var data))
+            TextureHandle visibility = graph.CreateTexture(new TextureDesc(descriptor.width, descriptor.height)
             {
-                data.material = material; data.inputs = inputs; data.depth = geometry.depthTexture;
-                builder.UseTexture(data.depth, AccessFlags.Read);
-                builder.SetRenderAttachment(mask, 0, AccessFlags.Write);
-                builder.AllowGlobalStateModification(true);
-                builder.SetRenderFunc(static (MaskData d, RasterGraphContext context) =>
-                {
-                    context.cmd.SetGlobalTexture(DepthId, d.depth);
-                    context.cmd.SetGlobalVector(SizeId, d.inputs.screenSize);
-                    context.cmd.SetGlobalMatrix(VPId, d.inputs.vp);
-                    context.cmd.EnableScissorRect(d.inputs.scissor);
-                    foreach (Surface surface in d.inputs.surfaces)
-                        for (int submesh = 0; submesh < surface.submeshCount; submesh++)
-                            context.cmd.DrawRenderer(surface.renderer, d.material, submesh, 0);
-                    context.cmd.DisableScissorRect();
-                });
-            }
-            using (var builder = graph.AddRasterRenderPass<AppendData>("Ho Capsule AO Append", out var data))
+                name = "Ho Capsule AO Receiver Visibility", colorFormat = GraphicsFormat.R8_UNorm,
+                clearBuffer = true, clearColor = Color.white, filterMode = FilterMode.Point,
+                msaaSamples = MSAASamples.None, depthBufferBits = DepthBits.None
+            });
+            using (var builder = graph.AddRasterRenderPass<ReceiverData>("Ho Capsule AO Receiver Redraw", out var data))
             {
-                data.material = material; data.inputs = inputs; data.mask = mask;
-                data.depth = geometry.depthTexture; data.normal = geometry.normalDepthTexture;
-                builder.UseTexture(mask, AccessFlags.Read);
+                data.material = material; data.inputs = inputs; data.depth = resources.cameraDepthTexture;
                 builder.UseTexture(data.depth, AccessFlags.Read);
-                builder.UseTexture(data.normal, AccessFlags.Read);
-                builder.SetRenderAttachment(ao.aoTexture, 0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(visibility, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
-                builder.SetRenderFunc(static (AppendData d, RasterGraphContext context) =>
+                builder.SetRenderFunc(static (ReceiverData d, RasterGraphContext context) =>
                 {
-                    var c = d.inputs.configuration;
-                    context.cmd.SetGlobalTexture(MaskId, d.mask);
+                    var i = d.inputs; var c = i.configuration;
                     context.cmd.SetGlobalTexture(DepthId, d.depth);
-                    context.cmd.SetGlobalTexture(NormalId, d.normal);
-                    context.cmd.SetGlobalVector(SizeId, d.inputs.screenSize);
-                    context.cmd.SetGlobalMatrix(InvVPId, d.inputs.inverseVP);
-                    context.cmd.SetGlobalInt(CountId, d.inputs.count);
-                    context.cmd.SetGlobalVectorArray(AId, d.inputs.a);
-                    context.cmd.SetGlobalVectorArray(BId, d.inputs.b);
+                    context.cmd.SetGlobalVector(SizeId, i.screenSize);
+                    context.cmd.SetGlobalMatrix(VPId, i.vp);
+                    context.cmd.SetGlobalInt(CountId, i.count);
+                    context.cmd.SetGlobalVectorArray(AId, i.a); context.cmd.SetGlobalVectorArray(BId, i.b);
                     context.cmd.SetGlobalVector(ParamsId, new Vector4(c.strength, c.distance, (float)c.mode, 0));
                     context.cmd.SetGlobalVector(CrossId, new Vector4(c.crossLength, c.crossWidth, c.crossAngle * Mathf.Deg2Rad, c.crossSoftness));
                     context.cmd.SetGlobalFloat(RotationId, c.crossRotation * Mathf.Deg2Rad);
+                    context.cmd.EnableScissorRect(i.scissor);
+                    foreach (Surface surface in i.surfaces)
+                        for (int submesh = 0; submesh < surface.submeshCount; submesh++)
+                            context.cmd.DrawRenderer(surface.renderer, d.material, submesh, 0);
+                    context.cmd.DisableScissorRect(); context.cmd.SetGlobalInt(CountId, 0);
+                });
+            }
+            using (var builder = graph.AddRasterRenderPass<CompositeData>("Ho Capsule AO Color Overlay", out var data))
+            {
+                data.material = material; data.inputs = inputs; data.visibility = visibility;
+                builder.UseTexture(visibility, AccessFlags.Read);
+                builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.ReadWrite);
+                builder.AllowGlobalStateModification(true);
+                builder.SetRenderFunc(static (CompositeData d, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalTexture(VisibilityId, d.visibility);
                     context.cmd.EnableScissorRect(d.inputs.scissor);
-                    context.cmd.DrawProcedural(Matrix4x4.identity, d.material, c.blend == HoCapsuleAOBlendMode.Min ? 1 : 2, MeshTopology.Triangles, 3);
+                    context.cmd.DrawProcedural(Matrix4x4.identity, d.material, 1, MeshTopology.Triangles, 3);
                     context.cmd.DisableScissorRect();
-                    context.cmd.SetGlobalInt(CountId, 0);
                 });
             }
         }
 
+        private static bool Supported(Camera camera, CameraRenderType type, RenderTextureDescriptor descriptor)
+            => (camera.cameraType == CameraType.Game || camera.cameraType == CameraType.SceneView)
+                && !camera.stereoEnabled && type == CameraRenderType.Base && camera.rect == new Rect(0, 0, 1, 1)
+                && !descriptor.useDynamicScale && descriptor.dimension == TextureDimension.Tex2D;
+
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
             LastCapsuleCount = LastReceiverCount = 0;
-            Camera camera = renderingData.cameraData.camera;
-            RTHandle ao = HoAOCompatibilityPublication.Camera == camera ? HoAOCompatibilityPublication.Texture : null;
-            var geometry = HoGeometryBufferPass.CompatibilityCamera == camera ? HoGeometryBufferPass.CompatibilityTargets : null;
-            if (ao == null || ao.rt == null || geometry == null || geometry.DepthTexture == null || geometry.NormalDepthTexture == null)
-            { Status = "当前相机没有 Compatibility HoAO／GB 发布。"; return; }
-            var descriptor = renderingData.cameraData.cameraTargetDescriptor;
-            if (camera.stereoEnabled || renderingData.cameraData.renderType != CameraRenderType.Base
-                || camera.rect != new Rect(0, 0, 1, 1) || descriptor.useDynamicScale
-                || ao.rt.width != descriptor.width || ao.rt.height != descriptor.height
-                || geometry.DepthTexture.rt.width != descriptor.width || geometry.DepthTexture.rt.height != descriptor.height)
-            { Status = "Compatibility AO／GB 尺寸或相机配置不匹配。"; return; }
-            Matrix4x4 vp = GL.GetGPUProjectionMatrix(renderingData.cameraData.GetProjectionMatrix(), true)
-                * renderingData.cameraData.GetViewMatrix();
+            var cameraData = renderingData.cameraData;
+            Camera camera = cameraData.camera;
+            var descriptor = cameraData.cameraTargetDescriptor;
+            if (!Supported(camera, cameraData.renderType, descriptor))
+            { Status = "当前相机配置不支持接收面叠加。"; return; }
+            Matrix4x4 vp = GL.GetGPUProjectionMatrix(cameraData.GetProjectionMatrix(), true) * cameraData.GetViewMatrix();
             if (!Prepare(camera, descriptor.width, descriptor.height, vp, out Inputs inputs)) return;
-            compatibilityMasks.TryGetValue(camera.GetInstanceID(), out RTHandle mask);
-            descriptor = HoGTAOPublishOnlyPass.Descriptor(descriptor);
+            compatibilityMasks.TryGetValue(camera.GetInstanceID(), out RTHandle visibility);
             descriptor.graphicsFormat = GraphicsFormat.R8_UNorm;
-            RenderingUtils.ReAllocateIfNeeded(ref mask, descriptor, FilterMode.Point, TextureWrapMode.Clamp,
-                name: "Ho Capsule AO Receiver Coverage");
-            compatibilityMasks[camera.GetInstanceID()] = mask;
-            var cmd = CommandBufferPool.Get("Ho Capsule AO Append");
-            CoreUtils.SetRenderTarget(cmd, mask, ClearFlag.Color, Color.black);
-            cmd.SetGlobalTexture(DepthId, geometry.DepthTexture);
-            cmd.SetGlobalVector(SizeId, inputs.screenSize);
-            cmd.SetGlobalMatrix(VPId, inputs.vp);
-            cmd.EnableScissorRect(inputs.scissor);
-            foreach (Surface surface in inputs.surfaces)
-                for (int submesh = 0; submesh < surface.submeshCount; submesh++)
-                    cmd.DrawRenderer(surface.renderer, material, submesh, 0);
-            cmd.DisableScissorRect();
-            CoreUtils.SetRenderTarget(cmd, ao, ClearFlag.None);
-            cmd.SetGlobalTexture(MaskId, mask);
-            cmd.SetGlobalTexture(NormalId, geometry.NormalDepthTexture);
-            cmd.SetGlobalMatrix(InvVPId, inputs.inverseVP);
+            descriptor.depthStencilFormat = GraphicsFormat.None; descriptor.depthBufferBits = 0;
+            descriptor.msaaSamples = 1; descriptor.bindMS = false; descriptor.sRGB = false;
+            descriptor.useMipMap = descriptor.autoGenerateMips = descriptor.enableRandomWrite = false;
+            descriptor.memoryless = RenderTextureMemoryless.None;
+            RenderingUtils.ReAllocateIfNeeded(ref visibility, descriptor, FilterMode.Point, TextureWrapMode.Clamp,
+                name: "Ho Capsule AO Receiver Visibility");
+            compatibilityMasks[camera.GetInstanceID()] = visibility;
+            var cmd = CommandBufferPool.Get("Ho Capsule AO Receiver Overlay");
+            CoreUtils.SetRenderTarget(cmd, visibility, ClearFlag.Color, Color.white);
+            cmd.SetGlobalVector(SizeId, inputs.screenSize); cmd.SetGlobalMatrix(VPId, inputs.vp);
             cmd.SetGlobalInt(CountId, inputs.count);
             cmd.SetGlobalVectorArray(AId, inputs.a); cmd.SetGlobalVectorArray(BId, inputs.b);
             var c = inputs.configuration;
@@ -274,10 +239,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             cmd.SetGlobalVector(CrossId, new Vector4(c.crossLength, c.crossWidth, c.crossAngle * Mathf.Deg2Rad, c.crossSoftness));
             cmd.SetGlobalFloat(RotationId, c.crossRotation * Mathf.Deg2Rad);
             cmd.EnableScissorRect(inputs.scissor);
-            cmd.DrawProcedural(Matrix4x4.identity, material, c.blend == HoCapsuleAOBlendMode.Min ? 1 : 2, MeshTopology.Triangles, 3);
+            foreach (Surface surface in inputs.surfaces)
+                for (int submesh = 0; submesh < surface.submeshCount; submesh++)
+                    cmd.DrawRenderer(surface.renderer, material, submesh, 0);
             cmd.DisableScissorRect(); cmd.SetGlobalInt(CountId, 0);
-            context.ExecuteCommandBuffer(cmd);
-            CommandBufferPool.Release(cmd);
+            CoreUtils.SetRenderTarget(cmd, cameraData.renderer.cameraColorTargetHandle, ClearFlag.None);
+            cmd.SetGlobalTexture(VisibilityId, visibility);
+            cmd.EnableScissorRect(inputs.scissor);
+            cmd.DrawProcedural(Matrix4x4.identity, material, 1, MeshTopology.Triangles, 3);
+            cmd.DisableScissorRect();
+            context.ExecuteCommandBuffer(cmd); CommandBufferPool.Release(cmd);
         }
 
         internal void Dispose()

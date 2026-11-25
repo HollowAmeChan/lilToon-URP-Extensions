@@ -76,15 +76,28 @@ namespace lilToon.URP.Extensions.GTAO
             output.size = new Vector2Int(descriptor.width, descriptor.height);
         }
 
-        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        private RTHandle GetTarget(Camera camera, RenderTextureDescriptor descriptor)
         {
-            Camera camera = renderingData.cameraData.camera;
             int id = camera.GetInstanceID();
             targets.TryGetValue(id, out RTHandle target);
-            var desc = Descriptor(renderingData.cameraData.cameraTargetDescriptor);
+            var desc = Descriptor(descriptor);
             RenderingUtils.ReAllocateIfNeeded(ref target, desc, FilterMode.Bilinear, TextureWrapMode.Clamp,
                 name: "_HoAOTexture");
             targets[id] = target;
+            return target;
+        }
+
+        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
+        {
+            // Keep URP's attachment tracking in sync so opaques rebind camera color.
+            ConfigureTarget(GetTarget(renderingData.cameraData.camera, renderingData.cameraData.cameraTargetDescriptor));
+            ConfigureClear(ClearFlag.Color, Color.white);
+        }
+
+        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        {
+            Camera camera = renderingData.cameraData.camera;
+            RTHandle target = GetTarget(camera, renderingData.cameraData.cameraTargetDescriptor);
             var cmd = CommandBufferPool.Get("Ho-GTAO Publish White AO");
             CoreUtils.SetRenderTarget(cmd, target, ClearFlag.Color, Color.white);
             cmd.SetGlobalTexture(HoGTAOShaderConstants.AOTextureId, target);

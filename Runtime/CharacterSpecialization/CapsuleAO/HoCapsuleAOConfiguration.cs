@@ -3,19 +3,17 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     public enum HoCapsuleAOMode { Capsule, Cross }
-    public enum HoCapsuleAOBlendMode { Min, Multiply }
 
     // A value snapshot: render functions never retain a mutable Volume/profile.
     internal struct HoCapsuleAOConfiguration
     {
         internal HoCapsuleAOMode mode;
-        internal HoCapsuleAOBlendMode blend;
         internal float strength, distance, crossLength, crossWidth, crossAngle, crossRotation, crossSoftness;
         internal int budget;
 
         internal static HoCapsuleAOConfiguration From(HoCharacterSpecializationEffects e) => new HoCapsuleAOConfiguration
         {
-            mode = e.capsuleAOMode, blend = e.capsuleAOBlend,
+            mode = e.capsuleAOMode,
             strength = Mathf.Clamp01(Safe(e.capsuleAOStrength, .75f)),
             distance = Mathf.Max(.001f, Safe(e.capsuleAOInfluenceDistance, .5f)),
             crossLength = Mathf.Max(.001f, Safe(e.capsuleAOCrossLength, .25f)),

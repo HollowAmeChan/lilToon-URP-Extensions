@@ -96,7 +96,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
                     DrawPresets();
                     DrawParameter(resolution, "计算分辨率");
                 }
-                else EditorGUILayout.HelpBox("发布全白 HoAO，跳过追踪、运动输入与去噪。胶囊等附加项可继续写入；调试仅支持 AO 视图。", MessageType.Info);
+                else EditorGUILayout.HelpBox("发布全白 HoAO，跳过追踪、运动输入与去噪；调试仅支持 AO 视图。独立接收面胶囊 AO 不需要此模式。", MessageType.Info);
             }
         }
 

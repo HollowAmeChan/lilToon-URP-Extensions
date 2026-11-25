@@ -80,7 +80,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
             HoCharacterSpecializationSettings activeSettings = ResolveSettings(in renderingData);
-            // AO has an earlier dependency stage and no AC/capture/color requirements.
+            // Receiver AO overlays opaque color independently of HoAO and the AC/capture chain.
             var effects = GetVolumeComponent()?.Effects.value;
             if (activeSettings != null && activeSettings.enabled && effects != null && effects.capsuleAOEnabled)
             {
