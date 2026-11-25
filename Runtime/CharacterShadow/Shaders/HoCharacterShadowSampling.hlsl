@@ -153,11 +153,13 @@ float2 HoCSSampleDenseTent(float2 uv, float2 lo, float2 hi, float receiverDepth,
         offsetsY[pair] = centre.y * _HoCSAtlasSize.y;
     }
     float2 visibility = 0;
-    [unroll] for (int y = 0; y < 4; y++)
+    // Keep the branch-heavy depth comparison rolled: duplicating it for all
+    // 16 taps makes FXC optimization costly. Tap order and weights are unchanged.
+    [loop] for (int y = 0; y < 4; y++)
     {
         UNITY_BRANCH if (weightsY[y] > 0)
         {
-            [unroll] for (int x = 0; x < 4; x++)
+            [loop] for (int x = 0; x < 4; x++)
             {
                 UNITY_BRANCH if (weightsX[x] > 0)
                     visibility += weightsX[x] * weightsY[y] * HoCSCompareBilinear(
