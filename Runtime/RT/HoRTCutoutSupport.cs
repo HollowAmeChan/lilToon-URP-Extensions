@@ -12,8 +12,7 @@ namespace lilToon.URP.Extensions.RT
             if (material == null || material.shader == null || material.renderQueue >= (int)RenderQueue.Transparent
                 || material.GetTag("RenderType", false) != "TransparentCutout"
                 || !material.shader.name.StartsWith("Hidden/lilToonCutout", StringComparison.Ordinal)) return false;
-            if (Enabled(material, "_UseMain2ndTex") || Enabled(material, "_UseMain3rdTex")
-                || Enabled(material, "_UseParallax") || Enabled(material, "_UseDither")) return false;
+            if (Enabled(material, "_UseParallax") || Enabled(material, "_UseDither")) return false;
             if (Vector(material, "_DissolveParams").x != 0
                 || Vector(material, "_DistanceFade").z != 0) return false;
             float mode = Float(material, "_AlphaMaskMode");

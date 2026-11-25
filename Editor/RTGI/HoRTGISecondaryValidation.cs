@@ -98,10 +98,9 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 Near3(hit.baseColor, new Vector3(baseColor.r,baseColor.g,baseColor.b), "linear material base");
                 Near3(hit.emission, new Vector3(1f,.5f,.25f), "dedicated HDR emission");
                 Near3(hit.normal, Vector3.back, "interpolated normal"); Near3(hit.geometricNormal, Vector3.back, "triangle normal");
-                bool linear=QualitySettings.activeColorSpace==ColorSpace.Linear;
                 Near(hit.roughness,.3f,"roughness");
-                Near(hit.metallic,linear?Mathf.GammaToLinearSpace(.3f):.3f,"Gamma-tagged metallic");
-                Near(hit.reflectance,linear?Mathf.GammaToLinearSpace(.08f):.08f,"Gamma-tagged reflectance");
+                Near(hit.metallic,.3f,"linear metallic");
+                Near(hit.reflectance,.08f,"linear dielectric F0");
                 source.SetFloat("_EmissionMainStrength",1);
                 hit=Trace(); Near3(hit.emission,new Vector3(baseColor.r,baseColor.g*.5f,baseColor.b*.25f),"emission main-strength component");
                 source.SetFloat("_EmissionMainStrength",0);
@@ -118,8 +117,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 source.SetTexture("_EmissionBlendMask",Texture2D.whiteTexture);
                 source.SetFloat("_UseEmission",0); hit=Trace(); Near3(hit.emission,Vector3.zero,"emission disabled");
                 Require(source.shader.name=="lilToon" && source.GetColor("_Color")==new Color(.2f,.4f,.6f,1),"Source raster material was changed");
-                source.SetFloat("_UseMain2ndTex",1); hit=Trace(); Require(hit.status==2,"Unsupported material must remain a hit");
-                source.SetFloat("_UseMain2ndTex",0); renderer.sharedMaterial=Keep(new Material(Shader.Find("Universal Render Pipeline/Unlit")));
+                source.SetFloat("_UseParallax",1); hit=Trace(); Require(hit.status==2,"Unsupported material must remain a hit");
+                source.SetFloat("_UseParallax",0); renderer.sharedMaterial=Keep(new Material(Shader.Find("Universal Render Pipeline/Unlit")));
                 hit=Trace(); Require(hit.status==2,"Unsupported shader became an environment miss");
                 renderer.sharedMaterial=source; renderer.transform.localScale=new Vector3(-2,.5f,1); hit=Trace();
                 Require(hit.status==1,"Mirrored, nonuniform world transform lost hit"); Near3(hit.geometricNormal,Vector3.back,"mirrored triangle normal");

@@ -16,7 +16,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         static void ValidateCutout()
         {
             source.shader=Shader.Find("Hidden/lilToonCutout");source.renderQueue=2450;source.SetOverrideTag("RenderType","TransparentCutout");
-            source.SetFloat("_Cutoff",.5f);source.SetFloat("_AlphaMaskMode",0);source.SetFloat("_UseMain2ndTex",0);source.SetFloat("_UseMain3rdTex",0);source.SetFloat("_UseParallax",0);source.SetFloat("_UseDither",0);
+            source.SetFloat("_Cutoff",.5f);source.SetFloat("_AlphaMaskMode",0);source.SetFloat("_UseParallax",0);source.SetFloat("_UseDither",0);
             source.SetVector("_DissolveParams",Vector4.zero);source.SetVector("_DistanceFade",Vector4.zero);
             Debug.Log("[HoGICutoutHit] INPUT shader="+source.shader.name+" queue="+source.renderQueue+" tag="+source.GetTag("RenderType",false)+" mask="+source.GetFloat("_AlphaMaskMode"));
             Require(HoRTCutoutSupport.Supports(source),"Basic static Cutout classifier accepted");
@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             source.SetFloat("_AlphaMaskScale",1);source.SetFloat("_AlphaMaskValue",0);mask.SetPixels(new[]{Color.black,Color.white});mask.Apply();source.SetTextureOffset("_AlphaMask",Vector2.zero);Require(Trace().status==1,"Independent mask UV solid texel");source.SetTextureOffset("_AlphaMask",new Vector2(.5f,0));Require(Trace().status==0,"Independent mask ST selects hole");
             source.SetFloat("_AlphaMaskMode",0);hit=Trace(true);Require(hit.status==2,"Visibility-only native payload returns blocker status");Near(hit.distance,1,"Visibility-only actual distance");Near3(hit.emission,Vector3.zero,"Visibility query skips expensive emission evaluation");
             source.SetColor("_Color",new Color(.2f,.4f,.6f,0));Require(Trace(true).status==0,"Visibility-only rays execute the same alpha any-hit");
-            source.SetColor("_Color",Color.white);source.SetFloat("_UseMain2ndTex",1);Require(!HoRTCutoutSupport.Supports(source),"Unsupported multilayer Cutout remains outside bounded domain");source.SetFloat("_UseMain2ndTex",0);Require(HoRTCutoutSupport.Supports(source),"Static alpha UV remains supported");
+            source.SetColor("_Color",Color.white);source.SetFloat("_UseParallax",1);Require(!HoRTCutoutSupport.Supports(source),"Unsupported parallax Cutout remains outside bounded domain");source.SetFloat("_UseParallax",0);Require(HoRTCutoutSupport.Supports(source),"Static alpha UV remains supported");
             foreach(var message in ShaderUtil.GetShaderMessages(Shader.Find("Hidden/lilToon/URP/RTGI/SecondaryMaterial")))if(message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error||message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning)throw new Exception(message.message);
             Debug.Log("[HoGICutoutHit] PASS native alpha/mask/UV/backface/visibility payload");
             void Mask(float value){mask.SetPixels(new[]{new Color(value,value,value,1),new Color(value,value,value,1)});mask.Apply();}

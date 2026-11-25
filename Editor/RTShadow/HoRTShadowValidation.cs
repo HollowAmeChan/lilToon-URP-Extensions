@@ -82,7 +82,7 @@ namespace lilToon.URP.Extensions.Editor.RTShadow
         {
             var go=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));go.layer=29;go.transform.position=position;go.transform.localScale=scale;
             var material=Keep(new Material(Shader.Find("Hidden/lilToonCutout")));material.SetFloat("_Cull",0);material.SetTexture("_MainTex",Texture2D.whiteTexture);material.SetColor("_Color",Color.white);material.SetFloat("_Cutoff",.5f);
-            foreach(var name in new[]{"_UseMain2ndTex","_UseMain3rdTex","_UseParallax","_UseDither","_AlphaMaskMode"})material.SetFloat(name,0);
+            foreach(var name in new[]{"_UseParallax","_UseDither","_AlphaMaskMode"})material.SetFloat(name,0);
             material.SetVector("_DissolveParams",Vector4.zero);material.SetVector("_DistanceFade",Vector4.zero);
             material.renderQueue=2450;material.SetOverrideTag("RenderType","TransparentCutout");
             var renderer=go.GetComponent<Renderer>();renderer.sharedMaterial=material;renderer.shadowCastingMode=caster?ShadowCastingMode.TwoSided:ShadowCastingMode.Off;return renderer;

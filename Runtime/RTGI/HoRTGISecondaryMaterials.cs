@@ -60,7 +60,6 @@ namespace lilToon.URP.Extensions.RTGI
 
         internal static bool IsSupported(Material source) => source != null && source.shader != null
             && ((source.shader.name == "lilToon" && source.renderQueue < (int)RenderQueue.AlphaTest) || HoRTCutoutSupport.Supports(source))
-            && !Enabled(source, "_UseMain2ndTex") && !Enabled(source, "_UseMain3rdTex")
             && !Enabled(source, "_UseParallax");
 
         // Same bounded static-alpha domain as the already verified DI any-hit.

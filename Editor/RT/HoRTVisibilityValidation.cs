@@ -67,7 +67,7 @@ namespace lilToon.URP.Extensions.RT
                 alpha=Quad(2,0);Quad(2,1);
                 cutout=Keep(new Material(Shader.Find("Hidden/lilToonCutout")));cutout.renderQueue=2450;cutout.SetOverrideTag("RenderType","TransparentCutout");
                 cutout.SetColor("_Color",Color.white);cutout.SetTexture("_MainTex",Texture2D.whiteTexture);cutout.SetFloat("_Cutoff",.5f);
-                foreach(var name in new[]{"_UseMain2ndTex","_UseMain3rdTex","_UseParallax","_UseDither","_AlphaMaskMode"})cutout.SetFloat(name,0);
+                foreach(var name in new[]{"_UseParallax","_UseDither","_AlphaMaskMode"})cutout.SetFloat(name,0);
                 cutout.SetVector("_DissolveParams",Vector4.zero);cutout.SetVector("_DistanceFade",Vector4.zero);
                 Check(HoRTCutoutSupport.Supports(cutout),"Cutout support domain accepted");alpha.sharedMaterial=cutout;
                 castOff=Quad(4,0);castOff.shadowCastingMode=ShadowCastingMode.Off;

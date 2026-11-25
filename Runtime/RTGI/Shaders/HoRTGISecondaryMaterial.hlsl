@@ -101,10 +101,9 @@ void HoRTGIClosestHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
     fd.albedo=fd.col.rgb;fd.invLighting=1;
     fd.nvabs=abs(dot(fd.N,fd.V));fd.uvRim=fd.nvabs.xx;
     float4 emission=lilEmissionComponent(fd LIL_SAMP_IN(sampler_MainTex));
-    float smoothness=_Smoothness*LIL_SAMPLE_2D(_SmoothnessTex,sampler_MainTex,fd.uvMain).r;
-    float metallic=_Metallic*LIL_SAMPLE_2D(_MetallicGlossMap,sampler_MainTex,fd.uvMain).r;
+    lilReadPBRInputs(fd LIL_SAMP_IN(sampler_MainTex));
     payload.status=1;payload.normalWS=fd.N;payload.geometricNormalWS=geo;
-    payload.baseColor=fd.col.rgb;payload.perceptualRoughness=saturate(1-smoothness);
-    payload.metallic=saturate(metallic);payload.reflectance=saturate(_Reflectance);
+    payload.baseColor=fd.col.rgb;payload.perceptualRoughness=1-fd.smoothness;
+    payload.metallic=fd.metallic;payload.reflectance=fd.dielectricF0;
     payload.emission=max(0,emission.rgb*emission.a);
 }

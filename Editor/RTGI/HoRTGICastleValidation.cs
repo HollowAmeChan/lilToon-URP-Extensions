@@ -68,7 +68,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var source=UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.InstanceID).FirstOrDefault(c=>c.CompareTag("MainCamera"));if(source==null)throw new Exception("Castle MainCamera missing");report.camera=source.name;
                 var geometry=UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.InstanceID);
                 var sky=geometry.SelectMany(r=>r.sharedMaterials).Where(m=>m!=null&&m.name=="天空").Distinct().ToArray();if(sky.Length==0)throw new Exception("Known copied sky shell material missing");
-                report.materials=geometry.SelectMany(r=>r.sharedMaterials).Where(m=>m!=null).Distinct().Select(m=>new MaterialRow{name=m.name,shader=m.shader!=null?m.shader.name:"null",queue=m.renderQueue,excluded=sky.Contains(m),supported=HoRTGISecondaryMaterials.IsSupported(m),cutout=HoRTCutoutSupport.Supports(m),main2=m.HasProperty("_UseMain2ndTex")&&m.GetFloat("_UseMain2ndTex")!=0,main3=m.HasProperty("_UseMain3rdTex")&&m.GetFloat("_UseMain3rdTex")!=0}).ToArray();
+                report.materials=geometry.SelectMany(r=>r.sharedMaterials).Where(m=>m!=null).Distinct().Select(m=>new MaterialRow{name=m.name,shader=m.shader!=null?m.shader.name:"null",queue=m.renderQueue,excluded=sky.Contains(m),supported=HoRTGISecondaryMaterials.IsSupported(m),cutout=HoRTCutoutSupport.Supports(m)}).ToArray();
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
                 renderer.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>()));
                 var gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
@@ -199,7 +199,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         static float Map(float x)=>Mathf.Pow(Mathf.Max(0,x)/(1+Mathf.Max(0,x)),1/2.2f);
         static bool Finite(Color c)=>float.IsFinite(c.r)&&float.IsFinite(c.g)&&float.IsFinite(c.b)&&float.IsFinite(c.a)&&c.r>=0&&c.g>=0&&c.b>=0;
         static double Max(Color c)=>Math.Max(c.r,Math.Max(c.g,c.b));
-        [Serializable]sealed class MaterialRow{public string name,shader;public int queue;public bool excluded,supported,cutout,main2,main3;}
+        [Serializable]sealed class MaterialRow{public string name,shader;public int queue;public bool excluded,supported,cutout;}
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]internal struct Primary{public uint depth,normal,geometric,diffuse,specular;}
         [Serializable]sealed class StageMean{public int pipeline;public Vector3 remodulatedMean;}
         [Serializable]sealed class FrameMean{public int index;public Vector3 raw,filtered;}

@@ -48,7 +48,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 oldAsync=ShaderUtil.allowAsyncCompilation;ShaderUtil.allowAsyncCompilation=false;
                 output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-"+(commonDiffuse?"common-diffuse-":"v01-matched-")+(compatibility?"compat":noReuse?"no-reuse":"rg")));Directory.CreateDirectory(output);
                 report=new Report{unity=Application.unityVersion,gpu=SystemInfo.graphicsDeviceName,api=SystemInfo.graphicsDeviceType.ToString(),colorSpace=QualitySettings.activeColorSpace.ToString(),noReuse=noReuse,compatibility=compatibility};
-                if(commonDiffuse)report.protocol="Step002 common diffuse receiver: linear F0=.04 via gamma-tagged Reflectance property, metallic=0, roughness=1; same geometry/light as step001, reference final evaluator also selects diffuse only. Secondary F0 quantization differs (.0392 Ho vs about .03995 reference). 128x128, 256 requests; not performance/motion/Player acceptance.";
+                if(commonDiffuse)report.protocol="Step002 common diffuse receiver: linear F0=.04 via linear Reflectance property, metallic=0, roughness=1; same geometry/light as step001, reference final evaluator also selects diffuse only. Secondary F0 quantization differs (.0392 Ho vs about .03995 reference). 128x128, 256 requests; not performance/motion/Player acceptance.";
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
                 renderer.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoRTRendererFeature>()));
@@ -83,7 +83,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             var obj=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));obj.name=name;obj.transform.position=position;obj.transform.eulerAngles=rotation;obj.transform.localScale=new Vector3(size.x,size.y,1);
             var material=Keep(new Material(Shader.Find("lilToon")));material.EnableKeyword("UNITY_UI_ALPHACLIP");
             material.SetFloat("_Cull",0);material.SetColor("_Color",color);material.SetTexture("_MainTex",Texture2D.whiteTexture);
-            material.SetFloat("_Metallic",0);material.SetFloat("_Reflectance",commonDiffuse?Mathf.LinearToGammaSpace(.04f):0);material.SetFloat("_Smoothness",0);material.SetFloat("_UseEmission",0);
+            material.SetFloat("_Metallic",0);material.SetFloat("_Reflectance",commonDiffuse ? .04f : 0f);material.SetFloat("_Smoothness",0);material.SetFloat("_UseEmission",0);
             obj.GetComponent<Renderer>().sharedMaterial=material;
         }
         static void OnLog(string text,string stack,LogType type)

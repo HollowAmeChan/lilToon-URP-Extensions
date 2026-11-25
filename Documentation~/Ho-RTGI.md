@@ -4,7 +4,7 @@
 
 ## 2026-11-25 共享 HLSL 维护边界
 
-次级命中材质通过单个 `LIL_PASS_RTGI_SECONDARY` 显式入口使用 lilToon 的公共 HLSL，保留原 12 个 feature 形成的第一主色、法线、发光及 smoothness/metallic 有界子集。旧逐项 feature 定义已退役；该入口与原生八材质共同维护，不增加通用 profile 配置层，也不扩大本页原有材质支持域。
+次级命中材质通过单个 `LIL_PASS_RTGI_SECONDARY` 显式入口使用 lilToon 的公共 HLSL，保留第一主色、法线、发光及 PBR 输入的有界子集。旧逐项 feature 定义已退役；该入口与原生八材质共同维护，不增加通用 profile 配置层，也不扩大本页原有材质支持域。
 
 `LIL_MATRIX_M` 的 RT 对象变换，以及 `LIL_SAMPLE_2D`、`LIL_SAMPLE_2D_GRAD`、`LIL_SAMPLE_2D_ST`、`LIL_SAMPLE_1D` 的显式 LOD 0 覆写继续保留。没有新增 ray-cone 过滤或改动 GI 光照算法、重采样、NRD 与发布契约。
 
@@ -73,12 +73,16 @@ GI 提供 `HoRTGISecondaryMaterials` 适配策略，由 Ho-RT host 拥有副本�
 
 Emission 直接调用 lilToon 的 `lilEmissionComponent`，读取唯一自发光组的颜色、贴图/alpha、UV 选择、ST/动画、mask、渐变、blink 与 main-strength，并乘以组分权重；与 SB 相同，fluorescence 使用中性 lighting gate。不会把主色、matcap、rim、旧 Forward 明亮部分当作发光来源。
 
+PBR 输入直接调用主包 `lilReadPBRInputs`，不在命中适配器复制另一套采样公式。`_PBRInputMode=0` 默认独立贴图，读取金属度、光滑度与反射率单图 R；`=1` 使用 `_PBRMap` 的 RGBA（金属度权重、介电 F0 权重、灰度 baked AO、光滑度权重）。金属度、F0 和光滑度分别乘其线性标量，白图中性；独立图及 Packed 各自 ST 统一在主贴图坐标上应用。反射率仍是绝对介电 F0，`.04` 表示 4%，不是 ZMD 的固定 F0 倍率。RTGI 只输出已有 metallic、reflectance 与 `1-smoothness`，不新增 AO 能量项、GSAA 或 ray-cone。
+
+2026-11-25 的输入收敛同步移除私有命中 Shader 中 `_Metallic`、`_Reflectance` 遗留的 `[Gamma]`，对齐主包线性单位，并通过公共读取入口补齐原 metallic/smoothness 漏用的 ST。材质副本与历史签名沿既有全属性复制和遍历，包含新模式、图、ST 与纹理更新；没有新增手工上传表。既有探针源码同步线性预期和有效负例，本轮仅静态核对，未启动 Unity、编译或运行探针；下文历史通过记录不代表这些改动已运行验收。
+
 ## 首版支持域
 
 - 刚性MeshRenderer与SkinnedMeshRenderer的opaque/基础lilToon Cutout已有GI命中/可见性验证，支持屏幕外、变换更新和非均匀/镜像变换。骨骼snapshot的UV/法线/法线贴图、BlendShape、实际遮挡与emission反弹已有独立证据；动态接收稳定性、复杂角色仍待验。透明混合、任意shader顶点变形、static batching或additional vertex streams不在本阶段支持域。
-- 当前命中材质接收标准 `lilToon` opaque，第一主色链、单层 normal map、唯一专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
+- 当前命中材质接收标准 `lilToon` opaque，第一主色链、单层 normal map、唯一专用 emission，以及独立/Packed PBR 输入。第二/第三主色和闪粉已从主包退役，不再保留旧层支持判断；parallax 位移及其它 shader 仍不在支持域，明确返回 unsupported。
 - 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
-- 基础Cutout沿DI的有界域：`Hidden/lilToonCutout*`、TransparentCutout tag、非透明队列、静态UV0、Main alpha/Color alpha与AlphaMask0～4，支持静态ST。主贴图坐标与lilToon前向路径统一。dissolve、distance fade、dither、多主色/视差、MPB等不在该域；共享registry要求UV0和无MPB。Unsupported Cutout会有几何拒绝记录，不作为已支持alpha遮挡物。
+- 基础Cutout沿DI的有界域：`Hidden/lilToonCutout*`、TransparentCutout tag、非透明队列、静态UV0、Main alpha/Color alpha与AlphaMask0～4，支持静态ST。主贴图坐标与lilToon前向路径统一。dissolve、distance fade、dither、视差、MPB等不在该域；共享registry要求UV0和无MPB。Unsupported Cutout会有几何拒绝记录，不作为已支持alpha遮挡物。
 - Unsupported opaque 材质仍有真实命中，status=2，保持遮挡；不能把它转成环境 miss。status=0 才表示 miss，status=1 表示已求值的材质。
 - 纹理采样显式LOD0，尚未实现ray-cone过滤与GSAA。发光视角组分使用二次射线的观察方向。已有加法场景合成及独立GI降噪；SSS、最终NPR ramp/材质内接收及完整Player/场景验收仍未交付。
 - 二次命中点支持 point / spot / directional 解析灯，限制与 Ho-RTDI 相同：cookie、非全局 cullingMask、baked-only、其他灯型排除；Rendering Layer / 艺术灯光链接未接入。RT 可见性独立于 raster Light.shadows。
