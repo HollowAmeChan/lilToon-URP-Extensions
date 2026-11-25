@@ -52,15 +52,19 @@ namespace lilToon.URP.Extensions.RT
                 adapters.Add(source, adapter);
             }
             adapter.CopyPropertiesFromMaterial(source); adapter.shaderKeywords = Array.Empty<string>();
-            bool environment = HoRTCutoutSupport.IsEnvironmentSurface(source);
-            if (environment) HoRTCutoutSupport.CopyEnvironmentBaseToAdapter(source, adapter);
+            HoRTMaterialFamily family = HoRTMaterialFamilies.Get(source);
+            bool legacy = family == HoRTMaterialFamily.LegacyLilToon;
+            HoRTMaterialFamilies.CopyBaseAndAlpha(source, adapter);
             adapter.SetFloat(cutoutProperty, 1);
             unchecked
             {
                 int hash = source.GetInstanceID();
-                hash = hash * 397 ^ source.GetColor(environment ? "_BaseColor" : "_Color").a.GetHashCode();
+                hash = hash * 397 ^ source.GetColor(legacy ? "_Color" : "_BaseColor").a.GetHashCode();
+                hash = hash * 397 ^ (int)family;
                 foreach (string name in Scalars) hash = hash * 397 ^ Float(source, name).GetHashCode();
-                foreach (string name in environment ? EnvironmentTextures : LilToonTextures)
+                string[] textures = legacy ? LilToonTextures : family == HoRTMaterialFamily.Cloth ? new[] { "_BaseMap", "_AlphaMask" }
+                    : family == HoRTMaterialFamily.Eye || family == HoRTMaterialFamily.Skin ? new[] { "_BaseMap", "_CoverageMap" } : EnvironmentTextures;
+                foreach (string name in textures)
                 {
                     if (!source.HasProperty(name)) continue;
                     var texture = source.GetTexture(name);

@@ -13,23 +13,21 @@ namespace lilToon.URP.Extensions.Tests
     public sealed class HoRPShadowModeTests
     {
         [Test]
-        public void GeneratedLilToonVariantsExposePersistentMainDefault()
+        public void PipelineReceiverProbeExposesPersistentMainDefault()
         {
-            int checkedCount = 0;
-            foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { "Packages/jp.lilxyzw.liltoon/Shader" }))
+            var shader = Shader.Find("Hidden/HoRP/Tests/ShadowModeProbe");
+            Assert.That(shader, Is.Not.Null, "The pipeline owns its receiver-mode probe.");
+            var material = new Material(shader);
+            try
             {
-                var shader = AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(guid));
-                if (shader == null || shader.FindPropertyIndex("_HoAdditionalLightIntensity") < 0) continue;
-                var material = new Material(shader);
-                try
-                {
-                    Assert.IsTrue(material.HasProperty("_HoRPShadowMode"), shader.name);
-                    Assert.AreEqual(1f, material.GetFloat("_HoRPShadowMode"), shader.name);
-                    checkedCount++;
-                }
-                finally { Object.DestroyImmediate(material); }
+                Assert.That(material.HasProperty("_HoRPShadowMode"), Is.True);
+                Assert.That(material.GetFloat("_HoRPShadowMode"), Is.EqualTo(1f));
+                material.SetFloat("_HoRPShadowMode", 2f);
+                var saved = new Material(material);
+                try { Assert.That(saved.GetFloat("_HoRPShadowMode"), Is.EqualTo(2f), "Receiver selection is persistent material state."); }
+                finally { Object.DestroyImmediate(saved); }
             }
-            Assert.Greater(checkedCount, 0, "No lilToon shaders were tested.");
+            finally { Object.DestroyImmediate(material); }
         }
 
         [TestCase(0, 0, 1f)]

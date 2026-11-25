@@ -1,0 +1,19 @@
+#pragma max_recursion_depth 1
+#include "../../../Runtime/RTDI/Shaders/HoRTDIVisibilityPayload.hlsl"
+RaytracingAccelerationStructure _HoRTSceneAccelerationStructure;
+struct TestRay { float4 originMin, directionMax; };
+StructuredBuffer<TestRay> _HoGITestRays;
+RWStructuredBuffer<uint> _HoDIBlocked;
+[shader("miss")]
+void Miss(inout HoRTDIVisibilityPayload payload : SV_RayPayload) { payload.blocked=0; }
+[shader("raygeneration")]
+void Query()
+{
+    uint index=DispatchRaysIndex().x;
+    TestRay input=_HoGITestRays[index];
+    RayDesc ray;ray.Origin=input.originMin.xyz;ray.TMin=input.originMin.w;
+    ray.Direction=normalize(input.directionMax.xyz);ray.TMax=input.directionMax.w;
+    HoRTDIVisibilityPayload payload=(HoRTDIVisibilityPayload)0;
+    TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,255,0,1,0,ray,payload);
+    _HoDIBlocked[index]=payload.blocked;
+}

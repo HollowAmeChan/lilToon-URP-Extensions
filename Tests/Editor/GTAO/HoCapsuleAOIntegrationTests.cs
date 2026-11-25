@@ -180,16 +180,18 @@ namespace lilToon.URP.Extensions.Tests
                 }
                 geometry.SetActive(false);gtao.SetActive(false);
                 // Material AO is explicitly off, yet the independent receiver overlay remains visible.
-                var lil=Keep(new Material(Shader.Find("lilToon")));
-                lil.SetColor("_Color",Color.white);lil.SetFloat("_LightMinLimit",1);lil.SetFloat("_LightMaxLimit",1);
-                lil.SetFloat("_UseShadow",0);lil.SetFloat("_UseReflection",0);lil.SetFloat("_AOSource",0);lil.SetFloat("_UseAODarkening",0);
-                ground.GetComponent<Renderer>().sharedMaterial=lil;string originalLil=EditorJsonUtility.ToJson(lil);
-                effects.capsuleAOEnabled=false;Render();float lilBaseline=ReadColor();
+                var probeShader=Shader.Find("Hidden/HoRP/Tests/MaterialAOOffProbe");
+                Assert.That(probeShader,Is.Not.Null,"The provider-only AO test owns its material probe.");
+                var materialAOOff=Keep(new Material(probeShader));
+                materialAOOff.SetColor("_BaseColor",Color.white);
+                materialAOOff.SetFloat("_AOSource",0);materialAOOff.SetFloat("_UseAODarkening",0);
+                ground.GetComponent<Renderer>().sharedMaterial=materialAOOff;string originalAOOff=EditorJsonUtility.ToJson(materialAOOff);
+                effects.capsuleAOEnabled=false;Render();float materialBaseline=ReadColor();
                 effects.capsuleAOEnabled=true;Render();
-                Assert.That(ReadColor(),Is.EqualTo(lilBaseline*.6f).Within(.01f),"Receiver overlay still depended on lilToon material AO.");
-                Assert.That(EditorJsonUtility.ToJson(lil),Is.EqualTo(originalLil));
+                Assert.That(ReadColor(),Is.EqualTo(materialBaseline*.6f).Within(.01f),"Receiver overlay must remain independent of material AO.");
+                Assert.That(EditorJsonUtility.ToJson(materialAOOff),Is.EqualTo(originalAOOff));
                 Assert.That(EditorJsonUtility.ToJson(floorMaterial),Is.EqualTo(originalMaterial));
-                Assert.That(ShaderUtil.ShaderHasError(lil.shader),Is.False);
+                Assert.That(ShaderUtil.ShaderHasError(probeShader),Is.False);
                 ground.GetComponent<Renderer>().sharedMaterial=floorMaterial;
                 if(!compatibility && msaa==1 && !perspective)
                 {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -95,6 +96,35 @@ namespace lilToon.URP.Extensions.Tests
         Texture2D Solid(Color color)
         {
             var pixels = new Color[Width * Height]; Array.Fill(pixels, color); return Texture(pixels);
+        }
+
+        Material SpecializedOutline(string family, float width, Color color)
+        {
+            var shader = Shader.Find("HoShader/" + family + " URP");
+            Assert.That(shader, Is.Not.Null, "Install Cloth/Hair URP in the material integration host.");
+            var material = Keep(new Material(shader)); material.enableInstancing = true;
+            void Set(string name, float value) { if (material.HasProperty(name)) material.SetFloat(name, value); }
+            Set("_SurfaceMode", 0); Set("_OutlineEnabled", 1); Set("_OutlineWidthMode", 0);
+            Set("_OutlineWidth", width); Set("_OutlineBaseColorWeight", 0); Set("_OutlineMaskStrength", 0);
+            Set("_HoSemanticWeight", 1); Set("_MainLightStrength", 1);
+            Set("_UseEnvironmentLighting", 0); Set("_EnvironmentStrength", 0);
+            Set("_ReceiveShadows", 0); Set("_ReceiveShadowStrength", 0); Set("_AOSource", 0); Set("_AOInput", 0);
+            Set("_UseAODarkening", 0); Set("_UseSpecular", 0); Set("_UseBacklight", 0); Set("_UseRim", 0);
+            Set("_RimStrength", 0); Set("_UseMatCap", 0); Set("_MatCapStrength", 0); Set("_UseEmission", 0);
+            Set("_PrimaryHighlightStrength", 0); Set("_SecondaryHighlightStrength", 0);
+            material.SetColor("_BaseColor", Color.white); material.SetColor("_OutlineColor", color);
+            SyncSpecialized(material);
+            return material;
+        }
+
+        static void SyncSpecialized(Material material)
+        {
+            string family = material.shader.name == "HoShader/Hair URP" ? "Hair" : "Cloth";
+            string ns = "HoShader." + family + "URP.Editor";
+            var gui = Type.GetType(ns + "." + family + "ShaderGUI, " + ns, true);
+            var method = gui.GetMethod(family == "Hair" ? "SyncSurfaceMode" : "SyncMaterial", BindingFlags.Public | BindingFlags.Static);
+            Assert.That(method, Is.Not.Null, "Material integration uses the package's public synchronizer.");
+            method.Invoke(null, new object[] { material });
         }
         Color[] Read()
         {
@@ -710,11 +740,11 @@ namespace lilToon.URP.Extensions.Tests
             foreach (var pixel in Render()) Assert.That(pixel.r,Is.LessThan(.001f),"Unresolved inverted group must fail closed");
         }
 
-        [TestCase(false,1), TestCase(true,1), TestCase(false,4), TestCase(true,4)]
-        public void NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(bool compatibility, int samples)
+        [Category("MaterialPackageIntegration")]
+        [TestCase("Cloth",false,1), TestCase("Cloth",true,1), TestCase("Cloth",false,4), TestCase("Cloth",true,4)]
+        [TestCase("Hair",false,1), TestCase("Hair",true,1), TestCase("Hair",false,4), TestCase("Hair",true,4)]
+        public void SpecializedOutlineRetainsItsRendererOwnerDuringCameraMotion(string family, bool compatibility, int samples)
         {
-            var shader = Shader.Find("Hidden/lilToonOutline");
-            if (shader == null) Assert.Ignore("Native lilToon integration requires the lilToon package.");
             var rd = Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoObjectBufferRendererFeature>()));
@@ -725,8 +755,7 @@ namespace lilToon.URP.Extensions.Tests
             output.Release(); output.antiAliasing = samples; output.Create();
             var actor = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere)); actor.layer = TestLayer;
             SceneManager.MoveGameObjectToScene(actor,testScene); actor.transform.localScale = Vector3.one * 1.25f;
-            var material = Keep(new Material(shader)); material.enableInstancing = true;
-            material.SetFloat("_OutlineWidth",2); material.SetFloat("_OutlineFixWidth",0); material.SetFloat("_HoSemanticWeight",1);
+            var material = SpecializedOutline(family, 2, Color.black);
             actor.GetComponent<Renderer>().sharedMaterial = material;
             var group = actor.AddComponent<HoObjectBufferGroup>(); group.parts.Add(new HoObjectBufferPartEntry {
                 name="Face",tags=HoObjectBufferPartTags.CharacterFull | HoObjectBufferPartTags.Face,
@@ -755,9 +784,9 @@ namespace lilToon.URP.Extensions.Tests
                     Assert.That(selected[i].r,Is.GreaterThan(.99f),"Native outline loses custom selection frame=" + frame + " pixel=" + i);
                 }
                 Assert.That(shellPixels,Is.GreaterThan(8),"Native writer fixture must have a visible expanded outline");
-                Assert.That(ShaderUtil.ShaderHasError(shader),Is.False,"Native lilToon outline writer failed to compile");
+                Assert.That(ShaderUtil.ShaderHasError(material.shader),Is.False,"Dedicated outline writer failed to compile");
             }
-            material.SetFloat("_HoSemanticMaskOn",1); material.EnableKeyword("_HO_SEMANTIC_MASK"); material.SetTexture("_HoSemanticWeightTex",Solid(new Color(.75f,0,0,1)));
+            material.SetTexture("_HoSemanticMask",Solid(new Color(.75f,0,0,1))); SyncSpecialized(material);
             layer.maskSource = HoACQueryKind.Outline; var weightedShell = Render();
             layer.maskSource = HoACQueryKind.Semantic; layer.maskSemanticName = "Face"; var weightedSemantic = Render();
             for (int i = 0; i < weightedShell.Length; ++i)
@@ -765,10 +794,9 @@ namespace lilToon.URP.Extensions.Tests
         }
 
         [TestCase(false), TestCase(true)]
+        [Category("MaterialPackageIntegration")]
         public void OverlappingNativeOutlinesInheritTheForwardVisibleCharacter(bool compatibility)
         {
-            var shader = Shader.Find("Hidden/lilToonOutline");
-            if (shader == null) Assert.Ignore("Requires native lilToon.");
             var rd = Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoObjectBufferRendererFeature>()));
@@ -776,19 +804,17 @@ namespace lilToon.URP.Extensions.Tests
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
             SetPipeline(rd); SetCompatibilityMode(compatibility);
-            HoObjectBufferGroup Actor(string name, Vector3 position, Color color, HoObjectBufferPartTags tags)
+            HoObjectBufferGroup Actor(string name, string family, Vector3 position, Color color, HoObjectBufferPartTags tags)
             {
                 var actor = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere)); actor.layer = TestLayer;
                 SceneManager.MoveGameObjectToScene(actor,testScene); actor.transform.position = position; actor.transform.localScale = Vector3.one * 1.2f;
-                var material = Keep(new Material(shader)); material.enableInstancing = true;
-                material.SetFloat("_OutlineWidth",3); material.SetFloat("_OutlineFixWidth",0); material.SetColor("_OutlineColor",color);
-                material.SetFloat("_OutlineEnableLighting",0); material.SetFloat("_HoSemanticWeight",1);
+                var material = SpecializedOutline(family, 3, color);
                 actor.GetComponent<Renderer>().sharedMaterial = material;
                 var group = actor.AddComponent<HoObjectBufferGroup>(); group.parts.Add(new HoObjectBufferPartEntry {
                     name=name,tags=tags | HoObjectBufferPartTags.CharacterFull,renderers=new Object[]{actor.GetComponent<Renderer>()} }); group.Apply(); return group;
             }
-            var face = Actor("Face",new Vector3(-.2f,0,.15f),Color.red,HoObjectBufferPartTags.Face);
-            var hair = Actor("Hair",new Vector3(.2f,.13f,0),Color.blue,HoObjectBufferPartTags.FrontHair);
+            var face = Actor("Face","Cloth",new Vector3(-.2f,0,.15f),Color.red,HoObjectBufferPartTags.Face);
+            var hair = Actor("Hair","Hair",new Vector3(.2f,.13f,0),Color.blue,HoObjectBufferPartTags.FrontHair);
             var volume = GameObject("Cross-owner volume").AddComponent<Volume>(); volume.isGlobal = true;
             var profile = Keep(ScriptableObject.CreateInstance<VolumeProfile>()); volume.sharedProfile = profile;
             var stack = profile.Add<ScreenProcessStackVolume>(true); stack.Enable.Override(true);
@@ -811,10 +837,11 @@ namespace lilToon.URP.Extensions.Tests
             Assert.That(facePixels,Is.GreaterThan(8)); Assert.That(hairPixels,Is.GreaterThan(8));
         }
 
-        [TestCase(false,1), TestCase(true,1), TestCase(false,4), TestCase(true,4)]
-        public void MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(bool compatibility, int samples)
+        [Category("MaterialPackageIntegration")]
+        [TestCase("Cloth",false,1), TestCase("Cloth",true,1), TestCase("Cloth",false,4), TestCase("Cloth",true,4)]
+        [TestCase("Hair",false,1), TestCase("Hair",true,1), TestCase("Hair",false,4), TestCase("Hair",true,4)]
+        public void MovingStencilCharacterCannotLeaveAnyAcMaskOutsideCurrentForwardSilhouette(string family, bool compatibility, int samples)
         {
-            var shader = Shader.Find("Hidden/lilToonOutline"); if (shader == null) Assert.Ignore("Requires native lilToon.");
             var rd = Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>()));
             rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoObjectBufferRendererFeature>()));
@@ -826,11 +853,15 @@ namespace lilToon.URP.Extensions.Tests
             camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.blue;
             var actor = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Sphere)); actor.layer = TestLayer;
             SceneManager.MoveGameObjectToScene(actor,testScene); actor.transform.localScale = Vector3.one;
-            var material = Keep(new Material(shader)); material.enableInstancing = true;
-            material.SetFloat("_AsUnlit",1); material.SetColor("_Color",Color.green); material.SetColor("_OutlineColor",Color.red);
-            material.SetFloat("_OutlineEnableLighting",0); material.SetFloat("_OutlineWidth",3); material.SetFloat("_OutlineFixWidth",0);
+            var material = SpecializedOutline(family, 3, Color.red);
+            material.SetColor("_BaseColor",Color.green);
+            Assert.That(material.HasProperty("_StencilRef"),Is.True,"Dedicated material must expose its reviewed stencil contract.");
             material.SetFloat("_StencilRef",42); material.SetFloat("_StencilComp",(float)CompareFunction.GreaterEqual);
             material.SetFloat("_StencilPass",(float)StencilOp.Zero);
+            SyncSpecialized(material);
+            var keyLight = GameObject("Stencil oracle light").AddComponent<Light>();
+            keyLight.type = LightType.Directional; keyLight.color = Color.white; keyLight.intensity = 1;
+            keyLight.shadows = LightShadows.None; keyLight.cullingMask = 1 << TestLayer;
             actor.GetComponent<Renderer>().sharedMaterial = material;
             var group = actor.AddComponent<HoObjectBufferGroup>(); group.parts.Add(new HoObjectBufferPartEntry {
                 name="Face",tags=HoObjectBufferPartTags.CharacterFull | HoObjectBufferPartTags.Face,renderers=new Object[]{actor.GetComponent<Renderer>()} }); group.Apply();

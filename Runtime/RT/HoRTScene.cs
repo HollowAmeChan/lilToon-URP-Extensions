@@ -68,7 +68,8 @@ namespace lilToon.URP.Extensions.RT
             internal Mesh mesh, sourceMesh;
             internal Material material;
             internal Material hitMaterial;
-            internal uint identity, materialId, triangles, mask;
+            internal uint identity, materialId, triangles, mask, rendererUserValue;
+            internal MaterialPropertyBlock materialProperties;
             internal int submesh, handle;
             internal bool cutout, triangleCulling, flipWinding;
             internal Matrix4x4 matrix;
@@ -180,6 +181,8 @@ namespace lilToon.URP.Extensions.RT
                     if (cutout && (renderer.HasPropertyBlock() || !mesh.HasVertexAttribute(VertexAttribute.TexCoord0) || mesh.GetVertexAttributeDimension(VertexAttribute.TexCoord0) < 2))
                     { Rejections.Add(renderer.name + " submesh " + submesh + ": cutout requires UV0 and no material property block."); continue; }
                     var key = (renderer.GetInstanceID(), submesh); seen.Add(key);
+                    uint rendererUserValue = renderer is MeshRenderer meshRenderer ? meshRenderer.GetShaderUserValue()
+                        : renderer is SkinnedMeshRenderer skinnedRenderer ? skinnedRenderer.GetShaderUserValue() : 0u;
                     // Surface views keep their existing two-sided query contract.
                     // Shadow views follow raster material culling unless the
                     // renderer explicitly requests TwoSided. ShadowsOnly stays
@@ -191,7 +194,7 @@ namespace lilToon.URP.Extensions.RT
                     var matrix = renderer.localToWorldMatrix; uint triangles = (uint)(descriptor.indexCount / 3);
                     if (!ValidTransform(matrix))
                     { seen.Remove(key); Rejections.Add(renderer.name + ": non-finite or singular transform."); continue; }
-                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || !ReferenceEquals(entry.sourceMesh, sourceMesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial) || entry.cutout != cutout || entry.triangleCulling != triangleCulling || entry.flipWinding != flipWinding))
+                    if (entries.TryGetValue(key, out var entry) && (entry.rendererUserValue != rendererUserValue || !ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || !ReferenceEquals(entry.sourceMesh, sourceMesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial) || entry.cutout != cutout || entry.triangleCulling != triangleCulling || entry.flipWinding != flipWinding))
                     { Remove(key); entry = null; changed = structureChanged = true; }
                     if (entry == null)
                     {
@@ -199,8 +202,11 @@ namespace lilToon.URP.Extensions.RT
                         uint identity = nextIdentity++;
                         // Inline surface views need no material hit group;
                         // native visibility views supply their own alpha adapter.
+                        var instanceProperties = new MaterialPropertyBlock();
+                        instanceProperties.SetVector("_HoRTInstanceUserValue", new Vector4(rendererUserValue & 0xffffu, rendererUserValue >> 16, 0, 0));
                         var config = new RayTracingMeshInstanceConfig(mesh, (uint)submesh, hitMaterial)
                         {
+                            materialProperties = instanceProperties,
                             mask = mask, enableTriangleCulling = triangleCulling, frontTriangleCounterClockwise = flipWinding,
                             // Allow explicit geometry refresh instead of reusing a static BLAS after a Mesh edit.
                             rayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometryManualUpdate,
@@ -210,6 +216,7 @@ namespace lilToon.URP.Extensions.RT
                         // Native instance handles are opaque signed tokens, not positive array indices.
                         acceleration.UpdateInstanceGeometry(handle);
                         entry = new Entry { renderer = renderer, mesh = mesh, sourceMesh = sourceMesh, material = material, submesh = submesh,
+                            rendererUserValue = rendererUserValue, materialProperties = instanceProperties,
                             identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial, cutout = cutout, poseVersion = poseVersion, triangleCulling = triangleCulling, flipWinding = flipWinding };
                         entries.Add(key, entry); identities.Add(identity, entry); asDirty = metadataDirty = true; changed = structureChanged = true;
                     }

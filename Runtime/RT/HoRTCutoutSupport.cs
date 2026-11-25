@@ -14,7 +14,24 @@ namespace lilToon.URP.Extensions.RT
             if (IsEnvironmentSurface(material))
                 return Float(material, "_AlphaClip") > 0.5f && Finite(Float(material, "_Cutoff"))
                     && Finite(material.GetColor("_BaseColor").a) && SupportsTexture(material, "_BaseMap");
-            if (!material.shader.name.StartsWith("Hidden/lilToonCutout", StringComparison.Ordinal)) return false;
+            HoRTMaterialFamily family = HoRTMaterialFamilies.Get(material);
+            if (family == HoRTMaterialFamily.Skin)
+                return Float(material, "_AlphaClip") > .5f && Finite(Float(material, "_Cutoff"))
+                    && Finite(material.GetColor("_BaseColor").a) && SupportsTexture(material, "_CoverageMap");
+            if (family == HoRTMaterialFamily.Cloth || family == HoRTMaterialFamily.Hair || family == HoRTMaterialFamily.Eye)
+            {
+                if (Float(material, "_SurfaceMode") < .5f || Float(material, "_SurfaceMode") >= 1.5f
+                    || !Finite(Float(material, "_Cutoff")) || !Finite(material.GetColor("_BaseColor").a)
+                    || !SupportsTexture(material, "_BaseMap")) return false;
+                if (family == HoRTMaterialFamily.Eye) return SupportsTexture(material, "_CoverageMap");
+                if (family == HoRTMaterialFamily.Hair) return true;
+                foreach (string name in Scalars) if (!Finite(Float(material, name))) return false;
+                float clothMode = Float(material, "_AlphaMaskMode");
+                return clothMode >= 0 && clothMode <= 4 && clothMode == Mathf.Floor(clothMode)
+                    && SupportsTexture(material, "_AlphaMask");
+            }
+            if (family != HoRTMaterialFamily.LegacyLilToon
+                || !material.shader.name.StartsWith("Hidden/lilToonCutout", StringComparison.Ordinal)) return false;
             if (Enabled(material, "_UseParallax") || Enabled(material, "_UseDither")) return false;
             if (Vector(material, "_DissolveParams").x != 0
                 || Vector(material, "_DistanceFade").z != 0) return false;
@@ -35,11 +52,7 @@ namespace lilToon.URP.Extensions.RT
 
         internal static void CopyEnvironmentBaseToAdapter(Material source, Material adapter)
         {
-            adapter.SetColor("_Color", source.GetColor("_BaseColor"));
-            adapter.SetTexture("_MainTex", source.GetTexture("_BaseMap"));
-            adapter.SetTextureScale("_MainTex", source.GetTextureScale("_BaseMap"));
-            adapter.SetTextureOffset("_MainTex", source.GetTextureOffset("_BaseMap"));
-            adapter.SetFloat("_AlphaMaskMode", 0);
+            HoRTMaterialFamilies.CopyBaseAndAlpha(source, adapter);
         }
 
         private static bool SupportsTexture(Material material, string name)

@@ -45,63 +45,99 @@ namespace lilToon.URP.Extensions.RTGI
                 adapter = new Material(shader) { name = "HoRTGI hit: " + source.name, hideFlags = HideFlags.HideAndDontSave };
                 adapters.Add(source, adapter);
             }
-            // Copy the source values, including texture ST and the dedicated
-            // emission groups. The private hit shader keeps its own keywords.
             adapter.CopyPropertiesFromMaterial(source);
             adapter.shaderKeywords = Array.Empty<string>();
-            bool environment = HoRTCutoutSupport.IsEnvironmentSurface(source);
+            var family = HoRTMaterialFamilies.Get(source);
             bool cutout = HoRTCutoutSupport.Supports(source);
-            bool supported = IsSupported(source, environment, cutout);
-            bool normalMap = false;
-            bool emission = false;
-            if (environment && (supported || cutout))
-                HoRTCutoutSupport.CopyEnvironmentBaseToAdapter(source, adapter);
-            if (environment && supported)
-            {
-                normalMap = source.IsKeywordEnabled("_NORMALMAP");
-                emission = source.IsKeywordEnabled("_EMISSION");
-                adapter.SetFloat("_HoRTGIEnvironmentPBRMode", Float(source, "_PBRInputMode"));
-            }
+            bool supported = IsSupported(source, family, cutout);
+            if (supported || cutout) ConfigureSurface(source, adapter, family);
+            adapter.SetKeyword(new LocalKeyword(shader, "_HO_RT_TENSION"), supported && Float(adapter, "_HoRTTensionEnabled") > .5f);
             unchecked
             {
-                int hash = MaterialSignature(source);
-                if (environment)
-                {
-                    hash = hash * 397 ^ supported.GetHashCode();
-                    hash = hash * 397 ^ cutout.GetHashCode();
-                    hash = hash * 397 ^ normalMap.GetHashCode();
-                    hash = hash * 397 ^ emission.GetHashCode();
-                }
-                Signature ^= hash;
+                int derived = Float(adapter, "_HoRTNormalEnabled").GetHashCode();
+                derived = derived * 397 ^ Float(adapter, "_HoRTEmissionMode").GetHashCode();
+                derived = derived * 397 ^ Float(adapter, "_HoRTTensionEnabled").GetHashCode();
+                Signature ^= MaterialSignature(source) * 397 ^ derived ^ (int)family ^ supported.GetHashCode() ^ cutout.GetHashCode();
             }
-            if (supported && !environment) TimeVarying |= Animated(source);
+            if (supported && family == HoRTMaterialFamily.LegacyLilToon) TimeVarying |= Animated(source);
             adapter.SetFloat("_HoRTGISecondarySupported", supported ? 1 : 0);
             adapter.SetFloat("_HoRTGICutout", cutout ? 1 : 0);
-            adapter.SetFloat("_HoRTGIEnvironment", environment ? 1 : 0);
-            adapter.SetFloat("_HoRTGIEnvironmentNormalMap", normalMap ? 1 : 0);
-            adapter.SetFloat("_HoRTGIEnvironmentEmission", emission ? 1 : 0);
-            if (!supported) Rejections.Add(source.name + ": secondary material not supported; remains opaque to RT.");
+            if (!supported) Rejections.Add(source.name + ": no matching secondary surface contract; remains an opaque occluder.");
             return adapter;
         }
 
-        internal static bool IsSupported(Material source) =>
-            IsSupported(source, HoRTCutoutSupport.IsEnvironmentSurface(source), HoRTCutoutSupport.Supports(source));
+        internal static bool IsSupported(Material source) => IsSupported(source, HoRTMaterialFamilies.Get(source), HoRTCutoutSupport.Supports(source));
 
-        private static bool IsSupported(Material source, bool environment, bool cutout)
+        private static bool IsSupported(Material source, HoRTMaterialFamily family, bool cutout)
         {
-            if (source == null || source.shader == null) return false;
-            if (environment)
-            {
-                if (Enabled(source, "_Surface")) return false;
-                if (Enabled(source, "_AlphaClip")) return cutout;
-                return source.renderQueue < (int)RenderQueue.AlphaTest
-                    && source.GetTag("RenderType", false) == "Opaque";
-            }
-            return ((source.shader.name == "lilToon" && source.renderQueue < (int)RenderQueue.AlphaTest) || cutout)
-                && !Enabled(source, "_UseParallax");
+            if (source == null || source.shader == null || family == HoRTMaterialFamily.Unsupported) return false;
+            if (family == HoRTMaterialFamily.Environment && Enabled(source, "_Surface")) return false;
+            if ((family == HoRTMaterialFamily.Cloth || family == HoRTMaterialFamily.Hair || family == HoRTMaterialFamily.Eye)
+                && Float(source, "_SurfaceMode") > 1.5f) return false;
+            bool opaque = source.renderQueue < (int)RenderQueue.AlphaTest && source.GetTag("RenderType", false) != "Transparent"
+                && source.GetTag("RenderType", false) != "TransparentCutout" && !source.IsKeywordEnabled("_ALPHATEST_ON");
+            return (opaque || cutout) && (family != HoRTMaterialFamily.LegacyLilToon || !Enabled(source, "_UseParallax"));
         }
 
-        private static float Float(Material material, string property) => material.HasProperty(property) ? material.GetFloat(property) : 0;
+        private static void ConfigureSurface(Material source, Material target, HoRTMaterialFamily family)
+        {
+            HoRTMaterialFamilies.CopyBaseAndAlpha(source, target);
+            bool legacy = family == HoRTMaterialFamily.LegacyLilToon;
+            bool cloth = family == HoRTMaterialFamily.Cloth;
+            bool environment = family == HoRTMaterialFamily.Environment;
+            bool skin = family == HoRTMaterialFamily.Skin;
+            bool hair = family == HoRTMaterialFamily.Hair;
+            target.SetFloat("_HoRTMaterialFamily", (float)family);
+            target.SetVector("_HoRTColorAdjustment", cloth ? source.GetVector("_ColorAdjustment") : new Vector4(0, 1, 1, 1));
+            target.SetFloat("_Metallic", legacy || cloth || environment ? Float(source, "_Metallic") : 0);
+            target.SetFloat("_Reflectance", hair ? 0 : skin ? .04f * Mathf.Clamp(Float(source, "_SpecularStrength", .8f), 0, 2)
+                : family == HoRTMaterialFamily.Eye ? .04f : Float(source, "_Reflectance", .04f));
+            target.SetFloat("_Smoothness", hair ? 0 : Float(source, "_Smoothness", .5f));
+            int input = legacy || environment || cloth ? (Float(source, "_PBRInputMode") > .5f ? 2 : 1) : 0;
+            Vector4 flags = cloth ? source.GetVector("_PBRMapFlags") : new Vector4(1, 1, 1, 1);
+            if (cloth && input == 2 && flags.x < .5f) input = 0;
+            if (skin && Float(source, "_UseSmoothnessMap") > .5f) { input = 1; flags = new Vector4(0, 0, 0, 1); }
+            target.SetFloat("_HoRTPBRMode", input);
+            target.SetVector("_HoRTPBRFlags", flags);
+            target.SetFloat("_HoRTMetallicMapScale", cloth ? Float(source, "_MetallicMapScale", 1) : Float(source, "_Metallic"));
+            target.SetFloat("_HoRTSmoothnessMapScale", cloth || skin ? Float(source, "_SmoothnessMapScale", 1) : Float(source, "_Smoothness", .5f));
+            foreach (string property in new[] { "_PBRMap", "_MetallicGlossMap", "_ReflectanceTex", "_SmoothnessTex" })
+            {
+                string from = skin && property == "_SmoothnessTex" ? "_SmoothnessMap" : property;
+                HoRTMaterialFamilies.CopyTexture(source, from, target, property);
+                if (legacy) ComposeMainUV(source, target, property);
+            }
+            HoRTMaterialFamilies.CopyTexture(source, "_BumpMap", target, "_BumpMap");
+            if (legacy) ComposeMainUV(source, target, "_BumpMap");
+            if (skin || family == HoRTMaterialFamily.Eye)
+            {
+                target.SetTextureScale("_BumpMap", source.GetTextureScale("_BaseMap"));
+                target.SetTextureOffset("_BumpMap", source.GetTextureOffset("_BaseMap"));
+            }
+            target.SetFloat("_BumpScale", Float(source, "_BumpScale", 1));
+            target.SetFloat("_HoRTNormalEnabled", !environment || source.IsKeywordEnabled("_NORMALMAP") ? 1 : 0);
+            target.SetFloat("_HoRTNormalPolicy", legacy ? 0 : hair ? 3 : 1);
+            target.SetFloat("_FlipNormal", skin || hair || family == HoRTMaterialFamily.Eye ? 1 : Float(source, "_FlipNormal"));
+            bool emission = environment ? source.IsKeywordEnabled("_EMISSION") : Enabled(source, "_UseEmission");
+            foreach (string property in new[] { "_EmissionMap", "_EmissionBlendMask", "_EmissionGradTex",
+                "_HoTesionStretchBaseColor", "_HoTesionCompressionBaseColor", "_HoTesionStretchNormal", "_HoTesionCompressionNormal" })
+                HoRTMaterialFamilies.CopyTexture(source, property, target, property);
+            target.SetFloat("_HoRTEmissionMode", !emission ? 0 : legacy ? 2 : skin || family == HoRTMaterialFamily.Eye ? 3 : 1);
+            target.SetFloat("_HoRTTensionEnabled", (cloth || skin) && Enabled(source, "_HoTesionEnabled")
+                && source.IsKeywordEnabled("_HO_GD_TENSION") ? 1 : 0);
+            // Reset fields absent from the new source shader when an existing material changes family.
+            target.SetFloat("_EmissionMainStrength", Float(source, "_EmissionMainStrength"));
+        }
+
+        private static void ComposeMainUV(Material source, Material target, string map)
+        {
+            Vector2 scale = source.GetTextureScale("_MainTex"), offset = source.GetTextureOffset("_MainTex");
+            Vector2 mapScale = target.GetTextureScale(map), mapOffset = target.GetTextureOffset(map);
+            target.SetTextureScale(map, Vector2.Scale(scale, mapScale));
+            target.SetTextureOffset(map, Vector2.Scale(offset, mapScale) + mapOffset);
+        }
+
+        private static float Float(Material material, string property, float fallback = 0) => material.HasProperty(property) ? material.GetFloat(property) : fallback;
         private static bool Enabled(Material material, string property) => Float(material, property) != 0;
 
         // A conservative content signature for GI radiance history, not a second
