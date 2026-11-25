@@ -10,7 +10,7 @@
 
 - `PLR` = Planar Reflection；`SSR` = Screen-Space Reflection。
 - 反射 source 只提供 radiance；材质响应统一使用 roughness、metallic、reflectance/F0、Fresnel 和接收强度。
-- `_UseReflection` 是总开关。关闭时 PLR、SSR、Probe/Sky 全部停止消费；子开关不能绕过它。
+- 环境反射由 `_UseEnvironmentLighting` / `_EnvironmentReflectionStrength` 门控；PLR 另有自己的开关和强度。`_UseReflection` / `_SpecularStrength` 只管直接光高光，环境反射不依赖它们。此为 2026-11-25 按材质分组更新的约定。
 - lilToon `_Smoothness`、`_Metallic` 及贴图按常见 PBR 语义解释，最终 NPR 外观仍由 lilToon 决定。
 - 不再维护卡通反射模式，不再把 camera color 与 source 做无条件 `lerp`。
 - Surface color 的 RGB 为线性 HDR 表面色，producer 不钳制；需要 `[0,1]` 的消费者自行钳制。
@@ -40,7 +40,7 @@ v2 的 SurfaceBuffer / 三轴迁移**已经落地**，反射不再有任何 Meta
 | SB `Material` / `Reflection` | perceptualRoughness / metallic / thickness；reflectance / PLR strength | SB 具名通道 |
 | 身份 / 覆盖率 / 具名遮罩 | 谁占了这像素多少、是不是指定部件 | **OB（身份池 + 覆盖率）经 AC 查询** |
 
-“通用反射接收”和“PLR 专用接收”必须分开命名，不能让 SSR 复用含混的 PLR strength——这条纪律从桥接期沿用至今；`_UseReflection` 仍是不可绕过的总开关。
+“通用反射接收”和“PLR 专用接收”必须分开命名，不能让 SSR 复用含混的 PLR strength——这条纪律从桥接期沿用至今；二者归属环境照明，不能借用直接光高光的开关或强度。
 
 ## 4. v2 目标输入契约
 
@@ -64,7 +64,7 @@ GB 不拥有 roughness、metallic、reflectance、着色法线或材质 mask。�
 | `perceptualRoughness` | `1 - finalSmoothness`，已应用贴图与 GSAA |
 | `metallic` | 已应用 metallic map |
 | `reflectance` | dielectric F0 标量或等价参数 |
-| `reflectionEnable/strength` | 服从 `_UseReflection` 的通用反射接收 |
+| `reflectionEnable/strength` | 服从环境照明开关及环境反射权重的通用反射接收 |
 | `plrEnable/strength` | 额外服从 `_UsePlanarReflection` 的 PLR 专用接收 |
 
 规范化计算：
@@ -88,7 +88,7 @@ F0        = lerp(reflectance, saturate(baseColor), metallic)
 - 每 Renderer PropertyBlock 绑定独立 source；opaque 多平面可用。
 - ForwardLit PBR 响应：smoothness/metallic 贴图、GSAA、F0、Fresnel、能量项。
 - 13-tap tent HDR 预过滤金字塔，按 perceptual roughness 采样；不支持 mip 时安全退回 sharp source。
-- `_UseReflection` 总开关门控。
+- 环境照明门控，与直接光高光独立。
 - 旧 fullscreen composite 默认关闭；多 surface 时自动禁用，避免全局 source 串面。
 
 仍需处理：
@@ -135,9 +135,9 @@ GTAO/SSGI 现有 depth pyramid 不直接复用。只有在编码、coverage、re
 1. ✅ 冻结 SurfaceBuffer 的 `Color / Normal / Material / Reflection / Classification` packing（6 MRT = 五张数值图 + owner）。
 2. ✅ 实现 SurfaceBuffer producer 与 DebugTile。
 3. ✅ PLR 特殊 composite 已从 MetadataBuffer 迁到 SB + AC（`MetadataBuffer` 整块删除）；opaque ForwardLit 不读回 SB。
-4. 反射开关回归矩阵（总开关、PLR 开关、source 有效性、Probe 有无）——**按实机验收继续做**。
+4. 反射开关回归矩阵（环境照明、高光独立性、PLR 开关、source 有效性、Probe 有无）——**按实机验收继续做**。
 
-验收：全仓库无 `_HoMetadataBuffer` 引用、无 MB 反射桥（已达成）；关闭 `_UseReflection` 后所有反射输出为零。
+验收：全仓库无 `_HoMetadataBuffer` 引用、无 MB 反射桥（已达成）；关闭环境照明或归零环境反射权重时环境反射输出为零，改变直接光高光的开关和强度不影响 PLR/Probe/Sky。
 
 ### P1：SSR 基础闭环
 

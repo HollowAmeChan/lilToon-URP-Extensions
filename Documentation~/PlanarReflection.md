@@ -81,7 +81,11 @@ Probe/Sky                 -> PLR/SSR miss fallback
 
 同一表面不能同时启用 ForwardLit PLR 与特殊 fullscreen PLR resolve，否则会重复累计间接高光。
 
-PLR 始终服从 lilToon 的 `_UseReflection` 总开关。总开关关闭时，即使 `_UsePlanarReflection`、surface 和 source 都有效，也不会产生 ForwardLit 或特殊 fullscreen PLR；Probe/Sky fallback 同样关闭。
+PLR 归属环境照明，受 `_UseEnvironmentLighting`、`_EnvironmentReflectionStrength` 和自己的 `_UsePlanarReflection` / `_PlanarReflectionStrength` 控制。`_UseReflection` 与 `_SpecularStrength` 只控制直接光高光，不再门控 PLR、Probe/Sky 或 SB 的 PLR 接收强度。
+
+因此可以关闭「高光」而保留倒影。`_ApplyReflection` 继续只控制探针/天空 Cubemap 接收，PLR 由自己的子开关控制；各分支仍共用 PBR 法线、光滑度、metallic、F0 和 Fresnel 响应。透明材质的环境反射覆盖只乘一次 alpha。
+
+「最小光滑度」是接收筛选，不是镜面程度：低于 1 时保留原有线性渐变，设为 1 时只接收最终光滑度恰好为 1 的表面。Forward 与特殊合成共用 `HoPlanarReflectionSmoothnessWeight`，避免端点处 `(1-1)/epsilon` 把完美镜面也过滤掉。
 
 ## 调试与排查
 
@@ -94,11 +98,17 @@ DebugTile / 整屏调试里 PLR 有自己的一整套视图（`planar-reflection
 - `geometry.world-normal` / `geometry.linear-depth`：物理几何输入；描边不得成为 coverage。
 - PLR source debug：检查镜像相机内容、Flip Y、source 有效性和分辨率。
 
-无反射时依次检查 Feature、surface renderer、反射层遮罩、材质 `_UseReflection`/`_UsePlanarReflection`，并读回 source 的 mip 0 和粗糙度使用的 mip。原图有内容而 mip 1+ 全黑，仍然会让光滑度小于 1 的材质几乎没有反射。预过滤必须显式采样输入的 LOD 0；隐式 LOD 会在第一次缩小时读到尚未生成的 mip 1。
+无反射时依次检查 Feature、surface renderer、反射层遮罩、环境照明开关与反射权重、材质 `_UsePlanarReflection`，并读回 source 的 mip 0 和粗糙度使用的 mip。原图有内容而 mip 1+ 全黑，仍然会让光滑度小于 1 的材质几乎没有反射。预过滤必须显式采样输入的 LOD 0；隐式 LOD 会在第一次缩小时读到尚未生成的 mip 1。
+
+2026-11-25 的羽啾地板个案中，已保存材质同时有 `_UseReflection=0`、`_PlanarReflectionMinSmoothness=1`、`_Smoothness=1`。旧版的高光联动与端点公式都会使接收归零；source 调试不经过这些材质门控，所以仍能显示镜像相机内容。按当前分组约定已解除高光联动并修复端点，没有自动修改生产材质参数。
+
+该次修复的共享函数 GPU 专项在 Unity 6000.3.15f1 / D3D12 通过 24 组组合检查，最大绝对误差为 0，记录见 [Smoothness regression](D:/Temp/ho-rim-20261125/Test/Results-PLR-Smoothness-02/plr-smoothness-regression.json)。初版测试 Shader 缺少 Blit 输入纹理的 Properties 声明，已修正夹具并保留失败记录。原生 lilToon 材质专项在 420 秒编译时限内未完成，未产生结果 JSON；这项不记作通过，也不据函数专项宣称生产地板整帧已恢复。[原生专项日志](D:/Temp/ho-rim-20261125/Test/plr-01.log)
+
+解除高光联动后的权重专项在 D3D12 完成 27 项检查，CLI 退出码 0、结果 `passed=true`：[Independence regression](D:/Temp/ho-rim-20261125/Test/Results-PLR-Independence-02/plr-independence-regression.json)。它逐字提取生产端的 PBR 准备、环境反射、Forward PLR 与 SB 接收函数，使用固定 PBR 输入和光源辐射值，验证不透明/透明的独立开关、强度及一次 alpha 覆盖；未代替完整原生帧、贴图输入、捕获相机或 OIT 验收。首轮已有成功读回，但进程退出超时，仅第二轮记作完整专项通过。
 
 `Ready=true` 只代表镜像源被分配并提交渲染，不证明像素非黑或最终地面有反射。使用 `HoMmdPlrValidation.Run -plrMode on/off/debug -hoStage 孔雀月令` 做同镜头开关对比、source/mip 读回；debug 模式还执行 `HoMmdPlrGpuCheck.CheckPrefilter` 的恒定 HDR 能量测试。CLI 入口复制到项目制作工具后使用，不加 `-quit` 或 `-nographics`。
 
-回归检查：将材质 `_UseReflection = 0`、`_UsePlanarReflection = 1`；`Reflection.g`（PLR 接收强度）应为 0，ForwardLit 与特殊 composite 都必须保持原色。再打开 `_UseReflection` 后，才允许按 `_UsePlanarReflection` 和 source 有效性产生 PLR。
+回归检查：环境照明与 PLR 开启且 source 有效时，关闭 `_UseReflection` 或将 `_SpecularStrength` 归零，Forward PLR 与 `Reflection.g`（PLR 接收强度）应保持不变。关闭环境照明、归零环境反射权重或关闭 PLR 时，对应接收贡献应为零；无有效 source 时 Forward PLR 也应为零。
 
 ## 后续边界
 

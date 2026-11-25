@@ -24,6 +24,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
+            #include "HoPlanarReflectionCommon.hlsl"
 
             float _HoPlanarReflectionCompositeActive;
             float4 _HoPlanarReflectionCompositeParams;
@@ -99,7 +100,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                 half materialReflectionStrength = saturate(reflectionMaterial.a);
 
                 half minSmoothness = saturate(_HoPlanarReflectionCompositeParams.z);
-                half smoothnessFade = saturate((smoothness - minSmoothness) / max(1.0h - minSmoothness, 0.0001h));
+                half smoothnessFade = HoPlanarReflectionSmoothnessWeight(smoothness, minSmoothness);
                 half centerWeight = surfaceMask * materialReflectionStrength * smoothnessFade;
 
                 float3 normalWS = LilHoGeometryBufferWorldNormalOrZero(normalDepth);
