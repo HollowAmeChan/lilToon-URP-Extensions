@@ -44,6 +44,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             DrawCapture();
             DrawDebug();
             DrawRuntime();
+            EditorGUILayout.LabelField("胶囊 AO", ((HoCharacterSpecializationRendererFeature)target).CapsuleAOStatus, EditorStyles.wordWrappedLabel);
 
             serializedObject.ApplyModifiedProperties();
         }

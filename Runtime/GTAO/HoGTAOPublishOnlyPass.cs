@@ -66,7 +66,7 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.SetRenderAttachment(target, 0, AccessFlags.Write);
                 builder.SetGlobalTextureAfterPass(target, HoGTAOShaderConstants.AOTextureId);
                 builder.AllowGlobalStateModification(true);
-                builder.SetRenderFunc((PublishData _, RasterGraphContext context) =>
+                builder.SetRenderFunc(static (PublishData _, RasterGraphContext context) =>
                     context.cmd.SetGlobalFloat(HoGTAOShaderConstants.AOAvailableId, 1f));
             }
             var output = frameData.GetOrCreate<HoGTAORenderGraphResources>();

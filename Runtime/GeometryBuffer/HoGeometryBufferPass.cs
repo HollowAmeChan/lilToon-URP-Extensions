@@ -14,6 +14,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private static readonly ProfilingSampler ProfilingSampler = lilToon.URP.Extensions.Debugging.HoDebugPerformanceRegistry.GetSampler("Ho-GeometryBuffer Output");
         // CPU publication for compatibility consumers; queued GPU globals cannot be read back during pass recording.
         internal static HoGeometryBufferRenderTargets CompatibilityTargets { get; private set; }
+        internal static Camera CompatibilityCamera { get; private set; }
         private static readonly List<ShaderTagId> GeometryShaderTagIds = new List<ShaderTagId>
         {
             new ShaderTagId(HoGeometryBufferShaderConstants.ShaderPassName)
@@ -209,6 +210,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
             CompatibilityTargets = renderTargets;
+            CompatibilityCamera = renderingData.cameraData.camera;
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -510,6 +512,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineOwnerTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, Texture2D.blackTexture);
             CompatibilityTargets = null;
+            CompatibilityCamera = null;
             Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 0.0f);
             Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.CoverageTextureValidId, 0.0f);
             Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.OutlineCoverageTextureValidId, 0.0f);

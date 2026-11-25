@@ -26,7 +26,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private const float CheckboxWidth = 18.0f;
         private const float RemoveWidth = 18.0f;
         private const string ExpandKeyPrefix = "lilToon.CharacterSpecialization.";
-        private static readonly string[] LayoutFields = { "subjectOutlineFillMode", "subjectOutlineHeightFadeMode", "enhancedOutlineHeightFadeMode" };
+        private static readonly string[] LayoutFields = { "subjectOutlineFillMode", "subjectOutlineHeightFadeMode", "enhancedOutlineHeightFadeMode", "capsuleAOMode" };
 
         /// <summary>区段行里那个「×」的背景色（与 IP/SP 的搜索高亮同一套观感）。</summary>
         private static readonly Color RowHighlightColor = new Color(0.30f, 0.55f, 0.95f, 0.16f);
@@ -68,6 +68,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 new[] { "subjectOutline" }),
             new EffectSection("EyeReveal", "眼透", "icon_Glow_SelectColor_v1", "eyeRevealEnabled", "eyeRevealStrength",
                 new[] { "eyeReveal", "useEyeRevealArea", "sameCharacterOnly" }),
+            new EffectSection("CapsuleAO", "胶囊 AO（前置）", "icon_DropShadow_v1", "capsuleAOEnabled", "capsuleAOStrength",
+                new[] { "capsuleAO" }),
         };
 
         private SerializedProperty effectsParameter;
@@ -238,10 +240,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             if (valid) return;
             var stored = new HoCharacterCompositionEffect[compositionOrder.arraySize];
             for (int i = 0; i < stored.Length; i++) stored[i] = (HoCharacterCompositionEffect)compositionOrder.GetArrayElementAtIndex(i).intValue;
-            HoCharacterCompositionOrder.Pack(stored, out Vector4 first, out Vector4 last);
+            var normalized = HoCharacterCompositionOrder.Normalize(stored);
             compositionOrder.arraySize = HoCharacterCompositionOrder.Count;
             for (int i = 0; i < compositionOrder.arraySize; i++)
-                compositionOrder.GetArrayElementAtIndex(i).intValue = (int)(i < 4 ? first[i] : last.x);
+                compositionOrder.GetArrayElementAtIndex(i).intValue = (int)normalized[i];
         }
 
         private int GetLayoutStamp()
@@ -301,7 +303,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             string summary = enabled != null && enabled.boolValue
                 ? "开" + (summaryValue != null ? " " + summaryValue.floatValue.ToString("0.###") : string.Empty) : "关";
             float foldoutWidth = Mathf.Max(0, rect.width - CheckboxWidth - RemoveWidth - 6);
-            var title = new GUIContent(section.Label + "　" + summary, "拖动左侧手柄调整叠加顺序；从上到下合成，眼透默认最后。关闭效果会保留参数和位置。");
+            var title = new GUIContent(section.Label + "　" + summary, section.Id == "CapsuleAO"
+                ? "只附加到已发布 HoAO，始终在不透明绘制前执行；列表位置不改变该依赖阶段。"
+                : "拖动左侧手柄调整颜色效果叠加顺序；眼透默认最后。前置 AO 不参与颜色叠加。");
             expanded = EditorGUI.Foldout(new Rect(rect.x + CheckboxWidth, rect.y, foldoutWidth, LineHeight), expanded, title, true);
             Rect removeRect = new Rect(rect.xMax - RemoveWidth, rect.y + 1, RemoveWidth, LineHeight - 2);
             if (EffectBrowserView.DrawChromeLessButton(removeRect, new GUIContent("×", "关闭这个效果，保留参数和位置")) && enabled != null)
@@ -321,6 +325,21 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 case "FaceHairDiffuse": HoCharacterFaceHairDiffuseEditorSection.DrawEffects(effects, layout); break;
                 case "SubjectOutline": HoCharacterSubjectOutlineEditorSection.DrawEffects(effects, layout); break;
                 case "EnhancedOutline": HoCharacterEnhancedOutlineEditorSection.DrawEffects(effects, layout); break;
+                case "CapsuleAO":
+                    layout.Property(Find("capsuleAOMode"), "模式");
+                    layout.Property(Find("capsuleAOBlend"), "与 HoAO 混合");
+                    layout.Property(Find("capsuleAOStrength"), "强度");
+                    layout.Property(Find("capsuleAOInfluenceDistance"), "影响距离");
+                    if (Find("capsuleAOMode").enumValueIndex == 1)
+                    {
+                        layout.Property(Find("capsuleAOCrossLength"), "十字半臂长");
+                        layout.Property(Find("capsuleAOCrossWidth"), "十字宽度");
+                        layout.Property(Find("capsuleAOCrossAngle"), "交叉角度");
+                        layout.Property(Find("capsuleAOCrossRotation"), "十字旋转");
+                        layout.Property(Find("capsuleAOCrossSoftness"), "十字软度");
+                    }
+                    layout.Property(Find("capsuleAOMaxCapsules"), "相机胶囊预算");
+                    break;
             }
         }
 

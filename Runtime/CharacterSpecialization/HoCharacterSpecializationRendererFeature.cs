@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private readonly HoCharacterSpecializationRenderTargets renderTargets = new HoCharacterSpecializationRenderTargets();
         private readonly HoCharacterSpecializationSettings runtimeSettings = new HoCharacterSpecializationSettings();
         private HoCharacterSpecializationPass pass;
+        private HoCapsuleAOPass capsuleAOPass;
         private Material compositeMaterial;
         private Material captureClearMaterial;
         private Material faceHairDiffuseMaterial;
@@ -39,12 +40,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private bool warnedMissingObjectSemanticShader;
 
         public HoCharacterSpecializationSettings Settings => settings;
+        public string CapsuleAOStatus => capsuleAOPass?.Status ?? "未启用。";
+        public int CapsuleAOActiveCount => capsuleAOPass?.LastCapsuleCount ?? 0;
+        public int CapsuleAOReceiverCount => capsuleAOPass?.LastReceiverCount ?? 0;
 
         public override void Create()
         {
             HoAttributeCompositeConsumerRegistry.EnsureInitialized();
             pass?.Dispose();
             pass = new HoCharacterSpecializationPass();
+            capsuleAOPass?.Dispose();
+            capsuleAOPass = new HoCapsuleAOPass();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -74,6 +80,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
             HoCharacterSpecializationSettings activeSettings = ResolveSettings(in renderingData);
+            // AO has an earlier dependency stage and no AC/capture/color requirements.
+            var effects = GetVolumeComponent()?.Effects.value;
+            if (activeSettings != null && activeSettings.enabled && effects != null && effects.capsuleAOEnabled)
+            {
+                capsuleAOPass.Setup(effects);
+                renderer.EnqueuePass(capsuleAOPass);
+            }
             if (!ShouldRender(in renderingData, activeSettings))
             {
                 pass?.ReleaseCompatibilityResources();
@@ -122,6 +135,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoAttributeCompositeConsumerRegistry.Remove(this);
             pass?.Dispose();
             pass = null;
+            capsuleAOPass?.Dispose();
+            capsuleAOPass = null;
             renderTargets.Release();
             CoreUtils.Destroy(compositeMaterial);
             CoreUtils.Destroy(captureClearMaterial);
