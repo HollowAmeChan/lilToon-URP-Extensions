@@ -4,6 +4,7 @@
 // 打包要用到 HoObjectBufferGroupId / SlotId，所以这里把 palette 表一起带进来——
 // 否则每个用它的 shader 都得自己记得包含两次（漏一次就是 "undeclared identifier"）。
 #include "HoObjectBufferPalette.hlsl"
+#include "../../../ShaderLibrary/HoPass/Encoding/HoBufferEncoding.hlsl"
 
 // ID pass 的写入约定（OB 架构 §5.1 / §5.4）：
 //   非 MSAA：直接写 3 张 RGBA8 层图（层0/层1 装进 Id0、层2/层3 装进 Id1、覆盖率逐通道）；
@@ -18,30 +19,19 @@ uint HoObjectBufferPackIdByte(uint value)
 // 一张 RGBA8 装两个 (角色, 槽位) 对：R/G = 层A，B/A = 层B。
 float4 HoObjectBufferPackIdRow(uint partIdA, uint partIdB)
 {
-    return float4(
-        (float)HoObjectBufferPackIdByte(HoObjectBufferGroupId(partIdA)) / 255.0,
-        (float)HoObjectBufferPackIdByte(HoObjectBufferSlotId(partIdA)) / 255.0,
-        (float)HoObjectBufferPackIdByte(HoObjectBufferGroupId(partIdB)) / 255.0,
-        (float)HoObjectBufferPackIdByte(HoObjectBufferSlotId(partIdB)) / 255.0);
+    return HoBufferOwnerPairEncode(partIdA,partIdB);
 }
 
 // 一张 RGBA8 装两个 (选择 ID, 覆盖率) 对。
 float4 HoObjectBufferPackSelectionRow(uint selectionIdA, float coverageA, uint selectionIdB, float coverageB)
 {
-    return float4(
-        (float)HoObjectBufferPackIdByte(selectionIdA) / 255.0,
-        saturate(coverageA),
-        (float)HoObjectBufferPackIdByte(selectionIdB) / 255.0,
-        saturate(coverageB));
+    return HoBufferSelectionRowEncode(selectionIdA,coverageA,selectionIdB,coverageB);
 }
 
 // 选择层的解包（消费端用）：ID 必须 round 回整数，覆盖率保持线性。
 void HoObjectBufferUnpackSelection(float4 packed, out uint selectionIdA, out float coverageA, out uint selectionIdB, out float coverageB)
 {
-    selectionIdA = (uint)round(saturate(packed.r) * 255.0);
-    coverageA = packed.g;
-    selectionIdB = (uint)round(saturate(packed.b) * 255.0);
-    coverageB = packed.a;
+    HoBufferSelectionRowDecode(packed,selectionIdA,coverageA,selectionIdB,coverageB);
 }
 
 #endif

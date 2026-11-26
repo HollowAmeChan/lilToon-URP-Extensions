@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
     /// <summary>
     /// C# side of the ShadowCast shader contract. Every value mirrors a constant in
-    /// <c>Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl</c>; the editor validator
+    /// <c>ShaderLibrary/Shadow/Receiver/HoShadowCastShaderContract.hlsl</c>; the editor validator
     /// (<c>Editor/ShadowCast/HoShadowCastShaderContractValidator.cs</c>) parses that file and
     /// reports drift.
     /// </summary>

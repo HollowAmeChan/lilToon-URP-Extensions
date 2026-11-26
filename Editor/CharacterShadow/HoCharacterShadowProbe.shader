@@ -16,7 +16,7 @@ Shader "Hidden/Ho-CharacterShadow/ValidationProbe"
             #pragma multi_compile_local _ HO_CS_PROBE_DEBUG
             #pragma instancing_options renderinglayer
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/ShaderLibrary/Shadow/Receiver/HoCharacterShadowSampling.hlsl"
             struct Attributes { float3 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; UNITY_VERTEX_INPUT_INSTANCE_ID };
             Varyings Vert(Attributes input)

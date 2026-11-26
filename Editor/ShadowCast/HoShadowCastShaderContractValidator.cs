@@ -12,7 +12,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 {
     /// <summary>
     /// Keeps <c>Runtime/ShadowCast/HoShadowCastShaderContract.cs</c> and
-    /// <c>Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl</c> in sync.
+    /// <c>ShaderLibrary/Shadow/Receiver/HoShadowCastShaderContract.hlsl</c> in sync.
     ///
     /// The compiler cannot relate C# constants to shader macros, so this validator parses the shader
     /// side and compares it with the C# side. It runs on editor load (silent while both sides agree)
@@ -309,8 +309,9 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
         private static string FindAssetPath(string fileName)
         {
-            string relativePath = "Runtime/ShadowCast/Shaders/" +
-                (fileName == DebugShaderFileName ? "Debug/" : string.Empty) + fileName;
+            string relativePath = (fileName == DebugShaderFileName
+                ? "Runtime/ShadowCast/Shaders/Debug/"
+                : "ShaderLibrary/Shadow/Receiver/") + fileName;
             PackageInfo owner = PackageInfo.FindForAssembly(typeof(HoShadowCastShaderContractValidator).Assembly);
             if (owner != null)
             {
@@ -326,7 +327,11 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 string path = AssetDatabase.GUIDToAssetPath(guids[i]);
                 if (!string.IsNullOrEmpty(path) && path.EndsWith("/" + relativePath, StringComparison.Ordinal))
                 {
-                    return path;
+                    // Material packages share the same library-relative paths. The producer's C#
+                    // contract distinguishes this Assets-based installation from those receiver copies.
+                    string producerRoot = path.Substring(0, path.Length - relativePath.Length);
+                    if (File.Exists(Path.Combine(producerRoot, "Runtime/ShadowCast/HoShadowCastShaderContract.cs")))
+                        return path;
                 }
             }
 

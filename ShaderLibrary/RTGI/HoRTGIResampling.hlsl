@@ -1,11 +1,11 @@
 // Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
-// NVIDIA portions are governed by ../../RTDI/ThirdParty/RTXDI/LICENSE.txt.
+// NVIDIA portions are governed by ../../Runtime/RTDI/ThirdParty/RTXDI/LICENSE.txt.
 // Same pinned SDK resampling and application callbacks for both backends.
 #ifndef HO_RTGI_RESAMPLING_INCLUDED
 #define HO_RTGI_RESAMPLING_INCLUDED
 #include "HoRTGIShadingCommon.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl"
+#include "../../Runtime/RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl"
+#include "../../Runtime/RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl"
 RTXDI_RuntimeParameters HoGIRuntime()
 {RTXDI_RuntimeParameters p=(RTXDI_RuntimeParameters)0;p.neighborOffsetMask=255;p.frameIndex=(uint)_HoRTGIFrameIndex;return p;}
 

@@ -3,7 +3,7 @@
 // Adapted from the diffuse branch of the reference GI/BrdfRayTracing.hlsl.
 #pragma max_recursion_depth 1
 #define HO_RTGI_NATIVE_SHADING 1
-#include "HoRTGIResampling.hlsl"
+#include "../../../ShaderLibrary/RTGI/HoRTGIResampling.hlsl"
 RWStructuredBuffer<float2> _HoRTGIFinalVisibility;
 float4 _HoRTGIRaySettings; // bias, finite geometry range, environment enabled, distant sample range
 

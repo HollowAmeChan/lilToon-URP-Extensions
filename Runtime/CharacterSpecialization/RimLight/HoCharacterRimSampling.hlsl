@@ -1,6 +1,6 @@
 #ifndef HO_CHARACTER_RIM_SAMPLING_INCLUDED
 #define HO_CHARACTER_RIM_SAMPLING_INCLUDED
-#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoRendererIdentity.hlsl"
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/ShaderLibrary/Shadow/Receiver/HoRendererIdentity.hlsl"
 #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
 
 struct HoRimLightData

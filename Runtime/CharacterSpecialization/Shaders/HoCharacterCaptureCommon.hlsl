@@ -3,7 +3,7 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
-#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoRendererIdentity.hlsl"
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/ShaderLibrary/Shadow/Receiver/HoRendererIdentity.hlsl"
 
 // Material capture passes should keep their own cutout/dissolve rules and use
 // Tags { "LightMode" = "HoCharacterCapture" }. Material alpha is intentionally

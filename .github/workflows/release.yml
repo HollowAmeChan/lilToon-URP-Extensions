@@ -34,6 +34,11 @@ jobs:
       - name: Verify installer contracts
         run: python3 -m unittest discover -s .github/tests -v
 
+      - name: Verify shader library layout
+        run: |
+          python3 Tools~/ShaderLibrary/check_library.py
+          python3 -m unittest discover -s Tools~/ShaderLibrary/tests -v
+
       - name: Build date-stamped Unity installers
         id: build
         run: python3 .github/scripts/build_release.py

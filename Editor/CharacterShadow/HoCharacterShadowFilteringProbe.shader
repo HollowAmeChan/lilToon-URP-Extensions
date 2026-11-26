@@ -14,7 +14,7 @@ Shader "Hidden/Ho-CharacterShadow/FilteringProbe"
             #if defined(HO_CS_FILTER_FORCE_FALLBACK)
                 #undef PLATFORM_SUPPORT_GATHER
             #endif
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/ShaderLibrary/Shadow/Receiver/HoCharacterShadowSampling.hlsl"
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
             float _Mode, _Pattern, _Radius, _CropTexels, _ShiftTexels, _PlaneSlope, _EdgeAngle;

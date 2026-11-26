@@ -1,5 +1,5 @@
 #pragma max_recursion_depth 1
-#include "../../../Runtime/RTGI/Shaders/HoRTGISecondarySurface.hlsl"
+#include "../../../ShaderLibrary/RTGI/HoRTGISecondarySurface.hlsl"
 RaytracingAccelerationStructure _HoRTSceneAccelerationStructure;
 struct HoGITestRay { float4 originMin, directionMax; };
 StructuredBuffer<HoGITestRay> _HoGITestRays;

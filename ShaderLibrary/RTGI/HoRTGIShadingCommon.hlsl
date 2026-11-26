@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
-// NVIDIA portions are governed by ../../RTDI/ThirdParty/RTXDI/LICENSE.txt.
+// NVIDIA portions are governed by ../../Runtime/RTDI/ThirdParty/RTXDI/LICENSE.txt.
 // Shared original secondary estimator; compute and native raygen differ only
 // in the scene-query implementation selected before the RAB bridge is included.
 #ifndef HO_RTGI_SHADING_COMMON_INCLUDED
@@ -8,8 +8,8 @@
 #include "HoRTGINativeSceneQuery.hlsl"
 #endif
 #include "HoRTGIApplicationBridge.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl"
+#include "../../Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl"
+#include "../../Runtime/RTDI/ThirdParty/RTXDI/GI/Reservoir.hlsl"
 RTXDI_ReservoirBufferParameters HoGILayout()
 {RTXDI_ReservoirBufferParameters p=(RTXDI_ReservoirBufferParameters)0;p.reservoirBlockRowPitch=(uint)_HoRTGIReservoirLayout.x;p.reservoirArrayPitch=(uint)_HoRTGIReservoirLayout.y;return p;}
 bool HoGIInside(uint2 pixel) {return all(pixel<(uint2)_HoRTGIFrame.xy);}

@@ -37,3 +37,7 @@ sysinfo.txt
 /EndfieldD3D11*Probe.lib
 /EndfieldD3D11*Probe.lib.meta
 /ZMD_viewer.meta
+
+# Generated Python bytecode from repository validation tools.
+__pycache__/
+*.pyc

@@ -72,7 +72,7 @@ Shader "Hidden/lilToon/URP/RTGI/SecondaryMaterial"
             HLSLPROGRAM
             #pragma raytracing HoRTGISecondarySurface
             #pragma shader_feature_local _HO_RT_TENSION
-            #include "HoRTGISecondaryMaterial.hlsl"
+            #include "../../../ShaderLibrary/RTGI/HoRTGISecondaryMaterial.hlsl"
             ENDHLSL
         }
     }

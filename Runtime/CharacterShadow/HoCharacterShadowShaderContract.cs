@@ -16,7 +16,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
     /// <summary>
     /// CS 里 C# 与 HLSL 共享的数值契约。
     /// <para>
-    /// **采样上限必须与 `Runtime/CharacterShadow/Shaders/HoCharacterShadowSampling.hlsl` 里的
+    /// **采样上限必须与 `ShaderLibrary/Shadow/Receiver/HoCharacterShadowSampling.hlsl` 里的
     /// `HO_CS_MAX_PCSS_BLOCKER_SAMPLES` / `HO_CS_MAX_PCSS_FILTER_SAMPLES` 一致** —— HLSL 侧用它们定
     /// 循环上界，C# 侧用它们夹住档位请求。编译器无法把两边关联起来，所以
     /// `HoCharacterShadowValidation.Validate()` 会解析那份 HLSL 逐条比对（batch 里也跑，防漂移）。

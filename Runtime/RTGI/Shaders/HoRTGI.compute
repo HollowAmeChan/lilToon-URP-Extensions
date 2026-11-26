@@ -12,12 +12,12 @@
 #pragma use_dxc
 #pragma target 6.0
 #pragma require inlineraytracing
-#include "HoRTGIResampling.hlsl"
+#include "../../../ShaderLibrary/RTGI/HoRTGIResampling.hlsl"
 #include "../../RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl"
 RWTexture2D<float4> _HoRTGIDiffuse;
 StructuredBuffer<float2> _HoRTGIFinalVisibility;
 #if defined(HO_RTGI_NRD_ACTIVE)
-#include "HoRTGINrdSignal.hlsl"
+#include "../../../ShaderLibrary/RTGI/HoRTGINrdSignal.hlsl"
 #endif
 
 // Same equal-solid-angle PDF and pinned SDK pre-sampling used by Ho-RTDI.

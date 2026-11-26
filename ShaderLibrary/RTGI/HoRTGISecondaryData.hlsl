@@ -1,6 +1,6 @@
 #ifndef HO_RTGI_SECONDARY_DATA_INCLUDED
 #define HO_RTGI_SECONDARY_DATA_INCLUDED
-#include "../../SurfaceBuffer/Shaders/HoSurfaceBufferCommon.hlsl"
+#include "../HoPass/Encoding/HoBufferEncoding.hlsl"
 // GI-only per-ray data, not a duplicate of the current primary GBuffer.
 // 48 B: flags 0 invalid primary, 1 material hit, 2 environment, 3 opaque black/rejected direction.
 struct HoRTGISecondaryData

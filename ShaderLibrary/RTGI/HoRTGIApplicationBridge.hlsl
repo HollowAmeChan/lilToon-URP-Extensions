@@ -1,5 +1,5 @@
 // Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
-// NVIDIA portions are governed by ../../RTDI/ThirdParty/RTXDI/LICENSE.txt.
+// NVIDIA portions are governed by ../../Runtime/RTDI/ThirdParty/RTXDI/LICENSE.txt.
 #ifndef HO_RTGI_APPLICATION_BRIDGE_INCLUDED
 #define HO_RTGI_APPLICATION_BRIDGE_INCLUDED
 // Reuse the already adapted primary surface, light sampling and visibility RAB.
@@ -31,8 +31,8 @@
 #define _HoRTDILights _HoRTGILights
 #define _HoRTDIHistory _HoRTGIHistory
 #define _HoRTDINeighbors _HoRTGINeighbors
-#include "../../RTDI/Shaders/HoRTDIApplicationBridge.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/GI/ReSTIRGIParameters.h"
+#include "../../Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl"
+#include "../../Runtime/RTDI/ThirdParty/RTXDI/GI/ReSTIRGIParameters.h"
 #include "HoRTGISecondaryData.hlsl"
 RWStructuredBuffer<RTXDI_PackedGIReservoir> _HoRTGIReservoirs;
 #define RTXDI_GI_RESERVOIR_BUFFER _HoRTGIReservoirs

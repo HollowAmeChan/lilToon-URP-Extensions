@@ -75,6 +75,17 @@ namespace lilToon.URP.Extensions.Tests
             Assert.That(errors[0], Does.Contain(missing ? "is missing" : "is 49"));
         }
 
+        [TestCase("HoShadowCastShaderContract.hlsl", "/ShaderLibrary/Shadow/Receiver/")]
+        [TestCase("HoShadowCastSampling.hlsl", "/ShaderLibrary/Shadow/Receiver/")]
+        [TestCase("HoShadowCastDebug.shader", "/Runtime/ShadowCast/Shaders/Debug/")]
+        public void AssetLookupUsesLibraryHeadersAndRetainsRuntimeDebugEntry(string fileName, string directory)
+        {
+            var find = Validator.GetMethod("FindAssetPath", BindingFlags.NonPublic | BindingFlags.Static);
+            string path = (string)find.Invoke(null, new object[] { fileName });
+            Assert.That(path, Is.Not.Null.And.Not.Empty);
+            Assert.That(path.Replace('\\', '/'), Does.Contain(directory));
+        }
+
         [Test]
         public void ShippingContractPassesCompleteValidation()
         {

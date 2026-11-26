@@ -6,7 +6,7 @@ namespace lilToon.URP.Extensions.ShadowCast
     internal static class HoShadowCastShaderConstants
     {
         // Capacity tiers, array sizes and sample ceilings live in HoShadowCastShaderContract.cs,
-        // which mirrors Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl.
+        // which mirrors ShaderLibrary/Shadow/Receiver/HoShadowCastShaderContract.hlsl.
 
         public const string CapacityMediumKeywordName = HoShadowCastShaderContract.MediumKeywordName;
         public const string CapacityHighKeywordName = HoShadowCastShaderContract.HighKeywordName;
@@ -59,7 +59,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         // Capacity tier keywords. Low is the untouched state and declares no keyword, so only the
         // non-default tiers need a GlobalKeyword. The matching #pragma multi_compile lives in
-        // Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl.
+        // ShaderLibrary/Shadow/Receiver/HoShadowCastShaderContract.hlsl.
         public static readonly GlobalKeyword CapacityMediumKeyword = GlobalKeyword.Create(CapacityMediumKeywordName);
         public static readonly GlobalKeyword CapacityHighKeyword = GlobalKeyword.Create(CapacityHighKeywordName);
     }

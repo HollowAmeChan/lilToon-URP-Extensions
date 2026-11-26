@@ -1,6 +1,6 @@
 #ifndef HO_RTGI_NRD_SIGNAL_INCLUDED
 #define HO_RTGI_NRD_SIGNAL_INCLUDED
-#include "../../RTDI/ThirdParty/NRD/NRD.hlsli"
+#include "../../Runtime/RTDI/ThirdParty/NRD/NRD.hlsli"
 RWTexture2D<float4> _HoRTGINrdSignal,_HoRTGINrdNormal;
 RWTexture2D<float> _HoRTGINrdViewZ;
 Texture2D<float4> _HoRTGINrdOutput;

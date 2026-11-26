@@ -22,7 +22,7 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/ShaderLibrary/Shadow/Receiver/HoShadowCastShaderContract.hlsl"
 
             int _HoShadowCastDebugMode;
             float _HoShadowCastActive;

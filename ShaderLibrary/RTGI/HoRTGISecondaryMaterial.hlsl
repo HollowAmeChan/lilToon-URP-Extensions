@@ -2,7 +2,7 @@
 #include "HoRTGISecondaryInputs.hlsl"
 #include "HoRTGISecondaryTension.hlsl"
 #include "HoRTGISecondaryNormals.hlsl"
-#include "../../RT/Shaders/HoRTCutoutAlpha.hlsl"
+#include "../../Runtime/RT/Shaders/HoRTCutoutAlpha.hlsl"
 
 [shader("anyhit")]
 void HoRTGIAlphaHit(inout HoRTGISecondarySurface payload : SV_RayPayload,HoGIAttributes attributes : SV_IntersectionAttributes)

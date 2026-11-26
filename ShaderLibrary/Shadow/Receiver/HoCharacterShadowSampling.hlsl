@@ -1,7 +1,7 @@
 #ifndef HO_CHARACTER_SHADOW_SAMPLING_INCLUDED
 #define HO_CHARACTER_SHADOW_SAMPLING_INCLUDED
-#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoRendererIdentity.hlsl"
-#include "../../RTShadow/Shaders/HoRTShadowSampling.hlsl"
+#include "HoRendererIdentity.hlsl"
+#include "HoRTShadowSampling.hlsl"
 #define HO_CS_MAX_SLICES 16
 // Mirrored by HoCharacterShadowShaderContract and checked by Validate().
 #define HO_CS_MAX_PCSS_BLOCKER_SAMPLES 32

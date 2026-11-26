@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "id": "ho-pipeline-common-library-v1",
+  "encoding": "UTF-8 LF",
+  "headers": [
+    {
+      "id": "ho-pass.encoding",
+      "local": "ShaderLibrary/HoPass/Encoding/HoBufferEncoding.hlsl",
+      "authority": "ShaderLibrary~/HoPass/Encoding/HoBufferEncoding.hlsl",
+      "sha256": "794610695fb7a372a4c52ab6d98fca24cc0bf74a0cd16a6675e4cf37a31bd0d8"
+    },
+    {
+      "id": "receiver.contract",
+      "local": "ShaderLibrary/Shadow/Receiver/HoShadowCastShaderContract.hlsl",
+      "authority": "ShaderLibrary~/Shadow/Receiver/HoShadowCastShaderContract.hlsl",
+      "sha256": "811a21b68606d103f9e5a13c7d8a91294253e0a0b74c64c34083b53e81cb89b1"
+    },
+    {
+      "id": "receiver.rt-shadow",
+      "local": "ShaderLibrary/Shadow/Receiver/HoRTShadowSampling.hlsl",
+      "authority": "ShaderLibrary~/Shadow/Receiver/HoRTShadowSampling.hlsl",
+      "sha256": "c8e1bebef3da445482fa6400924bf3e57c843bbbb7cc4237ea7be14fa11bb8ae"
+    },
+    {
+      "id": "receiver.renderer-identity",
+      "local": "ShaderLibrary/Shadow/Receiver/HoRendererIdentity.hlsl",
+      "authority": "ShaderLibrary~/Shadow/Receiver/HoRendererIdentity.hlsl",
+      "sha256": "96874a549ea0cd4282f72bd1e4db615310ec3b2fb0479b383620237bfa4eaf2a"
+    }
+  ]
+}

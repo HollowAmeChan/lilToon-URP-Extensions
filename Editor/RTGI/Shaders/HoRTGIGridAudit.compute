@@ -1,7 +1,7 @@
 #pragma kernel Audit
 #pragma target 5.0
 #include "../../../Runtime/RT/Shaders/HoRTPrimarySurface.hlsl"
-#include "../../../Runtime/RTGI/Shaders/HoRTGIGrid.hlsl"
+#include "../../../ShaderLibrary/RTGI/HoRTGIGrid.hlsl"
 
 struct Packet
 {

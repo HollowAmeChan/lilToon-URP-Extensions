@@ -128,9 +128,9 @@ class Audit:
                          r / "Runtime/RTGI/HoRTGIRendererFeature.cs": [r"new HoRTViewRequest", r"excludedRayMaterials", r"useEnvironment", r"includeDirectEnvironment"],
                          r / "Runtime/RT/HoRTScene.cs": [r"excludedMaterials", r"excluded\.Contains", r"excluded by material filter"]})
         self.require("rtgi.material-domain", "Ray material domain", "GI adapters preserve source properties while rejecting unsupported animated/parallax material domains.",
-                     [r / "Runtime/RTGI/HoRTGISecondaryMaterials.cs", r / "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl"], {
+                     [r / "Runtime/RTGI/HoRTGISecondaryMaterials.cs", r / "ShaderLibrary/RTGI/HoRTGISecondaryMaterial.hlsl"], {
                          r / "Runtime/RTGI/HoRTGISecondaryMaterials.cs": [r"CopyPropertiesFromMaterial", r"HoRTCutoutSupport\.Supports", r"remains opaque to RT"],
-                         r / "Runtime/RTGI/Shaders/HoRTGISecondaryMaterial.hlsl": [r"perceptualRoughness\s*=\s*saturate\(1-smoothness\)", r"metallic\s*=\s*saturate", r"reflectance\s*=\s*saturate"]})
+                         r / "ShaderLibrary/RTGI/HoRTGISecondaryMaterial.hlsl": [r"perceptualRoughness\s*=\s*saturate\(1-smoothness\)", r"metallic\s*=\s*saturate", r"reflectance\s*=\s*saturate"]})
         self.require("ray.surface-material", "Ray material domain", "Primary ray surface reads SB material channels as perceptual roughness/metallic and validates finite data.",
                      [r / "Runtime/RT/Shaders/HoRTPrimarySurface.hlsl", r / "Runtime/RT/HoRTPrimarySurfaceInputs.cs"], {
                          r / "Runtime/RT/Shaders/HoRTPrimarySurface.hlsl": [r"value\.perceptualRoughness\s*=\s*material\.r", r"value\.metallic\s*=\s*material\.g", r"value\.reflectance\s*=\s*SAMPLE_TEXTURE2D_X_LOD", r"HoRTPrimaryFinite3"],
