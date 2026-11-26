@@ -51,7 +51,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             rays.SetData(new[]{new Ray {originMin=new Vector4(-.5f,0,-1,.001f),directionMax=new Vector4(0,0,1,4)},new Ray{originMin=new Vector4(.5f,0,-1,.001f),directionMax=new Vector4(0,0,1,4)}});
             try
             {
-                var cloth=Material("HoShader/Cloth URP");cloth.SetColor("_BaseColor",new Color(.2f,.4f,.6f,1));
+                var cloth=Material("Ho/Cloth/URP/Cloth");cloth.SetColor("_BaseColor",new Color(.2f,.4f,.6f,1));
                 var packed=Texture(new Color(.8f,.5f,1,.7f));cloth.SetTexture("_PBRMap",packed);cloth.SetFloat("_PBRInputMode",1);
                 Sync(cloth);var baseline=Trace(cloth)[0];Require(baseline.status==1,"Cloth secondary evaluated");
                 ColorNear(baseline.baseColor,new Vector3(.2f,.4f,.6f),"Cloth base");Near(baseline.metallic,.8f,"Cloth default map multiplier");Near(baseline.roughness,.3f,"Cloth packed roughness");Near(baseline.reflectance,.02f,"Cloth packed F0");
@@ -60,18 +60,18 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 CheckClothAlpha(cloth);
                 cloth.SetFloat("_SurfaceMode",0);cloth.SetColor("_BaseColor",new Color(.2f,.4f,.6f,1));Sync(cloth);
                 CheckTension(cloth);
-                var hair=Material("HoShader/Hair URP");hair.SetColor("_BaseColor",new Color(.3f,.2f,.1f,.01f));hair.SetFloat("_SurfaceMode",1);Sync(hair);
+                var hair=Material("Ho/Hair/URP/Hair");hair.SetColor("_BaseColor",new Color(.3f,.2f,.1f,.01f));hair.SetFloat("_SurfaceMode",1);Sync(hair);
                 var hairHit=Trace(hair)[0];Require(hairHit.status==1,"Hair solid coverage ignores tint alpha");Near(hairHit.roughness,1,"Hair numeric roughness");Near(hairHit.reflectance,0,"Hair numeric F0");
-                var skin=Material("HoShader/Skin URP");skin.SetColor("_BaseColor",new Color(.2f,.4f,.6f,1));skin.SetFloat("_SpecularStrength",1.5f);
+                var skin=Material("Ho/Skin/URP/Stylized");skin.SetColor("_BaseColor",new Color(.2f,.4f,.6f,1));skin.SetFloat("_SpecularStrength",1.5f);
                 skin.SetTexture("_SmoothnessMap",Texture(new Color(.8f,0,0,1)));skin.SetFloat("_SmoothnessMapScale",.5f);
                 CheckEmission(skin);var skinHit=Trace(skin)[0];Near(skinHit.reflectance,.06f,"Skin absolute F0 weight");Near(skinHit.roughness,.6f,"Skin mapped roughness");
                 skin.SetFloat("_AlphaClip",1);skin.SetTexture("_CoverageMap",Texture(Color.clear,Color.white));Sync(skin);
                 var skinCoverage=Trace(skin);Require(skinCoverage[0].status==0&&skinCoverage[1].status==1,"Skin independent cutout coverage");
-                var eye=Material("HoShader/Eye URP");eye.SetFloat("_SurfaceMode",1);eye.SetTexture("_BaseMap",Texture(new Color(1,1,1,.01f)));
+                var eye=Material("Ho/Skin/URP/Eye");eye.SetFloat("_SurfaceMode",1);eye.SetTexture("_BaseMap",Texture(new Color(1,1,1,.01f)));
                 eye.SetTexture("_CoverageMap",Texture(Color.clear,Color.white));Sync(eye);var eyeCoverage=Trace(eye);
                 Require(eyeCoverage[0].status==0&&eyeCoverage[1].status==1,"Eye R coverage independent of base A AO");Near(eyeCoverage[1].reflectance,.04f,"Eye F0");
                 CheckEyeSmoothness(eye);
-                var environment=Material("HoShader/Environment URP");environment.SetFloat("_Metallic",.4f);environment.SetFloat("_Smoothness",.6f);environment.SetFloat("_Reflectance",.08f);
+                var environment=Material("Ho/Environment/URP/Lit");environment.SetFloat("_Metallic",.4f);environment.SetFloat("_Smoothness",.6f);environment.SetFloat("_Reflectance",.08f);
                 environment.SetTexture("_MetallicGlossMap",Texture(new Color(.5f,0,0,1)));environment.SetTexture("_SmoothnessTex",Texture(new Color(.5f,0,0,1)));Sync(environment);
                 var envHit=Trace(environment)[0];Near(envHit.metallic,.2f,"Environment legacy map multiplier");Near(envHit.roughness,.7f,"Environment roughness");Near(envHit.reflectance,.08f,"Environment F0");
                 CheckKeywordHistory(environment);
@@ -241,9 +241,9 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         private static void Sync(Material material)
         {
             string type=material.shader.name switch
-            {"HoShader/Cloth URP"=>"HoShader.ClothURP.Editor.ClothShaderGUI, HoShader.ClothURP.Editor","HoShader/Hair URP"=>"HoShader.HairURP.Editor.HairShaderGUI, HoShader.HairURP.Editor",
-             "HoShader/Skin URP"=>"HoShader.SkinStylizedURP.Editor.SkinShaderGUI, HoShader.SkinStylizedURP.Editor","HoShader/Eye URP"=>"HoShader.SkinStylizedURP.Editor.EyeShaderGUI, HoShader.SkinStylizedURP.Editor",
-             _=>"HoShader.EnvironmentURP.Editor.EnvironmentShaderGUI, HoShader.EnvironmentURP.Editor"};
+            {"Ho/Cloth/URP/Cloth"=>"HoShader.ClothURP.Editor.ClothMaterialUtility, HoShader.ClothURP.Editor","Ho/Hair/URP/Hair"=>"HoShader.HairURP.Editor.HairMaterialUtility, HoShader.HairURP.Editor",
+             "Ho/Skin/URP/Stylized"=>"HoShader.SkinStylizedURP.Editor.SkinMaterialUtility, HoShader.SkinStylizedURP.Editor","Ho/Skin/URP/Eye"=>"HoShader.SkinStylizedURP.Editor.EyeMaterialUtility, HoShader.SkinStylizedURP.Editor",
+             _=>"HoShader.EnvironmentURP.Editor.EnvironmentMaterialUtility, HoShader.EnvironmentURP.Editor"};
             var gui=Type.GetType(type,true);var method=gui.GetMethod("SyncMaterial",BindingFlags.Public|BindingFlags.Static)??gui.GetMethod("SyncSurfaceMode",BindingFlags.Public|BindingFlags.Static);
             method.Invoke(null,new object[]{material});
         }

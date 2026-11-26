@@ -100,7 +100,7 @@ namespace lilToon.URP.Extensions.Tests
 
         Material SpecializedOutline(string family, float width, Color color)
         {
-            var shader = Shader.Find("HoShader/" + family + " URP");
+            var shader = Shader.Find("Ho/" + family + "/URP/" + family);
             Assert.That(shader, Is.Not.Null, "Install Cloth/Hair URP in the material integration host.");
             var material = Keep(new Material(shader)); material.enableInstancing = true;
             void Set(string name, float value) { if (material.HasProperty(name)) material.SetFloat(name, value); }
@@ -119,9 +119,9 @@ namespace lilToon.URP.Extensions.Tests
 
         static void SyncSpecialized(Material material)
         {
-            string family = material.shader.name == "HoShader/Hair URP" ? "Hair" : "Cloth";
+            string family = material.shader.name == "Ho/Hair/URP/Hair" ? "Hair" : "Cloth";
             string ns = "HoShader." + family + "URP.Editor";
-            var gui = Type.GetType(ns + "." + family + "ShaderGUI, " + ns, true);
+            var gui = Type.GetType(ns + "." + family + "MaterialUtility, " + ns, true);
             var method = gui.GetMethod(family == "Hair" ? "SyncSurfaceMode" : "SyncMaterial", BindingFlags.Public | BindingFlags.Static);
             Assert.That(method, Is.Not.Null, "Material integration uses the package's public synchronizer.");
             method.Invoke(null, new object[] { material });

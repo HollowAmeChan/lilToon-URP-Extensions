@@ -312,7 +312,7 @@ public static class HoMmdStageLighting
         bool day=name=="花吐电気"||name=="乐园·深命"||name=="茉莉庭院";
         string path=folder+"/Rendering/天空球.mat";
         var material=AssetDatabase.LoadAssetAtPath<Material>(path);
-        if(material==null){material=new Material(HoMmdEnvironmentSurface.FindSky("HoShader/Environment Sky Sphere","Ho/MMD Stage Sky Sphere"));AssetDatabase.CreateAsset(material,path);}
+        if(material==null){material=new Material(HoMmdEnvironmentSurface.FindSky("Ho/Environment/URP/Sky/Sphere","Ho/MMD/Stage/Sky Sphere"));AssetDatabase.CreateAsset(material,path);}
         material.SetColor("_Top",day?C(.18f,.39f,.65f):C(.001f,.0015f,.008f));
         material.SetColor("_Horizon",day?C(.77f,.84f,.9f):C(.008f,.007f,.025f));
         material.SetColor("_SunColor",day?C(4,3.1f,1.9f):C(.9f,1.2f,1.8f));

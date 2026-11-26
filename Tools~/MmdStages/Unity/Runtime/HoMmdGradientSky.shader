@@ -1,4 +1,4 @@
-Shader "Ho/MMD Stage Gradient Sky"
+Shader "Ho/MMD/Stage/Gradient Sky"
 {
     Properties
     {

@@ -32,13 +32,13 @@ namespace lilToon.URP.Extensions.Tests
         [TestCase("Cloth"), TestCase("Hair")]
         public void DedicatedStaticMaterialTracksColorAndTextureTransformChanges(string family)
         {
-            var shader = Shader.Find("HoShader/" + family + " URP");
+            var shader = Shader.Find("Ho/" + family + "/URP/" + family);
             Assert.That(shader, Is.Not.Null, "Install the dedicated material package in the material integration host.");
             var material = new Material(shader);
             try
             {
                 string ns = "HoShader." + family + "URP.Editor";
-                var gui = System.Type.GetType(ns + "." + family + "ShaderGUI, " + ns, true);
+                var gui = System.Type.GetType(ns + "." + family + "MaterialUtility, " + ns, true);
                 var sync = gui.GetMethod(family == "Hair" ? "SyncSurfaceMode" : "SyncMaterial", BindingFlags.Public | BindingFlags.Static);
                 Assert.That(sync, Is.Not.Null);
                 sync.Invoke(null, new object[] { material });

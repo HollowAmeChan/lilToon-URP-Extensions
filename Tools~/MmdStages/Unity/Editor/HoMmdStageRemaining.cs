@@ -89,7 +89,7 @@ public static class HoMmdStageRemaining
     {
         var scene=EditorSceneManager.OpenScene(HoMmdStageBuilder.Root+name+"/"+name+".unity",OpenSceneMode.Single);
         var env=scene.GetRootGameObjects().SelectMany(x=>x.GetComponentsInChildren<HoMmdStageEnvironment>()).Single();
-        env.skybox.shader=HoMmdEnvironmentSurface.FindSky("HoShader/Environment Gradient Sky","Ho/MMD Stage Gradient Sky");EditorUtility.SetDirty(env.skybox);
+        env.skybox.shader=HoMmdEnvironmentSurface.FindSky("Ho/Environment/URP/Sky/Gradient","Ho/MMD/Stage/Gradient Sky");EditorUtility.SetDirty(env.skybox);
         EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
     }
     public static void Art(string name)
@@ -193,7 +193,7 @@ public static class HoMmdStageRemaining
         if(importer==null)throw new InvalidOperationException("HDR importer unavailable "+path);
         if(importer.textureShape!=TextureImporterShape.TextureCube){importer.textureShape=TextureImporterShape.TextureCube;importer.generateCubemap=TextureImporterGenerateCubemap.AutoCubemap;importer.maxTextureSize=2048;importer.SaveAndReimport();}
         var cube=AssetDatabase.LoadAssetAtPath<Cubemap>(path);if(cube==null)throw new Exception("HDR cubemap import failed "+path);
-        env.skybox.shader=HoMmdEnvironmentSurface.FindSky("HoShader/Environment Cubemap Sky","Skybox/Cubemap");env.skybox.SetTexture("_Tex",cube);env.skybox.SetFloat("_Exposure",spec.skyExposure);env.skybox.SetFloat("_Rotation",20);
+        env.skybox.shader=HoMmdEnvironmentSurface.FindSky("Ho/Environment/URP/Sky/Cubemap","Skybox/Cubemap");env.skybox.SetTexture("_Tex",cube);env.skybox.SetFloat("_Exposure",spec.skyExposure);env.skybox.SetFloat("_Rotation",20);
         var sky=env.GetComponentsInChildren<MeshRenderer>().Single(x=>x.name=="天空球").sharedMaterial;
         sky.SetTexture("_HdrTex",cube);sky.SetFloat("_UseHdr",1);sky.SetFloat("_HdrExposure",spec.skyExposure);sky.SetFloat("_HdrRotation",20);
         EditorUtility.SetDirty(sky);EditorUtility.SetDirty(env.skybox);

@@ -3,7 +3,7 @@ using UnityEngine;
 
 internal static class HoMmdEnvironmentSurface
 {
-    private const string EnvironmentShader = "HoShader/Environment URP";
+    private const string EnvironmentShader = "Ho/Environment/URP/Lit";
     private const string EnvironmentEditor = "HoShader.EnvironmentURP.Editor.EnvironmentShaderGUI, HoShader.EnvironmentURP.Editor";
     private static readonly Lazy<Action<Material>> Sync = new(ResolveSynchronizer);
 
@@ -16,7 +16,7 @@ internal static class HoMmdEnvironmentSurface
 
     internal static Material CreateStageSky(string name, Color top, Color bottom, float exposure)
     {
-        Shader skyShader = FindSky("HoShader/Environment Gradient Sky", "Skybox/Procedural");
+        Shader skyShader = FindSky("Ho/Environment/URP/Sky/Gradient", "Skybox/Procedural");
         if (skyShader == null)
             throw new InvalidOperationException("没有可用的环境天空 Shader。");
         var sky = new Material(skyShader) { name = name };

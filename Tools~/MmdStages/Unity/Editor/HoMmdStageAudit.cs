@@ -46,10 +46,10 @@ public static class HoMmdStageAudit
                     (x.StartsWith("Assets/00动画/MMD场景/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/00动画/MMD场景/_制作工具/"))||
                     (x=="Assets/Settings/PC_Renderer.asset"||x=="Assets/Settings/PC_RPAsset.asset")&&!sharedRenderAssets).ToArray();
                 var modelRenderers=renderers.Where(x=>x.transform.parent.name!="04 环境与后处理").ToArray();
-                bool skySphere=renderers.Any(x=>x.name=="天空球"&&x.sharedMaterial!=null&&x.sharedMaterial.shader!=null&&x.sharedMaterial.shader.name=="Ho/MMD Stage Sky Sphere");
+                bool skySphere=renderers.Any(x=>x.name=="天空球"&&x.sharedMaterial!=null&&x.sharedMaterial.shader!=null&&x.sharedMaterial.shader.name=="Ho/MMD/Stage/Sky Sphere");
                 var missing=mats.Where(x=>x==null||x.shader==null||(!HoMmdEnvironmentSurface.IsEnvironment(x)&&
-                    !x.shader.name.Contains("lilToon")&&x.shader.name!="Ho/MMD Stage Sky Sphere"&&
-                    x.shader.name!="HoShader/Environment Sky Sphere")).Select(x=>x==null?"null":x.name).ToArray();
+                    !x.shader.name.Contains("lilToon")&&x.shader.name!="Ho/MMD/Stage/Sky Sphere"&&
+                    x.shader.name!="Ho/Environment/URP/Sky/Sphere")).Select(x=>x==null?"null":x.name).ToArray();
                 bool dof=profile.TryGet<ScreenProcessStackVolume>(out var screen)&&screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.DepthOfField);
                 profile.TryGet<ImageProcessStackVolume>(out var image);
                 var bars=image!=null?image.layers.value.FirstOrDefault(x=>x.enabled&&x.effect==ImageProcessEffect.CinematicBars):null;
@@ -67,7 +67,7 @@ public static class HoMmdStageAudit
                 profile.TryGet<HoRTGIVolume>(out var rtgiVolume);
                 var rtgiExcluded=rtgi!=null&&rtgi.Settings.excludedRayMaterials!=null&&rtgi.Settings.excludedRayMaterials.Length==1?rtgi.Settings.excludedRayMaterials:
                     rtgiVolume!=null&&rtgiVolume.excludedRayMaterials.overrideState?rtgiVolume.excludedRayMaterials.value:null;
-                bool rtgiSkyExcluded=rtgiExcluded!=null&&rtgiExcluded.Length==1&&rtgiExcluded[0]!=null&&rtgiExcluded[0].shader!=null&&rtgiExcluded[0].shader.name=="Ho/MMD Stage Sky Sphere";
+                bool rtgiSkyExcluded=rtgiExcluded!=null&&rtgiExcluded.Length==1&&rtgiExcluded[0]!=null&&rtgiExcluded[0].shader!=null&&rtgiExcluded[0].shader.name=="Ho/MMD/Stage/Sky Sphere";
                 var objectBuffer=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.ObjectBuffer.HoObjectBufferRendererFeature>().FirstOrDefault(x=>x.isActive);
                 var attribute=renderer.rendererFeatures.OfType<lilToon.URP.Extensions.AttributeComposite.HoAttributeCompositeRendererFeature>().FirstOrDefault(x=>x.isActive);
                 var plrFeature=renderer.rendererFeatures.OfType<HoPlanarReflectionRendererFeature>().FirstOrDefault(x=>x.isActive);

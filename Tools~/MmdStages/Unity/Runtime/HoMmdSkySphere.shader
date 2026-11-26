@@ -1,4 +1,4 @@
-Shader "Ho/MMD Stage Sky Sphere"
+Shader "Ho/MMD/Stage/Sky Sphere"
 {
     Properties
     {

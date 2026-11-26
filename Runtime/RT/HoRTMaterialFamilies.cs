@@ -14,10 +14,10 @@ namespace lilToon.URP.Extensions.RT
             if (HoRTCutoutSupport.IsEnvironmentSurface(source)) return HoRTMaterialFamily.Environment;
             return source.shader.name switch
             {
-                "HoShader/Cloth URP" => HoRTMaterialFamily.Cloth,
-                "HoShader/Hair URP" => HoRTMaterialFamily.Hair,
-                "HoShader/Skin URP" => HoRTMaterialFamily.Skin,
-                "HoShader/Eye URP" => HoRTMaterialFamily.Eye,
+                "Ho/Cloth/URP/Cloth" => HoRTMaterialFamily.Cloth,
+                "Ho/Hair/URP/Hair" => HoRTMaterialFamily.Hair,
+                "Ho/Skin/URP/Stylized" => HoRTMaterialFamily.Skin,
+                "Ho/Skin/URP/Eye" => HoRTMaterialFamily.Eye,
                 "lilToon" or "Hidden/lilToonOutline" or "Hidden/lilToonCutout" or "Hidden/lilToonCutoutOutline" => HoRTMaterialFamily.LegacyLilToon,
                 _ => HoRTMaterialFamily.Unsupported
             };
