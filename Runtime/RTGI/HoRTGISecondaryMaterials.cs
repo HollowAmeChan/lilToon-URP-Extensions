@@ -119,7 +119,9 @@ namespace lilToon.URP.Extensions.RTGI
             target.SetFloat("_HoRTNormalEnabled", !environment || source.IsKeywordEnabled("_NORMALMAP") ? 1 : 0);
             target.SetFloat("_HoRTNormalPolicy", legacy ? 0 : hair ? 3 : 1);
             target.SetFloat("_FlipNormal", skin || hair || family == HoRTMaterialFamily.Eye ? 1 : Float(source, "_FlipNormal"));
-            bool emission = environment ? source.IsKeywordEnabled("_EMISSION") : Enabled(source, "_UseEmission");
+            bool emission = environment
+                ? source.IsKeywordEnabled("_EMISSION") && (!source.HasProperty("_UseEmission") || Enabled(source, "_UseEmission"))
+                : Enabled(source, "_UseEmission");
             foreach (string property in new[] { "_EmissionMap", "_EmissionBlendMask", "_EmissionGradTex",
                 "_HoTesionStretchBaseColor", "_HoTesionCompressionBaseColor", "_HoTesionStretchNormal", "_HoTesionCompressionNormal" })
                 HoRTMaterialFamilies.CopyTexture(source, property, target, property);
