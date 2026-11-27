@@ -1,10 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTShadow;
+using lilToon.URP.Extensions.Shadows;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -16,6 +19,8 @@ using Object = UnityEngine.Object;
 /// <summary>Current-scene RT Cast proof; temporary settings are never saved.</summary>
 public static class HoMmdRTShadowDiagnostics
 {
+    const BindingFlags InstanceMembers = BindingFlags.Instance | BindingFlags.NonPublic;
+
     public static string ConfigureStageReceivers(HoMmdVideoWorkshop.Request request)
     {
         var scene = SceneManager.GetActiveScene();
@@ -91,22 +96,6 @@ public static class HoMmdRTShadowDiagnostics
         if (scene.path != request.scene) throw new InvalidOperationException("Only inspect the loaded scene.");
         string folder = string.IsNullOrEmpty(request.output) ? Path.GetFullPath(
             "Library/HoMmdVideo/Diagnostics/RTShadow-" + DateTime.Now.ToString("yyyyMMdd-HHmmss")) : Path.GetFullPath(request.output);
-        var renderer = string.IsNullOrEmpty(request.folder) ? null : HoMmdStageBuilder.ResolveRenderer(request.folder.TrimEnd('/'));
-        if (renderer == null) renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(HoMmdSharedRenderAssets.RendererPath);
-        var unified = HoMmdSharedRenderAssets.ActiveHoShadows(renderer);
-        if (unified != null)
-        {
-            string status = unified.RayTracedShadowsEnabled
-                ? "Managed RT is enabled. This capture tool reads the legacy RT products only."
-                : "Managed RT is disabled on Ho Shadows. The stage Volume does not enable the renderer's RT switch.";
-            return WriteUnavailableReport(folder, scene, renderer, "managed", status);
-        }
-
-        var candidates = renderer?.rendererFeatures.OfType<HoRTShadowRendererFeature>().Take(2).ToArray();
-        if (candidates == null || candidates.Length != 1)
-            return WriteUnavailableReport(folder, scene, renderer, "legacy", "Expected one legacy RT Shadow feature on the selected renderer.");
-        var feature = candidates[0];
-        var host = renderer.rendererFeatures.OfType<HoRTRendererFeature>().FirstOrDefault();
         var roots = scene.GetRootGameObjects();
         var cameras = roots.SelectMany(x => x.GetComponentsInChildren<Camera>(true)).ToArray();
         var camera = request.cameraName == "$scene-view" ? SceneView.lastActiveSceneView?.camera :
@@ -114,6 +103,34 @@ public static class HoMmdRTShadowDiagnostics
             cameras.Single(x => x.name == request.cameraName);
         if (camera == null) throw new InvalidOperationException("Requested camera is missing.");
         var data = camera.GetComponent<UniversalAdditionalCameraData>();
+        var cameraRenderer = (camera.cameraType == CameraType.SceneView ? null : data?.scriptableRenderer)
+            ?? UniversalRenderPipeline.asset?.scriptableRenderer;
+        var cameraFeatures = cameraRenderer == null ? null : typeof(ScriptableRenderer)
+            .GetProperty("rendererFeatures", InstanceMembers)?.GetValue(cameraRenderer) as List<ScriptableRendererFeature>;
+        var features = cameraFeatures;
+        if (features == null)
+        {
+            var renderer = string.IsNullOrEmpty(request.folder) ? null : HoMmdStageBuilder.ResolveRenderer(request.folder.TrimEnd('/'));
+            if (renderer == null) renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(HoMmdSharedRenderAssets.RendererPath);
+            features = renderer?.rendererFeatures;
+            if (HoMmdSharedRenderAssets.ActiveHoShadows(renderer) != null)
+                return WriteUnavailableReport(folder, scene, features, "managed", "The selected camera's active renderer could not be inspected.");
+        }
+        var unified = cameraFeatures?.OfType<HoShadowsRendererFeature>().FirstOrDefault(item => item.isActive);
+        bool managed = unified != null;
+        HoRTShadowRendererFeature feature = null;
+        if (!managed)
+        {
+            var candidates = features?.OfType<HoRTShadowRendererFeature>().Where(item => item.isActive).Take(2).ToArray();
+            if (candidates == null || candidates.Length != 1)
+                return WriteUnavailableReport(folder, scene, features, "legacy", "Expected exactly one active legacy RT Shadow feature on the selected renderer.");
+            feature = candidates[0];
+        }
+        else if (data != null && data.renderType != CameraRenderType.Base)
+            return WriteUnavailableReport(folder, scene, features, "managed", "Managed RT capture requires a Base camera.");
+
+        var host = features.OfType<HoRTRendererFeature>().FirstOrDefault(item => item.isActive);
+        bool previousManagedRt = managed && unified.RayTracedShadowsEnabled;
         var previousTarget = camera.targetTexture;
         var previousAspect = camera.aspect;
         var previousAA = data != null ? data.antialiasing : AntialiasingMode.None;
@@ -128,40 +145,47 @@ public static class HoMmdRTShadowDiagnostics
         try
         {
             ShaderUtil.allowAsyncCompilation = false;
-            foreach (var volume in roots.SelectMany(x => x.GetComponentsInChildren<Volume>(true))
-                         .Where(x => x.isActiveAndEnabled && x.sharedProfile != null))
-                copies.Add(new ProfileCopy(volume));
+            if (!managed)
+                foreach (var volume in roots.SelectMany(x => x.GetComponentsInChildren<Volume>(true))
+                             .Where(x => x.isActiveAndEnabled && x.sharedProfile != null))
+                    copies.Add(new ProfileCopy(volume));
             target.Create();
             camera.targetTexture = target;
             camera.aspect = request.width / (float)request.height;
             if (data != null && data.antialiasing == AntialiasingMode.TemporalAntiAliasing)
                 data.antialiasing = AntialiasingMode.SubpixelMorphologicalAntiAliasing;
-            foreach (string mode in new[] { "authored", "rtshadow-off", "consumer-status", "force-lit", "force-shadow" })
+            var standardRequest = new RenderPipeline.StandardRequest { destination = target };
+            if (managed && !RenderPipeline.SupportsRenderRequest(camera, standardRequest))
+                return WriteUnavailableReport(folder, scene, features, "managed", "The pipeline does not support the camera capture request.");
+            var modes = managed ? new[] { "authored", "rtshadow-off" }
+                : new[] { "authored", "rtshadow-off", "consumer-status", "force-lit", "force-shadow" };
+            foreach (string mode in modes)
             {
-                foreach (var copy in copies) copy.Mode(mode);
-                for (int warmup = 0; warmup < 4; ++warmup)
-                    RenderPipeline.SubmitRenderRequest(camera, new RenderPipeline.StandardRequest { destination = target });
-                var lights = feature.LightDiagnostics.ToArray();
-                frames.Add(new Frame {
-                    mode = mode, camera = camera.name, featureCamera = feature.LastCamera != null ? feature.LastCamera.name : "",
-                    featureActive = feature.isActive, status = feature.Status, host = host != null ? host.Status : "Missing",
-                    configured = JsonUtility.ToJson(feature.Settings), effective = JsonUtility.ToJson(feature.LastEffectiveSettings),
-                    activeGlobal = Shader.GetGlobalFloat("_HoRTShadowActive"),
-                    consumerDebugGlobal = Shader.GetGlobalFloat("_HoRTShadowConsumerDebugMode"),
-                    ordinaryMainMaps = Shader.IsKeywordEnabled("_MAIN_LIGHT_SHADOWS") ||
-                        Shader.IsKeywordEnabled("_MAIN_LIGHT_SHADOWS_CASCADE") || Shader.IsKeywordEnabled("_MAIN_LIGHT_SHADOWS_SCREEN"),
-                    characterCast = Shader.GetGlobalFloat("_HoCSActive"), legacyCast = Shader.GetGlobalFloat("_HoShadowCastActive"),
-                    products = lights.Select(x => ReadProduct(feature, camera, x)).ToArray(),
-                    rejected = feature.UnavailableProducts.Select(x => (x.Light != null ? x.Light.name : "<null>") +
-                        ": " + x.Status + " - " + x.Reason).ToArray()
-                });
-                File.WriteAllText(Path.Combine(folder, mode + ".json"), JsonUtility.ToJson(frames[frames.Count - 1], true));
+                if (managed) unified.RayTracedShadowsEnabled = previousManagedRt && mode == "authored";
+                else foreach (var copy in copies) copy.Mode(mode);
+
+                for (int warmup = 0; warmup < 3; ++warmup)
+                    RenderPipeline.SubmitRenderRequest(camera, standardRequest);
+                Frame frame;
+                if (managed) frame = CaptureManagedFrame(standardRequest, mode, unified, host, cameraRenderer, camera);
+                else
+                {
+                    RenderPipeline.SubmitRenderRequest(camera, standardRequest);
+                    frame = DescribeFrame(mode, host, camera);
+                    ReadLegacyFrame(frame, feature, camera, cameraFeatures != null);
+                }
+                frames.Add(frame);
+                File.WriteAllText(Path.Combine(folder, mode + ".json"), JsonUtility.ToJson(frame, true));
                 SavePng(target, Path.Combine(folder, mode + ".png"));
             }
             var receivers = roots.SelectMany(x => x.GetComponentsInChildren<HoRTShadowReceiver>(true)).ToArray();
             var report = new Report {
                 scene = scene.path, hardwareRayTracing = SystemInfo.supportsRayTracing, device = SystemInfo.graphicsDeviceName,
-                shadowBackend = "legacy", features = DescribeFeatures(renderer),
+                shadowBackend = managed ? "managed" : "legacy", features = DescribeFeatures(features),
+                rendererSource = cameraFeatures != null ? "Selected camera runtime renderer" : "Stage renderer asset fallback",
+                capturePath = managed ? "Camera stack image with Base camera RT diagnostics" : "Camera stack",
+                consumerWitness = managed ? "Legacy consumer-status and force controls are unavailable in managed mode." : "Legacy consumer debug globals",
+                perLightScreenVisibility = managed ? "Unavailable after RenderGraph execution. Product statistics are from the producer's Raw texture." : null,
                 frames = frames.ToArray(),
                 lights = roots.SelectMany(x => x.GetComponentsInChildren<Light>(true)).Select(x =>
                     $"{PathOf(x.transform)}: active={x.isActiveAndEnabled} type={x.type} intensity={x.intensity} " +
@@ -177,6 +201,7 @@ public static class HoMmdRTShadowDiagnostics
         }
         finally
         {
+            if (managed) unified.RayTracedShadowsEnabled = previousManagedRt;
             camera.targetTexture = previousTarget; camera.aspect = previousAspect;
             if (data != null) data.antialiasing = previousAA;
             if (data != null) data.renderShadows = previousRenderShadows;
@@ -188,21 +213,170 @@ public static class HoMmdRTShadowDiagnostics
         }
     }
 
-    static string WriteUnavailableReport(string folder, Scene scene, UniversalRendererData renderer, string backend, string status)
+    static Frame DescribeFrame(string mode, HoRTRendererFeature host, Camera camera) => new Frame
+    {
+        mode = mode, camera = camera.name, host = host != null ? host.Status : "Missing",
+        ordinaryMainMaps = Shader.IsKeywordEnabled("_MAIN_LIGHT_SHADOWS") ||
+            Shader.IsKeywordEnabled("_MAIN_LIGHT_SHADOWS_CASCADE") || Shader.IsKeywordEnabled("_MAIN_LIGHT_SHADOWS_SCREEN"),
+        characterCast = Shader.GetGlobalFloat("_HoCSActive"), legacyCast = Shader.GetGlobalFloat("_HoShadowCastActive")
+    };
+
+    static Frame CaptureManagedFrame(RenderPipeline.StandardRequest request, string mode, HoShadowsRendererFeature feature,
+        HoRTRendererFeature host, ScriptableRenderer renderer, Camera camera)
+    {
+        Frame frame = null;
+        var readbacks = new List<(Product product, RenderTexture raw)>();
+        void CameraRendered(ScriptableRenderContext _, Camera rendered)
+        {
+            if (rendered != camera || frame != null) return;
+            frame = DescribeFrame(mode, host, camera);
+            ReadManagedFrame(frame, feature, renderer, camera, readbacks);
+        }
+
+        // Each camera resets the producer's public observations. Take the Base snapshot before any overlay begins.
+        // The producer's Raw texture is an imported RTHandle, so read it after the entire request has been submitted.
+        RenderPipelineManager.endCameraRendering += CameraRendered;
+        try { RenderPipeline.SubmitRenderRequest(camera, request); }
+        finally { RenderPipelineManager.endCameraRendering -= CameraRendered; }
+        foreach (var (product, raw) in readbacks)
+        {
+            if (raw != null && raw.IsCreated()) ReadRaw(product, raw);
+            else product.rawReadback = "Source texture is no longer available after the render request.";
+        }
+        return frame ?? new Frame
+        {
+            mode = mode, camera = camera.name, featureActive = feature.isActive, managedRtEnabled = feature.RayTracedShadowsEnabled,
+            configured = JsonUtility.ToJson(feature.RayTracedShadowSettings),
+            status = "The render request did not complete the selected Base camera.",
+            requestedLights = -1, hostRequests = -1, scheduledLights = -1, writtenProducts = -1, rayDispatches = -1,
+            products = Array.Empty<Product>(), rejected = Array.Empty<string>()
+        };
+    }
+
+    static void ReadManagedFrame(Frame frame, HoShadowsRendererFeature feature, ScriptableRenderer renderer, Camera camera,
+        List<(Product product, RenderTexture raw)> readbacks)
+    {
+        frame.featureActive = feature.isActive;
+        frame.managedRtEnabled = feature.RayTracedShadowsEnabled;
+        frame.configured = JsonUtility.ToJson(feature.RayTracedShadowSettings);
+        frame.products = Array.Empty<Product>();
+        frame.rejected = Array.Empty<string>();
+        if (!frame.managedRtEnabled || feature.RayTracedShadowSettings?.enabled != true)
+        {
+            frame.status = "Managed RT is disabled on Ho Shadows.";
+            return;
+        }
+        if (!SystemInfo.supportsRayTracing || !SystemInfo.supportsInlineRayTracing ||
+            SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D12)
+        {
+            frame.status = "Managed RT requires D3D12 native and inline ray tracing.";
+            return;
+        }
+
+        // The renderer owns the producer and the planner. Read their existing per-camera state here.
+        var producerField = typeof(HoShadowsRendererFeature).GetField("rayProducer", InstanceMembers);
+        if (producerField == null)
+        {
+            frame.status = "Managed RT producer diagnostics are unavailable in this package version.";
+            frame.requestedLights = frame.hostRequests = frame.scheduledLights = frame.writtenProducts = frame.rayDispatches = -1;
+            return;
+        }
+        var producer = producerField.GetValue(feature) as HoRTShadowRendererFeature;
+        if (producer == null)
+        {
+            frame.status = "Managed RT has no producer state for the captured camera.";
+            return;
+        }
+        if (producer.LastCamera != camera)
+        {
+            frame.status = "The managed producer did not report the captured camera.";
+            frame.requestedLights = frame.hostRequests = frame.scheduledLights = frame.writtenProducts = frame.rayDispatches = -1;
+            return;
+        }
+
+        frame.featureCamera = producer.LastCamera.name;
+        frame.status = producer.Status;
+        Type producerType = typeof(HoRTShadowRendererFeature);
+        var planCamera = producerType.GetField("managedPlanCamera", InstanceMembers);
+        var requested = producerType.GetField("managedRequestedCount", InstanceMembers);
+        if (planCamera == null || requested == null) frame.requestedLights = -1;
+        else if (planCamera.GetValue(producer) as Camera == camera)
+        {
+            frame.requestedLights = (int)requested.GetValue(producer);
+            var effective = producer.LastEffectiveSettings;
+            if (effective != null)
+            {
+                frame.effective = JsonUtility.ToJson(effective);
+                frame.effectiveSettingsAvailable = true;
+            }
+        }
+        frame.hostRequests = ReadManagedHostRequests(renderer, camera, producer);
+        ReadProducts(frame, producer, camera, readbacks);
+    }
+
+    static int ReadManagedHostRequests(ScriptableRenderer renderer, Camera camera, HoRTShadowRendererFeature producer)
+    {
+        var active = typeof(HoRTRendererFeature).GetField("active", BindingFlags.Static | BindingFlags.NonPublic);
+        if (!(active?.GetValue(null) is IDictionary domains)) return -1;
+        object domain = domains[(renderer, camera)];
+        if (domain == null) return 0;
+        var requests = domain.GetType().GetField("requests", InstanceMembers)?.GetValue(domain) as IDictionary;
+        return requests == null ? -1 : requests.Contains(producer) ? 1 : 0;
+    }
+
+    static void ReadLegacyFrame(Frame frame, HoRTShadowRendererFeature feature, Camera camera, bool rendererVerified)
+    {
+        frame.featureCamera = feature.LastCamera != null ? feature.LastCamera.name : "";
+        frame.featureActive = feature.isActive;
+        frame.configured = JsonUtility.ToJson(feature.Settings);
+        frame.requestedLights = frame.hostRequests = -1;
+        if (!rendererVerified || feature.LastCamera != camera)
+        {
+            frame.status = rendererVerified ? "The last legacy RT producer observation belongs to another camera or is unavailable."
+                : "The stage renderer supplies the configured settings, but the camera's legacy RT producer could not be verified.";
+            frame.scheduledLights = frame.writtenProducts = frame.rayDispatches = -1;
+            frame.products = Array.Empty<Product>();
+            frame.rejected = Array.Empty<string>();
+            return;
+        }
+        frame.status = feature.Status;
+        var effective = feature.LastEffectiveSettings;
+        if (effective != null)
+        {
+            frame.effective = JsonUtility.ToJson(effective);
+            frame.effectiveSettingsAvailable = true;
+        }
+        frame.activeGlobal = Shader.GetGlobalFloat("_HoRTShadowActive");
+        frame.consumerDebugGlobal = Shader.GetGlobalFloat("_HoRTShadowConsumerDebugMode");
+        ReadProducts(frame, feature, camera);
+    }
+
+    static void ReadProducts(Frame frame, HoRTShadowRendererFeature producer, Camera camera,
+        List<(Product product, RenderTexture raw)> readbacks = null)
+    {
+        frame.products = producer.LightDiagnostics.Select(light => ReadProduct(producer, camera, light, readbacks)).ToArray();
+        frame.scheduledLights = frame.products.Length;
+        frame.writtenProducts = frame.products.Count(product => product.currentProduct);
+        frame.rayDispatches = frame.products.Sum(product => product.rayDispatches);
+        frame.rejected = producer.UnavailableProducts.Select(product => (product.Light != null ? product.Light.name : "<null>") +
+            ": " + product.Status + " - " + product.Reason).ToArray();
+    }
+
+    static string WriteUnavailableReport(string folder, Scene scene, IEnumerable<ScriptableRendererFeature> features, string backend, string status)
     {
         Directory.CreateDirectory(folder);
         var report = new Report
         {
             scene = scene.path, device = SystemInfo.graphicsDeviceName, hardwareRayTracing = SystemInfo.supportsRayTracing,
-            shadowBackend = backend, status = status, features = DescribeFeatures(renderer), frames = Array.Empty<Frame>()
+            shadowBackend = backend, status = status, features = DescribeFeatures(features), frames = Array.Empty<Frame>()
         };
         File.WriteAllText(Path.Combine(folder, "report.json"), JsonUtility.ToJson(report, true));
         Debug.Log(status);
         return folder;
     }
 
-    static string[] DescribeFeatures(UniversalRendererData renderer) => renderer == null ? Array.Empty<string>() :
-        renderer.rendererFeatures.Select(x => x == null ? "<missing>" : x.GetType().Name + " active=" + x.isActive).ToArray();
+    static string[] DescribeFeatures(IEnumerable<ScriptableRendererFeature> features) => features == null ? Array.Empty<string>() :
+        features.Select(x => x == null ? "<missing>" : x.GetType().Name + " active=" + x.isActive).ToArray();
 
     static Receiver DescribeReceiver(HoRTShadowReceiver receiver)
     {
@@ -228,13 +402,24 @@ public static class HoMmdRTShadowDiagnostics
         };
     }
 
-    static Product ReadProduct(HoRTShadowRendererFeature feature, Camera camera, HoRTShadowLightDiagnostics light)
+    static Product ReadProduct(HoRTShadowRendererFeature feature, Camera camera, HoRTShadowLightDiagnostics light,
+        List<(Product product, RenderTexture raw)> readbacks)
     {
         var result = new Product { light = light.Light != null ? light.Light.name : "<null>", slot = light.Slot,
             receivers = light.Receivers, width = light.Width, height = light.Height, reconstruction = light.Reconstruction.ToString() };
         if (!feature.TryGetCompatibilityProduct(camera, light.Light, out var product) || product.Raw?.rt == null) return result;
         result.currentProduct = true;
-        var raw = Read(product.Raw.rt);
+        // The producer records one DispatchRays per estimate before marking this serial complete.
+        result.rayDispatches = light.Estimates;
+        result.renderSerial = product.RenderSerial;
+        if (readbacks == null) ReadRaw(result, product.Raw.rt);
+        else readbacks.Add((result, product.Raw.rt));
+        return result;
+    }
+
+    static void ReadRaw(Product result, RenderTexture texture)
+    {
+        var raw = Read(texture);
         result.statusCounts = Enumerable.Range(0, 5).Select(s => raw.Count(p => Mathf.RoundToInt(p.b) == s)).ToArray();
         var valid = raw.Where(p => Mathf.RoundToInt(p.b) == 1).ToArray();
         if (valid.Length > 0)
@@ -247,7 +432,6 @@ public static class HoMmdRTShadowDiagnostics
             result.validOwners = valid.GroupBy(p => Mathf.RoundToInt(p.a)).OrderBy(x => x.Key)
                 .Select(x => x.Key + ": " + x.Count()).ToArray();
         }
-        return result;
     }
 
     static string PathOf(Transform transform)
@@ -326,8 +510,8 @@ public static class HoMmdRTShadowDiagnostics
             Object.DestroyImmediate(copy);
         }
     }
-    [Serializable] sealed class Report { public string scene, device, shadowBackend, status; public bool hardwareRayTracing; public string[] features, lights, rendererCasting; public Frame[] frames; public Receiver[] receivers; }
-    [Serializable] sealed class Frame { public string mode, camera, featureCamera, status, host, configured, effective; public bool featureActive, ordinaryMainMaps; public float activeGlobal, consumerDebugGlobal, characterCast, legacyCast; public Product[] products; public string[] rejected; }
-    [Serializable] sealed class Product { public string light, reconstruction; public int slot, width, height, receivers, shadowPixels; public bool currentProduct; public int[] statusCounts; public float minimumVisibility, meanVisibility; public float[] blockerDistances; public string[] validOwners; }
+    [Serializable] sealed class Report { public string scene, device, shadowBackend, status, rendererSource, capturePath, consumerWitness, perLightScreenVisibility; public bool hardwareRayTracing; public string[] features, lights, rendererCasting; public Frame[] frames; public Receiver[] receivers; }
+    [Serializable] sealed class Frame { public string mode, camera, featureCamera, status, host, configured, effective; public bool featureActive, managedRtEnabled, effectiveSettingsAvailable, ordinaryMainMaps; public int requestedLights, hostRequests, scheduledLights, writtenProducts, rayDispatches; public float activeGlobal, consumerDebugGlobal, characterCast, legacyCast; public Product[] products; public string[] rejected; }
+    [Serializable] sealed class Product { public string light, reconstruction, rawReadback; public int slot, width, height, receivers, shadowPixels, rayDispatches; public long renderSerial; public bool currentProduct; public int[] statusCounts; public float minimumVisibility, meanVisibility; public float[] blockerDistances; public string[] validOwners; }
     [Serializable] sealed class Receiver { public string name, group; public bool enabled, validGroup, wholeGroup, allLights; public int groupId; public string[] selectedParts, identities, materials; }
 }
