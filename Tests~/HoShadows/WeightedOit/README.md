@@ -26,3 +26,11 @@ unity run $project --editor-version 6000.3.15f1 --timeout 300 --no-tail --no-acc
 ```
 
 D3D12 使用另一个结果目录和 `-force-d3d12`。通过时日志包含 `HO_OIT_INTEGRATION_OK`，`oit-integration.json` 的 `passed` 为 `true`。每个场景保存线性 EXR、显示用 PNG 和探针数值。
+
+## Eye 与 Weighted OIT 同相机
+
+`HoEyeOitScopeProbe.cs` 使用同一台相机、水平方向相同的原生硬阴影和上下分布的两块透明接收面。上方走真实 Eye Forward，下方走真实 Cloth Weighted OIT。夹具分别创建 OIT 在前和 Ho Shadows 在前的 Renderer Feature 声明顺序。每种顺序依次开启两路、单独关闭 OIT 阴影、单独关闭 Eye 阴影。关闭一路时比较另一路整个半帧，随后比较两种声明顺序的整帧 RGB。
+
+在隔离工程另外安装含透明 Eye 分层接收面的 Skin_URP，复制 `HoEyeOitScopeProbe.cs` 到 `Assets/Editor`。用相同 Unity CLI 参数，将入口换为 `-executeMethod HoEyeOitScopeProbe.Run`，并使用 `HO_EYE_OIT_SCOPE_OUTPUT` 指定新的输出目录和日志。通过时日志包含 `HO_EYE_OIT_SCOPES_OK`，`eye-oit-scopes.json` 的 `passed` 为 `true`。输出同样包含 EXR 和 PNG。
+
+RTX 4060 上 D3D11 和 D3D12 各通过六个场景，六对 PNG 的文件哈希一致。在两个后端，交换声明顺序后每种启用状态的整帧 RGB 最大误差均为 0。关闭 OIT 阴影使下半帧遮挡探针恢复亮区值，上半帧 RGB 最大误差为 0。关闭 Eye 阴影时反向验证得到相同结论。此夹具覆盖原生主方向光、全分辨率、单采样正交 Base Camera 和默认 stencil。
