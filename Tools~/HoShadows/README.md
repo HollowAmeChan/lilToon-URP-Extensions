@@ -38,6 +38,8 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 `
 
 分镜头试用时，副本里的 Base Camera 可显式选择新索引。共享材质的屏幕预览是材质局部关键字。先确认材质只供受管镜头使用，或者给试用镜头分配材质副本，再开启关键字。此工具保留原有相机与材质引用。在弃用副本时，关闭 Editor，从输出目录恢复副本的 `PC_RPAsset` 及其 `.meta`，清理单独的试用 Renderer 资产。
 
+具名 RT 镜头的独立副本可在追加 Renderer 时设置 `HO_SHADOWS_P5_PILOT_RT_OPT_IN=1`。工具保留旧 RT 设置和程序引用，报告候选的开关与射线偏移。WTD 保存了启用 RT 的 Volume，旧 Skin 即使是 Main 也能接收主灯 RT。测试统一路径时，临时给该相机的 Body 和 Head 材质副本启用预览并设为 Full，保持两次受管对照的材质和灯光一致，仅切换 RT 总开关。
+
 ## 真实镜头的隔离对照
 
 把 `HoShadowsSceneCutoverComparison.cs` 与试切工具一起复制到物理快照的 `Assets/Editor`。快照包含保存的羽啾与圣诞万花镜场景、两者的依赖，以及带有屏幕预览的 HoShader 包版本。重新使用尚未试切的 Renderer，设置两个空输出目录，以 D3D11 启动 Unity。

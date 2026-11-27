@@ -60,6 +60,7 @@ public static class HoShadowsPilotCutover
         public bool captureShadowInputs;
         public bool rayTraced;
         public int rayTracedResources;
+        public float rayTracedRayBias;
         public FeatureState[] before;
         public FeatureState[] after;
     }
@@ -72,6 +73,8 @@ public static class HoShadowsPilotCutover
     {
         Require(Application.isBatchMode && Application.platform == RuntimePlatform.WindowsEditor,
             "Run this helper in a Windows batch Editor.");
+        bool rayOptIn = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_PILOT_RT_OPT_IN") == "1";
+        Require(!rayOptIn || separateRenderer, "RT opt-in requires a separate renderer for a selected test camera.");
         string project = Canonical(Path.Combine(Application.dataPath, ".."));
         string expected = DirectoryFromEnvironment("HO_SHADOWS_P5_PILOT_PROJECT");
         string output = DirectoryFromEnvironment("HO_SHADOWS_P5_PILOT_OUTPUT");
@@ -157,7 +160,7 @@ public static class HoShadowsPilotCutover
         unified.EarlyTransparentShadowsEnabled = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_PILOT_EARLY_TRANSPARENT") == "1";
         unified.TransparentEyeShadowsEnabled = true;
         unified.WeightedOitShadowsEnabled = true;
-        unified.RayTracedShadowsEnabled = false;
+        unified.RayTracedShadowsEnabled = rayOptIn;
         var previous = oldCharacter.Settings;
         var current = unified.CharacterSettings;
         current.resolution = previous.resolution;
@@ -165,6 +168,7 @@ public static class HoShadowsPilotCutover
         current.maxAtlasSize = previous.maxAtlasSize;
         current.depthBias = previous.depthBias;
         current.normalBias = previous.normalBias;
+        EditorUtility.CopySerializedManagedFieldsOnly(oldRt.Settings, unified.RayTracedShadowSettings);
         report.rayTracedResources = CopyRayPrograms(oldRt, unified);
 
         capture.CaptureShadowInputsEnabled = true;
@@ -208,6 +212,7 @@ public static class HoShadowsPilotCutover
         report.transparentEye = unified.TransparentEyeShadowsEnabled;
         report.weightedOit = unified.WeightedOitShadowsEnabled;
         report.rayTraced = unified.RayTracedShadowsEnabled;
+        report.rayTracedRayBias = unified.RayTracedShadowSettings.rayBias;
         report.captureShadowInputs = capture.CaptureShadowInputsEnabled;
         File.WriteAllText(Path.Combine(output, "pilot-applied.json"), JsonUtility.ToJson(report, true));
         Debug.Log("HO_SHADOWS_P5_PILOT_OK " + Path.Combine(output, "pilot-applied.json"));
