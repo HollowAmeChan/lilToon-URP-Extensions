@@ -44,6 +44,14 @@ WTD 的保存机位在 RTX 4060／D3D12 输出了 `1280×720` 的三组受管图
 
 以上是关闭 Editor 着色器优化的诊断回放。开启优化的旧路径在 `420 s` 的着色器预热期限内未写出可用图像，旧画面等价仍待验证。产物 `wtd-named-rt-compare.json` 记录 D3D12、相机、owner、开关状态、重复噪声和逐项判据。这次回放只给 Body 和 Head 分配临时材质副本。
 
+### 保存已验证的镜头试切
+
+`HoShadowsApplyAcceptedScene.cs` 接受一份显式场景清单，写入物理隔离工程。将工具复制到副本的 `Assets/Editor`，设置 `HO_SHADOWS_APPLY_PROJECT`、`HO_SHADOWS_APPLY_PLAN`，执行 `HoShadowsApplyAcceptedScene.Run`。清单需要 `scenePath`、`sceneSha256`、Base Camera 的 `cameraGlobalObjectId`、`candidateRendererIndex` 和 `slots`。每个槽写入 `rendererGlobalObjectId`、`slotIndex`、`sourceMaterialGuid`、`sourceMaterialSha256`。可选 `scopeMode` 取 `1` 或 `2`，省略时沿用源材质的范围。
+
+工具按场景 GUID 建立 `.mat` 副本，保留已保存的队列、混合和写深度设置。它只给清单中的槽位和 Base Camera 写入覆盖，随后重开副本核对。场景备份、报告以及前后 SHA-256 位于副本项目根的 `HoShadowsAccepted`，材质副本位于 `Assets/HoShadowsAccepted`。第二次使用同一已写入清单时验证回执、场景和副本的哈希并跳过保存。
+
+长门隔离演练保存了三个已验证槽位，Base Camera 路由从 `-1` 变为 `1`。第二次执行验证了原场景、三个副本及对应回执的 SHA-256 和修改时间。269 个原始文件中，仅隔离场景文件变化。Unity 会重新序列化较旧的场景。长门的原始 Hair 文件也在隔离导入期间补写了默认字段，这次保存验证使用其稳定的序列化结果作为隔离清单输入，保留了生产源文件的原 SHA-256。
+
 ## 真实镜头的隔离对照
 
 把 `HoShadowsSceneCutoverComparison.cs` 与试切工具一起复制到物理快照的 `Assets/Editor`。快照包含保存的羽啾与圣诞万花镜场景、两者的依赖，以及带有屏幕预览的 HoShader 包版本。重新使用尚未试切的 Renderer，设置两个空输出目录，以 D3D11 启动 Unity。
