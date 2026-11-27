@@ -106,6 +106,8 @@ New-Item -ItemType Directory -Path $env:HO_SHADOWS_WARMUP_OUTPUT
 
 关闭 TAA 的五组拆分对照曾在样点 `(303,206)` 复现四灯受管路径的相同 RGB。旧 Renderer 的 HoShadowCast 关闭臂还清除了副本里已保存的材质预览，存在两项输入同时改变。后续运行时探针在同一羽啾 Base 相机下确认只有一盏可见方向光，旧 HoShadowCast 接纳 `0` 盏灯，也没有额外图集切片。清洁材质输入下的重新对照用于确认实际差异。
 
+恢复后的同一 Editor 对照使用原始材质和不保存的预览副本，关闭 TAA 并保留相同 Volume 和编译诊断设置。退出后 58 个 `.mat` 的 SHA-256 均与运行前一致，序列化预览项仍为 `0`。样点 `(303,206)` 两侧 RGB 完全一致。在 `230292` 个稳定像素中，`4416` 个差异超过 `0.01`，其中 `4277` 个属于角色信号，稳定区域平均最大 RGB 分量差为 `0.001796`。这组数据作为后续差异定位的参考。
+
 ## 逐 Pass GPU 时间
 
 在已完成隔离试切、附加灯预算为 `4`、托管 RT 关闭的工程内，复制 `HoShadowsSceneGpuProfile.cs` 到 `Assets/Editor`。使用 Unity 6000.3.15f1 图形模式运行，保持同一 GPU 和分辨率。入口用 Editor update 每次提交一个请求，采集延迟返回的 GPU 记录。省略 `-quit`，入口会在采样结束后退出。
