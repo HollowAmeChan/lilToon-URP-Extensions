@@ -225,6 +225,18 @@ public static class HoCharacterResolveProbe
             var restored = Capture("primary-restored", selectedOwner);
             Require(restored.accepted == soft.accepted && restored.dark == soft.dark && restored.partial == soft.partial,
                 "The primary camera must resume the same result after views without a character product.");
+
+            character.SetActive(false);
+            resolve.CharacterSettings.resolution = HoCharacterShadowResolution.R512;
+            resolve.CharacterSettings.maxCharacters = 2;
+            resolve.CharacterSettings.depthBias = 0;
+            resolve.CharacterSettings.normalBias = 0;
+            resolve.ManagedCharacterShadowsEnabled = true;
+            var managed = Capture("managed-character-without-legacy-feature", selectedOwner);
+            Require(managed.dark > 50 && managed.lit > 50 && managed.partial > 0 && managed.producerStatus.Contains("fixed PCF"),
+                "Ho Shadows must own the atlas and fixed filter when the standalone feature is disabled.");
+            resolve.ManagedCharacterShadowsEnabled = false;
+            Capture("managed-character-turned-off", 0, false);
         }
         finally
         {

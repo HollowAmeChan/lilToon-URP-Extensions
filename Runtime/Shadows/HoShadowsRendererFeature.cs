@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.CharacterShadow;
 using lilToon.URP.Extensions.RTShadow;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -30,6 +31,8 @@ namespace lilToon.URP.Extensions.Shadows
         [SerializeField, Range(0, 16)] private int additionalLightBudget = 4;
         [SerializeField] private bool transparentEyeShadows;
         [SerializeField] private bool weightedOitShadows;
+        [SerializeField] private bool managedCharacterShadows;
+        [SerializeField] private HoShadowsCharacterSettings characterSettings = new();
         [SerializeField] private bool rayTracedShadows;
         [SerializeField] private HoRTShadowSettings rayTracedShadowSettings = new();
         [SerializeField] private RayTracingShader rayTracedShadowProgram;
@@ -55,6 +58,8 @@ namespace lilToon.URP.Extensions.Shadows
         private HoTransparentScreenShadowPass transparentResolve;
         private HoTransparentScreenShadowPass clearTransparent;
         private HoWeightedOitShadowSetupPass weightedOitSetup;
+        private HoCharacterShadowRendererFeature characterProducer;
+        private HoCharacterShadowSettings characterProducerSettings;
 
         public bool RayTracedShadowsEnabled
         {
@@ -76,6 +81,14 @@ namespace lilToon.URP.Extensions.Shadows
             set => weightedOitShadows = value;
         }
 
+        public bool ManagedCharacterShadowsEnabled
+        {
+            get => managedCharacterShadows;
+            set => managedCharacterShadows = value;
+        }
+
+        public HoShadowsCharacterSettings CharacterSettings => characterSettings;
+
         public override void Create()
         {
             CoreUtils.Destroy(resolveMaterial);
@@ -94,6 +107,7 @@ namespace lilToon.URP.Extensions.Shadows
             clearOpaque = new HoOpaqueScreenShadowBindingPass(true);
             ReleaseRayTracedShadows();
             ReleaseTransparentEyeShadows();
+            ReleaseCharacterProducer();
         }
 
         public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
@@ -126,6 +140,24 @@ namespace lilToon.URP.Extensions.Shadows
         {
             if (!SupportsOpaqueCamera(renderer, renderingData.cameraData))
                 return;
+
+            if (managedCharacterShadows && characterSettings != null)
+            {
+                if (HoCharacterShadow.Active.Count != 0)
+                {
+                    if (characterProducer == null)
+                    {
+                        characterProducerSettings = new HoCharacterShadowSettings();
+                        characterProducer = CreateInstance<HoCharacterShadowRendererFeature>();
+                        characterProducer.hideFlags = HideFlags.HideAndDontSave;
+                        characterProducer.ConfigureManaged(characterProducerSettings);
+                    }
+                    characterSettings.SetAtlasSettings(characterProducerSettings);
+                    characterProducer.AddRenderPasses(renderer, ref renderingData);
+                }
+            }
+            else
+                ReleaseCharacterProducer();
 
             if (resolvePass != null && renderingData.shadowData.supportsMainLightShadows
                 && renderingData.lightData.mainLightIndex >= 0)
@@ -178,6 +210,7 @@ namespace lilToon.URP.Extensions.Shadows
             clearOpaque = null;
             ReleaseRayTracedShadows();
             ReleaseTransparentEyeShadows();
+            ReleaseCharacterProducer();
         }
 
         private static bool SupportsOpaqueCamera(ScriptableRenderer renderer, CameraData cameraData)
@@ -233,6 +266,16 @@ namespace lilToon.URP.Extensions.Shadows
             transparentResolve = null;
             clearTransparent = null;
             weightedOitSetup = null;
+        }
+
+        private void ReleaseCharacterProducer()
+        {
+            if (characterProducer == null)
+                return;
+            characterProducer.Dispose();
+            CoreUtils.Destroy(characterProducer);
+            characterProducer = null;
+            characterProducerSettings = null;
         }
 
         private sealed class NativeMainShadowPass : ScriptableRenderPass

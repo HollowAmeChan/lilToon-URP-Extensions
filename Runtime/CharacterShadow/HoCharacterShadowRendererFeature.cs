@@ -25,6 +25,14 @@ namespace lilToon.URP.Extensions.CharacterShadow
         private HoCharacterShadowPass pass;
         private HoCharacterShadowDebugPass debugPass;
         private Material debugMaterial;
+        private bool managed;
+
+        internal void ConfigureManaged(HoCharacterShadowSettings settings)
+        {
+            this.settings = settings;
+            managed = true;
+            if (pass == null) Create();
+        }
 
         public override void Create()
         {
@@ -67,6 +75,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 || !renderingData.shadowData.supportsMainLightShadows || HoCharacterShadow.Active.Count == 0)
             { LastCullStatus += $"light(main={main},null={light == null},dir={(light != null && light.type == LightType.Directional)},shadows={(light != null && light.shadows != LightShadows.None)},supports={renderingData.shadowData.supportsMainLightShadows},active={HoCharacterShadow.Active.Count})"; return; }
             var config = HoCharacterShadowRenderConfig.Resolve(settings, volume);
+            if (managed)
+            {
+                config.useLegacySampling = false;
+                config.pcssEnabled = false;
+                config.pcssFilterRadiusTexels = 2.0f;
+                config.pcssStatus = "fixed PCF";
+            }
             var frame = pass.BuildFrame(camera, light, renderingData.cameraData.GetViewMatrix(),
                 renderingData.cameraData.GetProjectionMatrix(), config);
             if (frame.slices.Count == 0) { LastCullStatus += "noSlices"; return; }
@@ -507,7 +522,10 @@ namespace lilToon.URP.Extensions.CharacterShadow
             // PCSS: (enabled, tanHalfAngle, search metres, cap metres) + (bias, counts, fixed softness).
             cmd.SetGlobalVector("_HoCSPcssParams", f.pcssParams);
             cmd.SetGlobalVector("_HoCSPcssParams2", f.pcssParams2);
-            HoCharacterShadowShaderContract.BindSamplingPattern(cmd, f.pcssParams2);
+            if (f.useLegacySampling)
+                HoCharacterShadowShaderContract.BindSamplingPattern(cmd, f.pcssParams2);
+            else
+                cmd.SetGlobalVector("_HoCSSampleOffsetCounts", Vector4.zero);
             cmd.SetGlobalInt("_HoCSCount", f.slices.Count);
             cmd.SetGlobalFloat("_HoCSActive", 1);
         }

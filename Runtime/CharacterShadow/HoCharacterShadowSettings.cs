@@ -99,6 +99,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
 
         /// <summary>「PCF 半径」这个 texel 单位的旧旋钮还留一个 texel 值：只给投影拟合留边界余量用。</summary>
         internal float pcssFilterRadiusTexels = 1.0f;
+        internal bool useLegacySampling = true;
 
         internal static HoCharacterShadowRenderConfig Resolve(HoCharacterShadowSettings settings, HoCharacterShadowVolume volume)
         {

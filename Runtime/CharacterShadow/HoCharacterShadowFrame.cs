@@ -30,6 +30,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal Vector3 cameraPosition;
         internal Matrix4x4 cameraView, cameraProjection;
         internal Vector4 pcssParams, pcssParams2;
+        internal bool useLegacySampling;
         /// <summary>这一帧实际生效的 PCSS 状态（给 LastCullStatus 用，回答"为什么关不掉/改不动"）。</summary>
         internal string pcssStatus = "";
 
@@ -53,6 +54,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             frame.cameraView = cameraView;
             frame.cameraProjection = cameraProjection;
             frame.pcssStatus = config.pcssStatus;
+            frame.useLegacySampling = config.useLegacySampling;
             // Directional PCSS consumes tan(angular diameter / 2), not a distance to the
             // arbitrary shadow-camera near plane. PCF keeps its sample budget when PCSS is off.
             frame.pcssParams = new Vector4(
