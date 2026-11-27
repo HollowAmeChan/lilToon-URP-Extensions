@@ -30,6 +30,8 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 `
 
 试切开启托管角色图集、透明 Eye、加权 OIT 和 Capture 输入，并关闭 RT。旧 Feature 作为原 Renderer subasset 留存并停用。角色图集沿用旧分辨率、容量和深度／法线偏移，滤波使用托管路径的 PCF。统一 Feature 插在原有输入生产端之后、Capture 和 OIT 之前。旧 RT 已绑定的 ray tracing 程序、命中材质、重建程序及有序 SIGMA pass 引用直接复制到统一 Feature，为具名镜头后续验证 opt-in 留存 Player 资源引用。材质和默认 Volume 保持原样，镜头测试可按 dry-run 清单选取。
 
+设 `HO_SHADOWS_P5_PILOT_EARLY_TRANSPARENT=1` 可在试用 Renderer 启用不透明队列里透明接收面的独立两层解析。它使用相机和 Renderer 的不透明层交集，只读已准备的深度。该路径要求 Forward 或 Forward+、关闭 Depth Priming，以及相机内一致的预写和不透明层遮罩。
+
 `pilot-before.json` 和 `pilot-applied.json` 记录文件哈希和逐项前后索引及本地 fileID。回放旧基线时，关闭隔离 Editor，再把备份的 Renderer 与 Volume 文件及其 `.meta` 复制回副本的 `Assets/Settings`。
 
 把执行方法换为 `HoShadowsPilotCutover.RunWithSeparateRenderer`，可在同一物理试验工程建立 `PC_HoShadowsPilotRenderer.asset`，并把它追加到 `PC_RPAsset` 的 Renderer 列表。报告给出 `candidateRendererIndex`。实测旧资产 SHA-256 未变化、默认索引仍为 `0`、新 Renderer 索引为 `1`、RT 总开关保持关闭，13 个程序与材质引用已经保留。
@@ -52,6 +54,8 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 以 640×360 渲染两个已保存的 Base Camera。先读两次旧路径，再用同一快照跑新 Feature 的 4 和 16 个逐灯预算。当前版本在已支持的 Skin、Eye、Cloth、Environment、Hair 和 Effect 材质路径临时启用受管预览。场景退出时恢复材质。默认保留材质的 Main／Full。要测试拟议的 Full 迁移，用 `HO_SHADOWS_P5_COMPARE_PLAN` 传入 dry-run JSON。对照工具只处理报告内的 `review_full_candidate`，逐项核对快照材质文件的 SHA-256。
 
+设 `HO_SHADOWS_P5_COMPARE_HAIR_TRANSPARENT=1` 可在试切臂临时预览透明 Hair，并单列早队列和常规透明队列的合资格材质数。早队列还需要同时启用试切的早队列开关。对照保留材质的保存队列、深度写入、接收强度和阴影范围，只临时设置预览关键字和对应资格关键字。
+
 可用 `HO_SHADOWS_P5_COMPARE_FILTER` 按场景路径选择子集，或用 `HO_SHADOWS_P5_COMPARE_SCENE` 指定快照内另一场景的 `Assets/...unity` 路径。默认关闭用作对照变量的平面反射、相机后处理和 AA。设 `HO_SHADOWS_P5_COMPARE_AUTHORED=1` 改用原生相机栈请求，保留保存的相机效果并执行 URP 的 Volume 更新。
 
 | 首轮 D3D11 对照（Hair 和 Effect 接入前） | 预览材质／临时转 Full | 四灯预算的 RGB 最大分量差 | 旧路径重复波动 | 阈值 `>0.002` 且旧重复稳定的差异像素 |
@@ -67,7 +71,30 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 两个物理项目的冷缓存仍未完成旧路径首帧。羽啾重新取景后在旧路径首帧触发 `360 s` 超时，Hiro 冻结包快照在同一步触发 `900 s` 超时。`HO_SHADOWS_P5_COMPARE_WITNESSES_ONLY=1` 可以按盘点清单保留候选材质所在的网格，将其它投射物改为仅投射模式。这组 Hiro 对照也在首帧触发 `240 s` 超时。各次均未写出可用于画面对照的 EXR。Hiro 的七份候选材质已和盘点逐项核对 SHA-256，真实镜头的转 Full 验收仍未完成。
 
-标准透明队列的 Hair 屏幕预览在 D3D11 通过两层 owner、错误 owner、同镜头 Eye 和早队列回退。测试在提交前显式设置接收强度，提交之间没有重写材质。合成夹具首帧只读到亮值，第二帧和第三帧均正确变暗。`2000` 和 `2400` 两个早队列保持原路径，请求预览前后画面逐像素一致。生产 Hair 透明的预览保持关闭。标准透明仍需用实际 Sour 材质和 owner 复查，八份早队列材质需要独立的前层调度。
+标准透明队列的 Hair 屏幕预览在 D3D11 通过两层 owner、错误 owner 和同镜头 Eye。合成夹具首帧只读到亮值，提交之间保持材质值，第二帧和第三帧均正确变暗。
+
+独立的早队列预览在 D3D11 Forward 和 Forward+ 各通过 12 个相机样本。`2000`、`2400` 与 `3000` 可在同像素混合，跨队列共享 owner 时仍按各自深度和阶段匹配。仅改变早队列 owner、仅改变晚队列 owner 及停用早队列解析都只影响对应像素通道。关闭灯影后启用预览，整帧 RGB 与原绘制一致。D3D12 的 Eye 与 Weighted OIT 六个组合回归和早队列改动前逐像素一致。Rendering Layers MRT 分支尚缺独立 GPU 验收。生产盘点仍为 7 份 `2000`、1 份 `2400` 与 1 份 `3000`，实际镜头中的材质、owner、首帧和相机设置仍需复查。
+
+### 冷缓存异步预热
+
+复制 `HoShadowsAsyncSceneWarmup.cs` 到物理副本的 `Assets/Editor`。此入口按 Editor update 提交原生相机栈，等待着色器编译队列空闲后复查两张有场景内容的渲染结果。它临时关闭实际相机 Renderer 上的性能 HUD，记录进度、提交耗时和稳定性。达到截止时间时会保留报告，待编译完成的占位画面不会被保存为基线。
+
+```powershell
+$env:HO_SHADOWS_WARMUP_PROJECT = 'D:/Temp/HoShadows-P5-Local/SceneSnapshot'
+$env:HO_SHADOWS_WARMUP_OUTPUT = 'D:/Temp/HoShadows-P5-Local/AsyncWarmup'
+$env:HO_SHADOWS_WARMUP_SCENE = 'Assets/00动画/角色/羽啾/羽啾.unity'
+$env:HO_SHADOWS_WARMUP_ARM = 'legacy'
+$env:HO_SHADOWS_WARMUP_FRAME_SKIN = '1'
+$env:HO_SHADOWS_WARMUP_SECONDS = '900'
+New-Item -ItemType Directory -Path $env:HO_SHADOWS_WARMUP_OUTPUT
+& 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe' `
+  -batchmode -projectPath $env:HO_SHADOWS_WARMUP_PROJECT -force-d3d11 `
+  -logFile "$env:HO_SHADOWS_WARMUP_OUTPUT/unity.log" -executeMethod HoShadowsAsyncSceneWarmup.Run
+```
+
+入口完成后自行退出。`HO_SHADOWS_WARMUP_RENDERER_INDEX` 可选择副本中已配置的 Renderer，默认沿用保存的相机。可用 `HO_SHADOWS_WARMUP_CAMERA` 指定相机名。需要材质预览的对照臂先准备相机和材质，再调用 `Capture`。两个 EXR 和 JSON 使用各自的臂名。保留 TAA 的诊断可设 `HO_SHADOWS_WARMUP_ALLOW_TEMPORAL=1`，记录两张编译已完成的画面和重复帧变化，用各自的重复帧划分可比较像素。
+
+羽啾的 D3D11 原设置异步首次提交在 `2.68 s` 返回，编译队列在 `290 s` 内仍未清空。另一次仅用于定位的诊断关闭着色器优化，使队列清空并拍到角色。热缓存下三次提交取得重复 EXR，中心非均匀信号 `21006` 像素，两帧差异 `>0.01` 的像素有 `6176` 个。该数据单独记录 TAA 波动与编译诊断条件。
 
 ## 逐 Pass GPU 时间
 
