@@ -9,12 +9,16 @@ namespace lilToon.URP.Extensions.Shadows
     public sealed class HoNativeMainShadowFrameData : ContextItem
     {
         public TextureHandle Visibility { get; internal set; }
+        public TextureHandle SurfaceDepth { get; internal set; }
+        public TextureHandle CharacterVisibility { get; internal set; }
         public int CameraInstanceId { get; internal set; }
         public bool IsValid => Visibility.IsValid();
 
         public override void Reset()
         {
             Visibility = TextureHandle.nullHandle;
+            SurfaceDepth = TextureHandle.nullHandle;
+            CharacterVisibility = TextureHandle.nullHandle;
             CameraInstanceId = 0;
         }
     }
@@ -24,6 +28,8 @@ namespace lilToon.URP.Extensions.Shadows
     {
         private Material resolveMaterial;
         private NativeMainShadowPass resolvePass;
+        private Material characterMaterial;
+        private HoCharacterScreenShadowPass characterPass;
 
         public override void Create()
         {
@@ -31,6 +37,10 @@ namespace lilToon.URP.Extensions.Shadows
             Shader shader = Resources.Load<Shader>("HoNativeMainShadowResolve");
             resolveMaterial = shader != null ? CoreUtils.CreateEngineMaterial(shader) : null;
             resolvePass = resolveMaterial != null ? new NativeMainShadowPass(resolveMaterial) : null;
+            CoreUtils.Destroy(characterMaterial);
+            Shader characterShader = Resources.Load<Shader>("HoCharacterScreenShadowResolve");
+            characterMaterial = characterShader != null ? CoreUtils.CreateEngineMaterial(characterShader) : null;
+            characterPass = characterMaterial != null ? new HoCharacterScreenShadowPass(characterMaterial) : null;
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -52,6 +62,8 @@ namespace lilToon.URP.Extensions.Shadows
                 return;
 
             renderer.EnqueuePass(resolvePass);
+            if (characterPass != null)
+                renderer.EnqueuePass(characterPass);
         }
 
         protected override void Dispose(bool disposing)
@@ -59,6 +71,9 @@ namespace lilToon.URP.Extensions.Shadows
             CoreUtils.Destroy(resolveMaterial);
             resolveMaterial = null;
             resolvePass = null;
+            CoreUtils.Destroy(characterMaterial);
+            characterMaterial = null;
+            characterPass = null;
         }
 
         private sealed class NativeMainShadowPass : ScriptableRenderPass
@@ -133,6 +148,7 @@ namespace lilToon.URP.Extensions.Shadows
 
                 var product = frameData.GetOrCreate<HoNativeMainShadowFrameData>();
                 product.Visibility = output;
+                product.SurfaceDepth = depth;
                 product.CameraInstanceId = frameData.Get<UniversalCameraData>().camera.GetInstanceID();
             }
         }
