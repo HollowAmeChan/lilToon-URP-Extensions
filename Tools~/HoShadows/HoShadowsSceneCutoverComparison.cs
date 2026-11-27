@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using HoShader.ClothURP.Editor;
 using HoShader.EffectURP.Editor;
@@ -23,6 +24,7 @@ public static class HoShadowsSceneCutoverComparison
     private const int Width = 640;
     private const int Height = 360;
     private const string RendererPath = "Assets/Settings/PC_Renderer.asset";
+    private const string PipelinePath = "Assets/Settings/PC_RPAsset.asset";
     private static readonly string[] Scenes =
     {
         "Assets/00动画/角色/羽啾/羽啾.unity",
@@ -55,6 +57,7 @@ public static class HoShadowsSceneCutoverComparison
     [Serializable] private sealed class SceneCase
     {
         public string scene, camera;
+        public string legacyRenderer, managedRenderer;
         public bool reframedSubject;
         public Vector3 cameraPosition;
         public float fieldOfView;
@@ -79,7 +82,8 @@ public static class HoShadowsSceneCutoverComparison
     [Serializable] private sealed class Report
     {
         public string unity, graphics, error, migrationPlan;
-        public bool finished, authoredEffects;
+        public bool finished, authoredEffects, shaderOptimizationDisabled;
+        public int candidateDefaultIndex = -1;
         public List<SceneCase> scenes = new();
     }
 
@@ -88,9 +92,13 @@ public static class HoShadowsSceneCutoverComparison
         string output = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_OUTPUT");
         if (!Directory.Exists(output) || File.Exists(Path.Combine(output, "scene-cutover.json")))
             throw new InvalidOperationException("A fresh output directory is required.");
-        string backup = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_PILOT_OUTPUT");
-        if (!Directory.Exists(backup) || Directory.EnumerateFileSystemEntries(backup).Any())
-            throw new InvalidOperationException("An empty backup directory is required for the pilot cutover.");
+        string preparedDefault = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_CANDIDATE_DEFAULT_INDEX");
+        if (string.IsNullOrEmpty(preparedDefault))
+        {
+            string backup = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_PILOT_OUTPUT");
+            if (!Directory.Exists(backup) || Directory.EnumerateFileSystemEntries(backup).Any())
+                throw new InvalidOperationException("An empty backup directory is required for the pilot cutover.");
+        }
         string project = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_PILOT_PROJECT");
         if (!string.Equals(Application.dataPath.Replace('\\', '/'), project?.Replace('\\', '/').TrimEnd('/') + "/Assets",
             StringComparison.OrdinalIgnoreCase) || !Application.dataPath.Replace('\\', '/').StartsWith("D:/Temp/HoShadows-P5-"))
@@ -100,8 +108,12 @@ public static class HoShadowsSceneCutoverComparison
         {
             unity = Application.unityVersion, graphics = SystemInfo.graphicsDeviceType.ToString(),
             authoredEffects = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_AUTHORED") == "1",
+            shaderOptimizationDisabled = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_NO_SHADER_OPT") == "1",
             migrationPlan = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_PLAN")
         };
+        if (!string.IsNullOrEmpty(preparedDefault)
+            && (!int.TryParse(preparedDefault, out report.candidateDefaultIndex) || report.candidateDefaultIndex <= 0))
+            throw new InvalidOperationException("Use a positive index for an installed default candidate renderer.");
         string filter = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_FILTER");
         string selectedScene = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_SCENE");
         if (!string.IsNullOrWhiteSpace(selectedScene) && (!selectedScene.StartsWith("Assets/", StringComparison.Ordinal)
@@ -109,15 +121,18 @@ public static class HoShadowsSceneCutoverComparison
             throw new InvalidOperationException("Use the saved scene's project-relative asset path.");
         var comparisonScenes = string.IsNullOrWhiteSpace(selectedScene) ? Scenes : new[] { selectedScene };
         var rows = new List<(string path, SceneCase row, Color[] legacy, Color[] repeat)>();
+        bool previousOptimizationDisabled = ShaderUtil.disableShaderOptimization;
         try
         {
+            if (report.shaderOptimizationDisabled) ShaderUtil.disableShaderOptimization = true;
+            report.shaderOptimizationDisabled = ShaderUtil.disableShaderOptimization;
             var fullCandidates = ReadFullCandidates(report.migrationPlan);
             foreach (string path in comparisonScenes.Where(path => string.IsNullOrWhiteSpace(filter) || path.Contains(filter)))
             {
                 var row = new SceneCase { scene = path };
                 report.scenes.Add(row);
-                var first = Render(path, row, output, "legacy", 0, report.authoredEffects, fullCandidates, out float milliseconds);
-                var second = Render(path, row, output, "legacy-repeat", 0, report.authoredEffects, fullCandidates, out _);
+                var first = Render(path, row, output, "legacy", 0, report.authoredEffects, fullCandidates, out float milliseconds, report.candidateDefaultIndex);
+                var second = Render(path, row, output, "legacy-repeat", 0, report.authoredEffects, fullCandidates, out _, report.candidateDefaultIndex);
                 row.legacySubmitMilliseconds = milliseconds;
                 row.legacyPeak = first.Max(MaxRgb);
                 row.legacyScenePixels = SceneSignalPixels(first);
@@ -127,13 +142,13 @@ public static class HoShadowsSceneCutoverComparison
 
             if (rows.Count == 0) throw new InvalidOperationException("No saved scenes match the comparison filter.");
 
-            HoShadowsPilotCutover.Run();
+            if (report.candidateDefaultIndex < 0) HoShadowsPilotCutover.Run();
 
             foreach (var entry in rows)
             {
                 var row = entry.row;
-                var first = Render(entry.path, row, output, "managed-budget4", 4, report.authoredEffects, fullCandidates, out row.managedSubmitMilliseconds);
-                var second = Render(entry.path, row, output, "managed-budget16", 16, report.authoredEffects, fullCandidates, out row.wideManagedSubmitMilliseconds);
+                var first = Render(entry.path, row, output, "managed-budget4", 4, report.authoredEffects, fullCandidates, out row.managedSubmitMilliseconds, report.candidateDefaultIndex);
+                var second = Render(entry.path, row, output, "managed-budget16", 16, report.authoredEffects, fullCandidates, out row.wideManagedSubmitMilliseconds, report.candidateDefaultIndex);
                 double sum = 0;
                 double sumWide = 0;
                 for (int index = 0; index < first.Length; index++)
@@ -160,7 +175,7 @@ public static class HoShadowsSceneCutoverComparison
                     foreach (string arm in new[] { "producer-only", "core-only", "hair-only", "effect-only", "disable-character", "disable-capture" })
                     {
                         var sample = new SceneCase();
-                        var image = Render(entry.path, sample, output, arm, 4, report.authoredEffects, fullCandidates, out _, arm);
+                        var image = Render(entry.path, sample, output, arm, 4, report.authoredEffects, fullCandidates, out _, report.candidateDefaultIndex, arm);
                         var result = new IsolationCase { arm = arm, previewMaterials = sample.previewMaterials };
                         for (int index = 0; index < image.Length; index++)
                         {
@@ -182,7 +197,11 @@ public static class HoShadowsSceneCutoverComparison
             report.error = error.ToString();
             throw;
         }
-        finally { File.WriteAllText(Path.Combine(output, "scene-cutover.json"), JsonUtility.ToJson(report, true)); }
+        finally
+        {
+            ShaderUtil.disableShaderOptimization = previousOptimizationDisabled;
+            File.WriteAllText(Path.Combine(output, "scene-cutover.json"), JsonUtility.ToJson(report, true));
+        }
     }
 
     private static Dictionary<string, string> ReadFullCandidates(string filename)
@@ -202,8 +221,31 @@ public static class HoShadowsSceneCutoverComparison
         return result;
     }
 
+    private static UniversalRendererData RendererForArm(UniversalAdditionalCameraData cameraData, bool useCandidate, int candidateDefaultIndex)
+    {
+        if (candidateDefaultIndex < 0) return AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
+
+        var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelinePath);
+        if (pipeline == null || new SerializedObject(pipeline).FindProperty("m_DefaultRendererIndex").intValue != candidateDefaultIndex
+            || candidateDefaultIndex >= pipeline.rendererDataList.Length || UniversalRenderPipeline.asset != pipeline)
+            throw new InvalidOperationException("The isolated pipeline is not using the installed default renderer index.");
+        if (new SerializedObject(cameraData).FindProperty("m_RendererIndex").intValue != -1)
+            throw new InvalidOperationException("Select a saved camera that uses the pipeline default renderer.");
+
+        int index = useCandidate ? candidateDefaultIndex : 0;
+        if (!useCandidate) cameraData.SetRenderer(0);
+        if (cameraData.scriptableRenderer != pipeline.GetRenderer(index)
+            || pipeline.rendererDataList[index] is not UniversalRendererData renderer)
+            throw new InvalidOperationException("The camera did not resolve the expected renderer.");
+
+        var unified = renderer.rendererFeatures.OfType<HoShadowsRendererFeature>().SingleOrDefault(item => item.isActive);
+        if (useCandidate ? unified == null || unified.RayTracedShadowsEnabled : unified != null || AssetDatabase.GetAssetPath(renderer) != RendererPath)
+            throw new InvalidOperationException("The installed renderers must provide the legacy and RT-off managed arms.");
+        return renderer;
+    }
+
     private static Color[] Render(string path, SceneCase item, string output, string label, int budget, bool authoredEffects,
-        Dictionary<string, string> fullCandidates, out float milliseconds, string isolation = null)
+        Dictionary<string, string> fullCandidates, out float milliseconds, int candidateDefaultIndex, string isolation = null)
     {
         Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
         Camera camera = Camera.main;
@@ -225,7 +267,9 @@ public static class HoShadowsSceneCutoverComparison
             cameraData.renderPostProcessing = false;
             cameraData.antialiasing = AntialiasingMode.None;
         }
-        var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
+        var renderer = RendererForArm(cameraData, budget > 0, candidateDefaultIndex);
+        if (budget > 0) item.managedRenderer = AssetDatabase.GetAssetPath(renderer);
+        else item.legacyRenderer = AssetDatabase.GetAssetPath(renderer);
         var debugHud = renderer.rendererFeatures.OfType<HoDebugTileRendererFeature>().SingleOrDefault();
         bool hudActive = debugHud != null && debugHud.isActive;
         if (hudActive) debugHud.SetActive(false);
@@ -240,6 +284,10 @@ public static class HoShadowsSceneCutoverComparison
         var capture = renderer.rendererFeatures.OfType<HoCharacterSpecializationRendererFeature>().SingleOrDefault();
         bool previousCharacter = managed != null && managed.ManagedCharacterShadowsEnabled;
         bool previousCapture = capture != null && capture.CaptureShadowInputsEnabled;
+        var budgetField = managed != null && budget > 0
+            ? typeof(HoShadowsRendererFeature).GetField("additionalLightBudget", BindingFlags.Instance | BindingFlags.NonPublic)
+            : null;
+        int previousBudget = budgetField != null ? (int)budgetField.GetValue(managed) : 0;
         bool previewTransparentHair = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_HAIR_TRANSPARENT") == "1";
         bool previewTransparentCloth = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_CLOTH_TRANSPARENT") == "1";
         bool previewEarlyEye = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_EYE_EARLY") == "1";
@@ -255,10 +303,10 @@ public static class HoShadowsSceneCutoverComparison
             }
             else
             {
-                if (managed == null || !managed.isActive) throw new InvalidOperationException("Missing managed renderer shadow feature.");
-                var state = new SerializedObject(managed);
-                state.FindProperty("additionalLightBudget").intValue = budget;
-                state.ApplyModifiedPropertiesWithoutUndo();
+                if (managed == null || !managed.isActive || budgetField == null)
+                    throw new InvalidOperationException("Missing managed renderer shadow feature or light budget.");
+                // This probe changes the live field without dirtying the saved renderer asset.
+                budgetField.SetValue(managed, budget);
                 if (isolation == "disable-character") managed.ManagedCharacterShadowsEnabled = false;
                 if (isolation == "disable-capture" && capture != null) capture.CaptureShadowInputsEnabled = false;
 
@@ -352,6 +400,7 @@ public static class HoShadowsSceneCutoverComparison
         }
         finally
         {
+            budgetField?.SetValue(managed, previousBudget);
             if (hudActive) debugHud.SetActive(true);
             if (planarActive) planar.SetActive(true);
             if (isolation == "disable-character" && managed != null) managed.ManagedCharacterShadowsEnabled = previousCharacter;
@@ -361,6 +410,7 @@ public static class HoShadowsSceneCutoverComparison
             foreach (Material preview in previews.Values)
                 UnityEngine.Object.DestroyImmediate(preview);
         }
+
     }
 
     private static Color[] Read(Camera camera, string filename, bool authoredEffects, out float elapsed)
