@@ -128,6 +128,8 @@ New-Item -ItemType Directory -Path $env:HO_SHADOWS_WARMUP_OUTPUT
 
 沿用主仓库的 Cloth 深度状态修复后，在同一羽啾快照的 `30114` 个稳定角色像素中，超过 `0.01` 的旧／受管差异由 `3984` 降至 `1862`，平均差由 `0.01273` 降至 `0.00488`。原差异区域有 `3811` 个像素恢复 SurfaceBuffer 与 Character owner 的精确匹配。修复后剩余的 `1862` 个差异像素中，`1689` 个具有匹配 owner 及相同的原始相机／SurfaceBuffer 深度；`1837` 个位于旧图的强 RGB 边缘两像素内，边缘范围外最大差为 `0.03516`。旧式盘形 PCF 和固定 PCF 的差异、屏幕端邻域梯度，以及剩余 `173` 个缺 owner 像素仍需分开验证。58 份原始材质文件的 SHA-256 前后一致。
 
+在私有诊断包中，将受管解析的固定核换为旧盘形 PCF，继续关闭 blocker search，并保留同一屏幕世界坐标、边界权重和邻域梯度。在 `30107` 个共同稳定的角色像素中，超过 `0.01` 的差异从 `1857` 降至 `1475`，平均差从 `0.00487` 降至 `0.00295`。两个受管版本的原始相机／SurfaceBuffer 深度和打包 owner 逐像素一致。该对照确认滤波核贡献了一部分边缘差异，剩余差异仍待定位。发布路径继续使用固定 PCF。数据见 `resource-kernel-comparison.json`。
+
 ## 逐 Pass GPU 时间
 
 在已完成隔离试切、附加灯预算为 `4`、托管 RT 关闭的工程内，复制 `HoShadowsSceneGpuProfile.cs` 到 `Assets/Editor`。使用 Unity 6000.3.15f1 图形模式运行，保持同一 GPU 和分辨率。入口用 Editor update 每次提交一个请求，采集延迟返回的 GPU 记录。省略 `-quit`，入口会在采样结束后退出。
