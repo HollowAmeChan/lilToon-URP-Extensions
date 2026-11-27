@@ -98,7 +98,7 @@ public static class HoMmdStageLighting
         var env=root.GetComponentInChildren<HoMmdStageEnvironment>();
         var camera=root.GetComponentInChildren<Camera>();
         var profile=root.GetComponentInChildren<Volume>().sharedProfile;
-        var renderer=HoMmdStageBuilder.ResolveRenderer(folder);
+        var renderer=HoMmdSharedRenderAssets.RendererForCamera(env.pipeline,camera)??HoMmdStageBuilder.ResolveRenderer(folder);
         env.ambientSky=look.ambient;env.ambientEquator=look.ambient*.55f;env.ambientGround=look.ambient*.25f;
         env.ambientIntensity=look.ambientIntensity;env.sun.color=look.sun;env.sun.intensity=look.sunPower;
         env.sun.transform.rotation=Quaternion.Euler(look.sunAngles);env.sun.shadowStrength=1;

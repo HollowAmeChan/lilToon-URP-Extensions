@@ -60,6 +60,28 @@ public static class HoMmdSharedRenderAssets
     internal static HoShadowCastRendererFeature LegacyShadowCast(UniversalRendererData renderer) =>
         renderer == null || ActiveHoShadows(renderer) != null ? null : renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().FirstOrDefault();
 
+    internal static UniversalRendererData RendererForCamera(UniversalRenderPipelineAsset pipeline, Camera camera)
+    {
+        if (pipeline == null) return null;
+
+        var pipelineObject = new SerializedObject(pipeline);
+        var renderers = pipelineObject.FindProperty("m_RendererDataList");
+        var defaultIndex = pipelineObject.FindProperty("m_DefaultRendererIndex");
+        if (renderers == null || defaultIndex == null) return null;
+
+        Object RendererAt(int index) => index >= 0 && index < renderers.arraySize
+            ? renderers.GetArrayElementAtIndex(index).objectReferenceValue : null;
+
+        if (camera != null && camera.TryGetComponent<UniversalAdditionalCameraData>(out var data))
+        {
+            var cameraIndex = new SerializedObject(data).FindProperty("m_RendererIndex");
+            var selected = cameraIndex != null ? RendererAt(cameraIndex.intValue) : null;
+            if (selected != null) return selected as UniversalRendererData;
+        }
+
+        return RendererAt(defaultIndex.intValue) as UniversalRendererData;
+    }
+
     static bool IsLegacyShadowProducer(Type type) =>
         type == typeof(HoShadowCastRendererFeature) || type == typeof(HoCharacterShadowRendererFeature) ||
         type == typeof(HoRTShadowRendererFeature);

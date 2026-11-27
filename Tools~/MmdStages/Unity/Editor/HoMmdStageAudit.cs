@@ -11,6 +11,7 @@ using UnityEngine.SceneManagement;
 using Hollow.HoMmdStages;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.CharacterSpecialization;
+using lilToon.URP.Extensions.GeometryData;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.OIT;
@@ -19,6 +20,9 @@ using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.SurfaceBuffer;
 using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI;
+using lilToon.URP.Extensions.RTShadow;
+using lilToon.URP.Extensions.CharacterShadow;
+using lilToon.URP.Extensions.Shadows;
 using lilToon.URP.Extensions.PlanarReflection;
 
 public static class HoMmdStageAudit
@@ -43,10 +47,10 @@ public static class HoMmdStageAudit
                 var env=roots.SelectMany(x=>x.GetComponentsInChildren<HoMmdStageEnvironment>()).Single();
                 var camera=roots.SelectMany(x=>x.GetComponentsInChildren<Camera>()).FirstOrDefault();
                 var profile=roots.SelectMany(x=>x.GetComponentsInChildren<Volume>()).Single().sharedProfile;
-                var renderer=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
-                if(renderer==null)renderer=RendererFromPipeline(env.pipeline);
+                var renderer=HoMmdSharedRenderAssets.RendererForCamera(env.pipeline,camera);
                 string rendererPath=renderer!=null?AssetDatabase.GetAssetPath(renderer):string.Empty;
-                bool sharedRenderAssets=env.pipeline!=null&&AssetDatabase.GetAssetPath(env.pipeline)=="Assets/Settings/PC_RPAsset.asset"&&rendererPath=="Assets/Settings/PC_Renderer.asset";
+                bool sharedRenderAssets=renderer!=null&&AssetDatabase.GetAssetPath(env.pipeline)==HoMmdSharedRenderAssets.PipelinePath&&
+                    rendererPath.StartsWith(HoMmdSharedRenderAssets.Root,StringComparison.Ordinal);
                 var invalid=AssetDatabase.GetDependencies(path,true).Where(x=>
                     (x.StartsWith("Assets/00动画/MMD场景/")&&!x.StartsWith(folder+"/")&&!x.StartsWith("Assets/00动画/MMD场景/_制作工具/"))||
                     (x=="Assets/Settings/PC_Renderer.asset"||x=="Assets/Settings/PC_RPAsset.asset")&&!sharedRenderAssets).ToArray();
@@ -122,18 +126,16 @@ public static class HoMmdStageAudit
                 if(recipe.name=="圣诞万花镜")
                 {
                     if(lowPoints!=12)errors.Add(recipe.name+": low point fill audit failed");
-                    if(unified!=null)
-                    {
-                        if(env.pipeline==null||!env.pipeline.supportsAdditionalLightShadows)
-                            errors.Add(recipe.name+": native additional shadows are disabled on the stage pipeline");
-                    }
-                    else
+                    if(unified==null)
                     {
                         var legacy=renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().ToArray();
                         if(legacy.Length!=1||(int)legacy[0].Settings.lightCapacity<(int)HoShadowCastLightCapacity.Medium)
                             errors.Add(recipe.name+": legacy shadow capacity audit failed");
                     }
                 }
+                if(unified!=null&&(!env.pipeline.supportsMainLightShadows||!env.pipeline.supportsAdditionalLightShadows||
+                    env.pipeline.additionalLightsRenderingMode!=LightRenderingMode.PerPixel))
+                    errors.Add(recipe.name+": native main and per-pixel additional shadows must be enabled");
                 if(audit.aoArtMaterials!=audit.aoEligibleMaterials||audit.plrSurfaces<1)
                     errors.Add(recipe.name+": AO art / all-floor PLR audit failed");
                 if(File.Exists(folder+"/Rendering/细节灯光.json")&&(audit.reviewCameras!=3||audit.centerPostLighting))
@@ -161,13 +163,6 @@ public static class HoMmdStageAudit
         }
         catch(Exception e){Debug.LogException(e);EditorApplication.Exit(1);}
     }
-    static UniversalRendererData RendererFromPipeline(UniversalRenderPipelineAsset pipeline)
-    {
-        if(pipeline==null)return null;
-        var so=new SerializedObject(pipeline);var list=so.FindProperty("m_RendererDataList");
-        if(list==null||list.arraySize==0)return null;
-        return list.GetArrayElementAtIndex(0).objectReferenceValue as UniversalRendererData;
-    }
     static bool CheckFeatureOrder(UniversalRendererData renderer,out bool disabledPresent)
     {
         var actual=renderer.rendererFeatures.Where(x=>x!=null).ToArray();
@@ -180,7 +175,10 @@ public static class HoMmdStageAudit
             int IndexOfActive<T>() where T : ScriptableRendererFeature => Array.FindIndex(actual,x=>x is T&&x.isActive);
             bool Before(int index) => index>=0&&index<shadowIndex;
             bool AfterIfPresent(int index) => index<0||index>shadowIndex;
-            return Before(IndexOfActive<HoGeometryBufferRendererFeature>())&&Before(IndexOfActive<HoObjectBufferRendererFeature>())&&
+            return actual.OfType<HoShadowsRendererFeature>().Count(x=>x.isActive)==1&&
+                IndexOfActive<HoShadowCastRendererFeature>()<0&&IndexOfActive<HoCharacterShadowRendererFeature>()<0&&
+                IndexOfActive<HoRTShadowRendererFeature>()<0&&Before(IndexOfActive<HoGeometryDataRendererFeature>())&&
+                Before(IndexOfActive<HoGeometryBufferRendererFeature>())&&Before(IndexOfActive<HoObjectBufferRendererFeature>())&&
                 Before(IndexOfActive<HoSurfaceBufferRendererFeature>())&&
                 (!unified.RayTracedShadowsEnabled||Before(IndexOfActive<HoRTRendererFeature>()))&&
                 AfterIfPresent(IndexOfActive<WeightedOITRendererFeature>())&&AfterIfPresent(IndexOfActive<HoCharacterSpecializationRendererFeature>());
