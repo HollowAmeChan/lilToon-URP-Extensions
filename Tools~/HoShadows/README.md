@@ -28,7 +28,7 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 `
   -nographics -executeMethod HoShadowsPilotCutover.Run
 ```
 
-试切开启托管角色图集、透明 Eye、加权 OIT 和 Capture 输入，并关闭 RT。旧 Feature 作为原 Renderer subasset 留存并停用。角色图集沿用旧分辨率、容量和深度／法线偏移，滤波使用托管路径的 PCF。统一 Feature 插在原有输入生产端之后、Capture 和 OIT 之前。旧 RT 已绑定的 ray tracing 程序、命中材质、重建程序及有序 SIGMA pass 引用直接复制到统一 Feature，为具名镜头后续验证 opt-in 留存 Player 资源引用。材质和默认 Volume 保持原样，镜头测试可按 dry-run 清单选取。
+试切开启托管角色图集、透明 Eye、加权 OIT 和 Capture 输入，并关闭 RT。旧 Feature 停用并从候选 Renderer 的 Feature 列表和索引映射移出。序列化子资产留在副本中供比对。角色图集沿用旧分辨率、容量和深度／法线偏移，滤波使用托管路径的 PCF。统一 Feature 插在原有输入生产端之后、Capture 和 OIT 之前。旧 RT 已绑定的 ray tracing 程序、命中材质、重建程序及有序 SIGMA pass 引用直接复制到统一 Feature，为具名镜头后续验证 opt-in 留存 Player 资源引用。材质和默认 Volume 保持原样，镜头测试可按 dry-run 清单选取。
 
 设 `HO_SHADOWS_P5_PILOT_EARLY_TRANSPARENT=1` 可在试用 Renderer 启用不透明队列里透明接收面的独立两层解析。它使用相机和 Renderer 的不透明层交集，只读已准备的深度。该路径要求 Forward 或 Forward+、关闭 Depth Priming，以及相机内一致的预写和不透明层遮罩。
 
@@ -85,6 +85,8 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 独立的早队列预览在 D3D11 Forward 和 Forward+ 各通过 12 个相机样本。`2000`、`2400` 与 `3000` 可在同像素混合，跨队列共享 owner 时仍按各自深度和阶段匹配。仅改变早队列 owner、仅改变晚队列 owner 及停用早队列解析都只影响对应像素通道。关闭灯影后启用预览，整帧 RGB 与原绘制一致。D3D12 的 Eye 与 Weighted OIT 六个组合回归和早队列改动前逐像素一致。Rendering Layers MRT 分支尚缺独立 GPU 验收。生产盘点仍为 7 份 `2000`、1 份 `2400` 与 1 份 `3000`，实际镜头中的材质、owner、首帧和相机设置仍需复查。
 
+HoShader `6bcb86f` 的普通透明 Cloth 在 Forward+／D3D11 通过 8 个样本，覆盖 `2000`、`2450`、`3000` 队列、遮罩开孔与早晚 owner 的独立回退。关闭灯影后，新旧正向绘制的整帧最大 RGB 差为 `0`。编译检查确认正向早队列、常规透明和 OIT 使用对应的分层输入。HoShader `2de18c0` 的早队列 Eye 通过 5 个样本，覆盖 `2000` 队列写深度的前层、`2500` 队列后层、`Coverage R` 开孔和不透明遮挡。底图 A 继续保留原有的 AO 用途。GPU 夹具位于各包的 `Tests~`。
+
 ### 冷缓存异步预热
 
 复制 `HoShadowsAsyncSceneWarmup.cs` 到物理副本的 `Assets/Editor`。此入口按 Editor update 提交原生相机栈，等待着色器编译队列空闲后复查两张有场景内容的渲染结果。它临时关闭实际相机 Renderer 上的性能 HUD，记录进度、提交耗时和稳定性。达到截止时间时会保留报告，待编译完成的占位画面不会被保存为基线。
@@ -117,6 +119,8 @@ New-Item -ItemType Directory -Path $env:HO_SHADOWS_WARMUP_OUTPUT
 恢复后的同一 Editor 对照使用原始材质和不保存的预览副本，关闭 TAA 并保留相同 Volume 和编译诊断设置。退出后 58 个 `.mat` 的 SHA-256 均与运行前一致，序列化预览项仍为 `0`。样点 `(303,206)` 两侧 RGB 完全一致。在 `230292` 个稳定像素中，`4416` 个差异超过 `0.01`，其中 `4277` 个属于角色信号，稳定区域平均最大 RGB 分量差为 `0.001796`。这组数据作为后续差异定位的参考。
 
 用相同快照进一步拆分时，Cloth／Environment 组在 `4265` 个可比较的角色残差像素中复现 `3984` 个，容差 `0.01`。单独预览 Cloth 后，与 Cloth／Environment 组只剩 `4` 个稳定角色像素差异超过 `0.01`。关闭两侧角色阴影后，旧路径与受管 Cloth 的角色差异从 `3984` 降至 `173` 个。受管侧仍能发布一张角色图块。源码定位到旧版 Cloth 的 SurfaceBuffer Pass 使用 `ZWrite Off` 和 `ZTest Equal`，而对应 RenderGraph Pass 绑定刚清空的独立深度附件。该状态会漏掉 Cloth 深度和 owner。主仓库的修复恢复最近表面的深度和 owner 写入，后续以该版本重新核对真实镜头。
+
+沿用主仓库的 Cloth 深度状态修复后，在同一羽啾快照的 `30114` 个稳定角色像素中，超过 `0.01` 的旧／受管差异由 `3984` 降至 `1862`，平均差由 `0.01273` 降至 `0.00488`。原差异区域有 `3811` 个像素恢复 SurfaceBuffer 与 Character owner 的精确匹配。修复后剩余的 `1862` 个差异像素中，`1689` 个具有匹配 owner 及相同的原始相机／SurfaceBuffer 深度；`1837` 个位于旧图的强 RGB 边缘两像素内，边缘范围外最大差为 `0.03516`。旧式盘形 PCF 和固定 PCF 的差异、屏幕端邻域梯度，以及剩余 `173` 个缺 owner 像素仍需分开验证。58 份原始材质文件的 SHA-256 前后一致。
 
 ## 逐 Pass GPU 时间
 

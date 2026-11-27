@@ -137,6 +137,9 @@ public static class HoShadowsPilotCutover
 
         if (unified != null)
             features.Remove(unified);
+        var retiredFeatures = new ScriptableRendererFeature[] { cast, oldCharacter, oldRt };
+        foreach (var retired in retiredFeatures)
+            features.Remove(retired);
         int insertion = Math.Min(features.IndexOf(capture), features.IndexOf(oit));
         foreach (var input in new ScriptableRendererFeature[] {
             Find<HoRTRendererFeature>(features), Find<HoGeometryBufferRendererFeature>(features),
@@ -172,7 +175,7 @@ public static class HoShadowsPilotCutover
         report.rayTracedResources = CopyRayPrograms(oldRt, unified);
 
         capture.CaptureShadowInputsEnabled = true;
-        foreach (var retired in new ScriptableRendererFeature[] { cast, oldCharacter, oldRt })
+        foreach (var retired in retiredFeatures)
             retired.SetActive(false);
 
         features.Insert(insertion, unified);
