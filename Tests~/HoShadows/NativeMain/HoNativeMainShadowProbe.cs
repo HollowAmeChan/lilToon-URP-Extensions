@@ -144,6 +144,12 @@ public static class HoNativeMainShadowProbe
             Require(again.shadowed == soft.shadowed && again.partial == soft.partial,
                 "Camera changes must not change the first camera's restored results.");
 
+            cameraB.cameraType = CameraType.SceneView;
+            Sample(report, probe, cameraB, "scene-view-resolve", 208, 160, true, 1);
+            cameraB.cameraType = CameraType.Reflection;
+            Sample(report, probe, cameraB, "reflection-camera-resolve", 208, 160, true, 1);
+            cameraB.cameraType = CameraType.Game;
+
             pipeline.shadowCascadeCount = 4;
             var cameraC = MakeCamera(root, "Perspective cascades", new Vector3(0, 0, -6));
             cameraC.orthographic = false;

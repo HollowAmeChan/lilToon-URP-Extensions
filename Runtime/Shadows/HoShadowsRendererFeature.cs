@@ -217,11 +217,14 @@ namespace lilToon.URP.Extensions.Shadows
         {
             var camera = cameraData.camera;
             return renderer is UniversalRenderer && camera != null
-                && cameraData.cameraType == CameraType.Game && cameraData.renderType == CameraRenderType.Base
+                && IsSurfaceCamera(cameraData.cameraType) && cameraData.renderType == CameraRenderType.Base
                 && !cameraData.xrRendering && cameraData.cameraTargetDescriptor.msaaSamples <= 1
                 && !camera.allowDynamicResolution && camera.rect == new Rect(0, 0, 1, 1)
                 && !UniversalRenderer.IsOffscreenDepthTexture(ref cameraData);
         }
+
+        private static bool IsSurfaceCamera(CameraType type) =>
+            type == CameraType.Game || type == CameraType.SceneView || type == CameraType.Reflection;
 
         private void ReleaseRayTracedShadows()
         {
