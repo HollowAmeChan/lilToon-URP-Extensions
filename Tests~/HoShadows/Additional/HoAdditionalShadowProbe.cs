@@ -143,6 +143,16 @@ public static class HoAdditionalShadowProbe
             Require(hard.point.shaderIndex != hard.spot.shaderIndex && hard.point.screenSlot != hard.spot.screenSlot,
                 "Two native lights need distinct source indices and output slots.");
 
+            bool firstIsPoint = hard.point.metadataRank < hard.spot.metadataRank;
+            SetBudget(feature, 1);
+            var limited = Sample(report, probe, cameraA, mode, "budget-one-native-atlas-still-has-both-lights", 2,
+                firstIsPoint, !firstIsPoint);
+            Require((firstIsPoint ? limited.point.screenSlot : limited.spot.screenSlot) == 0,
+                "The first eligible native light must occupy the only screen slot.");
+            SetBudget(feature, 0);
+            Sample(report, probe, cameraA, mode, "budget-zero-no-screen-output", 2, false, false);
+            SetBudget(feature, 4);
+
             spot.shadows = LightShadows.Soft;
             spot.shadowStrength = .65f;
             var soft = Sample(report, probe, cameraB, mode, "pcf-and-shadow-strength-second-camera", 2, true, true);
@@ -188,6 +198,13 @@ public static class HoAdditionalShadowProbe
             Object.DestroyImmediate(probe);
             Object.DestroyImmediate(feature);
         }
+    }
+
+    static void SetBudget(HoShadowsRendererFeature feature, int lightCount)
+    {
+        var serialized = new SerializedObject(feature);
+        serialized.FindProperty("additionalLightBudget").intValue = lightCount;
+        serialized.ApplyModifiedPropertiesWithoutUndo();
     }
 
     static Light MakeLight(Transform root, LightType type, Vector3 position, Color color)
