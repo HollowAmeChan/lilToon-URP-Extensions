@@ -67,6 +67,8 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 两个物理项目的冷缓存仍未完成旧路径首帧。羽啾重新取景后在旧路径首帧触发 `360 s` 超时，Hiro 冻结包快照在同一步触发 `900 s` 超时。两次均未写出可用于画面对照的 EXR。Hiro 的七份候选材质已和盘点逐项核对 SHA-256，真实镜头的转 Full 验收仍未完成。
 
+标准透明队列的 Hair 实验读回了正确的两层 renderer owner 和深度，也在 Forward 中读到了有效的原始可见度。正常的 Hair 阴影响应仍未拉开明暗，下一步单独验证 `_UseShadow` 与 `_ReceiveShadowStrength` 的片元输入。生产 Hair 透明材质继续使用原路径。早队列需要独立的前层调度验证，标准透明的结果无法覆盖它们。
+
 ## 逐 Pass GPU 时间
 
 在已完成隔离试切、附加灯预算为 `4`、托管 RT 关闭的工程内，复制 `HoShadowsSceneGpuProfile.cs` 到 `Assets/Editor`。使用 Unity 6000.3.15f1 图形模式运行，保持同一 GPU 和分辨率。入口用 Editor update 每次提交一个请求，采集延迟返回的 GPU 记录。省略 `-quit`，入口会在采样结束后退出。
