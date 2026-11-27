@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.Shadows
     internal sealed class HoTransparentShadowSurfacePass : ScriptableRenderPass
     {
         private static readonly ShaderTagId ReceiverTag = new("HoEyeShadowReceiver");
+        private static readonly ShaderTagId StandardReceiverTag = new("HoTransparentShadowReceiver");
         private static readonly int OpaqueDepthId = Shader.PropertyToID("_HoShadowReceiverOpaqueDepth");
         private static readonly int PreviousLayerId = Shader.PropertyToID("_HoShadowReceiverPreviousLayer");
         private static readonly int PeelId = Shader.PropertyToID("_HoShadowReceiverPeel");
@@ -79,6 +80,8 @@ namespace lilToon.URP.Extensions.Shadows
             var rendering = frameData.Get<UniversalRenderingData>();
             var lights = frameData.Get<UniversalLightData>();
             var drawing = RenderingUtils.CreateDrawingSettings(tag, rendering, camera, lights, SortingCriteria.CommonOpaque);
+            if (!weightedOit)
+                drawing.SetShaderPassName(1, StandardReceiverTag);
             var renderers = new RendererListParams(rendering.cullResults, drawing, filtering);
             first = RecordLayer(graph, raster, opaque, graph.CreateRendererList(renderers), TextureHandle.nullHandle,
                 weightedOit, weight, alphaClip, queueRange);
