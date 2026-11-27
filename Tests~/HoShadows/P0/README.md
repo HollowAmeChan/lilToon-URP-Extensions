@@ -30,6 +30,17 @@
 
 D3D11 和 D3D12 对应的 18 对线性 EXR 与 18 对 PNG 各自哈希相同。全部关闭重放都回到同一画面。诊断确认实际 RenderGraph 图集开关和原生附加灯真实开启。该证据验证了旧 Ho 图集在普通 Full 和显式 Main 角色中的影响，属于合成夹具。正式取证在 RTX 4060 上完成，入口参数通用化后的夹具已用 D3D11 重放通过。
 
+## 生产镜头的物理快照
+
+把两个已保存的场景、配置和需要的依赖复制到独立工程，在 D3D11 用场景原有 Base Camera 读回 640×360 的线性颜色。两侧均关闭平面反射、相机后处理和相机 AA，先预热两帧。镜头、灯、材质和原生附加灯阴影使用快照保存值。两组均无缺失脚本或材质。
+
+| 镜头 | 旧场景图集开启时可见灯／切片 | 开启与首次关闭的变化像素 | 两次关闭的变化像素 | 同时区别于两次关闭的稳定像素 |
+| --- | ---: | ---: | ---: | ---: |
+| 圣诞万花镜 | 256／24（无第二方向光切片） | 40 | 43 | 13 |
+| 羽啾 | 1／0 | 0 | 0 | 0 |
+
+圣诞万花镜的两种差值最大均为 `0.00390625`。URP 手动对照日志另外记录原生图集把 157 个投影请求的分辨率缩为四分之一，以装进 4096×4096 的 atlas。当前快照的颜色变化与关闭重放噪声同量级，应在生产验收时继续使用该镜头检查多灯和预算。羽啾当前快照只验证旧场景图集关闭；探针未观测到角色或 RT 的工作结果。已保存的原始效果组合曾在第一次无隔离调整的多灯捕获中超时，仍留作 P5 的真实镜头验收条件。
+
 ## 重放方式
 
 在独立线性 Unity 工程安装当前 HoURP、lilToon-URP-Extensions、Environment_URP 和其 Inspector 依赖。复制 [HoShadowCastP0Probe.cs](HoShadowCastP0Probe.cs) 到该工程的 `Assets/Editor`。分别配置实际物理工程目录与新的输出目录，再启动 Unity CLI。
@@ -44,3 +55,19 @@ unity run $env:HO_SHADOWS_P0_PROJECT --editor-version 6000.3.15f1 --timeout 240 
 ```
 
 D3D12 使用另一输出目录并换用 `-force-d3d12`。`render-ab.json` 保留逐对统计、灯和图集信息，以及对应 EXR／PNG 名称。当前生产资产不参与该夹具。
+
+复跑真实镜头快照时，复制 [HoShadowCastP0SceneProbe.cs](HoShadowCastP0SceneProbe.cs) 到该物理快照的 `Assets/Editor`。快照应接入当前取证版本的旧 Renderer、依赖和两个同相对路径的场景。
+
+```powershell
+$env:HO_SHADOWS_P0_SCENE_PROJECT = 'D:/Temp/HoShadowsSceneSnapshot'
+$env:HO_SHADOWS_P0_SCENE_OUT = 'D:/Temp/HoShadowsSceneBaselineD3D11'
+$env:HO_SHADOWS_P0_SKIP_PLANAR = '1'
+$env:HO_SHADOWS_P0_NO_CAMERA_POST = '1'
+$env:HO_SHADOWS_P0_WARMUP = '2'
+New-Item -ItemType Directory -Path $env:HO_SHADOWS_P0_SCENE_OUT -Force | Out-Null
+unity run $env:HO_SHADOWS_P0_SCENE_PROJECT --editor-version 6000.3.15f1 --timeout 240 --no-tail `
+  --log-file "$env:HO_SHADOWS_P0_SCENE_OUT/unity.log" -- -force-d3d11 `
+  --burst-disable-compilation -executeMethod HoShadowCastP0SceneProbe.Run
+```
+
+`scene-ab.json` 记录图集状态和关→开→关的差异。可用 `HO_SHADOWS_P0_SCENE_FILTER` 按保存的场景路径选子集。原始场景仍在 `BREAK_URP`，只在独立副本运行探针。
