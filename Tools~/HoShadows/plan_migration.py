@@ -43,7 +43,8 @@ PROPERTIES = (
     "_SurfaceMode", "_Surface", "_AlphaClip", "_UseHoOIT", "_AlphaToCoverage",
     "_TransparentHoCoverage", "_TransparentZWrite", "_HoCharacterCaptureOpacity",
     "_ReceiveShadowStrength", "_AdditionalLightStrength", "_RenderMode", "_SurfaceEnabled",
-    "_ZWrite", "_SrcBlend", "_DstBlend", "_BlendOp",
+    "_ZWrite", "_SrcBlend", "_DstBlend", "_BlendOp", "_QueueControl", "_StencilComp",
+    "_MainLightShadowStrength",
 )
 PREVIEW = "_HO_SHADOWS_SCREEN_PREVIEW"
 SYMBOLS = re.compile(
@@ -192,21 +193,38 @@ def read_materials(project, shaders):
             yield identity, record, shaders.get(shader), values, chain, warning
 
 
-def scan_assets(project, script_guids):
-    nodes, scene_info, declarations, profiles, property_overrides, stage, renderer_assets = {}, {}, [], [], [], [], []
+def scan_assets(project, script_guids, camera_guid):
+    nodes, scene_info = {}, {}
+    declarations, profiles, property_overrides, stage, renderer_assets, camera_routes = [], [], [], [], [], []
     for path in files(project, "*.unity", "*.prefab", "*.fbx.meta", "*.pmx.meta"):
         source = read(path)
         guid = GUID.search(source) if path.suffix == ".meta" else None
         identity = guid[1] if guid else guid_for(path)
         if identity:
             nodes[identity] = set(GUID.findall(source)) - {identity}
-        if path.suffix == ".unity":
-            scene_info[path.as_posix()] = scene_lights(source, identity, set(GUID.findall(source)))
+        is_scene = path.suffix == ".unity"
+        has_camera = camera_guid and camera_guid in source and path.suffix in {".unity", ".prefab"}
+        has_declarations = any(guid in source for guid in script_guids)
+        docs = list(yaml_documents(source)) if is_scene or has_camera or has_declarations else []
+        if is_scene:
+            scene_info[path.as_posix()] = scene_lights(docs, identity, set(GUID.findall(source)))
+        if has_camera:
+            objects = {local_id: block for kind, local_id, block in docs if kind == 1}
+            for kind, local_id, block in docs:
+                if kind != 114 or field_guid(block, "m_Script") != camera_guid:
+                    continue
+                game_object = objects.get(file_id(field(block, "m_GameObject")), "")
+                camera_routes.append({"path": path.as_posix(), "fileId": local_id, "name": field(game_object, "m_Name"),
+                                      "embeddedActive": field(game_object, "m_IsActive") == "1", "enabled": field(block, "m_Enabled") == "1",
+                                      "rendererIndex": int(field(block, "m_RendererIndex", default="-1")),
+                                      "cameraType": "Overlay" if field(block, "m_CameraType") == "1" else "Base",
+                                      "renderShadows": field(block, "m_RenderShadows", default="1") == "1",
+                                      "stackCameraFileIds": [file_id(value) for value in listed(block, "m_Cameras") if file_id(value)]})
         property_overrides.extend(
             {"path": path.as_posix(), "property": match[1].strip(), "line": source.count("\n", 0, match.start()) + 1}
             for match in PROPERTY_OVERRIDES.finditer(source)
         )
-        for kind, local_id, block in yaml_documents(source) if any(guid in source for guid in script_guids) else ():
+        for kind, local_id, block in docs if has_declarations else ():
             role = script_guids.get(field_guid(block, "m_Script")) if kind == 114 else None
             if role in {"castLight", "characterBounds", "rtLight", "rtReceiver", "objectGroup"}:
                 tags = [int(value) for value in re.findall(r"(?m)^    tags: (\d+)$", block)]
@@ -263,11 +281,10 @@ def scan_assets(project, script_guids):
             pending.update(nodes.get(reference, set()) - visited)
         for identity in visited:
             scenes_by_guid[identity].append(name)
-    return scene_info, scenes_by_guid, declarations, profiles, property_overrides, stage, renderer_assets
+    return scene_info, scenes_by_guid, declarations, profiles, property_overrides, stage, renderer_assets, camera_routes
 
 
-def scene_lights(source, identity, references):
-    docs = list(yaml_documents(source))
+def scene_lights(docs, identity, references):
     direct_enabled = {local_id for kind, local_id, block in docs if kind == 1 and field(block, "m_IsActive") == "1"}
     counts = Counter()
     for kind, _, block in docs:
@@ -301,8 +318,13 @@ def plan_material(identity, record, shader, saved, chain, warning, variant_paren
     queue = record["customRenderQueue"]
     special = []
     if transparent:
-        special.append("transparent_eye" if family == "Eye" else "cloth_oit" if family == "Cloth" and values.get("_UseHoOIT", 0) > .5 else "transparent")
-        if family == "Hair" and 0 <= queue <= 2500:
+        if family == "Eye":
+            special.append("transparent_eye")
+        elif family == "Cloth":
+            special.append("cloth_oit" if values.get("_UseHoOIT", 0) > .5 else "transparent_cloth_forward")
+        else:
+            special.append("transparent")
+        if 0 <= queue <= 2500:
             special.append("transparent_in_opaque_queue")
     if family == "Effect" and values.get("_SurfaceEnabled", 1) <= .5:
         special.append("outline_only")
@@ -315,8 +337,8 @@ def plan_material(identity, record, shader, saved, chain, warning, variant_paren
         action, why = "review_shader_binding", "No known active package binding for this serialized shader."
     elif "outline_only" in special:
         action, why = "hold_special_surface", "Only the Effect body pass currently has a managed preview."
-    elif "transparent_in_opaque_queue" in special:
-        action, why = "hold_special_surface", "The transparent Hair material currently draws in the opaque phase. Preserve its queue until its receiver is verified."
+    elif "transparent_in_opaque_queue" in special and active:
+        action, why = "hold_special_surface", "This blended material draws in the opaque phase. Verify its early receiver, depth state and owner while preserving the saved queue."
     elif family == "Effect" and (mode < 0 or queue > 2500 or values.get("_ZWrite", 1) <= .5
                                 or (values.get("_SrcBlend", 1), values.get("_DstBlend", 0), values.get("_BlendOp", 0)) != (1, 0, 0)):
         action, why = "hold_special_surface", "Effect body render state does not satisfy the managed opaque or cutout gate."
@@ -350,9 +372,9 @@ def renderer_plan(path, script_guids):
     root = next(block for block in docs.values() if field(block, "m_RendererFeatures") is not None)
     features = []
     actions = {
-        "unified": ("pilot", "Use once on a pilot renderer. Explicitly default rayTracedShadows and transparentEyeShadows to false."),
+        "unified": ("pilot", "Use once on a pilot renderer. Keep RT off by default and verify each enabled transparency domain."),
         "cast": ("defer_retirement", "Keep until material and special-domain comparisons pass. Retire duplicate atlas and old artistic light scope at cutover."),
-        "character": ("retain_required_producer", "The unified Character pass currently reads this producer's atlas and frame data."),
+        "character": ("move_managed_atlas_then_disable", "Transfer the atlas settings to Ho Shadows and disable the standalone producer on the candidate renderer."),
         "rt": ("move_opt_in_then_disable", "The managed provider is off by default. Preserve intentional shots and resource references before disabling this legacy producer."),
         "characterSpecialization": ("retain_and_review_capture", "Keep capture behavior. Enable new capture shadow inputs only on a validated configuration."),
         "oit": ("retain_and_review_oit", "Keep transparency composition. Validate the configured shadow layers and overflow before changing receive behavior."),
@@ -380,7 +402,9 @@ def build_plan(project, hoshader):
     if None in script_guids:
         raise ValueError("Extensions source is missing a required script GUID")
     shaders = read_shaders(project, hoshader, dependencies)
-    scenes, usage, declarations, volumes, overrides, stages, renderer_assets = scan_assets(project, script_guids)
+    urp = local_package(project, dependencies, "com.unity.render-pipelines.universal")
+    camera_guid = guid_for(urp / "Runtime/UniversalAdditionalCameraData.cs") if urp else None
+    scenes, usage, declarations, volumes, overrides, stages, renderer_assets, camera_routes = scan_assets(project, script_guids, camera_guid)
     inputs = list(read_materials(project, shaders))
     variant_parents = {parent for _, _, _, _, chain, _ in inputs for parent in chain[:-1]}
     materials = [plan_material(identity, data, shader, saved, chain, error, variant_parents, usage, scenes)
@@ -420,7 +444,6 @@ def build_plan(project, hoshader):
     quality = project / "ProjectSettings/QualitySettings.asset"
     global_settings = project / "Assets/Settings/UniversalRenderPipelineGlobalSettings.asset"
     rp = read(rp_asset)
-    urp = local_package(project, dependencies, "com.unity.render-pipelines.universal")
     return {
         "schema": 1, "mode": "read-only", "project": project.as_posix(),
         "sourceHeads": {"product": head(project), "extensions": head(EXTENSIONS), "hoshader": head(hoshader),
@@ -432,8 +455,8 @@ def build_plan(project, hoshader):
         "cutover": {
             "status": "hold_for_runtime_acceptance", "projectEditsAllowedByThisPlan": False, "proposedDefaultRayTracing": False,
             "opaquePilot": "Test Main and Full on an isolated renderer. Require paired production pixels before writing scope or screen keywords.",
-            "character": "Retain legacy Character atlas producer until ownership transfer is separately verified.",
-            "specialDomains": "Gate transparent Eye, Face/Eye Capture and Cloth OIT on their actual camera, coverage, depth and owner checks.",
+            "character": "Compare the managed Character atlas and screen receiver on the saved camera before removing the legacy renderer route.",
+            "specialDomains": "Verify ordinary early and late transparent draws, Face/Eye Capture, and Cloth OIT with actual coverage, depth and owner data.",
             "stageTools": "Replace legacy feature creation/queries and validation of old globals before removing old types.",
             "assetWriteGuard": "Recheck per-file SHA-256 and GUID before any later migration. Do not infer scene usage from filenames.",
         },
@@ -451,6 +474,7 @@ def build_plan(project, hoshader):
             "m_DefaultRendererIndex")}, "rendererReferences": listed(rp, "m_RendererDataList")},
         "renderer": renderer_plan(pc_renderer, script_guids),
         "otherRendererAssets": [renderer_plan(path, script_guids) for path in renderer_assets if path != pc_renderer],
+        "cameraRendererRoutes": camera_routes,
         "shaders": shaders, "settingsAndComponents": declarations, "volumeProfiles": volumes,
         "sceneCandidates": {path: {**asset_stamp(Path(path)), **summary, "reviewSecondDirectional": summary["shadowingDirectional"] > 1}
                             for path, summary in scenes.items()
@@ -462,6 +486,7 @@ def build_plan(project, hoshader):
             "Unsaved edits in an open Unity Editor are outside this inventory.",
             "Scene links follow saved GUID references through prefabs and FBX/PMX remap metadata. This does not resolve every imported slot, procedural assignment or active timeline.",
             "Light witnesses count embedded scene Lights with enabled GameObjects. Ancestor activation, prefab overrides, camera culling and light linking require a render witness.",
+            "Camera routes are saved URP camera components in scenes and prefabs. Effective active state and stack routing still require a loaded scene.",
             "Material variants are advisory until evaluated through Unity. A capture-capable pass is not proof of a registered capture receiver.",
             "A worktree can contain untracked authored files and edited packages. The serialized values and hashes here are from disk, alongside the current Git HEADs.",
         ],

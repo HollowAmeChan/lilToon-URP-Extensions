@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using HoShader.ClothURP.Editor;
 using HoShader.EffectURP.Editor;
 using HoShader.HairURP.Editor;
+using HoShader.SkinStylizedURP.Editor;
 using lilToon.URP.Extensions.CharacterSpecialization;
 using lilToon.URP.Extensions.Debugging;
 using lilToon.URP.Extensions.PlanarReflection;
@@ -35,6 +37,9 @@ public static class HoShadowsSceneCutoverComparison
     private const string EffectSurfaceKeyword = "_EFFECT_SCREEN_SHADOW_SURFACE";
     private const string LateHairKeyword = "_HAIR_TRANSPARENT_SCREEN_SHADOW_SURFACE";
     private const string EarlyHairKeyword = "_HAIR_EARLY_TRANSPARENT_SCREEN_SHADOW_SURFACE";
+    private const string LateClothKeyword = "_CLOTH_TRANSPARENT_SCREEN_SHADOW_SURFACE";
+    private const string EarlyClothKeyword = "_CLOTH_EARLY_TRANSPARENT_SCREEN_SHADOW_SURFACE";
+    private const string EarlyEyeKeyword = "_EYE_EARLY_TRANSPARENT_SCREEN_SHADOW_SURFACE";
 
     [Serializable] private sealed class MigrationPlan
     {
@@ -55,7 +60,8 @@ public static class HoShadowsSceneCutoverComparison
         public float fieldOfView;
         public int previewMaterials, upgradedToFull, changedPixels, stableChangedPixels, baselineNoisePixels;
         public int changedAtBudget16, previewHair, previewEffect, upgradedOnEnabledRenderers;
-        public int earlyTransparentHair, lateTransparentHair, legacyPreviewMaterials;
+        public int earlyTransparentHair, lateTransparentHair, earlyTransparentCloth, lateTransparentCloth, legacyPreviewMaterials;
+        public int earlyTransparentEye;
         public string[] fullCandidateAssets;
         public float maximum, mean, baselineNoise, maximumAtBudget16, meanAtBudget16, legacyPeak;
         public int legacyScenePixels, witnessRenderers;
@@ -235,6 +241,8 @@ public static class HoShadowsSceneCutoverComparison
         bool previousCharacter = managed != null && managed.ManagedCharacterShadowsEnabled;
         bool previousCapture = capture != null && capture.CaptureShadowInputsEnabled;
         bool previewTransparentHair = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_HAIR_TRANSPARENT") == "1";
+        bool previewTransparentCloth = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_CLOTH_TRANSPARENT") == "1";
+        bool previewEarlyEye = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_EYE_EARLY") == "1";
         try
         {
             if (budget == 0)
@@ -265,6 +273,8 @@ public static class HoShadowsSceneCutoverComparison
                         if (!material || !material.shader || !SupportedShaders.Contains(material.shader.name))
                             continue;
                         bool hair = material.shader.name == "Ho/Hair/URP/Hair";
+                        bool cloth = material.shader.name == "Ho/Cloth/URP/Cloth";
+                        bool eye = material.shader.name == EyeMaterialUtility.ShaderName;
                         bool effect = material.shader.name == EffectMaterialUtility.ShaderName;
                         if (isolation == "producer-only" || (isolation == "core-only" && (hair || effect))
                             || (isolation == "hair-only" && !hair) || (isolation == "effect-only" && !effect)) continue;
@@ -272,9 +282,13 @@ public static class HoShadowsSceneCutoverComparison
                             continue;
                         if (material.renderQueue > 2500 && material.shader.name == "Ho/Environment/URP/Lit")
                             continue;
-                        if (material.renderQueue > 2500 && material.shader.name == "Ho/Cloth/URP/Cloth"
-                            && (!material.HasProperty("_UseHoOIT") || material.GetFloat("_UseHoOIT") < .5f))
+                        bool standardClothBlend = cloth && material.GetFloat("_SurfaceMode") >= 1.5f
+                            && material.GetFloat("_UseHoOIT") <= .5f;
+                        if (standardClothBlend && (!previewTransparentCloth || (material.renderQueue <= 2500
+                            ? !managed.EarlyTransparentShadowsEnabled : !managed.TransparentEyeShadowsEnabled)))
                             continue;
+                        bool earlyEye = eye && material.GetFloat("_SurfaceMode") >= 1.5f && material.renderQueue <= 2500;
+                        if (earlyEye && (!previewEarlyEye || !managed.EarlyTransparentShadowsEnabled)) continue;
                         bool hairBlend = hair && material.GetFloat("_SurfaceMode") > 1.5f;
                         if (hairBlend && (!previewTransparentHair || (material.renderQueue <= 2500
                             ? !managed.EarlyTransparentShadowsEnabled : !managed.TransparentEyeShadowsEnabled)))
@@ -283,10 +297,18 @@ public static class HoShadowsSceneCutoverComparison
                         if (!previews.TryGetValue(material, out Material preview))
                         {
                             preview = new Material(material) { hideFlags = HideFlags.HideAndDontSave };
-                            previews.Add(material, preview);
                             if (effect) EffectMaterialUtility.SetScreenShadowPreview(preview, true);
                             else if (hair) HairMaterialUtility.SetScreenShadowPreview(preview, true);
+                            else if (cloth) ClothMaterialUtility.SetScreenShadowPreview(preview, true);
+                            else if (eye) EyeMaterialUtility.SetScreenShadowPreview(preview, true);
                             else preview.EnableKeyword(PreviewKeyword);
+                            if ((standardClothBlend && !preview.IsKeywordEnabled(EarlyClothKeyword)
+                                && !preview.IsKeywordEnabled(LateClothKeyword)) || (earlyEye && !preview.IsKeywordEnabled(EarlyEyeKeyword)))
+                            {
+                                UnityEngine.Object.DestroyImmediate(preview);
+                                continue;
+                            }
+                            previews.Add(material, preview);
                             float mode = material.HasProperty("_HoRPShadowMode") ? material.GetFloat("_HoRPShadowMode") : 0;
                             string assetPath = AssetDatabase.GetAssetPath(material);
                             if (mode >= .5f && mode < 1.5f && fullCandidates.TryGetValue(assetPath, out string expectedHash))
@@ -314,6 +336,9 @@ public static class HoShadowsSceneCutoverComparison
                 item.previewHair = previews.Values.Count(material => material.shader.name == "Ho/Hair/URP/Hair");
                 item.earlyTransparentHair = previews.Values.Count(material => material.IsKeywordEnabled(EarlyHairKeyword));
                 item.lateTransparentHair = previews.Values.Count(material => material.IsKeywordEnabled(LateHairKeyword));
+                item.earlyTransparentCloth = previews.Values.Count(material => material.IsKeywordEnabled(EarlyClothKeyword));
+                item.lateTransparentCloth = previews.Values.Count(material => material.IsKeywordEnabled(LateClothKeyword));
+                item.earlyTransparentEye = previews.Values.Count(material => material.IsKeywordEnabled(EarlyEyeKeyword));
                 item.previewEffect = previews.Values.Count(material => material.shader.name == EffectMaterialUtility.ShaderName
                     && material.IsKeywordEnabled(EffectSurfaceKeyword));
                 item.upgradedToFull = upgraded.Count;

@@ -58,6 +58,10 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 设 `HO_SHADOWS_P5_COMPARE_HAIR_TRANSPARENT=1` 可在试切臂临时预览透明 Hair，并单列早队列和常规透明队列的合资格材质数。早队列还需要同时启用试切的早队列开关。对照保留材质的保存队列、深度写入、接收强度和阴影范围，只临时设置预览关键字和对应资格关键字。
 
+拥有对应接收 Pass 的 HoShader 版本可用 `HO_SHADOWS_P5_COMPARE_CLOTH_TRANSPARENT=1` 试跑普通透明 Cloth，用 `HO_SHADOWS_P5_COMPARE_EYE_EARLY=1` 试跑早队列透明 Eye。报告分别记录两种队列的 Cloth 数量及早队列 Eye 数量。试切臂沿用包内资格检查，直接读取保存的队列和深度状态。`plan_migration.py` 的 `cameraRendererRoutes` 列出保存的 Renderer 索引和相机栈引用，便于锁定具名镜头的共享配置。实际启用状态以加载后的相机栈为准。
+
+2026-11-27 盘点到 150 个保存的 URP 相机组件，均为 Base、Renderer 索引 `-1`，且未直接序列化 Overlay 栈引用。场景关联且开启接收的普通透明材质中，Cloth 使用 `2000`、`2450` 和 `3000`，Eye 使用 `2000` 和 `2500`，Hair 有四份使用 `2000`。这些队列随场景保留，实际绘制和 owner 由隔离镜头复查。
+
 可用 `HO_SHADOWS_P5_COMPARE_FILTER` 按场景路径选择子集，或用 `HO_SHADOWS_P5_COMPARE_SCENE` 指定快照内另一场景的 `Assets/...unity` 路径。默认关闭用作对照变量的平面反射、相机后处理和 AA。设 `HO_SHADOWS_P5_COMPARE_AUTHORED=1` 改用原生相机栈请求，保留保存的相机效果并执行 URP 的 Volume 更新。
 
 | 首轮 D3D11 对照（Hair 和 Effect 接入前） | 预览材质／临时转 Full | 四灯预算的 RGB 最大分量差 | 旧路径重复波动 | 阈值 `>0.002` 且旧重复稳定的差异像素 |
@@ -107,6 +111,8 @@ New-Item -ItemType Directory -Path $env:HO_SHADOWS_WARMUP_OUTPUT
 关闭 TAA 的五组拆分对照曾在样点 `(303,206)` 复现四灯受管路径的相同 RGB。旧 Renderer 的 HoShadowCast 关闭臂还清除了副本里已保存的材质预览，存在两项输入同时改变。后续运行时探针在同一羽啾 Base 相机下确认只有一盏可见方向光，旧 HoShadowCast 接纳 `0` 盏灯，也没有额外图集切片。清洁材质输入下的重新对照用于确认实际差异。
 
 恢复后的同一 Editor 对照使用原始材质和不保存的预览副本，关闭 TAA 并保留相同 Volume 和编译诊断设置。退出后 58 个 `.mat` 的 SHA-256 均与运行前一致，序列化预览项仍为 `0`。样点 `(303,206)` 两侧 RGB 完全一致。在 `230292` 个稳定像素中，`4416` 个差异超过 `0.01`，其中 `4277` 个属于角色信号，稳定区域平均最大 RGB 分量差为 `0.001796`。这组数据作为后续差异定位的参考。
+
+用相同快照进一步拆分时，Cloth／Environment 组在 `4265` 个可比较的角色残差像素中复现 `3984` 个，容差 `0.01`。单独预览 Cloth 后，与 Cloth／Environment 组只剩 `4` 个稳定角色像素差异超过 `0.01`。关闭两侧角色阴影后，旧路径与受管 Cloth 的角色差异从 `3984` 降至 `173` 个。受管侧仍能发布一张角色图块。源码定位到旧版 Cloth 的 SurfaceBuffer Pass 使用 `ZWrite Off` 和 `ZTest Equal`，而对应 RenderGraph Pass 绑定刚清空的独立深度附件。该状态会漏掉 Cloth 深度和 owner。主仓库的修复恢复最近表面的深度和 owner 写入，后续以该版本重新核对真实镜头。
 
 ## 逐 Pass GPU 时间
 
