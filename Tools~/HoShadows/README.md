@@ -65,7 +65,7 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 羽啾的保存视角在角色上方，早期的像素对照不计为角色材质验收。保留保存机位的原生相机栈一度报出 `12488` 个差异像素，经 EXR 检查全部来自性能 HUD 中启用的 Feature 数量和行顺序。对照工具现在关闭两侧的性能 HUD，并检查中心区域有有效场景信号。`HO_SHADOWS_P5_COMPARE_FRAME_SUBJECT=1` 可在副本加载时根据 Skin 网格的世界包围盒重新取景，报告保留实际机位。`HO_SHADOWS_P5_COMPARE_ISOLATE=1` 增加仅生产端、仅 Core、仅 Hair、仅 Effect、关闭角色图集、关闭 Capture 输入六个定位对照。
 
-两个物理项目的冷缓存仍未完成旧路径首帧。羽啾重新取景后在旧路径首帧触发 `360 s` 超时，Hiro 冻结包快照在同一步触发 `900 s` 超时。两次均未写出可用于画面对照的 EXR。Hiro 的七份候选材质已和盘点逐项核对 SHA-256，真实镜头的转 Full 验收仍未完成。
+两个物理项目的冷缓存仍未完成旧路径首帧。羽啾重新取景后在旧路径首帧触发 `360 s` 超时，Hiro 冻结包快照在同一步触发 `900 s` 超时。`HO_SHADOWS_P5_COMPARE_WITNESSES_ONLY=1` 可以按盘点清单保留候选材质所在的网格，将其它投射物改为仅投射模式。这组 Hiro 对照也在首帧触发 `240 s` 超时。各次均未写出可用于画面对照的 EXR。Hiro 的七份候选材质已和盘点逐项核对 SHA-256，真实镜头的转 Full 验收仍未完成。
 
 标准透明队列的 Hair 实验读回了正确的两层 renderer owner 和深度，也在 Forward 中读到了有效的原始可见度。正常的 Hair 阴影响应仍未拉开明暗，下一步单独验证 `_UseShadow` 与 `_ReceiveShadowStrength` 的片元输入。生产 Hair 透明材质继续使用原路径。早队列需要独立的前层调度验证，标准透明的结果无法覆盖它们。
 

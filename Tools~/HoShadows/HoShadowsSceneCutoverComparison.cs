@@ -54,7 +54,7 @@ public static class HoShadowsSceneCutoverComparison
         public int changedAtBudget16, previewHair, previewEffect, upgradedOnEnabledRenderers;
         public string[] fullCandidateAssets;
         public float maximum, mean, baselineNoise, maximumAtBudget16, meanAtBudget16, legacyPeak;
-        public int legacyScenePixels;
+        public int legacyScenePixels, witnessRenderers;
         public float legacySubmitMilliseconds, managedSubmitMilliseconds, wideManagedSubmitMilliseconds;
         public List<IsolationCase> isolation = new();
     }
@@ -201,6 +201,8 @@ public static class HoShadowsSceneCutoverComparison
             throw new InvalidOperationException("No saved Base Main Camera for " + path);
         item.camera = camera.name;
         var cameraData = camera.GetUniversalAdditionalCameraData();
+        if (Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_WITNESSES_ONLY") == "1")
+            item.witnessRenderers = KeepCandidateDraws(scene, fullCandidates);
         if (Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_FRAME_SUBJECT") == "1")
         {
             FrameSubject(scene, camera);
@@ -367,6 +369,27 @@ public static class HoShadowsSceneCutoverComparison
         camera.fieldOfView = fieldOfView;
         camera.transform.position = subject.center - camera.transform.forward * distance;
         camera.useOcclusionCulling = false;
+    }
+
+    private static int KeepCandidateDraws(Scene scene, Dictionary<string, string> fullCandidates)
+    {
+        var renderers = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<Renderer>());
+        int witnesses = 0;
+        foreach (var renderer in renderers)
+        {
+            if (!renderer.enabled || renderer.shadowCastingMode == ShadowCastingMode.ShadowsOnly) continue;
+            if (renderer.sharedMaterials.Any(material => material != null && fullCandidates.ContainsKey(AssetDatabase.GetAssetPath(material))))
+            {
+                witnesses++;
+                continue;
+            }
+            if (renderer.shadowCastingMode != ShadowCastingMode.Off)
+                renderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+            else
+                renderer.enabled = false;
+        }
+        if (witnesses == 0) throw new InvalidOperationException("The scene contains no eligible Full-candidate renderers.");
+        return witnesses;
     }
 
     private static float MaxRgb(Color value) => Mathf.Max(Mathf.Abs(value.r), Mathf.Abs(value.g), Mathf.Abs(value.b));
