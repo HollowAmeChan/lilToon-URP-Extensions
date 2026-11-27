@@ -23,7 +23,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
                 string[] required = { "AttributeComposite", "WeightedOIT", "RT", "GTAO", "SSGI",
                     "ObjectBuffer", "GeometryBuffer", "SurfaceBuffer", "Subsurface Scattering", "PLR",
                     "HoAtmosphere", "Ho-VolumeLight", "RTDI", "RTGI", "RTShadow", "ScreenProcess", "ImageProcess",
-                    "GeometryData", "CharacterShadow", "CharacterSpecialization", "ShadowCast" };
+                    "GeometryData", "CharacterShadow", "CharacterSpecialization" };
                 foreach (string feature in required)
                     Require(HoDebugPerformanceRegistry.All.Any(item => item.FeatureName == feature), "registered " + feature);
 

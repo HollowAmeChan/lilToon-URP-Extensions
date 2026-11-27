@@ -33,20 +33,6 @@ namespace lilToon.URP.Extensions.CharacterShadow
         }
     }
 
-    [Serializable]
-    public sealed class HoCharacterShadowPcssQualityParameter : VolumeParameter<HoCharacterShadowPcssQuality>
-    {
-        public HoCharacterShadowPcssQualityParameter(HoCharacterShadowPcssQuality value, bool overrideState = false)
-            : base(value, overrideState)
-        {
-        }
-
-        public override void Interp(HoCharacterShadowPcssQuality from, HoCharacterShadowPcssQuality to, float t)
-        {
-            value = t > 0.0f ? to : from;
-        }
-    }
-
     /// <summary>
     /// Per-camera overrides for Ho-CharacterShadow: enable, per-receiver resolution and the debug view.
     /// The RendererFeature keeps the fallback values (used when a field here is not overridden) and the
@@ -70,29 +56,11 @@ namespace lilToon.URP.Extensions.CharacterShadow
         [InspectorName("启用"), Tooltip("该相机是否使用局部高精度天光投影。未勾选覆盖时用 Ho-CharacterShadow RendererFeature 的兜底值。\n\n逐相机覆盖；未覆盖字段使用 Feature 兜底值，接收对象由场景组件声明。")]
         public BoolParameter enable = new BoolParameter(true);
 
-        [InspectorName("单角色分辨率"), Tooltip("每个接收域的深度图分辨率。可容纳 tile 数 = (图集边长上限/本值)²；容量不足的接收域回退普通天光投影。软边与半影使用米，不随分辨率缩窄。")]
+        [InspectorName("单角色分辨率"), Tooltip("每个接收域的深度图分辨率。可容纳 tile 数 = (图集边长上限/本值)²。容量不足的接收域使用普通天光投影。")]
         public HoCharacterShadowResolutionParameter resolution = new HoCharacterShadowResolutionParameter(HoCharacterShadowResolution.R2048);
 
-        [InspectorName("启用 PCSS"), Tooltip("blocker search + 按遮挡距离估算的可变半影。关闭后只剩「阴影软边」那一档固定半径滤波。\n\n关闭 PCSS 只关闭 blocker 搜索，固定软边和基础抗锯齿继续运行。Add Override 可能已勾选全部字段；取消对应覆盖后才会使用 Feature 的值。")]
-        public BoolParameter pcssEnabled = new BoolParameter(true);
-
-        [InspectorName("阴影软边"), Tooltip("额外固定滤波半径（米）。0 仍保留基础抗锯齿；PCSS 在此基础上增加随遮挡距离变化的半影。")]
+        [InspectorName("阴影软边"), Tooltip("独立角色阴影的固定 PCF 请求半径（米）。按当前 tile 换算成 1 到 2 个 texel。")]
         public ClampedFloatParameter softnessRadius = new ClampedFloatParameter(0.005f, 0.0f, 0.2f);
-
-        [InspectorName("PCSS 质量档"), Tooltip("只决定 blocker / filter 的采样数，不改变阴影形状。\n\n控制 blocker/filter 采样预算；关闭 PCSS 时固定滤波仍使用该档的 filter 预算。")]
-        public HoCharacterShadowPcssQualityParameter pcssQuality = new HoCharacterShadowPcssQualityParameter(HoCharacterShadowPcssQuality.Ultra);
-
-        [InspectorName("光源角直径"), Tooltip("方向光角直径（度）。半影半径 = 遮挡距离 × tan(角直径 / 2)，受半影上限限制；0 只用固定软边与基础抗锯齿。")]
-        public ClampedFloatParameter pcssSoftness = new ClampedFloatParameter(2.0f, 0.0f, 8.0f);
-
-        [InspectorName("Blocker 搜索半径"), Tooltip("寻找遮挡物的范围（米），不是软边宽度。过大而采样数不足时可能漏掉细小遮挡物。")]
-        public ClampedFloatParameter pcssBlockerSearchRadius = new ClampedFloatParameter(0.02f, 0.001f, 0.2f);
-
-        [InspectorName("半影半径上限"), Tooltip("PCSS 半影半径上限（米），不随分辨率或质量档缩窄。大范围需要更高采样档以减少颗粒。固定软边与基础抗锯齿独立生效。")]
-        public ClampedFloatParameter pcssMaxPenumbraRadius = new ClampedFloatParameter(0.04f, 0.001f, 0.2f);
-
-        [InspectorName("Blocker 深度偏移"), Tooltip("判定 blocker 时加在接收深度上的偏移（阴影空间 z）：压自遮挡与深度抖动。留一点默认值，避免 blocker 数量在相邻像素间跳变。")]
-        public ClampedFloatParameter pcssDepthBias = new ClampedFloatParameter(0.0005f, 0.0f, 0.02f);
 
         [InspectorName("调试模式"), Tooltip("直出替换画面，不改材质输出。Off 无输出；Atlas 看整张图集；Character 按编号放大单个接收域的 tile。")]
         public HoCharacterShadowDebugModeParameter debugMode = new HoCharacterShadowDebugModeParameter(HoCharacterShadowDebugMode.Off);

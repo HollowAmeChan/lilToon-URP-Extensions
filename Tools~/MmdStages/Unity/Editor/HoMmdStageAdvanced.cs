@@ -95,14 +95,6 @@ public static class HoMmdStageAdvanced
         var sky=root.GetComponentsInChildren<MeshRenderer>().Single(x=>x.name=="天空球").sharedMaterial;
         var gb=d.rendererFeatures.OfType<HoGeometryBufferRendererFeature>().Single();
         gb.Settings.minRenderQueue=1500;gb.Settings.renderScale=HoGeometryBufferRenderScale.Full;
-        var shadow=HoMmdSharedRenderAssets.LegacyShadowCast(d);
-        if(shadow!=null)
-        {
-            shadow.Settings.atlasSize=4096;shadow.Settings.directionalResolution=2048;
-            shadow.Settings.spotResolution=1024;shadow.Settings.pointFaceResolution=512;
-            shadow.Settings.shadowStrength=1;shadow.Settings.punctualShadowStrength=1;
-            EditorUtility.SetDirty(shadow);
-        }
         // Keep the artistic AO contract consistent for every stage, including the
         // eight scenes that were authored before the remaining-scene pass.
         var spec=HoMmdStageRemaining.Specs().FirstOrDefault(x=>x.recipe.name==name);

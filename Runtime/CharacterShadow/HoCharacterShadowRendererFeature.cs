@@ -22,7 +22,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         /// </summary>
         public static string LastCullStatus = "";
 
-        private readonly HoCharacterShadowAtlasProducer producer = new HoCharacterShadowAtlasProducer(fixedPcf: false);
+        private readonly HoCharacterShadowAtlasProducer producer = new HoCharacterShadowAtlasProducer(filterPaddingTexels: 1.0f);
 
         public override void Create() => producer.Create();
 
@@ -34,12 +34,12 @@ namespace lilToon.URP.Extensions.CharacterShadow
 
     internal sealed class HoCharacterShadowAtlasProducer : System.IDisposable
     {
-        private readonly bool fixedPcf;
+        private readonly float filterPaddingTexels;
         private HoCharacterShadowPass pass;
         private HoCharacterShadowDebugPass debugPass;
         private Material debugMaterial;
 
-        internal HoCharacterShadowAtlasProducer(bool fixedPcf) => this.fixedPcf = fixedPcf;
+        internal HoCharacterShadowAtlasProducer(float filterPaddingTexels) => this.filterPaddingTexels = filterPaddingTexels;
 
         internal void Create()
         {
@@ -83,13 +83,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 || !renderingData.shadowData.supportsMainLightShadows || HoCharacterShadow.Active.Count == 0)
             { status += $"light(main={main},null={light == null},dir={(light != null && light.type == LightType.Directional)},shadows={(light != null && light.shadows != LightShadows.None)},supports={renderingData.shadowData.supportsMainLightShadows},active={HoCharacterShadow.Active.Count})"; return; }
             var config = HoCharacterShadowRenderConfig.Resolve(settings, volume);
-            if (fixedPcf)
-            {
-                config.useLegacySampling = false;
-                config.pcssEnabled = false;
-                config.pcssFilterRadiusTexels = 2.0f;
-                config.pcssStatus = "fixed PCF";
-            }
+            config.filterPaddingTexels = filterPaddingTexels;
             var frame = pass.BuildFrame(camera, light, renderingData.cameraData.GetViewMatrix(),
                 renderingData.cameraData.GetProjectionMatrix(), config);
             if (frame.slices.Count == 0) { status += "noSlices"; return; }
@@ -402,11 +396,9 @@ namespace lilToon.URP.Extensions.CharacterShadow
             var lightData = data.Get<UniversalLightData>();
             // camLights/add 是给“隐藏光有没有泄漏进相机灯光列表”留的哨兵：CS 的灯只在
             // beginCameraRendering→本 pass 之间开着，正常情况下相机看到的灯光数与 CS 无关。
-            // pcss 那一段是"这一帧到底用了哪组软阴影参数"（含被 Volume 覆盖了几个字段），
-            // 用来回答"为什么关了没反应 / 改了没反应"。
             HoCharacterShadowRendererFeature.LastCullStatus =
                 $"slices={frame.slices.Count}|camLights={lightData.visibleLights.Length},add={lightData.additionalLightsCount}"
-                + $"|pcss={frame.pcssStatus}";
+                + "|filter=PCF";
             // The atlas is consumed by opaque materials through a global binding, which
             // RenderGraph cannot see. A transient (graph-owned) texture is therefore free to be
             // aliased away right after this pass and the materials then sample another pass's
@@ -527,13 +519,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             cmd.SetGlobalVectorArray("_HoCSParameters", f.parameters);
             cmd.SetGlobalVectorArray("_HoCSDepthParameters", f.depthParameters);
             cmd.SetGlobalVector("_HoCSAtlasSize", new Vector4(1f / f.atlasSize, 1f / f.atlasSize, f.atlasSize, f.atlasSize));
-            // PCSS: (enabled, tanHalfAngle, search metres, cap metres) + (bias, counts, fixed softness).
-            cmd.SetGlobalVector("_HoCSPcssParams", f.pcssParams);
-            cmd.SetGlobalVector("_HoCSPcssParams2", f.pcssParams2);
-            if (f.useLegacySampling)
-                HoCharacterShadowShaderContract.BindSamplingPattern(cmd, f.pcssParams2);
-            else
-                cmd.SetGlobalVector("_HoCSSampleOffsetCounts", Vector4.zero);
+            cmd.SetGlobalFloat("_HoCSSoftnessRadius", f.softnessRadiusWorld);
             cmd.SetGlobalInt("_HoCSCount", f.slices.Count);
             cmd.SetGlobalFloat("_HoCSActive", 1);
         }

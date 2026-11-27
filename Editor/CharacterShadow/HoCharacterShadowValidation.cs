@@ -50,53 +50,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 }
                 Shader shader = Shader.Find("Hidden/Ho-CharacterShadow/Debug");
                 Require(shader != null && !ShaderUtil.ShaderHasError(shader), "CS debug shader missing or failed");
-                RequirePcssSampleContract();
-                Debug.Log("[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader, PCSS sample contract.");
+                Debug.Log("[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader.");
             }
             finally { Object.DestroyImmediate(root); EditorSceneManager.ClosePreviewScene(scene); }
-        }
-
-        /// <summary>
-        /// C# 与 HLSL 的 PCSS 采样上限必须一致：HLSL 用它们定循环上界，C# 用它们夹档位请求。
-        /// 编译器关联不了两边，所以这里解析 HLSL 的 #define 逐条比对（batch 里也跑，防漂移）。
-        /// </summary>
-        private static void RequirePcssSampleContract()
-        {
-            string path = null;
-            string[] guids = AssetDatabase.FindAssets("HoCharacterShadowSampling");
-            for (int i = 0; i < guids.Length; i++)
-            {
-                string candidate = AssetDatabase.GUIDToAssetPath(guids[i]);
-                if (candidate != null && candidate.EndsWith("/HoCharacterShadowSampling.hlsl", StringComparison.Ordinal))
-                {
-                    path = candidate;
-                    break;
-                }
-            }
-
-            Require(!string.IsNullOrEmpty(path), "HoCharacterShadowSampling.hlsl was not found for the PCSS contract check");
-            string text;
-            try
-            {
-                text = System.IO.File.ReadAllText(System.IO.Path.GetFullPath(path));
-            }
-            catch (System.IO.IOException exception)
-            {
-                throw new InvalidOperationException("[Ho-CS Validation] could not read " + path + ": " + exception.Message);
-            }
-
-            RequireReadDefine(text, "HO_CS_MAX_PCSS_BLOCKER_SAMPLES", HoCharacterShadowShaderContract.PcssBlockerSamples);
-            RequireReadDefine(text, "HO_CS_MAX_PCSS_FILTER_SAMPLES", HoCharacterShadowShaderContract.PcssFilterSamples);
-        }
-
-        private static void RequireReadDefine(string text, string name, int expected)
-        {
-            var match = System.Text.RegularExpressions.Regex.Match(
-                text, "^[ \\t]*#define[ \\t]+" + name + "[ \\t]+([0-9]+)", System.Text.RegularExpressions.RegexOptions.Multiline);
-            Require(match.Success, name + " is missing from HoCharacterShadowSampling.hlsl");
-            int actual = int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
-            Require(actual == expected,
-                name + " is " + actual + " in the shader but " + expected + " in HoCharacterShadowShaderContract.cs");
         }
 
         private static T Field<T>(object value, string name) => (T)value.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(value);
@@ -414,18 +370,18 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                         RenderCenter();
                         float atlasSize = Shader.GetGlobalVector("_HoCSAtlasSize").z;
                         Require(Mathf.Approximately(atlasSize, 512f), $"Volume 覆盖的单角色分辨率没有生效: {atlasSize:F0}");
-                        volumeComponent.pcssEnabled.overrideState = true;
-                        volumeComponent.pcssEnabled.value = false;
+                        volumeComponent.softnessRadius.overrideState = true;
+                        volumeComponent.softnessRadius.value = 0.01f;
                         VolumeManager.instance.Update(volumeStack, camera.transform, additionalData.volumeLayerMask);
-                        RenderCenter("cs-volume-pcss-off");
-                        Require(Shader.GetGlobalVector("_HoCSPcssParams").x < 0.5f
+                        RenderCenter("cs-volume-pcf-radius");
+                        Require(Mathf.Approximately(Shader.GetGlobalFloat("_HoCSSoftnessRadius"), 0.01f)
                             && Shader.GetGlobalFloat("_HoCSActive") > 0.5f,
-                            "PCSS Volume override did not disable blocker search while retaining CS");
-                        volumeComponent.pcssEnabled.overrideState = false;
+                            "Volume must update the fixed PCF radius while retaining the character shadow.");
+                        volumeComponent.softnessRadius.overrideState = false;
                         VolumeManager.instance.Update(volumeStack, camera.transform, additionalData.volumeLayerMask);
-                        RenderCenter("cs-volume-pcss-fallback");
-                        Require(Shader.GetGlobalVector("_HoCSPcssParams").x > 0.5f,
-                            "Removing the PCSS override did not restore the enabled feature fallback");
+                        RenderCenter("cs-volume-pcf-fallback");
+                        Require(Mathf.Approximately(Shader.GetGlobalFloat("_HoCSSoftnessRadius"), feature.Settings.softnessRadius),
+                            "Clearing the radius override must restore the feature setting.");
                         volumeResult = $"volume={volumeDisabled:F3}/atlas {atlasSize:F0}";
                     }
                     else
@@ -437,7 +393,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 {
                     volumeComponent.enable.overrideState = false;
                     volumeComponent.resolution.overrideState = false;
-                    volumeComponent.pcssEnabled.overrideState = false;
+                    volumeComponent.softnessRadius.overrideState = false;
                     volume.profile = null;
                     Object.DestroyImmediate(volumeObject);
                     created.Remove(volumeObject);
@@ -693,15 +649,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             }
         }
 
-        /// <summary>
-        /// PCSS 的可量化回归：把一个立方体的投影打到水平接收面上，正交相机俯视，
-        /// 扫过阴影边缘测"过渡带宽度"（visibility 落在 0.15..0.85 的最长连续像素数）。
-        /// 断言：PCF 时边缘很窄；PCSS 打开后明显变宽；半影放大 0 时退化回窄边；
-        /// 两种情况阴影核心都必须够暗（不许漏光）、边缘外侧必须够亮（不许出现 PCSS 经典光环）。
-        /// </summary>
-        public static void ValidatePcss()
+        // Check the fixed PCF edge with an orthographic camera and an isolated caster.
+        public static void ValidatePcf()
         {
-            Require(Application.isBatchMode, "PCSS validation runs in a separate batch editor only");
+            Require(Application.isBatchMode, "PCF validation runs in a separate batch editor only");
             Validate();
             RenderPipelineAsset previousGraphics = GraphicsSettings.defaultRenderPipeline;
             RenderPipelineAsset previousQuality = QualitySettings.renderPipeline;
@@ -722,10 +673,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
 
                 var renderer = ScriptableObject.CreateInstance<UniversalRendererData>(); created.Add(renderer);
                 var feature = ScriptableObject.CreateInstance<HoCharacterShadowRendererFeature>(); created.Add(feature);
-                // 低一点的分辨率让 1 texel 在屏幕上约 0.8 px：PCF 边缘保持在 1px 量级，PCSS 的 texel 半径才看得出来。
                 feature.Settings.resolution = HoCharacterShadowResolution.R512;
                 feature.Settings.softnessRadius = 0.005f;
-                feature.Settings.pcssEnabled = false;
                 renderer.rendererFeatures.Add(feature);
                 var pipeline = UniversalRenderPipelineAsset.Create(renderer); created.Add(pipeline);
                 pipeline.shadowDistance = 50;
@@ -733,17 +682,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 GraphicsSettings.defaultRenderPipeline = pipeline;
                 QualitySettings.renderPipeline = pipeline;
 
-                var sunObject = new GameObject("CS PCSS Sun"); created.Add(sunObject);
+                var sunObject = new GameObject("CS PCF Sun"); created.Add(sunObject);
                 sunObject.transform.rotation = Quaternion.Euler(55, 25, 0);
                 Light sun = sunObject.AddComponent<Light>(); sun.type = LightType.Directional;
                 sun.shadows = LightShadows.Hard; sun.intensity = 1; sun.shadowStrength = 1;
                 RenderSettings.sun = sun;
 
-                // 标准 PCSS 摆法：接收面**正对光源**（它在光空间的深度基本恒定，阴影边界就是干净的剪影），
-                // 投影物悬在光源与接收面之间。斜掠的接收面会让 PCF 自己就变成一条 20+px 的锯齿斜坡，
-                // 那样量出来的"边宽"来自几何而不是滤波（本测试第一版就踩了这个坑）。
-                // 注意方向命名：Unity 的 Light.transform.forward 是**光的行进方向**，
-                // 指向光源要用 -forward；第一版把两者搞反，投影物落到了接收面背后。
+                // Face the receiver into the light to measure the filter independently of a grazing plane.
                 Vector3 toLight = -sun.transform.forward;
                 Quaternion facingLight = Quaternion.LookRotation(toLight, Vector3.up);
 
@@ -760,7 +705,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 group.Apply();
                 var cs = receiver.AddComponent<HoCharacterShadow>(); cs.objectGroup = group;
                 // 盒子用**不带旋转**的空物体当锚点：接收面本身是斜的，用它的局部空间不方便描述盒子。
-                var anchor = new GameObject("CS PCSS Box Anchor"); created.Add(anchor);
+                var anchor = new GameObject("CS PCF Box Anchor"); created.Add(anchor);
                 anchor.transform.position = Vector3.zero;
                 anchor.transform.rotation = Quaternion.identity;
                 cs.boundsAnchor = anchor.transform;
@@ -778,7 +723,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 casterRenderer.sharedMaterial = casterMaterial;
                 casterRenderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
 
-                var cameraObject = new GameObject("CS PCSS Camera"); created.Add(cameraObject);
+                var cameraObject = new GameObject("CS PCF Camera"); created.Add(cameraObject);
                 Camera camera = cameraObject.AddComponent<Camera>();
                 camera.enabled = false; camera.orthographic = true; camera.orthographicSize = 1;
                 camera.aspect = 1; camera.nearClipPlane = 0.5f; camera.farClipPlane = 100;
@@ -805,7 +750,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     {
                         string directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "HoCSValidation");
                         System.IO.Directory.CreateDirectory(directory);
-                        System.IO.File.WriteAllBytes(System.IO.Path.Combine(directory, "cs-pcss-" + label + ".png"), image.EncodeToPNG());
+                        System.IO.File.WriteAllBytes(System.IO.Path.Combine(directory, "cs-pcf-" + label + ".png"), image.EncodeToPNG());
                     }
                     Object.DestroyImmediate(image);
                     return pixels;
@@ -855,7 +800,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 float MaxValue(float[] pixels) { float max = 0f; for (int i = 0; i < pixels.Length; i++) max = Mathf.Max(max, pixels[i]); return max; }
 
                 // 斑点：4 邻里有 ≥3 个"反相"的像素（亮区里孤立的暗点 / 暗区里孤立的亮点）。
-                // 用户报的"PCSS 产生很多噪声黑点"就是它 —— 采样太稀、以及硬像素与软像素混在一起。
+                // 用户报的"PCF 产生很多噪声黑点"就是它 —— 采样太稀、以及硬像素与软像素混在一起。
                 int Speckles(float[] pixels)
                 {
                     int count = 0;
@@ -881,8 +826,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 }
 
                 SampleImage(null); // 预热 / 管线初始化
-                Require(cs.atlasSlice >= 0, "PCSS receiver did not get a CS slice: " + cs.status);
-                Debug.Log($"[Ho-CS PCSS] cull={HoCharacterShadowRendererFeature.LastCullStatus} cs={cs.status}");
+                Require(cs.atlasSlice >= 0, "PCF receiver did not get a CS slice: " + cs.status);
+                Debug.Log($"[Ho-CS PCF] cull={HoCharacterShadowRendererFeature.LastCullStatus} cs={cs.status}");
                 {
                     var w2s = Shader.GetGlobalMatrixArray("_HoCSWorldToShadow")[0];
                     Vector4 tile0 = Shader.GetGlobalVectorArray("_HoCSTileRects")[0];
@@ -890,7 +835,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     Vector4 atlasSize0 = Shader.GetGlobalVector("_HoCSAtlasSize");
                     Vector3 receiverShadow = w2s.MultiplyPoint3x4(receiver.transform.position);
                     Vector3 casterShadow = w2s.MultiplyPoint3x4(caster.transform.position);
-                    Debug.Log($"[Ho-CS PCSS] receiver shadow=({receiverShadow.x:F3},{receiverShadow.y:F3},{receiverShadow.z:F3}) "
+                    Debug.Log($"[Ho-CS PCF] receiver shadow=({receiverShadow.x:F3},{receiverShadow.y:F3},{receiverShadow.z:F3}) "
                         + $"caster shadow=({casterShadow.x:F3},{casterShadow.y:F3},{casterShadow.z:F3}) "
                         + $"tile=({tile0.x:F3},{tile0.y:F3},{tile0.z:F3},{tile0.w:F3}) params=({params0.x:F3},{params0.y:F3},{params0.z:F3}) "
                         + $"atlas=({atlasSize0.x:F5},{atlasSize0.z:F0})");
@@ -903,11 +848,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 feature.Settings.debugMode = HoCharacterShadowDebugMode.Off;
                 feature.Settings.debugInGameView = false;
 
-                // 半径是世界单位（米）。测试场景里相机覆盖 4m/256px ≈ 15.6mm/像素，所以用 R512（≈4.7mm/texel）
-                // 让"看得见的软边"落在几十毫米这一档；R4096 那一档另外测（见文件末尾的 4096 段）。
+                // Use the lower-resolution tile so the filter footprint is measurable in pixels.
                 feature.Settings.resolution = HoCharacterShadowResolution.R512;
                 feature.Settings.softnessRadius = 0.005f;
-                feature.Settings.pcssEnabled = false;
                 float[] pcf = SampleImage("pcf");
                 float pcfWidth = EdgeWidth(pcf);
                 float pcfCore = MinValue(pcf);
@@ -917,54 +860,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 Require(pcfLit > 0.85f, $"PCF lit side is not bright: {pcfLit:F3}");
                 Require(pcfWidth > 0f && pcfWidth <= 16f, $"PCF edge should be localized (not a giant ramp): 10-90% width {pcfWidth:F0}px");
                 Require(pcfSpeckles <= 8, $"PCF edge is speckled: {pcfSpeckles} isolated pixels");
-                // 开关必须真的到达渲染器（用户报"PCSS 永远启用"）；这句同时是新状态行的回归。
-                Require(HoCharacterShadowRendererFeature.LastCullStatus.Contains("pcss=off"),
-                    "PCSS disable did not reach the renderer: " + HoCharacterShadowRendererFeature.LastCullStatus);
-
-                feature.Settings.pcssEnabled = true;
-                feature.Settings.pcssQuality = HoCharacterShadowPcssQuality.Ultra;
-                feature.Settings.pcssSoftness = 3f;
-                feature.Settings.pcssBlockerSearchRadius = 0.06f;
-                feature.Settings.pcssMaxPenumbraRadius = 0.12f;
-                feature.Settings.pcssDepthBias = 0.0005f;
-                float[] pcss = SampleImage("pcss");
-                float pcssWidth = EdgeWidth(pcss);
-                float pcssCore = MinValue(pcss);
-                float pcssLit = MaxValue(pcss);
-                int pcssSpeckles = Speckles(pcss);
-                Require(pcssCore < 0.25f, $"PCSS shadow core leaks light: {pcssCore:F3}");
-                Require(pcssLit > 0.8f, $"PCSS edge shows a halo (lit side not bright enough): {pcssLit:F3}");
-                Require(pcssWidth >= pcfWidth + 6f,
-                    $"PCSS did not widen the penumbra: pcf={pcfWidth:F0}px, pcss={pcssWidth:F0}px");
-                Require(pcssSpeckles <= 8 && pcssSpeckles <= pcfSpeckles + 6,
-                    $"PCSS is speckled (the reported noise/dark dots): pcss={pcssSpeckles}, pcf={pcfSpeckles}");
-
-                feature.Settings.pcssSoftness = 0f;
-                float[] hard = SampleImage("pcss-softness0");
-                float hardWidth = EdgeWidth(hard);
-                Require(hardWidth >= pcfWidth - 3f && hardWidth <= pcfWidth + 3f,
-                    $"PCSS with softness 0 should degenerate back to PCF: pcss={hardWidth:F0}px, pcf={pcfWidth:F0}px");
-
-                // 用户现场那一档：4096 的 tile（0.6mm/texel）+ 默认参数。图集比屏幕细得多，同样世界半径吃掉的
-                // texel 很多、采样相对稀，是最容易冒颗粒的组合 —— 这里必须也干净（这是"噪声黑点"的直接回归）。
-                feature.Settings.resolution = HoCharacterShadowResolution.R4096;
-                feature.Settings.softnessRadius = 0.005f;
-                feature.Settings.pcssQuality = HoCharacterShadowPcssQuality.Ultra;
-                feature.Settings.pcssSoftness = 2f;
-                feature.Settings.pcssBlockerSearchRadius = 0.02f;
-                feature.Settings.pcssMaxPenumbraRadius = 0.04f;
-                feature.Settings.pcssDepthBias = 0.0005f;
-                float[] user = SampleImage("pcss-user-settings");
-                float userWidth = EdgeWidth(user);
-                int userSpeckles = Speckles(user);
-                float userCore = MinValue(user);
-                Require(userSpeckles <= 12,
-                    $"PCSS is speckled at the reported settings (4096 tile): {userSpeckles} isolated pixels");
-                Require(userCore < 0.25f, $"PCSS leaks light at the reported settings (4096 tile): core={userCore:F3}");
-
-                Debug.Log($"[Ho-CS PCSS] PASS: pcf width={pcfWidth:F0}px core={pcfCore:F3} lit={pcfLit:F3} speckles={pcfSpeckles} | "
-                    + $"pcss width={pcssWidth:F0}px core={pcssCore:F3} lit={pcssLit:F3} speckles={pcssSpeckles} | "
-                    + $"softness0 width={hardWidth:F0}px | 4096-tile width={userWidth:F0}px speckles={userSpeckles} core={userCore:F3}, graphics={SystemInfo.graphicsDeviceType}.");
+                Require(HoCharacterShadowRendererFeature.LastCullStatus.Contains("filter=PCF"),
+                    "The standalone character renderer must publish the fixed PCF status.");
+                Debug.Log($"[Ho-CS PCF] PASS: width={pcfWidth:F0}px core={pcfCore:F3} lit={pcfLit:F3} speckles={pcfSpeckles}.");
             }
             finally
             {

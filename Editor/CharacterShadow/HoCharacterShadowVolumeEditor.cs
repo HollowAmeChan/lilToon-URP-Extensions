@@ -13,18 +13,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
 
 
         private static bool showRuntime = true;
-        private static bool showSoftShadow = true;
         private static bool showDebug;
 
         private SerializedDataParameter enable;
         private SerializedDataParameter resolution;
-        private SerializedDataParameter pcssEnabled;
         private SerializedDataParameter softnessRadius;
-        private SerializedDataParameter pcssQuality;
-        private SerializedDataParameter pcssSoftness;
-        private SerializedDataParameter pcssBlockerSearchRadius;
-        private SerializedDataParameter pcssMaxPenumbraRadius;
-        private SerializedDataParameter pcssDepthBias;
         private SerializedDataParameter debugMode;
         private SerializedDataParameter debugInSceneView;
         private SerializedDataParameter debugInGameView;
@@ -35,13 +28,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             var fetcher = new PropertyFetcher<HoCharacterShadowVolume>(serializedObject);
             enable = Unpack(fetcher.Find(x => x.enable));
             resolution = Unpack(fetcher.Find(x => x.resolution));
-            pcssEnabled = Unpack(fetcher.Find(x => x.pcssEnabled));
             softnessRadius = Unpack(fetcher.Find(x => x.softnessRadius));
-            pcssQuality = Unpack(fetcher.Find(x => x.pcssQuality));
-            pcssSoftness = Unpack(fetcher.Find(x => x.pcssSoftness));
-            pcssBlockerSearchRadius = Unpack(fetcher.Find(x => x.pcssBlockerSearchRadius));
-            pcssMaxPenumbraRadius = Unpack(fetcher.Find(x => x.pcssMaxPenumbraRadius));
-            pcssDepthBias = Unpack(fetcher.Find(x => x.pcssDepthBias));
             debugMode = Unpack(fetcher.Find(x => x.debugMode));
             debugInSceneView = Unpack(fetcher.Find(x => x.debugInSceneView));
             debugInGameView = Unpack(fetcher.Find(x => x.debugInGameView));
@@ -52,7 +39,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
         {
 
             DrawRuntime();
-            DrawSoftShadow();
             DrawDebug();
         }
 
@@ -71,28 +57,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 DrawParameter(enable, "启用");
                 DrawParameter(resolution, "单角色分辨率");
                 DrawParameter(softnessRadius, "阴影软边（米）");
-            }
-        }
-
-        private void DrawSoftShadow()
-        {
-            string summary = LilUrpEditorSectionGui.BoolSummary(pcssEnabled)
-                + " / " + LilUrpEditorSectionGui.EnumSummary(pcssQuality)
-                + " / " + LilUrpEditorSectionGui.FloatSummary(pcssSoftness);
-            if (!HoVolumeEditorGUI.Section(ref showSoftShadow, "软阴影（PCSS）", summary))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope())
-            {
-                DrawParameter(pcssEnabled, "启用 PCSS");
-                DrawParameter(pcssQuality, "质量档");
-                DrawParameter(pcssSoftness, "光源角直径（度）");
-                DrawParameter(pcssBlockerSearchRadius, "Blocker 搜索半径（米）");
-                DrawParameter(pcssMaxPenumbraRadius, "半影半径上限（米）");
-                DrawParameter(pcssDepthBias, "Blocker 深度偏移");
-
             }
         }
 

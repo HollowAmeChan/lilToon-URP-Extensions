@@ -5,7 +5,6 @@ using lilToon.URP.Extensions.Debugging;
 using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.SurfaceBuffer;
-using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.SubsurfaceScattering;
 using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.SSGI;
@@ -103,7 +102,6 @@ namespace lilToon.URP.Extensions.Editor.Debugging
                 CheckGrid(grid, HoObjectBufferDebugViewInfo.Views, "_HoObjectBufferDebugMode");
                 CheckGrid(grid, HoGeometryBufferDebugViewInfo.Views, "_HoGeometryBufferDebugMode");
                 CheckGrid(grid, HoSurfaceBufferDebugViewInfo.Views, "_HoSurfaceBufferDebugMode");
-                CheckGrid(grid, HoShadowCastDebugViewInfo.Views, "_HoShadowCastDebugMode", integer: true);
                 CheckGrid(grid, HoSubsurfaceScatteringDebugViewInfo.Views, "_lilHoSSSDebugParams", new Vector4(0, 0, 0, 0));
                 CheckGrid(grid, HoPlanarReflectionDebugViewInfo.Views, "_HoPlanarReflectionDebugParams", new Vector4(0, 100, 32, 0));
                 CheckGrid(grid, HoSSGIDebugViewInfo.Views, "_HoSSGIDebugMode", integer: true);
@@ -153,9 +151,9 @@ namespace lilToon.URP.Extensions.Editor.Debugging
         {
             var texture = Keep(new Texture2D(2, 2, TextureFormat.RGBAFloat, false, true));
             texture.SetPixels(new[] { new Color(.2f,.4f,.6f,1), new Color(.2f,.4f,.6f,1), new Color(.2f,.4f,.6f,1), new Color(.2f,.4f,.6f,1) }); texture.Apply();
-            string[] names = { "_BlitTexture", "_HoGeometryBufferNormalDepthTexture", "_HoGeometryBufferOutlineNormalDepthTexture", "_HoGeometryBufferCoverageTexture", "_HoGeometryBufferOutlineCoverageTexture", "_HoGeometryBufferSkyTexture", "_HoObjectBufferId0Texture", "_HoObjectBufferId1Texture", "_HoObjectBufferCoverageTexture", "_HoObjectBufferSelectionTexture", "_HoSurfaceBufferColorTexture", "_HoSurfaceBufferEmissionTexture", "_HoSurfaceBufferNormalTexture", "_HoSurfaceBufferMaterialTexture", "_HoSurfaceBufferReflectionTexture", "_HoSurfaceBufferClassificationTexture", "_HoSurfaceBufferOwnerTexture", "_HoSurfaceSemanticOwnerTexture", "_HoSurfaceSemanticLane0Texture", "_HoSurfaceSemanticLane1Texture", "_HoSurfaceSemanticLane2Texture", "_HoSurfaceSemanticLane3Texture", "_HoShadowCastAtlas", "_HoShadowCastSecondDirectionalAtlas", "_lilHoSSSSourceTexture", "_lilHoSSSTransmissionTexture", "_LILPBRPlanarReflectionTexture" };
+            string[] names = { "_BlitTexture", "_HoGeometryBufferNormalDepthTexture", "_HoGeometryBufferOutlineNormalDepthTexture", "_HoGeometryBufferCoverageTexture", "_HoGeometryBufferOutlineCoverageTexture", "_HoGeometryBufferSkyTexture", "_HoObjectBufferId0Texture", "_HoObjectBufferId1Texture", "_HoObjectBufferCoverageTexture", "_HoObjectBufferSelectionTexture", "_HoSurfaceBufferColorTexture", "_HoSurfaceBufferEmissionTexture", "_HoSurfaceBufferNormalTexture", "_HoSurfaceBufferMaterialTexture", "_HoSurfaceBufferReflectionTexture", "_HoSurfaceBufferClassificationTexture", "_HoSurfaceBufferOwnerTexture", "_HoSurfaceSemanticOwnerTexture", "_HoSurfaceSemanticLane0Texture", "_HoSurfaceSemanticLane1Texture", "_HoSurfaceSemanticLane2Texture", "_HoSurfaceSemanticLane3Texture", "_lilHoSSSSourceTexture", "_lilHoSSSTransmissionTexture", "_LILPBRPlanarReflectionTexture" };
             foreach (string name in names) Shader.SetGlobalTexture(name, texture);
-            foreach (string name in new[] { "_HoSurfaceBufferActive", "_HoObjectBufferActive", "_HoGeometryBufferValid", "_HoGeometryBufferCoverageTextureValid", "_HoGeometryBufferSkyTextureValid", "_HoShadowCastActive", "_HoSurfaceSemanticActive" }) Shader.SetGlobalFloat(name, 1);
+            foreach (string name in new[] { "_HoSurfaceBufferActive", "_HoObjectBufferActive", "_HoGeometryBufferValid", "_HoGeometryBufferCoverageTextureValid", "_HoGeometryBufferSkyTextureValid", "_HoSurfaceSemanticActive" }) Shader.SetGlobalFloat(name, 1);
             Shader.SetGlobalVector("_HoPlanarReflectionDebugInputStatus", Vector4.one);
             Shader.SetGlobalVector("_HoGeometryBufferDebugDepthParams", new Vector4(0, 100, .01f, 0));
             Shader.SetGlobalFloat("_HoGTAODebugIntensity", 1); Shader.SetGlobalFloat("_HoGTAODebugInvert", 0);

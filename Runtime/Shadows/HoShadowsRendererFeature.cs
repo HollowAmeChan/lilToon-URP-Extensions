@@ -157,7 +157,7 @@ namespace lilToon.URP.Extensions.Shadows
                     if (characterProducer == null)
                     {
                         characterProducerSettings = new HoCharacterShadowSettings();
-                        characterProducer = new HoCharacterShadowAtlasProducer(fixedPcf: true);
+                        characterProducer = new HoCharacterShadowAtlasProducer(filterPaddingTexels: 2.0f);
                         characterProducer.Create();
                     }
                     characterSettings.SetAtlasSettings(characterProducerSettings);

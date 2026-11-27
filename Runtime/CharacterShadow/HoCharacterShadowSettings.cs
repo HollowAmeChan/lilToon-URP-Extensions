@@ -21,27 +21,12 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public int maxCharacters = 16;
         [Range(2048, 16384), Tooltip("图集边长上限。可容纳 tile 数 = (本值 / 单角色分辨率)²，再与「同时接收域上限」取小。")]
         public int maxAtlasSize = 8192;
-        [Range(0, 0.2f), Tooltip("额外的固定滤波半径（米），PCSS 在此基础上增加半影。0 仍保留基础抗锯齿；不必放大软边来掩盖 texel 台阶。")]
+        [Range(0, 0.2f), Tooltip("独立角色阴影的固定 PCF 请求半径（米）。按当前 tile 换算成 1 到 2 个 texel。")]
         public float softnessRadius = 0.005f;
         [Min(0), Tooltip("投影深度偏移（单位：texel）。")]
         public float depthBias = 1;
         [Min(0), Tooltip("法线方向偏移（单位：texel）。")]
         public float normalBias = 1;
-
-        [Header("PCSS 软阴影")]
-        [Tooltip("启用 PCSS（blocker search + 按遮挡距离估算的可变半影）。关闭后只剩「阴影软边」那一档固定半径滤波。")]
-        public bool pcssEnabled = true;
-        [Tooltip("采样档：只决定 blocker / filter 的采样数，不改变阴影形状。")]
-        public HoCharacterShadowPcssQuality pcssQuality = HoCharacterShadowPcssQuality.Ultra;
-        [Range(0, 8), Tooltip("方向光的角直径（度）。半影半径 = 遮挡距离 × tan(角直径 / 2)，受半影上限限制。0 只保留固定软边与基础抗锯齿。")]
-        public float pcssSoftness = 2;
-        [Range(0.001f, 0.2f), Tooltip("寻找遮挡物的范围（米），不是最终软边宽度。范围太大而采样数不足时可能漏掉细小遮挡物。")]
-        public float pcssBlockerSearchRadius = 0.02f;
-        [Range(0.001f, 0.2f), Tooltip("PCSS 的半影半径上限（米）。不随分辨率或质量档缩窄；大范围滤波需要更高采样档以避免颗粒。固定软边与基础抗锯齿独立生效。")]
-        public float pcssMaxPenumbraRadius = 0.04f;
-        [Range(0, 0.02f), Tooltip("blocker 判定的深度偏移（阴影空间 z，1 ≈ 盒子整个深度范围）：压自遮挡与深度抖动。"
-            + "默认给一点，避免 blocker 数量在相邻像素之间跳变（那会变成斑点）。")]
-        public float pcssDepthBias = 0.0005f;
 
         [Tooltip("Volume 未覆盖时的调试模式；调试入口在 Ho-CharacterShadow Volume 的「调试」分组。")]
         public HoCharacterShadowDebugMode debugMode;
@@ -62,11 +47,6 @@ namespace lilToon.URP.Extensions.CharacterShadow
             softnessRadius = Mathf.Clamp(softnessRadius, 0.0f, 0.2f);
             depthBias = Mathf.Max(0.0f, depthBias);
             normalBias = Mathf.Max(0.0f, normalBias);
-            pcssQuality = HoCharacterShadowShaderContract.ClampQuality((int)pcssQuality);
-            pcssSoftness = Mathf.Clamp(pcssSoftness, 0.0f, 8.0f);
-            pcssBlockerSearchRadius = Mathf.Clamp(pcssBlockerSearchRadius, 0.001f, 0.2f);
-            pcssMaxPenumbraRadius = Mathf.Clamp(pcssMaxPenumbraRadius, 0.001f, 0.2f);
-            pcssDepthBias = Mathf.Clamp(pcssDepthBias, 0.0f, 0.02f);
         }
     }
 
@@ -82,24 +62,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal float softnessRadiusWorld;
         internal float depthBias;
         internal float normalBias;
-        internal bool pcssEnabled;
-        internal HoCharacterShadowPcssQuality pcssQuality;
-        internal float pcssSoftness;
-        internal float pcssBlockerRadiusWorld;
-        internal float pcssMaxPenumbraRadiusWorld;
-        internal float pcssDepthBias;
-        internal int pcssBlockerSamples;
-        internal int pcssFilterSamples;
-
-        /// <summary>被 Volume 覆盖掉的 PCSS 字段个数：&gt;0 说明"改 feature 上的值没用"，UI 靠它提示。</summary>
-        internal int pcssVolumeOverrides;
-
-        /// <summary>这一帧实际生效的 PCSS 状态（发布在 LastCullStatus 里，用来回答"为什么关不掉"）。</summary>
-        internal string pcssStatus;
-
-        /// <summary>「PCF 半径」这个 texel 单位的旧旋钮还留一个 texel 值：只给投影拟合留边界余量用。</summary>
-        internal float pcssFilterRadiusTexels = 1.0f;
-        internal bool useLegacySampling = true;
+        internal float filterPaddingTexels = 1.0f;
 
         internal static HoCharacterShadowRenderConfig Resolve(HoCharacterShadowSettings settings, HoCharacterShadowVolume volume)
         {
@@ -116,35 +79,15 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 maxAtlasSize = settings.maxAtlasSize,
                 softnessRadiusWorld = settings.softnessRadius,
                 depthBias = settings.depthBias,
-                normalBias = settings.normalBias,
-                pcssEnabled = settings.pcssEnabled,
-                pcssSoftness = settings.pcssSoftness,
-                pcssBlockerRadiusWorld = settings.pcssBlockerSearchRadius,
-                pcssMaxPenumbraRadiusWorld = settings.pcssMaxPenumbraRadius,
-                pcssDepthBias = settings.pcssDepthBias,
-                pcssQuality = settings.pcssQuality
+                normalBias = settings.normalBias
             };
 
             if (volume != null)
             {
                 if (volume.resolution.overrideState) config.resolution = (int)volume.resolution.value;
-                if (volume.softnessRadius.overrideState) { config.softnessRadiusWorld = volume.softnessRadius.value; config.pcssVolumeOverrides++; }
-                if (volume.pcssEnabled.overrideState) { config.pcssEnabled = volume.pcssEnabled.value; config.pcssVolumeOverrides++; }
-                if (volume.pcssQuality.overrideState) { config.pcssQuality = volume.pcssQuality.value; config.pcssVolumeOverrides++; }
-                if (volume.pcssSoftness.overrideState) { config.pcssSoftness = volume.pcssSoftness.value; config.pcssVolumeOverrides++; }
-                if (volume.pcssBlockerSearchRadius.overrideState) { config.pcssBlockerRadiusWorld = volume.pcssBlockerSearchRadius.value; config.pcssVolumeOverrides++; }
-                if (volume.pcssMaxPenumbraRadius.overrideState) { config.pcssMaxPenumbraRadiusWorld = volume.pcssMaxPenumbraRadius.value; config.pcssVolumeOverrides++; }
-                if (volume.pcssDepthBias.overrideState) { config.pcssDepthBias = volume.pcssDepthBias.value; config.pcssVolumeOverrides++; }
+                if (volume.softnessRadius.overrideState) config.softnessRadiusWorld = volume.softnessRadius.value;
             }
 
-            HoCharacterShadowShaderContract.GetPcssSampleCounts(config.pcssQuality, out config.pcssBlockerSamples, out config.pcssFilterSamples);
-            config.pcssStatus =
-                (config.pcssEnabled ? "on" : "off")
-                + ",min=" + config.softnessRadiusWorld.ToString("0.###") + "m"
-                + ",max=" + config.pcssMaxPenumbraRadiusWorld.ToString("0.###") + "m"
-                + ",angle=" + config.pcssSoftness.ToString("0.##") + "deg"
-                + "," + config.pcssQuality
-                + ",vol=" + config.pcssVolumeOverrides;
             return config;
         }
     }

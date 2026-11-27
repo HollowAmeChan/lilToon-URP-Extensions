@@ -20,7 +20,6 @@ using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTDI;
 using lilToon.URP.Extensions.RTGI;
 using lilToon.URP.Extensions.RTShadow;
-using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.Shadows;
 using lilToon.URP.Extensions.SSGI;
 using lilToon.URP.Extensions.SubsurfaceScattering;
@@ -42,10 +41,10 @@ public static class HoMmdSharedRenderAssets
     public const string RendererPath = Root + "PC_Renderer.asset";
     public const string PipelinePath = Root + "PC_RPAsset.asset";
 
-    static readonly Type[] LegacyFeatureOrder =
+    static readonly Type[] FeatureOrder =
     {
         typeof(HoGeometryDataRendererFeature), typeof(HoRTRendererFeature), typeof(HoCharacterShadowRendererFeature),
-        typeof(HoShadowCastRendererFeature), typeof(HoAtmosphereRendererFeature), typeof(HoPlanarReflectionRendererFeature),
+        typeof(HoAtmosphereRendererFeature), typeof(HoPlanarReflectionRendererFeature),
         typeof(HoGeometryBufferRendererFeature), typeof(HoObjectBufferRendererFeature), typeof(HoSurfaceBufferRendererFeature),
         typeof(HoRTShadowRendererFeature), typeof(HoAttributeCompositeRendererFeature), typeof(HoGTAORendererFeature),
         typeof(HoSSGIRendererFeature), typeof(HoRTDIRendererFeature), typeof(HoRTGIRendererFeature),
@@ -56,9 +55,6 @@ public static class HoMmdSharedRenderAssets
 
     internal static HoShadowsRendererFeature ActiveHoShadows(UniversalRendererData renderer) =>
         renderer == null ? null : renderer.rendererFeatures.OfType<HoShadowsRendererFeature>().FirstOrDefault(feature => feature.isActive);
-
-    internal static HoShadowCastRendererFeature LegacyShadowCast(UniversalRendererData renderer) =>
-        renderer == null || ActiveHoShadows(renderer) != null ? null : renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().FirstOrDefault();
 
     internal static UniversalRendererData RendererForCamera(UniversalRenderPipelineAsset pipeline, Camera camera)
     {
@@ -82,13 +78,12 @@ public static class HoMmdSharedRenderAssets
         return RendererAt(defaultIndex.intValue) as UniversalRendererData;
     }
 
-    static bool IsLegacyShadowProducer(Type type) =>
-        type == typeof(HoShadowCastRendererFeature) || type == typeof(HoCharacterShadowRendererFeature) ||
-        type == typeof(HoRTShadowRendererFeature);
+    static bool IsStandaloneShadowProducer(Type type) =>
+        type == typeof(HoCharacterShadowRendererFeature) || type == typeof(HoRTShadowRendererFeature);
 
     internal static IEnumerable<Type> CanonicalFeatureOrder(bool unified, bool includeDebugTile = false)
     {
-        foreach (var type in LegacyFeatureOrder)
+        foreach (var type in FeatureOrder)
         {
             if (!includeDebugTile && type == typeof(HoDebugTileRendererFeature))
                 continue;
@@ -140,30 +135,15 @@ public static class HoMmdSharedRenderAssets
 
     public static void EnsureAssets()
     {
-        var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
         var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelinePath);
-        if (renderer == null || pipeline == null) throw new InvalidOperationException("固定 PC_Renderer/PC_RPAsset 不存在。");
-
-        var pipelineObject = new SerializedObject(pipeline);
-        var rendererList = pipelineObject.FindProperty("m_RendererDataList");
-        if (rendererList == null) throw new InvalidOperationException("PC_RPAsset 缺少 Renderer 列表。");
-        var firstRenderer = rendererList.arraySize > 0 ? rendererList.GetArrayElementAtIndex(0).objectReferenceValue : null;
-        if (firstRenderer != null && firstRenderer != renderer)
-            throw new InvalidOperationException("PC_RPAsset 的 Renderer 索引 0 未指向 PC_Renderer，未修改资产。");
-
+        var renderer = RendererForCamera(pipeline, null);
+        if (renderer == null)
+            throw new InvalidOperationException("PC_RPAsset 缺少默认 Renderer。");
         if (ActiveHoShadows(renderer) == null)
-        {
-            RemoveDuplicateFeatureSubassets(renderer);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.ImportAsset(RendererPath, ImportAssetOptions.ForceSynchronousImport);
-            renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
-        }
+            throw new InvalidOperationException("PC_RPAsset 的默认 Renderer 缺少已启用的 Ho Shadows。");
+
         ConfigureRenderer(renderer);
-        if (firstRenderer == null)
-        {
-            if (rendererList.arraySize == 0) rendererList.arraySize = 1;
-            rendererList.GetArrayElementAtIndex(0).objectReferenceValue = renderer;
-        }
+        var pipelineObject = new SerializedObject(pipeline);
         var volumeProfile = pipelineObject.FindProperty("m_VolumeProfile");
         if (volumeProfile != null) volumeProfile.objectReferenceValue = null;
         pipelineObject.FindProperty("m_MainLightShadowmapResolution").intValue = 4096;
@@ -175,14 +155,13 @@ public static class HoMmdSharedRenderAssets
 
     static void ConfigureRenderer(UniversalRendererData renderer)
     {
-        bool unified = ActiveHoShadows(renderer) != null;
         var features = renderer.rendererFeatures.Where(x => x != null).ToList();
         var unique = new List<ScriptableRendererFeature>();
         var types = new HashSet<Type>();
         foreach (var feature in features)
         {
             var type = feature.GetType();
-            if (types.Add(type) || (unified && (IsLegacyShadowProducer(type) || type == typeof(HoShadowsRendererFeature)))) unique.Add(feature);
+            if (types.Add(type) || IsStandaloneShadowProducer(type) || type == typeof(HoShadowsRendererFeature)) unique.Add(feature);
             else
             {
                 renderer.rendererFeatures.Remove(feature);
@@ -195,14 +174,8 @@ public static class HoMmdSharedRenderAssets
         Ensure<HoObjectBufferRendererFeature>(unique, types, renderer, "Ho-ObjectBuffer");
         Ensure<HoSurfaceBufferRendererFeature>(unique, types, renderer, "Ho-SurfaceBuffer");
         Ensure<HoAttributeCompositeRendererFeature>(unique, types, renderer, "Ho-AttributeComposite");
-        if (!unified)
-        {
-            Ensure<HoCharacterShadowRendererFeature>(unique, types, renderer, "Ho-CharacterShadow");
-            Ensure<HoShadowCastRendererFeature>(unique, types, renderer, "Ho-ShadowCast");
-        }
         Ensure<HoAtmosphereRendererFeature>(unique, types, renderer, "Ho-Atmosphere");
         Ensure<HoGTAORendererFeature>(unique, types, renderer, "Ho-GTAO");
-        if (!unified) Ensure<HoRTShadowRendererFeature>(unique, types, renderer, "Ho-RTShadow");
         Ensure<HoVolumeLightRendererFeature>(unique, types, renderer, "Ho-VolumeLight");
         Ensure<WeightedOITRendererFeature>(unique, types, renderer, "Ho-WeightedOIT");
         Ensure<HoCharacterSpecializationRendererFeature>(unique, types, renderer, "Ho-CharacterSpecialization");
@@ -214,17 +187,17 @@ public static class HoMmdSharedRenderAssets
         Ensure<HoRTDIRendererFeature>(unique, types, renderer, "Ho-RTDI");
         Ensure<HoDebugTileRendererFeature>(unique, types, renderer, "Ho-DebugTile");
 
-        var ordered = OrderFeatures(unique, unified, includeDebugTile: true);
+        var ordered = OrderFeatures(unique, unified: true, includeDebugTile: true);
         var postFeatures=ordered.Where(x=>x.GetType().Name=="HoPostProcessRendererFeature"||x.GetType().Name=="ShoostPostProcessRendererFeature").ToList();
         foreach(var feature in postFeatures)ordered.Remove(feature);
         int debugIndex=ordered.FindIndex(x=>x.GetType()==typeof(HoDebugTileRendererFeature));
         if(debugIndex<0)ordered.AddRange(postFeatures);else ordered.InsertRange(debugIndex,postFeatures);
-        var required = new HashSet<Type>(CanonicalFeatureOrder(unified, includeDebugTile: true));
+        var required = new HashSet<Type>(CanonicalFeatureOrder(unified: true, includeDebugTile: true));
         var disabled = new HashSet<Type>{typeof(HoSSGIRendererFeature),typeof(HoRTDIRendererFeature),typeof(HoDebugTileRendererFeature)};
         foreach (var feature in ordered)
         {
             var type = feature.GetType();
-            if (unified && (feature is HoShadowsRendererFeature || IsLegacyShadowProducer(type))) continue;
+            if (feature is HoShadowsRendererFeature || IsStandaloneShadowProducer(type)) continue;
             if (required.Contains(type)) feature.SetActive(!disabled.Contains(type));
         }
         ApplyFeatureOrder(renderer, ordered);
@@ -244,7 +217,7 @@ public static class HoMmdSharedRenderAssets
         if(validate!=null)validate.Invoke(renderer,null);
         AssetDatabase.SaveAssets();
         Debug.Log("MMD_SHARED_RENDERER "+string.Join(",",ordered.Select(x=>{AssetDatabase.TryGetGUIDAndLocalFileIdentifier(x,out _,out long id);return x.GetType().Name+"@"+AssetDatabase.GetAssetPath(x)+"#"+AssetDatabase.Contains(x)+"/"+id;})));
-        Debug.Log("MMD_SHARED_SUBASSETS "+string.Join(",",AssetDatabase.LoadAllAssetsAtPath(RendererPath).OfType<ScriptableRendererFeature>().Select(x=>x.GetType().Name)));
+        Debug.Log("MMD_SHARED_SUBASSETS "+string.Join(",",AssetDatabase.LoadAllAssetsAtPath(AssetDatabase.GetAssetPath(renderer)).OfType<ScriptableRendererFeature>().Select(x=>x.GetType().Name)));
     }
 
     internal static void ApplyFeatureOrder(UniversalRendererData renderer, List<ScriptableRendererFeature> ordered)
@@ -263,25 +236,6 @@ public static class HoMmdSharedRenderAssets
         serialized.ApplyModifiedPropertiesWithoutUndo();
         renderer.SetDirty();
         EditorUtility.SetDirty(renderer);
-    }
-
-    static void RemoveDuplicateFeatureSubassets(UniversalRendererData renderer)
-    {
-        var all=renderer.rendererFeatures.Where(x=>x!=null).ToList();
-        var unique=new List<ScriptableRendererFeature>();var types=new HashSet<Type>();
-        foreach(var feature in all)
-        {
-            if(types.Add(feature.GetType()))unique.Add(feature);
-            else{renderer.rendererFeatures.Remove(feature);Object.DestroyImmediate(feature,true);}
-        }
-        string path=AssetDatabase.GetAssetPath(renderer);
-        foreach(var orphan in AssetDatabase.LoadAllAssetsAtPath(path).OfType<ScriptableRendererFeature>().Where(x=>!unique.Contains(x)).ToArray())
-            Object.DestroyImmediate(orphan,true);
-        renderer.rendererFeatures.Clear();renderer.rendererFeatures.AddRange(unique);
-        var so=new SerializedObject(renderer);var list=so.FindProperty("m_RendererFeatures");var map=so.FindProperty("m_RendererFeatureMap");
-        if(list!=null){list.arraySize=unique.Count;for(int i=0;i<unique.Count;i++)list.GetArrayElementAtIndex(i).objectReferenceValue=unique[i];}
-        if(map!=null){map.arraySize=unique.Count;for(int i=0;i<unique.Count;i++){AssetDatabase.TryGetGUIDAndLocalFileIdentifier(unique[i],out _,out long id);map.GetArrayElementAtIndex(i).longValue=id;}}
-        so.ApplyModifiedProperties();renderer.SetDirty();EditorUtility.SetDirty(renderer);
     }
 
     static void Ensure<T>(List<ScriptableRendererFeature> list, HashSet<Type> types, UniversalRendererData renderer, string name)

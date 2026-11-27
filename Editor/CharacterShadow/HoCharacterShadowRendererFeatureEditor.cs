@@ -9,14 +9,12 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
     {
         // Palette (Ho-UI 风格规范 §1): 运行 / 名称·声明 / 调试 / 高级 / RendererFeature 设置。
         private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
-        private static readonly Color SoftShadowColor = new Color(0.42f, 0.72f, 0.58f);
         private static readonly Color DeclarationColor = new Color(0.80f, 0.55f, 0.85f);
         private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
         private static readonly Color AdvancedColor = new Color(0.62f, 0.58f, 0.78f);
         private static readonly Color StatusColor = new Color(0.45f, 0.64f, 0.96f);
 
         private static bool showRuntime = true;
-        private static bool showSoftShadow = true;
         private static bool showDeclaration;
         private static bool showDebug;
         private static bool showAdvanced;
@@ -52,7 +50,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 MessageType.Info);
 
             DrawRuntime();
-            DrawSoftShadow();
             DrawDeclaration();
             DrawDebug();
             DrawAdvanced();
@@ -81,28 +78,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 DrawProperty("maxAtlasSize", "图集边长上限");
                 DrawProperty("depthBias", "深度偏移");
                 DrawProperty("normalBias", "法线偏移");
-            }
-        }
-
-        private void DrawSoftShadow()
-        {
-            string summary = LilUrpEditorSectionGui.BoolSummary(Find("pcssEnabled"))
-                + " / " + LilUrpEditorSectionGui.EnumName(Find("pcssQuality"))
-                + " / " + LilUrpEditorSectionGui.FloatSummary(Find("pcssSoftness"));
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSoftShadow, "软阴影（PCSS）", summary, SoftShadowColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                DrawProperty("pcssEnabled", "启用 PCSS");
-                DrawProperty("pcssQuality", "质量档");
-                DrawProperty("pcssSoftness", "光源角直径（度）");
-                DrawProperty("pcssBlockerSearchRadius", "Blocker 搜索半径（米）");
-                DrawProperty("pcssMaxPenumbraRadius", "半影半径上限（米）");
-                DrawProperty("pcssDepthBias", "Blocker 深度偏移");
-
             }
         }
 

@@ -20,7 +20,6 @@ namespace lilToon.URP.Extensions.Shadows
             target.maxAtlasSize = maxAtlasSize;
             target.depthBias = depthBias;
             target.normalBias = normalBias;
-            target.pcssEnabled = false;
         }
     }
 }

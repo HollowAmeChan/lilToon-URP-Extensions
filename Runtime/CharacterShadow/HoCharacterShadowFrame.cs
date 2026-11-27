@@ -29,10 +29,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal Light light;
         internal Vector3 cameraPosition;
         internal Matrix4x4 cameraView, cameraProjection;
-        internal Vector4 pcssParams, pcssParams2;
-        internal bool useLegacySampling;
-        /// <summary>这一帧实际生效的 PCSS 状态（给 LastCullStatus 用，回答"为什么关不掉/改不动"）。</summary>
-        internal string pcssStatus = "";
+        internal float softnessRadiusWorld;
 
         internal static HoCharacterShadowFrame Build(Camera camera, Light light,
             Matrix4x4 cameraView, Matrix4x4 cameraProjection, HoCharacterShadowRenderConfig config)
@@ -53,18 +50,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             frame.cameraPosition = camera.transform.position;
             frame.cameraView = cameraView;
             frame.cameraProjection = cameraProjection;
-            frame.pcssStatus = config.pcssStatus;
-            frame.useLegacySampling = config.useLegacySampling;
-            // Directional PCSS consumes tan(angular diameter / 2), not a distance to the
-            // arbitrary shadow-camera near plane. PCF keeps its sample budget when PCSS is off.
-            frame.pcssParams = new Vector4(
-                config.pcssEnabled ? 1.0f : 0.0f,
-                Mathf.Tan(Mathf.Clamp(config.pcssSoftness, 0, 8) * Mathf.Deg2Rad * 0.5f),
-                Mathf.Max(0.0f, config.pcssBlockerRadiusWorld),
-                Mathf.Max(0.0f, config.pcssMaxPenumbraRadiusWorld));
-            frame.pcssParams2 = new Vector4(
-                Mathf.Max(0.0f, config.pcssDepthBias), config.pcssBlockerSamples, config.pcssFilterSamples,
-                Mathf.Max(0.0f, config.softnessRadiusWorld));
+            frame.softnessRadiusWorld = config.softnessRadiusWorld;
             HoObjectBufferRegistry.EnsureBuilt();
             List<HoCharacterShadow> subjects = frame.subjects;
             subjects.Clear();
@@ -126,7 +112,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 HoCharacterShadowSlice cachedSlice = frame.sliceCache[index];
                 if (cachedSlice == null) frame.sliceCache[index] = cachedSlice = new HoCharacterShadowSlice();
                 HoCharacterShadowSlice slice = HoCharacterShadowProjection.Rebuild(subject, light, corners,
-                    casterBounds, frame.resolution, config.pcssFilterRadiusTexels, config.depthBias, config.normalBias,
+                    casterBounds, frame.resolution, config.filterPaddingTexels, config.depthBias, config.normalBias,
                     cachedSlice);
                 if (slice == null) { subject.status = "包围盒变换无效"; continue; }
                 groups.Add(group.groupId);

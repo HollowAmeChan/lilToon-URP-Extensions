@@ -16,7 +16,6 @@ using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.OIT;
 using lilToon.URP.Extensions.PostProcessing;
-using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.SurfaceBuffer;
 using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI;
@@ -123,16 +122,8 @@ public static class HoMmdStageAudit
                     errors.Add(recipe.name+": scene dependency/state audit failed");
                 if(recipe.name=="花吐电気"&&(!layerIsolation||exterior.Length!=3||!screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.SkyTyndall)))
                     errors.Add(recipe.name+": exterior lighting / sky scattering audit failed");
-                if(recipe.name=="圣诞万花镜")
-                {
-                    if(lowPoints!=12)errors.Add(recipe.name+": low point fill audit failed");
-                    if(unified==null)
-                    {
-                        var legacy=renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().ToArray();
-                        if(legacy.Length!=1||(int)legacy[0].Settings.lightCapacity<(int)HoShadowCastLightCapacity.Medium)
-                            errors.Add(recipe.name+": legacy shadow capacity audit failed");
-                    }
-                }
+                if(recipe.name=="圣诞万花镜"&&lowPoints!=12)
+                    errors.Add(recipe.name+": low point fill audit failed");
                 if(unified!=null&&(!env.pipeline.supportsMainLightShadows||!env.pipeline.supportsAdditionalLightShadows||
                     env.pipeline.additionalLightsRenderingMode!=LightRenderingMode.PerPixel))
                     errors.Add(recipe.name+": native main and per-pixel additional shadows must be enabled");
@@ -142,8 +133,8 @@ public static class HoMmdStageAudit
                     errors.Add(recipe.name+": three cameras / world-space lighting audit failed");
                 if(!audit.hasObjectBuffer||!audit.hasAttributeComposite||!audit.plrSourceBeforeGeometryBuffer||!audit.plrSceneView||!audit.plrReceiversHaveIdentity)
                     errors.Add(recipe.name+": OB/SB/AC/PLR dependency or SceneView reflection audit failed");
-                if(!audit.canonicalFeatureOrder||(unified==null&&!audit.disabledFeaturesPresent))
-                    errors.Add(recipe.name+": Renderer feature order / disabled feature retention audit failed");
+                if(!audit.canonicalFeatureOrder)
+                    errors.Add(recipe.name+": Ho Shadows Renderer feature order audit failed");
                 if(advanced)
                 {
                     if(rtgi==null||ssgiFeatures!=0||ssgiVolumes!=0||audit.advancedImageLayers<2||
@@ -169,28 +160,17 @@ public static class HoMmdStageAudit
         var ssgi=actual.FirstOrDefault(x=>x.GetType().Name=="HoSSGIRendererFeature");var rtdi=actual.FirstOrDefault(x=>x.GetType().Name=="HoRTDIRendererFeature");var debug=actual.FirstOrDefault(x=>x.GetType().Name=="HoDebugTileRendererFeature");
         disabledPresent=ssgi!=null&&!ssgi.isActive&&rtdi!=null&&!rtdi.isActive&&debug!=null&&!debug.isActive;
         var unified=HoMmdSharedRenderAssets.ActiveHoShadows(renderer);
-        if(unified!=null)
-        {
-            int shadowIndex=Array.IndexOf(actual,unified);
-            int IndexOfActive<T>() where T : ScriptableRendererFeature => Array.FindIndex(actual,x=>x is T&&x.isActive);
-            bool Before(int index) => index>=0&&index<shadowIndex;
-            bool AfterIfPresent(int index) => index<0||index>shadowIndex;
-            return actual.OfType<HoShadowsRendererFeature>().Count(x=>x.isActive)==1&&
-                IndexOfActive<HoShadowCastRendererFeature>()<0&&IndexOfActive<HoCharacterShadowRendererFeature>()<0&&
-                IndexOfActive<HoRTShadowRendererFeature>()<0&&Before(IndexOfActive<HoGeometryDataRendererFeature>())&&
-                Before(IndexOfActive<HoGeometryBufferRendererFeature>())&&Before(IndexOfActive<HoObjectBufferRendererFeature>())&&
-                Before(IndexOfActive<HoSurfaceBufferRendererFeature>())&&
-                (!unified.RayTracedShadowsEnabled||Before(IndexOfActive<HoRTRendererFeature>()))&&
-                AfterIfPresent(IndexOfActive<WeightedOITRendererFeature>())&&AfterIfPresent(IndexOfActive<HoCharacterSpecializationRendererFeature>());
-        }
+        if(unified==null)return false;
 
-        int last=-1;
-        foreach(var type in HoMmdSharedRenderAssets.CanonicalFeatureOrder(false))
-        {
-            int index=Array.FindIndex(actual,x=>x.GetType()==type);
-            if(index<0||index<last)return false;
-            last=index;
-        }
-        return true;
+        int shadowIndex=Array.IndexOf(actual,unified);
+        int IndexOfActive<T>() where T : ScriptableRendererFeature => Array.FindIndex(actual,x=>x is T&&x.isActive);
+        bool Before(int index) => index>=0&&index<shadowIndex;
+        bool AfterIfPresent(int index) => index<0||index>shadowIndex;
+        return actual.OfType<HoShadowsRendererFeature>().Count(x=>x.isActive)==1&&
+            IndexOfActive<HoCharacterShadowRendererFeature>()<0&&IndexOfActive<HoRTShadowRendererFeature>()<0&&
+            Before(IndexOfActive<HoGeometryDataRendererFeature>())&&Before(IndexOfActive<HoGeometryBufferRendererFeature>())&&
+            Before(IndexOfActive<HoObjectBufferRendererFeature>())&&Before(IndexOfActive<HoSurfaceBufferRendererFeature>())&&
+            (!unified.RayTracedShadowsEnabled||Before(IndexOfActive<HoRTRendererFeature>()))&&
+            AfterIfPresent(IndexOfActive<WeightedOITRendererFeature>())&&AfterIfPresent(IndexOfActive<HoCharacterSpecializationRendererFeature>());
     }
 }

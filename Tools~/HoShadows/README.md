@@ -1,5 +1,7 @@
 # Ho Shadows 生产迁移 dry-run
 
+发行后的静态盘点继续使用 `plan_migration.py`。已确认的场景槽位用 `HoShadowsApplyAcceptedScene.cs` 在物理副本复制、写入和复核。保存物的物理 phase 与队列进入同一回执。下方试切、逐 Pass 时间和材质预览记录为历史验收。重放旧 renderer 或使用旧预览开关时，Extensions 固定到 `386ae989`、HoShader 固定到 `a6a1699`、HoURP 固定到 `9206557`。旧 shader 和资产作为配套快照一起加载。
+
 `plan_migration.py` 读取磁盘上的 Renderer、URP 资产、Volume、灯与角色声明、材质和 Variant，并扫描舞台工具及序列化属性覆盖。它只向标准输出写 JSON，可以在关闭或运行 Unity 时使用。运行需要 Python 3.9+、`rg` 和 Git。
 
 ```powershell

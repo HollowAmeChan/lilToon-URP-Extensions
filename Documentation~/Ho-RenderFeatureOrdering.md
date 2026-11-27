@@ -23,6 +23,8 @@ HoUrp 的 `ScriptableRenderer` 在每帧开始清空 active pass queue，并给�
 
 ## 资源依赖规则
 
+当前 Ho Shadows 依赖原生主光与逐灯图集、相机深度，以及需要的 Geometry、Object 和 Surface 通道。把 `Ho Shadows` 排在这些输入 Feature 后，把 Weighted OIT 与角色 Capture 放在其对应输入生产之后。开启 RT 的专属 Renderer 还需把 `Ho-RT` 排在 `Ho Shadows` 前。受管 Renderer 使用一份 `Ho Shadows`，由它选择局部角色阴影及可选 RT 生产器。
+
 同事件顺序只保证 RenderGraph 的记录顺序。真正的 GPU 依赖仍必须声明：
 
 - 生产者：`SetRenderAttachment` / `SetGlobalTextureAfterPass`；

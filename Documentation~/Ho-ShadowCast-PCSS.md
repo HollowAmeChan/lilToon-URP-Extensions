@@ -1,5 +1,7 @@
 # ShadowCast PCSS：现状与坑
 
+> 历史说明。这里记录旧场景图集与 PCSS 的技术基线。复跑旧实现使用提交 `386ae989`。当前入口见 [Ho Shadows 使用说明](Ho-Shadows.md)。
+
 > **2026-11-25 静态化状态**：源码已切换为原生 ShaderLab / HLSL 维护。本轮已停止追加测试，GPU 对照、Player 和安装复开等完整验收未完成，未完成项不记为通过；历史记录仅代表其注明日期与范围。
 
 > 状态：**现行栅格化 ShadowCast 实现说明**，2026-10-28。角色 CS 的现行参数和采样见 [Ho-CharacterShadow](Ho-CharacterShadow.md)。

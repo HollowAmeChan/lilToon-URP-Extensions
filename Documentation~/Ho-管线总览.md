@@ -1,5 +1,7 @@
 # Ho 管线总览
 
+> 阴影章节附注。发布后的 Ho Shadows 复用原生场景图集并解析主光与逐灯可见度，统一调度角色局部 PCF 和默认关闭的 RT。本文的旧 ShadowCast、独立 Character 与 RTShadow 列表保留作历史架构记录。当前 Renderer 顺序见 [RendererFeature 顺序](Ho-RenderFeatureOrdering.md)，材质使用见 [Ho Shadows](Ho-Shadows.md)。
+
 > **状态：现行总览**（2026 文档审核时把原来的两份草案合并到这里；**三轴 producer + AC 合成器已经落地**，
 > 本文描述的是完成形态，历史草案见 `归档/LILTOON_FORMAL_PIPELINE_DRAFT_v0.1.md`）。
 > 分轴细节：`Ho-ObjectBuffer.md`（OB）/ `Ho-SurfaceBuffer.md`（SB）/ `Ho-AttributeComposite.md`（AC）/
