@@ -46,6 +46,8 @@ namespace lilToon.URP.Extensions.RT
         }
     }
 
+    internal delegate HoRTViewRequest HoRTManagedViewPlanner(ref RenderingData renderingData);
+
     // A borrowed view is valid only in the renderer/camera epoch that produced
     // it. A later camera cannot silently make an earlier request valid again.
     internal readonly struct HoRTView
@@ -112,6 +114,7 @@ namespace lilToon.URP.Extensions.RT
             internal readonly HoRTGeometryCache geometry = new();
             internal readonly Dictionary<Object, View> views = new();
             internal readonly Dictionary<Object, HoRTViewRequest> requests = new();
+            internal Dictionary<Object, HoRTManagedViewPlanner> managedPlanners;
             internal readonly FencePass fencePass;
             internal Camera camera;
             internal ulong epoch;
@@ -144,7 +147,7 @@ namespace lilToon.URP.Extensions.RT
             internal void Begin(Camera nextCamera)
             {
                 camera = nextCamera; epoch++; frozen = false;
-                requests.Clear(); candidates.Clear();
+                requests.Clear(); managedPlanners?.Clear(); candidates.Clear();
                 fenceExpected = fenceRecorded = false;
                 capturedInput = false;
             }
@@ -174,10 +177,26 @@ namespace lilToon.URP.Extensions.RT
                 }
                 frozen = true;
             }
+
+            internal void PlanManagedViews(ref RenderingData renderingData)
+            {
+                if (managedPlanners == null)
+                    return;
+
+                foreach (var pair in managedPlanners)
+                {
+                    if (pair.Key == null)
+                        continue;
+                    var request = pair.Value(ref renderingData);
+                    if (request != null)
+                        requests[pair.Key] = request;
+                }
+                managedPlanners.Clear();
+            }
             public void Dispose()
             {
                 foreach (var view in views.Values) view.Dispose(); views.Clear();
-                geometry.Dispose(); requests.Clear(); candidates.Clear();
+                geometry.Dispose(); requests.Clear(); managedPlanners?.Clear(); candidates.Clear();
             }
         }
 
@@ -224,6 +243,19 @@ namespace lilToon.URP.Extensions.RT
             domain.requests[client] = request; reason = null; return true;
         }
 
+        // Managed clients can decide after culling and before the host freezes this camera's requests.
+        internal static bool RegisterManagedPlanner(ScriptableRenderer renderer, Camera camera, Object client,
+            HoRTManagedViewPlanner planner, out string reason)
+        {
+            if (client == null || planner == null) { reason = "无效的 RT 请求规划"; return false; }
+            if (!Find(renderer, camera, out var domain)) { reason = "缺少先准备的 Ho-RT"; return false; }
+            if (domain.frozen) { reason = "RT 请求晚于场景冻结"; return false; }
+            domain.managedPlanners ??= new Dictionary<Object, HoRTManagedViewPlanner>();
+            domain.managedPlanners[client] = planner;
+            reason = null;
+            return true;
+        }
+
         internal static bool TryAcquire(ScriptableRenderer renderer, Camera camera, Object client, out HoRTView view, out string reason)
         {
             view = default;
@@ -244,7 +276,11 @@ namespace lilToon.URP.Extensions.RT
         {
             if (!CheckVolumeEnabled(renderer, renderingData.cameraData.camera)) return;
             if (!Find(renderer, renderingData.cameraData.camera, out var domain) || domain.owner != this) return;
-            using (new ProfilingScope((CommandBuffer)null, HoDebugPerformanceRegistry.GetSampler("Ho-RT Prepare"))) domain.Prepare();
+            using (new ProfilingScope((CommandBuffer)null, HoDebugPerformanceRegistry.GetSampler("Ho-RT Prepare")))
+            {
+                domain.PlanManagedViews(ref renderingData);
+                domain.Prepare();
+            }
             if (domain.requests.Count == 0) { Status = "没有 RT 请求"; return; }
             HoDebugPerformanceRegistry.TrackPreparation(renderingData.cameraData.camera, Performance);
             domain.fenceExpected = true;

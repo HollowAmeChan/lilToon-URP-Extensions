@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.RTShadow;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -27,6 +28,13 @@ namespace lilToon.URP.Extensions.Shadows
     public sealed class HoShadowsRendererFeature : ScriptableRendererFeature
     {
         [SerializeField, Range(0, 16)] private int additionalLightBudget = 4;
+        [SerializeField] private bool rayTracedShadows;
+        [SerializeField] private HoRTShadowSettings rayTracedShadowSettings = new();
+        [SerializeField] private RayTracingShader rayTracedShadowProgram;
+        [SerializeField] private Shader rayVisibilityMaterial;
+        [SerializeField] private ComputeShader rayShadowReconstruction;
+        [SerializeField] private ComputeShader[] rayShadowReconstructionPasses;
+        [SerializeField] private Shader rayShadowDebugShader;
 
         private Material resolveMaterial;
         private NativeMainShadowPass resolvePass;
@@ -36,6 +44,17 @@ namespace lilToon.URP.Extensions.Shadows
         private HoAdditionalScreenShadowPass additionalPass;
         private HoOpaqueScreenShadowBindingPass bindOpaque;
         private HoOpaqueScreenShadowBindingPass clearOpaque;
+        private HoRTShadowRendererFeature rayProducer;
+        private Material rayResolveMaterial;
+        private HoRayTracedScreenShadowPass rayResolvePass;
+
+        public bool RayTracedShadowsEnabled
+        {
+            get => rayTracedShadows;
+            set => rayTracedShadows = value;
+        }
+
+        public HoRTShadowSettings RayTracedShadowSettings => rayTracedShadowSettings;
 
         public override void Create()
         {
@@ -53,21 +72,38 @@ namespace lilToon.URP.Extensions.Shadows
             additionalPass = additionalMaterial != null ? new HoAdditionalScreenShadowPass(additionalMaterial) : null;
             bindOpaque = new HoOpaqueScreenShadowBindingPass(false);
             clearOpaque = new HoOpaqueScreenShadowBindingPass(true);
+            ReleaseRayTracedShadows();
+        }
+
+        public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
+        {
+            if (!rayTracedShadows || rayTracedShadowSettings == null || !rayTracedShadowSettings.enabled)
+            {
+                ReleaseRayTracedShadows();
+                return;
+            }
+            if (!SystemInfo.supportsRayTracing || !SupportsOpaqueCamera(renderer, cameraData))
+                return;
+
+            if (rayProducer == null)
+            {
+                Shader shader = Resources.Load<Shader>("HoRayTracedScreenShadowResolve");
+                if (shader == null)
+                    return;
+                rayResolveMaterial = CoreUtils.CreateEngineMaterial(shader);
+                rayResolvePass = new HoRayTracedScreenShadowPass(rayResolveMaterial);
+                rayProducer = CreateInstance<HoRTShadowRendererFeature>();
+                rayProducer.hideFlags = HideFlags.HideAndDontSave;
+                rayProducer.ConfigureForManaged(rayTracedShadowSettings);
+                rayProducer.ConfigureManagedShaders(rayTracedShadowProgram, rayVisibilityMaterial, rayShadowReconstruction,
+                    rayShadowReconstructionPasses, rayShadowDebugShader);
+            }
+            rayProducer.OnCameraPreCull(renderer, in cameraData);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            var cameraData = renderingData.cameraData;
-            var camera = cameraData.camera;
-            if (!(renderer is UniversalRenderer)
-                || camera == null
-                || cameraData.cameraType != CameraType.Game
-                || cameraData.renderType != CameraRenderType.Base
-                || cameraData.xrRendering
-                || cameraData.cameraTargetDescriptor.msaaSamples > 1
-                || camera.allowDynamicResolution
-                || camera.rect != new Rect(0, 0, 1, 1)
-                || UniversalRenderer.IsOffscreenDepthTexture(ref cameraData))
+            if (!SupportsOpaqueCamera(renderer, renderingData.cameraData))
                 return;
 
             if (resolvePass != null && renderingData.shadowData.supportsMainLightShadows
@@ -81,6 +117,12 @@ namespace lilToon.URP.Extensions.Shadows
             {
                 additionalPass.Budget = Mathf.Min(additionalLightBudget, 16);
                 renderer.EnqueuePass(additionalPass);
+            }
+            if (rayTracedShadows && rayProducer != null)
+            {
+                rayProducer.AddRenderPasses(renderer, ref renderingData);
+                if (rayProducer.ScheduledLightCount > 0)
+                    renderer.EnqueuePass(rayResolvePass);
             }
             if (bindOpaque != null)
             {
@@ -102,6 +144,30 @@ namespace lilToon.URP.Extensions.Shadows
             additionalPass = null;
             bindOpaque = null;
             clearOpaque = null;
+            ReleaseRayTracedShadows();
+        }
+
+        private static bool SupportsOpaqueCamera(ScriptableRenderer renderer, CameraData cameraData)
+        {
+            var camera = cameraData.camera;
+            return renderer is UniversalRenderer && camera != null
+                && cameraData.cameraType == CameraType.Game && cameraData.renderType == CameraRenderType.Base
+                && !cameraData.xrRendering && cameraData.cameraTargetDescriptor.msaaSamples <= 1
+                && !camera.allowDynamicResolution && camera.rect == new Rect(0, 0, 1, 1)
+                && !UniversalRenderer.IsOffscreenDepthTexture(ref cameraData);
+        }
+
+        private void ReleaseRayTracedShadows()
+        {
+            if (rayProducer != null)
+            {
+                rayProducer.Dispose();
+                CoreUtils.Destroy(rayProducer);
+                rayProducer = null;
+            }
+            CoreUtils.Destroy(rayResolveMaterial);
+            rayResolveMaterial = null;
+            rayResolvePass = null;
         }
 
         private sealed class NativeMainShadowPass : ScriptableRenderPass

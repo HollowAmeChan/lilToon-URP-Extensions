@@ -30,10 +30,19 @@ namespace lilToon.URP.Extensions.RTShadow
         public readonly HoRTShadowProductStatus Status;
         public readonly string Reason;
         public readonly TextureHandle Raw, Visibility;
+        /// <summary>The SurfaceBuffer depth sampled by an available Render Graph product.</summary>
+        public readonly TextureHandle SourceDepth;
+        /// <summary>Captured Light.shadowStrength. Visibility is published before applying this value.</summary>
+        public readonly float LightShadowStrength;
         internal HoRTShadowProduct(Light light, long id, int slot, long serial, int width, int height, int samples, int estimates,
             long sceneLifetime, uint sceneRevision, HoRTShadowReconstruction mode, TextureHandle raw, TextureHandle visibility,
-            HoRTShadowProductStatus status = HoRTShadowProductStatus.Available, string reason = null)
-        { Light=light;LightId=id;Slot=slot;RenderSerial=serial;Width=width;Height=height;Samples=samples;Estimates=estimates;SceneLifetime=sceneLifetime;SceneRevision=sceneRevision;Reconstruction=mode;Raw=raw;Visibility=visibility;Status=status;Reason=reason; }
+            HoRTShadowProductStatus status = HoRTShadowProductStatus.Available, string reason = null,
+            TextureHandle sourceDepth = default, float lightShadowStrength = 0)
+        {
+            Light=light;LightId=id;Slot=slot;RenderSerial=serial;Width=width;Height=height;Samples=samples;Estimates=estimates;
+            SceneLifetime=sceneLifetime;SceneRevision=sceneRevision;Reconstruction=mode;Raw=raw;Visibility=visibility;
+            Status=status;Reason=reason;SourceDepth=sourceDepth;LightShadowStrength=lightShadowStrength;
+        }
     }
     public sealed class HoRTShadowRenderGraphResources : ContextItem
     {
