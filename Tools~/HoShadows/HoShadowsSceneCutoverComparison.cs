@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using HoShader.EffectURP.Editor;
+using lilToon.URP.Extensions.CharacterSpecialization;
+using lilToon.URP.Extensions.Debugging;
 using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.Shadows;
 using UnityEditor;
@@ -45,11 +47,23 @@ public static class HoShadowsSceneCutoverComparison
     [Serializable] private sealed class SceneCase
     {
         public string scene, camera;
+        public bool reframedSubject;
+        public Vector3 cameraPosition;
+        public float fieldOfView;
         public int previewMaterials, upgradedToFull, changedPixels, stableChangedPixels, baselineNoisePixels;
         public int changedAtBudget16, previewHair, previewEffect, upgradedOnEnabledRenderers;
         public string[] fullCandidateAssets;
         public float maximum, mean, baselineNoise, maximumAtBudget16, meanAtBudget16, legacyPeak;
+        public int legacyScenePixels;
         public float legacySubmitMilliseconds, managedSubmitMilliseconds, wideManagedSubmitMilliseconds;
+        public List<IsolationCase> isolation = new();
+    }
+
+    [Serializable] private sealed class IsolationCase
+    {
+        public string arm;
+        public int previewMaterials, stableChangedPixels;
+        public float maximum;
     }
 
     [Serializable] private sealed class Report
@@ -64,6 +78,9 @@ public static class HoShadowsSceneCutoverComparison
         string output = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_OUTPUT");
         if (!Directory.Exists(output) || File.Exists(Path.Combine(output, "scene-cutover.json")))
             throw new InvalidOperationException("A fresh output directory is required.");
+        string backup = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_PILOT_OUTPUT");
+        if (!Directory.Exists(backup) || Directory.EnumerateFileSystemEntries(backup).Any())
+            throw new InvalidOperationException("An empty backup directory is required for the pilot cutover.");
         string project = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_PILOT_PROJECT");
         if (!string.Equals(Application.dataPath.Replace('\\', '/'), project?.Replace('\\', '/').TrimEnd('/') + "/Assets",
             StringComparison.OrdinalIgnoreCase) || !Application.dataPath.Replace('\\', '/').StartsWith("D:/Temp/HoShadows-P5-"))
@@ -93,7 +110,8 @@ public static class HoShadowsSceneCutoverComparison
                 var second = Render(path, row, output, "legacy-repeat", 0, report.authoredEffects, fullCandidates, out _);
                 row.legacySubmitMilliseconds = milliseconds;
                 row.legacyPeak = first.Max(MaxRgb);
-                if (row.legacyPeak < .01f) throw new InvalidOperationException("Missing legacy camera signal for " + path);
+                row.legacyScenePixels = SceneSignalPixels(first);
+                if (row.legacyScenePixels == 0) throw new InvalidOperationException("Missing legacy scene color for " + path);
                 rows.Add((path, row, first, second));
             }
 
@@ -128,6 +146,22 @@ public static class HoShadowsSceneCutoverComparison
                 }
                 row.mean = (float)(sum / first.Length);
                 row.meanAtBudget16 = (float)(sumWide / first.Length);
+                if (Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_ISOLATE") == "1")
+                    foreach (string arm in new[] { "producer-only", "core-only", "hair-only", "effect-only", "disable-character", "disable-capture" })
+                    {
+                        var sample = new SceneCase();
+                        var image = Render(entry.path, sample, output, arm, 4, report.authoredEffects, fullCandidates, out _, arm);
+                        var result = new IsolationCase { arm = arm, previewMaterials = sample.previewMaterials };
+                        for (int index = 0; index < image.Length; index++)
+                        {
+                            float difference = MaxRgb(image[index] - entry.legacy[index]);
+                            result.maximum = Mathf.Max(result.maximum, difference);
+                            if (difference > .002f && MaxRgb(entry.repeat[index] - entry.legacy[index]) <= .002f
+                                && MaxRgb(image[index] - entry.repeat[index]) > .002f) result.stableChangedPixels++;
+                        }
+                        row.isolation.Add(result);
+                        Debug.Log($"HO_SHADOWS_SCENE_ISOLATION {arm}, preview={result.previewMaterials}, changed={result.stableChangedPixels}, max={result.maximum}");
+                    }
                 Debug.Log($"HO_SHADOWS_SCENE_CUTOVER {row.camera}, preview={row.previewMaterials}, upgrade={row.upgradedToFull}, max={row.maximum} mean={row.mean} wide={row.meanAtBudget16}");
                 File.WriteAllText(Path.Combine(output, "scene-cutover.json"), JsonUtility.ToJson(report, true));
             }
@@ -159,7 +193,7 @@ public static class HoShadowsSceneCutoverComparison
     }
 
     private static Color[] Render(string path, SceneCase item, string output, string label, int budget, bool authoredEffects,
-        Dictionary<string, string> fullCandidates, out float milliseconds)
+        Dictionary<string, string> fullCandidates, out float milliseconds, string isolation = null)
     {
         Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
         Camera camera = Camera.main;
@@ -167,12 +201,22 @@ public static class HoShadowsSceneCutoverComparison
             throw new InvalidOperationException("No saved Base Main Camera for " + path);
         item.camera = camera.name;
         var cameraData = camera.GetUniversalAdditionalCameraData();
+        if (Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_FRAME_SUBJECT") == "1")
+        {
+            FrameSubject(scene, camera);
+            item.reframedSubject = true;
+        }
+        item.cameraPosition = camera.transform.position;
+        item.fieldOfView = camera.fieldOfView;
         if (!authoredEffects)
         {
             cameraData.renderPostProcessing = false;
             cameraData.antialiasing = AntialiasingMode.None;
         }
         var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
+        var debugHud = renderer.rendererFeatures.OfType<HoDebugTileRendererFeature>().SingleOrDefault();
+        bool hudActive = debugHud != null && debugHud.isActive;
+        if (hudActive) debugHud.SetActive(false);
         var planar = renderer.rendererFeatures.OfType<HoPlanarReflectionRendererFeature>().SingleOrDefault();
         bool planarActive = !authoredEffects && planar != null && planar.isActive;
         if (planarActive) planar.SetActive(false);
@@ -180,6 +224,9 @@ public static class HoShadowsSceneCutoverComparison
         var upgraded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var enabledRenderers = new HashSet<Material>();
         var managed = renderer.rendererFeatures.OfType<HoShadowsRendererFeature>().SingleOrDefault();
+        var capture = renderer.rendererFeatures.OfType<HoCharacterSpecializationRendererFeature>().SingleOrDefault();
+        bool previousCharacter = managed != null && managed.ManagedCharacterShadowsEnabled;
+        bool previousCapture = capture != null && capture.CaptureShadowInputsEnabled;
         try
         {
             if (budget > 0)
@@ -188,6 +235,8 @@ public static class HoShadowsSceneCutoverComparison
                 var state = new SerializedObject(managed);
                 state.FindProperty("additionalLightBudget").intValue = budget;
                 state.ApplyModifiedPropertiesWithoutUndo();
+                if (isolation == "disable-character") managed.ManagedCharacterShadowsEnabled = false;
+                if (isolation == "disable-capture" && capture != null) capture.CaptureShadowInputsEnabled = false;
 
                 foreach (var mesh in scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<Renderer>(true)))
                 {
@@ -196,6 +245,10 @@ public static class HoShadowsSceneCutoverComparison
                         if (material && mesh.enabled && mesh.gameObject.activeInHierarchy) enabledRenderers.Add(material);
                         if (!material || !material.shader || !SupportedShaders.Contains(material.shader.name) || restore.ContainsKey(material))
                             continue;
+                        bool hair = material.shader.name == "Ho/Hair/URP/Hair";
+                        bool effect = material.shader.name == EffectMaterialUtility.ShaderName;
+                        if (isolation == "producer-only" || (isolation == "core-only" && (hair || effect))
+                            || (isolation == "hair-only" && !hair) || (isolation == "effect-only" && !effect)) continue;
                         if (!material.shader.keywordSpace.FindKeyword(PreviewKeyword).isValid)
                             continue;
                         if (material.renderQueue > 2500 && material.shader.name == "Ho/Environment/URP/Lit")
@@ -207,7 +260,6 @@ public static class HoShadowsSceneCutoverComparison
                             && (material.renderQueue > 2500 || material.GetFloat("_SurfaceMode") >= 1.5f))
                             continue;
                         float mode = material.HasProperty("_HoRPShadowMode") ? material.GetFloat("_HoRPShadowMode") : 0;
-                        bool effect = material.shader.name == EffectMaterialUtility.ShaderName;
                         restore.Add(material, (material.IsKeywordEnabled(PreviewKeyword),
                             effect && material.IsKeywordEnabled(EffectSurfaceKeyword), mode));
                         if (effect) EffectMaterialUtility.SetScreenShadowPreview(material, true);
@@ -241,7 +293,10 @@ public static class HoShadowsSceneCutoverComparison
         }
         finally
         {
+            if (hudActive) debugHud.SetActive(true);
             if (planarActive) planar.SetActive(true);
+            if (isolation == "disable-character" && managed != null) managed.ManagedCharacterShadowsEnabled = previousCharacter;
+            if (isolation == "disable-capture" && capture != null) capture.CaptureShadowInputsEnabled = previousCapture;
             foreach (var entry in restore)
             {
                 entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, PreviewKeyword), entry.Value.keyword);
@@ -283,6 +338,35 @@ public static class HoShadowsSceneCutoverComparison
             UnityEngine.Object.DestroyImmediate(result);
             UnityEngine.Object.DestroyImmediate(target);
         }
+    }
+
+    private static int SceneSignalPixels(Color[] image)
+    {
+        Color reference = image[(Height / 2) * Width + Width / 2];
+        int count = 0;
+        for (int y = Height / 4; y < Height * 3 / 4; y++)
+            for (int x = Width / 4; x < Width * 3 / 4; x++)
+                if (MaxRgb(image[y * Width + x] - reference) > .01f) count++;
+        return count;
+    }
+
+    private static void FrameSubject(Scene scene, Camera camera)
+    {
+        var renderers = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<SkinnedMeshRenderer>());
+        var portraits = renderers.Where(mesh => mesh.enabled && mesh.sharedMaterials.Any(material => material != null
+            && material.shader != null && material.shader.name == "Ho/Skin/URP/Stylized")).ToArray();
+        if (portraits.Length == 0) throw new InvalidOperationException("No visible Skin subject to reframe in " + scene.path);
+        Bounds subject = portraits[0].bounds;
+        foreach (var mesh in portraits.Skip(1)) subject.Encapsulate(mesh.bounds);
+        if (subject.extents.sqrMagnitude <= .001f || camera.orthographic)
+            throw new InvalidOperationException("A perspective camera and nonempty subject bounds are required for reframing.");
+
+        float radius = subject.extents.magnitude;
+        float fieldOfView = Mathf.Max(camera.fieldOfView, 25f);
+        float distance = radius / Mathf.Sin(fieldOfView * .5f * Mathf.Deg2Rad) + camera.nearClipPlane;
+        camera.fieldOfView = fieldOfView;
+        camera.transform.position = subject.center - camera.transform.forward * distance;
+        camera.useOcclusionCulling = false;
     }
 
     private static float MaxRgb(Color value) => Mathf.Max(Mathf.Abs(value.r), Mathf.Abs(value.g), Mathf.Abs(value.b));

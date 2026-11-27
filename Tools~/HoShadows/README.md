@@ -56,9 +56,36 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 | 首轮 D3D11 对照（Hair 和 Effect 接入前） | 预览材质／临时转 Full | 四灯预算的 RGB 最大分量差 | 旧路径重复波动 | 阈值 `>0.002` 且旧重复稳定的差异像素 |
 | --- | ---: | ---: | ---: | ---: |
-| 羽啾 | 13／11 | 0.00001324 | 0.00001324 | 0 |
+| 羽啾（保存机位只有背景和地面） | 13／11 | 0.00001324 | 0.00001324 | 0 |
 | 圣诞万花镜 | 19／0 | 0.00280380 | 0.00280380 | 0 |
 
 圣诞万花镜的两路预算各有 9 个像素超过阈值，旧路径重复也有 9 个。此快照中该镜头没有启用阴影响应的 Main 材质临时转为 Full，逐灯预算在实际受光材质上的影响还应使用 Hiro 测试场景验证。`scene-cutover.json` 里的时间来自同步提交和读回，包含 Editor 开销。正式帧预算用 GPU 帧计时检查。
 
-早期单相机请求保留了平面反射、后处理和 AA 开关。该条件下，默认四灯预算的两个镜头仍各有 0 个超过阈值且旧重复稳定的差异像素。羽啾最大差为 0.00055987，圣诞万花镜为 0.00390625，均和各自的旧路径重复波动一致。圣诞万花镜的 16 灯对照最大差为 0.01583862。这组既有结果只覆盖 Base 相机单独提交，没有运行完整相机栈的 Volume 更新。生产仍需核对 Hair、Effect 等实际接收路径，以及 RT 和更高逐灯预算的镜头。
+早期单相机请求保留了平面反射、后处理和 AA 开关。圣诞万花镜四灯预算下超过阈值且旧重复稳定的差异像素为 `0`，最大差 `0.00390625` 与旧路径重复波动一致。16 灯对照的最大差为 `0.01583862`。这组既有结果只覆盖 Base 相机单独提交，没有运行完整相机栈的 Volume 更新。
+
+羽啾的保存视角在角色上方，早期的像素对照不计为角色材质验收。保留保存机位的原生相机栈一度报出 `12488` 个差异像素，经 EXR 检查全部来自性能 HUD 中启用的 Feature 数量和行顺序。对照工具现在关闭两侧的性能 HUD，并检查中心区域有有效场景信号。`HO_SHADOWS_P5_COMPARE_FRAME_SUBJECT=1` 可在副本加载时根据 Skin 网格的世界包围盒重新取景，报告保留实际机位。`HO_SHADOWS_P5_COMPARE_ISOLATE=1` 增加仅生产端、仅 Core、仅 Hair、仅 Effect、关闭角色图集、关闭 Capture 输入六个定位对照。
+
+## 逐 Pass GPU 时间
+
+在已完成隔离试切、附加灯预算为 `4`、托管 RT 关闭的工程内，复制 `HoShadowsSceneGpuProfile.cs` 到 `Assets/Editor`。使用 Unity 6000.3.15f1 图形模式运行，保持同一 GPU 和分辨率。入口用 Editor update 每次提交一个请求，采集延迟返回的 GPU 记录。省略 `-quit`，入口会在采样结束后退出。
+
+```powershell
+$env:HO_SHADOWS_P5_GPU_PROJECT = 'D:/Temp/HoShadows-P5-Local/SceneSnapshot'
+$env:HO_SHADOWS_P5_GPU_OUTPUT = 'D:/Temp/HoShadows-P5-Local/GpuProfiles'
+New-Item -ItemType Directory -Path $env:HO_SHADOWS_P5_GPU_OUTPUT
+& 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe' `
+  -batchmode -projectPath $env:HO_SHADOWS_P5_GPU_PROJECT -force-d3d12 -burst-disable-compilation `
+  -logFile "$env:HO_SHADOWS_P5_GPU_OUTPUT/profile-d3d12.log" `
+  -executeMethod HoShadowsSceneGpuProfile.Run
+```
+
+默认测 Base 相机单独提交，`HO_SHADOWS_P5_GPU_AUTHORED_STACK=1` 可测包含 Volume 更新的原生相机栈。`scene-gpu-profile.json` 保留逐帧 block 数、有效帧数和 P50／均值／P95。没有有效 GPU 样本的 pass 会明确标记。直接提交的嵌套平面反射可能计入同名的逐帧 Pass，保存相机单独计时使用相机专属 marker，不能把各行直接加总。
+
+RTX 4060／D3D12，1280×720，Base 单独提交，受管样本使用 Skin、Eye、Cloth 与 Environment 的屏幕接收预览。各场景两侧都有 49 个有效相机 GPU 样本。下表为中位数，单位 ms。
+
+| 场景 | 相机旧路径 | 相机受管 | 原生逐灯图集旧／受管 | 新主光解析 | 新不透明逐灯解析 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 羽啾（保存机位未拍到角色） | 7.517 | 6.849 | 有效样本不足 | 0.065 | 无有效记录 |
+| 圣诞万花镜 | 55.223 | 52.730 | 27.799／28.951 | 0.120 | 0.306 |
+
+圣诞万花镜的受管透明逐灯解析为 `0.148 ms`，深度预写为 `0.189 ms`。在最终工具的热缓存复测中，每侧有 17 个有效样本。旧 HoShadowCast 图集 P50 为 `2.104 ms`。受管主光、不透明逐灯和透明逐灯解析分别为 `0.114`、`0.301`、`0.145 ms`。两轮均未获取完整帧 GPU 时间或角色图集的有效记录。
