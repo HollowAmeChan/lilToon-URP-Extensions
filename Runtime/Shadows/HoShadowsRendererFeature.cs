@@ -26,10 +26,14 @@ namespace lilToon.URP.Extensions.Shadows
     [DisallowMultipleRendererFeature("Ho Shadows")]
     public sealed class HoShadowsRendererFeature : ScriptableRendererFeature
     {
+        [SerializeField, Range(0, 16)] private int additionalLightBudget = 4;
+
         private Material resolveMaterial;
         private NativeMainShadowPass resolvePass;
         private Material characterMaterial;
         private HoCharacterScreenShadowPass characterPass;
+        private Material additionalMaterial;
+        private HoAdditionalScreenShadowPass additionalPass;
 
         public override void Create()
         {
@@ -41,14 +45,17 @@ namespace lilToon.URP.Extensions.Shadows
             Shader characterShader = Resources.Load<Shader>("HoCharacterScreenShadowResolve");
             characterMaterial = characterShader != null ? CoreUtils.CreateEngineMaterial(characterShader) : null;
             characterPass = characterMaterial != null ? new HoCharacterScreenShadowPass(characterMaterial) : null;
+            CoreUtils.Destroy(additionalMaterial);
+            Shader additionalShader = Resources.Load<Shader>("HoAdditionalScreenShadowResolve");
+            additionalMaterial = additionalShader != null ? CoreUtils.CreateEngineMaterial(additionalShader) : null;
+            additionalPass = additionalMaterial != null ? new HoAdditionalScreenShadowPass(additionalMaterial) : null;
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             var cameraData = renderingData.cameraData;
             var camera = cameraData.camera;
-            if (resolvePass == null
-                || !(renderer is UniversalRenderer)
+            if (!(renderer is UniversalRenderer)
                 || camera == null
                 || cameraData.cameraType != CameraType.Game
                 || cameraData.renderType != CameraRenderType.Base
@@ -56,14 +63,21 @@ namespace lilToon.URP.Extensions.Shadows
                 || cameraData.cameraTargetDescriptor.msaaSamples > 1
                 || camera.allowDynamicResolution
                 || camera.rect != new Rect(0, 0, 1, 1)
-                || UniversalRenderer.IsOffscreenDepthTexture(ref cameraData)
-                || !renderingData.shadowData.supportsMainLightShadows
-                || renderingData.lightData.mainLightIndex < 0)
+                || UniversalRenderer.IsOffscreenDepthTexture(ref cameraData))
                 return;
 
-            renderer.EnqueuePass(resolvePass);
-            if (characterPass != null)
-                renderer.EnqueuePass(characterPass);
+            if (resolvePass != null && renderingData.shadowData.supportsMainLightShadows
+                && renderingData.lightData.mainLightIndex >= 0)
+            {
+                renderer.EnqueuePass(resolvePass);
+                if (characterPass != null)
+                    renderer.EnqueuePass(characterPass);
+            }
+            if (additionalPass != null && additionalLightBudget > 0 && renderingData.shadowData.supportsAdditionalLightShadows)
+            {
+                additionalPass.Budget = Mathf.Min(additionalLightBudget, 16);
+                renderer.EnqueuePass(additionalPass);
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -74,6 +88,9 @@ namespace lilToon.URP.Extensions.Shadows
             CoreUtils.Destroy(characterMaterial);
             characterMaterial = null;
             characterPass = null;
+            CoreUtils.Destroy(additionalMaterial);
+            additionalMaterial = null;
+            additionalPass = null;
         }
 
         private sealed class NativeMainShadowPass : ScriptableRenderPass
