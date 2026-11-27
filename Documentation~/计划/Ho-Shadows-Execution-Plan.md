@@ -1,6 +1,6 @@
 # Ho Shadows 重构执行计划
 
-日期 2026-11-27。状态为待实施。本页是 `lilToon-URP-Extensions`、`HoUrp17.3.0`、`HoShader` 和 `BREAK_URP` 的共同开发计划。当前行为仍以各模块实现说明为准，用户使用文档在默认切换验收后同步。
+日期 2026-11-27。状态为实施中。本页是 `lilToon-URP-Extensions`、`HoUrp17.3.0`、`HoShader` 和 `BREAK_URP` 的共同开发计划。当前行为仍以各模块实现说明为准，用户使用文档在默认切换验收后同步。
 
 ## 1. 已确定的目标
 
@@ -28,6 +28,7 @@
 ### 2.1 当前主要验证入口
 
 - [P0 生产盘点和隔离 A/B](../../Tests~/HoShadows/P0/README.md) 记录本轮基线和可重放的旧 ShadowCast 夹具。
+- [P1a 原生 Main 屏幕解析](../../Tests~/HoShadows/NativeMain/README.md) 记录原生级联和 PCF 的 GPU 对照及当前相机范围。
 - `HoShader/Skin_URP/Tests~/SkinShaderCompileBenchmark.cs` 可复用为导入和逐 Pass 请求入口。槽位和字节码审计需要记录确切的片元关键字组合并解析 DXBC 声明。
 - `HoShader/Environment_URP/Tests~/EnvironmentGraphicsSmoke.cs` 已有两盏不同颜色原生点光的对照，可扩成新 Main 和 Full 的逐灯门槛。
 - 现有 [RT 多灯产品验证与接入说明](../Ho-RT.md) 覆盖按 `LightId` 查询、状态、主灯绑定和 RG／Compatibility。独立产品通过只能证明生产能力，材质着色接入另有验收。
