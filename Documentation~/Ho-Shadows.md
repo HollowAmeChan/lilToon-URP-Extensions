@@ -26,6 +26,8 @@ Ho Shadows 供使用 HoURP 的 Renderer 输出主光和逐灯的屏幕阴影。�
 
 支持 `_ShadowReceiveMask` 的材质以线性 R 通道控制投影接收。可先制作一张左黑右白的灰度图。关闭该贴图的 sRGB 导入，把贴图放到 Cast 接收遮罩槽，让阴影横跨黑白边界，并确保选中的三段阴影权重允许接收。黑区减少投影接收，白区保留材质设定的投影接收。阴影色、渐变、AO 和材质 SDF 仍按家族自身的用途设置。
 
+![左半为黑色、右半为白色的 Cast 接收遮罩测试图](Images/Ho-Shadows-Cast-Receive-Mask.png)
+
 ## 具名镜头启用 RT
 
 RT 默认关闭。具名镜头使用专属 Renderer，显式开启它及对应的 RT Shadow Volume，并保留已有的 RT 灯、接收域和资源引用。使用 Full 材质检查每盏灯的屏幕结果，分别比较 RT 开启和关闭。RT 资源、灯索引或接收者匹配失败时，该灯使用可用的原生结果。设置 RT 程序、SIGMA 资源和灯接收条件见 [Ho RT](Ho-RT.md)。
