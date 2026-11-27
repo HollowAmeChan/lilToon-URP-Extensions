@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using HoShader.EffectURP.Editor;
+using HoShader.HairURP.Editor;
 using lilToon.URP.Extensions.CharacterSpecialization;
 using lilToon.URP.Extensions.Debugging;
 using lilToon.URP.Extensions.PlanarReflection;
@@ -32,6 +33,8 @@ public static class HoShadowsSceneCutoverComparison
     };
     private const string PreviewKeyword = "_HO_SHADOWS_SCREEN_PREVIEW";
     private const string EffectSurfaceKeyword = "_EFFECT_SCREEN_SHADOW_SURFACE";
+    private const string LateHairKeyword = "_HAIR_TRANSPARENT_SCREEN_SHADOW_SURFACE";
+    private const string EarlyHairKeyword = "_HAIR_EARLY_TRANSPARENT_SCREEN_SHADOW_SURFACE";
 
     [Serializable] private sealed class MigrationPlan
     {
@@ -52,6 +55,7 @@ public static class HoShadowsSceneCutoverComparison
         public float fieldOfView;
         public int previewMaterials, upgradedToFull, changedPixels, stableChangedPixels, baselineNoisePixels;
         public int changedAtBudget16, previewHair, previewEffect, upgradedOnEnabledRenderers;
+        public int earlyTransparentHair, lateTransparentHair;
         public string[] fullCandidateAssets;
         public float maximum, mean, baselineNoise, maximumAtBudget16, meanAtBudget16, legacyPeak;
         public int legacyScenePixels, witnessRenderers;
@@ -222,13 +226,14 @@ public static class HoShadowsSceneCutoverComparison
         var planar = renderer.rendererFeatures.OfType<HoPlanarReflectionRendererFeature>().SingleOrDefault();
         bool planarActive = !authoredEffects && planar != null && planar.isActive;
         if (planarActive) planar.SetActive(false);
-        var restore = new Dictionary<Material, (bool keyword, bool effectSurface, float mode)>();
+        var restore = new Dictionary<Material, (bool keyword, bool effectSurface, bool earlyHair, bool lateHair, float mode)>();
         var upgraded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var enabledRenderers = new HashSet<Material>();
         var managed = renderer.rendererFeatures.OfType<HoShadowsRendererFeature>().SingleOrDefault();
         var capture = renderer.rendererFeatures.OfType<HoCharacterSpecializationRendererFeature>().SingleOrDefault();
         bool previousCharacter = managed != null && managed.ManagedCharacterShadowsEnabled;
         bool previousCapture = capture != null && capture.CaptureShadowInputsEnabled;
+        bool previewTransparentHair = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_HAIR_TRANSPARENT") == "1";
         try
         {
             if (budget > 0)
@@ -258,13 +263,17 @@ public static class HoShadowsSceneCutoverComparison
                         if (material.renderQueue > 2500 && material.shader.name == "Ho/Cloth/URP/Cloth"
                             && (!material.HasProperty("_UseHoOIT") || material.GetFloat("_UseHoOIT") < .5f))
                             continue;
-                        if (material.shader.name == "Ho/Hair/URP/Hair"
-                            && (material.renderQueue > 2500 || material.GetFloat("_SurfaceMode") >= 1.5f))
+                        bool hairBlend = hair && material.GetFloat("_SurfaceMode") > 1.5f;
+                        if (hairBlend && (!previewTransparentHair || (material.renderQueue <= 2500
+                            ? !managed.EarlyTransparentShadowsEnabled : !managed.TransparentEyeShadowsEnabled)))
                             continue;
+                        if (hair && !hairBlend && material.renderQueue > 2500) continue;
                         float mode = material.HasProperty("_HoRPShadowMode") ? material.GetFloat("_HoRPShadowMode") : 0;
                         restore.Add(material, (material.IsKeywordEnabled(PreviewKeyword),
-                            effect && material.IsKeywordEnabled(EffectSurfaceKeyword), mode));
+                            effect && material.IsKeywordEnabled(EffectSurfaceKeyword),
+                            hair && material.IsKeywordEnabled(EarlyHairKeyword), hair && material.IsKeywordEnabled(LateHairKeyword), mode));
                         if (effect) EffectMaterialUtility.SetScreenShadowPreview(material, true);
+                        else if (hair) HairMaterialUtility.SetScreenShadowPreview(material, true);
                         else material.EnableKeyword(PreviewKeyword);
                         string assetPath = AssetDatabase.GetAssetPath(material);
                         if (mode >= .5f && mode < 1.5f && fullCandidates.TryGetValue(assetPath, out string expectedHash))
@@ -282,6 +291,8 @@ public static class HoShadowsSceneCutoverComparison
                 }
                 item.previewMaterials = restore.Count;
                 item.previewHair = restore.Keys.Count(material => material.shader.name == "Ho/Hair/URP/Hair");
+                item.earlyTransparentHair = restore.Keys.Count(material => material.IsKeywordEnabled(EarlyHairKeyword));
+                item.lateTransparentHair = restore.Keys.Count(material => material.IsKeywordEnabled(LateHairKeyword));
                 item.previewEffect = restore.Keys.Count(material => material.shader.name == EffectMaterialUtility.ShaderName
                     && material.IsKeywordEnabled(EffectSurfaceKeyword));
                 item.upgradedToFull = upgraded.Count;
@@ -304,6 +315,11 @@ public static class HoShadowsSceneCutoverComparison
                 entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, PreviewKeyword), entry.Value.keyword);
                 if (entry.Key.shader.name == EffectMaterialUtility.ShaderName)
                     entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, EffectSurfaceKeyword), entry.Value.effectSurface);
+                if (entry.Key.shader.name == "Ho/Hair/URP/Hair")
+                {
+                    entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, EarlyHairKeyword), entry.Value.earlyHair);
+                    entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, LateHairKeyword), entry.Value.lateHair);
+                }
                 if (entry.Key.HasProperty("_HoRPShadowMode")) entry.Key.SetFloat("_HoRPShadowMode", entry.Value.mode);
             }
         }

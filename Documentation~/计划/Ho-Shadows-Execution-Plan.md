@@ -122,7 +122,7 @@ P1 和 P2 可以在隔离分支并行开发，消费合同和光照混合对照�
 - P0–P4 的受管主路径已提交。隔离工程覆盖原生主方向光、角色固定 PCF、Forward 与 Forward+ 的 Point／Spot、透明 Eye、私有 Capture、Weighted OIT，以及默认关闭的可选 RT。屏幕逐灯预算 `0`、`1`、`4`、`16` 与 URP 原生图集容量分别测试。预算为 `0` 时停发屏幕逐灯结果，URP 仍有原生图集。
 - Skin 与 Environment 首批 D3D11 片元对照中，旧硬投影片元的直接 atlas 比较指令降为 `0`。Skin 的单变体时间由 `24.76 s` 降到 `0.52 s`，Environment 由 `16.87 s` 降到 `0.42 s`。两者的 sampler 均从 `11` 减到 `9`。Skin 的 SDF、Tension、Cookie 等高负载组合使用 `13` 个 sampler。数据以固定变体、固定依赖的编译请求为单位。
 - P5 已验证在试验工程追加独立的受管 Renderer，旧默认索引为 `0`，新索引为 `1`。旧 Renderer 哈希一致。保留实际绑定的 13 个 RT 程序或材质引用，统一 RT 总开关仍关闭。Hair 和 Effect 的不透明／裁切预览已用实际材质验证。
-- P5 生产验证仍在进行。需要逐一验证早队列透明 Hair、普通透明接收和相关材质引用，确认 Hiro 的七个 Full 候选确实收到预期投影，并核对具名 RT 镜头与相机栈。现有生产 Renderer 和旧实现继续支撑尚未迁移的接收端。逐项结果和复跑方法见 [场景迁移与 GPU 测量](../../Tools~/HoShadows/README.md)。
+- P5 的早队列透明 Hair 在隔离项目完成 D3D11 Forward 和 Forward+ 分层验证，覆盖原队列、同 owner 跨域、层遮罩及切换后清理。D3D12 的 Eye 与 OIT 六项回归逐像素一致。仍需在生产快照验证实际 Hair 材质和 owner，确认 Hiro 的七个 Full 候选确实收到预期投影，并核对具名 RT 镜头与相机栈。现有生产 Renderer 和旧实现继续支撑尚未迁移的接收端。逐项结果和复跑方法见 [场景迁移与 GPU 测量](../../Tools~/HoShadows/README.md)。
 
 ## 7. BREAK_URP 迁移
 

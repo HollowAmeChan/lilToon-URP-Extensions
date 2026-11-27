@@ -365,7 +365,7 @@ def renderer_plan(path, script_guids):
         features.append({"index": rank, "fileId": local_id, "name": field(block, "m_Name"), "role": role,
                          "scriptGuid": field_guid(block, "m_Script"), "active": field(block, "m_Active") == "1",
                          "settings": scalar_fields(block, 4) | {key: field(block, key) for key in
-                             ("rayTracedShadows", "transparentEyeShadows", "captureShadowInputsEnabled", "additionalLightBudget")
+                             ("rayTracedShadows", "earlyTransparentShadows", "transparentEyeShadows", "captureShadowInputsEnabled", "additionalLightBudget")
                              if field(block, key) is not None}, "action": action, "reason": reason})
     return {**asset_stamp(path), "renderingMode": field(root, "m_RenderingMode"),
             "transparentReceiveShadows": field(root, "m_ShadowTransparentReceive"), "features": features,

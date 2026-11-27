@@ -54,6 +54,7 @@ public static class HoShadowsPilotCutover
         public int defaultRendererIndex = -1;
         public int candidateRendererIndex = -1;
         public bool managedCharacter;
+        public bool earlyTransparent;
         public bool transparentEye;
         public bool weightedOit;
         public bool captureShadowInputs;
@@ -153,6 +154,7 @@ public static class HoShadowsPilotCutover
         }
         unified.SetActive(true);
         unified.ManagedCharacterShadowsEnabled = true;
+        unified.EarlyTransparentShadowsEnabled = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_PILOT_EARLY_TRANSPARENT") == "1";
         unified.TransparentEyeShadowsEnabled = true;
         unified.WeightedOitShadowsEnabled = true;
         unified.RayTracedShadowsEnabled = false;
@@ -202,6 +204,7 @@ public static class HoShadowsPilotCutover
         }
         report.rendererAfter = Hash(rendererFile);
         report.managedCharacter = unified.ManagedCharacterShadowsEnabled;
+        report.earlyTransparent = unified.EarlyTransparentShadowsEnabled;
         report.transparentEye = unified.TransparentEyeShadowsEnabled;
         report.weightedOit = unified.WeightedOitShadowsEnabled;
         report.rayTraced = unified.RayTracedShadowsEnabled;
