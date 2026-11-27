@@ -124,6 +124,8 @@ P1 和 P2 可以在隔离分支并行开发，消费合同和光照混合对照�
 - P5 已验证在试验工程追加独立的受管 Renderer，旧默认索引为 `0`，新索引为 `1`。旧 Renderer 哈希一致。保留实际绑定的 13 个 RT 程序或材质引用，统一 RT 总开关仍关闭。Hair 和 Effect 的不透明／裁切预览已用实际材质验证。
 - P5 的早队列透明 Hair 在隔离项目完成 D3D11 Forward 和 Forward+ 分层验证，覆盖原队列、同 owner 跨域、层遮罩及切换后清理。D3D12 的 Eye 与 OIT 六项回归逐像素一致。仍需在生产快照验证实际 Hair 材质和 owner，确认 Hiro 的七个 Full 候选确实收到预期投影，并核对具名 RT 镜头与相机栈。现有生产 Renderer 和旧实现继续支撑尚未迁移的接收端。逐项结果和复跑方法见 [场景迁移与 GPU 测量](../../Tools~/HoShadows/README.md)。
 
+- WTD 的保存机位已确认可选 RT 主灯产品。RTX 4060／D3D12 的三组诊断中，开关只改变候选 Renderer 的 RT 主控，关闭两组均为 `0` 个产品，开启后得到 `1` 个产品。旧路径优化编译未在 `420 s` 内产出可比较帧，具名镜头的旧画面等价仍待验证。数据见 [具名 RT 镜头试切](../../Tools~/HoShadows/README.md)。
+
 ## 7. BREAK_URP 迁移
 
 1. 盘点 `Assets/Settings/PC_Renderer.asset`、`PC_RPAsset.asset`、默认 Volume、镜头/角色局部 Volume 与独立 Renderer 资产。按保存值和实际相机栈分别记录。现存 RT 配置可以是开启，新默认要显式迁为关闭，保留有意启用 RT 的具名场景或测试配置。

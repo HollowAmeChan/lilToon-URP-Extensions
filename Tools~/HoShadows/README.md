@@ -40,6 +40,10 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 `
 
 具名 RT 镜头的独立副本可在追加 Renderer 时设置 `HO_SHADOWS_P5_PILOT_RT_OPT_IN=1`。试切验证了默认索引 `0`、候选索引 `1`，候选保留旧的 `0.001 m` 射线偏移和 13 个程序及材质引用。WTD 保存了启用 RT 的 Volume，旧 Skin 即使是 Main 也能接收主灯 RT。测试统一路径时，临时给该相机的 Body 和 Head 材质副本启用预览并设为 Full，保持两次受管对照的材质和灯光一致，仅切换 RT 总开关。
 
+WTD 的保存机位在 RTX 4060／D3D12 输出了 `1280×720` 的三组受管图像。RT 关闭及重复关闭均发布 `0` 个 RT 产品。开启后发布 `1` 个主光 RT 产品，Raw 中有 `60140` 个有效 owner 1 像素，其中 `29784` 个处于阴影。经过重复关闭逐像素噪声加 `0.002` 的阈值后，`10490` 个像素的颜色发生变化，`2878` 个与 Raw 遮挡重合。Body 和 Head 的取景和包围盒均一致。
+
+以上是关闭 Editor 着色器优化的诊断回放。开启优化的旧路径在 `420 s` 的着色器预热期限内未写出可用图像，旧画面等价仍待验证。产物 `wtd-named-rt-compare.json` 记录 D3D12、相机、owner、开关状态、重复噪声和逐项判据。这次回放只给 Body 和 Head 分配临时材质副本。
+
 ## 真实镜头的隔离对照
 
 把 `HoShadowsSceneCutoverComparison.cs` 与试切工具一起复制到物理快照的 `Assets/Editor`。快照包含保存的羽啾与圣诞万花镜场景、两者的依赖，以及带有屏幕预览的 HoShader 包版本。重新使用尚未试切的 Renderer，设置两个空输出目录，以 D3D11 启动 Unity。
