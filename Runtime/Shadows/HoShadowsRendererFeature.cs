@@ -34,6 +34,8 @@ namespace lilToon.URP.Extensions.Shadows
         private HoCharacterScreenShadowPass characterPass;
         private Material additionalMaterial;
         private HoAdditionalScreenShadowPass additionalPass;
+        private HoOpaqueScreenShadowBindingPass bindOpaque;
+        private HoOpaqueScreenShadowBindingPass clearOpaque;
 
         public override void Create()
         {
@@ -49,6 +51,8 @@ namespace lilToon.URP.Extensions.Shadows
             Shader additionalShader = Resources.Load<Shader>("HoAdditionalScreenShadowResolve");
             additionalMaterial = additionalShader != null ? CoreUtils.CreateEngineMaterial(additionalShader) : null;
             additionalPass = additionalMaterial != null ? new HoAdditionalScreenShadowPass(additionalMaterial) : null;
+            bindOpaque = new HoOpaqueScreenShadowBindingPass(false);
+            clearOpaque = new HoOpaqueScreenShadowBindingPass(true);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -78,6 +82,11 @@ namespace lilToon.URP.Extensions.Shadows
                 additionalPass.Budget = Mathf.Min(additionalLightBudget, 16);
                 renderer.EnqueuePass(additionalPass);
             }
+            if (bindOpaque != null)
+            {
+                renderer.EnqueuePass(bindOpaque);
+                renderer.EnqueuePass(clearOpaque);
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -91,6 +100,8 @@ namespace lilToon.URP.Extensions.Shadows
             CoreUtils.Destroy(additionalMaterial);
             additionalMaterial = null;
             additionalPass = null;
+            bindOpaque = null;
+            clearOpaque = null;
         }
 
         private sealed class NativeMainShadowPass : ScriptableRenderPass

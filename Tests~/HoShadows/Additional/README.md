@@ -21,3 +21,9 @@ unity run $project --editor-version 6000.3.15f1 --timeout 300 --no-tail `
 Unity `6000.3.15f1` 在 D3D11 和 D3D12 下各通过 12 个用例。Forward 和 Forward+ 的硬投影与原生比较误差为 0，软 Spot 全图最大绝对误差为 `0.000439`。两灯各自的遮挡中心为 0、对方遮挡区为 1。软 Spot 的阴影强度设为 `0.65` 时，其遮挡中心为 `0.35`。关闭原先排在前面的 Spot 后，两种 Renderer 的 Point 均从 shader index 和屏幕 slot `1:1` 切到 `0:0`。
 
 实测 Point 的立方体六面掩码为 `0x3f`。夹具设有面不全时的排除断言，这组真实场景未触发该断言。
+
+## Opaque 阶段发布
+
+Ho Shadows 在原生、角色和附加灯的解析 Pass 之后绑定当前相机的图。`_HoShadowsMainVisibility` 是方向主光实时值，`_HoShadowsCharacterVisibility` 是角色局部值、过渡和组／部件，`_HoShadowsAdditionalVisibility` 按切片保存 Point／Spot 的实时值。三路共用 `_HoShadowsSurfaceDepth`。`_HoShadowsAdditionalSlots` 每个分量存对应 URP shader 灯索引的槽位加一，为零表示本帧没有结果。
+
+各路由独立的 `Active` 标志控制。不透明阶段结束清空这些标志，避免透明或下一台相机读取前一阶段的结果。透明专用深度仍由后续阶段接入。角色解析存在时，Ho Shadows 要排在 SurfaceBuffer 后，沿用现有 Character Shadow atlas 直到生产迁移。
