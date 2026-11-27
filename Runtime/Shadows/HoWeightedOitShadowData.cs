@@ -17,8 +17,8 @@ namespace lilToon.URP.Extensions.Shadows
                 return default;
             TextureHandle opaque = frameData.Get<UniversalResourceData>().activeDepthTexture;
             HoTransparentShadowSurfacePass.RecordSurfaces(graph, frameData, opaque, ReceiverTag, filtering,
-                out var first, out var second, true, weight, alphaClip, queueRange);
-            return Resolver.RecordLayers(graph, frameData, first, second, weightedOit: true);
+                out var first, out var second, HoLayeredShadowScope.WeightedOit, weight, alphaClip, queueRange);
+            return Resolver.RecordLayers(graph, frameData, first, second, HoLayeredShadowScope.WeightedOit);
         }
 
         public override void Reset() => Resolver = null;

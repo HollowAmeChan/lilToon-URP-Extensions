@@ -10,18 +10,18 @@ namespace lilToon.URP.Extensions.Shadows
     internal readonly struct HoLayeredShadowDrawInputs
     {
         internal readonly TextureHandle surface0, surface1, visibility0, visibility1, additional;
-        internal readonly bool weightedOit;
+        internal readonly HoLayeredShadowScope scope;
         internal bool IsValid => surface0.IsValid() && surface1.IsValid() && visibility0.IsValid() && visibility1.IsValid();
 
         internal HoLayeredShadowDrawInputs(TextureHandle surface0, TextureHandle surface1,
-            TextureHandle visibility0, TextureHandle visibility1, TextureHandle additional, bool weightedOit)
+            TextureHandle visibility0, TextureHandle visibility1, TextureHandle additional, HoLayeredShadowScope scope)
         {
             this.surface0 = surface0;
             this.surface1 = surface1;
             this.visibility0 = visibility0;
             this.visibility1 = visibility1;
             this.additional = additional;
-            this.weightedOit = weightedOit;
+            this.scope = scope;
         }
 
         internal void DeclareReads(IRasterRenderGraphBuilder builder)
@@ -36,7 +36,7 @@ namespace lilToon.URP.Extensions.Shadows
 
         internal void Clear(RenderGraph graph)
         {
-            if (IsValid) HoTransparentScreenShadowPass.RecordClear(graph, weightedOit);
+            if (IsValid) HoTransparentScreenShadowPass.RecordClear(graph, scope);
         }
     }
 
@@ -49,11 +49,13 @@ namespace lilToon.URP.Extensions.Shadows
         private static readonly int SizeId = Shader.PropertyToID("_HoTransparentShadowRasterSize");
         private static readonly BindingNames EyeBindings = new("_HoShadowsLayer");
         private static readonly BindingNames OitBindings = new("_HoShadowsOit");
+        private static readonly BindingNames EarlyBindings = new("_HoShadowsEarlyLayer");
         private const GraphicsFormat OutputFormat = GraphicsFormat.R16G16B16A16_SFloat;
 
         private readonly Material material;
         private readonly Material additionalMaterial;
         private readonly bool clear;
+        private readonly HoLayeredShadowScope scope;
 
         private sealed class ResolveData
         {
@@ -87,46 +89,56 @@ namespace lilToon.URP.Extensions.Shadows
             }
         }
 
-        internal HoTransparentScreenShadowPass(Material material, Material additionalMaterial = null, bool clear = false)
+        internal HoTransparentScreenShadowPass(Material material, Material additionalMaterial = null,
+            bool clear = false, HoLayeredShadowScope scope = HoLayeredShadowScope.Transparent)
         {
             this.material = material;
             this.additionalMaterial = additionalMaterial;
             this.clear = clear;
-            renderPassEvent = clear ? RenderPassEvent.AfterRenderingTransparents : RenderPassEvent.BeforeRenderingTransparents;
+            this.scope = scope;
+            renderPassEvent = scope == HoLayeredShadowScope.OpaqueQueue
+                ? (clear ? RenderPassEvent.AfterRenderingOpaques : RenderPassEvent.BeforeRenderingOpaques)
+                : (clear ? RenderPassEvent.AfterRenderingTransparents : RenderPassEvent.BeforeRenderingTransparents);
         }
 
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
         {
             if (clear || !frameData.Contains<HoTransparentShadowSurfaceData>())
             {
-                RecordClear(graph);
+                RecordClear(graph, scope);
                 return;
             }
 
             var surface = frameData.Get<HoTransparentShadowSurfaceData>();
             var camera = frameData.Get<UniversalCameraData>().camera;
-            if (surface.CameraInstanceId != camera.GetInstanceID())
+            if (surface.CameraInstanceId != camera.GetInstanceID() || surface.Scope != scope)
             {
-                RecordClear(graph);
+                RecordClear(graph, scope);
                 return;
             }
 
-            var inputs = RecordLayers(graph, frameData, surface.First, surface.Second);
+            var inputs = RecordLayers(graph, frameData, surface.First, surface.Second, scope);
             if (!inputs.IsValid)
             {
-                RecordClear(graph);
+                RecordClear(graph, scope);
                 return;
             }
             var transparentDraw = frameData.GetOrCreate<HoTransparentShadowDrawData>();
-            transparentDraw.RegisterTexture(inputs.surface0);
-            transparentDraw.RegisterTexture(inputs.surface1);
-            transparentDraw.RegisterTexture(inputs.visibility0);
-            transparentDraw.RegisterTexture(inputs.visibility1);
-            transparentDraw.RegisterTexture(inputs.additional);
+            Register(inputs.surface0);
+            Register(inputs.surface1);
+            Register(inputs.visibility0);
+            Register(inputs.visibility1);
+            Register(inputs.additional);
+
+            void Register(TextureHandle input)
+            {
+                if (scope == HoLayeredShadowScope.OpaqueQueue) transparentDraw.RegisterOpaqueQueueTexture(input);
+                else transparentDraw.RegisterTexture(input);
+            }
         }
 
         internal HoLayeredShadowDrawInputs RecordLayers(RenderGraph graph, ContextContainer frameData,
-            TextureHandle surface0, TextureHandle surface1, bool weightedOit = false)
+            TextureHandle surface0, TextureHandle surface1, HoLayeredShadowScope scope)
         {
             if (!surface0.IsValid() || !surface1.IsValid()
                 || !SystemInfo.IsFormatSupported(OutputFormat, GraphicsFormatUsage.Render | GraphicsFormatUsage.Sample))
@@ -154,12 +166,13 @@ namespace lilToon.URP.Extensions.Shadows
 
             var configuration = new Vector4(native.IsValid() ? shadows.mainLightShadowCascadesCount : 0,
                 character.IsValid() ? 1 : 0, main != null && main.shadows == LightShadows.Soft && shadows.supportsSoftShadows ? 1 : 0, 0);
-            TextureHandle first = RecordResolve(graph, surface0, native, character, configuration, "Ho Screen Shadow Layer 1");
-            TextureHandle second = RecordResolve(graph, surface1, native, character, configuration, "Ho Screen Shadow Layer 2");
+            string marker = scope == HoLayeredShadowScope.OpaqueQueue ? "Ho Early Screen Shadow Layer " : "Ho Screen Shadow Layer ";
+            TextureHandle first = RecordResolve(graph, surface0, native, character, configuration, marker + "1");
+            TextureHandle second = RecordResolve(graph, surface1, native, character, configuration, marker + "2");
             TextureHandle additionalVisibility = additionalValid ? HoAdditionalScreenShadowPass.RecordVisibility(graph,
                 additionalMaterial, lights, additional, resources.additionalShadowsTexture, surface0, surface1) : TextureHandle.nullHandle;
-            var inputs = new HoLayeredShadowDrawInputs(surface0, surface1, first, second, additionalVisibility, weightedOit);
-            RecordBindings(graph, inputs, additional, weightedOit);
+            var inputs = new HoLayeredShadowDrawInputs(surface0, surface1, first, second, additionalVisibility, scope);
+            RecordBindings(graph, inputs, additional, scope);
             return inputs;
         }
 
@@ -195,14 +208,24 @@ namespace lilToon.URP.Extensions.Shadows
             return output;
         }
 
-        internal static void RecordClear(RenderGraph graph, bool weightedOit = false) => RecordBindings(graph, default, null, weightedOit);
+        internal static void RecordClear(RenderGraph graph, HoLayeredShadowScope scope) => RecordBindings(graph, default, null, scope);
 
         private static void RecordBindings(RenderGraph graph, HoLayeredShadowDrawInputs inputs,
-            HoAdditionalShadowFrameData additional, bool weightedOit)
+            HoAdditionalShadowFrameData additional, HoLayeredShadowScope scope)
         {
-            string name = weightedOit ? "Ho Bind OIT Screen Shadows" : "Ho Bind Eye Screen Shadows";
+            string name = scope switch
+            {
+                HoLayeredShadowScope.OpaqueQueue => "Ho Bind Early Transparent Screen Shadows",
+                HoLayeredShadowScope.WeightedOit => "Ho Bind OIT Screen Shadows",
+                _ => "Ho Bind Eye Screen Shadows",
+            };
             using var builder = graph.AddRasterRenderPass<BindingData>(name, out var pass);
-            var bindings = weightedOit ? OitBindings : EyeBindings;
+            var bindings = scope switch
+            {
+                HoLayeredShadowScope.OpaqueQueue => EarlyBindings,
+                HoLayeredShadowScope.WeightedOit => OitBindings,
+                _ => EyeBindings,
+            };
             pass.names = bindings;
             pass.active = inputs.IsValid;
             pass.additional = inputs.additional.IsValid() ? additional : null;
