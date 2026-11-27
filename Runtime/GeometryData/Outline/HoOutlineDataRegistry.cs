@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.GeometryData
             = new Dictionary<HoGeometryDataOutlineCorrection, Dictionary<Renderer, Source>>();
         private static readonly HashSet<Source> Bound = new HashSet<Source>();
         private static readonly HashSet<Renderer> WarnedAmbiguous = new HashSet<Renderer>();
+        private static readonly List<Renderer> TargetRenderers = new List<Renderer>();
         private static GraphicsBuffer entries, values;
         private static bool dirty = true;
         private static int bindingRevision = -1;
@@ -75,7 +76,8 @@ namespace lilToon.URP.Extensions.GeometryData
             bool changed = false;
             if (producer != null && producer.isActiveAndEnabled)
             {
-                foreach (var renderer in producer.GetTargetRenderers())
+                producer.CollectTargetRenderers(TargetRenderers);
+                foreach (var renderer in TargetRenderers)
                 {
                     targets.Add(renderer);
                     var data = producer.GetPreparedData(renderer);
@@ -90,6 +92,7 @@ namespace lilToon.URP.Extensions.GeometryData
                         changed = true;
                     }
                 }
+                TargetRenderers.Clear();
             }
             var removed = new List<Renderer>();
             foreach (var pair in sources) if (!targets.Contains(pair.Key)) removed.Add(pair.Key);

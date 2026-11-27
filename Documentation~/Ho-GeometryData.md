@@ -23,11 +23,11 @@ ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保
 ## 2. 描边修正
 
 1. 在 URP Renderer Data 添加 `HoGeometryDataRendererFeature`。
-2. 添加 `Rendering/Ho-GeometryData OutlineCorrection`，在“目标渲染器”列表中输入多个 MeshRenderer / SkinnedMeshRenderer。空列表只尝试组件同对象上的 Renderer；列表中的空项和重复项跳过。
+2. 在预制件根对象添加 `Rendering/Ho-GeometryData OutlineCorrection`，将“目标范围”设为“本物体及全部子级”。组件收集本物体、任意深度子级及未激活分支中带 Mesh 的 MeshRenderer 和 SkinnedMeshRenderer。既有组件沿用“手动指定”，空列表使用同对象上的 Renderer。切换范围会保留手动列表。
 3. 按需要启用“初始化时准备”“Play 前准备”，或点击“生成 / 更新描边修正”。
 4. lilToon 描边的来源选择 `GD (Direction + Width)`，值为 3。原值 0/1/2 保持原语义。
 
-一个组件可以统一准备和发布多个 Renderer。相同 Mesh 共用准备缓存和上传数据，各 Renderer 保留独立 GD 槽；某个目标失败不会阻止其他有效目标发布。组件面板只保留配置项与生成按钮，手动生成失败时错误写入 Console。
+一个组件可以统一准备和发布多个 Renderer。相同 Mesh 共用准备缓存和上传数据，各 Renderer 保留独立 GD 槽，某个目标失败时其他有效目标仍可发布。层级内添加新 Renderer 后，面板会显示当前目标数和已准备数。新 Mesh 可以通过“生成 / 更新描边修正”准备。
 
 共享 Renderer 数据的低 16 bit 为 OB 身份，高 16 bit 为 GD 槽。角色特化的材质捕获必须通过 `HoRendererIdentity()` 取低位，再查询标签及角色组；直接把完整值传入 OB 表会使 GD 启用后的脸/眼标签失效，捕获被裁掉。捕获共用代码已修正这两个入口。
 
@@ -35,7 +35,7 @@ GD 与角色捕获的联动验证通过 24 项 D3D12 检查：真实 lilToon 的
 
 原算法来自本机 Blender 4.5 HoTools 的 `SOLIDIFY_RAW2SMOOTH`：按边的两面角累计方向、Laplacian 判断曲率符号、角点加权求 shell 因子，再生成 TBN RGB 和以 0.5 为中性值的 A 补偿。专用输出不写 Mesh 顶点色。
 
-为了保持既有 RGBA 来源的画面，GD 把自己的数据交给同一个方向/宽度消费路径；A 仍按旧 lilToon 路径乘宽度，没有擅自改成另一种 shell 解码。准备动作与保存结果发生在组件上，不在 AssetPostprocessor 中触发。
+GD 与既有 RGBA 来源共用方向和宽度消费路径。切线缺失或退化时，RGB 使用纯白，描边沿网格法线扩展，A 继续乘宽度。准备数据保存在组件上，Mesh 顶点流保留原状。
 
 结果缓存在组件中，可以跨 Play/序列化重建复用。修改模型或准备参数后使用按钮更新。基准使用原始 Mesh；运行时由现有 TBN 跟随蒙皮，首版不每帧重算邻接与 shell。
 
@@ -47,7 +47,7 @@ GD 与角色捕获的联动验证通过 24 项 D3D12 检查：真实 lilToon 的
 - 槽在组件启用或显式准备时建立，先于相机剔除，避免首帧绘制拿到 0 号槽。Inspector 参数改变仅在 OnValidate 标记，后续主线程 Update 更新关联；这遵循 [Unity 的 OnValidate 线程约束](https://docs.unity3d.com/kr/current/ScriptReference/MonoBehaviour.OnValidate.html)。
 - GD Feature 在绘制前发布外部持久只读 buffer，使用明确的全局状态同步点；首版没有 async compute 或 transient 输出。
 - 停用某个组件只撤销它自己的关联；最后一个生产者离开时才收回 GD 槽。无数据/无发布时 GD 来源回退已有材质行为。参考系、描边与张力是独立输出。
-- 描边构建需要可读 Mesh、法线和切线，或已准备的组件缓存。仅支持三角形/四边形。静态合批改变索引，首版不发布给已静态合批的 Renderer。
+- 描边构建需要带法线的可读 Mesh，或与当前 Mesh 和准备参数匹配的组件缓存。切线属性的有无发生变化时，重新生成描边数据。只支持三角形和四边形。静态合批会改变索引，描边修正只发布给使用原 Mesh 索引的 Renderer。
 - 同位置连接需要位置、骨骼权重及 morph 位置轨迹一致。完全重合而实际应分离的表面可关闭连接；不能仅靠导入数据保证重建任意 DCC 原始拓扑。
 
 ## 4. 验证记录

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace lilToon.URP.Extensions.GeometryData
 {
@@ -8,6 +9,15 @@ namespace lilToon.URP.Extensions.GeometryData
     [AddComponentMenu("Rendering/Ho-GeometryData OutlineCorrection")]
     public sealed class HoGeometryDataOutlineCorrection : MonoBehaviour
     {
+        public enum TargetScope
+        {
+            [InspectorName("手动指定")] Manual = 0,
+            [InspectorName("本物体及全部子级")] Hierarchy = 1
+        }
+
+        [InspectorName("目标范围")]
+        [Tooltip("递归收集本物体和全部子级中的网格渲染器，包括未激活的子级。")]
+        public TargetScope targetScope;
         [InspectorName("目标渲染器")] public List<Renderer> targetRenderers = new List<Renderer>();
         [InspectorName("初始化时准备")] public bool prepareOnInitialize = true;
         [InspectorName("Play 前准备")] public bool prepareBeforePlay = true;
@@ -19,6 +29,7 @@ namespace lilToon.URP.Extensions.GeometryData
         {
             public Mesh mesh;
             public Vector4[] data;
+            public bool withoutTangents;
         }
         [SerializeField, HideInInspector] private List<PreparedMesh> preparedMeshes = new List<PreparedMesh>();
         [SerializeField, HideInInspector] private bool preparedWeld;
@@ -42,29 +53,51 @@ namespace lilToon.URP.Extensions.GeometryData
 
         public IEnumerable<Renderer> GetTargetRenderers()
         {
+            var renderers = new List<Renderer>();
+            CollectTargetRenderers(renderers);
+            return renderers;
+        }
+
+        internal void CollectTargetRenderers(List<Renderer> renderers)
+        {
+            renderers.Clear();
+            if (targetScope == TargetScope.Hierarchy)
+            {
+                GetComponentsInChildren(true, renderers);
+                renderers.RemoveAll(renderer => GetSourceMesh(renderer) == null);
+                return;
+            }
+
             if (targetRenderers.Count == 0)
             {
-                if (TryGetComponent<Renderer>(out var renderer)) yield return renderer;
-                yield break;
+                if (TryGetComponent<Renderer>(out var renderer)) renderers.Add(renderer);
+                return;
             }
             var seen = new HashSet<Renderer>();
             foreach (var renderer in targetRenderers)
-                if (renderer != null && seen.Add(renderer)) yield return renderer;
+                if (renderer != null && seen.Add(renderer)) renderers.Add(renderer);
         }
 
         internal Vector4[] GetPreparedData(Renderer renderer)
         {
-            if (renderer == null || renderer.isPartOfStaticBatch || preparedWeld != weldCoincidentVertices) return null;
-            Mesh mesh = GetSourceMesh(renderer);
-            if (mesh == null) return null;
+            if (renderer == null || renderer.isPartOfStaticBatch) return null;
+            return FindPreparedMesh(GetSourceMesh(renderer))?.data;
+        }
+
+        private PreparedMesh FindPreparedMesh(Mesh mesh)
+        {
+            if (mesh == null || preparedWeld != weldCoincidentVertices) return null;
             foreach (var prepared in preparedMeshes)
-                if (prepared.mesh == mesh && prepared.data != null && prepared.data.Length == mesh.vertexCount)
-                    return prepared.data;
+                if (prepared.mesh == mesh && prepared.data != null && prepared.data.Length == mesh.vertexCount &&
+                    prepared.withoutTangents == !mesh.HasVertexAttribute(VertexAttribute.Tangent))
+                    return prepared;
             return null;
         }
 
         private static Mesh GetSourceMesh(Renderer renderer) => renderer is SkinnedMeshRenderer skin ? skin.sharedMesh
             : renderer is MeshRenderer && renderer.TryGetComponent<MeshFilter>(out var filter) ? filter.sharedMesh : null;
+
+        private void Reset() => targetScope = TargetScope.Hierarchy;
 
         private void OnEnable()
         {
@@ -100,7 +133,13 @@ namespace lilToon.URP.Extensions.GeometryData
                     Mesh mesh = GetSourceMesh(renderer);
                     if (mesh == null) throw new InvalidOperationException("目标未提供 MeshRenderer / SkinnedMeshRenderer 的 Mesh。");
                     if (!meshes.Add(mesh)) continue;
-                    results.Add(new PreparedMesh { mesh = mesh, data = HoGeometryDataOutlineCorrectionBuilder.Build(mesh, weldCoincidentVertices) });
+                    var cached = mesh.isReadable ? null : FindPreparedMesh(mesh);
+                    results.Add(cached ?? new PreparedMesh
+                    {
+                        mesh = mesh,
+                        data = HoGeometryDataOutlineCorrectionBuilder.Build(mesh, weldCoincidentVertices),
+                        withoutTangents = !mesh.HasVertexAttribute(VertexAttribute.Tangent)
+                    });
                 }
                 catch (Exception exception)
                 {

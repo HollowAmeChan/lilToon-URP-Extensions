@@ -26,8 +26,8 @@ namespace lilToon.URP.Extensions.GeometryData
             if (!mesh.isReadable) throw new InvalidOperationException("描边修正需要可读 Mesh，或预先准备并保存的组件结果。");
             Vector3[] vertices = mesh.vertices, normals = mesh.normals;
             Vector4[] tangents = mesh.tangents;
-            if (normals.Length != vertices.Length || tangents.Length != vertices.Length)
-                throw new InvalidOperationException("Mesh 必须提供法线和切线，用于与现有 lilToon RGBA 修正一致的方向编码。");
+            if (normals.Length != vertices.Length)
+                throw new InvalidOperationException("描边修正需要 Mesh 法线。");
 
             ulong[] signature = new ulong[vertices.Length];
             for (int i=0; i<signature.Length; i++) signature[i]=1469598103934665603UL;
@@ -135,12 +135,29 @@ namespace lilToon.URP.Extensions.GeometryData
                 float shell=Mathf.Max(1,angles[i]>1e-8f ? weighted[i]/angles[i] : 1);
                 alpha[i]=Mathf.Clamp(0.5f+sign*(1-1/shell)*0.5f,1e-4f,1);
             }
-            var encoded=new Vector4[vertices.Length];
-            for(int i=0; i<encoded.Length; i++)
+            var encoded = new Vector4[vertices.Length];
+            bool hasTangents = tangents.Length == vertices.Length;
+            for (int i = 0; i < encoded.Length; i++)
             {
-                Vector3 n=normals[i].normalized,t=((Vector3)tangents[i]).normalized;
-                Vector3 b=Vector3.Cross(n,t).normalized*tangents[i].w;Vector3 d=direction[map[i]];
-                encoded[i]=new Vector4(Vector3.Dot(d,t)*0.5f+0.5f,Vector3.Dot(d,b)*0.5f+0.5f,Vector3.Dot(d,n)*0.5f+0.5f,alpha[map[i]]);
+                int point = map[i];
+                float width = alpha[point];
+                // White RGB selects the mesh normal in existing outline shaders. Alpha still scales width.
+                encoded[i] = new Vector4(1f, 1f, 1f, width);
+                if (!hasTangents) continue;
+
+                Vector4 tangent = tangents[i];
+                Vector3 n = normals[i].normalized;
+                Vector3 t = ((Vector3)tangent).normalized;
+                Vector3 cross = Vector3.Cross(n, t);
+                float bitangentLengthSquared = cross.sqrMagnitude;
+                if (!float.IsFinite(bitangentLengthSquared) || bitangentLengthSquared < 1e-8f ||
+                    !float.IsFinite(tangent.w) || Mathf.Abs(tangent.w) < 0.5f)
+                    continue;
+
+                Vector3 b = cross.normalized * tangent.w;
+                Vector3 d = direction[point];
+                encoded[i] = new Vector4(Vector3.Dot(d, t) * 0.5f + 0.5f, Vector3.Dot(d, b) * 0.5f + 0.5f,
+                    Vector3.Dot(d, n) * 0.5f + 0.5f, width);
             }
             return encoded;
         }

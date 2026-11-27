@@ -51,10 +51,14 @@ Shader "Hidden/Ho-GeometryData/Debug"
                 float4 encoded;
                 if(HoGDOutlineVertexColor(i.vertexID, encoded))
                 {
-                    float3 n = normalize(i.normalOS);
-                    float3 t = normalize(i.tangentOS.xyz);
-                    float3 b = cross(n, t) * i.tangentOS.w;
-                    float3 direction = mul(encoded.rgb * 2 - 1, float3x3(t, b, n));
+                    float3 n = SafeNormalize(i.normalOS);
+                    float3 direction = n;
+                    if (!all(encoded.rgb <= 0.0001) && !all(encoded.rgb >= 0.9999))
+                    {
+                        float3 t = SafeNormalize(i.tangentOS.xyz);
+                        float3 b = cross(n, t) * i.tangentOS.w;
+                        direction = mul(encoded.rgb * 2 - 1, float3x3(t, b, n));
+                    }
                     float3 world = TransformObjectToWorldNormal(direction);
                     o.outline = float4(world * 0.5 + 0.5, encoded.a); o.outlineValid = 1;
                 }
