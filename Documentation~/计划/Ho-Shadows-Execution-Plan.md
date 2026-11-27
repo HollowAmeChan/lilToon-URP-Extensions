@@ -32,7 +32,9 @@
 - [P1b 角色固定 PCF](../../Tests~/HoShadows/CharacterPcf/README.md) 和 [P1c 角色屏幕解析](../../Tests~/HoShadows/CharacterResolve/README.md) 记录滤波预算、接收域和隔离 GPU 对照。
 - [P2b 原生附加灯屏幕解析](../../Tests~/HoShadows/Additional/README.md) 记录 Forward 和 Forward+ 的逐灯对照与索引复用。
 - [P3 分层 Weighted OIT](../../Tests~/HoShadows/WeightedOit/README.md) 记录真实 Cloth、图层顺序、主光、点光及聚光的复跑方式。
+- [P3 私有 Character Capture](../../Tests~/HoShadows/Capture/README.md) 记录 Face／Eye 的实际受管材质、私有深度、主光及 Spot 对照。
 - [P4a 托管 RT 请求](../../Tests~/HoShadows/RayTraced/README.md) 记录默认关闭、相机 Volume 和独立 RT 客户端的生命周期验证。
+- [P5 迁移盘点和隔离试切](../../Tools~/HoShadows/README.md) 记录候选材质、生产文件签名、工具引用与隔离回退。
 - `HoShader/Skin_URP/Tests~/SkinShaderCompileBenchmark.cs` 可复用为导入和逐 Pass 请求入口。槽位和字节码审计需要记录确切的片元关键字组合并解析 DXBC 声明。
 - `HoShader/Environment_URP/Tests~/EnvironmentGraphicsSmoke.cs` 已有两盏不同颜色原生点光的对照，可扩成新 Main 和 Full 的逐灯门槛。
 - 现有 [RT 多灯产品验证与接入说明](../Ho-RT.md) 覆盖按 `LightId` 查询、状态、主灯绑定和 RG／Compatibility。独立产品通过只能证明生产能力，材质着色接入另有验收。
