@@ -1,6 +1,12 @@
-# Ho Shadows 生产迁移 dry-run
+# Ho Shadows 场景迁移与发布验证
 
-发行后的静态盘点继续使用 `plan_migration.py`。已确认的场景槽位用 `HoShadowsApplyAcceptedScene.cs` 在物理副本复制、写入和复核。保存物的物理 phase 与队列进入同一回执。下方试切、逐 Pass 时间和材质预览记录为历史验收。重放旧 renderer 或使用旧预览开关时，Extensions 固定到 `386ae989`、HoShader 固定到 `a6a1699`、HoURP 固定到 `9206557`。旧 shader 和资产作为配套快照一起加载。
+## 当前发布工具
+
+- 用 `plan_migration.py` 读取场景和材质配置，生成迁移盘点。
+- 用 `HoShadowsApplyAcceptedScene.Run` 在物理副本安装已确认的场景路由和材质覆盖，再用 `HoShadowsApplyAcceptedScene.VerifySaved` 重开同一副本验证保存结果。
+- 用 `HoShadowsAsyncSceneWarmup.Run` 预热保存相机，获取着色器编译完成后的重复帧。
+- 用 `HoShadowsSceneGpuProfile.RunRelease` 测量保存相机所选的已发行 Renderer，按场景记录实际 Renderer 索引、附加灯预算、RT 和 Capture 配置。
+- 接收端着色器的编译时间和采样器统计使用 [Receiver ABI benchmark](../../Tests~/HoShadows/ReceiverAbi/README.md)，可分别测 HoURP 和原生 URP。
 
 `plan_migration.py` 读取磁盘上的 Renderer、URP 资产、Volume、灯与角色声明、材质和 Variant，并扫描舞台工具及序列化属性覆盖。它只向标准输出写 JSON，可以在关闭或运行 Unity 时使用。运行需要 Python 3.9+、`rg` 和 Git。
 
@@ -10,16 +16,64 @@ python -B 'Tools~/HoShadows/plan_migration.py' `
   --hoshader 'D:/Unity_Fork/HoShader' > 'D:/Temp/ho-shadows-migration-plan.json'
 ```
 
-- `renderer.features` 按实际顺序记录 Feature、fileID、GUID、启用状态和建议。生产 Renderer 继续用旧 Character Feature 提供图集。隔离试切开启托管角色图集后，才在副本中停用旧 Character Feature。
+- `renderer.features` 按实际顺序记录 Feature、fileID、GUID、启用状态和建议。当前默认 Renderer 由 Ho Shadows 统一负责，静态盘点也能识别历史快照里的旧 Feature。
 - `materialRecords` 记录旧 Main／Full 的有效接收、属性来源、Scene／Prefab 引用和特殊 Pass。只有当前可能接收附加投影、可链接到记录有投影 Point／Spot 的场景、且通过普通材质门控的旧 Main 被列为 `review_full_candidate`。确认实际受光后，可在后续迁移中把该项设为 Full。无确定受光证据、Variant／锁、透明、Capture 和 OIT 分别核验。
 - Hair 同时记录材质配方和自定义队列。BREAK 的 9 份透明 Hair 有 8 份在 `2000` 或 `2400` 绘制，按不透明阶段调度，迁移需保留当前排序。Effect 记录仅描边、关闭深度写入以及自定义混合等本体接收资格。
 - `volumeProfiles`、`settingsAndComponents` 与 `scriptReferences` 带出处。默认托管 RT 关闭，具名 RT 镜头另行验证 opt-in。保留投射、接收、角色边界和 Capture owner 的作者配置。
 
 报告包含后续写入前可重查的 GUID 和 SHA-256。Scene 链接只反映已保存引用，嵌入灯计数只用于筛选复查场景。相机可见性、导入模型的所有绑定、动画或脚本写入和未保存编辑需要单独验证。
 
-## 隔离试切
+### 保存与复核已确认的场景
 
-将 `HoShadowsPilotCutover.cs` 复制到物理试验工程的 `Assets/Editor`，并接入实现统一 Feature 的当前包。项目与单独的空输出目录都须在 `D:/Temp` 下。入口拒绝生产路径、junction、symbolic link 和有多个硬链接的目标文件。它将原 Renderer 与 Volume 文件及其 .meta 复制到输出目录，再配置隔离 Renderer。
+将 `HoShadowsApplyAcceptedScene.cs` 复制到物理副本的 `Assets/Editor`，设置 `HO_SHADOWS_APPLY_PROJECT`、`HO_SHADOWS_APPLY_PLAN`，在 Windows batch 执行 `HoShadowsApplyAcceptedScene.Run`。工程及清单的绝对路径均以 `D:/Temp/HoShadows-P5-` 开头。
+
+- 清单使用 `abi: "resolved-screen-v1"`，记录 `scenePath`、`sceneSha256`、Base Camera 的 `cameraGlobalObjectId`、非默认的 `candidateRendererIndex`、`candidateRendererPath`、`candidateRendererGuid`、`candidateRendererSha256`、`rayTraced` 和 `slots`。RT 镜头还需要 `requiredRtVolume` 的 `globalObjectId`、`profilePath`、`profileSha256`。
+- 每个槽记录 `rendererGlobalObjectId`、`slotIndex`、`sourceMaterialGuid`、`sourceMaterialSha256`、`rawRenderQueue` 和 `phase`。阶段可用 `Opaque`、`EarlyTransparent`、`LateTransparent` 或 `WeightedOit`。可选 `scopeMode` 取 `1` 或 `2`，省略时沿用源材质范围。
+
+工具为清单指定的材质槽生成副本，按保存队列更新阶段资格，并保留混合和写深度设置。场景备份和回执位于项目根的 `HoShadowsAccepted`，材质副本位于 `Assets/HoShadowsAccepted`。复核时以已保存场景的 SHA-256 更新验证清单，并在每个槽记录 `savedMaterialGuid`、`savedMaterialSha256`。用该清单执行 `VerifySaved` 会重开场景，核对相机路由、槽位、材质阶段和哈希。
+
+### 逐 Pass GPU 时间
+
+复制 `HoShadowsSceneGpuProfile.cs` 到物理发行副本的 `Assets/Editor`。设置场景路径可只取一个保存机位。入口采集基准 GPU marker，再测实际相机路由。省略 `-quit`，采样结束后由入口退出。
+
+```powershell
+$env:HO_SHADOWS_P5_GPU_PROJECT = 'D:/Temp/HoShadows-Release/SceneSnapshot'
+$env:HO_SHADOWS_P5_GPU_OUTPUT = 'D:/Temp/HoShadows-Release/GpuProfiles'
+$env:HO_SHADOWS_P5_GPU_SCENE = 'Assets/00动画/MMD场景/H2Cu阿相/圣诞万花镜/圣诞万花镜.unity'
+New-Item -ItemType Directory -Path $env:HO_SHADOWS_P5_GPU_OUTPUT
+& 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe' `
+  -batchmode -projectPath $env:HO_SHADOWS_P5_GPU_PROJECT -force-d3d12 -burst-disable-compilation `
+  -logFile "$env:HO_SHADOWS_P5_GPU_OUTPUT/profile-d3d12.log" `
+  -executeMethod HoShadowsSceneGpuProfile.RunRelease
+```
+
+默认单独提交 Base 相机。设 `HO_SHADOWS_P5_GPU_AUTHORED_STACK=1` 可改用保存的原生相机栈并执行 Volume 更新。报告 `scene-gpu-profile.json` 中的 `profileMode` 为 `installed_release`，保留每个 Pass 的有效帧数、block 数和 P50／均值／P95。单相机提交中的嵌套反射可能计入同名 Pass，整机位用相机专属 marker。
+
+### 冷缓存异步预热
+
+复制 `HoShadowsAsyncSceneWarmup.cs` 到物理副本的 `Assets/Editor`。入口按 Editor update 提交原生相机栈，等待着色器编译队列空闲并复查两张有场景内容的画面。它临时关闭实际相机 Renderer 上的性能 HUD，记录进度、提交耗时和稳定性。达到截止时间时保留报告，待编译的占位画面不会写作基线。
+
+```powershell
+$env:HO_SHADOWS_WARMUP_PROJECT = 'D:/Temp/HoShadows-Release/SceneSnapshot'
+$env:HO_SHADOWS_WARMUP_OUTPUT = 'D:/Temp/HoShadows-Release/AsyncWarmup'
+$env:HO_SHADOWS_WARMUP_SCENE = 'Assets/00动画/角色/羽啾/羽啾.unity'
+$env:HO_SHADOWS_WARMUP_ARM = 'release'
+$env:HO_SHADOWS_WARMUP_SECONDS = '900'
+New-Item -ItemType Directory -Path $env:HO_SHADOWS_WARMUP_OUTPUT
+& 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe' `
+  -batchmode -projectPath $env:HO_SHADOWS_WARMUP_PROJECT -force-d3d11 `
+  -logFile "$env:HO_SHADOWS_WARMUP_OUTPUT/unity.log" -executeMethod HoShadowsAsyncSceneWarmup.Run
+```
+
+入口完成后自行退出。`HO_SHADOWS_WARMUP_ARM` 是报告和 EXR 的臂名，实际 Renderer 默认沿用保存的相机。`HO_SHADOWS_WARMUP_RENDERER_INDEX` 可显式选择副本中已有的 Renderer，`HO_SHADOWS_WARMUP_CAMERA` 可指定相机名。保留 TAA 的诊断可设 `HO_SHADOWS_WARMUP_ALLOW_TEMPORAL=1`，用重复帧划分可比较像素。
+
+## 历史回放版本
+
+下方试切、预览对照和旧 GPU 时序均在 PCSS 和旧图集退役前获取。用 Extensions `386ae989`、HoShader `a6a1699`、HoURP `9206557`，从 Extensions 固定版本复制试切、对照和 profiler 源文件，并准备对应阶段的物理场景快照。复跑 WTD 的优化版报告时用 HoShader `79ff20e` 和对应的 WTD 场景、Renderer、Volume 快照。旧投影、材质、场景和 Renderer 资产应与报告配套，尤其是历史的默认旧路由及额外的候选 Renderer。
+
+### 历史隔离试切
+
+将固定版本的 `HoShadowsPilotCutover.cs` 复制到物理试验工程的 `Assets/Editor`，并接入上述固定版本的包。项目与单独的空输出目录都须在 `D:/Temp` 下。入口拒绝生产路径、junction、symbolic link 和有多个硬链接的目标文件。它将原 Renderer 与 Volume 文件及其 .meta 复制到输出目录，再配置隔离 Renderer。
 
 ```powershell
 $env:HO_SHADOWS_P5_PILOT_PROJECT = 'D:/Temp/HoShadows-P5/SceneSnapshot'
@@ -50,11 +104,7 @@ WTD 的保存机位在 RTX 4060／D3D12 输出了 `1280×720` 的三组受管图
 
 使用生产等价 HoShader `79ff20e`、HoURP `9206557` 和统一 RT 生产器后，优化版四组回放通过。旧路径、受管关闭、关闭复跑和开启分别耗时 `323.21/7.00/3.00/3.00 s`，均无洋红色像素。四组共用本轮 Shader 缓存，耗时包括预热和成像。旧路径与受管开启的原始 RT EXR 逐字节一致，各有 `74996` 个有效和 `38056` 个遮挡像素。RT 开启后有 `10318` 个色图像素变化高于关闭重拍噪声，其中 `2882` 个属于原始遮挡。以最大 RGB 分量差 `0.002` 为阈值，旧路径对受管关闭和开启分别有 `18019` 和 `7203` 个差异像素。产物 `wtd-named-rt-compare.json` 记录相机、owner、开关状态、重复噪声和逐项判据。
 
-### 保存已验证的镜头试切
-
-`HoShadowsApplyAcceptedScene.cs` 接受一份显式场景清单，写入物理隔离工程。将工具复制到副本的 `Assets/Editor`，设置 `HO_SHADOWS_APPLY_PROJECT`、`HO_SHADOWS_APPLY_PLAN`，执行 `HoShadowsApplyAcceptedScene.Run`。清单需要 `scenePath`、`sceneSha256`、Base Camera 的 `cameraGlobalObjectId`、`candidateRendererIndex` 和 `slots`。每个槽写入 `rendererGlobalObjectId`、`slotIndex`、`sourceMaterialGuid`、`sourceMaterialSha256`。可选 `scopeMode` 取 `1` 或 `2`，省略时沿用源材质的范围。
-
-工具按场景 GUID 建立 `.mat` 副本，保留已保存的队列、混合和写深度设置。它只给清单中的槽位和 Base Camera 写入覆盖，随后重开副本核对。场景备份、报告以及前后 SHA-256 位于副本项目根的 `HoShadowsAccepted`，材质副本位于 `Assets/HoShadowsAccepted`。第二次使用同一已写入清单时验证回执、场景和副本的哈希并跳过保存。
+#### 历史镜头保存验收
 
 长门隔离演练保存了三个已验证槽位，Base Camera 路由从 `-1` 变为 `1`。第二次执行验证了原场景、三个副本及对应回执的 SHA-256 和修改时间。269 个原始文件中，仅隔离场景文件变化。Unity 会重新序列化较旧的场景。长门的原始 Hair 文件也在隔离导入期间补写了默认字段，这次保存验证使用其稳定的序列化结果作为隔离清单输入，保留了生产源文件的原 SHA-256。
 
@@ -64,9 +114,9 @@ WTD 的保存机位在 RTX 4060／D3D12 输出了 `1280×720` 的三组受管图
 
 圣诞万花镜在 D3D12 复测保存主相机的 `640×360` 画面，保留原场景后处理，并使用 19 份临时材质预览。关闭 Shader 优化时，四灯候选有 `57` 个像素的最大 RGB 分量差高于 `0.002`。开启 Shader 优化时，四灯与十六灯候选分别最大相差 `0.00049` 与 `0.00122`，两组均有 `0` 个像素超出阈值。测试前后候选 Renderer 和管线的 SHA-256 一致。
 
-## 真实镜头的隔离对照
+### 历史镜头对照
 
-把 `HoShadowsSceneCutoverComparison.cs` 与试切工具一起复制到物理快照的 `Assets/Editor`。快照包含保存的羽啾与圣诞万花镜场景、两者的依赖，以及带有屏幕预览的 HoShader 包版本。重新使用尚未试切的 Renderer，设置两个空输出目录，以 D3D11 启动 Unity。
+把固定版本的 `HoShadowsSceneCutoverComparison.cs` 与试切工具一起复制到物理快照的 `Assets/Editor`。快照包含保存的羽啾与圣诞万花镜场景、两者的依赖，以及带有屏幕预览的 HoShader 包版本。重新使用尚未试切的 Renderer，设置两个空输出目录，以 D3D11 启动 Unity。
 
 ```powershell
 $env:HO_SHADOWS_P5_PILOT_PROJECT = 'D:/Temp/HoShadows-P5-Local/SceneSnapshot'
@@ -113,24 +163,9 @@ HoShader `6bcb86f` 的普通透明 Cloth 在 Forward+／D3D11 通过 8 个样本
 
 D3D11 的普通透明夹具共通过 30 个样本。Cloth 在同一深度验证有组与无组表面只能读取各自对应的层。补充 Eye 夹具分别为无组表面启用 Point 和 Spot。两组均有 `10404` 个接收者像素，owner 全为 `0`，量化覆盖率为 `49151`。Full 遮挡处变暗，关闭对应灯投影后回到 Main，禁用灯的首帧逐灯槽从 `1` 清为 `0`。原有 Weighted OIT 的 8 个方向光、Point 和 Spot 样本复验通过，缺 owner 仍回到中性阴影值。
 
-### 冷缓存异步预热
+#### 历史冷缓存诊断
 
-复制 `HoShadowsAsyncSceneWarmup.cs` 到物理副本的 `Assets/Editor`。此入口按 Editor update 提交原生相机栈，等待着色器编译队列空闲后复查两张有场景内容的渲染结果。它临时关闭实际相机 Renderer 上的性能 HUD，记录进度、提交耗时和稳定性。达到截止时间时会保留报告，待编译完成的占位画面不会被保存为基线。
-
-```powershell
-$env:HO_SHADOWS_WARMUP_PROJECT = 'D:/Temp/HoShadows-P5-Local/SceneSnapshot'
-$env:HO_SHADOWS_WARMUP_OUTPUT = 'D:/Temp/HoShadows-P5-Local/AsyncWarmup'
-$env:HO_SHADOWS_WARMUP_SCENE = 'Assets/00动画/角色/羽啾/羽啾.unity'
-$env:HO_SHADOWS_WARMUP_ARM = 'legacy'
-$env:HO_SHADOWS_WARMUP_FRAME_SKIN = '1'
-$env:HO_SHADOWS_WARMUP_SECONDS = '900'
-New-Item -ItemType Directory -Path $env:HO_SHADOWS_WARMUP_OUTPUT
-& 'C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe' `
-  -batchmode -projectPath $env:HO_SHADOWS_WARMUP_PROJECT -force-d3d11 `
-  -logFile "$env:HO_SHADOWS_WARMUP_OUTPUT/unity.log" -executeMethod HoShadowsAsyncSceneWarmup.Run
-```
-
-入口完成后自行退出。`HO_SHADOWS_WARMUP_RENDERER_INDEX` 可选择副本中已配置的 Renderer，默认沿用保存的相机。可用 `HO_SHADOWS_WARMUP_CAMERA` 指定相机名。需要材质预览的对照臂先准备相机和材质，再调用 `Capture`。两个 EXR 和 JSON 使用各自的臂名。保留 TAA 的诊断可设 `HO_SHADOWS_WARMUP_ALLOW_TEMPORAL=1`，记录两张编译已完成的画面和重复帧变化，用各自的重复帧划分可比较像素。
+历史羽啾回放使用 `HO_SHADOWS_WARMUP_ARM=legacy` 和 `HO_SHADOWS_WARMUP_FRAME_SKIN=1`。预览对照由固定版本的调用端准备相机和临时材质，再调用 `Capture`。
 
 羽啾的 D3D11 原设置异步首次提交在 `2.68 s` 返回，编译队列在 `290 s` 内仍未清空。另一次仅用于定位的诊断关闭着色器优化，使队列清空并拍到角色。热缓存下三次提交取得重复 EXR，中心非均匀信号 `21006` 像素，两帧差异 `>0.01` 的像素有 `6176` 个。该数据单独记录 TAA 波动与编译诊断条件。
 
@@ -150,9 +185,9 @@ New-Item -ItemType Directory -Path $env:HO_SHADOWS_WARMUP_OUTPUT
 
 在私有诊断包中，将受管解析的固定核换为旧盘形 PCF，继续关闭 blocker search，并保留同一屏幕世界坐标、边界权重和邻域梯度。在 `30107` 个共同稳定的角色像素中，超过 `0.01` 的差异从 `1857` 降至 `1475`，平均差从 `0.00487` 降至 `0.00295`。两个受管版本的原始相机／SurfaceBuffer 深度和打包 owner 逐像素一致。该对照确认滤波核贡献了一部分边缘差异，剩余差异仍待定位。发布路径继续使用固定 PCF。数据见 `resource-kernel-comparison.json`。
 
-## 逐 Pass GPU 时间
+### 历史逐 Pass GPU 时间
 
-在已完成隔离试切、附加灯预算为 `4`、托管 RT 关闭的工程内，复制 `HoShadowsSceneGpuProfile.cs` 到 `Assets/Editor`。使用 Unity 6000.3.15f1 图形模式运行，保持同一 GPU 和分辨率。入口用 Editor update 每次提交一个请求，采集延迟返回的 GPU 记录。省略 `-quit`，入口会在采样结束后退出。
+在已完成历史隔离试切、附加灯预算为 `4`、托管 RT 关闭的工程内，从固定版本复制 `HoShadowsSceneGpuProfile.cs` 到 `Assets/Editor`。使用 Unity 6000.3.15f1 图形模式运行，保持同一 GPU 和分辨率。省略 `-quit`，入口会在采样结束后退出。
 
 ```powershell
 $env:HO_SHADOWS_P5_GPU_PROJECT = 'D:/Temp/HoShadows-P5-Local/SceneSnapshot'

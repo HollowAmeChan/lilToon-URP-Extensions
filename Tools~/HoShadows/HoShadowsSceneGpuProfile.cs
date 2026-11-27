@@ -7,7 +7,6 @@ using lilToon.URP.Extensions.CharacterShadow;
 using lilToon.URP.Extensions.CharacterSpecialization;
 using lilToon.URP.Extensions.Debugging;
 using lilToon.URP.Extensions.RTShadow;
-using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.Shadows;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -19,11 +18,12 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using Object = UnityEngine.Object;
 
-// Run the isolated cutover helper first. Start Unity batch without -quit; this entry exits after the profiler frames arrive.
+// Start Unity batch without -quit; the entry exits after the profiler frames arrive.
 public static class HoShadowsSceneGpuProfile
 {
     const string RendererPath = "Assets/Settings/PC_Renderer.asset";
     const string Preview = "_HO_SHADOWS_SCREEN_PREVIEW";
+    const string LegacyCastType = "lilToon.URP.Extensions.ShadowCast.HoShadowCastRendererFeature";
     const string CalibrationName = "Ho Shadows GPU Timing Calibration";
     const int Warmup = 40;
     const int Width = 1280;
@@ -59,13 +59,16 @@ public static class HoShadowsSceneGpuProfile
         public List<Sample> samples = new();
     }
     [Serializable] sealed class Segment {
-        public string scene, camera, mode;
+        public string scene, camera, mode, rendererAsset;
+        public int rendererIndex = -1;
+        public int additionalLightBudget;
+        public bool rayTracedShadows, captureShadowInputs;
         public int eligibleProfilerFrames, submittedFrames, savedCameraRenders, otherCameraRenders, previewMaterials;
         public List<PassResult> passes = new();
         public List<double> frameTimingGpuMilliseconds = new();
     }
     [Serializable] sealed class Report {
-        public string unity, api, gpu, requestMode, error;
+        public string unity, api, gpu, requestMode, profileMode, error;
         public bool recorderSupported, calibrationMeasured, completed, frameTimingFeature;
         public int width, height, warmup, requestedSamples, candidateBudget;
         public List<Segment> segments = new();
@@ -120,7 +123,7 @@ public static class HoShadowsSceneGpuProfile
     static Camera camera;
     static UniversalRenderPipeline.SingleCameraRequest request;
     static RenderPipeline.StandardRequest stackRequest;
-    static bool authoredStack;
+    static bool authoredStack, profileRelease;
     static Report report;
     static Segment current;
     static string reportPath;
@@ -128,7 +131,11 @@ public static class HoShadowsSceneGpuProfile
     static int segmentIndex, tick, lastProfilerFrame;
     static ulong lastTimingTimestamp;
 
-    public static void Run()
+    public static void Run() => RunProfile(useRelease: false);
+
+    public static void RunRelease() => RunProfile(useRelease: true);
+
+    static void RunProfile(bool useRelease)
     {
         string project = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
         string expected = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_GPU_PROJECT");
@@ -147,27 +154,16 @@ public static class HoShadowsSceneGpuProfile
                 throw new InvalidOperationException("Missing saved scene: " + path);
         int samples = int.TryParse(Environment.GetEnvironmentVariable("HO_SHADOWS_P5_GPU_SAMPLES"), out int count) ? count : 90;
         authoredStack = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_GPU_AUTHORED_STACK") == "1";
+        profileRelease = useRelease;
         report = new Report {
             unity = Application.unityVersion, api = SystemInfo.graphicsDeviceType.ToString(), gpu = SystemInfo.graphicsDeviceName,
             recorderSupported = SystemInfo.supportsGpuRecorder, frameTimingFeature = FrameTimingManager.IsFeatureEnabled(),
             requestMode = authoredStack ? "authored_camera_stack" : "single_camera",
-            width = Width, height = Height, warmup = Warmup, requestedSamples = Math.Max(12, samples), candidateBudget = 4
+            profileMode = profileRelease ? "installed_release" : "legacy_comparison",
+            width = Width, height = Height, warmup = Warmup, requestedSamples = Math.Max(12, samples),
+            candidateBudget = profileRelease ? 0 : 4
         };
-        renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
-        if (renderer == null) throw new InvalidOperationException("Missing isolated PC_Renderer.");
-        managed = renderer.rendererFeatures.OfType<HoShadowsRendererFeature>().Single();
-        capture = renderer.rendererFeatures.OfType<HoCharacterSpecializationRendererFeature>().Single();
-        legacy = new ScriptableRendererFeature[] {
-            renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().Single(),
-            renderer.rendererFeatures.OfType<HoCharacterShadowRendererFeature>().Single(),
-            renderer.rendererFeatures.OfType<HoRTShadowRendererFeature>().Single()
-        };
-        originalLegacy = legacy.Select(feature => feature.isActive).ToArray();
-        originalManaged = managed.isActive;
-        originalCapture = capture.CaptureShadowInputsEnabled;
-        if (!originalManaged || originalLegacy.Any(active => active) || managed.RayTracedShadowsEnabled ||
-            new SerializedObject(managed).FindProperty("additionalLightBudget").intValue != report.candidateBudget)
-            throw new InvalidOperationException("Run the physical cutover helper first, with budget 4 and managed RT disabled.");
+        if (!profileRelease) PrepareLegacyComparison();
 
         previousProfiler = ProfilerDriver.enabled;
         previousProfileEditor = ProfilerDriver.profileEditor;
@@ -184,12 +180,65 @@ public static class HoShadowsSceneGpuProfile
         EditorApplication.QueuePlayerLoopUpdate();
     }
 
+    static void PrepareLegacyComparison()
+    {
+        renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
+        if (renderer == null) throw new InvalidOperationException("Missing isolated PC_Renderer.");
+        managed = renderer.rendererFeatures.OfType<HoShadowsRendererFeature>().Single();
+        capture = renderer.rendererFeatures.OfType<HoCharacterSpecializationRendererFeature>().Single();
+        var cast = renderer.rendererFeatures.SingleOrDefault(feature => feature != null && feature.GetType().FullName == LegacyCastType);
+        if (cast == null)
+            throw new InvalidOperationException("The comparison requires the pinned preview packages. Use RunRelease for an installed renderer.");
+        legacy = new ScriptableRendererFeature[] {
+            cast,
+            renderer.rendererFeatures.OfType<HoCharacterShadowRendererFeature>().Single(),
+            renderer.rendererFeatures.OfType<HoRTShadowRendererFeature>().Single()
+        };
+        originalLegacy = legacy.Select(feature => feature.isActive).ToArray();
+        originalManaged = managed.isActive;
+        originalCapture = capture.CaptureShadowInputsEnabled;
+        using var managedState = new SerializedObject(managed);
+        if (!originalManaged || originalLegacy.Any(active => active) || managed.RayTracedShadowsEnabled ||
+            managedState.FindProperty("additionalLightBudget").intValue != report.candidateBudget)
+            throw new InvalidOperationException("Run the physical cutover helper first, with budget 4 and managed RT disabled.");
+    }
+
+    static void DescribeReleaseRenderer(UniversalAdditionalCameraData cameraData)
+    {
+        if (GraphicsSettings.currentRenderPipeline is not UniversalRenderPipelineAsset pipeline)
+            throw new InvalidOperationException("The saved camera needs a URP asset.");
+        using var pipelineState = new SerializedObject(pipeline);
+        using var cameraState = new SerializedObject(cameraData);
+        int index = cameraState.FindProperty("m_RendererIndex").intValue;
+        if (index < 0) index = pipelineState.FindProperty("m_DefaultRendererIndex").intValue;
+        var renderers = pipelineState.FindProperty("m_RendererDataList");
+        if (index < 0 || index >= renderers.arraySize
+            || renderers.GetArrayElementAtIndex(index).objectReferenceValue is not UniversalRendererData data
+            || cameraData.scriptableRenderer != pipeline.GetRenderer(index))
+            throw new InvalidOperationException("The saved camera needs a valid Renderer slot in the current pipeline.");
+        var active = data.rendererFeatures.Where(feature => feature != null && feature.isActive).ToArray();
+        var producer = active.OfType<HoShadowsRendererFeature>().SingleOrDefault();
+        if (producer == null || active.Any(feature => feature is HoCharacterShadowRendererFeature or HoRTShadowRendererFeature
+                                                       || feature.GetType().FullName == LegacyCastType))
+            throw new InvalidOperationException("RunRelease requires the saved camera to use Ho Shadows as the only shadow feature owner.");
+        using var producerState = new SerializedObject(producer);
+        current.rendererAsset = AssetDatabase.GetAssetPath(data);
+        current.rendererIndex = index;
+        current.additionalLightBudget = producerState.FindProperty("additionalLightBudget").intValue;
+        current.rayTracedShadows = producer.RayTracedShadowsEnabled;
+        current.captureShadowInputs = active.OfType<HoCharacterSpecializationRendererFeature>()
+                                            .Any(feature => feature.CaptureShadowInputsEnabled);
+    }
+
     static void StartSegment()
     {
         tick = 0;
         lastProfilerFrame = -1;
         lastTimingTimestamp = 0;
-        current = new Segment { mode = segmentIndex == 0 ? "calibration" : segmentIndex % 2 == 1 ? "legacy" : "managed-budget4" };
+        current = new Segment {
+            mode = segmentIndex == 0 ? "calibration" : profileRelease ? "managed-installed"
+                : segmentIndex % 2 == 1 ? "legacy" : "managed-budget4"
+        };
         report.segments.Add(current);
         if (segmentIndex == 0)
         {
@@ -200,26 +249,34 @@ public static class HoShadowsSceneGpuProfile
         }
         else
         {
-            bool candidate = segmentIndex % 2 == 0;
-            current.scene = scenes[(segmentIndex - 1) / 2];
+            current.scene = scenes[(segmentIndex - 1) / (profileRelease ? 1 : 2)];
             var scene = EditorSceneManager.OpenScene(current.scene, OpenSceneMode.Single);
             camera = Camera.main;
-            if (camera == null || camera.GetUniversalAdditionalCameraData().renderType != CameraRenderType.Base)
+            if (camera == null || !camera.TryGetComponent(out UniversalAdditionalCameraData cameraData)
+                || cameraData.renderType != CameraRenderType.Base)
                 throw new InvalidOperationException("Missing saved Base Main Camera for " + current.scene);
             if (target == null) target = MakeTarget("Ho Shadows profile", Width, Height, 24);
             if (!target.IsCreated() && !target.Create()) throw new InvalidOperationException("Camera target was lost.");
             if (authoredStack) stackRequest = new RenderPipeline.StandardRequest { destination = target };
             else request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
             current.camera = camera.name;
-            managed.SetActive(candidate);
-            capture.CaptureShadowInputsEnabled = candidate && originalCapture;
-            foreach (var feature in legacy) feature.SetActive(!candidate);
-            if (candidate)
+            if (profileRelease)
             {
-                foreach (var root in scene.GetRootGameObjects())
-                    foreach (var mesh in root.GetComponentsInChildren<Renderer>(true))
-                        CopyPreviewMaterials(mesh);
-                current.previewMaterials = MaterialCopies.Count;
+                DescribeReleaseRenderer(cameraData);
+            }
+            else
+            {
+                bool candidate = segmentIndex % 2 == 0;
+                managed.SetActive(candidate);
+                capture.CaptureShadowInputsEnabled = candidate && originalCapture;
+                foreach (var feature in legacy) feature.SetActive(!candidate);
+                if (candidate)
+                {
+                    foreach (var root in scene.GetRootGameObjects())
+                        foreach (var mesh in root.GetComponentsInChildren<Renderer>(true))
+                            CopyPreviewMaterials(mesh);
+                    current.previewMaterials = MaterialCopies.Count;
+                }
             }
             foreach (string name in RegistryNames.Concat(MarkerNames)) NewWatch(name);
             NewWatch($"UniversalRenderPipeline.RenderSingleCameraInternal: {camera.name}");
@@ -253,7 +310,7 @@ public static class HoShadowsSceneGpuProfile
                 FinishSegment();
                 if (segmentIndex != 0 && (current.savedCameraRenders == 0 || !current.passes.Any(pass => pass.frames > 0)))
                     throw new InvalidOperationException("No saved-camera GPU samples for " + current.scene + " " + current.mode);
-                if (++segmentIndex > scenes.Length * 2) { End(null); return; }
+                if (++segmentIndex > scenes.Length * (profileRelease ? 1 : 2)) { End(null); return; }
                 StartSegment();
             }
 
@@ -370,9 +427,12 @@ public static class HoShadowsSceneGpuProfile
         EditorApplication.update -= Tick;
         RenderPipelineManager.endCameraRendering -= OnCameraEnd;
         if (Watches.Count > 0) FinishSegment();
-        managed.SetActive(originalManaged);
-        capture.CaptureShadowInputsEnabled = originalCapture;
-        for (int i = 0; i < legacy.Length; i++) legacy[i].SetActive(originalLegacy[i]);
+        if (!profileRelease)
+        {
+            managed.SetActive(originalManaged);
+            capture.CaptureShadowInputsEnabled = originalCapture;
+            for (int i = 0; i < legacy.Length; i++) legacy[i].SetActive(originalLegacy[i]);
+        }
         ProfilerDriver.SetAreaEnabled(ProfilerArea.GPU, previousGpuArea);
         ProfilerDriver.profileEditor = previousProfileEditor;
         ProfilerDriver.enabled = previousProfiler;
