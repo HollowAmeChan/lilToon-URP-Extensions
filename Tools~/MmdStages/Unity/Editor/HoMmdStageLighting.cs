@@ -195,7 +195,7 @@ public static class HoMmdStageLighting
         AddBranding(image,folder,look);
         EnsureFeature<ScreenProcessRendererFeature>(renderer,"Ho 景深与空气透视").UseVolumes=true;
         EnsureFeature<ImageProcessRendererFeature>(renderer,"Ho 镜头柔光").UseVolumes=true;
-        var shadow=renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().FirstOrDefault();
+        var shadow=HoMmdSharedRenderAssets.LegacyShadowCast(renderer);
         if(shadow!=null){shadow.Settings.shadowStrength=1;shadow.Settings.punctualShadowStrength=.85f;shadow.Settings.pcssEnabled=true;shadow.Settings.pcssMaxPenumbraRadius=5;
             // 4096 / 512 gives 64 point-light faces, avoiding URP's silent
             // reduction when dappled scenes use many small shadow casters.

@@ -10,8 +10,13 @@ using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using Hollow.HoMmdStages;
 using lilToon.URP.Extensions.Atmosphere;
+using lilToon.URP.Extensions.CharacterSpecialization;
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.ObjectBuffer;
+using lilToon.URP.Extensions.OIT;
 using lilToon.URP.Extensions.PostProcessing;
 using lilToon.URP.Extensions.ShadowCast;
+using lilToon.URP.Extensions.SurfaceBuffer;
 using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI;
 using lilToon.URP.Extensions.PlanarReflection;
@@ -63,6 +68,7 @@ public static class HoMmdStageAudit
                 bool layerIsolation=exterior.Length>0&&exterior.All(x=>(uint)x.GetUniversalAdditionalLightData().renderingLayers==2u)&&
                     modelRenderers.Count(x=>(x.renderingLayerMask&2u)!=0)==6;
                 if(renderer==null){errors.Add(recipe.name+": renderer asset missing");continue;}
+                var unified=HoMmdSharedRenderAssets.ActiveHoShadows(renderer);
                 var rtgi=renderer.rendererFeatures.OfType<HoRTGIRendererFeature>().FirstOrDefault(x=>x.isActive);
                 profile.TryGet<HoRTGIVolume>(out var rtgiVolume);
                 var rtgiExcluded=rtgi!=null&&rtgi.Settings.excludedRayMaterials!=null&&rtgi.Settings.excludedRayMaterials.Length==1?rtgi.Settings.excludedRayMaterials:
@@ -113,15 +119,28 @@ public static class HoMmdStageAudit
                     errors.Add(recipe.name+": scene dependency/state audit failed");
                 if(recipe.name=="花吐电気"&&(!layerIsolation||exterior.Length!=3||!screen.layers.value.Any(x=>x.enabled&&x.effect==ScreenProcessEffect.SkyTyndall)))
                     errors.Add(recipe.name+": exterior lighting / sky scattering audit failed");
-                if(recipe.name=="圣诞万花镜"&&(lowPoints!=12||(int)renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().Single().Settings.lightCapacity<(int)HoShadowCastLightCapacity.Medium))
-                    errors.Add(recipe.name+": low point fill / shadow capacity audit failed");
+                if(recipe.name=="圣诞万花镜")
+                {
+                    if(lowPoints!=12)errors.Add(recipe.name+": low point fill audit failed");
+                    if(unified!=null)
+                    {
+                        if(env.pipeline==null||!env.pipeline.supportsAdditionalLightShadows)
+                            errors.Add(recipe.name+": native additional shadows are disabled on the stage pipeline");
+                    }
+                    else
+                    {
+                        var legacy=renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().ToArray();
+                        if(legacy.Length!=1||(int)legacy[0].Settings.lightCapacity<(int)HoShadowCastLightCapacity.Medium)
+                            errors.Add(recipe.name+": legacy shadow capacity audit failed");
+                    }
+                }
                 if(audit.aoArtMaterials!=audit.aoEligibleMaterials||audit.plrSurfaces<1)
                     errors.Add(recipe.name+": AO art / all-floor PLR audit failed");
                 if(File.Exists(folder+"/Rendering/细节灯光.json")&&(audit.reviewCameras!=3||audit.centerPostLighting))
                     errors.Add(recipe.name+": three cameras / world-space lighting audit failed");
                 if(!audit.hasObjectBuffer||!audit.hasAttributeComposite||!audit.plrSourceBeforeGeometryBuffer||!audit.plrSceneView||!audit.plrReceiversHaveIdentity)
                     errors.Add(recipe.name+": OB/SB/AC/PLR dependency or SceneView reflection audit failed");
-                if(!audit.canonicalFeatureOrder||!audit.disabledFeaturesPresent)
+                if(!audit.canonicalFeatureOrder||(unified==null&&!audit.disabledFeaturesPresent))
                     errors.Add(recipe.name+": Renderer feature order / disabled feature retention audit failed");
                 if(advanced)
                 {
@@ -151,11 +170,29 @@ public static class HoMmdStageAudit
     }
     static bool CheckFeatureOrder(UniversalRendererData renderer,out bool disabledPresent)
     {
-        string[] required={"HoGeometryDataRendererFeature","HoRTRendererFeature","HoCharacterShadowRendererFeature","HoShadowCastRendererFeature","HoAtmosphereRendererFeature","HoPlanarReflectionRendererFeature","HoGeometryBufferRendererFeature","HoObjectBufferRendererFeature","HoSurfaceBufferRendererFeature","HoRTShadowRendererFeature","HoAttributeCompositeRendererFeature","HoGTAORendererFeature","HoSSGIRendererFeature","HoRTDIRendererFeature","HoRTGIRendererFeature","HoSubsurfaceScatteringRendererFeature","HoVolumeLightRendererFeature","WeightedOITRendererFeature","HoCharacterSpecializationRendererFeature","ScreenProcessRendererFeature","ImageProcessRendererFeature"};
-        var actual=renderer.rendererFeatures.Where(x=>x!=null).ToArray();int last=-1;bool ordered=true;
-        foreach(string type in required){int index=Array.FindIndex(actual,x=>x.GetType().Name==type);if(index<0||index<last)ordered=false;last=Mathf.Max(last,index);}
+        var actual=renderer.rendererFeatures.Where(x=>x!=null).ToArray();
         var ssgi=actual.FirstOrDefault(x=>x.GetType().Name=="HoSSGIRendererFeature");var rtdi=actual.FirstOrDefault(x=>x.GetType().Name=="HoRTDIRendererFeature");var debug=actual.FirstOrDefault(x=>x.GetType().Name=="HoDebugTileRendererFeature");
         disabledPresent=ssgi!=null&&!ssgi.isActive&&rtdi!=null&&!rtdi.isActive&&debug!=null&&!debug.isActive;
-        return ordered;
+        var unified=HoMmdSharedRenderAssets.ActiveHoShadows(renderer);
+        if(unified!=null)
+        {
+            int shadowIndex=Array.IndexOf(actual,unified);
+            int IndexOfActive<T>() where T : ScriptableRendererFeature => Array.FindIndex(actual,x=>x is T&&x.isActive);
+            bool Before(int index) => index>=0&&index<shadowIndex;
+            bool AfterIfPresent(int index) => index<0||index>shadowIndex;
+            return Before(IndexOfActive<HoGeometryBufferRendererFeature>())&&Before(IndexOfActive<HoObjectBufferRendererFeature>())&&
+                Before(IndexOfActive<HoSurfaceBufferRendererFeature>())&&
+                (!unified.RayTracedShadowsEnabled||Before(IndexOfActive<HoRTRendererFeature>()))&&
+                AfterIfPresent(IndexOfActive<WeightedOITRendererFeature>())&&AfterIfPresent(IndexOfActive<HoCharacterSpecializationRendererFeature>());
+        }
+
+        int last=-1;
+        foreach(var type in HoMmdSharedRenderAssets.CanonicalFeatureOrder(false))
+        {
+            int index=Array.FindIndex(actual,x=>x.GetType()==type);
+            if(index<0||index<last)return false;
+            last=index;
+        }
+        return true;
     }
 }

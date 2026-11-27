@@ -4,7 +4,6 @@ using System.Linq;
 using System.Collections.Generic;
 using Hollow.HoMmdStages;
 using lilToon.URP.Extensions.PlanarReflection;
-using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.PostProcessing;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -132,9 +131,14 @@ public static class HoMmdStageRemaining
             EditorUtility.SetDirty(m);
         }
         foreach(var mesh in meshes){mesh.shadowCastingMode=ShadowCastingMode.On;mesh.receiveShadows=true;mesh.sharedMaterial.SetShaderPassEnabled("ShadowCaster",true);}
-        var shadow=renderer.rendererFeatures.OfType<HoShadowCastRendererFeature>().First();shadow.Settings.shadowStrength=1;shadow.Settings.punctualShadowStrength=1;
-        shadow.Settings.pcssMaxPenumbraRadius=3.5f;shadow.Settings.punctualPcssSoftness=.35f;
-        shadow.Settings.atlasSize=4096;shadow.Settings.directionalResolution=2048;shadow.Settings.spotResolution=1024;shadow.Settings.pointFaceResolution=512;EditorUtility.SetDirty(shadow);
+        var shadow=HoMmdSharedRenderAssets.LegacyShadowCast(renderer);
+        if(shadow!=null)
+        {
+            shadow.Settings.shadowStrength=1;shadow.Settings.punctualShadowStrength=1;
+            shadow.Settings.pcssMaxPenumbraRadius=3.5f;shadow.Settings.punctualPcssSoftness=.35f;
+            shadow.Settings.atlasSize=4096;shadow.Settings.directionalResolution=2048;shadow.Settings.spotResolution=1024;
+            shadow.Settings.pointFaceResolution=512;EditorUtility.SetDirty(shadow);
+        }
         if(spec!=null)
         {
             HdrSky(spec,env,folder);

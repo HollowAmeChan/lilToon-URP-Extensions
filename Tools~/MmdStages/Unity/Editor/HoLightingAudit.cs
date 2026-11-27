@@ -14,6 +14,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using lilToon.URP.Extensions.ShadowCast;
+using lilToon.URP.Extensions.Shadows;
 using lilToon.URP.Extensions.CharacterShadow;
 using lilToon.URP.Extensions.RTShadow;
 using lilToon.URP.Extensions.VolumeLight;
@@ -89,7 +90,7 @@ public static class HoLightingAudit
             pipeline = AssetDatabase.GetAssetPath(pipeline),
             quality = QualitySettings.names[QualitySettings.GetQualityLevel()],
             sun = RenderSettings.sun == null ? null : PathOf(RenderSettings.sun.transform),
-            note = "Capture reads the last rendered camera; lighting-audit-render explicitly renders once beforehand. No asset saves or lighting changes. Name-based atlas matches are ambiguous for duplicate light names.",
+            note = "Capture reads the last rendered camera; lighting-audit-render explicitly renders once beforehand. Atlas matches and _HoShadowCast values describe the legacy feature. Ho Shadows is reported by its renderer configuration. Name-based atlas matches are ambiguous for duplicate light names.",
             currentFrame = Time.frameCount, lastShadowFrame = snapshot.FrameCount, lastShadowCamera = snapshot.CameraName,
             lastShadowValid = snapshot.IsValid,
             characterShadow = HoCharacterShadowRendererFeature.LastCullStatus,
@@ -183,6 +184,13 @@ public static class HoLightingAudit
                 {
                     if (feature == null) continue;
                     var type = feature.GetType();
+                    if (feature is HoShadowsRendererFeature unified)
+                    {
+                        yield return new FeatureRow { asset = AssetDatabase.GetAssetPath(data), name = feature.name,
+                            type = type.FullName, active = feature.isActive, settings = JsonUtility.ToJson(unified),
+                            status = "managed RT=" + (unified.RayTracedShadowsEnabled ? "enabled" : "disabled") };
+                        continue;
+                    }
                     if (!(feature is HoShadowCastRendererFeature || feature is HoCharacterShadowRendererFeature ||
                           feature is HoRTShadowRendererFeature || feature is HoVolumeLightRendererFeature)) continue;
                     var field = type.GetField("settings", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);

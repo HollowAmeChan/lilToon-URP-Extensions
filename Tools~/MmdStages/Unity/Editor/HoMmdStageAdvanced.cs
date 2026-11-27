@@ -9,7 +9,6 @@ using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.PostProcessing;
 using lilToon.URP.Extensions.RT;
 using lilToon.URP.Extensions.RTGI;
-using lilToon.URP.Extensions.ShadowCast;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -95,7 +94,7 @@ public static class HoMmdStageAdvanced
         var sky=root.GetComponentsInChildren<MeshRenderer>().Single(x=>x.name=="天空球").sharedMaterial;
         var gb=d.rendererFeatures.OfType<HoGeometryBufferRendererFeature>().Single();
         gb.Settings.minRenderQueue=1500;gb.Settings.renderScale=HoGeometryBufferRenderScale.Full;
-        var shadow=d.rendererFeatures.OfType<HoShadowCastRendererFeature>().FirstOrDefault();
+        var shadow=HoMmdSharedRenderAssets.LegacyShadowCast(d);
         if(shadow!=null)
         {
             shadow.Settings.atlasSize=4096;shadow.Settings.directionalResolution=2048;

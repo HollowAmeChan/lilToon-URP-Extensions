@@ -177,6 +177,11 @@ public static class HoMmdStageBuilder
         SceneManager.SetActiveScene(scene);
         try
         {
+            var rendererData=ResolveRenderer(Root+r.name);
+            if(rendererData==null)throw new InvalidOperationException("Stage renderer is missing");
+            bool unified=HoMmdSharedRenderAssets.ActiveHoShadows(rendererData)!=null;
+            if(!unified&&!AssetDatabase.GetAssetPath(rendererData).StartsWith(Root,StringComparison.Ordinal))
+                throw new InvalidOperationException("Only stage-owned renderer copies may be pruned");
             var root=scene.GetRootGameObjects().First();
             var renderers=root.GetComponentsInChildren<MeshRenderer>(true);
             foreach(var mat in renderers.Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct())TuneMaterial(mat,r);
@@ -217,19 +222,23 @@ public static class HoMmdStageBuilder
             profile.TryGet(out ColorAdjustments color);color.postExposure.Override(r.exposure);
             profile.TryGet(out Bloom bloom);bloom.intensity.Override(r.bloom);
             profile.TryGet(out HoVolumeLightVolume lightVolume);lightVolume.intensity.Override(r.volume);
-            var rendererData=ResolveRenderer(Root+r.name);
-            var kept=new HashSet<string>();
-            foreach(var feature in rendererData.rendererFeatures)
+            if(!unified)
             {
-                string n=feature.GetType().Name;
-                feature.SetActive(new[]{"HoGeometryDataRendererFeature","HoGeometryBufferRendererFeature","HoSurfaceBufferRendererFeature",
-                    "HoAtmosphereRendererFeature","HoGTAORendererFeature","HoShadowCastRendererFeature","HoVolumeLightRendererFeature",
-                    "ImageProcessRendererFeature","WeightedOITRendererFeature"}.Contains(n)&&kept.Add(n));
-                if(feature is HoGTAORendererFeature gtao)gtao.Settings.temporalFrameCount=0;
-                EditorUtility.SetDirty(feature);
+                var kept=new HashSet<string>();
+                foreach(var feature in rendererData.rendererFeatures)
+                {
+                    if(feature==null)continue;
+                    string n=feature.GetType().Name;
+                    feature.SetActive(new[]{"HoGeometryDataRendererFeature","HoGeometryBufferRendererFeature","HoSurfaceBufferRendererFeature",
+                        "HoAtmosphereRendererFeature","HoGTAORendererFeature","HoShadowCastRendererFeature","HoVolumeLightRendererFeature",
+                        "ImageProcessRendererFeature","WeightedOITRendererFeature"}.Contains(n)&&kept.Add(n));
+                    if(feature is HoGTAORendererFeature gtao)gtao.Settings.temporalFrameCount=0;
+                    EditorUtility.SetDirty(feature);
+                }
+                PruneRenderer(rendererData);
+                EditorUtility.SetDirty(rendererData);
             }
-            PruneRenderer(rendererData);
-            EditorUtility.SetDirty(profile);EditorUtility.SetDirty(rendererData);
+            EditorUtility.SetDirty(profile);
             EditorSceneManager.SaveScene(scene);AssetDatabase.SaveAssets();
             return Audit(r);
         }

@@ -89,15 +89,30 @@ public static class HoMmdRTShadowDiagnostics
     {
         var scene = SceneManager.GetActiveScene();
         if (scene.path != request.scene) throw new InvalidOperationException("Only inspect the loaded scene.");
+        string folder = string.IsNullOrEmpty(request.output) ? Path.GetFullPath(
+            "Library/HoMmdVideo/Diagnostics/RTShadow-" + DateTime.Now.ToString("yyyyMMdd-HHmmss")) : Path.GetFullPath(request.output);
+        var renderer = string.IsNullOrEmpty(request.folder) ? null : HoMmdStageBuilder.ResolveRenderer(request.folder.TrimEnd('/'));
+        if (renderer == null) renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(HoMmdSharedRenderAssets.RendererPath);
+        var unified = HoMmdSharedRenderAssets.ActiveHoShadows(renderer);
+        if (unified != null)
+        {
+            string status = unified.RayTracedShadowsEnabled
+                ? "Managed RT is enabled. This capture tool reads the legacy RT products only."
+                : "Managed RT is disabled on Ho Shadows. The stage Volume does not enable the renderer's RT switch.";
+            return WriteUnavailableReport(folder, scene, renderer, "managed", status);
+        }
+
+        var candidates = renderer?.rendererFeatures.OfType<HoRTShadowRendererFeature>().Take(2).ToArray();
+        if (candidates == null || candidates.Length != 1)
+            return WriteUnavailableReport(folder, scene, renderer, "legacy", "Expected one legacy RT Shadow feature on the selected renderer.");
+        var feature = candidates[0];
+        var host = renderer.rendererFeatures.OfType<HoRTRendererFeature>().FirstOrDefault();
         var roots = scene.GetRootGameObjects();
         var cameras = roots.SelectMany(x => x.GetComponentsInChildren<Camera>(true)).ToArray();
         var camera = request.cameraName == "$scene-view" ? SceneView.lastActiveSceneView?.camera :
             string.IsNullOrEmpty(request.cameraName) ? cameras.Single(x => x.CompareTag("MainCamera")) :
             cameras.Single(x => x.name == request.cameraName);
         if (camera == null) throw new InvalidOperationException("Requested camera is missing.");
-        var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/Settings/PC_Renderer.asset");
-        var feature = renderer.rendererFeatures.OfType<HoRTShadowRendererFeature>().Single();
-        var host = renderer.rendererFeatures.OfType<HoRTRendererFeature>().SingleOrDefault();
         var data = camera.GetComponent<UniversalAdditionalCameraData>();
         var previousTarget = camera.targetTexture;
         var previousAspect = camera.aspect;
@@ -106,8 +121,6 @@ public static class HoMmdRTShadowDiagnostics
         bool previousAsync = ShaderUtil.allowAsyncCompilation;
         var copies = new List<ProfileCopy>();
         var frames = new List<Frame>();
-        string folder = string.IsNullOrEmpty(request.output) ? Path.GetFullPath(
-            "Library/HoMmdVideo/Diagnostics/RTShadow-" + DateTime.Now.ToString("yyyyMMdd-HHmmss")) : Path.GetFullPath(request.output);
         Directory.CreateDirectory(folder);
         var target = new RenderTexture(request.width, request.height, 24, RenderTextureFormat.ARGBHalf) {
             name = "Ho RTShadow proof", antiAliasing = 1, hideFlags = HideFlags.HideAndDontSave
@@ -148,7 +161,7 @@ public static class HoMmdRTShadowDiagnostics
             var receivers = roots.SelectMany(x => x.GetComponentsInChildren<HoRTShadowReceiver>(true)).ToArray();
             var report = new Report {
                 scene = scene.path, hardwareRayTracing = SystemInfo.supportsRayTracing, device = SystemInfo.graphicsDeviceName,
-                features = renderer.rendererFeatures.Select(x => x == null ? "<missing>" : x.GetType().Name + " active=" + x.isActive).ToArray(),
+                shadowBackend = "legacy", features = DescribeFeatures(renderer),
                 frames = frames.ToArray(),
                 lights = roots.SelectMany(x => x.GetComponentsInChildren<Light>(true)).Select(x =>
                     $"{PathOf(x.transform)}: active={x.isActiveAndEnabled} type={x.type} intensity={x.intensity} " +
@@ -174,6 +187,22 @@ public static class HoMmdRTShadowDiagnostics
             EditorApplication.QueuePlayerLoopUpdate();
         }
     }
+
+    static string WriteUnavailableReport(string folder, Scene scene, UniversalRendererData renderer, string backend, string status)
+    {
+        Directory.CreateDirectory(folder);
+        var report = new Report
+        {
+            scene = scene.path, device = SystemInfo.graphicsDeviceName, hardwareRayTracing = SystemInfo.supportsRayTracing,
+            shadowBackend = backend, status = status, features = DescribeFeatures(renderer), frames = Array.Empty<Frame>()
+        };
+        File.WriteAllText(Path.Combine(folder, "report.json"), JsonUtility.ToJson(report, true));
+        Debug.Log(status);
+        return folder;
+    }
+
+    static string[] DescribeFeatures(UniversalRendererData renderer) => renderer == null ? Array.Empty<string>() :
+        renderer.rendererFeatures.Select(x => x == null ? "<missing>" : x.GetType().Name + " active=" + x.isActive).ToArray();
 
     static Receiver DescribeReceiver(HoRTShadowReceiver receiver)
     {
@@ -297,7 +326,7 @@ public static class HoMmdRTShadowDiagnostics
             Object.DestroyImmediate(copy);
         }
     }
-    [Serializable] sealed class Report { public string scene, device; public bool hardwareRayTracing; public string[] features, lights, rendererCasting; public Frame[] frames; public Receiver[] receivers; }
+    [Serializable] sealed class Report { public string scene, device, shadowBackend, status; public bool hardwareRayTracing; public string[] features, lights, rendererCasting; public Frame[] frames; public Receiver[] receivers; }
     [Serializable] sealed class Frame { public string mode, camera, featureCamera, status, host, configured, effective; public bool featureActive, ordinaryMainMaps; public float activeGlobal, consumerDebugGlobal, characterCast, legacyCast; public Product[] products; public string[] rejected; }
     [Serializable] sealed class Product { public string light, reconstruction; public int slot, width, height, receivers, shadowPixels; public bool currentProduct; public int[] statusCounts; public float minimumVisibility, meanVisibility; public float[] blockerDistances; public string[] validOwners; }
     [Serializable] sealed class Receiver { public string name, group; public bool enabled, validGroup, wholeGroup, allLights; public int groupId; public string[] selectedParts, identities, materials; }
