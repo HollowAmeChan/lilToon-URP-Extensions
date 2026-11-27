@@ -63,44 +63,56 @@ namespace lilToon.URP.Extensions.Shadows
             if (product.Count == 0)
                 return;
 
-            var desc = depth.GetDescriptor(graph);
-            desc.name = "Ho Additional Screen Shadow Visibility";
+            product.Visibility = RecordVisibility(graph, material, frameData.Get<UniversalLightData>(), product, atlas, depth);
+            product.SurfaceDepth = depth;
+            product.CameraInstanceId = camera.GetInstanceID();
+        }
+
+        internal static TextureHandle RecordVisibility(RenderGraph graph, Material material,
+            UniversalLightData lightData, HoAdditionalShadowFrameData product, TextureHandle atlas,
+            TextureHandle firstSurface, TextureHandle secondSurface = default)
+        {
+            int layerCount = secondSurface.IsValid() ? 2 : 1;
+            var desc = firstSurface.GetDescriptor(graph);
+            desc.name = layerCount == 1 ? "Ho Additional Screen Shadow Visibility" : "Ho Transparent Additional Shadow Visibility";
             desc.depthBufferBits = DepthBits.None;
             desc.colorFormat = OutputFormat;
             desc.dimension = TextureDimension.Tex2DArray;
-            desc.slices = product.Count;
+            desc.slices = product.Count * layerCount;
             desc.msaaSamples = MSAASamples.None;
             desc.bindTextureMS = false;
             desc.filterMode = FilterMode.Point;
             desc.wrapMode = TextureWrapMode.Clamp;
             desc.clearBuffer = false;
+            if (desc.slices > SystemInfo.maxTextureArraySlices)
+                return TextureHandle.nullHandle;
 
             TextureHandle output = graph.CreateTexture(desc);
             for (int slot = 0; slot < product.Count; slot++)
             {
-                using var builder = graph.AddRasterRenderPass<PassData>("Ho Additional Screen Shadow Resolve", out var pass);
-                pass.material = material;
-                pass.depth = depth;
-                pass.atlas = atlas;
-                pass.shaderIndex = product.GetShaderLightIndex(slot);
-                pass.position = lights[product.GetVisibleLightIndex(slot)].localToWorldMatrix.GetColumn(3);
-                builder.UseTexture(depth, AccessFlags.Read);
-                builder.UseTexture(atlas, AccessFlags.Read);
-                builder.SetRenderAttachment(output, 0, AccessFlags.Write, 0, slot);
-                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                for (int layer = 0; layer < layerCount; layer++)
                 {
-                    var properties = context.renderGraphPool.GetTempMaterialPropertyBlock();
-                    properties.SetTexture(DepthId, (Texture)data.depth);
-                    properties.SetTexture(AtlasId, (Texture)data.atlas);
-                    properties.SetInteger(LightIndexId, data.shaderIndex);
-                    properties.SetVector(LightPositionId, data.position);
-                    CoreUtils.DrawFullScreen(context.cmd, data.material, properties);
-                });
+                    using var builder = graph.AddRasterRenderPass<PassData>(desc.name, out var pass);
+                    pass.material = material;
+                    pass.depth = layer == 0 ? firstSurface : secondSurface;
+                    pass.atlas = atlas;
+                    pass.shaderIndex = product.GetShaderLightIndex(slot);
+                    pass.position = lightData.visibleLights[product.GetVisibleLightIndex(slot)].localToWorldMatrix.GetColumn(3);
+                    builder.UseTexture(pass.depth, AccessFlags.Read);
+                    builder.UseTexture(atlas, AccessFlags.Read);
+                    builder.SetRenderAttachment(output, 0, AccessFlags.Write, 0, slot * layerCount + layer);
+                    builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                    {
+                        var properties = context.renderGraphPool.GetTempMaterialPropertyBlock();
+                        properties.SetTexture(DepthId, (Texture)data.depth);
+                        properties.SetTexture(AtlasId, (Texture)data.atlas);
+                        properties.SetInteger(LightIndexId, data.shaderIndex);
+                        properties.SetVector(LightPositionId, data.position);
+                        CoreUtils.DrawFullScreen(context.cmd, data.material, properties);
+                    });
+                }
             }
-
-            product.Visibility = output;
-            product.SurfaceDepth = depth;
-            product.CameraInstanceId = camera.GetInstanceID();
+            return output;
         }
     }
 }

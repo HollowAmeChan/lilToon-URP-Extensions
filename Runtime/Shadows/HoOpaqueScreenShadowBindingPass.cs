@@ -84,17 +84,7 @@ namespace lilToon.URP.Extensions.Shadows
                 commands.SetGlobalInt(RayTracedActiveId, data.rayTraced != null ? 1 : 0);
 
                 if (data.additional != null)
-                {
-                    var slots = context.renderGraphPool.GetTempArray<Vector4>(SlotVectorCount);
-                    Array.Clear(slots, 0, SlotVectorCount);
-                    for (int slot = 0; slot < data.additional.Count; slot++)
-                    {
-                        int index = data.additional.GetShaderLightIndex(slot);
-                        if ((uint)index < SlotVectorCount * 4u)
-                            slots[index >> 2][index & 3] = slot + 1;
-                    }
-                    commands.SetGlobalVectorArray(AdditionalSlotsId, slots);
-                }
+                    BindAdditionalSlots(context, data.additional, AdditionalSlotsId);
                 if (data.rayTraced != null)
                 {
                     var raySlots = context.renderGraphPool.GetTempArray<Vector4>(SlotVectorCount);
@@ -112,6 +102,19 @@ namespace lilToon.URP.Extensions.Shadows
                     commands.SetGlobalVectorArray(RayTracedSlotsId, raySlots);
                 }
             });
+        }
+
+        internal static void BindAdditionalSlots(RasterGraphContext context, HoAdditionalShadowFrameData additional, int property)
+        {
+            var slots = context.renderGraphPool.GetTempArray<Vector4>(SlotVectorCount);
+            Array.Clear(slots, 0, SlotVectorCount);
+            for (int slot = 0; slot < additional.Count; slot++)
+            {
+                int index = additional.GetShaderLightIndex(slot);
+                if ((uint)index < SlotVectorCount * 4u)
+                    slots[index >> 2][index & 3] = slot + 1;
+            }
+            context.cmd.SetGlobalVectorArray(property, slots);
         }
 
         private static void Publish(IRasterRenderGraphBuilder builder, TextureHandle texture, int property)

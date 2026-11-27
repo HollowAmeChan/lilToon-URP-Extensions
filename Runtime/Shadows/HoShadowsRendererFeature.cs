@@ -28,6 +28,8 @@ namespace lilToon.URP.Extensions.Shadows
     public sealed class HoShadowsRendererFeature : ScriptableRendererFeature
     {
         [SerializeField, Range(0, 16)] private int additionalLightBudget = 4;
+        [SerializeField] private bool transparentEyeShadows;
+        [SerializeField] private bool weightedOitShadows;
         [SerializeField] private bool rayTracedShadows;
         [SerializeField] private HoRTShadowSettings rayTracedShadowSettings = new();
         [SerializeField] private RayTracingShader rayTracedShadowProgram;
@@ -47,6 +49,12 @@ namespace lilToon.URP.Extensions.Shadows
         private HoRTShadowRendererFeature rayProducer;
         private Material rayResolveMaterial;
         private HoRayTracedScreenShadowPass rayResolvePass;
+        private Material transparentMaterial;
+        private Material transparentAdditionalMaterial;
+        private HoTransparentShadowSurfacePass transparentSurface;
+        private HoTransparentScreenShadowPass transparentResolve;
+        private HoTransparentScreenShadowPass clearTransparent;
+        private HoWeightedOitShadowSetupPass weightedOitSetup;
 
         public bool RayTracedShadowsEnabled
         {
@@ -55,6 +63,18 @@ namespace lilToon.URP.Extensions.Shadows
         }
 
         public HoRTShadowSettings RayTracedShadowSettings => rayTracedShadowSettings;
+
+        public bool TransparentEyeShadowsEnabled
+        {
+            get => transparentEyeShadows;
+            set => transparentEyeShadows = value;
+        }
+
+        public bool WeightedOitShadowsEnabled
+        {
+            get => weightedOitShadows;
+            set => weightedOitShadows = value;
+        }
 
         public override void Create()
         {
@@ -73,6 +93,7 @@ namespace lilToon.URP.Extensions.Shadows
             bindOpaque = new HoOpaqueScreenShadowBindingPass(false);
             clearOpaque = new HoOpaqueScreenShadowBindingPass(true);
             ReleaseRayTracedShadows();
+            ReleaseTransparentEyeShadows();
         }
 
         public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData cameraData)
@@ -129,6 +150,17 @@ namespace lilToon.URP.Extensions.Shadows
                 renderer.EnqueuePass(bindOpaque);
                 renderer.EnqueuePass(clearOpaque);
             }
+            if ((transparentEyeShadows || weightedOitShadows) && ((UniversalRenderer)renderer).shadowTransparentReceive
+                && SetupLayeredShadows())
+            {
+                if (weightedOitShadows) renderer.EnqueuePass(weightedOitSetup);
+                if (transparentEyeShadows)
+                {
+                    renderer.EnqueuePass(transparentSurface);
+                    renderer.EnqueuePass(transparentResolve);
+                    renderer.EnqueuePass(clearTransparent);
+                }
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -145,6 +177,7 @@ namespace lilToon.URP.Extensions.Shadows
             bindOpaque = null;
             clearOpaque = null;
             ReleaseRayTracedShadows();
+            ReleaseTransparentEyeShadows();
         }
 
         private static bool SupportsOpaqueCamera(ScriptableRenderer renderer, CameraData cameraData)
@@ -168,6 +201,38 @@ namespace lilToon.URP.Extensions.Shadows
             CoreUtils.Destroy(rayResolveMaterial);
             rayResolveMaterial = null;
             rayResolvePass = null;
+        }
+
+        private bool SetupLayeredShadows()
+        {
+            if (transparentResolve != null)
+                return true;
+            var shader = Resources.Load<Shader>("HoTransparentScreenShadowResolve");
+            if (shader == null)
+                return false;
+            transparentMaterial = CoreUtils.CreateEngineMaterial(shader);
+            if (additionalMaterial != null)
+            {
+                transparentAdditionalMaterial = CoreUtils.CreateEngineMaterial(additionalMaterial.shader);
+                transparentAdditionalMaterial.EnableKeyword("_HO_TRANSPARENT_SHADOW_SURFACE");
+            }
+            transparentSurface = new HoTransparentShadowSurfacePass();
+            transparentResolve = new HoTransparentScreenShadowPass(transparentMaterial, transparentAdditionalMaterial);
+            clearTransparent = new HoTransparentScreenShadowPass(null, clear: true);
+            weightedOitSetup = new HoWeightedOitShadowSetupPass(transparentResolve);
+            return true;
+        }
+
+        private void ReleaseTransparentEyeShadows()
+        {
+            CoreUtils.Destroy(transparentMaterial);
+            CoreUtils.Destroy(transparentAdditionalMaterial);
+            transparentMaterial = null;
+            transparentAdditionalMaterial = null;
+            transparentSurface = null;
+            transparentResolve = null;
+            clearTransparent = null;
+            weightedOitSetup = null;
         }
 
         private sealed class NativeMainShadowPass : ScriptableRenderPass

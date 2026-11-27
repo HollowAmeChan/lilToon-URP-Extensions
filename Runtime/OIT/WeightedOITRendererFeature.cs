@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using lilToon.URP.Extensions.Debugging;
+using lilToon.URP.Extensions.Shadows;
 
 namespace lilToon.URP.Extensions.OIT
 {
@@ -415,37 +416,50 @@ namespace lilToon.URP.Extensions.OIT
                 renderingData.cullResults,
                 drawingSettings,
                 filteringSettings);
+            RendererListHandle renderers = renderGraph.CreateRendererList(rendererListParams);
+            if (!renderers.IsValid())
+            {
+                return;
+            }
+
+            TextureHandle depthTarget = resourceData.activeDepthTexture;
+            bool hasDepthTarget = CanUseDepthTarget(renderGraph, accumulation, depthTarget, settings);
+            bool canonicalActive = false;
+            if (hasDepthTarget)
+            {
+                TextureDesc color = accumulation.GetDescriptor(renderGraph);
+                TextureDesc depth = depthTarget.GetDescriptor(renderGraph);
+                canonicalActive = CanActivateCanonical(cameraData.camera)
+                    && !resourceData.isActiveTargetBackBuffer
+                    && resourceData.activeColorTexture.IsValid()
+                    && depth.depthBufferBits != DepthBits.None
+                    && color.dimension == depth.dimension
+                    && color.useDynamicScale == depth.useDynamicScale
+                    && color.useDynamicScaleExplicit == depth.useDynamicScaleExplicit;
+            }
+
+            Vector4 queueRange = GetQueueRange();
+            var shadowInputs = canonicalActive && frameData.Contains<HoWeightedOitShadowData>()
+                ? frameData.Get<HoWeightedOitShadowData>().Record(renderGraph, frameData, filteringSettings,
+                    settings.weight, settings.alphaClipThreshold, queueRange)
+                : default;
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-WeightedOIT Accumulation", out var passData, ProfilingSampler))
             {
-                passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
+                passData.rendererList = renderers;
                 passData.weight = settings.weight;
                 passData.alphaClipThreshold = settings.alphaClipThreshold;
-                passData.queueRange = GetQueueRange();
-                passData.canonicalActive = false;
-
-                if (!passData.rendererList.IsValid())
-                {
-                    return;
-                }
+                passData.queueRange = queueRange;
+                passData.canonicalActive = canonicalActive;
 
                 builder.UseRendererList(passData.rendererList);
+                shadowInputs.DeclareReads(builder);
 
                 builder.SetRenderAttachment(accumulation, 0, AccessFlags.ReadWrite);
                 builder.SetRenderAttachment(revealage, 1, AccessFlags.ReadWrite);
-                if (CanUseDepthTarget(renderGraph, accumulation, resourceData.activeDepthTexture, settings))
+                if (hasDepthTarget)
                 {
-                    TextureHandle depthTarget = resourceData.activeDepthTexture;
                     builder.SetRenderAttachmentDepth(depthTarget, AccessFlags.Read);
-                    TextureDesc color = accumulation.GetDescriptor(renderGraph);
-                    TextureDesc depth = depthTarget.GetDescriptor(renderGraph);
-                    passData.canonicalActive = CanActivateCanonical(cameraData.camera)
-                        && !resourceData.isActiveTargetBackBuffer
-                        && resourceData.activeColorTexture.IsValid()
-                        && depth.depthBufferBits != DepthBits.None
-                        && color.dimension == depth.dimension
-                        && color.useDynamicScale == depth.useDynamicScale
-                        && color.useDynamicScaleExplicit == depth.useDynamicScaleExplicit;
                 }
 
                 builder.SetGlobalTextureAfterPass(accumulation, WeightedOITShaderConstants.AccumulationTextureId);
@@ -458,6 +472,7 @@ namespace lilToon.URP.Extensions.OIT
                     context.cmd.DrawRendererList(data.rendererList);
                 });
             }
+            shadowInputs.Clear(renderGraph);
         }
 
         private bool CanActivateCanonical(Camera camera)
