@@ -59,7 +59,8 @@ Shader "Hidden/HoShadows/TransparentResolve"
                 int2 pixel = (int2)positionCS.xy;
                 uint2 candidate = LOAD_TEXTURE2D(_HoTransparentShadowCandidate, pixel);
                 uint owner = candidate.y & 65535u;
-                if (owner < 256u)
+                // Registered packets also use the owner to mark occupancy, including OIT coverage below one quantized step.
+                if (owner < 256u && (candidate.y >> 16u) == 0u)
                     return float4(1, 1, 0, 0);
 
                 float raw = asfloat(candidate.x);
@@ -73,7 +74,8 @@ Shader "Hidden/HoShadows/TransparentResolve"
                         coords, GetMainLightShadowSamplingData(), GetMainLightShadowParams(), false);
                     result.a = 1.0;
                 }
-                if (_HoTransparentShadowConfiguration.y > 0)
+                // Scene lighting depends on position; local Character shadows also need a registered owner.
+                if (_HoTransparentShadowConfiguration.y > 0 && owner >= 256u)
                 {
                     float eyeDepth = EyeDepth(raw);
                     float3 dx = SurfaceDelta(pixel + int2(1, 0), owner, eyeDepth, world);

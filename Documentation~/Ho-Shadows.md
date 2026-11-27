@@ -20,7 +20,7 @@ Ho Shadows 供使用 HoURP 的 Renderer 输出主光和逐灯的屏幕阴影。�
 1. 使用带 HoURP 17.3 与对应 HoShader 接收 Pass 的隔离 Renderer。保留原 URP 主光阴影和逐像素附加灯阴影，添加一次 `Ho Shadows`。保留现有的 Object／Surface／Geometry 等输入生产端。需要私有角色 Capture 或 Weighted OIT 时，按实际 Pass 顺序接在相应输入准备之后。顺序和隔离 Renderer 的设置见 [RendererFeature 顺序](Ho-RenderFeatureOrdering.md) 和 [试切说明](../Tools~/HoShadows/README.md)。
 2. 给一盏 Directional Light 开启 Soft Shadows，再为两盏不同颜色的 Spot 开启投影。让每盏灯各有一个独立遮挡体，并在相机中同时覆盖一块接收面。给同一接收面做 Main 和 Full 两份材质副本，用同一相机切换比较。材质若启用了三段阴影，也要给用于对比的段开启 Cast 接收。
 3. 验证角色时，为角色配置 [角色局部阴影](Ho-CharacterShadow.md) 中的范围、接收部位和 ObjectBuffer 组。启用受管角色阴影，核对同一个角色在局部盒内外的交接。布料的角色屏幕阴影需要相机深度、SurfaceBuffer 深度和接收者 ID 对应同一个可见面。
-4. 验证透明时保留材质原队列。`0–2500` 范围内的透明绘制使用独立早队列解析，`2501–5000` 范围内的普通透明绘制使用常规透明解析。加权 OIT 和角色 Capture 各有专用域。开启对应 Renderer 选项，并用叠放接收面检查深度、可见层和 owner。早队列当前在 Forward／Forward+ 且关闭 Depth Priming 时可用。
+4. 验证透明时保留材质原队列。`0–2500` 范围内的透明绘制使用独立早队列解析，`2501–5000` 范围内的普通透明绘制使用常规透明解析。适配后的普通透明材质可以按覆盖和深度接收原生投影。角色局部阴影、加权 OIT 和角色 Capture 需要相应的接收身份。开启对应 Renderer 选项，并用叠放接收面检查深度、可见层和 owner。早队列当前在 Forward／Forward+ 且关闭 Depth Priming 时可用。
 
 ## Cast 接收遮罩
 

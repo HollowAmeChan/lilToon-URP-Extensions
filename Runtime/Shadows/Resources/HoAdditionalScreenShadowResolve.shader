@@ -52,7 +52,7 @@ Shader "Hidden/HoShadows/AdditionalResolve"
                 uint2 pixel = (uint2)input.positionCS.xy;
                 #if defined(_HO_TRANSPARENT_SHADOW_SURFACE)
                     uint2 surface = LOAD_TEXTURE2D(_HoAdditionalScreenShadowDepth, pixel);
-                    if ((surface.y & 65535u) < 256u) return 1.0h;
+                    if ((surface.y & 65535u) < 256u && (surface.y >> 16u) == 0u) return 1.0h;
                     float depth = asfloat(surface.x);
                 #elif defined(_HO_CAPTURE_SHADOW_SURFACE)
                     float4 surface = LOAD_TEXTURE2D(_HoAdditionalScreenShadowDepth, pixel);
