@@ -1,6 +1,6 @@
 # Ho Shadows 重构执行计划
 
-日期 2026-11-27。状态为实施中。本页是 `lilToon-URP-Extensions`、`HoUrp17.3.0`、`HoShader` 和 `BREAK_URP` 的共同开发计划。当前行为仍以各模块实现说明为准，用户使用文档在默认切换验收后同步。
+立项日期 2026-11-27。生产默认切换日期 2026-11-28。本页记录 `lilToon-URP-Extensions`、`HoUrp17.3.0`、`HoShader` 和 `BREAK_URP` 的执行计划与验收结果。材质和 Renderer 配置另见 [Ho Shadows 使用说明](../Ho-Shadows.md)。
 
 ## 1. 已确定的目标
 
@@ -35,6 +35,7 @@
 - [P3 私有 Character Capture](../../Tests~/HoShadows/Capture/README.md) 记录 Face／Eye 的实际受管材质、私有深度、主光及 Spot 对照。
 - [P4a 托管 RT 请求](../../Tests~/HoShadows/RayTraced/README.md) 记录默认关闭、相机 Volume 和独立 RT 客户端的生命周期验证。
 - [P5 迁移盘点和隔离试切](../../Tools~/HoShadows/README.md) 记录候选材质、生产文件签名、工具引用与隔离回退。
+- [受管片元小型编译基准](../../Tests~/HoShadows/ReceiverAbi/README.md) 编译 19 个受管或标准 URP 片元并导出 DXBC，覆盖不透明、裁切和多种透明域。
 - `HoShader/Skin_URP/Tests~/SkinShaderCompileBenchmark.cs` 可复用为导入和逐 Pass 请求入口。槽位和字节码审计需要记录确切的片元关键字组合并解析 DXBC 声明。
 - `HoShader/Environment_URP/Tests~/EnvironmentGraphicsSmoke.cs` 已有两盏不同颜色原生点光的对照，可扩成新 Main 和 Full 的逐灯门槛。
 - 现有 [RT 多灯产品验证与接入说明](../Ho-RT.md) 覆盖按 `LightId` 查询、状态、主灯绑定和 RG／Compatibility。独立产品通过只能证明生产能力，材质着色接入另有验收。
@@ -138,6 +139,23 @@ P1 和 P2 可以在隔离分支并行开发，消费合同和光照混合对照�
 - WTD 的隔离持久化已核验实际 Unity GlobalObjectId、保存相机索引、两份本地材质和三个槽位。二次执行无需写入。清理三类旧生产器后，D3D12 保存相机仍产生同一份 RT Raw EXR。其余旧 RT Volume 的实际挂载已经核实，动画模板涉及共享角色 Prefab 和导入材质，仍需验证代表镜头实际接收。
 - 长门保存机位去掉三处预览关键字后，早队列两层覆盖为 `182/19`，常规透明两层为 `26012/1462`，与之前相同。D3D11 对照的 `230400` 个像素中有 8 个最大 RGB 分量差大于 `0.002`，全图最大差为 `0.00391`。1313 份磁盘材质的隔离导入中，159 份属于需要计算 phase 的家族，均无需补写 phase。角色固定 PCF 的 D3D12 专项通过。
 - 已反汇编 D3D11 的受管与标准 URP 片元。六种不透明受管样本均无深度比较采样指令，sampler 分别为 Skin `9`、Eye `10`、Cloth `7`、Hair `12`、Environment `9`、Effect `1`。19 个受管样本最高用了 `13` 个 sampler。
+
+### 生产切换
+
+HoURP `882ccd3` 发布受管接收合同，HoShader `a4b9cbe` 启用对应接收路径，Extensions `1434cd2d` 移除独立场景图集、直接比较采样和角色 PCSS。BREAK_URP `a68265b3` 切换默认 Renderer 并退役旧挂载，`68cf22d1` 保存具名 RT 路由。生产源包由项目以本地路径引用，回放时将四仓版本作为一组固定。旧基线为 HoURP `9206557`、HoShader `a6a1699`、Extensions `8413f41f` 和 BREAK_URP `6f9f6583`。
+
+| Renderer 索引 | 镜头 | RT 总开关 |
+| --- | --- | --- |
+| `0` | 生产默认 `PC_Renderer` | 关闭 |
+| `1` | 长门试切镜头 | 关闭 |
+| `2` | 17 个花吐电気动画模板保存机位 | 开启 |
+| `3` | WTD 保存主相机 | 开启 |
+
+四套 Renderer 均只有一个 Ho Shadows 所有者，保留 Eye Reveal 需要的 Capture 输入，屏幕逐灯预算均为四。默认 Renderer 沿用原 GUID，并保留 GTAO、RTGI 和调试配置。动画模板只改相机索引。WTD 的两份本地材质副本及专用 Renderer 已提交，原场景仍由本地工作区持有，保存了一个相机索引和三个材质槽的变更。扫描生产资产未发现退役 Renderer 的 GUID、预览关键字或六个旧角色 PCSS 字段。
+
+动画模板代表机位 `Catch_Me_If_You_Can` 的新旧主光 RT Raw 逐字节一致，角色色图有可见变化。将逐灯预算从 `4` 提到 `16` 时，实际解析从四盏增到五盏。试验中再将 19 个槽切换到 Full，角色区域的平均每像素最大 RGB 分量差从 `0.0508` 降到 `0.0398`。生产经确认接受新版观感，采用原四灯预算和保存材质范围。用已提交场景、Renderer 和源码的物理副本复跑后，D3D12 从保存索引 `2` 发布 1 份主光 RT 结果，Raw SHA-256 与对照一致，图集内五盏灯中有四盏发布屏幕结果。WTD 的隔离保存机位通过 D3D12 优化回放，发布 1 份主光 RT 结果，包含 `74996` 个有效及 `38056` 个遮挡像素。
+
+圣诞万花镜早期 RTX 4060／D3D12、`1280×720` 对照中，相机 GPU 中位数从 `55.223 ms` 降到 `52.730 ms`。热缓存复测的旧 HoShadowCast 图集为 `2.104 ms`，新版主光、不透明逐灯和透明逐灯解析分别为 `0.114`、`0.301`、`0.145 ms`。两轮均未获得有效的整帧或角色图集计时。[逐 Pass GPU 测量](../../Tools~/HoShadows/README.md#逐-pass-gpu-时间)
 
 ## 7. BREAK_URP 迁移
 
