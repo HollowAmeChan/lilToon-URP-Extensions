@@ -154,6 +154,7 @@ P5 前保留可复跑的旧 Renderer／资产快照和跨仓版本清单。若�
 
 ## 9. 参考入口
 
+- [Ho Shadows 使用说明](../Ho-Shadows.md) 提供材质范围、手工镜头、Cast 遮罩和 RT opt-in 的配置示例。
 - [RendererFeature 顺序契约](../Ho-RenderFeatureOrdering.md)与 [Surface Buffer](../Ho-SurfaceBuffer.md) 说明当前资源调度、覆盖和身份合同。
 - [当前 Ho-RT 实现](../Ho-RT.md)、[逐灯研究与长期规划](Ho-RTShadow-ManyLight-Research-Plan.md) 提供当前 RT 产品和历史研究。新版 Full 使用可查询逐灯可见度。大量灯的聚合研究按其独立任务推进。
 - [Unity 内置 Screen Space Shadows](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/renderer-feature-screen-space-shadows.html) 提供原生主方向光和相机深度的实现参考。Full 的逐灯屏幕结果与各透明域需要 Ho 自己明确覆盖。
