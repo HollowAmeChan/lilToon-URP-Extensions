@@ -28,6 +28,11 @@ SCRIPT_PATHS = {
     "objectGroup": "Runtime/ObjectBuffer/HoObjectBufferGroup.cs",
     "oit": "Runtime/OIT/WeightedOITRendererFeature.cs",
 }
+# Preserve detection of saved legacy assets after their runtime types are retired.
+RETIRED_SCRIPT_GUIDS = {
+    "cast": "278064b10b484356a4d7b0fdc7e0f01f",
+    "castLight": "e30713c830cf4e09b751ec34f96df1cb",
+}
 SHADERS = {
     "Skin": ("com.hoshader.skin-urp-stylized", "Skin_URP/Runtime/Shaders/Skin.shader"),
     "Eye": ("com.hoshader.skin-urp-stylized", "Skin_URP/Runtime/Shaders/Eye.shader"),
@@ -398,7 +403,8 @@ def renderer_plan(path, script_guids):
 def build_plan(project, hoshader):
     manifest = project / "Packages/manifest.json"
     dependencies = json.loads(read(manifest))["dependencies"]
-    script_guids = {guid_for(EXTENSIONS / path): role for role, path in SCRIPT_PATHS.items()}
+    script_guids = {guid_for(EXTENSIONS / path) or RETIRED_SCRIPT_GUIDS.get(role): role
+                    for role, path in SCRIPT_PATHS.items()}
     if None in script_guids:
         raise ValueError("Extensions source is missing a required script GUID")
     shaders = read_shaders(project, hoshader, dependencies)
