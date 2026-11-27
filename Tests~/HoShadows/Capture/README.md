@@ -1,6 +1,6 @@
 # Skin／Eye 受管角色 Capture
 
-夹具用生产的接收表面登记、原生阴影解析和绘制绑定，调用当前 Skin、Eye 的 `HO_CHARACTER_CAPTURE` Pass。它在独立 Render Graph 中重放 Face → Eye，将色彩和光学 MRT 写到可读回目标。矩阵、标签、深度和 stencil 由生产写入器处理，颜色来自实际材质。每种材质开启 `_UseShadow` 与局部 `_HO_SHADOWS_SCREEN_PREVIEW`。
+夹具用生产的接收表面登记、原生阴影解析和绘制绑定，调用当前 Skin、Eye 的 `HO_CHARACTER_CAPTURE` Pass。它在独立 Render Graph 中重放 Face → Eye，将色彩和光学 MRT 写到可读回目标。矩阵、标签、深度和 stencil 由生产写入器处理，颜色来自实际材质。每种材质开启 `_UseShadow`，Capture pass 通过 HoURP 的 ABI 接入屏幕阴影。
 
 第一组使用真实方向主光。第二组关闭主方向光，由一盏真实 Spot 在 Full 模式投影。两组分别检查只含 Face 的取样点、完全由 Eye 遮盖的取样点、亮处对照、光学 MRT 和撤掉投影后的颜色。Spot 组同时切到 Main 模式检查接收范围。全量角色合成、Volume 及 AC 语义选择独立于本夹具。
 

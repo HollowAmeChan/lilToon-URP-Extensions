@@ -10,12 +10,6 @@
       "sha256": "794610695fb7a372a4c52ab6d98fca24cc0bf74a0cd16a6675e4cf37a31bd0d8"
     },
     {
-      "id": "receiver.contract",
-      "local": "ShaderLibrary/Shadow/Receiver/HoShadowCastShaderContract.hlsl",
-      "authority": "ShaderLibrary~/Shadow/Receiver/HoShadowCastShaderContract.hlsl",
-      "sha256": "811a21b68606d103f9e5a13c7d8a91294253e0a0b74c64c34083b53e81cb89b1"
-    },
-    {
       "id": "receiver.rt-shadow",
       "local": "ShaderLibrary/Shadow/Receiver/HoRTShadowSampling.hlsl",
       "authority": "ShaderLibrary~/Shadow/Receiver/HoRTShadowSampling.hlsl",

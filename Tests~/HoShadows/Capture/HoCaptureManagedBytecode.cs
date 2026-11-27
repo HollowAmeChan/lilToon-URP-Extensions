@@ -37,7 +37,7 @@ public static class HoCaptureManagedBytecode
                     .Single(pass => pass.Name == "HO_CHARACTER_CAPTURE");
                 foreach (bool full in new[] { false, true })
                 {
-                    var keywords = new List<string> { "_HO_SHADOWS_SCREEN_PREVIEW" };
+                    var keywords = new List<string>();
                     if (material.Item2) keywords.Add("_SURFACE_TYPE_TRANSPARENT");
                     if (full) keywords.AddRange(new[] { "_ADDITIONAL_LIGHTS", "_ADDITIONAL_LIGHT_SHADOWS" });
                     else keywords.AddRange(new[] { "_MAIN_LIGHT_SHADOWS", "_SHADOWS_SOFT_HIGH" });

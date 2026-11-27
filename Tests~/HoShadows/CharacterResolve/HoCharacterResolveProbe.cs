@@ -91,7 +91,6 @@ public static class HoCharacterResolveProbe
         character.Settings.maxCharacters = 2;
         character.Settings.depthBias = 0f;
         character.Settings.normalBias = 0f;
-        character.Settings.pcssEnabled = false;
         surface.Settings.enableSemanticLanes = false;
         surface.Settings.enableCorrelatedSemantics = false;
         renderer.renderingMode = RenderingMode.Forward;

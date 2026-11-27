@@ -73,6 +73,16 @@ class PipelineLibraryContract(unittest.TestCase):
         (self.root/"Runtime/RTGI/Shaders/HoRTGI.raytrace").unlink()
         self.assertTrue(any("missing Runtime RTGI entry HoRTGI.raytrace" in e for e in checks.check(self.root)["errors"]))
 
+    def test_retired_cast_mirror_source_metadata_and_active_include_are_rejected(self):
+        old_mirror="ShaderLibrary/Shadow/Receiver/HoShadowCastSampling.hlsl"
+        self.asset(old_mirror,"// retired atlas sampling\n")
+        self.source("Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl.meta","guid: "+"a"*32+"\n")
+        self.source("Editor/Probe.shader",'#include "../'+old_mirror+'"\n')
+        errors=checks.check(self.root)["errors"]
+        self.assertIn("retired Receiver header remains "+old_mirror,errors)
+        self.assertIn("retired Receiver header remains Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl",errors)
+        self.assertTrue(any("retired library include" in error for error in errors))
+
     def test_orphan_library_metadata_cannot_hide_a_second_identity(self):
         self.source("ShaderLibrary/RTGI/Missing.hlsl.meta","guid: "+"a"*32+"\\n")
         self.assertTrue(any("orphan library meta" in e for e in checks.check(self.root)["errors"]))
@@ -100,7 +110,7 @@ class PipelineLibraryContract(unittest.TestCase):
     def test_contract_cannot_silently_drop_a_shared_protocol(self):
         self.contract["headers"].pop()
         self.source("Tools~/ShaderLibrary/contract.json",json.dumps(self.contract))
-        self.assertTrue(any("all four shared headers" in e for e in checks.check(self.root)["errors"]))
+        self.assertTrue(any("all shared headers" in e for e in checks.check(self.root)["errors"]))
 
     def test_optional_hopass_authority_comparison_is_read_only_and_detects_drift(self):
         authority=Path(self.temp.name)/"HoShader/ShaderLibrary~/HoPass/Encoding/HoBufferEncoding.hlsl"

@@ -16,7 +16,6 @@ public static class HoWeightedOitIntegrationProbe
     const int Size = 192;
     const int FrontOwner = (31 << 8) | 9;
     const int BackOwner = (77 << 8) | 3;
-    const string Preview = "_HO_SHADOWS_SCREEN_PREVIEW";
 
     [Serializable] sealed class Case
     {
@@ -222,9 +221,6 @@ public static class HoWeightedOitIntegrationProbe
         material.SetColor("_BaseColor", color);
         material.SetColor("_ShadowColor", new Color(.05f, .05f, .05f, 1));
         material.SetColor("_Shadow2ndColor", Color.clear);
-        var preview = new LocalKeyword(material.shader, Preview);
-        Require(preview.isValid, "Ho Shadows preview keyword is missing.");
-        material.SetKeyword(preview, true);
         SetQueue(material, offset);
     }
 

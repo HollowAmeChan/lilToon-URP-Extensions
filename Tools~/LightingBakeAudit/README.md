@@ -1,6 +1,6 @@
 # 已制作场景的烘焙 / HoShadowCast 退役对照
 
-任务状态：执行中。不要将用户预期的“更好看、更快”预先当作结论。
+本页保留 2026-11-02 的对照实验。复跑请从 Extensions `2ab17c6a` 提取夹具，并使用当时隔离工程的渲染包快照。脚本直接调用现已退役的独立 HoShadowCast 生产者和诊断接口。
 
 输入是 BREAK_URP 的花吐电気通用动画、圣诞万花镜、孔雀月令。先导出只读依赖清单，再在 `.codex-research/LightingBakeAudit-20261102` 中物理复制资源与渲染包快照。原 Scene、材质和共享 PC Renderer 保持原状。
 

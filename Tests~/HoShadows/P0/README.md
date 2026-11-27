@@ -2,6 +2,8 @@
 
 本页记录 2026-11-27 在 `BREAK_URP` 的只读盘点与旧 HoShadowCast 的隔离 GPU 对照。阶段目标和生产切换门槛见 [执行计划](../../../Documentation~/计划/Ho-Shadows-Execution-Plan.md)。
 
+复跑时按下表固定三套包与相关资产快照。本夹具直接调用已退役的 HoShadowCast 生产者和诊断接口。
+
 ## 生产资产快照
 
 | 仓库 | 取证时提交 | 当时工作树 |
@@ -43,7 +45,7 @@ D3D11 和 D3D12 对应的 18 对线性 EXR 与 18 对 PNG 各自哈希相同。�
 
 ## 重放方式
 
-在独立线性 Unity 工程安装当前 HoURP、lilToon-URP-Extensions、Environment_URP 和其 Inspector 依赖。复制 [HoShadowCastP0Probe.cs](HoShadowCastP0Probe.cs) 到该工程的 `Assets/Editor`。分别配置实际物理工程目录与新的输出目录，再启动 Unity CLI。
+在独立线性 Unity 工程安装表中固定版本的 HoURP、lilToon-URP-Extensions、Environment_URP 和其 Inspector 依赖。复制 [HoShadowCastP0Probe.cs](HoShadowCastP0Probe.cs) 到该工程的 `Assets/Editor`。分别配置实际物理工程目录与新的输出目录，再启动 Unity CLI。
 
 ```powershell
 $env:HO_SHADOWS_P0_PROJECT = 'D:/Temp/HoShadowsBaselineProject'

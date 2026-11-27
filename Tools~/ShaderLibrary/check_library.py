@@ -13,14 +13,13 @@ RTGI_HEADERS=(
     "HoRTGISecondaryInputs.hlsl","HoRTGISecondaryMaterial.hlsl","HoRTGISecondaryNormals.hlsl",
     "HoRTGISecondarySurface.hlsl","HoRTGISecondaryTension.hlsl","HoRTGIShadingCommon.hlsl")
 RTGI_ENTRIES=("HoRTGI.compute","HoRTGI.raytrace","HoRTGIComposite.shader","HoRTGIDebug.shader","HoRTGISecondaryMaterial.shader")
-RECEIVER_HEADERS=("HoShadowCastShaderContract.hlsl","HoShadowCastSampling.hlsl","HoRTShadowSampling.hlsl","HoRendererIdentity.hlsl","HoCharacterShadowSampling.hlsl")
+RECEIVER_HEADERS=("HoRTShadowSampling.hlsl","HoRendererIdentity.hlsl","HoCharacterShadowSampling.hlsl")
 RECEIVER_ORIGINS={
-    "HoShadowCastShaderContract.hlsl":"Runtime/ShadowCast/Shaders",
-    "HoShadowCastSampling.hlsl":"Runtime/ShadowCast/Shaders",
     "HoRTShadowSampling.hlsl":"Runtime/RTShadow/Shaders",
     "HoRendererIdentity.hlsl":"Runtime/ObjectBuffer/Shaders",
     "HoCharacterShadowSampling.hlsl":"Runtime/CharacterShadow/Shaders"}
-COMMON_RECEIVERS=("HoShadowCastShaderContract.hlsl","HoRTShadowSampling.hlsl","HoRendererIdentity.hlsl")
+RETIRED_CAST_HEADERS=("HoShadowCastShaderContract.hlsl","HoShadowCastSampling.hlsl")
+COMMON_RECEIVERS=("HoRTShadowSampling.hlsl","HoRendererIdentity.hlsl")
 SOURCE_SUFFIXES={".hlsl",".hlsli",".cginc",".compute",".raytrace",".shader",".h"}
 ENGINE_INCLUDES={"UnityRayQuery.cginc","UnityRayTracingMeshUtils.cginc","UnityCG.cginc","UnityShaderVariables.cginc",
                  "HLSLSupport.cginc","Lighting.cginc","AutoLight.cginc","UnityInstancing.cginc",
@@ -84,10 +83,10 @@ def common_library_errors(root,hoshader_root=None):
         entries=contract["headers"]
         expected={HOPASS:"ShaderLibrary~/HoPass/Encoding/HoBufferEncoding.hlsl"}
         expected.update({"ShaderLibrary/Shadow/Receiver/"+name:"ShaderLibrary~/Shadow/Receiver/"+name for name in COMMON_RECEIVERS})
-        if contract.get("schema")!=1 or len(entries)!=4 or {e["local"] for e in entries}!=set(expected):
-            raise ValueError("common-library contract must register all four shared headers")
+        if contract.get("schema")!=1 or len(entries)!=len(expected) or {e["local"] for e in entries}!=set(expected):
+            raise ValueError("common-library contract must register all shared headers")
         identities=[e["id"] for e in entries]
-        if len(set(identities))!=4 or not all(identities):raise ValueError("shared header IDs must be unique")
+        if len(set(identities))!=len(entries) or not all(identities):raise ValueError("shared header IDs must be unique")
         for entry in entries:
             local=entry["local"];canonical=entry["authority"];digest=entry["sha256"]
             if canonical!=expected[local]:raise ValueError("unexpected common-library authority "+canonical)
@@ -116,6 +115,12 @@ def check(root,hoshader_root=None):
         return {"passed":False,"errors":["package identity: "+str(error)]}
     library=root/"ShaderLibrary";old=root/"Runtime/RTGI/Shaders"
     retired_receiver={(root/directory/name).resolve() for name,directory in RECEIVER_ORIGINS.items()}
+    for directory in ("Runtime/ShadowCast/Shaders","ShaderLibrary/Shadow/Receiver"):
+        for name in RETIRED_CAST_HEADERS:
+            path=(root/directory/name).resolve()
+            retired_receiver.add(path)
+            if path.exists() or Path(str(path)+".meta").exists():
+                errors.append("retired Receiver header remains "+path.relative_to(root).as_posix())
     def retired(target):return (target.parent==old.resolve() and target.suffix==".hlsl") or target in retired_receiver
     for name in RTGI_HEADERS:
         if not (library/"RTGI"/name).is_file():errors.append("missing RTGI library header ShaderLibrary/RTGI/"+name)
@@ -168,7 +173,7 @@ def check(root,hoshader_root=None):
     errors.extend(library_metadata_errors(root))
     common_errors,local_count,authority_count=common_library_errors(root,hoshader_root)
     errors.extend(common_errors)
-    mirror_checked=authority_count==4
+    mirror_checked=authority_count==1+len(COMMON_RECEIVERS)
     return {"passed":not errors,"rtgiHeaders":len(RTGI_HEADERS),
             "libraryHeaders":sum(1 for p in library.rglob("*") if p.is_file() and p.suffix in SOURCE_SUFFIXES),
             "includeClosureFiles":len(visited),"includeEdges":edges,"externalIncludes":len(external),

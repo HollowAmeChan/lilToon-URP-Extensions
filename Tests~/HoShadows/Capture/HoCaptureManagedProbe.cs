@@ -248,7 +248,6 @@ public static class HoCaptureManagedProbe
         var shader = Shader.Find(name);
         Require(shader != null, name);
         var material = new Material(shader);
-        material.SetKeyword(new LocalKeyword(shader, "_HO_SHADOWS_SCREEN_PREVIEW"), true);
         material.SetColor("_BaseColor", color);
         material.SetColor("_ShadowTint", new Color(.11f, .14f, .18f));
         material.SetFloat("_UseShadow", 1);

@@ -1,6 +1,6 @@
 # Weighted OIT 分层阴影接线回归
 
-夹具运行实际 `WeightedOITRendererFeature`、`HoShadowsRendererFeature` 和 Cloth `HoOIT` pass。程序创建两片透明接收面、原生硬光源和只投影的遮挡体，读回实际 OIT 合成后的相机颜色。接收材质启用 `_HO_SHADOWS_SCREEN_PREVIEW` 和第一档的投影权重。
+夹具运行实际 `WeightedOITRendererFeature`、`HoShadowsRendererFeature` 和 Cloth `HoOIT` pass。程序创建两片透明接收面、原生硬光源和只投影的遮挡体，读回实际 OIT 合成后的相机颜色。接收材质使用第一档的投影权重，屏幕阴影由 HoURP 的 ABI、材质表面分类和相机分层输入启用。
 
 | 主方向光用例 | 结果 |
 | --- | --- |

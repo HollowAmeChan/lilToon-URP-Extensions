@@ -210,9 +210,6 @@ public static class HoEyeOitScopeProbe
         material.SetColor("_BaseColor", baseColor);
         material.SetColor("_ShadowColor", new Color(.05f, .05f, .05f, 1));
         material.SetColor("_Shadow2ndColor", Color.clear);
-        var keyword = new LocalKeyword(material.shader, "_HO_SHADOWS_SCREEN_PREVIEW");
-        Require(keyword.isValid, "Material shader lacks screen shadow preview: " + material.shader.name);
-        material.SetKeyword(keyword, true);
     }
 
     static MeshRenderer MakePrimitive(Transform root, PrimitiveType shape, Vector3 position, Vector3 size, Material material, int owner)
