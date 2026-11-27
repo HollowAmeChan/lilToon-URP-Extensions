@@ -121,6 +121,14 @@ public static class HoMmdSharedRenderAssets
         var renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
         var pipeline = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(PipelinePath);
         if (renderer == null || pipeline == null) throw new InvalidOperationException("固定 PC_Renderer/PC_RPAsset 不存在。");
+
+        var pipelineObject = new SerializedObject(pipeline);
+        var rendererList = pipelineObject.FindProperty("m_RendererDataList");
+        if (rendererList == null) throw new InvalidOperationException("PC_RPAsset 缺少 Renderer 列表。");
+        var firstRenderer = rendererList.arraySize > 0 ? rendererList.GetArrayElementAtIndex(0).objectReferenceValue : null;
+        if (firstRenderer != null && firstRenderer != renderer)
+            throw new InvalidOperationException("PC_RPAsset 的 Renderer 索引 0 未指向 PC_Renderer，未修改资产。");
+
         if (ActiveHoShadows(renderer) == null)
         {
             RemoveDuplicateFeatureSubassets(renderer);
@@ -129,10 +137,11 @@ public static class HoMmdSharedRenderAssets
             renderer = AssetDatabase.LoadAssetAtPath<UniversalRendererData>(RendererPath);
         }
         ConfigureRenderer(renderer);
-        var pipelineObject = new SerializedObject(pipeline);
-        var rendererList = pipelineObject.FindProperty("m_RendererDataList");
-        rendererList.arraySize = 1;
-        rendererList.GetArrayElementAtIndex(0).objectReferenceValue = renderer;
+        if (firstRenderer == null)
+        {
+            if (rendererList.arraySize == 0) rendererList.arraySize = 1;
+            rendererList.GetArrayElementAtIndex(0).objectReferenceValue = renderer;
+        }
         var volumeProfile = pipelineObject.FindProperty("m_VolumeProfile");
         if (volumeProfile != null) volumeProfile.objectReferenceValue = null;
         pipelineObject.FindProperty("m_MainLightShadowmapResolution").intValue = 4096;
