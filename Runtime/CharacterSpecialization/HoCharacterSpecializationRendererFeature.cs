@@ -19,6 +19,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [SerializeField]
         private HoCharacterSpecializationSettings settings = new HoCharacterSpecializationSettings();
 
+        [SerializeField]
+        private bool captureShadowInputsEnabled;
+
         private readonly HoCharacterSpecializationRenderTargets renderTargets = new HoCharacterSpecializationRenderTargets();
         private readonly HoCharacterSpecializationSettings runtimeSettings = new HoCharacterSpecializationSettings();
         private HoCharacterSpecializationPass pass;
@@ -26,6 +29,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private HoCharacterRimPass rimLightPass;
         private Material compositeMaterial;
         private Material captureClearMaterial;
+        private Material captureShadowResolveMaterial;
+        private Material captureAdditionalShadowResolveMaterial;
         private Material faceHairDiffuseMaterial;
         private Material subjectOutlineMaterial;
         private Material objectSemanticMaterial;
@@ -41,6 +46,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private bool warnedMissingObjectSemanticShader;
 
         public HoCharacterSpecializationSettings Settings => settings;
+        public bool CaptureShadowInputsEnabled
+        {
+            get => captureShadowInputsEnabled;
+            set => captureShadowInputsEnabled = value;
+        }
         public string RimLightStatus => rimLightPass?.Status ?? "未启用。";
         public int RimLightActiveCount => rimLightPass?.LastLightCount ?? 0;
         public int RimLightShadowCount => rimLightPass?.LastShadowCount ?? 0;
@@ -135,13 +145,36 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return;
             }
 
+            if (captureShadowInputsEnabled && captureShadowResolveMaterial == null)
+            {
+                Shader resolve = Resources.Load<Shader>("HoCharacterCaptureShadowResolve");
+                if (resolve != null)
+                    captureShadowResolveMaterial = CoreUtils.CreateEngineMaterial(resolve);
+            }
+            if (captureShadowInputsEnabled && captureAdditionalShadowResolveMaterial == null)
+            {
+                Shader resolve = Resources.Load<Shader>("HoAdditionalScreenShadowResolve");
+                if (resolve != null)
+                {
+                    var keyword = new LocalKeyword(resolve, "_HO_CAPTURE_SHADOW_SURFACE");
+                    if (keyword.isValid)
+                    {
+                        captureAdditionalShadowResolveMaterial = CoreUtils.CreateEngineMaterial(resolve);
+                        captureAdditionalShadowResolveMaterial.SetKeyword(keyword, true);
+                    }
+                }
+            }
+
             pass?.SetupRenderGraph(
                 activeSettings,
                 compositeMaterial,
                 captureClearMaterial,
                 faceHairDiffuseMaterial,
                 subjectOutlineMaterial,
-                objectSemanticMaterial);
+                objectSemanticMaterial,
+                captureShadowInputsEnabled,
+                captureShadowResolveMaterial,
+                captureAdditionalShadowResolveMaterial);
             if (activeSettings.debugMode != HoCharacterSpecializationDebugMode.Off) pass.Enqueue(renderer, renderingData.cameraData.camera, HoCharacterSpecializationDebugViewInfo.Performance);
             else HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoCharacterSpecializationDebugViewInfo.Performance);
         }
@@ -158,11 +191,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             renderTargets.Release();
             CoreUtils.Destroy(compositeMaterial);
             CoreUtils.Destroy(captureClearMaterial);
+            CoreUtils.Destroy(captureShadowResolveMaterial);
+            CoreUtils.Destroy(captureAdditionalShadowResolveMaterial);
             CoreUtils.Destroy(faceHairDiffuseMaterial);
             CoreUtils.Destroy(subjectOutlineMaterial);
             CoreUtils.Destroy(objectSemanticMaterial);
             compositeMaterial = null;
             captureClearMaterial = null;
+            captureShadowResolveMaterial = null;
+            captureAdditionalShadowResolveMaterial = null;
             faceHairDiffuseMaterial = null;
             subjectOutlineMaterial = null;
             objectSemanticMaterial = null;
@@ -334,6 +371,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             HoCharacterSpecializationShaderConstants.CaptureShaderTagId
         };
+        private static readonly ShaderTagId CaptureInputShaderTagId = new ShaderTagId("HoCharacterCaptureInput");
 
         private readonly RTHandle[] captureColorTargets = new RTHandle[2];
         private readonly RenderTargetIdentifier[] captureColorIdentifiers = new RenderTargetIdentifier[2];
@@ -348,6 +386,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private Material objectSemanticMaterial;
         private FilteringSettings filteringSettings;
         private RenderStateBlock renderStateBlock;
+        private bool captureShadowInputsEnabled;
+        private Material captureShadowResolveMaterial;
+        private Material captureAdditionalShadowResolveMaterial;
 
         private sealed class CapturePassData
         {
@@ -358,6 +399,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public Material clearMaterial;
             public float captureMode;
             public bool clearTargets;
+            public HoCharacterCaptureShadowPass.DrawInputs shadowInputs;
+        }
+
+        private sealed class CaptureInputPassData
+        {
+            public RendererListHandle rendererList;
+            public int mode;
+            public bool clearDepthStencil;
         }
 
         public HoCharacterSpecializationPass()
@@ -392,7 +441,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Material captureClearMaterial,
             Material faceHairDiffuseMaterial,
             Material subjectOutlineMaterial,
-            Material objectSemanticMaterial)
+            Material objectSemanticMaterial,
+            bool captureShadowInputsEnabled,
+            Material captureShadowResolveMaterial,
+            Material captureAdditionalShadowResolveMaterial)
         {
             this.settings = settings;
             this.compositeMaterial = compositeMaterial;
@@ -400,6 +452,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             this.faceHairDiffuseMaterial = faceHairDiffuseMaterial;
             this.subjectOutlineMaterial = subjectOutlineMaterial;
             this.objectSemanticMaterial = objectSemanticMaterial;
+            this.captureShadowInputsEnabled = captureShadowInputsEnabled;
+            this.captureShadowResolveMaterial = captureShadowResolveMaterial;
+            this.captureAdditionalShadowResolveMaterial = captureAdditionalShadowResolveMaterial;
             ConfigurePass();
         }
 
@@ -637,6 +692,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 SortingCriteria.CommonTransparent);
             RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
 
+            HoCharacterCaptureInputFrameData shadowInputs = null;
+            if (captureShadowInputsEnabled && needsFaceCapture)
+            {
+                RecordCaptureShadowInputs(renderGraph, frameData, cameraData, renderingData, lightData, needsEyeCapture);
+                if (frameData.Contains<HoCharacterCaptureInputFrameData>())
+                {
+                    shadowInputs = frameData.Get<HoCharacterCaptureInputFrameData>();
+                    HoCharacterCaptureShadowPass.Record(renderGraph, frameData, captureShadowResolveMaterial,
+                        captureAdditionalShadowResolveMaterial, shadowInputs);
+                }
+            }
+
             if (needsFaceCapture)
             {
                 using (var builder = renderGraph.AddRasterRenderPass<CapturePassData>("Ho-CharacterSpecialization CaptureFace", out CapturePassData passData, ProfilingSampler))
@@ -648,6 +715,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     passData.clearMaterial = captureClearMaterial;
                     passData.captureMode = 1.0f;
                     passData.clearTargets = true;
+                    passData.shadowInputs = HoCharacterCaptureShadowPass.UseDrawInputs(builder, shadowInputs, eye: false);
 
                     builder.UseRendererList(passData.rendererList);
                     builder.SetRenderAttachment(eyeColorTexture, 0, AccessFlags.WriteAll);
@@ -663,7 +731,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         }
 
                         context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, data.captureMode);
+                        HoCharacterCaptureShadowPass.BeginDraw(context, data.shadowInputs, eye: false);
                         context.cmd.DrawRendererList(data.rendererList);
+                        HoCharacterCaptureShadowPass.EndDraw(context.cmd, data.shadowInputs, eye: false);
                         context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 0.0f);
                     });
                 }
@@ -680,6 +750,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     passData.clearMaterial = null;
                     passData.captureMode = 2.0f;
                     passData.clearTargets = false;
+                    passData.shadowInputs = HoCharacterCaptureShadowPass.UseDrawInputs(builder, shadowInputs, eye: true);
 
                     builder.UseRendererList(passData.rendererList);
                     builder.SetRenderAttachment(eyeColorTexture, 0, AccessFlags.ReadWrite);
@@ -695,7 +766,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         }
 
                         context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, data.captureMode);
+                        HoCharacterCaptureShadowPass.BeginDraw(context, data.shadowInputs, eye: true);
                         context.cmd.DrawRendererList(data.rendererList);
+                        HoCharacterCaptureShadowPass.EndDraw(context.cmd, data.shadowInputs, eye: true);
                         context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 0.0f);
                     });
                 }
@@ -1245,6 +1318,78 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
+        }
+
+        private void RecordCaptureShadowInputs(
+            RenderGraph graph,
+            ContextContainer frameData,
+            UniversalCameraData cameraData,
+            UniversalRenderingData renderingData,
+            UniversalLightData lightData,
+            bool needsEyeCapture)
+        {
+            Camera camera = cameraData.camera;
+            RenderTextureDescriptor target = cameraData.cameraTargetDescriptor;
+            const GraphicsFormat format = GraphicsFormat.R32G32B32A32_SFloat;
+            if (camera == null || cameraData.cameraType != CameraType.Game
+                || cameraData.renderType != CameraRenderType.Base || cameraData.xrRendering
+                || target.msaaSamples > 1 || target.dimension != TextureDimension.Tex2D
+                || target.useDynamicScale || target.useDynamicScaleExplicit || camera.allowDynamicResolution
+                || camera.rect != new Rect(0, 0, 1, 1)
+                || !SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render | GraphicsFormatUsage.Sample))
+                return;
+
+            // Replaying the stencil and depth writes in a separate attachment keeps the
+            // CaptureFace/CaptureEye attachment pair available for their original color draws.
+            var depth = UniversalRenderer.CreateRenderGraphTexture(graph,
+                HoCharacterSpecializationRenderTargets.CreateDepthDescriptor(target, settings),
+                "Ho Capture Shadow Input Depth Stencil", true, FilterMode.Point, TextureWrapMode.Clamp);
+            var descriptor = CreateTextureDesc(target, settings, format, "Ho Capture Face Shadow Input");
+            descriptor.filterMode = FilterMode.Point;
+            var face = graph.CreateTexture(descriptor);
+            var eye = TextureHandle.nullHandle;
+            if (needsEyeCapture)
+            {
+                descriptor.name = "Ho Capture Eye Shadow Input";
+                eye = graph.CreateTexture(descriptor);
+            }
+
+            var drawing = RenderingUtils.CreateDrawingSettings(CaptureInputShaderTagId, renderingData,
+                cameraData, lightData, SortingCriteria.CommonTransparent);
+            var list = new RendererListParams(renderingData.cullResults, drawing, filteringSettings);
+            RecordCaptureInput(graph, "Ho Capture Face Shadow Input", list, face, depth, 1, true);
+            if (needsEyeCapture)
+                RecordCaptureInput(graph, "Ho Capture Eye Shadow Input", list, eye, depth, 2, false);
+
+            var product = frameData.GetOrCreate<HoCharacterCaptureInputFrameData>();
+            product.FaceSurface = face;
+            product.EyeSurface = eye;
+            product.Width = descriptor.width;
+            product.Height = descriptor.height;
+            product.CameraInstanceId = camera.GetInstanceID();
+        }
+
+        private static void RecordCaptureInput(
+            RenderGraph graph, string name, RendererListParams list, TextureHandle surface,
+            TextureHandle depth, int mode, bool clearDepthStencil)
+        {
+            using var builder = graph.AddRasterRenderPass<CaptureInputPassData>(name, out var pass, ProfilingSampler);
+            pass.rendererList = graph.CreateRendererList(list);
+            pass.mode = mode;
+            pass.clearDepthStencil = clearDepthStencil;
+            builder.UseRendererList(pass.rendererList);
+            builder.SetRenderAttachment(surface, 0, AccessFlags.WriteAll);
+            HoCharacterCaptureShadowPass.PublishSurface(builder, surface, eye: mode == 2);
+            builder.SetRenderAttachmentDepth(depth, clearDepthStencil ? AccessFlags.WriteAll : AccessFlags.ReadWrite);
+            builder.AllowGlobalStateModification(true);
+            builder.SetRenderFunc(static (CaptureInputPassData data, RasterGraphContext context) =>
+            {
+                var cmd = context.cmd;
+                cmd.ClearRenderTarget(data.clearDepthStencil ? RTClearFlags.All : RTClearFlags.Color, Color.clear, 1.0f, 0);
+                cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, data.mode);
+                cmd.DrawRendererList(data.rendererList);
+                cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 0.0f);
+            });
         }
 
         private void ConfigureFiltering()
