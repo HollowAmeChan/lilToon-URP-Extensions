@@ -232,7 +232,8 @@ public static class HoCharacterResolveProbe
             resolve.CharacterSettings.normalBias = 0;
             resolve.ManagedCharacterShadowsEnabled = true;
             var managed = Capture("managed-character-without-legacy-feature", selectedOwner);
-            Require(managed.dark > 50 && managed.lit > 50 && managed.partial > 0 && managed.producerStatus.Contains("fixed PCF"),
+            Require(managed.dark > 50 && managed.lit > 50 && managed.partial > 0
+                && Array.IndexOf(managed.producerStatus.Split('|'), "filter=PCF") >= 0,
                 "Ho Shadows must own the atlas and fixed filter when the standalone feature is disabled.");
             resolve.ManagedCharacterShadowsEnabled = false;
             Capture("managed-character-turned-off", 0, false);

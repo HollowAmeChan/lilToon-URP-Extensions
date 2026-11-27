@@ -159,6 +159,8 @@ HoURP `882ccd3` 发布受管接收合同，HoShader `a4b9cbe` 启用对应接收
 
 生产切换后，使用保存主相机和工作区实际 Renderer 的隔离副本做了 23 次有效 GPU 采样。主光、不透明逐灯、透明逐灯解析 P50 分别为 `0.115`、`0.304`、`0.295 ms`。实测索引 `0`、四灯预算、RT 关闭、Capture 开启。工作区的调试和 RTGI 配置包含在本轮采样内。当前测量有相机和逐 Pass 样本，整帧与角色图集缺少可用计时。[发行版逐 Pass GPU 测量入口](../../Tools~/HoShadows/README.md#逐-pass-gpu-时间)
 
+切换后的 D3D12 隔离回归通过了 Effect 的 HoURP 与标准 URP 两条路径、Skin／Eye Capture、两组 Weighted OIT 和 14 项角色 PCF 测试。Capture 四个受管片元均无深度比较指令。Capture 夹具退出时报告四份持久分配，切换前的同一夹具也有这条报告，本轮未定位分配来源。[Capture 验证入口](../../Tests~/HoShadows/Capture/README.md)
+
 ## 7. BREAK_URP 迁移
 
 1. 盘点 `Assets/Settings/PC_Renderer.asset`、`PC_RPAsset.asset`、默认 Volume、镜头/角色局部 Volume 与独立 Renderer 资产。按保存值和实际相机栈分别记录。现存 RT 配置可以是开启，新默认要显式迁为关闭，保留有意启用 RT 的具名场景或测试配置。
