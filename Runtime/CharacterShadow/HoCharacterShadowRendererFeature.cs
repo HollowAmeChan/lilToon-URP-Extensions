@@ -22,19 +22,26 @@ namespace lilToon.URP.Extensions.CharacterShadow
         /// </summary>
         public static string LastCullStatus = "";
 
+        private readonly HoCharacterShadowAtlasProducer producer = new HoCharacterShadowAtlasProducer(fixedPcf: false);
+
+        public override void Create() => producer.Create();
+
+        public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData) =>
+            producer.AddRenderPasses(renderer, ref renderingData, settings);
+
+        protected override void Dispose(bool disposing) => producer.Dispose();
+    }
+
+    internal sealed class HoCharacterShadowAtlasProducer : System.IDisposable
+    {
+        private readonly bool fixedPcf;
         private HoCharacterShadowPass pass;
         private HoCharacterShadowDebugPass debugPass;
         private Material debugMaterial;
-        private bool managed;
 
-        internal void ConfigureManaged(HoCharacterShadowSettings settings)
-        {
-            this.settings = settings;
-            managed = true;
-            if (pass == null) Create();
-        }
+        internal HoCharacterShadowAtlasProducer(bool fixedPcf) => this.fixedPcf = fixedPcf;
 
-        public override void Create()
+        internal void Create()
         {
             pass?.Dispose();
             pass = new HoCharacterShadowPass();
@@ -58,24 +65,25 @@ namespace lilToon.URP.Extensions.CharacterShadow
             pass?.DisableLocalLight();
         }
 
-        public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
+        internal void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData, HoCharacterShadowSettings settings)
         {
-            LastCullStatus = "add:";
-            if (settings == null || pass == null) { LastCullStatus += "noSettings"; return; }
+            ref string status = ref HoCharacterShadowRendererFeature.LastCullStatus;
+            status = "add:";
+            if (settings == null || pass == null) { status += "noSettings"; return; }
             // Per-camera overrides live in Ho-CharacterShadow Volume; an un-overridden field keeps the
             // RendererFeature value as its fallback.
             HoCharacterShadowVolume volume = HoCharacterShadowVolume.Resolve();
             bool enabled = volume != null && volume.enable.overrideState ? volume.enable.value : settings.enabled;
-            if (!enabled) { LastCullStatus += "disabled"; return; }
+            if (!enabled) { status += "disabled"; return; }
             Camera camera = renderingData.cameraData.camera;
-            if (camera.cameraType != CameraType.Game && camera.cameraType != CameraType.SceneView) { LastCullStatus += "camType"; return; }
+            if (camera.cameraType != CameraType.Game && camera.cameraType != CameraType.SceneView) { status += "camType"; return; }
             int main = renderingData.lightData.mainLightIndex;
             Light light = main >= 0 ? renderingData.lightData.visibleLights[main].light : null;
             if (light == null || light.type != LightType.Directional || light.shadows == LightShadows.None
                 || !renderingData.shadowData.supportsMainLightShadows || HoCharacterShadow.Active.Count == 0)
-            { LastCullStatus += $"light(main={main},null={light == null},dir={(light != null && light.type == LightType.Directional)},shadows={(light != null && light.shadows != LightShadows.None)},supports={renderingData.shadowData.supportsMainLightShadows},active={HoCharacterShadow.Active.Count})"; return; }
+            { status += $"light(main={main},null={light == null},dir={(light != null && light.type == LightType.Directional)},shadows={(light != null && light.shadows != LightShadows.None)},supports={renderingData.shadowData.supportsMainLightShadows},active={HoCharacterShadow.Active.Count})"; return; }
             var config = HoCharacterShadowRenderConfig.Resolve(settings, volume);
-            if (managed)
+            if (fixedPcf)
             {
                 config.useLegacySampling = false;
                 config.pcssEnabled = false;
@@ -84,7 +92,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             }
             var frame = pass.BuildFrame(camera, light, renderingData.cameraData.GetViewMatrix(),
                 renderingData.cameraData.GetProjectionMatrix(), config);
-            if (frame.slices.Count == 0) { LastCullStatus += "noSlices"; return; }
+            if (frame.slices.Count == 0) { status += "noSlices"; return; }
             pass.Setup(frame);
             HoDebugPerformanceRegistry.EnqueuePass(renderer, renderingData.cameraData.camera, pass, HoCharacterShadowDebugViewInfo.Performance);
 
@@ -107,7 +115,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             }
         }
 
-        protected override void Dispose(bool disposing)
+        public void Dispose()
         {
             RenderPipelineManager.beginCameraRendering -= ResetCamera;
             RenderPipelineManager.endCameraRendering -= EndCamera;

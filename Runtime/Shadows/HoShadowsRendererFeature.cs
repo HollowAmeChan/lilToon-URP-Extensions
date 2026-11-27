@@ -62,7 +62,7 @@ namespace lilToon.URP.Extensions.Shadows
         private HoTransparentScreenShadowPass earlyTransparentResolve;
         private HoTransparentScreenShadowPass clearEarlyTransparent;
         private HoWeightedOitShadowSetupPass weightedOitSetup;
-        private HoCharacterShadowRendererFeature characterProducer;
+        private HoCharacterShadowAtlasProducer characterProducer;
         private HoCharacterShadowSettings characterProducerSettings;
 
         public bool RayTracedShadowsEnabled
@@ -158,12 +158,11 @@ namespace lilToon.URP.Extensions.Shadows
                     if (characterProducer == null)
                     {
                         characterProducerSettings = new HoCharacterShadowSettings();
-                        characterProducer = CreateInstance<HoCharacterShadowRendererFeature>();
-                        characterProducer.hideFlags = HideFlags.HideAndDontSave;
-                        characterProducer.ConfigureManaged(characterProducerSettings);
+                        characterProducer = new HoCharacterShadowAtlasProducer(fixedPcf: true);
+                        characterProducer.Create();
                     }
                     characterSettings.SetAtlasSettings(characterProducerSettings);
-                    characterProducer.AddRenderPasses(renderer, ref renderingData);
+                    characterProducer.AddRenderPasses(renderer, ref renderingData, characterProducerSettings);
                 }
             }
             else
@@ -301,7 +300,6 @@ namespace lilToon.URP.Extensions.Shadows
             if (characterProducer == null)
                 return;
             characterProducer.Dispose();
-            CoreUtils.Destroy(characterProducer);
             characterProducer = null;
             characterProducerSettings = null;
         }
