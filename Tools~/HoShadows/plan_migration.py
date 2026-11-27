@@ -34,6 +34,7 @@ SHADERS = {
     "Environment": ("com.hoshader.environment-urp", "Environment_URP/Runtime/Shaders/Environment.shader"),
     "Cloth": ("com.hoshader.cloth-urp", "Cloth_URP/Runtime/Shaders/Cloth.shader"),
     "Hair": ("com.hoshader.hair-urp", "Hair_URP/Runtime/Shaders/Hair.shader"),
+    "Effect": ("com.hoshader.effect-urp", "Effect_URP/Runtime/Shaders/EffectToon.shader"),
     "CommercialSkin": ("com.hoshader.skin-urp", "Skin_URP_Commercial/Runtime/Shaders/SkinUrp.shader"),
 }
 PROPERTIES = (
@@ -41,6 +42,8 @@ PROPERTIES = (
     "_AdditionalLightIntensity", "_AdditionalLightShadowStrength", "_ShadowMode",
     "_SurfaceMode", "_Surface", "_AlphaClip", "_UseHoOIT", "_AlphaToCoverage",
     "_TransparentHoCoverage", "_TransparentZWrite", "_HoCharacterCaptureOpacity",
+    "_ReceiveShadowStrength", "_AdditionalLightStrength", "_RenderMode", "_SurfaceEnabled",
+    "_ZWrite", "_SrcBlend", "_DstBlend", "_BlendOp",
 )
 PREVIEW = "_HO_SHADOWS_SCREEN_PREVIEW"
 SYMBOLS = re.compile(
@@ -162,6 +165,7 @@ def read_materials(project, shaders):
             raise ValueError(f"Duplicate material GUID {identity}, cannot resolve variants safely")
         materials[identity] = {
             "path": path, "shader": shader, "parent": field_guid(source, "m_Parent"), "properties": props,
+            "customRenderQueue": int(field(source, "m_CustomRenderQueue", default="-1")),
             "disabledPasses": listed(source, "disabledShaderPasses"),
             "keywords": sorted(set(listed(source, "m_ValidKeywords")) | set(field(source, "m_ShaderKeywords", default="").split())),
             "locked": bool(field(source, "m_LockedProperties", default="") or listed(source, "m_LockedProperties")),
@@ -286,14 +290,22 @@ def plan_material(identity, record, shader, saved, chain, warning, variant_paren
     family = shader["family"] if shader else "UnknownCastScope"
     values = (shader["defaults"] if shader else {}) | saved
     previous = values.get("_HoRPShadowMode")
-    active = values.get("_UseShadow", 0) >= .5 and values.get("_ReceiveShadows", 1) > (.5 if family in {"Cloth", "Environment"} else 0)
-    punctual = active and min(values.get("_AdditionalLightIntensity", 1), values.get("_AdditionalLightShadowStrength", 1)) > 0
+    receive = values.get("_ReceiveShadowStrength", 1) if family == "Hair" else values.get("_ReceiveShadows", 1)
+    active = values.get("_UseShadow", 0) >= .5 and receive > (.5 if family in {"Cloth", "Environment"} else 0)
+    intensity = values.get("_AdditionalLightStrength", 1) if family in {"Hair", "Effect"} else values.get("_AdditionalLightIntensity", 1)
+    punctual = active and min(intensity, values.get("_AdditionalLightShadowStrength", 1)) > 0
     scope = "Full" if previous is not None and previous >= 1.5 else "Main" if previous is not None else None
-    transparent = values.get("_Surface", 0) > .5 if family == "Environment" else values.get("_SurfaceMode", 0) >= 1.5
-    surface = "Transparent" if transparent else "Cutout" if values.get("_AlphaClip", values.get("_SurfaceMode", 0)) >= .5 else "Opaque"
+    mode = values.get("_RenderMode" if family == "Effect" else "_SurfaceMode", 0)
+    transparent = values.get("_Surface", 0) > .5 if family == "Environment" else mode >= 1.5
+    surface = "Transparent" if transparent else "Cutout" if values.get("_AlphaClip", mode) >= .5 else "Opaque"
+    queue = record["customRenderQueue"]
     special = []
     if transparent:
         special.append("transparent_eye" if family == "Eye" else "cloth_oit" if family == "Cloth" and values.get("_UseHoOIT", 0) > .5 else "transparent")
+        if family == "Hair" and 0 <= queue <= 2500:
+            special.append("transparent_in_opaque_queue")
+    if family == "Effect" and values.get("_SurfaceEnabled", 1) <= .5:
+        special.append("outline_only")
     if family in {"Skin", "Eye"} and "HoCharacterCapture" not in record["disabledPasses"]:
         special.append("capture_capable_needs_owner_scene_check")
     references = materials_scenes.get(identity, [])
@@ -301,8 +313,13 @@ def plan_material(identity, record, shader, saved, chain, warning, variant_paren
 
     if shader is None or shader["manifestBinding"] is None or not shader["matchesLocalBinding"]:
         action, why = "review_shader_binding", "No known active package binding for this serialized shader."
-    elif family == "Hair":
-        action, why = "keep_hair_out_of_scope", "Hair authoring is outside this migration."
+    elif "outline_only" in special:
+        action, why = "hold_special_surface", "Only the Effect body pass currently has a managed preview."
+    elif "transparent_in_opaque_queue" in special:
+        action, why = "hold_special_surface", "The transparent Hair material currently draws in the opaque phase. Preserve its queue until its receiver is verified."
+    elif family == "Effect" and (mode < 0 or queue > 2500 or values.get("_ZWrite", 1) <= .5
+                                or (values.get("_SrcBlend", 1), values.get("_DstBlend", 0), values.get("_BlendOp", 0)) != (1, 0, 0)):
+        action, why = "hold_special_surface", "Effect body render state does not satisfy the managed opaque or cutout gate."
     elif previous is None or not active:
         action, why = "keep_inactive", "Current shadow reception is disabled or has no serialized Cast Scope."
     elif warning or len(chain) > 1 or identity in variant_parents or record["locked"]:
@@ -321,7 +338,7 @@ def plan_material(identity, record, shader, saved, chain, warning, variant_paren
     return {**asset_stamp(record["path"]), "family": family, "sourceShaderGuid": record["shader"], "parentGuid": record["parent"],
             "variantChain": chain, "variantWarning": warning, "scope": scope, "effectiveShadowReceive": active,
             "lightingModel": ("ThreeBand" if values.get("_ShadowMode", 0) >= .5 else "Native") if family in {"Skin", "Eye"} else None,
-            "canReceivePunctual": punctual, "surface": surface, "specialDomains": special,
+            "canReceivePunctual": punctual, "surface": surface, "customRenderQueue": queue, "specialDomains": special,
             "previewKeywordSaved": PREVIEW in record["keywords"], "nativeReceiveOffKeywordSaved": "_RECEIVE_SHADOWS_OFF" in record["keywords"],
             "disabledPasses": record["disabledPasses"], "saved": record["properties"], "effective": values,
             "sceneReferences": references, "scenesWithPunctualEvidence": local_witnesses, "action": action, "reason": why,

@@ -10,6 +10,7 @@ python -B 'Tools~/HoShadows/plan_migration.py' `
 
 - `renderer.features` 按实际顺序记录 Feature、fileID、GUID、启用状态和建议。生产 Renderer 继续用旧 Character Feature 提供图集。隔离试切开启托管角色图集后，才在副本中停用旧 Character Feature。
 - `materialRecords` 记录旧 Main／Full 的有效接收、属性来源、Scene／Prefab 引用和特殊 Pass。只有当前可能接收附加投影、可链接到记录有投影 Point／Spot 的场景、且通过普通材质门控的旧 Main 被列为 `review_full_candidate`。确认实际受光后，可在后续迁移中把该项设为 Full。无确定受光证据、Variant／锁、透明、Capture 和 OIT 分别核验。
+- Hair 同时记录材质配方和自定义队列。BREAK 的 9 份透明 Hair 有 8 份在 `2000` 或 `2400` 绘制，按不透明阶段调度，迁移需保留当前排序。Effect 记录仅描边、关闭深度写入以及自定义混合等本体接收资格。
 - `volumeProfiles`、`settingsAndComponents` 与 `scriptReferences` 带出处。默认托管 RT 关闭，具名 RT 镜头另行验证 opt-in。保留投射、接收、角色边界和 Capture owner 的作者配置。
 
 报告包含后续写入前可重查的 GUID 和 SHA-256。Scene 链接只反映已保存引用，嵌入灯计数只用于筛选复查场景。相机可见性、导入模型的所有绑定、动画或脚本写入和未保存编辑需要单独验证。
@@ -33,7 +34,7 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 `
 
 ## 真实镜头的隔离对照
 
-把 `HoShadowsSceneCutoverComparison.cs` 与试切工具一起复制到物理快照的 `Assets/Editor`。快照包含保存的羽啾与圣诞万花镜场景和各自依赖。重新使用尚未试切的 Renderer，设置两个空输出目录，以 D3D11 启动 Unity。
+把 `HoShadowsSceneCutoverComparison.cs` 与试切工具一起复制到物理快照的 `Assets/Editor`。快照包含保存的羽啾与圣诞万花镜场景、两者的依赖，以及带有屏幕预览的 HoShader 包版本。重新使用尚未试切的 Renderer，设置两个空输出目录，以 D3D11 启动 Unity。
 
 ```powershell
 $env:HO_SHADOWS_P5_PILOT_PROJECT = 'D:/Temp/HoShadows-P5-Local/SceneSnapshot'
@@ -45,9 +46,11 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
   -force-d3d11 --burst-disable-compilation -executeMethod HoShadowsSceneCutoverComparison.Run
 ```
 
-以 640×360 渲染两个已保存的 Base Camera。先读两次旧路径，再用同一快照跑新 Feature 的 4 和 16 个逐灯预算。受管预览只在本次绘制选中的 Skin、Eye、Cloth 和 Environment 材质上临时启用，把其中旧 Main 且开启阴影响应的材质临时设为 Full，退出当前镜头时恢复。可用 `HO_SHADOWS_P5_COMPARE_FILTER` 按场景路径选择子集，或用 `HO_SHADOWS_P5_COMPARE_SCENE` 指定快照内另一场景的 `Assets/...unity` 路径。默认控制平面反射、相机后处理和 AA，设 `HO_SHADOWS_P5_COMPARE_AUTHORED=1` 可以沿用保存的相机效果配置。
+以 640×360 渲染两个已保存的 Base Camera。先读两次旧路径，再用同一快照跑新 Feature 的 4 和 16 个逐灯预算。当前版本在已支持的 Skin、Eye、Cloth、Environment、Hair 和 Effect 材质路径临时启用受管预览。场景退出时恢复材质。默认保留材质的 Main／Full。要测试拟议的 Full 迁移，用 `HO_SHADOWS_P5_COMPARE_PLAN` 传入 dry-run JSON。对照工具只处理报告内的 `review_full_candidate`，逐项核对快照材质文件的 SHA-256。
 
-| 默认控制条件，D3D11 | 预览材质／临时转 Full | 四灯预算的 RGB 最大分量差 | 旧路径重复波动 | 阈值 `>0.002` 且旧重复稳定的差异像素 |
+可用 `HO_SHADOWS_P5_COMPARE_FILTER` 按场景路径选择子集，或用 `HO_SHADOWS_P5_COMPARE_SCENE` 指定快照内另一场景的 `Assets/...unity` 路径。默认关闭用作对照变量的平面反射、相机后处理和 AA。设 `HO_SHADOWS_P5_COMPARE_AUTHORED=1` 可以沿用保存的相机效果配置。
+
+| 首轮 D3D11 对照（Hair 和 Effect 接入前） | 预览材质／临时转 Full | 四灯预算的 RGB 最大分量差 | 旧路径重复波动 | 阈值 `>0.002` 且旧重复稳定的差异像素 |
 | --- | ---: | ---: | ---: | ---: |
 | 羽啾 | 13／11 | 0.00001324 | 0.00001324 | 0 |
 | 圣诞万花镜 | 19／0 | 0.00280380 | 0.00280380 | 0 |

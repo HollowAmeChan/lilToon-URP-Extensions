@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using HoShader.EffectURP.Editor;
 using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.Shadows;
 using UnityEditor;
@@ -23,21 +25,36 @@ public static class HoShadowsSceneCutoverComparison
     };
     private static readonly HashSet<string> SupportedShaders = new()
     {
-        "Ho/Skin/URP/Stylized", "Ho/Skin/URP/Eye", "Ho/Cloth/URP/Cloth", "Ho/Environment/URP/Lit"
+        "Ho/Skin/URP/Stylized", "Ho/Skin/URP/Eye", "Ho/Cloth/URP/Cloth", "Ho/Environment/URP/Lit",
+        "Ho/Hair/URP/Hair", EffectMaterialUtility.ShaderName
     };
+    private const string PreviewKeyword = "_HO_SHADOWS_SCREEN_PREVIEW";
+    private const string EffectSurfaceKeyword = "_EFFECT_SCREEN_SHADOW_SURFACE";
+
+    [Serializable] private sealed class MigrationPlan
+    {
+        public string project = null;
+        public MigrationMaterial[] materialRecords = null;
+    }
+
+    [Serializable] private sealed class MigrationMaterial
+    {
+        public string path = null, action = null, sha256 = null;
+    }
 
     [Serializable] private sealed class SceneCase
     {
         public string scene, camera;
         public int previewMaterials, upgradedToFull, changedPixels, stableChangedPixels, baselineNoisePixels;
-        public int changedAtBudget16;
+        public int changedAtBudget16, previewHair, previewEffect, upgradedOnEnabledRenderers;
+        public string[] fullCandidateAssets;
         public float maximum, mean, baselineNoise, maximumAtBudget16, meanAtBudget16, legacyPeak;
         public float legacySubmitMilliseconds, managedSubmitMilliseconds, wideManagedSubmitMilliseconds;
     }
 
     [Serializable] private sealed class Report
     {
-        public string unity, graphics, error;
+        public string unity, graphics, error, migrationPlan;
         public bool finished, authoredEffects;
         public List<SceneCase> scenes = new();
     }
@@ -55,7 +72,8 @@ public static class HoShadowsSceneCutoverComparison
         var report = new Report
         {
             unity = Application.unityVersion, graphics = SystemInfo.graphicsDeviceType.ToString(),
-            authoredEffects = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_AUTHORED") == "1"
+            authoredEffects = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_AUTHORED") == "1",
+            migrationPlan = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_PLAN")
         };
         string filter = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_FILTER");
         string selectedScene = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_SCENE");
@@ -66,12 +84,13 @@ public static class HoShadowsSceneCutoverComparison
         var rows = new List<(string path, SceneCase row, Color[] legacy, Color[] repeat)>();
         try
         {
+            var fullCandidates = ReadFullCandidates(report.migrationPlan);
             foreach (string path in comparisonScenes.Where(path => string.IsNullOrWhiteSpace(filter) || path.Contains(filter)))
             {
                 var row = new SceneCase { scene = path };
                 report.scenes.Add(row);
-                var first = Render(path, row, output, "legacy", 0, report.authoredEffects, out float milliseconds);
-                var second = Render(path, row, output, "legacy-repeat", 0, report.authoredEffects, out _);
+                var first = Render(path, row, output, "legacy", 0, report.authoredEffects, fullCandidates, out float milliseconds);
+                var second = Render(path, row, output, "legacy-repeat", 0, report.authoredEffects, fullCandidates, out _);
                 row.legacySubmitMilliseconds = milliseconds;
                 row.legacyPeak = first.Max(MaxRgb);
                 if (row.legacyPeak < .01f) throw new InvalidOperationException("Missing legacy camera signal for " + path);
@@ -85,8 +104,8 @@ public static class HoShadowsSceneCutoverComparison
             foreach (var entry in rows)
             {
                 var row = entry.row;
-                var first = Render(entry.path, row, output, "managed-budget4", 4, report.authoredEffects, out row.managedSubmitMilliseconds);
-                var second = Render(entry.path, row, output, "managed-budget16", 16, report.authoredEffects, out row.wideManagedSubmitMilliseconds);
+                var first = Render(entry.path, row, output, "managed-budget4", 4, report.authoredEffects, fullCandidates, out row.managedSubmitMilliseconds);
+                var second = Render(entry.path, row, output, "managed-budget16", 16, report.authoredEffects, fullCandidates, out row.wideManagedSubmitMilliseconds);
                 double sum = 0;
                 double sumWide = 0;
                 for (int index = 0; index < first.Length; index++)
@@ -122,7 +141,25 @@ public static class HoShadowsSceneCutoverComparison
         finally { File.WriteAllText(Path.Combine(output, "scene-cutover.json"), JsonUtility.ToJson(report, true)); }
     }
 
-    private static Color[] Render(string path, SceneCase item, string output, string label, int budget, bool authoredEffects, out float milliseconds)
+    private static Dictionary<string, string> ReadFullCandidates(string filename)
+    {
+        var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        if (string.IsNullOrWhiteSpace(filename)) return result;
+        var plan = JsonUtility.FromJson<MigrationPlan>(File.ReadAllText(filename));
+        if (string.IsNullOrWhiteSpace(plan?.project) || plan.materialRecords == null)
+            throw new InvalidOperationException("The migration plan has no source project or material inventory.");
+        string project = plan.project.TrimEnd('/') + "/";
+        foreach (var item in plan.materialRecords.Where(material => material.action == "review_full_candidate"))
+        {
+            if (!item.path.StartsWith(project + "Assets/", StringComparison.OrdinalIgnoreCase) || item.sha256?.Length != 64)
+                throw new InvalidOperationException("Invalid asset path or SHA-256 in the Full candidate list.");
+            result.Add(item.path.Substring(project.Length), item.sha256);
+        }
+        return result;
+    }
+
+    private static Color[] Render(string path, SceneCase item, string output, string label, int budget, bool authoredEffects,
+        Dictionary<string, string> fullCandidates, out float milliseconds)
     {
         Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
         Camera camera = Camera.main;
@@ -139,7 +176,9 @@ public static class HoShadowsSceneCutoverComparison
         var planar = renderer.rendererFeatures.OfType<HoPlanarReflectionRendererFeature>().SingleOrDefault();
         bool planarActive = !authoredEffects && planar != null && planar.isActive;
         if (planarActive) planar.SetActive(false);
-        var restore = new Dictionary<Material, (bool keyword, float mode)>();
+        var restore = new Dictionary<Material, (bool keyword, bool effectSurface, float mode)>();
+        var upgraded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var enabledRenderers = new HashSet<Material>();
         var managed = renderer.rendererFeatures.OfType<HoShadowsRendererFeature>().SingleOrDefault();
         try
         {
@@ -154,24 +193,46 @@ public static class HoShadowsSceneCutoverComparison
                 {
                     foreach (Material material in mesh.sharedMaterials)
                     {
+                        if (material && mesh.enabled && mesh.gameObject.activeInHierarchy) enabledRenderers.Add(material);
                         if (!material || !material.shader || !SupportedShaders.Contains(material.shader.name) || restore.ContainsKey(material))
+                            continue;
+                        if (!material.shader.keywordSpace.FindKeyword(PreviewKeyword).isValid)
                             continue;
                         if (material.renderQueue > 2500 && material.shader.name == "Ho/Environment/URP/Lit")
                             continue;
                         if (material.renderQueue > 2500 && material.shader.name == "Ho/Cloth/URP/Cloth"
                             && (!material.HasProperty("_UseHoOIT") || material.GetFloat("_UseHoOIT") < .5f))
                             continue;
+                        if (material.shader.name == "Ho/Hair/URP/Hair"
+                            && (material.renderQueue > 2500 || material.GetFloat("_SurfaceMode") >= 1.5f))
+                            continue;
                         float mode = material.HasProperty("_HoRPShadowMode") ? material.GetFloat("_HoRPShadowMode") : 0;
-                        restore.Add(material, (material.IsKeywordEnabled("_HO_SHADOWS_SCREEN_PREVIEW"), mode));
-                        material.EnableKeyword("_HO_SHADOWS_SCREEN_PREVIEW");
-                        if (material.HasProperty("_HoRPShadowMode") && mode >= .5f && mode < 1.5f
-                            && material.HasProperty("_UseShadow") && material.GetFloat("_UseShadow") > .5f)
+                        bool effect = material.shader.name == EffectMaterialUtility.ShaderName;
+                        restore.Add(material, (material.IsKeywordEnabled(PreviewKeyword),
+                            effect && material.IsKeywordEnabled(EffectSurfaceKeyword), mode));
+                        if (effect) EffectMaterialUtility.SetScreenShadowPreview(material, true);
+                        else material.EnableKeyword(PreviewKeyword);
+                        string assetPath = AssetDatabase.GetAssetPath(material);
+                        if (mode >= .5f && mode < 1.5f && fullCandidates.TryGetValue(assetPath, out string expectedHash))
+                        {
+                            using var sha256 = SHA256.Create();
+                            string savedPath = Path.Combine(Application.dataPath, assetPath.Substring("Assets/".Length));
+                            using var savedMaterial = File.OpenRead(savedPath);
+                            string actualHash = BitConverter.ToString(sha256.ComputeHash(savedMaterial)).Replace("-", "");
+                            if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
+                                throw new InvalidOperationException("The saved Full candidate does not match the planned material: " + assetPath);
                             material.SetFloat("_HoRPShadowMode", 2);
+                            upgraded.Add(assetPath);
+                        }
                     }
                 }
                 item.previewMaterials = restore.Count;
-                item.upgradedToFull = restore.Count(entry => entry.Value.mode >= .5f && entry.Value.mode < 1.5f
-                    && entry.Key.GetFloat("_HoRPShadowMode") >= 1.5f);
+                item.previewHair = restore.Keys.Count(material => material.shader.name == "Ho/Hair/URP/Hair");
+                item.previewEffect = restore.Keys.Count(material => material.shader.name == EffectMaterialUtility.ShaderName
+                    && material.IsKeywordEnabled(EffectSurfaceKeyword));
+                item.upgradedToFull = upgraded.Count;
+                item.upgradedOnEnabledRenderers = enabledRenderers.Count(material => upgraded.Contains(AssetDatabase.GetAssetPath(material)));
+                item.fullCandidateAssets = upgraded.OrderBy(asset => asset, StringComparer.OrdinalIgnoreCase).ToArray();
             }
 
             string stem = Path.Combine(output, Path.GetFileNameWithoutExtension(path) + "-" + label + ".exr");
@@ -183,8 +244,9 @@ public static class HoShadowsSceneCutoverComparison
             if (planarActive) planar.SetActive(true);
             foreach (var entry in restore)
             {
-                if (entry.Value.keyword) entry.Key.EnableKeyword("_HO_SHADOWS_SCREEN_PREVIEW");
-                else entry.Key.DisableKeyword("_HO_SHADOWS_SCREEN_PREVIEW");
+                entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, PreviewKeyword), entry.Value.keyword);
+                if (entry.Key.shader.name == EffectMaterialUtility.ShaderName)
+                    entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, EffectSurfaceKeyword), entry.Value.effectSurface);
                 if (entry.Key.HasProperty("_HoRPShadowMode")) entry.Key.SetFloat("_HoRPShadowMode", entry.Value.mode);
             }
         }
