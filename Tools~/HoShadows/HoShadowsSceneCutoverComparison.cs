@@ -55,7 +55,7 @@ public static class HoShadowsSceneCutoverComparison
         public float fieldOfView;
         public int previewMaterials, upgradedToFull, changedPixels, stableChangedPixels, baselineNoisePixels;
         public int changedAtBudget16, previewHair, previewEffect, upgradedOnEnabledRenderers;
-        public int earlyTransparentHair, lateTransparentHair;
+        public int earlyTransparentHair, lateTransparentHair, legacyPreviewMaterials;
         public string[] fullCandidateAssets;
         public float maximum, mean, baselineNoise, maximumAtBudget16, meanAtBudget16, legacyPeak;
         public int legacyScenePixels, witnessRenderers;
@@ -226,7 +226,8 @@ public static class HoShadowsSceneCutoverComparison
         var planar = renderer.rendererFeatures.OfType<HoPlanarReflectionRendererFeature>().SingleOrDefault();
         bool planarActive = !authoredEffects && planar != null && planar.isActive;
         if (planarActive) planar.SetActive(false);
-        var restore = new Dictionary<Material, (bool keyword, bool effectSurface, bool earlyHair, bool lateHair, float mode)>();
+        var previews = new Dictionary<Material, Material>();
+        var assignments = new List<(Renderer mesh, Material[] originals)>();
         var upgraded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var enabledRenderers = new HashSet<Material>();
         var managed = renderer.rendererFeatures.OfType<HoShadowsRendererFeature>().SingleOrDefault();
@@ -236,7 +237,15 @@ public static class HoShadowsSceneCutoverComparison
         bool previewTransparentHair = Environment.GetEnvironmentVariable("HO_SHADOWS_P5_COMPARE_HAIR_TRANSPARENT") == "1";
         try
         {
-            if (budget > 0)
+            if (budget == 0)
+            {
+                item.legacyPreviewMaterials = scene.GetRootGameObjects()
+                    .SelectMany(root => root.GetComponentsInChildren<Renderer>(true))
+                    .SelectMany(mesh => mesh.sharedMaterials)
+                    .Where(material => material != null && material.IsKeywordEnabled(PreviewKeyword))
+                    .Distinct().Count();
+            }
+            else
             {
                 if (managed == null || !managed.isActive) throw new InvalidOperationException("Missing managed renderer shadow feature.");
                 var state = new SerializedObject(managed);
@@ -247,10 +256,13 @@ public static class HoShadowsSceneCutoverComparison
 
                 foreach (var mesh in scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<Renderer>(true)))
                 {
-                    foreach (Material material in mesh.sharedMaterials)
+                    Material[] originalMaterials = mesh.sharedMaterials;
+                    Material[] replacementMaterials = null;
+                    for (int slot = 0; slot < originalMaterials.Length; slot++)
                     {
+                        Material material = originalMaterials[slot];
                         if (material && mesh.enabled && mesh.gameObject.activeInHierarchy) enabledRenderers.Add(material);
-                        if (!material || !material.shader || !SupportedShaders.Contains(material.shader.name) || restore.ContainsKey(material))
+                        if (!material || !material.shader || !SupportedShaders.Contains(material.shader.name))
                             continue;
                         bool hair = material.shader.name == "Ho/Hair/URP/Hair";
                         bool effect = material.shader.name == EffectMaterialUtility.ShaderName;
@@ -268,32 +280,41 @@ public static class HoShadowsSceneCutoverComparison
                             ? !managed.EarlyTransparentShadowsEnabled : !managed.TransparentEyeShadowsEnabled)))
                             continue;
                         if (hair && !hairBlend && material.renderQueue > 2500) continue;
-                        float mode = material.HasProperty("_HoRPShadowMode") ? material.GetFloat("_HoRPShadowMode") : 0;
-                        restore.Add(material, (material.IsKeywordEnabled(PreviewKeyword),
-                            effect && material.IsKeywordEnabled(EffectSurfaceKeyword),
-                            hair && material.IsKeywordEnabled(EarlyHairKeyword), hair && material.IsKeywordEnabled(LateHairKeyword), mode));
-                        if (effect) EffectMaterialUtility.SetScreenShadowPreview(material, true);
-                        else if (hair) HairMaterialUtility.SetScreenShadowPreview(material, true);
-                        else material.EnableKeyword(PreviewKeyword);
-                        string assetPath = AssetDatabase.GetAssetPath(material);
-                        if (mode >= .5f && mode < 1.5f && fullCandidates.TryGetValue(assetPath, out string expectedHash))
+                        if (!previews.TryGetValue(material, out Material preview))
                         {
-                            using var sha256 = SHA256.Create();
-                            string savedPath = Path.Combine(Application.dataPath, assetPath.Substring("Assets/".Length));
-                            using var savedMaterial = File.OpenRead(savedPath);
-                            string actualHash = BitConverter.ToString(sha256.ComputeHash(savedMaterial)).Replace("-", "");
-                            if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
-                                throw new InvalidOperationException("The saved Full candidate does not match the planned material: " + assetPath);
-                            material.SetFloat("_HoRPShadowMode", 2);
-                            upgraded.Add(assetPath);
+                            preview = new Material(material) { hideFlags = HideFlags.HideAndDontSave };
+                            previews.Add(material, preview);
+                            if (effect) EffectMaterialUtility.SetScreenShadowPreview(preview, true);
+                            else if (hair) HairMaterialUtility.SetScreenShadowPreview(preview, true);
+                            else preview.EnableKeyword(PreviewKeyword);
+                            float mode = material.HasProperty("_HoRPShadowMode") ? material.GetFloat("_HoRPShadowMode") : 0;
+                            string assetPath = AssetDatabase.GetAssetPath(material);
+                            if (mode >= .5f && mode < 1.5f && fullCandidates.TryGetValue(assetPath, out string expectedHash))
+                            {
+                                using var sha256 = SHA256.Create();
+                                string savedPath = Path.Combine(Application.dataPath, assetPath.Substring("Assets/".Length));
+                                using var savedMaterial = File.OpenRead(savedPath);
+                                string actualHash = BitConverter.ToString(sha256.ComputeHash(savedMaterial)).Replace("-", "");
+                                if (!string.Equals(actualHash, expectedHash, StringComparison.OrdinalIgnoreCase))
+                                    throw new InvalidOperationException("The saved Full candidate does not match the planned material: " + assetPath);
+                                preview.SetFloat("_HoRPShadowMode", 2);
+                                upgraded.Add(assetPath);
+                            }
                         }
+                        replacementMaterials ??= (Material[])originalMaterials.Clone();
+                        replacementMaterials[slot] = preview;
+                    }
+                    if (replacementMaterials != null)
+                    {
+                        assignments.Add((mesh, originalMaterials));
+                        mesh.sharedMaterials = replacementMaterials;
                     }
                 }
-                item.previewMaterials = restore.Count;
-                item.previewHair = restore.Keys.Count(material => material.shader.name == "Ho/Hair/URP/Hair");
-                item.earlyTransparentHair = restore.Keys.Count(material => material.IsKeywordEnabled(EarlyHairKeyword));
-                item.lateTransparentHair = restore.Keys.Count(material => material.IsKeywordEnabled(LateHairKeyword));
-                item.previewEffect = restore.Keys.Count(material => material.shader.name == EffectMaterialUtility.ShaderName
+                item.previewMaterials = previews.Count;
+                item.previewHair = previews.Values.Count(material => material.shader.name == "Ho/Hair/URP/Hair");
+                item.earlyTransparentHair = previews.Values.Count(material => material.IsKeywordEnabled(EarlyHairKeyword));
+                item.lateTransparentHair = previews.Values.Count(material => material.IsKeywordEnabled(LateHairKeyword));
+                item.previewEffect = previews.Values.Count(material => material.shader.name == EffectMaterialUtility.ShaderName
                     && material.IsKeywordEnabled(EffectSurfaceKeyword));
                 item.upgradedToFull = upgraded.Count;
                 item.upgradedOnEnabledRenderers = enabledRenderers.Count(material => upgraded.Contains(AssetDatabase.GetAssetPath(material)));
@@ -310,18 +331,10 @@ public static class HoShadowsSceneCutoverComparison
             if (planarActive) planar.SetActive(true);
             if (isolation == "disable-character" && managed != null) managed.ManagedCharacterShadowsEnabled = previousCharacter;
             if (isolation == "disable-capture" && capture != null) capture.CaptureShadowInputsEnabled = previousCapture;
-            foreach (var entry in restore)
-            {
-                entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, PreviewKeyword), entry.Value.keyword);
-                if (entry.Key.shader.name == EffectMaterialUtility.ShaderName)
-                    entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, EffectSurfaceKeyword), entry.Value.effectSurface);
-                if (entry.Key.shader.name == "Ho/Hair/URP/Hair")
-                {
-                    entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, EarlyHairKeyword), entry.Value.earlyHair);
-                    entry.Key.SetKeyword(new LocalKeyword(entry.Key.shader, LateHairKeyword), entry.Value.lateHair);
-                }
-                if (entry.Key.HasProperty("_HoRPShadowMode")) entry.Key.SetFloat("_HoRPShadowMode", entry.Value.mode);
-            }
+            foreach (var (mesh, originals) in assignments)
+                if (mesh != null) mesh.sharedMaterials = originals;
+            foreach (Material preview in previews.Values)
+                UnityEngine.Object.DestroyImmediate(preview);
         }
     }
 
