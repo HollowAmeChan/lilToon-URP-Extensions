@@ -50,7 +50,7 @@ namespace lilToon.URP.Extensions.Shadows
         private HoAdditionalScreenShadowPass additionalPass;
         private HoOpaqueScreenShadowBindingPass bindOpaque;
         private HoOpaqueScreenShadowBindingPass clearOpaque;
-        private HoRTShadowRendererFeature rayProducer;
+        private HoRTShadowProducer rayProducer;
         private Material rayResolveMaterial;
         private HoRayTracedScreenShadowPass rayResolvePass;
         private Material transparentMaterial;
@@ -137,8 +137,7 @@ namespace lilToon.URP.Extensions.Shadows
                     return;
                 rayResolveMaterial = CoreUtils.CreateEngineMaterial(shader);
                 rayResolvePass = new HoRayTracedScreenShadowPass(rayResolveMaterial);
-                rayProducer = CreateInstance<HoRTShadowRendererFeature>();
-                rayProducer.hideFlags = HideFlags.HideAndDontSave;
+                rayProducer = new HoRTShadowProducer(this);
                 rayProducer.ConfigureForManaged(rayTracedShadowSettings);
                 rayProducer.ConfigureManagedShaders(rayTracedShadowProgram, rayVisibilityMaterial, rayShadowReconstruction,
                     rayShadowReconstructionPasses, rayShadowDebugShader);
@@ -248,7 +247,6 @@ namespace lilToon.URP.Extensions.Shadows
             if (rayProducer != null)
             {
                 rayProducer.Dispose();
-                CoreUtils.Destroy(rayProducer);
                 rayProducer = null;
             }
             CoreUtils.Destroy(rayResolveMaterial);

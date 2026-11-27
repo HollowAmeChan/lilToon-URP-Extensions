@@ -66,6 +66,50 @@ namespace lilToon.URP.Extensions.RTShadow
         [SerializeField] private ComputeShader sigmaShader;
         [SerializeField] private ComputeShader[] sigmaPipelines;
         [SerializeField] private Shader debugShader;
+
+        private HoRTShadowProducer producer;
+        private HoRTShadowProducer Producer => producer ??= new HoRTShadowProducer(this);
+
+        public HoRTShadowSettings Settings => settings;
+        public HoRTShadowSettings LastEffectiveSettings => producer?.LastEffectiveSettings;
+        public Camera LastCamera => producer?.LastCamera;
+        public int VolumeOverrideCount => producer?.VolumeOverrideCount ?? 0;
+        public IEnumerable<HoRTShadowLightDiagnostics> LightDiagnostics => producer?.LightDiagnostics ?? Array.Empty<HoRTShadowLightDiagnostics>();
+        public IReadOnlyList<HoRTShadowProduct> UnavailableProducts => producer?.UnavailableProducts ?? Array.Empty<HoRTShadowProduct>();
+        public string Status => producer?.Status ?? "未生产";
+        internal HoRTShadowProducer.Output LastOutput => producer?.LastOutput;
+        internal HoRTShadowProducer.Output OutputForLight(Light light) => producer?.OutputForLight(light);
+        internal int ScheduledLightCount => producer?.ScheduledLightCount ?? 0;
+        internal int ActiveOutputCount => producer?.ActiveOutputCount ?? 0;
+
+        public bool TryGetCompatibilityProduct(Camera camera, Light light, out HoRTShadowCompatibilityProduct product)
+        {
+            if (producer != null) return producer.TryGetCompatibilityProduct(camera, light, out product);
+            product = default;
+            return false;
+        }
+
+        public override void Create() => Producer.CreateLegacy(settings, ref shader, ref visibilityMaterialShader,
+            ref sigmaShader, ref sigmaPipelines, ref debugShader);
+
+        public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData data) =>
+            producer?.OnCameraPreCull(renderer, in data);
+
+        public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data) =>
+            producer?.AddRenderPasses(renderer, ref data);
+
+        protected override void Dispose(bool disposing) => Producer.Dispose();
+    }
+
+    internal sealed class HoRTShadowProducer : IDisposable
+    {
+        private readonly UnityEngine.Object requestOwner;
+        private HoRTShadowSettings settings;
+        private RayTracingShader shader;
+        private Shader visibilityMaterialShader;
+        private ComputeShader sigmaShader;
+        private ComputeShader[] sigmaPipelines;
+        private Shader debugShader;
         private Material debugMaterial;
         private HoRTShadowDebugPass debugPass;
         private ConsumerDebugPass consumerDebugPass;
@@ -87,7 +131,6 @@ namespace lilToon.URP.Extensions.RTShadow
         private readonly List<(ScriptableRenderer renderer, Camera camera, Light light)> dead = new();
         private object profileKey; private bool registered;
         private long serial;
-        public HoRTShadowSettings Settings => settings;
         public string Status { get; private set; } = "未生产";
         internal Output LastOutput { get; private set; }
         private readonly List<Output> scheduled = new();
@@ -133,6 +176,29 @@ namespace lilToon.URP.Extensions.RTShadow
         internal Output OutputForLight(Light light){foreach(var output in scheduled)if(output.light==light)return output;return null;}
         internal int ScheduledLightCount=>scheduled.Count;
         internal int ActiveOutputCount => outputs.Count;
+
+        internal HoRTShadowProducer(UnityEngine.Object requestOwner)
+        {
+            this.requestOwner = requestOwner ?? throw new ArgumentNullException(nameof(requestOwner));
+        }
+
+        internal void CreateLegacy(HoRTShadowSettings legacySettings, ref RayTracingShader rayShader, ref Shader hitShader,
+            ref ComputeShader reconstructionShader, ref ComputeShader[] reconstructionPipelines, ref Shader diagnosticShader)
+        {
+            settings = legacySettings;
+            shader = rayShader;
+            visibilityMaterialShader = hitShader;
+            sigmaShader = reconstructionShader;
+            sigmaPipelines = reconstructionPipelines;
+            debugShader = diagnosticShader;
+            Create();
+            // Existing legacy assets persist the Editor defaults filled by Create.
+            rayShader = shader;
+            hitShader = visibilityMaterialShader;
+            reconstructionShader = sigmaShader;
+            reconstructionPipelines = sigmaPipelines;
+            diagnosticShader = debugShader;
+        }
 
         internal void ConfigureForManaged(HoRTShadowSettings managedSettings, bool publishLegacyMainAlias = false, int maximumLights = 4)
         {
@@ -196,7 +262,7 @@ namespace lilToon.URP.Extensions.RTShadow
             public void Dispose() { if (disposed) return; disposed = true; sigma?.Dispose(); raw?.Release(); receivers?.Dispose(); }
             internal void ReleaseAfterUse() { lastView.ReleaseAfterUse(this); }
         }
-        public override void Create()
+        private void Create()
         {
             ReleaseOutputs(); profileKey = new object();
             // Create can be called by a pass while the current graph is still
@@ -232,7 +298,7 @@ namespace lilToon.URP.Extensions.RTShadow
             var stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
             return HoRTShadowVolume.Resolve(settings, stack?.GetComponent<HoRTShadowVolume>(), out overrides);
         }
-        public override void OnCameraPreCull(ScriptableRenderer renderer, in CameraData data)
+        internal void OnCameraPreCull(ScriptableRenderer renderer, in CameraData data)
         {
             if (managed)
             {
@@ -257,7 +323,7 @@ namespace lilToon.URP.Extensions.RTShadow
                 }
 
                 managedPlanner ??= PlanManagedRequest;
-                if (!HoRTRendererFeature.RegisterManagedPlanner(renderer, data.camera, this, managedPlanner, out var managedReason))
+                if (!HoRTRendererFeature.RegisterManagedPlanner(renderer, data.camera, requestOwner, managedPlanner, out var managedReason))
                     Status = "Ho-RT：" + managedReason;
                 return;
             }
@@ -272,7 +338,7 @@ namespace lilToon.URP.Extensions.RTShadow
                 || (data.camera.cameraType != CameraType.Game && (data.camera.cameraType != CameraType.SceneView || !settings.inSceneView))
                 || !HoRTScene.IsSupported || !SystemInfo.supportsRayTracing || shader == null || visibilityMaterialShader == null) return;
             var hitShader = visibilityMaterialShader;
-            if (!HoRTRendererFeature.Declare(renderer, data.camera, this, new HoRTViewRequest(settings.geometryLayers.value,
+            if (!HoRTRendererFeature.Declare(renderer, data.camera, requestOwner, new HoRTViewRequest(settings.geometryLayers.value,
                 settings.excludedRayMaterials, profileKey: profileKey, createProfile: () => new HoRTVisibilityMaterials(hitShader), geometryPolicy: HoRTGeometryPolicy.ShadowCasters), out var reason)) Status = "Ho-RT：" + reason;
         }
 
@@ -466,7 +532,7 @@ namespace lilToon.URP.Extensions.RTShadow
             bool plannedForCamera = managedPlanCamera == camera && ReferenceEquals(managedPlanRenderer, renderer);
             if (plannedForCamera && plannedLights.Count != 0)
             {
-                if (HoRTRendererFeature.TryAcquire(renderer, camera, this, out var view, out var reason))
+                if (HoRTRendererFeature.TryAcquire(renderer, camera, requestOwner, out var view, out var reason))
                 {
                     var descriptor = data.cameraData.cameraTargetDescriptor;
                     foreach (var plan in plannedLights)
@@ -485,7 +551,7 @@ namespace lilToon.URP.Extensions.RTShadow
                 EnqueueDebugPasses(renderer, data.cameraData);
             plannedLights.Clear();
         }
-        public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)
+        internal void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data)
         {
             if (managed)
             {
@@ -550,7 +616,7 @@ namespace lilToon.URP.Extensions.RTShadow
             if (!CameraSupported(data.cameraData, settings)) { Status = "当前相机未请求（检查 Feature 总开关 / Volume 启用 / Scene View）"; return; }
             if (!HoRTScene.IsSupported || !SystemInfo.supportsRayTracing || shader == null || visibilityMaterialShader == null)
             { Status = "需要 D3D12 native RT 与阴影 Shader"; return; }
-            if (!HoRTRendererFeature.TryAcquire(renderer, data.cameraData.camera, this, out var view, out var reason)) { Status = "Ho-RT：" + reason; return; }
+            if (!HoRTRendererFeature.TryAcquire(renderer, data.cameraData.camera, requestOwner, out var view, out var reason)) { Status = "Ho-RT：" + reason; return; }
             int main = data.lightData.mainLightIndex;
             var light = main >= 0 && main < data.lightData.visibleLights.Length ? data.lightData.visibleLights[main].light : null;
             var descriptor = data.cameraData.cameraTargetDescriptor;
@@ -632,7 +698,7 @@ namespace lilToon.URP.Extensions.RTShadow
 
         private void EnqueueProducts(ScriptableRenderer renderer, Camera camera)
         {
-            if(scheduled.Count>0)HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTShadow primary identity and normals",Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.Identity|HoACDemandResources.HighPrecisionSurfaceNormal);
+            if(scheduled.Count>0)HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,requestOwner,"RTShadow primary identity and normals",Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.Identity|HoACDemandResources.HighPrecisionSurfaceNormal);
             // Metadata pass is separate so rejected products are observable even
             // when there is nothing to trace. No invalid product masquerades as V=1.
             var publish=new ProductPass();publish.camera=camera;publish.products=rejected.ToArray();renderer.EnqueuePass(publish);
@@ -646,8 +712,8 @@ namespace lilToon.URP.Extensions.RTShadow
             {var resources=frame.GetOrCreate<HoRTShadowRenderGraphResources>();resources.Camera=camera;foreach(var product in products)resources.Add(product);}
             public override void Execute(ScriptableRenderContext context,ref RenderingData data){}
         }
-        private void ReleaseOutputs() { foreach (var output in outputs.Values) output.ReleaseAfterUse(); outputs.Clear(); scheduled.Clear(); rejected.Clear(); LastOutput = null; HoAttributeCompositeConsumerRegistry.Remove(this); }
-        protected override void Dispose(bool disposing)
+        private void ReleaseOutputs() { foreach (var output in outputs.Values) output.ReleaseAfterUse(); outputs.Clear(); scheduled.Clear(); rejected.Clear(); LastOutput = null; HoAttributeCompositeConsumerRegistry.Remove(requestOwner); }
+        public void Dispose()
         { if (registered) RenderPipelineManager.beginCameraRendering -= ResetCamera; registered = false; ResetCamera(default, null); RetireManagedOutputs(); debugPass?.ReleaseDebugResources(); CoreUtils.Destroy(debugMaterial); debugMaterial = null; }
 
         internal sealed class ShadowPass : ScriptableRenderPass

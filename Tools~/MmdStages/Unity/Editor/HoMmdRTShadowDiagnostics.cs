@@ -20,6 +20,7 @@ using Object = UnityEngine.Object;
 public static class HoMmdRTShadowDiagnostics
 {
     const BindingFlags InstanceMembers = BindingFlags.Instance | BindingFlags.NonPublic;
+    private delegate bool TryReadProduct(Camera camera, Light light, out HoRTShadowCompatibilityProduct product);
 
     public static string ConfigureStageReceivers(HoMmdVideoWorkshop.Request request)
     {
@@ -281,47 +282,59 @@ public static class HoMmdRTShadowDiagnostics
             frame.requestedLights = frame.hostRequests = frame.scheduledLights = frame.writtenProducts = frame.rayDispatches = -1;
             return;
         }
-        var producer = producerField.GetValue(feature) as HoRTShadowRendererFeature;
+        object producer = producerField.GetValue(feature);
         if (producer == null)
         {
             frame.status = "Managed RT has no producer state for the captured camera.";
             return;
         }
-        if (producer.LastCamera != camera)
+        Type producerType = producer.GetType();
+        var lastCamera = producerType.GetProperty("LastCamera")?.GetValue(producer) as Camera;
+        if (lastCamera != camera)
         {
             frame.status = "The managed producer did not report the captured camera.";
             frame.requestedLights = frame.hostRequests = frame.scheduledLights = frame.writtenProducts = frame.rayDispatches = -1;
             return;
         }
 
-        frame.featureCamera = producer.LastCamera.name;
-        frame.status = producer.Status;
-        Type producerType = typeof(HoRTShadowRendererFeature);
+        var lights = producerType.GetProperty("LightDiagnostics")?.GetValue(producer) as IEnumerable<HoRTShadowLightDiagnostics>;
+        var rejected = producerType.GetProperty("UnavailableProducts")?.GetValue(producer) as IReadOnlyList<HoRTShadowProduct>;
+        var tryRead = producerType.GetMethod("TryGetCompatibilityProduct");
+        if (lights == null || rejected == null || tryRead == null)
+        {
+            frame.status = "Managed RT product diagnostics are unavailable in this package version.";
+            frame.requestedLights = frame.hostRequests = frame.scheduledLights = frame.writtenProducts = frame.rayDispatches = -1;
+            return;
+        }
+
+        frame.featureCamera = lastCamera.name;
+        frame.status = producerType.GetProperty("Status")?.GetValue(producer) as string;
         var planCamera = producerType.GetField("managedPlanCamera", InstanceMembers);
         var requested = producerType.GetField("managedRequestedCount", InstanceMembers);
         if (planCamera == null || requested == null) frame.requestedLights = -1;
         else if (planCamera.GetValue(producer) as Camera == camera)
         {
             frame.requestedLights = (int)requested.GetValue(producer);
-            var effective = producer.LastEffectiveSettings;
+            var effective = producerType.GetProperty("LastEffectiveSettings")?.GetValue(producer) as HoRTShadowSettings;
             if (effective != null)
             {
                 frame.effective = JsonUtility.ToJson(effective);
                 frame.effectiveSettingsAvailable = true;
             }
         }
-        frame.hostRequests = ReadManagedHostRequests(renderer, camera, producer);
-        ReadProducts(frame, producer, camera, readbacks);
+        var requestOwner = producer as Object ?? feature;
+        frame.hostRequests = ReadManagedHostRequests(renderer, camera, requestOwner);
+        ReadProducts(frame, lights, rejected, (TryReadProduct)tryRead.CreateDelegate(typeof(TryReadProduct), producer), camera, readbacks);
     }
 
-    static int ReadManagedHostRequests(ScriptableRenderer renderer, Camera camera, HoRTShadowRendererFeature producer)
+    static int ReadManagedHostRequests(ScriptableRenderer renderer, Camera camera, Object requestOwner)
     {
         var active = typeof(HoRTRendererFeature).GetField("active", BindingFlags.Static | BindingFlags.NonPublic);
         if (!(active?.GetValue(null) is IDictionary domains)) return -1;
         object domain = domains[(renderer, camera)];
         if (domain == null) return 0;
         var requests = domain.GetType().GetField("requests", InstanceMembers)?.GetValue(domain) as IDictionary;
-        return requests == null ? -1 : requests.Contains(producer) ? 1 : 0;
+        return requests == null ? -1 : requests.Contains(requestOwner) ? 1 : 0;
     }
 
     static void ReadLegacyFrame(Frame frame, HoRTShadowRendererFeature feature, Camera camera, bool rendererVerified)
@@ -348,17 +361,18 @@ public static class HoMmdRTShadowDiagnostics
         }
         frame.activeGlobal = Shader.GetGlobalFloat("_HoRTShadowActive");
         frame.consumerDebugGlobal = Shader.GetGlobalFloat("_HoRTShadowConsumerDebugMode");
-        ReadProducts(frame, feature, camera);
+        ReadProducts(frame, feature.LightDiagnostics, feature.UnavailableProducts, feature.TryGetCompatibilityProduct, camera);
     }
 
-    static void ReadProducts(Frame frame, HoRTShadowRendererFeature producer, Camera camera,
+    static void ReadProducts(Frame frame, IEnumerable<HoRTShadowLightDiagnostics> lights, IReadOnlyList<HoRTShadowProduct> rejected,
+        TryReadProduct tryRead, Camera camera,
         List<(Product product, RenderTexture raw)> readbacks = null)
     {
-        frame.products = producer.LightDiagnostics.Select(light => ReadProduct(producer, camera, light, readbacks)).ToArray();
+        frame.products = lights.Select(light => ReadProduct(tryRead, camera, light, readbacks)).ToArray();
         frame.scheduledLights = frame.products.Length;
         frame.writtenProducts = frame.products.Count(product => product.currentProduct);
         frame.rayDispatches = frame.products.Sum(product => product.rayDispatches);
-        frame.rejected = producer.UnavailableProducts.Select(product => (product.Light != null ? product.Light.name : "<null>") +
+        frame.rejected = rejected.Select(product => (product.Light != null ? product.Light.name : "<null>") +
             ": " + product.Status + " - " + product.Reason).ToArray();
     }
 
@@ -402,12 +416,12 @@ public static class HoMmdRTShadowDiagnostics
         };
     }
 
-    static Product ReadProduct(HoRTShadowRendererFeature feature, Camera camera, HoRTShadowLightDiagnostics light,
+    static Product ReadProduct(TryReadProduct tryRead, Camera camera, HoRTShadowLightDiagnostics light,
         List<(Product product, RenderTexture raw)> readbacks)
     {
         var result = new Product { light = light.Light != null ? light.Light.name : "<null>", slot = light.Slot,
             receivers = light.Receivers, width = light.Width, height = light.Height, reconstruction = light.Reconstruction.ToString() };
-        if (!feature.TryGetCompatibilityProduct(camera, light.Light, out var product) || product.Raw?.rt == null) return result;
+        if (!tryRead(camera, light.Light, out var product) || product.Raw?.rt == null) return result;
         result.currentProduct = true;
         // The producer records one DispatchRays per estimate before marking this serial complete.
         result.rayDispatches = light.Estimates;

@@ -24,8 +24,8 @@ namespace lilToon.URP.Extensions.RTShadow
         private Material material;
         private int mode, slot;
         private float distance;
-        private HoRTShadowRendererFeature.Output output;
-        internal void Setup(Material material, HoRTShadowSettings settings, HoRTShadowRendererFeature.Output output)
+        private HoRTShadowProducer.Output output;
+        internal void Setup(Material material, HoRTShadowSettings settings, HoRTShadowProducer.Output output)
         {
             this.material = material; this.output = output;
             mode = (int)settings.debugMode; slot = settings.debugLight; distance = Mathf.Max(.0001f, settings.debugDistance);

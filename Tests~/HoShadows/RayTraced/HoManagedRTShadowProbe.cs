@@ -41,6 +41,7 @@ public static class HoManagedRTShadowProbe
         public string name;
         public int hostViews;
         public int hostRequests;
+        public bool unifiedOwnsRequest;
         public long companionLifetime;
         public bool companionAcquired;
         public bool hasProducer;
@@ -239,15 +240,15 @@ public static class HoManagedRTShadowProbe
                 RenderPipeline.SubmitRenderRequest(camera, request);
                 productProbe.Current = null;
                 candidateProbe.Current = null;
-                var producer = (HoRTShadowRendererFeature)typeof(HoShadowsRendererFeature)
-                    .GetField("rayProducer", InstanceInternal).GetValue(shadows);
+                object producer = typeof(HoShadowsRendererFeature).GetField("rayProducer", InstanceInternal).GetValue(shadows);
+                Type producerType = producer?.GetType();
                 sample.hostViews = (int)typeof(HoRTRendererFeature).GetProperty("ViewCount", InstanceInternal).GetValue(host);
-                sample.hostRequests = HostRequestCount(host, camera);
+                sample.hostRequests = HostRequestCount(host, camera, shadows, out sample.unifiedOwnsRequest);
                 sample.companionAcquired = companion.Acquired;
                 sample.companionLifetime = companion.Lifetime;
                 sample.hasProducer = producer != null;
-                sample.outputs = producer == null ? 0 : (int)typeof(HoRTShadowRendererFeature).GetProperty("ActiveOutputCount", InstanceInternal).GetValue(producer);
-                sample.scheduled = producer == null ? 0 : (int)typeof(HoRTShadowRendererFeature).GetProperty("ScheduledLightCount", InstanceInternal).GetValue(producer);
+                sample.outputs = producer == null ? 0 : (int)producerType.GetProperty("ActiveOutputCount", InstanceInternal).GetValue(producer);
+                sample.scheduled = producer == null ? 0 : (int)producerType.GetProperty("ScheduledLightCount", InstanceInternal).GetValue(producer);
                 sample.legacyAlias = Shader.GetGlobalFloat("_HoRTShadowActive");
                 Color header = ReadPixel(candidateTarget.rt, 0, 0);
                 sample.candidateActive = Mathf.RoundToInt(header.r);
@@ -261,6 +262,8 @@ public static class HoManagedRTShadowProbe
                 int expectedClients = expectOutput ? 2 : 1;
                 Require(sample.companionAcquired && sample.companionLifetime != 0 && sample.hostViews == expectedClients
                     && sample.hostRequests == expectedClients, name + " companion/Shadow host requests and views.");
+                Require(!(producer is Object) && sample.unifiedOwnsRequest == expectOutput,
+                    name + " plain RT producer must key the host request by its unified renderer feature.");
                 int expectedOutputs = expectLocal ? 3 : expectOutput ? 1 : 0;
                 Require(sample.hasProducer == expectProducer && sample.outputs == expectedOutputs
                     && sample.scheduled == expectedOutputs, name + " outputs and scheduling.");
@@ -273,7 +276,7 @@ public static class HoManagedRTShadowProbe
 
                 if (expectOutput)
                 {
-                    var result = typeof(HoRTShadowRendererFeature).GetProperty("LastOutput", InstanceInternal).GetValue(producer);
+                    var result = producerType.GetProperty("LastOutput", InstanceInternal).GetValue(producer);
                     Type type = result.GetType();
                     long submitted = (long)type.GetField("producedSerial", InstanceInternal).GetValue(result);
                     long serial = (long)type.GetField("renderSerial", InstanceInternal).GetValue(result);
@@ -374,9 +377,9 @@ public static class HoManagedRTShadowProbe
         light.shadowStrength = strength;
     }
 
-    static void VerifyLocal(LocalWitness result, HoRTShadowRendererFeature producer, Light light, uint owner, float visibility)
+    static void VerifyLocal(LocalWitness result, object producer, Light light, uint owner, float visibility)
     {
-        object output = typeof(HoRTShadowRendererFeature).GetMethod("OutputForLight", InstanceInternal).Invoke(producer, new object[] { light });
+        object output = producer.GetType().GetMethod("OutputForLight", InstanceInternal).Invoke(producer, new object[] { light });
         Require(output != null, light.name + " must have a per-light RT output.");
         var texture = (RTHandle)output.GetType().GetField("raw", InstanceInternal).GetValue(output);
         result.raw = ReadPixel(texture.rt, Size / 2, Size / 2);
@@ -405,14 +408,19 @@ public static class HoManagedRTShadowProbe
         }
     }
 
-    static int HostRequestCount(HoRTRendererFeature host, Camera camera)
+    static int HostRequestCount(HoRTRendererFeature host, Camera camera, Object unified, out bool unifiedOwnsRequest)
     {
+        unifiedOwnsRequest = false;
         var domains = (IDictionary)typeof(HoRTRendererFeature).GetField("domains", InstanceInternal).GetValue(host);
         foreach (object domain in domains.Values)
         {
             Type type = domain.GetType();
             if ((Camera)type.GetField("camera", InstanceInternal).GetValue(domain) == camera)
-                return ((IDictionary)type.GetField("requests", InstanceInternal).GetValue(domain)).Count;
+            {
+                var requests = (IDictionary)type.GetField("requests", InstanceInternal).GetValue(domain);
+                unifiedOwnsRequest = requests.Contains(unified);
+                return requests.Count;
+            }
         }
         return 0;
     }
