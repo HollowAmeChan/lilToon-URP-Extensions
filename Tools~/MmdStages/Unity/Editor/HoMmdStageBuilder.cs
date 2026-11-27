@@ -26,9 +26,23 @@ public static class HoMmdStageBuilder
         var local=AssetDatabase.LoadAssetAtPath<UniversalRendererData>(folder+"/Rendering/Ho Renderer.asset");
         if(local!=null)return local;
         var pipeline=AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(FixedPipelinePath);
-        if(pipeline==null)return null;
-        var so=new SerializedObject(pipeline);var list=so.FindProperty("m_RendererDataList");
-        return list!=null&&list.arraySize>0?list.GetArrayElementAtIndex(0).objectReferenceValue as UniversalRendererData:null;
+        return HoMmdSharedRenderAssets.RendererForCamera(pipeline, null);
+    }
+
+    internal static UniversalRendererData ResolveRenderer(string folder, Camera camera)
+    {
+        if (camera != null)
+        {
+            var environment = camera.transform.root.GetComponentInChildren<HoMmdStageEnvironment>();
+            var pipeline = environment?.pipeline
+                ?? GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset
+                ?? AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(FixedPipelinePath);
+            var renderer = HoMmdSharedRenderAssets.RendererForCamera(pipeline, camera);
+            if (renderer != null)
+                return renderer;
+        }
+
+        return ResolveRenderer(folder);
     }
     public static void BuildRemainingBatch()
     {
@@ -114,13 +128,13 @@ public static class HoMmdStageBuilder
             camera=>{
                 if(Environment.GetCommandLineArgs().Contains("-hoDiagnostic"))
                 {
-                    var renderer=ResolveRenderer(Root+r.name);
+                    var renderer=ResolveRenderer(Root+r.name, camera);
                     foreach(var f in renderer.rendererFeatures)f.SetActive(false);
                 }
                 if(Environment.GetCommandLineArgs().Contains("-hoNoPost"))camera.GetUniversalAdditionalCameraData().renderPostProcessing=false;
                 if(Environment.GetCommandLineArgs().Contains("-hoNoVolume"))
                 {
-                    var renderer=ResolveRenderer(Root+r.name);
+                    var renderer=ResolveRenderer(Root+r.name, camera);
                     foreach(var feature in renderer.rendererFeatures.OfType<HoVolumeLightRendererFeature>())feature.SetActive(false);
                 }
                 if(request.view>0)
@@ -177,17 +191,17 @@ public static class HoMmdStageBuilder
         SceneManager.SetActiveScene(scene);
         try
         {
-            var rendererData=ResolveRenderer(Root+r.name);
+            var root=scene.GetRootGameObjects().First();
+            var camera=root.GetComponentInChildren<Camera>();
+            var rendererData=ResolveRenderer(Root+r.name, camera);
             if(rendererData==null)throw new InvalidOperationException("Stage renderer is missing");
             bool unified=HoMmdSharedRenderAssets.ActiveHoShadows(rendererData)!=null;
             if(!unified&&!AssetDatabase.GetAssetPath(rendererData).StartsWith(Root,StringComparison.Ordinal))
                 throw new InvalidOperationException("Only stage-owned renderer copies may be pruned");
-            var root=scene.GetRootGameObjects().First();
             var renderers=root.GetComponentsInChildren<MeshRenderer>(true);
             foreach(var mat in renderers.Select(x=>x.sharedMaterial).Where(x=>x!=null).Distinct())TuneMaterial(mat,r);
             foreach(var surface in renderers)
                 if(surface.name.Contains("玻璃"))surface.shadowCastingMode=ShadowCastingMode.Off;
-            var camera=root.GetComponentInChildren<Camera>();
             camera.transform.position=r.camera;camera.transform.LookAt(r.target);camera.fieldOfView=r.fov;
             camera.GetUniversalAdditionalCameraData().volumeLayerMask=1<<31;
             var environment=root.GetComponentInChildren<HoMmdStageEnvironment>();

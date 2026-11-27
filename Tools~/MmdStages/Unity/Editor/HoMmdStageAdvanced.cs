@@ -90,7 +90,8 @@ public static class HoMmdStageAdvanced
         var scene=EditorSceneManager.OpenScene(folder+"/"+name+".unity",OpenSceneMode.Single);
         var root=scene.GetRootGameObjects().Single(x=>x.GetComponentInChildren<HoMmdStageEnvironment>()!=null);
         var profile=root.GetComponentInChildren<Volume>().sharedProfile;
-        var d=HoMmdStageBuilder.ResolveRenderer(folder);
+        var camera=root.GetComponentInChildren<Camera>();
+        var d=HoMmdStageBuilder.ResolveRenderer(folder, camera);
         var sky=root.GetComponentsInChildren<MeshRenderer>().Single(x=>x.name=="天空球").sharedMaterial;
         var gb=d.rendererFeatures.OfType<HoGeometryBufferRendererFeature>().Single();
         gb.Settings.minRenderQueue=1500;gb.Settings.renderScale=HoGeometryBufferRenderScale.Full;
@@ -180,7 +181,7 @@ public static class HoMmdStageAdvanced
     {
         string[] args=Environment.GetCommandLineArgs();var p=camera.transform.root.GetComponentInChildren<Volume>().sharedProfile;
         string name=camera.gameObject.scene.name;
-        var d=HoMmdStageBuilder.ResolveRenderer(HoMmdStageBuilder.Root+name);
+        var d=HoMmdStageBuilder.ResolveRenderer(HoMmdStageBuilder.Root+name, camera);
         if(args.Contains("-hoNoGi"))foreach(var f in d.rendererFeatures.OfType<HoRTGIRendererFeature>())f.SetActive(false);
         if(args.Contains("-hoGiOnly"))
         {
@@ -200,7 +201,7 @@ public static class HoMmdStageAdvanced
         if(frame!=32||Environment.GetCommandLineArgs().Contains("-hoNoGi")||Environment.GetCommandLineArgs().Contains("-hoGiOnly"))return;
         string name=camera.gameObject.scene.name,folder=HoMmdStageBuilder.Root+name;
         if(!File.Exists(folder+"/Rendering/进阶效果.json"))return;
-        var d=HoMmdStageBuilder.ResolveRenderer(folder);
+        var d=HoMmdStageBuilder.ResolveRenderer(folder, camera);
         var rt=d.rendererFeatures.OfType<HoRTGIRendererFeature>().FirstOrDefault(x=>x.isActive);
         // Read the actual main camera's persistent output. Reflection cameras reset
         // compatibility globals after the main render, so globals are not evidence.
