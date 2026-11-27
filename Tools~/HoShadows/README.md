@@ -28,9 +28,13 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 `
   -nographics -executeMethod HoShadowsPilotCutover.Run
 ```
 
-试切开启托管角色图集、透明 Eye、加权 OIT 和 Capture 输入，并关闭 RT。旧 Feature 作为原 Renderer subasset 留存并停用。角色图集沿用旧分辨率、容量和深度／法线偏移，滤波使用托管路径的 PCF。统一 Feature 插在原有输入生产端之后、Capture 和 OIT 之前。材质和默认 Volume 保持原样，镜头测试可按 dry-run 清单选取。
+试切开启托管角色图集、透明 Eye、加权 OIT 和 Capture 输入，并关闭 RT。旧 Feature 作为原 Renderer subasset 留存并停用。角色图集沿用旧分辨率、容量和深度／法线偏移，滤波使用托管路径的 PCF。统一 Feature 插在原有输入生产端之后、Capture 和 OIT 之前。旧 RT 已绑定的 ray tracing 程序、命中材质、重建程序及有序 SIGMA pass 引用直接复制到统一 Feature，为具名镜头后续验证 opt-in 留存 Player 资源引用。材质和默认 Volume 保持原样，镜头测试可按 dry-run 清单选取。
 
 `pilot-before.json` 和 `pilot-applied.json` 记录文件哈希和逐项前后索引及本地 fileID。回放旧基线时，关闭隔离 Editor，再把备份的 Renderer 与 Volume 文件及其 `.meta` 复制回副本的 `Assets/Settings`。
+
+把执行方法换为 `HoShadowsPilotCutover.RunWithSeparateRenderer`，可在同一物理试验工程建立 `PC_HoShadowsPilotRenderer.asset`，并把它追加到 `PC_RPAsset` 的 Renderer 列表。报告给出 `candidateRendererIndex`。实测旧资产 SHA-256 未变化、默认索引仍为 `0`、新 Renderer 索引为 `1`、RT 总开关保持关闭，13 个程序与材质引用已经保留。
+
+分镜头试用时，副本里的 Base Camera 可显式选择新索引。共享材质的屏幕预览是材质局部关键字。先确认材质只供受管镜头使用，或者给试用镜头分配材质副本，再开启关键字。此工具保留原有相机与材质引用。在弃用副本时，关闭 Editor，从输出目录恢复副本的 `PC_RPAsset` 及其 `.meta`，清理单独的试用 Renderer 资产。
 
 ## 真实镜头的隔离对照
 
@@ -48,7 +52,7 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 以 640×360 渲染两个已保存的 Base Camera。先读两次旧路径，再用同一快照跑新 Feature 的 4 和 16 个逐灯预算。当前版本在已支持的 Skin、Eye、Cloth、Environment、Hair 和 Effect 材质路径临时启用受管预览。场景退出时恢复材质。默认保留材质的 Main／Full。要测试拟议的 Full 迁移，用 `HO_SHADOWS_P5_COMPARE_PLAN` 传入 dry-run JSON。对照工具只处理报告内的 `review_full_candidate`，逐项核对快照材质文件的 SHA-256。
 
-可用 `HO_SHADOWS_P5_COMPARE_FILTER` 按场景路径选择子集，或用 `HO_SHADOWS_P5_COMPARE_SCENE` 指定快照内另一场景的 `Assets/...unity` 路径。默认关闭用作对照变量的平面反射、相机后处理和 AA。设 `HO_SHADOWS_P5_COMPARE_AUTHORED=1` 可以沿用保存的相机效果配置。
+可用 `HO_SHADOWS_P5_COMPARE_FILTER` 按场景路径选择子集，或用 `HO_SHADOWS_P5_COMPARE_SCENE` 指定快照内另一场景的 `Assets/...unity` 路径。默认关闭用作对照变量的平面反射、相机后处理和 AA。设 `HO_SHADOWS_P5_COMPARE_AUTHORED=1` 改用原生相机栈请求，保留保存的相机效果并执行 URP 的 Volume 更新。
 
 | 首轮 D3D11 对照（Hair 和 Effect 接入前） | 预览材质／临时转 Full | 四灯预算的 RGB 最大分量差 | 旧路径重复波动 | 阈值 `>0.002` 且旧重复稳定的差异像素 |
 | --- | ---: | ---: | ---: | ---: |
@@ -57,4 +61,4 @@ unity run $env:HO_SHADOWS_P5_PILOT_PROJECT --editor-version 6000.3.15f1 --timeou
 
 圣诞万花镜的两路预算各有 9 个像素超过阈值，旧路径重复也有 9 个。此快照中该镜头没有启用阴影响应的 Main 材质临时转为 Full，逐灯预算在实际受光材质上的影响还应使用 Hiro 测试场景验证。`scene-cutover.json` 里的时间来自同步提交和读回，包含 Editor 开销。正式帧预算用 GPU 帧计时检查。
 
-保留保存的相机效果配置重跑后，默认四灯预算下两场景仍各有 0 个超过阈值且旧重复稳定的差异像素。羽啾最大差为 0.00055987，圣诞万花镜为 0.00390625，均和各自的旧路径重复波动一致。圣诞万花镜的 16 灯对照最大差为 0.01583862。样本覆盖这两个保存镜头，生产仍需核对 Hair、Effect 等实际使用的其他阴影接收路径，以及 RT 和更高逐灯预算的镜头。
+早期单相机请求保留了平面反射、后处理和 AA 开关。该条件下，默认四灯预算的两个镜头仍各有 0 个超过阈值且旧重复稳定的差异像素。羽啾最大差为 0.00055987，圣诞万花镜为 0.00390625，均和各自的旧路径重复波动一致。圣诞万花镜的 16 灯对照最大差为 0.01583862。这组既有结果只覆盖 Base 相机单独提交，没有运行完整相机栈的 Volume 更新。生产仍需核对 Hair、Effect 等实际接收路径，以及 RT 和更高逐灯预算的镜头。

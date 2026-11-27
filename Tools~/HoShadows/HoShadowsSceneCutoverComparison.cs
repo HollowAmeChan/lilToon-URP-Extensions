@@ -237,7 +237,7 @@ public static class HoShadowsSceneCutoverComparison
 
             string stem = Path.Combine(output, Path.GetFileNameWithoutExtension(path) + "-" + label + ".exr");
             Debug.Log($"HO_SHADOWS_SCENE_SNAPSHOT {path} {label}");
-            return Read(camera, stem, out milliseconds);
+            return Read(camera, stem, authoredEffects, out milliseconds);
         }
         finally
         {
@@ -252,18 +252,24 @@ public static class HoShadowsSceneCutoverComparison
         }
     }
 
-    private static Color[] Read(Camera camera, string filename, out float elapsed)
+    private static Color[] Read(Camera camera, string filename, bool authoredEffects, out float elapsed)
     {
         var target = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGBFloat, RenderTextureReadWrite.Linear);
         var result = new Texture2D(Width, Height, TextureFormat.RGBAFloat, false, true);
         RenderTexture active = RenderTexture.active;
         try
         {
-            var request = new UniversalRenderPipeline.SingleCameraRequest { destination = target };
-            RenderPipeline.SubmitRenderRequest(camera, request);
-            RenderPipeline.SubmitRenderRequest(camera, request);
+            void Submit()
+            {
+                if (authoredEffects)
+                    RenderPipeline.SubmitRenderRequest(camera, new RenderPipeline.StandardRequest { destination = target });
+                else
+                    RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = target });
+            }
+            Submit();
+            Submit();
             var timing = System.Diagnostics.Stopwatch.StartNew();
-            RenderPipeline.SubmitRenderRequest(camera, request);
+            Submit();
             RenderTexture.active = target;
             result.ReadPixels(new Rect(0, 0, Width, Height), 0, 0);
             elapsed = (float)timing.Elapsed.TotalMilliseconds;
